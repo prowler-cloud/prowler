@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks for components that pull in next-auth transitively
@@ -22,6 +22,13 @@ const {
   mockClipboardWriteText,
   mockSearchParamsState,
   mockNotificationIndicator,
+  mockUpdateFindingTriage,
+  mockLoadLatestFindingTriageNote,
+  mockLoadFindingTriageDetail,
+  mockRequestPanelChatMessage,
+  mockRequestPanelSkillLaunch,
+  mockIsCloud,
+  mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
@@ -29,6 +36,27 @@ const {
   mockClipboardWriteText: vi.fn(),
   mockSearchParamsState: { value: "" },
   mockNotificationIndicator: vi.fn(),
+  mockUpdateFindingTriage: vi.fn(),
+  mockLoadLatestFindingTriageNote: vi.fn(),
+  mockLoadFindingTriageDetail: vi.fn(),
+  mockRequestPanelChatMessage: vi.fn(),
+  mockRequestPanelSkillLaunch: vi.fn(),
+  mockIsCloud: vi.fn(() => true),
+  mockCurrentLighthouseContext: {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "/findings",
+        label: "S3 Check",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      },
+    ],
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -60,11 +88,12 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock the entire shadcn barrel to avoid auth import chain
-vi.mock("@/components/shadcn", () => {
+vi.mock("@/components/shadcn", async (importOriginal) => {
   const Passthrough = ({ children }: { children?: ReactNode }) => (
     <>{children}</>
   );
   return {
+    ...(await importOriginal<Record<string, unknown>>()),
     Badge: ({
       children,
       className,
@@ -125,7 +154,8 @@ vi.mock("@/components/shadcn", () => {
   };
 });
 
-vi.mock("@/components/shadcn/card/card", () => ({
+vi.mock("@/components/shadcn/card/card", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Card: ({ children, variant }: { children: ReactNode; variant?: string }) => (
     <div data-slot="card" data-variant={variant}>
       {children}
@@ -134,17 +164,29 @@ vi.mock("@/components/shadcn/card/card", () => ({
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
+  // Always-open stand-in: renders the trigger (for presence assertions) and
+  // the menu children inline. Real menu behavior is covered by the rail's and
+  // the primitive's own tests.
   ActionDropdown: ({
     children,
+    trigger,
     ariaLabel,
   }: {
     children: ReactNode;
+    trigger?: ReactNode;
     ariaLabel?: string;
   }) => (
-    <div role="menu" aria-label={ariaLabel}>
-      {children}
+    <div>
+      {trigger}
+      <div role="menu" aria-label={ariaLabel}>
+        {children}
+      </div>
     </div>
   ),
+  DropdownMenuLabel: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => null,
   ActionDropdownItem: ({
     label,
     disabled,
@@ -255,15 +297,22 @@ vi.mock("@/actions/compliances", () => ({
   getCompliancesOverview: mockGetCompliancesOverview,
 }));
 
+vi.mock("@/actions/findings", () => ({
+  updateFindingTriage: mockUpdateFindingTriage,
+  loadLatestFindingTriageNote: mockLoadLatestFindingTriageNote,
+  loadFindingTriageDetail: mockLoadFindingTriageDetail,
+}));
+
 vi.mock("@/components/icons", () => ({
   getComplianceIcon: mockGetComplianceIcon,
+  LighthouseIcon: () => null,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({
     value,
     formatter,
@@ -282,11 +331,11 @@ vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities/date-with-time", () => ({
+vi.mock("@/components/shadcn/entities/date-with-time", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     nameAction,
     idAction,
@@ -304,13 +353,17 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   Table: ({ children }: { children: ReactNode }) => <table>{children}</table>,
   TableBody: ({ children }: { children: ReactNode }) => (
     <tbody>{children}</tbody>
   ),
-  TableCell: ({ children }: { children: ReactNode }) => <td>{children}</td>,
-  TableHead: ({ children }: { children: ReactNode }) => <th>{children}</th>,
+  TableCell: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+    <td {...props}>{children}</td>
+  ),
+  TableHead: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+    <th {...props}>{children}</th>
+  ),
   TableHeader: ({ children }: { children: ReactNode }) => (
     <thead>{children}</thead>
   ),
@@ -319,13 +372,13 @@ vi.mock("@/components/ui/table", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table/severity-badge", () => ({
+vi.mock("@/components/shadcn/table/severity-badge", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   FindingStatus: {},
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
@@ -341,6 +394,29 @@ vi.mock("@/lib/region-flags", () => ({
 vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: vi.fn(() => "2 days"),
   formatDuration: vi.fn(() => "5m"),
+}));
+
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: mockIsCloud,
+}));
+
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
+}));
+
+vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
+  requestPanelChatMessage: mockRequestPanelChatMessage,
+  requestPanelSkillLaunch: mockRequestPanelSkillLaunch,
+}));
+
+vi.mock("@/hooks/use-lighthouse-context", () => ({
+  useLighthouseCurrentContext: () => ({
+    context: mockCurrentLighthouseContext,
+  }),
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -360,6 +436,96 @@ vi.mock("../notification-indicator", () => ({
   DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" } as const,
 }));
 
+vi.mock("../finding-triage-cells", () => ({
+  FindingNoteActionItem: ({
+    triage,
+    onTriageUpdateAction,
+  }: {
+    triage?: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      label: string;
+      isMuted: boolean;
+    };
+    onTriageUpdateAction?: (input: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      previousStatus: string;
+      isMuted: boolean;
+      note: string;
+    }) => Promise<void>;
+  }) =>
+    triage ? (
+      <button
+        type="button"
+        onClick={() =>
+          onTriageUpdateAction?.({
+            findingId: triage.findingId,
+            findingUid: triage.findingUid,
+            triageId: triage.triageId,
+            notesCount: triage.notesCount,
+            status: "remediating",
+            previousStatus: triage.status,
+            isMuted: triage.isMuted,
+            note: "Investigating",
+          })
+        }
+      >
+        Add Triage Note
+      </button>
+    ) : null,
+  FindingTriageStatusCell: ({
+    triage,
+    onTriageUpdateAction,
+  }: {
+    triage?: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      label: string;
+      isMuted: boolean;
+    };
+    onTriageUpdateAction?: (input: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      previousStatus: string;
+      isMuted: boolean;
+    }) => Promise<void>;
+  }) =>
+    triage ? (
+      <button
+        type="button"
+        aria-label="Triage status"
+        onClick={() =>
+          onTriageUpdateAction?.({
+            findingId: triage.findingId,
+            findingUid: triage.findingUid,
+            triageId: triage.triageId,
+            notesCount: triage.notesCount,
+            status: "remediating",
+            previousStatus: triage.status,
+            isMuted: triage.isMuted,
+          })
+        }
+      >
+        {triage.label}
+      </button>
+    ) : (
+      <span>-</span>
+    ),
+}));
+
 vi.mock("./resource-detail-skeleton", () => ({
   ResourceDetailSkeleton: () => <div data-testid="skeleton" />,
 }));
@@ -373,7 +539,15 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { usePartialScanStore } from "@/store/partial-scan/store";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
+import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
+import {
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -384,18 +558,52 @@ afterEach(() => {
   mockGetComplianceIcon.mockImplementation(
     (_: string) => null as string | null,
   );
+  mockIsCloud.mockReturnValue(true);
+  useSidePanelStore.setState({
+    isOpen: false,
+    selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+  });
 });
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** A watchlisted framework as the API reports it for a finding. Provider-scoped
+ *  by default, which is the case that navigates without a lookup. */
+const complianceFramework = (
+  overrides: Partial<FindingComplianceFramework> = {},
+): FindingComplianceFramework => ({
+  id: "aws:cis_1.4_aws",
+  complianceId: "cis_1.4_aws",
+  providerType: "aws",
+  scope: WATCHLIST_SCOPE.PROVIDER,
+  framework: "CIS-1.4",
+  name: "CIS",
+  version: "1.4",
+  inWatchlist: true,
+  ...overrides,
+});
+
 const mockCheckMeta: CheckMeta = {
   checkId: "s3_check",
   checkTitle: "S3 Check",
   risk: "High",
   description: "S3 description",
-  complianceFrameworks: ["CIS-1.4", "PCI-DSS"],
+  complianceFrameworks: [
+    complianceFramework({
+      id: "aws:cis_1.4_aws",
+      complianceId: "cis_1.4_aws",
+      framework: "CIS-1.4",
+      version: "1.4",
+    }),
+    complianceFramework({
+      id: "aws:pci_dss_4.0_aws",
+      complianceId: "pci_dss_4.0_aws",
+      framework: "PCI-DSS",
+      version: "4.0",
+    }),
+  ],
   categories: ["security"],
   remediation: {
     recommendation: { text: "Fix it", url: "https://example.com" },
@@ -403,6 +611,24 @@ const mockCheckMeta: CheckMeta = {
   },
   additionalUrls: [],
 };
+
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    isMuted: false,
+    canEdit: true,
+    billingHref: "https://prowler.com/pricing",
+    ...overrides,
+  };
+}
 
 const mockFinding: ResourceDrawerFinding = {
   id: "finding-1",
@@ -425,6 +651,7 @@ const mockFinding: ResourceDrawerFinding = {
   resourceGroup: "default",
   resourceDetails: null,
   resourceMetadata: null,
+  providerId: "provider-1",
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -479,6 +706,187 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     expect(srOnlyLabel).toHaveTextContent("View Resource");
   });
 });
+
+describe("ResourceDetailDrawerContent — sample data", () => {
+  it("does not navigate to compliance details for a nonexistent sample scan", async () => {
+    // Given
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          id: "sample-finding-s3_bucket_public_access-1",
+          resourceId: "sample-resource-s3_bucket-1",
+          scan: {
+            id: "sample-scan",
+            name: "Sample scan",
+            trigger: "manual",
+            state: "completed",
+            uniqueResourceCount: 24,
+            progress: 100,
+            duration: 742,
+            startedAt: "2026-10-28T09:12:00Z",
+            completedAt: "2026-10-28T09:12:00Z",
+            insertedAt: "2026-10-28T09:12:00Z",
+            scheduledAt: null,
+          },
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const link = screen.queryByRole("button", {
+      name: "Open PCI-DSS 4.0 compliance details",
+    });
+    if (link) await user.click(link);
+
+    // Then
+    expect(mockWindowOpen).not.toHaveBeenCalled();
+  });
+
+  it("should not link sample resources to pages or consoles that lack them", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          id: "sample-finding-s3_bucket_public_access-1",
+          resourceId: "sample-resource-s3_bucket-1",
+          resourceUid: "arn:aws:s3:::acme-customer-exports",
+          providerType: "aws",
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: "View Resource" }),
+    ).not.toBeInTheDocument();
+    const hrefs = Array.from(container.querySelectorAll("a")).map((link) =>
+      link.getAttribute("href"),
+    );
+    expect(hrefs.filter((href) => href?.includes("aws.amazon.com"))).toEqual(
+      [],
+    );
+  });
+});
+
+describe("ResourceDetailDrawerContent — triage drawer actions", () => {
+  it("should render Triage and Add Triage Note for other findings rows", () => {
+    // Given
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      triage: makeTriageSummary({
+        findingId: "finding-2",
+        findingUid: "uid-2",
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        label: "Remediating",
+      }),
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const row = screen.getByText("EC2 Check").closest("tr");
+    expect(row).not.toBeNull();
+
+    // Then
+    expect(screen.getByText("Triage")).toBeInTheDocument();
+    expect(
+      within(row as HTMLElement).getByRole("button", {
+        name: "Triage status",
+      }),
+    ).toHaveTextContent("Remediating");
+    expect(
+      within(row as HTMLElement).getByRole("button", {
+        name: "Add Triage Note",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(row as HTMLElement).getByRole("button", { name: "Mute" }),
+    ).toBeInTheDocument();
+    expect(
+      within(row as HTMLElement).getByRole("button", {
+        name: "Send 1 Finding to Jira",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("should update simple drawer triage without using the mute refresh path", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onMuteComplete = vi.fn();
+    mockUpdateFindingTriage.mockResolvedValue(undefined);
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          triage: makeTriageSummary(),
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={onMuteComplete}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
+
+    // Then
+    expect(mockUpdateFindingTriage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        note: "Investigating",
+      }),
+    );
+    expect(onMuteComplete).not.toHaveBeenCalled();
+  });
+});
+
 const mockResourceRow: FindingResourceRow = {
   id: "row-1",
   rowType: "resource",
@@ -502,17 +910,12 @@ const mockResourceRow: FindingResourceRow = {
   lastSeenAt: null,
 };
 
-// ---------------------------------------------------------------------------
-// Fix 1: Lighthouse AI button text change
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () => {
-  it("should say 'Analyze this finding with Lighthouse AI' instead of 'View This Finding'", () => {
-    // Given
-    const { container } = render(
+describe("ResourceDetailDrawerContent — Lighthouse skills rail", () => {
+  const renderDrawer = (overrides: { isNavigating?: boolean } = {}) =>
+    render(
       <ResourceDetailDrawerContent
         isLoading={false}
-        isNavigating={false}
+        isNavigating={overrides.isNavigating ?? false}
         checkMeta={mockCheckMeta}
         currentIndex={0}
         totalResources={1}
@@ -524,20 +927,85 @@ describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () 
       />,
     );
 
-    // When — look for the lighthouse link
-    const allText = container.textContent ?? "";
+  it("should launch a skill from the header chip rail", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderDrawer();
 
-    // Then — correct text must be present, old text must be absent
-    expect(allText.toLowerCase()).toContain("analyze this finding");
-    expect(allText.toLowerCase()).not.toContain("view this finding");
+    // Then — rail chips present. The always-open dropdown mock repeats every
+    // skill as a menu button, hence getAllByRole.
+    expect(
+      screen.getAllByRole("button", { name: "Contextual Fix" }).length,
+    ).toBeGreaterThan(0);
+
+    // When — first match is the rail chip (rendered before the menu).
+    await user.click(
+      screen.getAllByRole("button", { name: "Triage Decision" })[0],
+    );
+
+    // Then
+    expect(mockRequestPanelSkillLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should start a fresh conversation from the rail prompt", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderDrawer();
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "More Lighthouse skills" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Ask Lighthouse anything" }),
+      "Is this exposed?{Enter}",
+    );
+
+    // Then
+    expect(mockRequestPanelChatMessage).toHaveBeenCalledWith(
+      "Is this exposed?",
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should hide the rail outside cloud and while navigating", () => {
+    // Given
+    mockIsCloud.mockReturnValue(false);
+
+    // When
+    const { unmount } = renderDrawer();
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Contextual Fix" }),
+    ).not.toBeInTheDocument();
+
+    // Given
+    unmount();
+    mockIsCloud.mockReturnValue(true);
+
+    // When
+    renderDrawer({ isNavigating: true });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Contextual Fix" }),
+    ).not.toBeInTheDocument();
   });
 });
 
-// ---------------------------------------------------------------------------
-// Fix 2: Remediation heading labels — remove "Command" suffix
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", () => {
+describe("ResourceDetailDrawerContent — remediation code editors", () => {
   const checkMetaWithCommands: CheckMeta = {
     ...mockCheckMeta,
     remediation: {
@@ -550,80 +1018,6 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
       },
     },
   };
-
-  it("should render 'Terraform' heading without 'Command' suffix", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — "Terraform" present, "Terraform Command" absent
-    expect(allText).toContain("Terraform");
-    expect(allText).not.toContain("Terraform Command");
-  });
-
-  it("should render 'CloudFormation' heading without 'Command' suffix", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — "CloudFormation" present, "CloudFormation Command" absent
-    expect(allText).toContain("CloudFormation");
-    expect(allText).not.toContain("CloudFormation Command");
-  });
-
-  it("should still render 'CLI Command' label for CLI section", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — CLI Command label must remain
-    expect(allText).toContain("CLI Command");
-  });
 
   it("should render CLI remediation in the code editor without line numbers and copy without the visual prompt", async () => {
     // Given
@@ -939,159 +1333,45 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Risk section styling", () => {
-  it("should render the Risk section with a vertical accent border (no danger card)", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When — find the Risk heading and walk up to the section wrapper
-    const riskHeading = Array.from(container.querySelectorAll("span")).find(
-      (el) => el.textContent?.trim() === "Risk:",
-    );
-    const riskSection = riskHeading?.parentElement;
-
-    // Then — Risk wrapper has a left accent border, not a danger Card
-    expect(riskSection).toBeDefined();
-    expect(riskSection?.className).toMatch(/border-l/);
-    expect(riskSection?.getAttribute("data-variant")).toBeNull();
-  });
-
-  it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When — look for section heading span with "Risk:"
-    const headingSpans = Array.from(container.querySelectorAll("span")).filter(
-      (el) => el.textContent?.trim() === "Risk:",
-    );
-
-    // Then — heading must not be tiny text-xs; should be text-sm or larger with font-semibold/font-medium
-    expect(headingSpans.length).toBeGreaterThan(0);
-    const riskHeading = headingSpans[0];
-    expect(riskHeading.className).not.toContain("text-xs");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Fix 4: Compliance icon styling should match master
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — compliance icon styling", () => {
-  it("should render framework icons inside the same white chip used in master", () => {
-    // Given
-    mockGetComplianceIcon.mockImplementation((framework: string) =>
-      framework === "CIS-1.4" ? "/cis.svg" : null,
-    );
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const icon = screen.getByRole("img", { name: "CIS-1.4" });
-    const chip = icon.closest("div");
-
-    // Then
-    expect(chip).toHaveClass("bg-white");
-    expect(chip).toHaveClass("border-gray-300");
-  });
-
-  it("should render framework fallback pills with the same master styling", () => {
-    // Given
-    mockGetComplianceIcon.mockReturnValue(null);
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const chip = screen.getByText("PCI-DSS");
-
-    // Then
-    expect(chip).toHaveClass("bg-white");
-    expect(chip).toHaveClass("border-gray-300");
-  });
-});
-
 describe("ResourceDetailDrawerContent — compliance navigation", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("should resolve the clicked framework against the selected scan and navigate to compliance detail", async () => {
+  it("should keep compliance logo canvases light in every navigation state", () => {
+    // Given
+    mockGetComplianceIcon.mockReturnValue("/compliance.svg");
+    const props = {
+      isLoading: false,
+      isNavigating: false,
+      checkMeta: mockCheckMeta,
+      currentIndex: 0,
+      totalResources: 1,
+      currentFinding: mockFinding,
+      otherFindings: [],
+      onNavigatePrev: vi.fn(),
+      onNavigateNext: vi.fn(),
+      onMuteComplete: vi.fn(),
+    };
+    const { rerender } = render(<ResourceDetailDrawerContent {...props} />);
+
+    // When / Then - No scan: static logo
+    const staticLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(staticLogo.parentElement).toHaveClass("bg-slate-50");
+
+    // When / Then - Selected scan: navigable logo
+    mockSearchParamsState.value = "filter[scan__in]=scan-selected";
+    rerender(<ResourceDetailDrawerContent {...props} />);
+    const navigableLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(navigableLogo.parentElement).toHaveClass("bg-slate-50");
+  });
+
+  it("should navigate straight to the framework the API identified, without querying the scan's overview", async () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
     mockSearchParamsState.value =
       "filter[scan__in]=scan-selected&filter[region__in]=eu-west-1";
-    mockGetCompliancesOverview.mockResolvedValue({
-      data: [
-        {
-          id: "compliance-1",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "PCI-DSS",
-            version: "4.0",
-            requirements_passed: 10,
-            requirements_failed: 2,
-            requirements_manual: 0,
-            total_requirements: 12,
-          },
-        },
-      ],
-    });
 
     render(
       <ResourceDetailDrawerContent
@@ -1111,16 +1391,14 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open PCI-DSS compliance details",
+        name: "Open PCI-DSS 4.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-selected",
-    });
+    expect(mockGetCompliancesOverview).not.toHaveBeenCalled();
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-1&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
+      "/compliance/PCI-DSS?complianceId=pci_dss_4.0_aws&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
       "_blank",
       "noopener,noreferrer",
     );
@@ -1130,22 +1408,6 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
-    mockGetCompliancesOverview.mockResolvedValue({
-      data: [
-        {
-          id: "compliance-2",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "PCI-DSS",
-            version: "4.0",
-            requirements_passed: 10,
-            requirements_failed: 2,
-            requirements_manual: 0,
-            total_requirements: 12,
-          },
-        },
-      ],
-    });
     const findingWithScan = {
       ...mockFinding,
       scan: {
@@ -1181,22 +1443,19 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open PCI-DSS compliance details",
+        name: "Open PCI-DSS 4.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-from-finding",
-    });
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding",
+      "/compliance/PCI-DSS?complianceId=pci_dss_4.0_aws&version=4.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
   });
 
-  it("should navigate when the finding framework is a short alias of the compliance overview framework", async () => {
+  it("should navigate a universal framework by its own id too, without a lookup", async () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
@@ -1242,7 +1501,16 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
         isNavigating={false}
         checkMeta={{
           ...mockCheckMeta,
-          complianceFrameworks: ["KISA"],
+          complianceFrameworks: [
+            complianceFramework({
+              id: "*:kisa_isms_p",
+              complianceId: "kisa_isms_p",
+              providerType: "*",
+              scope: WATCHLIST_SCOPE.UNIVERSAL,
+              framework: "KISA",
+              version: "1.0",
+            }),
+          ],
         }}
         currentIndex={0}
         totalResources={1}
@@ -1257,16 +1525,81 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open KISA compliance details",
+        name: "Open KISA 1.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-from-finding",
-    });
+    // A universal framework's id is the SDK's file stem, which the per-scan
+    // detail page keys on just like any other, so there is no lookup and no
+    // `window.open` after an await for a pop-up blocker to swallow.
+    expect(mockGetCompliancesOverview).not.toHaveBeenCalled();
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/KISA-ISMS-P?complianceId=compliance-kisa&version=1.0&scanId=scan-from-finding",
+      "/compliance/KISA?complianceId=kisa_isms_p&version=1.0&scanId=scan-from-finding",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  });
+
+  it("should fall back to the framework's name for the URL, as the label does", async () => {
+    // Given: a framework the SDK exposes no metadata for, so `framework` is
+    // empty. It is a path segment, so without the same fallback the label uses
+    // the destination collapses to `/compliance/`.
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    const findingWithScan = {
+      ...mockFinding,
+      scan: {
+        id: "scan-from-finding",
+        name: "Nightly scan",
+        trigger: "manual",
+        state: "completed",
+        uniqueResourceCount: 25,
+        progress: 100,
+        duration: 300,
+        startedAt: "2026-03-30T10:00:00Z",
+        completedAt: "2026-03-30T10:05:00Z",
+        insertedAt: "2026-03-30T09:59:00Z",
+        scheduledAt: null,
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={{
+          ...mockCheckMeta,
+          complianceFrameworks: [
+            complianceFramework({
+              id: "aws:mitre_attack_aws",
+              complianceId: "mitre_attack_aws",
+              framework: "",
+              name: "MITRE-ATTACK",
+              version: "1.0",
+            }),
+          ],
+        }}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithScan}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open MITRE-ATTACK 1.0 compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockWindowOpen).toHaveBeenCalledWith(
+      "/compliance/MITRE-ATTACK?complianceId=mitre_attack_aws&version=1.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
@@ -1350,64 +1683,6 @@ describe("ResourceDetailDrawerContent — synthetic resource empty state", () =>
 });
 
 describe("ResourceDetailDrawerContent — current resource row display", () => {
-  it("should place service and region in the primary metadata row after provider and resource", () => {
-    // Given/When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    const primaryMetadataRow = screen.getByTestId(
-      "resource-detail-primary-metadata-row",
-    );
-    expect(primaryMetadataRow).toHaveClass("grid-cols-2");
-    expect(primaryMetadataRow).toHaveClass(
-      "@md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)]",
-    );
-    expect(
-      within(primaryMetadataRow).getByText("Provider"),
-    ).toBeInTheDocument();
-    expect(
-      within(primaryMetadataRow).getByText("Resource"),
-    ).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-    expect(within(primaryMetadataRow).getByText("us-east-1")).toHaveClass(
-      "truncate",
-    );
-
-    const secondaryMetadataRow = screen.getByTestId(
-      "resource-detail-secondary-metadata-row",
-    );
-    expect(secondaryMetadataRow).toHaveClass("grid-cols-2");
-    expect(secondaryMetadataRow).toHaveClass("@md:grid-cols-3");
-    expect(
-      within(secondaryMetadataRow).queryByText("Service"),
-    ).not.toBeInTheDocument();
-    expect(
-      within(secondaryMetadataRow).queryByText("Region"),
-    ).not.toBeInTheDocument();
-    expect(within(secondaryMetadataRow).getByText("2 days")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-  });
-
   it("should render resource card fields from the current resource row instead of the fetched finding", () => {
     // Given
     const currentResource: FindingResourceRow = {
@@ -1616,9 +1891,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", {
-        name: "Analyze This Finding With Lighthouse AI",
-      }),
+      screen.queryByRole("button", { name: "More Lighthouse skills" }),
     ).not.toBeInTheDocument();
   });
 
@@ -1799,14 +2072,6 @@ describe("ResourceDetailDrawerContent — other findings delta/muted indicator",
     });
   });
 
-  it("should forward delta='changed' to the NotificationIndicator for a changed other finding", () => {
-    renderWithOtherFinding({ delta: "changed" });
-
-    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
-      delta: "changed",
-    });
-  });
-
   it("should pass delta=undefined when the finding has delta='none'", () => {
     renderWithOtherFinding({ delta: "none" });
 
@@ -1839,29 +2104,6 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
         (editor) =>
           editor.getAttribute("data-aria-label") === "Resource metadata",
       );
-
-  it("should render a Metadata tab trigger", () => {
-    // Given/When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    expect(
-      screen.getByRole("button", { name: "Evidence" }),
-    ).toBeInTheDocument();
-  });
 
   it("should render the resource metadata as formatted JSON and copy it to the clipboard", async () => {
     // Given
@@ -1985,5 +2227,82 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
     expect(
       screen.queryByText("No metadata available for this resource."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — re-check resource", () => {
+  beforeEach(() => {
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  it("should offer a re-check of the current resource with its provider id", async () => {
+    // Given — the drawer finding was fetched with scan.provider, so it knows the id
+    const user = userEvent.setup();
+    mockIsCloud.mockReturnValue(true);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      within(screen.getByRole("menu", { name: "Resource actions" })).getByRole(
+        "button",
+        { name: "Re-check resource" },
+      ),
+    );
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerId: "provider-1",
+      providerUid: "123456789",
+      providerType: "aws",
+      providerAlias: "prod",
+      resourceUid: "arn:aws:s3:::bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("should offer the re-check beside Last detected with the provider id", async () => {
+    const user = userEvent.setup();
+    mockIsCloud.mockReturnValue(true);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    const metadataRow = screen.getByTestId(
+      "resource-detail-secondary-metadata-row",
+    );
+    await user.click(
+      within(metadataRow).getByRole("button", { name: "Re-check resource" }),
+    );
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({
+        providerId: "provider-1",
+        resourceUid: "arn:aws:s3:::bucket",
+      }),
+    );
   });
 });

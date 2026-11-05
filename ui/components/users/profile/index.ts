@@ -3,7 +3,6 @@ export * from "./api-keys-card";
 export * from "./api-keys-card-client";
 export * from "./create-api-key-modal";
 export * from "./edit-api-key-name-modal";
-export * from "./membership-item";
 export * from "./memberships-card";
 export * from "./revoke-api-key-modal";
 export * from "./role-item";

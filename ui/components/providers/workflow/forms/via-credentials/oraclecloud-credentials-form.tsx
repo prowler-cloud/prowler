@@ -4,6 +4,9 @@ import {
   WizardInputField,
   WizardTextareaField,
 } from "@/components/providers/workflow/forms/fields";
+import { Combobox } from "@/components/shadcn/combobox";
+import { FormControl, FormField, FormMessage } from "@/components/shadcn/form";
+import { OCI_REGION_GROUPS } from "@/lib/provider-credentials/oci-regions";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { OCICredentials } from "@/types";
 
@@ -15,10 +18,10 @@ export const OracleCloudCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via API Key
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Please provide your Oracle Cloud Infrastructure API key credentials.
         </div>
       </div>
@@ -48,15 +51,33 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <WizardInputField
+      <FormField
         control={control}
         name={ProviderCredentialFields.OCI_REGION}
-        type="text"
-        label="Region"
-        labelPlacement="inside"
-        placeholder="e.g. us-ashburn-1"
-        variant="bordered"
-        isRequired
+        render={({ field }) => (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-text-neutral-tertiary text-xs font-light tracking-tight">
+              Home Region<span className="text-text-error-primary">*</span>
+            </span>
+            <FormControl>
+              <Combobox
+                aria-label="Home Region"
+                value={field.value ?? ""}
+                onValueChange={field.onChange}
+                groups={OCI_REGION_GROUPS}
+                placeholder="Select your tenancy home region"
+                searchPlaceholder="Search region..."
+                emptyMessage="No region found."
+                contentClassName="z-[60] sm:w-(--radix-popover-trigger-width) sm:max-w-none"
+              />
+            </FormControl>
+            <span className="text-text-neutral-tertiary text-xs">
+              Shown in the OCI Console under Tenancy Details. Used only to
+              validate the credentials: all subscribed regions are scanned.
+            </span>
+            <FormMessage className="text-text-error-primary max-w-full text-xs" />
+          </div>
+        )}
       />
       <WizardTextareaField
         control={control}
@@ -78,7 +99,7 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired={false}
       />
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         Paste the raw content of your OCI private key file (PEM format). The key
         will be automatically encoded for secure transmission.
       </div>

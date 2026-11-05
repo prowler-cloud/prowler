@@ -15,8 +15,9 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-} from "@/components/ui/chart/Chart";
+} from "@/components/shadcn/chart/Chart";
 
+import { formatYAxisTick } from "./line-chart.utils";
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
 import { CustomActiveDot, PointClickData } from "./shared/custom-active-dot";
@@ -222,6 +223,8 @@ export function LineChart({
             tickLine={false}
             axisLine={false}
             tickMargin={8}
+            tickFormatter={formatYAxisTick}
+            width={56}
             padding={{ top: 20 }}
             tick={{
               fill: "var(--color-text-neutral-secondary)",
@@ -286,9 +289,11 @@ export function LineChart({
       </ChartContainer>
 
       <div className="mt-4 flex flex-col items-start gap-2">
-        <p className="text-text-neutral-tertiary pl-2 text-xs">
-          Click to filter by severity
-        </p>
+        {onPointClick && (
+          <p className="text-text-neutral-tertiary pl-2 text-xs">
+            Click to filter by severity
+          </p>
+        )}
         <ChartLegend
           items={legendItems}
           selectedItem={selectedLine}

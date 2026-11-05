@@ -1,37 +1,102 @@
-import React from "react";
-
-import { Card } from "@/components/shadcn/card/card";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 
-export const SkeletonTableInvitation = () => {
+const SkeletonTableRow = () => {
   return (
-    <Card variant="base" padding="md" className="flex flex-col gap-4">
-      {/* Table headers */}
-      <div className="hidden gap-4 md:flex">
-        <Skeleton className="h-8 w-2/12" />
-        <Skeleton className="h-8 w-2/12" />
-        <Skeleton className="h-8 w-2/12" />
-        <Skeleton className="h-8 w-2/12" />
-        <Skeleton className="h-8 w-2/12" />
-        <Skeleton className="h-8 w-1/12" />
+    <tr className="border-border-neutral-secondary border-b last:border-b-0">
+      {/* Email */}
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-32 rounded" />
+      </td>
+      {/* State - text */}
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-16 rounded" />
+      </td>
+      {/* Role - text */}
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-20 rounded" />
+      </td>
+      {/* Inserted At - date */}
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-24 rounded" />
+      </td>
+      {/* Expires At - date */}
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-24 rounded" />
+      </td>
+      {/* Actions */}
+      <td className="px-2 py-4">
+        <Skeleton className="size-6 rounded" />
+      </td>
+    </tr>
+  );
+};
+
+export const SkeletonTableInvitation = () => {
+  const rows = 10;
+
+  return (
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm">
+      {/* Toolbar: Search + Total entries */}
+      <div className="flex items-center justify-between">
+        {/* Search icon button */}
+        <Skeleton className="size-10 rounded-md" />
+        {/* Total entries */}
+        <Skeleton className="h-4 w-28 rounded" />
       </div>
 
-      {/* Table body */}
-      <div className="flex flex-col gap-3">
-        {[...Array(10)].map((_, index) => (
-          <div
-            key={index}
-            className="flex flex-col gap-4 md:flex-row md:items-center"
-          >
-            <Skeleton className="h-12 w-full md:w-2/12" />
-            <Skeleton className="h-12 w-full md:w-2/12" />
-            <Skeleton className="hidden h-12 md:block md:w-2/12" />
-            <Skeleton className="hidden h-12 md:block md:w-2/12" />
-            <Skeleton className="hidden h-12 md:block md:w-2/12" />
-            <Skeleton className="hidden h-12 md:block md:w-1/12" />
+      {/* Table */}
+      <table className="w-full">
+        <thead>
+          <tr className="border-border-neutral-secondary border-b">
+            {/* Email */}
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-16 rounded" />
+            </th>
+            {/* State */}
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-12 rounded" />
+            </th>
+            {/* Role */}
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-12 rounded" />
+            </th>
+            {/* Inserted At */}
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-24 rounded" />
+            </th>
+            {/* Expires At */}
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-24 rounded" />
+            </th>
+            {/* Actions - empty header */}
+            <th className="w-10 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <SkeletonTableRow key={i} />
+          ))}
+        </tbody>
+      </table>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between pt-2">
+        {/* Rows per page */}
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-9 w-16 rounded-md" />
+        </div>
+        {/* Page info + navigation */}
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-4 w-24 rounded" />
+          <div className="flex gap-1">
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
           </div>
-        ))}
+        </div>
       </div>
-    </Card>
+    </div>
   );
 };

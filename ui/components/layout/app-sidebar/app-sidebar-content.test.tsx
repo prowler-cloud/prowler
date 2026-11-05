@@ -1,0 +1,289 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useUIStore } from "@/store/ui/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+
+import { AppSidebarContent } from "./app-sidebar-content";
+import { useAppSidebarMode } from "./app-sidebar-mode-store";
+import { APP_SIDEBAR_MODE } from "./types";
+
+const {
+  openCloudUpgradeMock,
+  openLaunchScanModalMock,
+  pathnameValue,
+  permissionsValue,
+  pushMock,
+} = vi.hoisted(() => ({
+  openCloudUpgradeMock: vi.fn(),
+  openLaunchScanModalMock: vi.fn(),
+  pathnameValue: { current: "/findings" },
+  permissionsValue: { current: {} as Record<string, boolean> },
+  pushMock: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => pathnameValue.current,
+  useRouter: () => ({ push: pushMock }),
+}));
+
+vi.mock("@/hooks", () => ({
+  useAuth: () => ({ permissions: permissionsValue.current }),
+}));
+
+vi.mock("@/hooks/use-runtime-config", () => ({
+  useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
+}));
+
+vi.mock("@/store", () => ({
+  useScansStore: (
+    selector: (state: {
+      openLaunchScanModal: typeof openLaunchScanModalMock;
+    }) => unknown,
+  ) => selector({ openLaunchScanModal: openLaunchScanModalMock }),
+  useCloudUpgradeStore: (
+    selector: (state: {
+      openCloudUpgrade: typeof openCloudUpgradeMock;
+    }) => unknown,
+  ) => selector({ openCloudUpgrade: openCloudUpgradeMock }),
+}));
+
+vi.mock("@/app/(prowler)/lighthouse/_components/navigation", () => ({
+  LighthouseV2SidebarChat: () => <div data-testid="lighthouse-chat-sidebar" />,
+}));
+
+describe("AppSidebarContent", () => {
+  beforeEach(() => {
+    pathnameValue.current = "/findings";
+    permissionsValue.current = { manage_providers: true };
+    pushMock.mockClear();
+    openCloudUpgradeMock.mockClear();
+    openLaunchScanModalMock.mockClear();
+    useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.BROWSE });
+    useUIStore.setState({
+      registryEligible: false,
+      hasProviders: false,
+      hasProvidersResolved: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("shares the brand, Launch Scan action and Local Server Cloud affordances", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    vi.stubEnv("NEXT_PUBLIC_PROWLER_RELEASE_VERSION", "5.8.0");
+    const user = userEvent.setup();
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    const homeLink = screen.getByRole("link", { name: "Prowler home" });
+    expect(homeLink).toBeVisible();
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toHaveAttribute(
+      "href",
+      "/scans?launchScan=true",
+    );
+    expect(screen.getByText("5.8.0")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Chat" }));
+    expect(openCloudUpgradeMock).toHaveBeenCalledWith(
+      CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
+      undefined,
+    );
+    expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
+  });
+
+  it("shows Registry navigation when the server marked this request eligible", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    useUIStore.setState({ registryEligible: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: /Registry/ })).toHaveAttribute(
+      "href",
+      "/registry",
+    );
+  });
+
+  it("shows Issues navigation in Cloud", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.getByRole("link", { name: /Exploitability issues/ }),
+    ).toHaveAttribute("href", "/issues");
+  });
+
+  it("shows Realtime navigation to every Cloud user", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen
+        .getAllByRole("link", { name: /Realtime/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/realtime"]);
+  });
+
+  it("hides Issues navigation in Local Server", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Exploitability issues/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Registry navigation without a server eligibility decision", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Registry/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the existing Lighthouse chat sidebar in Cloud Chat mode", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.CHAT });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByTestId("lighthouse-chat-sidebar")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Service status" }),
+    ).toHaveAttribute("href", "https://status.prowler.com");
+    expect(
+      screen.queryByText("All systems operational"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("preserves the current full-page Lighthouse session when Chat is selected again", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    pathnameValue.current = "/lighthouse";
+    useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.CHAT });
+    const user = userEvent.setup();
+    render(<AppSidebarContent />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Chat" }));
+
+    // Then
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("navigates to Lighthouse when Chat is selected from another page", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    render(<AppSidebarContent />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Chat" }));
+
+    // Then
+    expect(pushMock).toHaveBeenCalledWith("/lighthouse");
+  });
+
+  it("offers Add Provider instead of Launch Scan once the tenant is known to have no providers", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Add Provider" })).toHaveAttribute(
+      "href",
+      "/providers?addProvider=true&addProviderSource=sidebar_cta",
+    );
+    expect(
+      screen.queryByRole("link", { name: "Launch Scan" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan for a user who cannot add providers", () => {
+    // Given: an empty list may only mean limited visibility.
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    permissionsValue.current = { manage_providers: false };
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Add Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan while the provider count is still unresolved", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: false });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Add Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan for a tenant that already has providers", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: true, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+  });
+
+  it("opens the current scan modal instead of navigating from the scans route", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    pathnameValue.current = "/scans";
+    const user = userEvent.setup();
+
+    // When
+    render(<AppSidebarContent />);
+    await user.click(screen.getByRole("button", { name: "Launch Scan" }));
+
+    // Then
+    expect(openLaunchScanModalMock).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByRole("link", { name: "Launch Scan" }),
+    ).not.toBeInTheDocument();
+  });
+});

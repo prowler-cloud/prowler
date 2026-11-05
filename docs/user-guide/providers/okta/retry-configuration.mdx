@@ -1,0 +1,123 @@
+---
+title: "Okta Rate Limit Configuration in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.32.0" />
+
+Prowler's Okta Provider manages API rate limits with two complementary controls:
+
+- **Request throttling (proactive):** Prowler paces outbound requests through a shared limiter so scans stay under Okta's rate limits and rarely trigger a rate-limit response in the first place.
+- **Retries (reactive):** When Okta still returns a rate-limit response (HTTP 429), the official Okta Python SDK reads the `X-Rate-Limit-Reset` header and waits until the window resets before retrying. This acts as a safety net for occasional bursts.
+
+Both controls are configurable through the configuration file or command line flags.
+
+## Request Throttling (Requests per Second)
+
+Throttling is the primary control for avoiding rate limits. Prowler limits the aggregate number of Okta API requests per second across every service in a scan.
+
+### Using the Command Line Flag
+
+```bash
+prowler okta --okta-requests-per-second 4
+```
+
+Set the value to `0` to disable throttling.
+
+### Using the Configuration File
+
+```yaml
+okta:
+  # Maximum aggregate Okta API requests per second. Default: 4. Set to 0 to disable.
+  okta_requests_per_second: 4
+```
+
+Okta enforces rate limits per endpoint, so this single global cap is a deliberately simple control. Lower the value if scans still hit limits on large organizations; raise it to scan faster when the organization has generous limits.
+
+## Retries
+
+Retries cover the cases throttling does not prevent, such as short bursts or per-endpoint limits lower than the global cap.
+
+### Using the Command Line Flag
+
+```bash
+prowler okta --okta-retries-max-attempts 8
+```
+
+### Using the Configuration File
+
+```yaml
+okta:
+  # Maximum retries on HTTP 429. Default: 5.
+  okta_max_retries: 8
+  # Per-request timeout in seconds. Default: 300.
+  okta_request_timeout: 300
+```
+
+The command line flags override the configuration file values.
+
+## How It Works
+
+- **Automatic detection:** The Okta SDK retries the retryable statuses 429, 503, and 504.
+- **Reset-aware backoff:** On a 429 response the SDK sleeps until the `X-Rate-Limit-Reset` window before each retry, rather than using a fixed delay.
+- **Bounded attempts:** `okta_max_retries` caps how many times a single request is retried. The Okta SDK default is 2, which is often too low for large organizations, so Prowler defaults to 5.
+
+## Request Timeout
+
+The `okta_request_timeout` setting plays a dual role in the Okta SDK:
+
+- It is the per-request socket timeout, bounding how long a single HTTP call can hang.
+- It is also the total wall-clock budget for the whole retry-and-backoff loop of one request.
+
+For this reason, the value defaults to 300 seconds rather than 0 (no timeout). A value of 0 leaves hung connections unbounded, while a value that is too low cuts the rate-limit waits short and reintroduces the errors. As a guideline, keep `okta_request_timeout` greater than or equal to `okta_max_retries` multiplied by 60 when raising the retry count, because Okta reset windows are typically up to one minute.
+
+## Error Example Handled
+
+```
+Okta HTTP 429: Too Many Requests. Hit rate limit. Retry request in 42 seconds.
+```
+
+## Validation
+
+### Debug Logging
+
+To confirm that throttling and retries are active, run a scan with debug logging:
+
+```bash
+prowler okta --okta-requests-per-second 4 --log-level DEBUG --log-file debuglogs.txt
+```
+
+### Check the Messages
+
+```bash
+grep -i "throttling\|rate limit\|retry" debuglogs.txt
+```
+
+### Expected Output
+
+When throttling is enabled, Prowler logs the configured rate at startup:
+
+```
+Okta request throttling enabled at 4 req/s
+```
+
+If a rate limit is still hit, the SDK logs the backoff:
+
+```
+Hit rate limit. Retry request in 42 seconds.
+```
+
+## Troubleshooting
+
+If scans continue to hit rate limits:
+
+1. Lower `--okta-requests-per-second` so requests are paced more conservatively.
+2. Raise `--okta-retries-max-attempts` (and keep `okta_request_timeout` proportionally large) so the safety net absorbs more bursts.
+3. Review the rate-limit allocation for the Okta organization and request an increase if needed.
+4. Verify throttling and retry behavior with debug logging.
+
+## Official References
+
+- [Okta Rate Limits](https://developer.okta.com/docs/reference/rate-limits/)
+- [Okta SDK for Python](https://github.com/okta/okta-sdk-python)

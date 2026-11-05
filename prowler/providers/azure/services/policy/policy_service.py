@@ -18,8 +18,8 @@ class Policy(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                policy_assigments_list = client.policy_assignments.list()
                 policy_assigments.update({subscription_id: {}})
+                policy_assigments_list = client.policy_assignments.list()
 
                 for policy_assigment in policy_assigments_list:
                     policy_assigments[subscription_id].update(

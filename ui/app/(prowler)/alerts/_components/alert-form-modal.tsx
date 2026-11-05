@@ -60,7 +60,8 @@ import type {
   AlertFormSubmitResult,
   AlertFormValues,
 } from "../_types/alert-form";
-import { ALERT_NOTIFICATION_METHODS } from "../_types/alert-form";
+
+import { SlackChannelsField } from "./slack-channels-field";
 
 interface AlertFormModalProps {
   open: boolean;
@@ -84,6 +85,7 @@ interface AlertFormModalProps {
 interface FormErrors {
   name?: string;
   recipientEmails?: string;
+  slackChannels?: string;
   root?: string;
 }
 
@@ -108,6 +110,8 @@ const ALERT_FREQUENCY_OPTIONS = [
 ] as const;
 
 const ALERT_SEED_ERROR = "Apply at least one alert-compatible Findings filter.";
+
+const ALERT_FORM_ERROR = "Fix alert fields before saving.";
 
 const serializeCondition = (condition: AlertCondition | null): string =>
   condition ? JSON.stringify(condition) : "none";
@@ -369,6 +373,9 @@ const AlertFormModalContent = ({
   const [selectedRecipientEmails, setSelectedRecipientEmails] = useState(
     () => new Set(defaults.recipientEmails.map(normalizeEmail)),
   );
+  const [selectedSlackChannels, setSelectedSlackChannels] = useState<string[]>(
+    defaults.slackChannels,
+  );
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -395,10 +402,10 @@ const AlertFormModalContent = ({
   const buildCurrentValues = (condition: AlertCondition): AlertFormValues => ({
     name,
     description,
-    method: ALERT_NOTIFICATION_METHODS.EMAIL,
     frequency,
     condition,
     recipientEmails: getRecipientEmails(selectedRecipientEmails),
+    slackChannels: selectedSlackChannels,
     enabled: defaults.enabled,
   });
 
@@ -465,10 +472,17 @@ const AlertFormModalContent = ({
     const parsed = alertFormSchema.safeParse(values);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
-      setErrors({
+      const fieldScoped: FormErrors = {
         name: fieldErrors.name?.[0],
         recipientEmails: fieldErrors.recipientEmails?.[0],
-      });
+        slackChannels: fieldErrors.slackChannels?.[0],
+      };
+      // A field with no error slot of its own would leave Save a silent no-op.
+      setErrors(
+        Object.values(fieldScoped).some(Boolean)
+          ? fieldScoped
+          : { ...fieldScoped, root: ALERT_FORM_ERROR },
+      );
       return;
     }
 
@@ -554,6 +568,16 @@ const AlertFormModalContent = ({
             <FieldError>{errors.recipientEmails}</FieldError>
           )}
         </Field>
+        <Field>
+          <SlackChannelsField
+            selectedChannelIds={selectedSlackChannels}
+            storedChannels={editingAlert?.attributes.slack_channels ?? []}
+            onValuesChange={setSelectedSlackChannels}
+          />
+          {errors.slackChannels && (
+            <FieldError>{errors.slackChannels}</FieldError>
+          )}
+        </Field>
         {editingAlert && (
           <div className="flex flex-col gap-3">
             <Card variant="inner" padding="sm">
@@ -594,22 +618,31 @@ const AlertFormModalContent = ({
         {errors.root && (
           <div className="text-text-error-primary text-sm">{errors.root}</div>
         )}
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        {/* mt-4 lifts the gap-4 container spacing to 32px so the distance to
+            the footer matches the launch scan and triage note modals. */}
+        <div className="mt-4 flex w-full justify-between gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          {editingAlert && (
-            <Button
-              variant="outline"
-              onClick={handlePreview}
-              disabled={previewLoading || saving}
-            >
-              {previewLoading ? "Running..." : "Test"}
+          <div className="flex gap-4">
+            {editingAlert && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handlePreview}
+                disabled={previewLoading || saving}
+              >
+                {previewLoading ? "Running..." : "Test"}
+              </Button>
+            )}
+            <Button size="lg" onClick={handleSubmit} disabled={saving}>
+              {submitLabel}
             </Button>
-          )}
-          <Button onClick={handleSubmit} disabled={saving}>
-            {submitLabel}
-          </Button>
+          </div>
         </div>
       </div>
     </Modal>

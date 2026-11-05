@@ -154,3 +154,60 @@ class Test_KMS_Service:
         assert kms.keys[0].policy == json.loads(default_policy)
         assert kms.keys[1].arn == key2["Arn"]
         assert kms.keys[1].policy == json.loads(public_policy)
+
+    # Test KMS List Aliases
+    @mock_aws
+    def test_list_aliases(self):
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key_with_alias = kms_client.create_key()["KeyMetadata"]
+        key_without_alias = kms_client.create_key()["KeyMetadata"]
+        kms_client.create_alias(
+            AliasName="alias/enclave-signing-key",
+            TargetKeyId=key_with_alias["KeyId"],
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+        by_id = {k.id: k for k in kms.keys}
+        assert by_id[key_with_alias["KeyId"]].aliases == ["alias/enclave-signing-key"]
+        assert by_id[key_without_alias["KeyId"]].aliases == []
+
+    # Test KMS Describe Key maps Description
+    @mock_aws
+    def test_describe_key_maps_description(self):
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key_with_desc = kms_client.create_key(
+            MultiRegion=False,
+            Description="production enclave key for the vault workload",
+        )["KeyMetadata"]
+        key_without_desc = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+        by_id = {k.id: k for k in kms.keys}
+        assert (
+            by_id[key_with_desc["KeyId"]].description
+            == "production enclave key for the vault workload"
+        )
+        assert by_id[key_without_desc["KeyId"]].description == ""
+
+    # Test KMS Get Key Policy failure surfaces policy_fetch_error
+    @mock_aws
+    def test_get_key_policy_failure_records_error(self):
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+
+        # Monkey-patch the regional client so GetKeyPolicy raises, reset the
+        # (possibly-populated) policy field, and re-invoke _get_key_policy.
+        def _boom(**_):
+            raise RuntimeError("simulated GetKeyPolicy failure")
+
+        kms.regional_clients[AWS_REGION_US_EAST_1].get_key_policy = _boom
+        for k in kms.keys:
+            k.policy = None
+            k.policy_fetch_error = None
+        kms._get_key_policy()
+
+        target = next(k for k in kms.keys if k.id == key["KeyId"])
+        assert target.policy is None
+        assert target.policy_fetch_error == "RuntimeError"

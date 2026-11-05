@@ -4,7 +4,7 @@ import { getIntegrations } from "@/actions/integrations";
 import { getAllProviders } from "@/actions/providers";
 import { S3IntegrationsManager } from "@/components/integrations/s3/s3-integrations-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 interface S3IntegrationsProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

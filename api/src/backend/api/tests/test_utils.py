@@ -14,6 +14,7 @@ from api.utils import (
     return_prowler_provider,
     validate_invitation,
 )
+from api.v1.serializers import KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
 from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
@@ -34,6 +35,34 @@ from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 from prowler.providers.vercel.vercel_provider import VercelProvider
 from rest_framework.exceptions import NotFound, ValidationError
+
+VALID_KUBECONFIG = """\
+apiVersion: v1
+kind: Config
+clusters:
+- name: test-cluster
+  cluster:
+    server: https://example.invalid:6443
+    certificate-authority-data: Y2E=
+users:
+- name: test-user
+  user:
+    token: test-token
+contexts:
+- name: test-context
+  context:
+    cluster: test-cluster
+    user: test-user
+current-context: test-context
+"""
+
+TOKEN_FILE_KUBECONFIG = VALID_KUBECONFIG.replace(
+    "token: test-token", "tokenFile: /etc/passwd"
+)
+
+EXEC_KUBECONFIG = VALID_KUBECONFIG.replace(
+    "token: test-token", "exec:\n      command: test-command"
+)
 
 
 class TestMergeDicts:
@@ -171,6 +200,54 @@ class TestInitializeProwlerProvider:
             key="value", mutelist_content={"key": "value"}
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_passes_region_as_home_region(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "region": "me-abudhabi-1",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..fake",
+            home_region="me-abudhabi-1",
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_without_region_omits_scan_filter(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -185,13 +262,102 @@ class TestProwlerProviderConnectionTest:
             key="value", provider_id="1234567890", raise_on_exception=False
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_direct_credentials_without_region(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+            region=OraclecloudProvider._bootstrap_region,
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_stored_region_for_identity(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+            "region": "me-abudhabi-1",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+            region="me-abudhabi-1",
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_kubernetes_connection_test_rejects_invalid_kubeconfig(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.KUBERNETES.value
+        provider.uid = "provider_uid"
+        provider.secret.secret = {"kubeconfig_content": TOKEN_FILE_KUBECONFIG}
+
+        connection = prowler_provider_connection_test(provider)
+
+        assert connection.is_connected is False
+        assert (
+            str(connection.error) == KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
+        )
+        mock_return_prowler_provider.return_value.test_connection.assert_not_called()
+
+    @patch("api.utils.return_prowler_provider")
+    def test_kubernetes_connection_test_with_valid_kubeconfig(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.KUBERNETES.value
+        provider.uid = "provider_uid"
+        provider.secret.secret = {"kubeconfig_content": VALID_KUBECONFIG}
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            kubeconfig_content=VALID_KUBECONFIG,
+            provider_id="provider_uid",
+            raise_on_exception=False,
+        )
+
     @pytest.mark.django_db
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_without_secret(
-        self, mock_return_prowler_provider, providers_fixture
+        self, mock_return_prowler_provider, aws_provider
     ):
         mock_return_prowler_provider.return_value = MagicMock()
-        connection = prowler_provider_connection_test(providers_fixture[0])
+        connection = prowler_provider_connection_test(aws_provider)
 
         assert connection.is_connected is False
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
@@ -303,10 +469,6 @@ class TestGetProwlerProviderKwargs:
                 {},
             ),
             (
-                Provider.ProviderChoices.KUBERNETES.value,
-                {"context": "provider_uid"},
-            ),
-            (
                 Provider.ProviderChoices.M365.value,
                 {},
             ),
@@ -356,7 +518,40 @@ class TestGetProwlerProviderKwargs:
         expected_result = {**secret_dict, **expected_extra_kwargs}
         assert result == expected_result
 
-    def test_get_prowler_provider_kwargs_oraclecloud_converts_region_string_to_set(
+    def test_get_prowler_provider_kwargs_kubernetes_valid_kubeconfig(self):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.KUBERNETES.value
+        provider.uid = "provider_uid"
+        provider.secret.secret = {"kubeconfig_content": VALID_KUBECONFIG}
+
+        assert get_prowler_provider_kwargs(provider) == {
+            "kubeconfig_content": VALID_KUBECONFIG,
+            "context": "provider_uid",
+        }
+
+    @pytest.mark.parametrize(
+        "secret",
+        [
+            {"kubeconfig_content": TOKEN_FILE_KUBECONFIG},
+            {"kubeconfig_content": EXEC_KUBECONFIG},
+            {"kubeconfig_content": "[]"},
+            {"key": "value"},
+        ],
+    )
+    def test_get_prowler_provider_kwargs_kubernetes_rejects_invalid_kubeconfig(
+        self, secret
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.KUBERNETES.value
+        provider.uid = "provider_uid"
+        provider.secret.secret = secret
+
+        with pytest.raises(ValidationError) as exc_info:
+            get_prowler_provider_kwargs(provider)
+
+        assert "/etc/passwd" not in str(exc_info.value)
+
+    def test_get_prowler_provider_kwargs_oraclecloud_maps_region_to_home_region(
         self,
     ):
         secret_dict = {
@@ -377,8 +572,14 @@ class TestGetProwlerProviderKwargs:
 
         result = get_prowler_provider_kwargs(provider)
 
-        expected_result = {**secret_dict, "region": {"us-ashburn-1"}}
-        assert result == expected_result
+        assert result == {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "pass_phrase": "fake-passphrase",
+            "home_region": "us-ashburn-1",
+        }
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):
         provider_uid = "provider_uid"
@@ -856,7 +1057,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
-            "domain": "example.atlassian.net",
+            "domain": "example",
         }
         integration.configuration = {}
 
@@ -884,7 +1085,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_jira_class.test_connection.assert_called_once_with(
             user_mail="test@example.com",
             api_token="test_api_token",
-            domain="example.atlassian.net",
+            domain="example",
             raise_on_exception=False,
         )
 
@@ -917,7 +1118,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "invalid@example.com",
             "api_token": "invalid_token",
-            "domain": "invalid.atlassian.net",
+            "domain": "invalid",
         }
         integration.configuration = {}
 
@@ -942,7 +1143,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_jira_class.test_connection.assert_called_once_with(
             user_mail="invalid@example.com",
             api_token="invalid_token",
-            domain="invalid.atlassian.net",
+            domain="invalid",
             raise_on_exception=False,
         )
 
@@ -970,7 +1171,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
-            "domain": "example.atlassian.net",
+            "domain": "example",
         }
         integration.configuration = {
             "issue_types": {"OLD_PROJ": ["Task"]},  # Existing configuration

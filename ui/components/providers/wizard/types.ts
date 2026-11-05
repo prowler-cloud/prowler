@@ -1,4 +1,8 @@
-import { OrgSetupPhase, OrgWizardStep } from "@/types/organizations";
+import {
+  OrgFlowType,
+  OrgSetupPhase,
+  OrgWizardStep,
+} from "@/types/organizations";
 import { ProviderWizardMode } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
 
@@ -22,6 +26,7 @@ export type OrgWizardIntent =
   (typeof ORG_WIZARD_INTENT)[keyof typeof ORG_WIZARD_INTENT];
 
 export interface OrgWizardInitialData {
+  organizationType: OrgFlowType;
   organizationId: string;
   organizationName: string;
   externalId: string;

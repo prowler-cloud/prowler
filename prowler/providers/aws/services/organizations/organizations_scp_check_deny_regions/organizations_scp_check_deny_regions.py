@@ -67,7 +67,7 @@ class organizations_scp_check_deny_regions(Check):
 
                             # Allow if Condition = {"StringEquals": {"aws:RequestedRegion": [region1, region2]}}
                             if (
-                                policy.content.get("Statement") == "Allow"
+                                statement.get("Effect") == "Allow"
                                 and "Condition" in statement
                                 and "StringEquals" in statement["Condition"]
                                 and "aws:RequestedRegion"

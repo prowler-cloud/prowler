@@ -13,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_container_images_resolved_vulnerabilities:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {}
 
@@ -36,6 +37,7 @@ class Test_defender_container_images_resolved_vulnerabilities:
 
     def test_defender_subscription_empty(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {AZURE_SUBSCRIPTION_ID: {}}
 
@@ -59,6 +61,7 @@ class Test_defender_container_images_resolved_vulnerabilities:
 
     def test_defender_subscription_no_assesment(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -90,6 +93,7 @@ class Test_defender_container_images_resolved_vulnerabilities:
 
     def test_defender_subscription_assesment_unhealthy(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -139,6 +143,7 @@ class Test_defender_container_images_resolved_vulnerabilities:
 
     def test_defender_subscription_assesment_healthy(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -188,6 +193,7 @@ class Test_defender_container_images_resolved_vulnerabilities:
 
     def test_defender_subscription_assesment_not_applicable(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {

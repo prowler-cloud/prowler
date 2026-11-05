@@ -135,7 +135,7 @@ export default function DemoTreeViewPage() {
                     <TooltipContent side="top">{item.name}</TooltipContent>
                   </Tooltip>
                   {hasChildren && !isLeaf && (
-                    <span className="bg-prowler-white/10 inline-flex min-w-5 shrink-0 items-center justify-center rounded px-1 py-0.5 text-xs tabular-nums">
+                    <span className="inline-flex min-w-5 shrink-0 items-center justify-center rounded bg-white/10 px-1 py-0.5 text-xs tabular-nums">
                       {item.children?.length}
                     </span>
                   )}

@@ -13,6 +13,7 @@ from api.models import (
     Tenant,
 )
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from django.db import DatabaseError
 from tasks.jobs.queries import (
     COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL,
@@ -106,9 +107,19 @@ def delete_provider(tenant_id: str, pk: str):
     try:
         if attack_paths_sink_backends:
             for sink_backend in attack_paths_sink_backends:
-                sink_module.get_backend_for_name(sink_backend).drop_subgraph(
-                    tenant_database_name, str(pk)
-                )
+                try:
+                    backend = sink_module.get_backend_for_name(sink_backend)
+
+                except RuntimeError as sink_error:
+                    # A retired sink has no connection settings left, and no graph left to drop
+                    if sink_backend == settings.ATTACK_PATHS_SINK_DATABASE.lower():
+                        raise
+                    logger.warning(
+                        f"Skipping graph cleanup on unconfigured sink {sink_backend}: {sink_error}"
+                    )
+                    continue
+
+                backend.drop_subgraph(tenant_database_name, str(pk))
         else:
             graph_database.drop_subgraph(tenant_database_name, str(pk))
 

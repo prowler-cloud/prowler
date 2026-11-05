@@ -30,12 +30,6 @@
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
         "iam_password_policy_reuse_24",
-        "iam_password_policy_minimum_length_14",
-        "iam_password_policy_lowercase",
-        "iam_password_policy_number",
-        "iam_password_policy_number",
-        "iam_password_policy_symbol",
-        "iam_password_policy_uppercase",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
@@ -58,7 +52,8 @@
         "cloudwatch_log_metric_filter_root_usage",
         "cloudwatch_log_metric_filter_security_group_changes",
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
-        "vpc_flow_logs_enabled"
+        "vpc_flow_logs_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ],
       "ConfigRequirements": [
         {
@@ -84,7 +79,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_kms_encryption_enabled",
         "config_recorder_all_regions_enabled",
@@ -121,8 +115,6 @@
         "cloudtrail_log_file_validation_enabled",
         "dynamodb_accelerator_cluster_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
-        "ec2_ebs_volume_encryption",
         "ec2_ebs_volume_encryption",
         "efs_encryption_at_rest_enabled",
         "elb_ssl_listeners",
@@ -132,14 +124,13 @@
         "rds_instance_storage_encrypted",
         "rds_instance_backup_enabled",
         "rds_instance_integration_cloudwatch_logs",
-        "rds_instance_storage_encrypted",
         "redshift_cluster_automated_snapshot",
         "redshift_cluster_audit_logging",
         "s3_bucket_default_encryption",
-        "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy",
         "sagemaker_notebook_instance_encryption_enabled",
-        "sns_topics_kms_encryption_at_rest_enabled"
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     }
   ]

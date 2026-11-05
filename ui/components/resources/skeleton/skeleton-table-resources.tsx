@@ -55,7 +55,7 @@ export const SkeletonTableResources = () => {
   const rows = 10;
 
   return (
-    <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4">
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm">
       {/* Toolbar: Search + Total entries */}
       <div className="flex items-center justify-between">
         {/* Search icon button */}

@@ -5,16 +5,21 @@
  */
 
 import { vi } from "vitest";
-import { userEvent } from "vitest/browser";
+
+import { BrowserHarness } from "@/__tests__/browser-harness";
+import { isProwlerFindingNode } from "@/lib/attack-paths";
 
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
-export class AttackPathPageHarness {
+export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
+  private static readonly FLOW_SEL = ".react-flow";
   private static readonly NODE_SEL = ".react-flow__node";
   private static readonly EDGE_SEL = ".react-flow__edge";
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
   private static readonly MINIMAP_SEL = ".react-flow__minimap";
   private static readonly BACKGROUND_SEL = ".react-flow__background";
+  // Matches the graph's auto-fit duration; a pause this long means no fit is mid-flight.
+  private static readonly FIT_ANIMATION_MS = 300;
 
   private static isFindingElement(el: Element): boolean {
     return (
@@ -35,16 +40,6 @@ export class AttackPathPageHarness {
       el.classList.contains("react-flow__node-internet") ||
       el.getAttribute("data-nodetype") === "internet"
     );
-  }
-
-  readonly user = userEvent;
-
-  constructor(readonly fixture: PageFixture) {}
-
-  // --- Container ---
-
-  get container(): HTMLElement {
-    return document.body;
   }
 
   // --- Collections ---
@@ -166,10 +161,6 @@ export class AttackPathPageHarness {
 
   // --- Handles ---
 
-  private q(selector: string): HTMLElement | null {
-    return this.container.querySelector<HTMLElement>(selector);
-  }
-
   get toolbar() {
     const exportButton =
       this.q('button[aria-label="Export graph"]') ??
@@ -199,11 +190,6 @@ export class AttackPathPageHarness {
     return alert.textContent ?? "";
   }
 
-  /** True when the rendered page contains text matching `pattern`. */
-  containsText(pattern: RegExp): boolean {
-    return pattern.test(this.container.textContent ?? "");
-  }
-
   get minimap(): HTMLElement | null {
     return this.q(AttackPathPageHarness.MINIMAP_SEL);
   }
@@ -216,14 +202,113 @@ export class AttackPathPageHarness {
     return this.q(AttackPathPageHarness.VIEWPORT_SEL);
   }
 
+  get queryBuilderCard(): HTMLElement | null {
+    const executeButton = Array.from(
+      this.container.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((button) => /Execut(e|ing) Query/.test(button.textContent ?? ""));
+    return executeButton?.closest<HTMLElement>('[data-slot="card"]') ?? null;
+  }
+
+  /** Whether the query-parameters panel is shown. */
+  showsQueryParameters(): boolean {
+    return this.containsText(/Query Parameters/i);
+  }
+
+  /** Whether a query-parameter field label is shown (case-insensitive). */
+  showsParameterLabel(label: string): boolean {
+    return (this.container.textContent ?? "")
+      .toLowerCase()
+      .includes(label.toLowerCase());
+  }
+
+  /** Whether a query-parameter input is rendered, addressed by its name. */
+  hasParameterInput(name: string): boolean {
+    return this.inputByName(name) !== null;
+  }
+
+  /** Whether a graph node label is rendered on the page. */
+  showsNodeLabel(label: string): boolean {
+    return this.container.textContent?.includes(label) ?? false;
+  }
+
+  /** Wait until the query-builder card is present. */
+  async waitForQueryBuilderCard(timeoutMs = 10000): Promise<HTMLElement> {
+    return this.waitFor(() => this.queryBuilderCard, timeoutMs);
+  }
+
+  async fillInput(name: string, value: string): Promise<void> {
+    const input = this.inputByName(name);
+    if (!input) throw new Error(`fillInput: input "${name}" not found`);
+    await this.user.fill(input, value);
+  }
+
   /**
-   * Inline `transform` of the React Flow viewport element. This is the
-   * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing
-   * it before vs. after a user action is enough to assert that the viewport
-   * actually moved (or stayed put).
+   * Inline `transform` of the React Flow viewport element. Compare transforms
+   * only when the scenario guarantees different final camera positions; an
+   * unchanged transform does not prove that a fit operation did not run.
    */
   get viewportTransform(): string {
     return this.viewport?.style.transform ?? "";
+  }
+
+  /** Wait until the React Flow viewport transform changes from `previous`. */
+  async waitForViewportChange(
+    previous: string,
+    timeoutMs?: number,
+  ): Promise<void> {
+    await this.waitFor(
+      () => this.viewportTransform !== previous,
+      timeoutMs,
+      "the viewport transform to change",
+    );
+  }
+
+  /** Wait until the viewport stops moving and return its settled transform. */
+  async waitForViewportSettled(): Promise<string> {
+    return this.waitForStable(
+      () => this.viewportTransform,
+      AttackPathPageHarness.FIT_ANIMATION_MS,
+      undefined,
+      "the viewport to settle",
+    );
+  }
+
+  /** Wait until every requested node is fully contained in the graph canvas. */
+  async waitForNodesInViewport(
+    nodeIds: string[],
+    timeoutMs?: number,
+  ): Promise<void> {
+    const allInViewport = () => {
+      const canvas = this.q(AttackPathPageHarness.FLOW_SEL);
+      if (!canvas) return false;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      return nodeIds.every((nodeId) => {
+        const node = this.getNodeById(nodeId);
+        if (!node) return false;
+
+        const nodeRect = node.getBoundingClientRect();
+        return (
+          nodeRect.left >= canvasRect.left &&
+          nodeRect.right <= canvasRect.right &&
+          nodeRect.top >= canvasRect.top &&
+          nodeRect.bottom <= canvasRect.bottom
+        );
+      });
+    };
+    await this.waitFor(
+      allInViewport,
+      timeoutMs,
+      `nodes ${nodeIds.join(", ")} to be in the viewport`,
+    );
+  }
+
+  /** Wait until exactly `count` edges are highlighted. */
+  async waitForHighlightedEdges(
+    count: number,
+    timeoutMs = 2000,
+  ): Promise<void> {
+    await this.waitFor(() => this.highlightedEdges.length === count, timeoutMs);
   }
 
   /**
@@ -305,38 +390,7 @@ export class AttackPathPageHarness {
     );
   }
 
-  /** Wait until the predicate returns truthy and return that value. */
-  async waitFor<T>(
-    fn: () => T | null | undefined | false,
-    timeoutMs = 3000,
-  ): Promise<T> {
-    return vi.waitFor(
-      () => {
-        const v = fn();
-        if (!v) throw new Error("waitFor predicate not yet truthy");
-        return v;
-      },
-      { timeout: timeoutMs, interval: 16 },
-    ) as Promise<T>;
-  }
-
-  async waitForTransition(ms = 350): Promise<void> {
-    await new Promise((r) => setTimeout(r, ms));
-  }
-
   // --- Action methods ---
-
-  private async clickElement(
-    element: HTMLElement,
-    options?: { fallbackToDomClick?: boolean },
-  ): Promise<void> {
-    try {
-      await this.user.click(element);
-    } catch (error) {
-      if (!options?.fallbackToDomClick) throw error;
-      element.click();
-    }
-  }
 
   private async clickGraphElement(element: HTMLElement): Promise<void> {
     await this.closeFindingDrawerIfOpen();
@@ -373,23 +427,49 @@ export class AttackPathPageHarness {
           'button[role="combobox"]',
         ),
       10000,
+      "the query selector trigger",
     );
-    await this.user.click(trigger);
 
     const targetId = queryId ?? this.fixture.queryId;
     const targetName = this.fixture.queries.find((q) => q.id === targetId)
       ?.attributes.name;
 
-    const option = await this.waitFor<HTMLElement>(
-      () =>
-        document.querySelector<HTMLElement>(
-          `[role="option"][data-value="${targetId}"]`,
-        ) ??
-        Array.from(
-          document.querySelectorAll<HTMLElement>('[role="option"]'),
-        ).find((el) => targetName && el.textContent?.includes(targetName)),
-      10000,
+    // Id match is exact (`QuerySelector` emits `data-value`); the name fallback
+    // is loose, since `textContent` also covers the option's description.
+    const findOption = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>(
+        `[role="option"][data-value="${targetId}"]`,
+      ) ??
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      ).find((el) => targetName && el.textContent?.includes(targetName)) ??
+      null;
+
+    await this.user.click(trigger);
+
+    // A re-render landing mid-gesture makes Radix drop the open state, leaving
+    // the trigger focused and the listbox unmounted. Re-open from the keyboard,
+    // which acts on the focused trigger — but only when no option mounted at
+    // all, so a merely slow runner does not get a second gesture.
+    let option = await this.waitForOrNull(
+      findOption,
+      2000,
+      `option ${targetId}`,
     );
+    if (!option && document.querySelector('[role="option"]') === null) {
+      await this.user.keyboard("{Enter}");
+      option = await this.waitForOrNull(findOption, 8000, `option ${targetId}`);
+    }
+
+    if (!option) {
+      throw new Error(
+        `selectQuery: no option matching id "${targetId}"` +
+          (targetName
+            ? ` or name "${targetName}"`
+            : " (id not in the fixture)"),
+      );
+    }
+
     await this.user.click(option);
     await this.waitForTransition();
   }
@@ -442,9 +522,7 @@ export class AttackPathPageHarness {
   async clickFirstResourceNodeWithoutFindings(): Promise<HTMLElement> {
     const findingIds = new Set(
       (this.fixture.queryResult?.nodes ?? [])
-        .filter((n) =>
-          n.labels.some((l) => l.toLowerCase().includes("finding")),
-        )
+        .filter((n) => isProwlerFindingNode(n.labels))
         .map((n) => n.id),
     );
     const resourceWithFindingIds = new Set<string>();
@@ -507,14 +585,13 @@ export class AttackPathPageHarness {
   /**
    * Click every resource that the fixture's relationships connect to a finding.
    * Findings are hidden by default in the full graph view (Tier 1) — clicking
-   * their adjacent resources reveals them.
+   * their adjacent resources reveals them. Restore the full view after each
+   * expansion because its contextual fit can move the next resource off-screen.
    */
   async expandAllFindings(): Promise<void> {
     const findingIds = new Set(
       (this.fixture.queryResult?.nodes ?? [])
-        .filter((n) =>
-          n.labels.some((l) => l.toLowerCase().includes("finding")),
-        )
+        .filter((n) => isProwlerFindingNode(n.labels))
         .map((n) => n.id),
     );
     const resourceWithFindingIds = new Set<string>();
@@ -525,8 +602,15 @@ export class AttackPathPageHarness {
     for (const id of Array.from(resourceWithFindingIds)) {
       const el = this.getNodeById(id);
       if (el) {
+        const beforeExpansion = await this.waitForViewportSettled();
         await this.user.click(el);
-        await this.waitForTransition(50);
+        // Measuring new findings can delay the automatic fit. A quiet viewport
+        // alone does not prove that this fit has started or finished.
+        await this.waitForViewportChange(beforeExpansion);
+        await this.waitForViewportSettled();
+        await this.fit();
+        await this.waitForNodesInViewport(this.renderedNodeIds);
+        await this.waitForViewportSettled();
       }
     }
   }

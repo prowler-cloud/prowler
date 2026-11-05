@@ -1,36 +1,40 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
-import { OnboardingTrigger, PageReady } from "@/components/onboarding";
-import { DataTableSearch } from "@/components/ui/table/data-table-search";
-import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
-import { getFlowById } from "@/lib/onboarding";
-import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
+import { ComplianceFrameworkGrid } from "@/components/compliance/compliance-framework-grid";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
+import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
+import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
+import {
+  buildWatchlistIndex,
+  isFrameworkPinned,
+  resolveWatchlistEntryId,
+} from "@/lib/compliance/watchlist";
+import {
+  LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
+  LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT,
+} from "@/lib/lighthouse/context/constants";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import type { ComplianceOverviewData } from "@/types/compliance";
+import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
+import { WATCHLIST_PIN_STATE } from "@/types/compliance-watchlist";
 import type { ScanEntity } from "@/types/scans";
 
-const viewComplianceFlow = getFlowById("view-compliance")!;
-
-// Module-level so the identity is stable: `configOverrides` is an effect dependency in
-// `useDriverTour`, and a fresh object per keystroke would tear the tour down mid-typing.
-const VIEW_COMPLIANCE_TOUR_CONFIG = {
-  // Last step opens the first card (see createViewComplianceTourStepHandlers).
-  doneBtnText: "Open Compliance",
-};
+import { WatchlistEmptyState } from "./watchlist/watchlist-empty-state";
+import { WatchlistToggle } from "./watchlist/watchlist-toggle";
 
 interface ComplianceOverviewGridProps {
   frameworks: ComplianceOverviewData[];
   scanId: string;
   selectedScan?: ScanEntity;
-  /**
-   * Subset of compliance_ids that represent the latest CIS variant per
-   * provider. Only those cards expose the PDF download button, matching
-   * the backend's latest-only CIS PDF generation.
-   */
   latestCisIds?: ReadonlySet<string>;
+  catalogEntries?: ComplianceCatalogEntry[];
+  providerType?: string;
+  canManageWatchlist?: boolean;
+  subscriptionOnly?: boolean;
 }
 
 export const ComplianceOverviewGrid = ({
@@ -38,10 +42,14 @@ export const ComplianceOverviewGrid = ({
   scanId,
   selectedScan,
   latestCisIds,
+  catalogEntries,
+  providerType,
+  canManageWatchlist = false,
+  subscriptionOnly = false,
 }: ComplianceOverviewGridProps) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
+  const showOnlyWatchlist = useShowOnlyWatchlist();
 
   const filteredFrameworks = frameworks.filter((compliance) =>
     compliance.attributes.framework
@@ -49,63 +57,37 @@ export const ComplianceOverviewGrid = ({
       .includes(searchTerm.toLowerCase()),
   );
 
-  const resetSearch = () => {
-    setSearchTerm("");
-    return frameworks.length > 0;
-  };
+  const catalogIndex = buildWatchlistIndex(catalogEntries ?? []);
+  const watchlistEnabled =
+    Boolean(providerType) && (catalogEntries?.length ?? 0) > 0;
 
-  const openFirstFramework = () => {
-    const first = frameworks[0];
-    if (!first) return;
-    router.push(
-      buildComplianceDetailPath({
-        title: first.attributes.framework,
-        complianceId: first.id,
-        version: first.attributes.version,
-        scanId,
-        regionFilter: searchParams.get("filter[region__in]"),
-      }),
-    );
-  };
+  const isPinned = (complianceId: string) =>
+    watchlistEnabled &&
+    isFrameworkPinned(catalogIndex, {
+      complianceId,
+      providerType: providerType!,
+    });
 
-  return (
-    <>
-      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      <Suspense fallback={null}>
-        <OnboardingTrigger
-          flow={viewComplianceFlow}
-          stepHandlers={createViewComplianceTourStepHandlers({
-            resetSearch,
-            openFirstFramework,
-          })}
-          configOverrides={VIEW_COMPLIANCE_TOUR_CONFIG}
-        />
-      </Suspense>
-      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
-      <PageReady />
-      <div className="flex items-center justify-between gap-4">
-        <div data-tour-id="view-compliance-search">
-          <DataTableSearch
-            controlledValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            placeholder="Search frameworks..."
-          />
-        </div>
-        <span className="text-text-neutral-secondary shrink-0 text-sm">
-          {filteredFrameworks.length.toLocaleString()} Total Entries
-        </span>
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {filteredFrameworks.map((compliance, index) => {
-          const { attributes, id } = compliance;
-          const {
-            framework,
-            version,
-            requirements_passed,
-            total_requirements,
-          } = attributes;
+  // Counted before the search, so a term that matches nothing pinned does not
+  // make the empty state claim the organization has pinned nothing.
+  const pinnedTotal = watchlistEnabled
+    ? frameworks.filter((compliance) => isPinned(compliance.id)).length
+    : 0;
 
-          const card = (
+  const filterToWatchlist = watchlistEnabled && showOnlyWatchlist;
+  const visibleFrameworks = filterToWatchlist
+    ? filteredFrameworks.filter((compliance) => isPinned(compliance.id))
+    : filteredFrameworks;
+
+  const renderGrid = (items: ComplianceOverviewData[]) => (
+    <ComplianceFrameworkGrid>
+      {items.map((compliance) => {
+        const { attributes, id } = compliance;
+        const { framework, version, requirements_passed, total_requirements } =
+          attributes;
+
+        return (
+          <div key={id} className="h-full [&>*]:h-full">
             <ComplianceCard
               title={framework}
               version={version}
@@ -118,26 +100,77 @@ export const ComplianceOverviewGrid = ({
               id={id}
               selectedScan={selectedScan}
               isLatestCisForProvider={latestCisIds?.has(id) ?? false}
+              subscriptionOnly={subscriptionOnly}
+              watchlistAction={
+                watchlistEnabled && canManageWatchlist ? (
+                  <WatchlistToggle
+                    target={{ complianceId: id, providerType: providerType! }}
+                    state={
+                      isPinned(id)
+                        ? WATCHLIST_PIN_STATE.PINNED
+                        : WATCHLIST_PIN_STATE.UNPINNED
+                    }
+                    entryId={resolveWatchlistEntryId(catalogIndex, {
+                      complianceId: id,
+                      providerType: providerType!,
+                    })}
+                  />
+                ) : undefined
+              }
             />
-          );
+          </div>
+        );
+      })}
+    </ComplianceFrameworkGrid>
+  );
 
-          // Anchor the tour to a single card, not the whole grid: highlighting the
-          // grid lit up the entire viewport and scrolled the page to the bottom.
-          return index === 0 ? (
-            <div
-              key={id}
-              data-tour-id="view-compliance-frameworks"
-              className="h-full [&>*]:h-full"
-            >
-              {card}
-            </div>
-          ) : (
-            <div key={id} className="h-full [&>*]:h-full">
-              {card}
-            </div>
-          );
-        })}
+  return (
+    <>
+      {filteredFrameworks
+        .slice(0, LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT.AFTER_PAGE)
+        .map(({ attributes, id }) => (
+          <LighthouseContextContributor
+            key={`compliance-${id}-${attributes.requirements_passed}-${attributes.requirements_failed}`}
+            contributorId={`compliance-${id}`}
+            item={buildComplianceContext({
+              pathname: "/compliance",
+              id,
+              framework: attributes.framework,
+              version: attributes.version,
+              scanId,
+              providerUid: selectedScan?.providerInfo.uid,
+              mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN,
+              region: searchParams.get("filter[region__in]") ?? undefined,
+              passed: attributes.requirements_passed,
+              failed: attributes.requirements_failed,
+              total: attributes.total_requirements,
+            })}
+          />
+        ))}
+      <div className="flex items-center justify-between gap-4">
+        <DataTableSearch
+          controlledValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          placeholder="Search frameworks..."
+        />
+        <span className="text-text-neutral-secondary shrink-0 text-sm">
+          {visibleFrameworks.length.toLocaleString()} Total Entries
+        </span>
       </div>
+      {filterToWatchlist && visibleFrameworks.length === 0 ? (
+        <WatchlistEmptyState
+          message={
+            // A search term is the likelier culprit than an uncurated
+            // watchlist, so it gets its own copy instead of telling someone
+            // who has already pinned frameworks that they have pinned none.
+            pinnedTotal > 0
+              ? "No pinned framework matches your search."
+              : undefined
+          }
+        />
+      ) : (
+        renderGrid(visibleFrameworks)
+      )}
     </>
   );
 };

@@ -9,7 +9,7 @@ First ensure that the provider you want to add the service is already created. I
 </Note>
 ## Introduction
 
-In Prowler, a **service** represents a specific solution or resource offered by one of the supported [Prowler Providers](/developer-guide/provider), for example, [EC2](https://aws.amazon.com/ec2/) in AWS, or [Microsoft Exchange](https://www.microsoft.com/en-us/microsoft-365/exchange/exchange-online) in M365. Services are the building blocks that allow Prowler interact directly with the various resources exposed by each provider.
+In Prowler, a **service** represents a specific solution or resource offered by one of the supported [Prowler Providers](/developer-guide/provider), for example, [EC2](https://aws.amazon.com/ec2/) in AWS, or [Microsoft Exchange](https://www.microsoft.com/en-us/microsoft-365/exchange/exchange-online) in M365. Services are the building blocks that allow Prowler to interact directly with the various resources exposed by each provider.
 
 Each service is implemented as a class that encapsulates all the logic, data models, and API interactions required to gather and store information about that service's resources. All of this data is used by the [Prowler checks](/developer-guide/checks) to generate the security findings.
 
@@ -21,9 +21,9 @@ Within this folder the following files are also to be created:
 
 - `__init__.py` (empty) – Ensures Python recognizes this folder as a package.
 - `<new_service_name>_service.py` – Contains all the logic and API calls of the service.
-- `<new_service_name>_client_.py` – Contains the initialization of the freshly created service's class so that the checks can use it.
+- `<new_service_name>_client.py` – Contains the initialization of the freshly created service's class so that the checks can use it.
 
-Once the files are create, you can check that the service has been created by running the following command: `uv run python prowler-cli.py <provider> --list-services | grep <new_service_name>`.
+Once the files are created, you can check that the service has been created by running the following command: `uv run python prowler-cli.py <provider> --list-services | grep <new_service_name>`.
 
 ## Service Structure and Initialisation
 
@@ -31,7 +31,7 @@ The Prowler's service structure is as outlined below. To initialise it, just imp
 
 ### Service Base Class
 
-All Prowler provider service should inherit from a common base class to avoid code duplication. This base class handles initialization and storage of functions and objects needed across services. The exact implementation depends on the provider's API requirements, but the following are the most common responsibilities:
+All Prowler provider services should inherit from a common base class to avoid code duplication. This base class handles initialization and storage of functions and objects needed across services. The exact implementation depends on the provider's API requirements, but the following are the most common responsibilities:
 
 - Initialize/store clients to interact with the provider's API.
 - Store the audit and fixer configuration.
@@ -537,7 +537,7 @@ This architecture allows Prowler to efficiently scan AWS accounts with resources
 
 ## Best Practices
 
-- When available in the provider, use threading or parallelization utilities for all methods that can be parallelized by to maximize performance and reduce scan time.
+- When available in the provider, use threading or parallelization utilities for all methods that can be parallelized to maximize performance and reduce scan time.
 - Define a Pydantic `BaseModel` for every resource you manage, and use these models for all resource data handling.
 - Log every major step (start, success, error) in resource discovery and attribute collection for traceability and debugging; include as much context as possible.
 - Catch and log all exceptions, providing detailed context (region, subscription, resource, error type, line number) to aid troubleshooting.

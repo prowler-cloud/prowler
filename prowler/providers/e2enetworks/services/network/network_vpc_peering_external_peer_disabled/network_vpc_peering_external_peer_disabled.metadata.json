@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "network_vpc_peering_external_peer_disabled",
+  "CheckTitle": "E2E Networks VPC peering does not use external peers",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**E2E Networks VPC peering connections** should be established only with internal networks and must not extend trust to external peers outside the account.",
+  "Risk": "**VPC peering with external peers** expands trust boundaries and can expose private networks to third parties, enabling lateral movement across accounts.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove **VPC peering** tunnels that connect to external peers to keep private networks within trusted boundaries.",
+      "Url": "https://hub.prowler.com/check/network_vpc_peering_external_peer_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

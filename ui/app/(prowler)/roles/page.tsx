@@ -1,14 +1,13 @@
+import { UserCog } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
-import { FilterControls } from "@/components/filters";
-import { filterRoles } from "@/components/filters/data-filters";
-import { AddIcon } from "@/components/icons";
+import { RolesFilters } from "@/app/(prowler)/roles/_components/roles-filters";
 import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
 import { Button } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DataTable } from "@/components/shadcn/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Roles({
@@ -20,17 +19,12 @@ export default async function Roles({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Roles" icon="lucide:user-cog">
-      <FilterControls search />
-
+    <ContentLayout title="Roles" icon={<UserCog />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-between">
-          <DataTableFilterCustom filters={filterRoles || []} />
+          <RolesFilters />
           <Button asChild>
-            <Link href="/roles/new">
-              Add Role
-              <AddIcon size={20} />
-            </Link>
+            <Link href="/roles/new">Add Role</Link>
           </Button>
         </div>
 
@@ -67,6 +61,7 @@ const SSRDataTable = async ({
       columns={ColumnsRoles}
       data={rolesData?.data || []}
       metadata={rolesData?.meta}
+      showSearch
     />
   );
 };

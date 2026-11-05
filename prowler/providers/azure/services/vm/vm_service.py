@@ -22,8 +22,12 @@ class VirtualMachines(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                virtual_machines_list = client.virtual_machines.list_all()
                 virtual_machines.update({subscription_id: {}})
+                virtual_machines_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.virtual_machines.list_all,
+                    client.virtual_machines.list,
+                )
 
                 for vm in virtual_machines_list:
                     storage_profile = getattr(vm, "storage_profile", None)
@@ -155,8 +159,12 @@ class VirtualMachines(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                disks_list = client.disks.list()
                 disks.update({subscription_id: {}})
+                disks_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.disks.list,
+                    client.disks.list_by_resource_group,
+                )
 
                 for disk in disks_list:
                     vms_attached = []
@@ -202,9 +210,13 @@ class VirtualMachines(AzureService):
         vm_scale_sets = {}
         for subscription_id, client in self.clients.items():
             try:
-                scale_sets = client.virtual_machine_scale_sets.list_all()
                 vm_scale_sets[subscription_id] = {}
-                for scale_set in scale_sets:
+                scale_sets_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.virtual_machine_scale_sets.list_all,
+                    client.virtual_machine_scale_sets.list,
+                )
+                for scale_set in scale_sets_list:
                     backend_pools = []
                     nic_configs = []
                     virtual_machine_profile = getattr(

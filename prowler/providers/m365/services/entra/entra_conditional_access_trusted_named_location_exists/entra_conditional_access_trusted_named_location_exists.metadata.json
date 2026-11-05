@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_trusted_named_location_exists",
+  "CheckTitle": "A trusted IP-range named location is defined",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access **named locations** let an organization define **trusted** IP ranges that can be referenced by Conditional Access policies. At least one **IP-range** named location should be marked as **Trusted** and have at least one IP range defined.",
+  "Risk": "Without a trusted named location, **Conditional Access** policies cannot differentiate corporate networks from untrusted networks, limiting the ability to build location-aware controls such as blocking access from untrusted locations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-assignment-network"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Named locations**\n3. Create a **new IP ranges location**, add the organization's public IP ranges\n4. Mark the location as **Trusted**\n5. Click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define at least one trusted IP-range named location representing the organization's corporate networks so it can be referenced by location-aware Conditional Access policies.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_trusted_named_location_exists"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

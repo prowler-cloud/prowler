@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
-import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
+import { getTenantConfig } from "@/actions/lighthouse-v1/lighthouse";
 import { auth } from "@/auth.config";
 import { getErrorMessage } from "@/lib/helper";
 import {
@@ -14,14 +14,14 @@ import {
   handleChatModelStreamEvent,
   handleToolEvent,
   STREAM_MESSAGE_ID,
-} from "@/lib/lighthouse/analyst-stream";
-import { authContextStorage } from "@/lib/lighthouse/auth-context";
-import { getCurrentDataSection } from "@/lib/lighthouse/data";
-import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
+} from "@/lib/lighthouse-v1/analyst-stream";
+import { authContextStorage } from "@/lib/lighthouse-v1/auth-context";
+import { getCurrentDataSection } from "@/lib/lighthouse-v1/data";
+import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse-v1/utils";
 import {
   initLighthouseWorkflow,
   type RuntimeConfig,
-} from "@/lib/lighthouse/workflow";
+} from "@/lib/lighthouse-v1/workflow";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export async function POST(req: Request) {

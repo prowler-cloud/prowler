@@ -1,14 +1,55 @@
 ---
-title: "Boto3 Retrier Configuration in Prowler"
+title: "Boto3 Retrier and Timeout Configuration in Prowler"
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Prowler's AWS Provider leverages Boto3's [Standard](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html) retry mode to automatically retry client calls to AWS services when encountering errors or exceptions.
+
+## Timeout Configuration
+
+<VersionBadge version="5.42.0" />
+
+Every AWS API call is bounded by two timeouts:
+
+- Connect timeout: seconds to wait to establish a connection (TCP, proxy tunnel and TLS handshake) to the AWS endpoint. Prowler's default is 10 seconds, configurable via `--aws-connect-timeout 5`.
+- Read timeout: seconds to wait for a response once connected. Prowler's default is 60 seconds, configurable via `--aws-read-timeout 30`.
+
+Both timeouts can also be set through environment variables, which is the way to tune them in Prowler Cloud and other deployments without a CLI:
+
+```console
+export PROWLER_AWS_BOTO3_CONNECT_TIMEOUT=5
+export PROWLER_AWS_BOTO3_READ_TIMEOUT=30
+```
+
+CLI flags take precedence over the environment variables. Prowler sets both timeouts explicitly, so `AWS_DEFAULTS_MODE` and a `connect_timeout` in `~/.aws/config` are ignored; use the flag or the environment variable instead.
+
+<Note>
+Boto3 defaults both timeouts to 60 seconds. In networks with restricted egress (for example VPC endpoints for a subset of services, GovCloud or private deployments), every AWS service without a reachable endpoint used to cost up to 4 attempts × 60 seconds (the first call plus the 3 retries) for each region. Prowler lowers the connect timeout to 10 seconds so unreachable endpoints fail fast; lower it further together with `--aws-retries-max-attempts 0`, which disables retries and leaves a single attempt per call, if a scan still spends most of its time waiting on unreachable services.
+
+</Note>
+
+## Retries Configuration
+
+<VersionBadge version="5.44.0" />
+
+The number of retries is set with `--aws-retries-max-attempts`, where `0` disables retries. It can also be set through an environment variable, which is the way to tune it in Prowler Cloud and other deployments without a CLI:
+
+```console
+export PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS=0
+```
+
+The CLI flag takes precedence over the environment variable. The value must be a non-negative integer; when neither is set, Prowler uses 3 retries.
+
+<Warning>
+The environment variable is process-wide: it applies to every AWS provider built in the process where it is set, not only to a connection check. A scan started in that same process picks it up too. Boto3's Standard retry mode, which Prowler uses, also retries service-side throttling responses (see the errors listed below), so `0` disables retries for those as well. On a large account a scan can hit throttling under normal load, and with retries disabled that throttling becomes a hard failure instead of a retried call. Set the variable only on the processes that run connection checks; leave scan workers on the default, or raise their retry count instead of lowering it.
+</Warning>
 
 ## Retry Behavior Overview
 
 Boto3's Standard retry mode includes the following mechanisms:
 
-- Maximum Retry Attempts: Default value set to 3, configurable via the `--aws-retries-max-attempts 5` argument.
+- Maximum Retry Attempts: Default value set to 3, configurable via the `--aws-retries-max-attempts 5` argument. `0` disables retries.
 
 - Expanded Error Handling: Retries occur for a comprehensive set of errors.
 
@@ -49,6 +90,6 @@ For testing or modifying Prowler's behavior, use the following steps to confirm 
 * Run prowler with `--log-level DEBUG` and `--log-file debuglogs.txt`
 * Search for retry attempts using `grep -i 'Retry needed' debuglogs.txt`
 
-This approach follows the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, a message starting with "Retry needed” will be prompted.
+This approach follows the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, a message starting with "Retry needed" will be prompted.
 
 It is possible to determine the total number of calls made using `grep -i 'Sending http request' debuglogs.txt | wc -l`

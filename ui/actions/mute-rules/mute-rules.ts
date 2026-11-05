@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+} from "@/lib/sample-preview/sample-records";
 
 import {
   DeleteMuteRuleActionState,
@@ -131,6 +135,10 @@ export const createMuteRule = async (
     };
   }
 
+  if (findingIds.some(isSampleId)) {
+    return { errors: { general: SAMPLE_WRITE_MESSAGE } };
+  }
+
   try {
     const url = new URL(`${apiBaseUrl}/mute-rules`);
 
@@ -156,19 +164,27 @@ export const createMuteRule = async (
       let errorMessage = `Failed to create mute rule: ${response.statusText}`;
       const responseContentType = response.headers.get("content-type");
       try {
-        if (responseContentType?.includes("application/json")) {
+        // The API answers with application/vnd.api+json
+        if (responseContentType?.includes("json")) {
           const errorData = await response.json();
+          const jsonApiError = (
+            errorData as {
+              errors?: Array<{
+                detail?: string;
+                title?: string;
+                source?: { pointer?: string };
+              }>;
+              message?: string;
+            }
+          )?.errors?.[0];
           errorMessage =
-            (
-              errorData as {
-                errors?: Array<{ detail?: string }>;
-                message?: string;
-              }
-            )?.errors?.[0]?.detail ||
+            jsonApiError?.detail ||
+            jsonApiError?.title ||
             (errorData as { message?: string })?.message ||
             errorMessage;
         } else {
-          await response.text();
+          const responseText = await response.text();
+          errorMessage = responseText || errorMessage;
         }
       } catch {
         // JSON parsing failed, use default error message

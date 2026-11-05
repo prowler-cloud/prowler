@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class SSEChannelManager(DefaultChannelManager):
     """Connect `django-eventstream` to the platform's SSE viewsets."""
 
-    def get_channels_for_request(self, request: Request, view_kwargs: dict) -> set[str]:  # noqa: vulture
+    def get_channels_for_request(self, request: Request, view_kwargs: dict) -> set[str]:
         """Return the request's channels scoped to the active JWT tenant.
 
         Args:
@@ -30,6 +30,7 @@ class SSEChannelManager(DefaultChannelManager):
             The subset of `request.sse_channels` whose embedded tenant
             matches the active request tenant.
         """
+        _ = view_kwargs
         try:
             request_tenant_id = UUID(str(getattr(request, "tenant_id", None)))
         except (TypeError, ValueError):

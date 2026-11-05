@@ -13,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_mcas_is_enabled:
     def test_defender_no_settings(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.settings = {}
 
@@ -37,6 +38,7 @@ class Test_defender_ensure_mcas_is_enabled:
     def test_defender_mcas_disabled(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.settings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -79,6 +81,7 @@ class Test_defender_ensure_mcas_is_enabled:
     def test_defender_mcas_enabled(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.settings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -120,6 +123,7 @@ class Test_defender_ensure_mcas_is_enabled:
 
     def test_defender_mcas_no_settings(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.settings = {AZURE_SUBSCRIPTION_ID: {}}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 

@@ -1,8 +1,8 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import type { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import type { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import type { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   type ASDEssentialEightRequirement,
   type AttributesData,

@@ -3,11 +3,13 @@
 import { NextResponse } from "next/server";
 
 import { signIn } from "@/auth.config";
+import { getSafeCallbackPath } from "@/lib/auth-callback-url";
 import { apiBaseUrl, baseUrl } from "@/lib/helper";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
+  const callbackPath = getSafeCallbackPath(searchParams, "callbackUrl");
 
   if (!id) {
     return NextResponse.json(
@@ -40,14 +42,14 @@ export async function GET(req: Request) {
       accessToken: access,
       refreshToken: refresh,
       redirect: false,
-      callbackUrl: `${baseUrl}/`,
+      callbackUrl: new URL(callbackPath, baseUrl).toString(),
     });
 
     if (result?.error) {
       throw new Error(result.error);
     }
 
-    return NextResponse.redirect(new URL("/", baseUrl));
+    return NextResponse.redirect(new URL(callbackPath, baseUrl));
   } catch (error) {
     console.error("SAML authentication failed:", error);
     return NextResponse.redirect(new URL("/sign-in", baseUrl));

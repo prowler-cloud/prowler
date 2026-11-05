@@ -13,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_system_updates_are_applied:
     def test_defender_no_app_services(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {}
 
@@ -37,6 +38,7 @@ class Test_defender_ensure_system_updates_are_applied:
     def test_defender_machines_no_log_analytics_installed(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -89,6 +91,7 @@ class Test_defender_ensure_system_updates_are_applied:
     ):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -139,6 +142,7 @@ class Test_defender_ensure_system_updates_are_applied:
     def test_defender_machines_no_system_updates_installed(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -191,6 +195,7 @@ class Test_defender_ensure_system_updates_are_applied:
     ):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {

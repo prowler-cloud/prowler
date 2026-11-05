@@ -28,6 +28,8 @@ class repository_default_branch_deletion_disabled(Check):
                 report.status_extended = (
                     f"Repository {repo.name} does allow default branch deletion."
                 )
+                if repo.default_branch.branch_deletion_source == "ruleset_not_active":
+                    report.status_extended = f"Repository {repo.name} has default branch deletion disabled in a ruleset, but the ruleset is not active."
 
                 if not repo.default_branch.branch_deletion:
                     report.status = "PASS"

@@ -16,22 +16,31 @@ import {
   type ProviderTypeIconStackItem,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { Button, FieldError } from "@/components/shadcn";
+import { EntityInfo } from "@/components/shadcn/entities";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { EntityInfo } from "@/components/ui/entities";
-import { FormButtons } from "@/components/ui/form";
-import { toast } from "@/components/ui/toast";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import { toast } from "@/components/shadcn/toast";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+  USAGE_LIMIT_ERROR_TYPE,
+} from "@/lib/action-errors";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   buildScheduleUpdatePayload,
+  describeSchedulesBulkFailures,
   getScheduleFormValues,
   isScheduleConfigured,
+  parseSchedulesBulkResult,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import type { ProviderType, ScheduleProps } from "@/types";
 import type {
   ScanScheduleProvider,
   ScheduleFormValues,
+  SchedulesBulkResponse,
 } from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";
@@ -131,8 +140,39 @@ function EditScanScheduleForm({
       : await updateSchedule(targetProviderIds[0], payload);
 
     if (hasActionError(result)) {
-      form.setError("root", { message: getActionErrorMessage(result) });
+      form.setError("root", {
+        type: isUsageLimitError(result) ? USAGE_LIMIT_ERROR_TYPE : "server",
+        message: getActionErrorMessage(result),
+      });
       return;
+    }
+
+    // A bulk save reports per-provider outcomes, so a 200 does not mean every
+    // provider was updated. Only the single-provider PATCH is flat.
+    const bulkOutcome = isBulk
+      ? parseSchedulesBulkResult(result as SchedulesBulkResponse)
+      : null;
+
+    if (bulkOutcome && !bulkOutcome.isIndeterminate) {
+      const reasons = describeSchedulesBulkFailures(bulkOutcome.failures);
+
+      if (bulkOutcome.updatedProviderIds.length === 0) {
+        form.setError("root", {
+          message: `The scan schedule could not be saved${reasons ? `: ${reasons}.` : "."}`,
+        });
+        return;
+      }
+
+      if (bulkOutcome.failures.length > 0) {
+        toast({
+          title: "Scan schedule partially saved",
+          description: `Updated ${bulkOutcome.updatedProviderIds.length} of ${targetProviderIds.length} providers${reasons ? `: ${reasons}.` : "."}`,
+        });
+        onSaved?.();
+        onClose();
+        router.refresh();
+        return;
+      }
     }
 
     toast({
@@ -158,7 +198,12 @@ function EditScanScheduleForm({
 
     const failedResult = results.find(hasActionError);
     if (failedResult) {
-      form.setError("root", { message: getActionErrorMessage(failedResult) });
+      form.setError("root", {
+        type: isUsageLimitError(failedResult)
+          ? USAGE_LIMIT_ERROR_TYPE
+          : "server",
+        message: getActionErrorMessage(failedResult),
+      });
       return;
     }
 
@@ -175,6 +220,8 @@ function EditScanScheduleForm({
 
   const isSubmitting = form.formState.isSubmitting;
   const rootError = form.formState.errors.root?.message;
+  const isRootUsageLimit =
+    form.formState.errors.root?.type === USAGE_LIMIT_ERROR_TYPE;
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-8">
@@ -222,7 +269,12 @@ function EditScanScheduleForm({
         }
       />
 
-      {rootError && <FieldError>{rootError}</FieldError>}
+      {rootError &&
+        (isRootUsageLimit ? (
+          <UsageLimitMessage />
+        ) : (
+          <FieldError>{rootError}</FieldError>
+        ))}
 
       <FormButtons
         onCancel={onClose}

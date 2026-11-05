@@ -151,6 +151,23 @@ export interface UseFilterBatchOptions {
    * (e.g. `{ "filter[muted]": "false" }` on the Findings page).
    */
   defaultParams?: Record<string, string>;
+  /**
+   * Filter keys that represent the same logical control. Updating one removes
+   * the others so legacy exact params and new multi-select params cannot be
+   * applied together.
+   */
+  exclusiveFilterGroups?: string[][];
+}
+
+function normalizeFilterKey(key: string): string {
+  return key.startsWith("filter[") ? key : `filter[${key}]`;
+}
+
+function getExclusiveFilterGroup(
+  filterKey: string,
+  exclusiveFilterGroups: string[][] | undefined,
+): string[] | undefined {
+  return exclusiveFilterGroups?.find((group) => group.includes(filterKey));
 }
 
 /**
@@ -187,15 +204,27 @@ export const useFilterBatch = (
   }, [searchParams]);
 
   const setPending = (key: string, values: string[]) => {
-    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
-    setPendingFilters((prev) => ({
-      ...prev,
-      [filterKey]: values,
-    }));
+    const filterKey = normalizeFilterKey(key);
+    const exclusiveGroup = getExclusiveFilterGroup(
+      filterKey,
+      options?.exclusiveFilterGroups,
+    );
+    setPendingFilters((prev) => {
+      const next = { ...prev };
+
+      exclusiveGroup
+        ?.filter((exclusiveKey) => exclusiveKey !== filterKey)
+        .forEach((exclusiveKey) => {
+          delete next[exclusiveKey];
+        });
+
+      next[filterKey] = values;
+      return next;
+    });
   };
 
   const removePending = (key: string) => {
-    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+    const filterKey = normalizeFilterKey(key);
     setPendingFilters((prev) => {
       const next = { ...prev };
       delete next[filterKey];
@@ -265,7 +294,7 @@ export const useFilterBatch = (
   };
 
   const removeAppliedAndApply = (key: string, value?: string) => {
-    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+    const filterKey = normalizeFilterKey(key);
     const applied = deriveAppliedFromUrl(
       new URLSearchParams(searchParams.toString()),
     );
@@ -286,8 +315,20 @@ export const useFilterBatch = (
   };
 
   const getFilterValue = (key: string): string[] => {
-    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
-    return pendingFilters[filterKey] ?? [];
+    const filterKey = normalizeFilterKey(key);
+    const values = pendingFilters[filterKey];
+    if (values) return values;
+
+    const exclusiveGroup = getExclusiveFilterGroup(
+      filterKey,
+      options?.exclusiveFilterGroups,
+    );
+    const alternateKey = exclusiveGroup?.find(
+      (exclusiveKey) =>
+        exclusiveKey !== filterKey && pendingFilters[exclusiveKey],
+    );
+
+    return alternateKey ? pendingFilters[alternateKey] : [];
   };
 
   const hasChanges = !areFiltersEqual(pendingFilters, appliedFilters);

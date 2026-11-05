@@ -5,6 +5,7 @@ Mocks Alibaba Cloud SDK modules to avoid import issues when the real
 dependencies are not installed in the test environment.
 """
 
+import importlib
 import sys
 from unittest.mock import MagicMock
 
@@ -38,4 +39,7 @@ MOCKED_MODULES = [
 ]
 
 for module_name in MOCKED_MODULES:
-    sys.modules.setdefault(module_name, MagicMock())
+    try:
+        importlib.import_module(module_name)
+    except ModuleNotFoundError:
+        sys.modules.setdefault(module_name, MagicMock())

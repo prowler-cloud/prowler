@@ -1,4 +1,4 @@
-"""Domain-specific tools for Prowler App MCP Server.
+"""Domain-specific tools for Prowler MCP Server.
 
 Each module in this package contains a BaseTool subclass that registers
 and implements tools for a specific domain (findings, providers, scans, etc.).

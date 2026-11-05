@@ -12,6 +12,7 @@ from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
 from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.redact import redact_sensitive_fields
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.providers.common.provider import Provider as ProviderABC
@@ -747,6 +748,7 @@ class Check_Report:
                 f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
             )
             self.resource = {}
+        self.resource = redact_sensitive_fields(resource, self.resource)
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
@@ -901,6 +903,31 @@ class CheckReportAlibabaCloud(Check_Report):
         )
         self.resource_arn = getattr(resource, "arn", "")
         self.region = getattr(resource, "region", "")
+
+
+@dataclass
+class CheckReportHuaweiCloud(Check_Report):
+    """Contains the Huawei Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+    resource_name: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Huawei Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
+        self.resource_name = getattr(resource, "name", "") or self.resource_id
 
 
 @dataclass
@@ -1083,7 +1110,13 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def zone_name(self) -> str:
-        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        """Zone name - for DNS records use zone_name attribute, for zones use name.
+
+        Account-scoped resources (members, API tokens, Workers, R2 buckets) set
+        ``is_global_resource`` and report "global" instead of their own name.
+        """
+        if getattr(self._zone, "is_global_resource", False):
+            return "global"
         zone_name = getattr(self._zone, "zone_name", None)
         if zone_name:
             return zone_name
@@ -1284,6 +1317,29 @@ class CheckReportNHN(Check_Report):
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "kr1")
+
+
+@dataclass
+class CheckReportE2eNetworks(Check_Report):
+    """Contains the E2E Networks Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the E2E Networks Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the E2E Networks resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.location = getattr(resource, "location", "global")
 
 
 @dataclass

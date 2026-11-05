@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "node_accidental_protection_enabled",
+  "CheckTitle": "E2E Networks nodes have accidental protection enabled",
+  "CheckType": [],
+  "ServiceName": "node",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "compute",
+  "Description": "**E2E Networks nodes** should have **accidental protection** enabled to guard against unintended deletion or modification of compute instances.",
+  "Risk": "Nodes without **accidental protection** are easier to delete or modify unintentionally, increasing the risk of **service disruption** and unplanned exposure of compute resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **accidental protection** on nodes to prevent unintended deletion or modification.",
+      "Url": "https://hub.prowler.com/check/node_accidental_protection_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

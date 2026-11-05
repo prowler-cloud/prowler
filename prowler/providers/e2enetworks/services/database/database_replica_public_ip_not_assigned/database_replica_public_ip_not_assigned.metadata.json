@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "database_replica_public_ip_not_assigned",
+  "CheckTitle": "E2E Networks database read replicas do not have a public IP assigned",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**E2E Networks database read replicas** should be reachable only over private networking and must not have a public IP address assigned.",
+  "Risk": "Read replicas with **public IPs** are directly reachable from the internet, expanding database exposure and increasing the risk of unauthorized access to replicated data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove the **public IP** from database read replicas and route access through private networking.",
+      "Url": "https://hub.prowler.com/check/database_replica_public_ip_not_assigned"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

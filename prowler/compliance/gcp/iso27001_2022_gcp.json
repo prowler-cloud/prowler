@@ -247,8 +247,7 @@
       "Checks": [
         "iam_sa_user_managed_key_rotate_90_days",
         "kms_key_rotation_enabled",
-        "apikeys_key_rotated_in_90_days",
-        "kms_key_rotation_enabled"
+        "apikeys_key_rotated_in_90_days"
       ]
     },
     {

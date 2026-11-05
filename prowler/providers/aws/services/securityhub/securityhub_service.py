@@ -14,7 +14,7 @@ class SecurityHub(AWSService):
         super().__init__(__class__.__name__, provider)
         self.securityhubs = []
         self.organization_admin_accounts = []
-        self.organization_admin_lookup_failed: bool = False
+        self.organization_admin_lookup_failed_regions: set = set()
         self.__threading_call__(self._describe_hub)
         self.__threading_call__(self._list_tags, self.securityhubs)
         self.__threading_call__(self._list_organization_admin_accounts)
@@ -115,6 +115,9 @@ class SecurityHub(AWSService):
 
         This API is only available to the organization management account or
         a delegated administrator account.
+
+        Args:
+            regional_client: Regional client object.
         """
         logger.info("SecurityHub - listing organization admin accounts...")
         try:
@@ -123,12 +126,30 @@ class SecurityHub(AWSService):
             )
             for page in paginator.paginate():
                 for admin in page.get("AdminAccounts", []):
+                    # Security Hub returns AccountId/Status, unlike GuardDuty's
+                    # AdminAccountId/AdminStatus for the same operation name.
+                    account_id = admin.get("AccountId")
+                    status = admin.get("Status")
+                    if not account_id or not status:
+                        # An entry we cannot interpret means the delegated admin
+                        # status for this region is unknown, not absent.
+                        if (
+                            regional_client.region
+                            not in self.organization_admin_lookup_failed_regions
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- Unexpected admin account entry with keys {sorted(admin)}"
+                            )
+                        self.organization_admin_lookup_failed_regions.add(
+                            regional_client.region
+                        )
+                        continue
                     admin_account = OrganizationAdminAccount(
-                        admin_account_id=admin.get("AdminAccountId"),
-                        admin_status=admin.get("AdminStatus"),
+                        admin_account_id=account_id,
+                        admin_status=status,
                         region=regional_client.region,
                     )
-                    # Avoid duplicates across regions for the same admin account
+                    # Avoid duplicates across pages for the same admin account
                     if not any(
                         existing.admin_account_id == admin_account.admin_account_id
                         and existing.region == admin_account.region
@@ -136,7 +157,7 @@ class SecurityHub(AWSService):
                     ):
                         self.organization_admin_accounts.append(admin_account)
         except ClientError as error:
-            self.organization_admin_lookup_failed = True
+            self.organization_admin_lookup_failed_regions.add(regional_client.region)
             if error.response["Error"]["Code"] in (
                 "AccessDeniedException",
                 "InvalidAccessException",
@@ -150,7 +171,7 @@ class SecurityHub(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            self.organization_admin_lookup_failed = True
+            self.organization_admin_lookup_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

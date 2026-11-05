@@ -147,7 +147,7 @@ class Test_stepfunctions_statemachine_no_secrets_in_definition:
                 arn=statemachine_arn,
                 name="TestStateMachine",
                 status=StateMachineStatus.ACTIVE,
-                definition='{"Comment": "Example with secret", "StartAt": "MyTask", "States": {"MyTask": {"Type": "Task", "Parameters": {"api_key": "AKIAIOSFODNN7EXAMPLE"}, "End": true}}}',
+                definition='{"Comment": "Example with secret", "StartAt": "MyTask", "States": {"MyTask": {"Type": "Task", "Parameters": {"api_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"}, "End": true}}}',
                 region=AWS_REGION_US_EAST_1,
                 type=StateMachineType.STANDARD,
                 creation_date=datetime.now(),

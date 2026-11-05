@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
+  KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+  roleFormSchema,
+  samlConfigFormSchema,
 } from "./formSchemas";
 
 const BASE_AWS_ROLE_VALUES = {
@@ -16,6 +20,30 @@ const BASE_AWS_ROLE_VALUES = {
   [ProviderCredentialFields.EXTERNAL_ID]: "tenant-123",
   [ProviderCredentialFields.CREDENTIALS_TYPE]: "access-secret-key",
 } as const;
+
+describe("roleFormSchema", () => {
+  it("defaults manage_registry to false", () => {
+    // Given / When
+    const result = roleFormSchema.parse({ name: "Registry manager" });
+
+    // Then
+    expect(result.manage_registry).toBe(false);
+  });
+
+  it.each(["true", 1, null])(
+    "rejects malformed manage_registry values of %j",
+    (manageRegistry) => {
+      // Given / When
+      const result = roleFormSchema.safeParse({
+        name: "Registry manager",
+        manage_registry: manageRegistry,
+      });
+
+      // Then
+      expect(result.success).toBe(false);
+    },
+  );
+});
 
 describe("addCredentialsRoleFormSchema", () => {
   it("accepts AWS role credentials when access and secret keys are present", () => {
@@ -147,6 +175,402 @@ describe("addCredentialsFormSchema - okta", () => {
       expect.objectContaining({
         path: [ProviderCredentialFields.OKTA_PRIVATE_KEY],
       }),
+    );
+  });
+});
+
+describe("addCredentialsFormSchema - kubernetes", () => {
+  const BASE_KUBERNETES_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-kubernetes-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "kubernetes",
+  } as const;
+
+  it("accepts kubeconfig content without exec authentication", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      token: test-token`,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("reports kubeconfig exec authentication on kubeconfig_content field", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1
+        command: kubectl`,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+        message: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+      }),
+    );
+  });
+
+  it("reports kubeconfig auth-provider cmd-path on kubeconfig_content field", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: gcp
+        config:
+          cmd-path: /bin/sh`,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+        message: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+      }),
+    );
+  });
+
+  it.each([
+    [
+      "user tokenFile",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      tokenFile: /etc/passwd`,
+    ],
+    [
+      "user client-certificate",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      client-certificate: /etc/ssl/cert.pem`,
+    ],
+    [
+      "user client-key",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      client-key: /etc/ssl/key.pem`,
+    ],
+    [
+      "user auth-provider directives",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: oidc
+        config:
+          client-id: prowler`,
+    ],
+    [
+      "unknown user key",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      bogus: value`,
+    ],
+    [
+      "cluster certificate-authority",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      certificate-authority: /etc/ssl/ca.pem`,
+    ],
+    [
+      "cluster proxy-url",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      proxy-url: http://proxy.evil.test`,
+    ],
+    [
+      "unknown cluster key",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      bogus: /etc/ssl/ca.pem`,
+    ],
+  ])(
+    "rejects kubeconfig with %s on kubeconfig_content field",
+    (_label, kubeconfigContent) => {
+      const schema = addCredentialsFormSchema("kubernetes");
+
+      const result = schema.safeParse({
+        ...BASE_KUBERNETES_VALUES,
+        [ProviderCredentialFields.KUBECONFIG_CONTENT]: kubeconfigContent,
+      });
+
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+          message: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        }),
+      );
+    },
+  );
+
+  it("accepts kubeconfig with only inline credentials", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      certificate-authority-data: Zm9v
+users:
+  - name: test-user
+    user:
+      client-certificate-data: Zm9v
+      client-key-data: YmFy`,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts malformed kubeconfig content for backend validation", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: "apiVersion: [",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts non-mapping kubeconfig content for backend validation", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: "[]",
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("addCredentialsFormSchema - oraclecloud", () => {
+  const BASE_OCI_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-oci-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "oraclecloud",
+    [ProviderCredentialFields.OCI_USER]: "ocid1.user.oc1..example",
+    [ProviderCredentialFields.OCI_FINGERPRINT]: "aa:bb:cc:dd",
+    [ProviderCredentialFields.OCI_KEY_CONTENT]:
+      "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----",
+    [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
+  } as const;
+
+  it("rejects OCI API key credentials without a home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse(BASE_OCI_VALUES);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an unknown OCI home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "mars-north-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts OCI API key credentials with a home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "me-abudhabi-1",
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("samlConfigFormSchema", () => {
+  it("normalizes the primary and additional email domains", () => {
+    // Given
+    const values = {
+      email_domain: " Primary.Example.com ",
+      additional_email_domains: [
+        " Subsidiary.Example.com ",
+        "Division.Example.com",
+      ],
+      metadata_xml: " <EntityDescriptor /> ",
+    };
+
+    // When
+    const result = samlConfigFormSchema.safeParse(values);
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result.success && result.data).toEqual({
+      email_domain: "primary.example.com",
+      additional_email_domains: [
+        "subsidiary.example.com",
+        "division.example.com",
+      ],
+      metadata_xml: "<EntityDescriptor />",
+    });
+  });
+
+  it("defaults additional domains to an empty list for OSS submissions", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success && result.data.additional_email_domains).toEqual([]);
+  });
+
+  it("uses contextual required messages for SAML domains", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "",
+      additional_email_domains: [""],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors).toMatchObject({
+      email_domain: ["Email domain is required"],
+      additional_email_domains: ["Additional email domain is required"],
+    });
+  });
+
+  it("rejects duplicate additional domains after normalization", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: ["alias.example.com", " ALIAS.EXAMPLE.COM "],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
+      ["Additional email domains must be unique."],
+    );
+  });
+
+  it("rejects the primary domain when it is also added as an alias", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: [" PRIMARY.EXAMPLE.COM "],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
+      ["Additional email domains must differ from the primary email domain."],
+    );
+  });
+
+  it("accepts exactly nineteen aliases in addition to the primary domain", () => {
+    // Given
+    const aliases = Array.from(
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS },
+      (_, index) => `alias-${index}.example.com`,
+    );
+
+    // When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: aliases,
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.additional_email_domains).toEqual(
+      aliases,
+    );
+  });
+
+  it("rejects more than nineteen aliases in addition to the primary domain", () => {
+    // Given
+    const aliases = Array.from(
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS + 1 },
+      (_, index) => `alias-${index}.example.com`,
+    );
+
+    // When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: aliases,
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
+      [
+        `A SAML configuration supports up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains.`,
+      ],
     );
   });
 });

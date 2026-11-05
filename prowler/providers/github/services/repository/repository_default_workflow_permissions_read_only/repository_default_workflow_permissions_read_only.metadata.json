@@ -1,0 +1,39 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_workflow_permissions_read_only",
+  "CheckTitle": "Repository grants workflows a read-only default GITHUB_TOKEN",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "GitHub Actions repository settings define the default **GITHUB_TOKEN** permissions granted to every workflow run in the repository.\n\nThe evaluation determines whether the repository default is read-only, so that workflows have to opt in to write access through an explicit `permissions` block.",
+  "Risk": "A write-capable default **GITHUB_TOKEN** is available to every workflow in the repository, so any compromised step or dependency inherits it, leading to:\n- Code integrity loss from pushed commits, moved tags, or altered releases\n- Supply chain compromise when the token publishes packages or artifacts\n- Weakened review controls when the token acts on pull requests and issues",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#setting-the-permissions-of-the-github_token-for-your-repository",
+    "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication",
+    "https://docs.github.com/en/rest/actions/permissions"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gh api --method PUT /repos/<owner>/<repository>/actions/permissions/workflow -f default_workflow_permissions=read",
+      "NativeIaC": "",
+      "Other": "1. Sign in to GitHub as a repository administrator\n2. Go to the repository > Settings\n3. In the left sidebar, click Actions > General\n4. Under Workflow permissions, select Read repository contents and packages permissions\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the repository default **GITHUB_TOKEN** permissions to read-only and grant write scopes per workflow with an explicit `permissions` block, following **least privilege**.\n\nA repository can override an organization default, so verify this setting per repository even when the organization already defaults to read-only. Prefer short-lived **GitHub App** tokens over broad credentials when a workflow genuinely needs write access.",
+      "Url": "https://hub.prowler.com/check/repository_default_workflow_permissions_read_only"
+    }
+  },
+  "Categories": [
+    "ci-cd",
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

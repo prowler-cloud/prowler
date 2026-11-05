@@ -20,7 +20,7 @@ Prowler authenticates to Okta as a **service application** using **OAuth 2.0 wit
 
 | Method | Status | Use Case |
 |---|---|---|
-| **OAuth 2.0 (private-key JWT)** | Supported | Production scans, CI/CD, Prowler App. |
+| **OAuth 2.0 (private-key JWT)** | Supported | Production scans, CI/CD, Prowler Cloud. |
 
 The private-key JWT flow is the only supported authentication method in the initial release. The service application proves possession of a private key on every token request; Okta returns a short-lived access token, refreshed automatically by the SDK.
 
@@ -67,7 +67,7 @@ The service application must be assigned **one** of the following Okta admin rol
 
 Okta's Management API enforces a two-layer authorization model: an OAuth **scope** decides which API endpoints the token can call, and an **admin role** decides whether the call returns data. With only a scope granted, the token mint succeeds but every read returns `403 Forbidden`. Read-Only Administrator is the minimum role that lets the granted `okta.*.read` scopes return configuration data to Prowler's checks; without it, the credential probe at provider startup fails and the scan never gets to evaluate any check.
 
-#### When Super Administrator is required
+#### When Super Administrator Is Required
 
 Four checks need to resolve the Authentication Policy bound to Okta's first-party apps (Okta Admin Console, Okta Dashboard) and depend on `/api/v1/apps` returning those system apps — which Okta restricts to Super Administrator:
 
@@ -92,17 +92,17 @@ Read-Only Administrator stays the recommended default for the least-privilege fr
 
 ## Step-by-Step Setup
 
-### 1. Go to the admin console
+### 1. Go to the Admin Console
 
 ![Okta — admin console page](/user-guide/providers/okta/images/select-admin-console.png)
 
-### 2. [Optional] - Disable the privilege-escalation bypass (org-wide, one-time)
+### 2. [Optional] - Disable the Privilege-Escalation Bypass (Org-Wide, One-Time)
 
 In the Okta Admin Console, go to **Settings → Account → Public client app admins** and ensure it is **off**. When enabled, every API Services app can be auto-assigned the Super Administrator role after scopes are granted, which would invalidate the read-only premise of this integration.
 
 ![Okta — disable Public client app admins](/user-guide/providers/okta/images/public-client-app-admins.png)
 
-### 3. Create the API Services app
+### 3. Create the API Services App
 
 1. Go to **Applications → Applications**.
 
@@ -118,7 +118,7 @@ In the Okta Admin Console, go to **Settings → Account → Public client app ad
 
 ![Okta — copy client id](/user-guide/providers/okta/images/copy-client-id.png)
 
-### 4. Switch to private-key authentication and generate a keypair
+### 4. Switch to Private-Key Authentication and Generate a Keypair
 
 On the new app's **General** tab, scroll to **Client Credentials**:
 
@@ -136,13 +136,13 @@ Okta displays the private key **only once**. If you close the modal without copy
 
 ![Okta — create Public Key](/user-guide/providers/okta/images/create-public-key.png)
 
-### 5. Grant the required OAuth scopes
+### 5. Grant the Required OAuth Scopes
 
 On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. The bundled checks require `okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.authenticators.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, `okta.groups.read`, `okta.logStreams.read`, and `okta.idps.read`.
 
 ![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
 
-### 6. Assign an admin role
+### 6. Assign an Admin Role
 
 On the app, open the **Admin roles** tab and click **Edit assignments → Add assignment**:
 
@@ -155,7 +155,7 @@ To additionally evaluate the first-party application checks (Okta Admin Console 
 
 ![Okta — grant Read-Only role](/user-guide/providers/okta/images/grant-roles.png)
 
-### 7. [Optional] Verify DPoP setting
+### 7. [Optional] Verify DPoP Setting
 
 Prowler sends DPoP (Demonstrating Proof of Possession) proofs on every token request. The integration works whether the **Require Demonstrating Proof of Possession (DPoP) header in token requests** setting on the service app is on or off — but enabling it is the more secure default.
 
@@ -206,20 +206,20 @@ The org domain must be `<org>.okta.com` (or `.oktapreview.com` / `.okta-emea.com
 
 The file at `OKTA_PRIVATE_KEY_FILE` is missing, unreadable, or empty. Confirm the path and that the file contains a non-empty PEM block or JWK JSON document.
 
-### `OktaInvalidCredentialsError` at provider init
+### `OktaInvalidCredentialsError` at Provider Init
 
 Prowler validates credentials at startup by listing one sign-on policy. This error indicates the credential material itself was rejected:
 
 - **`invalid_client`** — the public key registered in Okta does not match the private key on disk. Generate a fresh keypair and try again.
 
-### `OktaInsufficientPermissionsError` at provider init
+### `OktaInsufficientPermissionsError` at Provider Init
 
 Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
 
 - **`invalid_scope`** — one of the requested scopes (`okta.policies.read`, `okta.brands.read`, `okta.apps.read`, `okta.authenticators.read`, `okta.networkZones.read`, `okta.apiTokens.read`, `okta.roles.read`, `okta.groups.read`, `okta.logStreams.read`, and `okta.idps.read`) is not granted on the service app. Grant the missing scope from **Okta API Scopes**.
 - **`Forbidden` / `not authorized`** — no admin role is assigned to the service app. Assign **Read-Only Administrator** (or **Super Administrator** for the first-party application checks) from **Admin roles**.
 
-### Application-service checks return MANUAL on first-party apps
+### Application-Service Checks Return MANUAL on First-Party Apps
 
 When the service app runs with Read-Only Administrator, the five application-service checks targeting the Okta Admin Console and Okta Dashboard return MANUAL. This is by design — Okta restricts the underlying endpoints (`/api/v1/first-party-app-settings/{appName}` and `/api/v1/apps` for first-party app `name` values `saasure` / `okta_enduser`) to **Super Administrator**. Assign the Super Administrator role to the service app to evaluate those checks. See [Required Admin Role](#required-admin-role) for the full list.
 

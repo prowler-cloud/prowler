@@ -1,0 +1,1604 @@
+---
+title: "Changelog"
+description: "New features and improvements in each Prowler release"
+rss: true
+---
+
+<Update label="v5.47.0" description="October 29, 2026">
+  ### 🧭 Add Provider — One Step to Connect Any Provider
+
+  The add-provider wizard follows the same model for every provider: one connect step, then the launch step. Adding an Azure subscription used to take six screens; now the account, its alias and its credentials are one form, and a single submit registers the account, stores the secret and tests the connection.
+
+  - A failed connection test shows inline, keeps the values and turns the action into **Retry connection** without registering the account twice.
+  - Access methods show as cards on the same step for AWS, GCP, Microsoft 365, GitHub, Alibaba Cloud and Cloudflare, and AWS, Azure and GCP switch to their organization flow through tabs.
+  - Users with the Manage Account permission can invite a teammate to finish the connection for every provider, not only AWS.
+  - **Ask Lighthouse AI** opens beside the wizard without closing it. It guides the connection from the Prowler docs by default and, when asked, connects the provider itself after confirming the provider, UID and credential field names, never echoing a secret back.
+  - Product tours and the guided onboarding sequence are removed; new tenants still land on the add-provider wizard.
+
+  ### 🎯 Issues — Verdicts Explained in the List
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - The issue list leads with the verdict, shows the attack path under each title and adds a **Why** column with the five evidence legs, so the reason for a verdict reads without opening the issue. The summary tiles become one line with the folded findings and the findings already covered by a control.
+  - A row opens in the side panel, next to Lighthouse AI, with the verdict, legs, remediation, triage and an **Attack path** tab with the issue graph, instead of expanding the issue inline.
+  - The menu entry is renamed to **Exploitability issues**.
+
+  ### ☁️ Azure and AWS Checks
+
+  - `network_application_gateway_waf_enabled` and `network_application_gateway_http2_enabled` cover Azure Application Gateways and their WAF policies, mapped to CIS 5.0 and 6.0. Contributed by @BabafemiB. Thank you!
+  - `iam_subscription_owners_between_2_and_3` verifies that each Azure subscription has between two and three Owners, counting owners inherited from management groups, mapped to CIS 5.0 and 6.0. Contributed by @BabafemiB. Thank you!
+  - The AWS security group internet exposure checks treat CIDRs in one ingress rule that together cover `0.0.0.0/0` or `::/0`, such as `0.0.0.0/1` plus `128.0.0.0/1`, as open to the internet; such a rule used to pass `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22` and its siblings. Contributed by @harshrajdebug. Thank you!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🛠️ Improvements and Fixes
+
+  - Every MCP Server tool declares `readOnlyHint` and `destructiveHint`, so clients can tell a listing from a write when deciding whether to ask the user. Mutelist and mute rule writes are marked destructive because they hide findings for good.
+  - The cross-provider compliance tab keeps the frameworks that loaded, with a warning, when one catalog page or framework fails, instead of going blank.
+  - The NATO D32 compliance framework has its own icon on the compliance cards.
+  - Lighthouse AI replies no longer blink when the response finishes streaming, and the user avatar no longer requests the current page as an image, which rendered every page twice.
+  - The Invitations page uses **Status** instead of **State**, and the Invitations and Roles filters show capitalized options.
+  - **Prowler Cloud:** actions refused because the tenant is over its plan's usage limit, such as launching a scan, saving a schedule, adding a provider or triaging a finding, now link to the plans page.
+  - **Prowler Cloud:** creating API keys is a Prowler Cloud feature; on Local Server the button opens the upgrade dialog, and existing keys can still be edited and revoked.
+  - **Prowler Cloud:** issue evaluation after a scan reads the scan's findings through their indexes instead of a server-side cursor that took hours on large scans, so the evaluations no longer queue up behind each other.
+  - **Prowler Private Cloud:** Lighthouse AI can use Amazon Bedrock with only a region, relying on the installation's own AWS role, when the API allows it.
+
+  ### 🔐 Security Updates
+
+  - `pymongo` upgraded to 4.18.3, `dnspython` to 2.9.0 and `oauthlib` to 4.0.0 in the SDK and the API container image, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure. The API also moves `django-allauth` to 65.19.7, since earlier releases cap `oauthlib` below 4.
+  - `Authlib` upgraded to 1.9.1 and `dnspython` to 2.9.0 in the MCP Server container image, patching CVE-2026-96760 (critical), CVE-2026-114615, CVE-2026-114616 and CVE-2026-114605.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @BabafemiB: Azure `network_application_gateway_waf_enabled`, `network_application_gateway_http2_enabled` and `iam_subscription_owners_between_2_and_3` checks ([#13160](https://github.com/prowler-cloud/prowler/pull/13160), [#13145](https://github.com/prowler-cloud/prowler/pull/13145))
+  - @harshrajdebug: AWS security group internet exposure fix for split CIDRs ([#13191](https://github.com/prowler-cloud/prowler/pull/13191))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.47.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.46.0" description="October 26, 2026">
+  ### 🎯 Issues — Attack Paths with an Exploitability Verdict
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A scan returns a list of failed checks, and most of them are one problem seen from several angles. The new **Issues** page folds the failed findings of each account into attack paths and gives each one a verdict: `exploitable`, `likely`, `conditional`, `not_exploitable` or `unknown`. The verdict is drawn from five legs of evidence (reachability, access, target, controls and verification), each naming the checks and resources it was read from, so a reader can disagree with it instead of having to trust it. A control in force moves a verdict one rung down and the issue says which control did it; a check that did not run reads as `unknown`, never as safe.
+
+  - Patterns cover AWS, Azure, GCP and Microsoft 365 and are keyed on Prowler check IDs, so detection is never reimplemented. Six more AWS paths ship in this release: Lambda functions anyone can invoke, snapshots shared with every AWS account, instances that can leak their role's credentials, database ports open to the internet, stale or weakly protected IAM user credentials, and roles another AWS account can use.
+  - Each issue says what the path buys an attacker and where the attacker has to start, lists the compliance frameworks its findings put at risk, and can be sent to Jira as one grouped ticket.
+  - An attack path can be triaged with a status and notes from its detail. The decision is kept per account and pattern, so it survives the next scan, which marks it resolved when the path is gone and reopened when it comes back.
+  - The issue list opens with summary tiles and names the account of each issue, so two accounts with the same misconfiguration no longer read as one row. Each issue shows its risk factors, the triage status of every folded finding and an issue graph that starts internet-facing paths at the Internet node, drawn only where a reachability check failed on the resource, and has a page of its own to share.
+  - The Overview shows a verdict share card and the top issues with their risk factors, with counts scoped to the latest completed scan of each provider.
+  - **API:** `GET /api/v1/issues`, `GET /api/v1/issues/{id}` and `GET /api/v1/issues/overview`, with `filter[outcome__in]`, `filter[attacker_start__in]` and `filter[triage_status__in]`; triage lives at `/api/v1/issues/{id}/triage` and `/api/v1/issues/{id}/triage/notes`.
+
+  ### 🐘 PHP — Coverage After the October Security Release
+
+  The PHP project shipped an emergency release on October 21 fixing two unauthenticated remote code execution flaws (CVE-2026-109618, CVE-2026-109619), with no fix for 8.1 and older branches. Four new checks cover how each cloud exposes the runtime, and the Azure runtime checks no longer fail every version newer than the configured one.
+
+  - **AWS:** `elasticbeanstalk_environment_php_platform_updated` flags PHP environments on branches without security fixes or on platform versions older than the one bundling the fixed release, `lightsail_instance_php_blueprint_updated` reports instances created from PHP blueprints for manual verification, and `wafv2_webacl_managed_rule_groups_enabled` verifies that a Web ACL references at least one managed rule group.
+  - **GCP:** new `appengine` service and `appengine_version_php_runtime_supported` check, flagging App Engine serving versions on PHP runtimes without security fixes.
+  - **Azure:** `app_ensure_php_version_is_latest`, `app_ensure_python_version_is_latest` and `app_ensure_java_version_is_latest` now pass any runtime at or above the configured minimum, and the default `php_latest_version` is raised from `8.2` to `8.5` in the SDK and in the scan configuration template of Prowler App.
+
+  The version thresholds are configurable; see the [configuration file documentation](https://docs.prowler.com/user-guide/cli/tutorials/configuration_file).
+
+  ### 🧠 GCP — Vertex AI Workbench Coverage
+
+  A new Vertex AI service audits Workbench instances with five checks, all contributed by @rajeshnadiminti. Thank you!
+
+  - `vertexai_workbench_instance_public_ip_disabled` and `vertexai_workbench_instance_root_access_disabled`, mapped to PCI DSS 4.0.
+  - `vertexai_workbench_instance_terminal_access_disabled`, `vertexai_workbench_instance_file_download_disabled` and `vertexai_workbench_instance_auto_upgrade_enabled`, with the Workbench checks mapped to the CCC MLDE requirements.
+
+  ### 🤖 AWS — Bedrock and Cognito Checks
+
+  - `bedrock_guardrail_sensitive_information_filter_enforced` flags guardrails whose PII entities or custom regexes take no action on the output path, so a detected match is reported in the trace and still delivered to the caller. Contributed by @tamg-aws. Thank you!
+  - `bedrock_model_invocation_logging_text_data_enabled` verifies that model invocation logging delivers prompt and response text rather than naming a destination while excluding request and response bodies. Contributed by @tamg-aws. Thank you!
+  - `cognito_user_pool_account_recovery_sms_not_preferred` verifies that user pools do not rank SMS first for account recovery. Contributed by @UTKARSH698. Thank you!
+  - `bedrock_api_key_no_long_term_credentials` now reports long-term API keys that never expire; IAM only returns `ExpirationDate` for keys created with an expiration period, so keys created without one produced no finding at all. Also contributed by @tamg-aws.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 📬 Google Workspace — Policy Precedence and Edition Context
+
+  - Checks now read the policy Google applies (the greatest `sortOrder`) instead of the last policy the Cloud Identity Policy API lists, which reported default values over admin-configured ones.
+  - Checks for Chat, Drive, Gmail, Calendar and Groups pass with the reason stated when the app is turned off for everyone and no organizational unit or group turns it back on. Drive sharing settings and the settings of existing groups keep being evaluated, because existing shares and groups stay reachable.
+  - Findings state when a feature is not sold on the tenant edition, such as Drive DLP rules, Google session control and the shared drive sharing settings on Business Starter. Reading editions needs the optional `apps.licensing` scope; see the [authentication documentation](https://docs.prowler.com/user-guide/providers/googleworkspace/authentication).
+  - The Gmail spoofing checks read each protection action from its own Policy API field: the inbound domain spoofing check could never pass and the similar domain names check reported the inbound action.
+  - `drive_publishing_files_disabled` passes when sharing outside the organization is limited to allowlisted domains or off, and `drive_desktop_access_disabled` remediation points to the Google Drive for desktop card in the Admin console.
+
+  ### 🛠️ Improvements and Fixes
+
+  - Scan report generation parses each resource's metadata once per batch, sanitizes it once per finding and releases each batch before building the next one, so providers with very large resource metadata no longer exhaust the worker memory.
+  - Scan ingestion compares the serialized resource metadata with the stored value and serializes sets in a stable order, so unchanged resources no longer get their metadata, details and `updated_at` rewritten on every scan.
+  - The compliance report PDF cover table wraps every value, so long account IDs such as OCI tenancy OCIDs no longer overflow their cell.
+  - **Launch an initial scan now** is ticked by default on the provider and organization setup launch steps, so saving a schedule also runs a first scan unless the box is unticked.
+  - The SAML SSO integration card on the profile page is shown to roles with the Manage Account permission, matching the API requirement.
+  - **Prowler Cloud:** the scan-reports worker replaces each Celery child process after one report, so the memory a large report needs is returned instead of pushing the task towards an out-of-memory kill, and a container health check replaces a worker that stops consuming instead of leaving it in steady state.
+  - **Prowler Cloud:** persistent report, compliance and overview workers no longer shut themselves down when a task named like a scan hits its time limit or is revoked; the one-shot shutdown only applies to the ephemeral workers of the `scans` queue.
+
+  ### 🔐 Security Updates
+
+  - Resource metadata attached to findings no longer carries the values that secrets checks scan (CloudFormation outputs, Lambda environment variables, EC2 user data and similar fields); they are replaced with `REDACTED` before reaching the Evidence tab, the API and the output files.
+  - SAML SSO configuration endpoints require the `manage_account` permission instead of `manage_integrations`, since the configured IdP controls who signs in and which role they receive.
+  - Attack Paths custom queries strip block comments before the blocked-operation check and drop APOC virtual nodes and relationships from results, so `LOAD CSV` can no longer be split with a comment nor its response returned under a forged provider label.
+  - `GET /resources/metadata`, `GET /resources/metadata/latest`, `GET /findings/metadata` and `GET /findings/metadata/latest` honour the provider groups of the caller role instead of aggregating every provider in the tenant.
+  - OpenStack `auth_url` values resolving to loopback, private or otherwise non-public hosts are rejected before the SDK connects, on both the connection test and the scan.
+  - `djangorestframework` upgraded to 3.18.3 in the API, patching the JSON parser charset and Accept header denial of service and the TokenProxy revocation bypass.
+  - `Pillow` upgraded to 13.0.0 in the API, patching a JPEG decoder heap overflow.
+  - `certifi` upgraded to 2026.10.19 in the SDK, the API and the MCP Server, dropping the emSign root CAs whose intermediate keys were compromised, and `uv` to 0.13.4 in the SDK and API images for the same reason.
+  - `aiohttp` upgraded to 3.14.5 with `yarl` 1.25.1 in the SDK and the API, patching the aiohttp resource exhaustion advisories.
+  - `black` upgraded to 26.10.1 and `graphql-core` to 3.2.12 in the SDK, patching CVE-2026-114134, CVE-2026-75507 and CVE-2026-75508, and `libbrotli1` to 1.1.0-2+deb13u1 in its container image, patching CVE-2026-111497.
+  - Trivy upgraded to 0.76.1 in the SDK and API images, patching the HTTP/2, TLS and Go 1.27.2 stdlib CVEs bundled in Trivy 0.75.0, and the SDK and API images no longer ship the MicrosoftTeams build SBOM that Trivy read as installed `zod` and `body-parser`.
+  - `next` upgraded to 16.4.1 in the UI, patching two unauthenticated remote code executions (Image Optimization with SVG files, GHSA-2464-fhr4-w9xw; `use cache` functions returning typed arrays, GHSA-673q-mjm6-r5xr), `@sentry/nextjs` to 10.75.2 for the middleware bypass through the tunnel route (GHSA-mchm-gjx6-7h55) and DOMPurify to 3.4.17 for the `SAFE_FOR_TEMPLATES` bypass (GHSA-cg2g-xh64-v4q7).
+  - Node.js upgraded to 24.22.1 LTS in the UI container image, patching the eight CVEs of the October 2026 security release that affect the 24.x line, including the Brotli decoder remote code execution (CVE-2026-111497); the base image moves to Alpine 3.24.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @rajeshnadiminti: GCP Vertex AI service and its Workbench checks ([#13062](https://github.com/prowler-cloud/prowler/pull/13062), [#13077](https://github.com/prowler-cloud/prowler/pull/13077))
+  - @tamg-aws: AWS `bedrock_guardrail_sensitive_information_filter_enforced` and `bedrock_model_invocation_logging_text_data_enabled` checks and the `bedrock_api_key_no_long_term_credentials` fix ([#12663](https://github.com/prowler-cloud/prowler/pull/12663))
+  - @UTKARSH698: AWS `cognito_user_pool_account_recovery_sms_not_preferred` check ([#12251](https://github.com/prowler-cloud/prowler/pull/12251))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.46.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.45.0" description="October 15, 2026">
+  ### 🤖 Azure — AI Services Coverage
+
+  A new Azure AI Services service audits the Azure AI and Azure OpenAI accounts of each subscription, with nine checks across network exposure, authentication, encryption, identity, logging and content safety, all contributed by @rajeshnadiminti. Thank you!
+
+  - `aiservices_account_public_network_access_disabled`, `aiservices_account_network_acls_default_action_deny`, `aiservices_account_uses_private_endpoint` and `aiservices_account_outbound_network_restricted` cover how the account can be reached and what it can reach.
+  - `aiservices_account_local_auth_disabled` and `aiservices_account_managed_identity_enabled` cover key-based access and the account's own identity.
+  - `aiservices_account_encrypted_with_cmk` and `aiservices_account_diagnostic_logging_enabled` cover customer-managed key encryption and diagnostic logs.
+  - `aiservices_deployment_content_filter_prompt_shield_enabled` verifies that model deployments have Prompt Shields enabled in their content filter.
+
+  ### 🪪 Microsoft 365 — New Entra ID Checks
+
+  Five new Entra ID checks, all contributed by @kinomakino. Thank you!
+
+  - `entra_cross_tenant_access_default_outbound_restricted` verifies that the default cross-tenant access policy does not let every user reach every external application through B2B collaboration or B2B direct connect.
+  - `entra_policy_admin_self_service_password_reset_disabled` verifies that Self-Service Password Reset is disabled for administrators.
+  - `entra_policy_msol_powershell_blocked` verifies that the tenant authorization policy blocks the legacy MSOnline PowerShell module.
+  - `entra_app_registration_redirect_uris_secure` flags app registrations with HTTP, wildcard, malformed or `azurewebsites.net` redirect URIs.
+  - `entra_dynamic_group_member_of_rule_not_used` flags dynamic groups whose membership rule uses the `memberOf` operator, which Microsoft retires on November 3, 2026.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### ☁️ OCI — Connect Tenancies Outside us-ashburn-1
+
+  OCI API key credentials now take a home region, and the credentials form in Prowler App requires it. Identity calls that validate the credentials and discover the subscribed regions used to go to `us-ashburn-1` regardless of the tenancy, so a tenancy not subscribed to that region could not connect. The home region is only used for that bootstrap; scans still audit every subscribed region.
+
+  Read more in the [Getting Started with OCI documentation](https://docs.prowler.com/user-guide/providers/oci/getting-started-oci).
+
+  ### 🛠️ Improvements and Fixes
+
+  - **AWS:** Organizations metadata is fetched from the partition of the audited account, using the region that answered the STS bootstrap, instead of the commercial `us-east-1` endpoint, which timed out in GovCloud.
+  - API Gunicorn workers are recycled after 10,000 requests, plus up to 1,000 of jitter, to cap memory growth. Both values are configurable with `GUNICORN_MAX_REQUESTS` and `GUNICORN_MAX_REQUESTS_JITTER`.
+  - The first-login redirect to the Add Provider wizard is retried on the next load when the navigation was cut short, instead of being written off after a single attempt.
+  - The AWS connect step offers to invite a teammate when the user cannot access the account credentials.
+  - **Prowler Cloud:** the Slack channel picker reads the channels the Prowler app is in before the public ones, so invited private channels show up in large workspaces, and the partial list message tells the user to invite the app to a missing channel.
+
+  ### 🔐 Security Updates
+
+  - Kubernetes kubeconfigs accept only inline credentials and known cluster fields. File-path fields, command-based authentication, `auth-provider` directives, proxy URLs and unknown keys are rejected by the API and the credentials form, and stored kubeconfigs are re-validated before each scan and connection test.
+  - IaC repository URLs that resolve to loopback, private or otherwise non-public hosts are rejected before the connection test and the scan clone, including every destination a redirect points to.
+  - CSV outputs prefix cells starting with `=`, `+`, `-`, `@`, tab or carriage return with a single quote so spreadsheet applications treat them as text, and the HTML report escapes the compliance column.
+  - `GET /api/v1/users/{id}` no longer exposes another user's memberships, roles or tenant names from tenants other than the one in the request token.
+  - API error reports sent to Sentry no longer include user identity, IP addresses, cookies, headers or request bodies.
+  - PowerShell upgraded to 7.5.12 in the SDK and API container images, bundling .NET runtime 9.0.21.
+  - Python base images upgraded to 3.12.15 in the SDK and API and to 3.13.16 in the MCP Server, and Trivy to 0.75.0, patching CVE-2026-19445, CVE-2026-19553 and the grpc-go and x/crypto CVEs bundled in Trivy.
+  - `django` upgraded to 5.2.17 in the API, patching CVE-2026-15307.
+  - `pyjwt` upgraded to 2.14.0 in the SDK, the API and the MCP Server, patching GHSA-ffc3-869f-jxw9.
+  - `pymongo` upgraded to 4.18.2 and `urllib3` to 2.8.0 in the SDK and the API, patching CVE-2026-96748, CVE-2026-96749, CVE-2026-97687 and CVE-2026-97689.
+  - `dulwich` upgraded to 1.2.9 in the SDK and the API, patching GHSA-5fqc-mrg8-w798, GHSA-8mcx-5rqc-vhmf, GHSA-8w8g-wq8h-fq33 and GHSA-cm62-gvxx-vmxx.
+  - `next` upgraded to 16.3.8 in the UI, patching a remote code execution in `next/og` (GHSA-vcvr-r3jv-pc5j) and a server-side request forgery in Image Optimization (GHSA-cjq9-62q9-8jv4).
+  - `sharp` upgraded to 0.35.5 and `proxy-addr` to 2.0.8 in the UI, patching GHSA-wq5f-xc86-pv6w and GHSA-jqcg-44mw-7w3h.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @rajeshnadiminti: Azure AI Services service and its checks ([#12925](https://github.com/prowler-cloud/prowler/pull/12925), [#12926](https://github.com/prowler-cloud/prowler/pull/12926), [#12997](https://github.com/prowler-cloud/prowler/pull/12997))
+  - @kinomakino: Microsoft 365 `entra_cross_tenant_access_default_outbound_restricted` ([#12991](https://github.com/prowler-cloud/prowler/pull/12991)), `entra_policy_admin_self_service_password_reset_disabled` ([#12990](https://github.com/prowler-cloud/prowler/pull/12990)), `entra_policy_msol_powershell_blocked` ([#13004](https://github.com/prowler-cloud/prowler/pull/13004)), `entra_app_registration_redirect_uris_secure` ([#12993](https://github.com/prowler-cloud/prowler/pull/12993)) and `entra_dynamic_group_member_of_rule_not_used` ([#13003](https://github.com/prowler-cloud/prowler/pull/13003)) checks
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.45.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.44.0" description="September 29, 2026">
+  ### 🔁 Findings — Re-check a Resource with a Partial Scan
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A resource that has just been fixed can be confirmed from the Findings page without waiting for the next full scan. **Re-check resource** is available in the actions menu of every resource row and in the resource detail drawer, and a hint icon next to **Last seen** opens it directly. It launches a partial scan that runs again only the checks that last reported on that resource; its findings update when the scan completes, and every other resource keeps the results of the latest full scan. Roles need the Manage Scans permission, and a re-check is refused while the provider has a scan running or queued.
+
+  Re-checked resources that now pass drop out of the finding groups list and its drill-down instead of opening a detail panel that still reports `FAIL`. Partial scans do not change overviews or compliance until the next full scan and produce no report files, so the Scans table marks them as **Partial**, offers no report download for them, and the per-scan Compliance selector leaves them out.
+
+  Partial scans can also be launched outside the Findings page:
+
+  - **API:** `POST /api/v1/scans` accepts up to 10 resources in `resource_uids`, and scans expose `is_partial` with a `filter[is_partial]` filter.
+  - **MCP Server:** `prowler_trigger_scan` takes a `resource_uids` argument, and `prowler_list_scans` and `prowler_get_scan` return `is_partial`, with an `is_partial` filter on `prowler_list_scans`.
+  - **Lighthouse AI:** can launch a partial scan to re-check specific resources, such as confirming a remediation.
+
+  ### ☁️ AWS — Connect an Account in One Step
+
+  The Add Provider wizard connects an AWS account in a single step. The account ID is read from the role ARN (or typed when using static access keys), the role is assumed with Prowler's own credentials, and the account, its credentials and the connection test are handled by one submit. A confirmed connection goes straight to the launch step. A refused connection stays on the form with the reason the API returned, so the fields can be fixed and retried without registering the account twice.
+
+  New tenants without providers now land on this wizard on their first sign-in instead of a welcome modal, and the sidebar action reads **Add Provider** until the first provider is connected.
+
+  Read more in the [Getting Started with AWS documentation](https://docs.prowler.com/user-guide/providers/aws/getting-started-aws).
+
+  ### 🔌 Connection Tests No Longer Give Up Early
+
+  The provider connection test no longer reports `Max retries exceeded` for checks that take longer than 30 seconds, such as networks where some AWS endpoints are unreachable. The UI now waits for the full time limit of the backend task, and if that is still exhausted it shows the provider's current connection state instead of a failure.
+
+  On the SDK side, STS calls after a role assumption reuse the region that answered, so an unreachable partition region is waited on once instead of twice. The new `PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS` environment variable sets the Boto3 retries for deployments that build the AWS provider without CLI flags, next to the existing timeout variables; `0` disables retries.
+
+  Read more in the [Boto3 configuration documentation](https://docs.prowler.com/user-guide/providers/aws/boto3-configuration#retries-configuration).
+
+  ### 🗄️ Self-Hosted — S3-Compatible Storage and Air-Gapped Deployments
+
+  - `DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL` points scan output uploads and downloads at S3-compatible object storage such as MinIO. Previously the only way to reach it was exporting process-wide AWS environment variables, which also hijacked unrelated AWS API calls such as role assumption for AWS providers.
+  - Report downloads from a bucket with default SSE-KMS encryption no longer fail with `InvalidArgument`: when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is set, download URLs are signed with Signature Version 4 for that region.
+  - Icons ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly without internet access.
+  - Celery worker fatal errors are logged instead of silenced, and every long-running service in `docker-compose.yml` restarts automatically after an unexpected crash.
+
+  ### 📊 Consistent Latest Scan Across Endpoints
+
+  Every endpoint now resolves a provider's latest completed scan the same way, so overlapping scans no longer make findings, compliance and mute rules read from different scans. Providers whose latest completed scan has no `completed_at` timestamp are no longer missing from those endpoints, and resources no longer keep a stale failed findings count when a scoped or imported scan completes after a full scan.
+
+  ### 🛠️ Prowler App Fixes
+
+  - API key authentication no longer locks the key row on every request, so a heavily used key no longer serializes all its requests; `last_used_at` is updated at most once per minute.
+  - `POST /api/v1/scans` returns the new scan ID in `task_args` again.
+  - Provider deletion no longer fails when the provider has Attack Paths scans recorded on a sink that is no longer configured, such as Neptune after moving back to Neo4j.
+  - A periodic sweep drops orphaned Attack Paths temporary Neo4j databases left behind when a worker or Neo4j crashes mid-scan.
+  - **Prowler Cloud:** imported findings no longer stay stuck in `pending` when the ingestion worker picks up the job before it is committed, and a failed enqueue marks the ingestion as failed.
+  - **Prowler Cloud:** the Lighthouse AI connection check reports a network failure as one, naming the endpoint it could not reach, instead of hitting a time limit that looked the same as a bad key.
+  - **Prowler Cloud:** the finding groups endpoints no longer query Manual Pass triages once per finding, and skip that overlay for tenants with no active Manual Pass.
+  - The Findings page renders a skeleton at once and streams the table before the filters, and the **Finding Group** options load when the dropdown opens.
+  - Mute rule creation errors show the API error message instead of the raw response body.
+  - The sidebar no longer throws a hydration error on full page loads for users who last used the chat mode.
+
+  ### 🔐 Security Updates
+
+  - `DELETE /api/v1/tasks/{id}` requires the permission of the operation that queued the task and rejects provider deletions, and `GET /api/v1/tasks` hides tasks of providers outside the role's visibility.
+  - The UI E2E workflow receives its AWS credentials through environment variables instead of template expansion.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.44.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.43.0" description="September 21, 2026">
+  ### 🏛️ Compliance — FedRAMP 20x Consolidated Rules 2026
+
+  The FedRAMP 20x Phase One pilot frameworks (`fedramp_20x_ksi_low_aws`, `fedramp_20x_ksi_low_azure` and `fedramp_20x_ksi_low_gcp`) are replaced by two universal frameworks built from the FedRAMP Consolidated Rules for 2026, each covering AWS, Azure, GCP, Kubernetes and Microsoft 365 from a single definition:
+
+  - **FedRAMP 20x KSI** (`fedramp_20x_ksi_2026`): the 46 Key Security Indicators across 10 themes. There is one indicator catalog for every class instead of a separate Low fork; each indicator carries its class applicability and NIST SP 800-53 controls.
+  - **FedRAMP 20x Class C FRR** (`fedramp_20x_frr_class_c_2026`): the 158 FedRAMP Rules of the Class C ruleset that bind cloud service providers. Most are program obligations (reports, notifications, certification package) and stay manual; checks are mapped only where they evidence part of the rule text. Configurable checks carry configuration requirements, so a relaxed `audit_config` cannot turn a requirement green.
+
+  Automation or stored results that reference the pilot framework IDs need to move to `fedramp_20x_ksi_2026`. In Prowler App, both frameworks show the per-provider breakdown in the cross-provider compliance view and can be downloaded as OCSF.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔎 AWS — Inspector Coverage, CISA KEV and FIPS Checks
+
+  Seven new AWS checks back the vulnerability detection and cryptography rules of FedRAMP 20x Class C:
+
+  - `inspector2_coverage_scan_status_active` and `inspector2_coverage_recently_scanned` report resources Amazon Inspector is not scanning, or last scanned more than `inspector2_max_days_since_last_scan` days ago (default 3).
+  - `inspector2_active_findings_no_known_exploited_vulnerabilities` and `inspector2_active_findings_kev_within_due_date` report active findings whose CVE is in the CISA Known Exploited Vulnerabilities catalog, and those still open past the CISA due date. The KEV data comes from Inspector itself through `inspector2:BatchGetFindingDetails`, so no external feed is needed.
+  - `inspector2_active_findings_within_max_age` reports active findings first observed more than `inspector2_active_finding_max_age_days` days ago (default 192).
+  - `elbv2_listener_fips_tls_enabled` and `transfer_server_fips_security_policy_enabled` report HTTPS/TLS load balancer listeners and Transfer Family servers without a FIPS security policy.
+
+  `inspector2:BatchGetFindingDetails` is not part of `SecurityAudit`, so it is now included in the Prowler additions policy and the CloudFormation scan role. Without it, the KEV checks report `MANUAL` naming the missing permission instead of a false `FAIL`.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### ☁️ AWS — Partition Bootstrap Failover
+
+  When `PROWLER_AWS_PARTITION` is set, the bootstrap STS calls (validating credentials, assuming a role and getting an MFA session token) now try up to two more regions of the partition if the first one cannot be reached. A GovCloud host whose configured region belongs to another partition was still sent to `us-gov-east-1`, and on a network that routes only to `us-gov-west-1` the connection check and the scan failed on perfectly valid credentials. Only connection errors and timeouts move on to the next region; credential errors are reported from the first one as before. Later STS calls reuse the region that answered, and nothing changes when `PROWLER_AWS_PARTITION` is unset.
+
+  Read more in the [AWS Regions and Partitions documentation](https://docs.prowler.com/user-guide/providers/aws/regions-and-partitions).
+
+  ### 🌐 Azure — Sovereign Cloud Endpoints for Defender and Key Vault
+
+  Defender security contacts and Key Vault key rotation policies now use the endpoints of the cloud selected with `--azure-region` instead of the hardcoded `management.azure.com` and `vault.azure.net` hosts, so both work on `AzureUSGovernment` and `AzureChinaCloud`. Key Vault clients are built from the vault URI that Azure returns for each vault.
+
+  Read more in the [Azure non-default cloud documentation](https://docs.prowler.com/user-guide/providers/azure/use-non-default-cloud).
+
+  ### ✉️ Invitations — Expired Invitations No Longer Block Re-Invites
+
+  A pending invitation past its expiry date is now reported as expired, and inviting the same email again marks it as expired and creates the new invitation instead of returning a generic error. The Invitations table disables Edit and Revoke on expired and revoked invitations, and `filter[state__in]` on the invitations endpoint no longer returns a server error.
+
+  In Prowler Cloud, new organizations are offered an **Invite your team** step once the first provider is connected, and Prowler Private Cloud deployments can set `UI_SELF_REGISTRATION_ENABLED=false` to make sign-up invitation-only.
+
+  Read more in the [Invitations documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#invitations).
+
+  ### 📄 Reports — Downloads on Self-Hosted Storage
+
+  Report downloads no longer depend on the storage host being the same inside and outside the container network. `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL` signs the download URL against a browser-reachable host, so a deployment whose object storage answers only on an internal address serves the file instead of a link the browser cannot open. Leaving `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` unset, common on S3-compatible storage with no meaningful region, no longer makes the download fail with a server error.
+
+  ### 🔍 Checks
+
+  - **Huawei Cloud:** new `smn_topic_subscriptions` check reports SMN topics without any subscription.
+  - **Cloudflare:** the API token links in the provider wizard request the SSL and Certificates, Bot Management and Zone WAF read permissions the checks need, so a token created from the wizard no longer produces failures on permissions it was never granted.
+  - **Microsoft 365:** five Defender malware, anti-phishing and inbound anti-spam checks no longer fail with `KeyError` on tenants that use the Standard or Strict preset security policies, which dropped every finding of those checks. Preset policies are covered by `defender_strict_preset_security_policy_enabled`.
+  - **Google Workspace:** `security_2sv_enforced` reports domain-wide 2-Step Verification failures as `FAIL` even when every failing setting is overridden for a group or organizational unit.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🔐 Security Updates
+
+  - `libsqlite3-0`, `gzip`, `perl-base`, `libssh2-1t64` and `libpcre2-8-0` upgraded in the SDK and API container images, patching high-severity Debian CVEs.
+  - PowerShell upgraded to 7.5.11 in the SDK and API container images, bundling .NET runtime 9.0.20 and patching CVE-2026-62901.
+  - `anyio` upgraded to 4.14.2 in the SDK, the API and the MCP Server, patching CVE-2026-63374.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.43.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.42.0" description="September 11, 2026">
+  ### ☁️ AWS — ISO Partitions
+
+  Prowler now resolves regions and services for the AWS ISO partitions (`aws-iso`, `aws-iso-b`, `aws-iso-e` and `aws-iso-f`) the same way it does for the commercial, China, European Sovereign Cloud and GovCloud partitions. The region matrix is filled from the endpoint metadata bundled with botocore, which needs no credentials or network access, so it covers partitions that are air-gapped from the internet. Scanning them no longer requires a hand-edited `aws_regions_by_service.json`: ISO regions such as `us-isob-east-1` are accepted by `--region` and `--excluded-region`.
+
+  Deployments that declare `PROWLER_AWS_PARTITION` also keep their bootstrap STS calls in the configured region when it belongs to that partition. An install in `us-gov-west-1` that reaches AWS only through its own VPC endpoints is no longer sent to `us-gov-east-1`, where the connection check and the scan used to time out.
+
+  Read more in the [AWS Regions and Partitions documentation](https://docs.prowler.com/user-guide/providers/aws/regions-and-partitions).
+
+  ### ⏱️ AWS — Configurable Timeouts for Restricted Networks
+
+  Scans from networks with restricted egress (VPC endpoints for only some services, GovCloud or private deployments) could take hours: Boto3 waits 60 seconds to connect by default and retries connection errors, so every service without a reachable endpoint cost up to four 60-second attempts in every region. Prowler now lowers the default connect timeout to 10 seconds, keeps the read timeout at 60 seconds, and exposes both through `--aws-connect-timeout` and `--aws-read-timeout`, or through the `PROWLER_AWS_BOTO3_CONNECT_TIMEOUT` and `PROWLER_AWS_BOTO3_READ_TIMEOUT` environment variables for deployments without a CLI. `--aws-retries-max-attempts 0` now disables retries instead of silently falling back to three, leaving a single attempt per call.
+
+  Read more in the [Boto3 configuration documentation](https://docs.prowler.com/user-guide/providers/aws/boto3-configuration).
+
+  ### 🐳 Image Provider — Reusable Vulnerability Database
+
+  The Image provider now honors `TRIVY_CACHE_DIR`. When the variable names a directory, Trivy keeps its vulnerability database there and Prowler leaves the directory in place after the scan, so the database is downloaded once instead of on every scan. Hosts without internet access can now scan images by pointing `TRIVY_CACHE_DIR` at a pre-populated database and setting `TRIVY_SKIP_DB_UPDATE=true`. Without the variable, the temporary cache is created and removed as before.
+
+  Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image#vulnerability-database-cache).
+
+  ### 🎫 Jira Integration — Faster Connection Test
+
+  Testing a Jira integration no longer reports a false failure on accounts with many projects. The connection test fetched the issue types of every project one request at a time, which could outlast the wait in the UI even when the check was about to succeed. Issue types are now fetched concurrently, a project whose issue types the integration user cannot see is no longer logged as an error, and the Integrations page keeps following the connection test instead of giving up after about a minute.
+
+  Read more in the [Jira integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-jira-integration).
+
+  ### 📚 Compliance — Catalog Integrity Fixes
+
+  A new integrity test runs over every compliance framework, asserting unique requirement IDs, no check listed twice within a requirement, and that every referenced check exists for its provider. The fixes it drove span 42 frameworks across AWS, Azure, GCP, GitHub, Kubernetes and Microsoft 365:
+
+  - **Duplicate requirement IDs:** identical copies are removed, and distinct requirements that shared an ID get their own, such as `1.10` in CIS AWS 5.0 and `rc_rp_1` for RC.RP-1 in NIST CSF 1.1. In Prowler ThreatScore for Azure, SQL auditing retention moves from `3.2.1` to `3.2.4`, and requirement `1.2.1` of Prowler ThreatScore for GCP now points to `iam_sa_no_user_managed_keys`.
+  - **Stale check references:** checks that no longer exist are replaced with their current name when there is a direct equivalent, or removed so the requirement reports as manual. Most of these were in the FedRAMP 20x KSI frameworks.
+
+  Renamed requirement IDs appear as new requirements for scans run after the upgrade.
+
+  The compliance overview task that runs after every scan is also faster: ThreatScore mappings are read once from the compliance template instead of from every finding, and rows are inserted with time-ordered `uuid7` IDs grouped by framework and requirement.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  `rolesanywhere_profile_restricts_session_permissions`, `iam_role_service_trust_restricts_source_to_account` and `codebuild_project_uses_allowed_github_organizations` no longer crash with `TypeError` when the scanning role is denied `iam:ListRoles`, which dropped every finding of those checks for the account. Without the role inventory, an enabled IAM Roles Anywhere profile without session scoping reports `MANUAL`, and CodeBuild projects whose service role cannot be resolved are skipped.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🔐 Security Updates
+
+  - `next` upgraded to 16.3.3 in the UI, patching unauthenticated remote code execution through AVIF image optimization ([GHSA-2xp9-vwfh-vxw4](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4)) and on Windows-hosted servers ([GHSA-p293-qw3h-jr36](https://github.com/advisories/GHSA-p293-qw3h-jr36)).
+  - `sharp` upgraded to 0.35.4 in the UI, patching libheif image-decoding vulnerabilities ([GHSA-rgj7-g3m4-5g8c](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c)).
+  - `nanoid`, `js-yaml` and `postcss`, plus eleven transitive UI dependencies, upgraded to patched versions, resolving 40 npm audit advisories (21 high, 15 moderate, 4 low).
+  - `libuuid` upgraded to 2.41.6-r1 in the MCP Server image, patching CVE-2026-53612, CVE-2026-53613, CVE-2026-53614, CVE-2026-76642, CVE-2026-78408 and CVE-2026-78410.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.42.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.41.0" description="September 2, 2026">
+  ### 📥 Scans — Import Findings from the Browser
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Findings produced outside the platform, by the Prowler CLI or a CI pipeline, can now be brought into the app without leaving the browser. The Scans page gains an "Import Findings" dialog that takes a Prowler `.ocsf.json` report by drag-and-drop or file picker, hands it to the ingestion API and tracks the job to completion, reporting how many records were processed and how many were invalid. Files that are not a `.ocsf.json` report, or are empty, are refused before any upload starts, and a rejected upload or a failed status poll can be retried in place. The dialog is available to roles holding the Manage Ingestions permission.
+
+  ![Import Findings button on the Scans page](/images/prowler-app/import-findings/import-findings-button.png)
+
+  ![Import findings dialog with the drag-and-drop area](/images/prowler-app/import-findings/import-findings-dialog.png)
+
+  Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings#using-the-ui).
+
+  ### 🎫 Jira Integration — Finding Reference in Every Issue
+
+  Every Jira issue created from a finding now carries a stable reference back to it. Issues are labeled `prowler`, `prowler-<provider>`, `prowler-<severity>`, `prowler-<check-id>` and `prowler-finding-<finding-uid>`, so they can be filtered, searched with JQL or matched by automation; labels are sanitized to Jira's limits so a long or unusual value never blocks issue creation. The issue also links back to the finding in Prowler, filtered by its UID so the link keeps working after later scans, and names the Prowler organization that sent it. Prowler Cloud always includes the link; Prowler Local Server enables it by setting `DJANGO_UI_BASE_URL` in the API environment.
+
+  Read more in the [Jira integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-jira-integration).
+
+  ### 📚 Compliance — CIS Google Workspace Foundations Benchmark v1.4.0
+
+  Prowler now ships the CIS Google Workspace Foundations Benchmark v1.4.0. Alongside the new framework, the Google Workspace checks mapped to CIS were reworked to evaluate the benchmark's full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass. Expect new `FAIL` findings on domains that rely on those defaults. Three accuracy fixes also land:
+
+  - `security_2sv_enforced` and `security_2sv_hardware_keys_admins` report `MANUAL` instead of judging domain-wide values that a group or a sub-organizational unit overrides; a domain-wide failure is still reported as such, with the override noted.
+  - `rules_*_alert_configured` no longer passes a rule whose delivery to the alert center is disabled.
+  - `security_password_policy_strong` no longer fails a domain that never touched the password strength setting, since Google enforces strong passwords by default.
+
+  `security_login_challenges_configured` was unmapped from CIS Google Workspace requirement 4.1.4.1 (Post-SSO verification) and `security_2sv_enforced` from CISA SCuBA `GWS.COMMONCONTROLS.1.1` (phishing-resistant MFA), because neither check can prove what those requirements ask for.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  Ten new AWS checks land in this release, eight of them contributed by @tamg-aws. Thank you!
+
+  #### Amazon Bedrock AgentCore
+
+  - `iam_policy_passrole_to_bedrock_agentcore_restricted` flags customer-managed IAM policies that allow `iam:PassRole` over every role where the passed role can reach Bedrock AgentCore, so any principal holding the policy could run agent code under any role in the account.
+  - `iam_policy_no_agentcore_workload_access_token_wildcard` flags customer-managed IAM policies that allow `bedrock-agentcore:GetWorkloadAccessToken`, `GetWorkloadAccessTokenForJWT` or `GetWorkloadAccessTokenForUserId` on resources reaching workload identities other than the caller's own.
+  - `cloudwatch_log_group_agentcore_data_protection_policy_enabled` verifies that Bedrock AgentCore log groups mask sensitive data with a CloudWatch Logs data protection policy. The log group prefixes are configurable through `agentcore_log_group_name_prefixes` in `config.yaml`.
+
+  #### Amazon GuardDuty
+
+  - `guardduty_runtime_monitoring_enabled` flags detectors without unified Runtime Monitoring, the only feature that covers Amazon EC2 instances and Amazon ECS on AWS Fargate tasks in addition to Amazon EKS.
+  - `guardduty_ai_protection_enabled` flags detectors without AI Protection, which analyzes CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI. A detector that does not report the feature is `MANUAL` rather than `FAIL`.
+
+  `guardduty_eks_runtime_monitoring_enabled` no longer reports `FAIL` for detectors that use unified Runtime Monitoring, which is mutually exclusive with `EKS_RUNTIME_MONITORING` and already covers Amazon EKS.
+
+  #### Amazon ECR and EKS
+
+  - `ecr_registry_enhanced_scanning_enabled` verifies that the ECR registry scan type is enhanced (Amazon Inspector, covering programming language packages and continuous rescanning) instead of basic, reporting `MANUAL` when the registry scanning configuration cannot be read.
+  - `eks_cluster_vpc_cni_network_policy_enforced` flags EKS clusters whose Amazon VPC CNI managed add-on does not enable Kubernetes network policy enforcement, reporting `MANUAL` where the EKS API cannot show the setting.
+
+  #### AWS IAM, Elastic Beanstalk and MemoryDB
+
+  - `iam_role_service_trust_restricts_source_to_account` flags IAM roles whose trust policy lets an AWS service principal assume the role without confining the request to a specific source account, including trust policies that `iam_role_cross_service_confused_deputy_prevention` does not evaluate.
+  - `elasticbeanstalk_environment_no_secrets_in_configuration` scans the option settings of every Elastic Beanstalk environment for hardcoded secrets. Thanks to @haneul-24!
+  - `memorydb_cluster_in_transit_encryption_enabled` verifies that MemoryDB clusters have in-transit encryption (TLS) enabled. Thanks to @UTKARSH698!
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🐳 Image Provider — On-Premises Registries
+
+  Scanning registries that live on private networks is now supported end to end. `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` takes a comma-separated list of IPs and CIDRs the provider may reach, while every other non-public address, including link-local and loopback, stays blocked by the SSRF guard. Authentication negotiation is also more resilient: the provider falls back to Basic when a registry such as Harbor rejects the negotiated bearer token, and switches to a bearer token when the server answers a Basic or anonymous request with a Bearer challenge. `--registry-insecure` now propagates to Trivy through `TRIVY_INSECURE`, so images behind self-signed certificates can be pulled and scanned, not just enumerated. The flag now disables certificate validation for the image pull too, so keep it for trusted internal registries only.
+
+  Registry scans also skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations), no longer abort the whole scan when Trivy fails on a single image, and enumerate repositories in parallel instead of one request at a time.
+
+  Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image#on-premises-registries-and-private-networks).
+
+  ### 🛠️ Prowler MCP Server — Tool Failures Reported as Errors
+
+  Prowler Local Server tools now report a failure as an MCP tool execution error (`isError: true`, with the explanation in `content`) instead of a successful result carrying an `{"error": ...}` object, which clients and models read as a success. The Prowler Documentation and Prowler Hub tools follow the same rule: `prowler_docs_search` no longer reports a failed search as zero matches, `prowler_docs_get_document` no longer reports a failed fetch as a missing page, and `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now name the provider a check ID actually belongs to instead of reporting it as nonexistent. `prowler_get_compliance_framework_state_details` also rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider.
+
+  Read more in the [Prowler MCP documentation](https://docs.prowler.com/getting-started/products/prowler-mcp).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @tamg-aws: GuardDuty unified Runtime Monitoring and AI Protection checks ([#12564](https://github.com/prowler-cloud/prowler/pull/12564)), EKS VPC CNI network policy check ([#12661](https://github.com/prowler-cloud/prowler/pull/12661)), ECR enhanced scanning check ([#12660](https://github.com/prowler-cloud/prowler/pull/12660)), Bedrock AgentCore IAM and service trust checks ([#12664](https://github.com/prowler-cloud/prowler/pull/12664)), AgentCore log group data protection check ([#12662](https://github.com/prowler-cloud/prowler/pull/12662)), and fixes to ECR scan frequency ([#12560](https://github.com/prowler-cloud/prowler/pull/12560)), CloudWatch metric filters ([#12561](https://github.com/prowler-cloud/prowler/pull/12561)) and SageMaker direct internet access ([#12659](https://github.com/prowler-cloud/prowler/pull/12659))
+  - @haneul-24: AWS `elasticbeanstalk_environment_no_secrets_in_configuration` check ([#12378](https://github.com/prowler-cloud/prowler/pull/12378))
+  - @UTKARSH698: AWS `memorydb_cluster_in_transit_encryption_enabled` check ([#12246](https://github.com/prowler-cloud/prowler/pull/12246))
+  - @ye11oc4t: GitHub repository discovery pagination for unscoped scans ([#12460](https://github.com/prowler-cloud/prowler/pull/12460))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.41.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.40.0" description="August 28, 2026">
+  ### 💬 Slack Integration — Alert Channel Destinations
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Alerts can now reach Slack. Connect a Slack workspace from the Integrations page, authorize one or several destination channels (the connection check confirms each channel with a one-time message and names any channel Slack refuses), and pick those channels in the alert modal's "Destination channels" selector, next to the "Recipients" selector for email. The alerts list summarizes both in a single "Destinations" column, showing a rule's email recipients and Slack channels at a glance. Disconnecting the workspace and recovering from revoked credentials are handled from the same page.
+
+  ![Connected Slack workspace on the Integrations page](/images/prowler-app/slack/connected-workspace.png)
+
+  ![Alert rule with Slack channel destinations](/images/prowler-app/alerts/create-alert-modal.png)
+
+  Read more in the [Slack integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration) and the [Alerts documentation](https://docs.prowler.com/user-guide/tutorials/prowler-alerts).
+
+  ### 🤖 Lighthouse AI — Answer Feedback
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Every Lighthouse AI answer can now be rated with a thumbs up or thumbs down, with an optional field to describe what worked or what did not. Feedback is collected per answer, directly in the chat, and tells the team where Lighthouse should improve next.
+
+  Read more in the [Lighthouse AI documentation](https://docs.prowler.com/getting-started/products/prowler-cloud-lighthouse).
+
+  ### 📥 Providers — Imported Findings Indicator
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Providers whose findings were imported with the Prowler CLI now show an "Imported provider" indicator next to their connection status in the providers table. In accounts that mix connected providers with Import Findings uploads, the table now tells them apart at a glance.
+
+  ![Provider row with the Imported provider indicator and its tooltip](/images/changelog/v5.40.0-imported-provider-indicator.png)
+
+  Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings).
+
+  ### 📚 Compliance — NCSC Cyber Essentials 3.3
+
+  Cyber Essentials is the UK National Cyber Security Centre (NCSC) scheme certifying the baseline technical controls an organization must implement, and cloud services are explicitly in scope and cannot be excluded from an assessment. Prowler now includes NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026) as a universal framework, with its 28 requirements organized in the five control themes: Firewalls, Secure Configuration, Security Update Management, User Access Control, and Malware Protection.
+
+  Sixteen requirements map to Azure checks covering the controls the applicant organization owns under the shared responsibility model. The remaining twelve apply to end-user devices, on-premises network appliances, or organizational process, which cloud control-plane evidence cannot observe, so they are reported as Manual.
+
+  Contributed by @m-khan-97. Thank you!
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  Fifteen new checks land across seven providers in this release.
+
+  #### AWS
+
+  - `ecr_repository_image_no_secrets` scans the latest image of each ECR repository, both its configuration and its filesystem layers, for hardcoded secrets. Thanks to @esquaredsec!
+  - Four new Amazon Bedrock checks, thanks to @tamg-aws!
+    - `bedrock_guardrail_contextual_grounding_filter_enabled` verifies that guardrails enable both contextual grounding filters, blocking responses that are not supported by the retrieved source or do not answer the question asked.
+    - `bedrock_custom_model_encrypted_with_cmk` verifies that custom models are encrypted at rest with a customer-managed KMS key instead of an AWS-owned key the organization cannot audit, rotate, or revoke.
+    - `bedrock_knowledge_base_encrypted_with_cmk` verifies that each knowledge-base data source encrypts with a customer-managed KMS key the transient storage used while documents are chunked and embedded.
+    - `bedrock_agent_role_not_shared_across_agents` verifies that every agent has a dedicated execution role, so no agent inherits another's permissions.
+  - `rolesanywhere_profile_restricts_session_permissions` flags IAM Roles Anywhere profiles that reference an administrative role without scoping down the vended session with a session policy or managed policies.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  #### GCP
+
+  - `iam_workload_identity_pool_provider_attribute_condition` flags Workload Identity Federation providers that trust a multi-tenant issuer without an attribute condition restricting which external identities can impersonate federated principals.
+
+  Explore all GCP checks at [Prowler Hub](https://hub.prowler.com/check?provider=gcp).
+
+  #### GitHub
+
+  Three new checks harden GitHub Actions defaults, all contributed by @Edneam. Thank you!
+
+  - `organization_default_workflow_permissions_read_only` and `repository_default_workflow_permissions_read_only` verify that workflows get a read-only default `GITHUB_TOKEN` at the organization and repository level.
+  - `organization_actions_pull_request_approval_disabled` verifies that organizations prevent GitHub Actions from creating and approving pull requests.
+
+  Explore all GitHub checks at [Prowler Hub](https://hub.prowler.com/check?provider=github).
+
+  #### Microsoft 365
+
+  - `defender_domain_dmarc_records_published` checks that every Exchange Online domain publishes a DMARC record with an enforcing policy (`p=quarantine` or `p=reject`). Thanks to @Rishi943!
+
+  Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
+
+  #### Alibaba Cloud
+
+  - `oss_bucket_versioning_enabled` verifies that OSS buckets keep versioning enabled, allowing recovery from accidental or malicious object overwrite and deletion. Thanks to @abidedavana!
+  - `oss_bucket_server_side_encryption_enabled` verifies that OSS buckets define a default server-side encryption rule, either AES256 or KMS. Thanks to @alexchen-sys!
+
+  OSS bucket logging, versioning, default encryption, and ACL configurations are also now read correctly from the Alibaba Cloud SDK, so the checks reading them no longer report every bucket as unconfigured.
+
+  Explore all Alibaba Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=alibabacloud).
+
+  #### Huawei Cloud
+
+  - `vpc_security_group_open_egress` flags VPC security groups that allow open egress to the internet. Thanks to @tomitobio!
+
+  Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
+
+  #### STACKIT
+
+  - `ske_cluster_no_public_endpoint` flags SKE clusters whose Kubernetes API endpoint is reachable from the whole internet, because the ACL extension is disabled or its allowed CIDR list contains `0.0.0.0/0` or `::/0`. Thanks to @johannes-engler-mw!
+
+  Explore all STACKIT checks at [Prowler Hub](https://hub.prowler.com/check?provider=stackit).
+
+  ### 🔐 Security Updates
+
+  - The API and SDK container images upgrade OpenSSL to 3.5.7-1~deb13u2, patching ten high CVEs; the UI image upgrades `libcrypto3` and `libssl3` to 3.5.8-r0, patching seven high CVEs; the MCP Server image patches CVE-2026-14456 (OpenSSL), CVE-2026-11822, and CVE-2026-11824 (SQLite).
+  - `sqlparse` upgraded to 0.6.0 in the API, patching CVE-2026-54284, CVE-2026-59893, and CVE-2026-71491.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @Edneam: GitHub `organization_default_workflow_permissions_read_only` ([#12122](https://github.com/prowler-cloud/prowler/pull/12122)), `repository_default_workflow_permissions_read_only` ([#12143](https://github.com/prowler-cloud/prowler/pull/12143)), and `organization_actions_pull_request_approval_disabled` ([#12394](https://github.com/prowler-cloud/prowler/pull/12394)) checks
+  - @tamg-aws: four AWS Bedrock checks covering guardrail grounding, CMK encryption, and agent role isolation ([#12459](https://github.com/prowler-cloud/prowler/pull/12459))
+  - @esquaredsec: AWS `ecr_repository_image_no_secrets` check ([#12123](https://github.com/prowler-cloud/prowler/pull/12123))
+  - @Rishi943: Microsoft 365 `defender_domain_dmarc_records_published` check ([#11936](https://github.com/prowler-cloud/prowler/pull/11936))
+  - @abidedavana: Alibaba Cloud `oss_bucket_versioning_enabled` check ([#11913](https://github.com/prowler-cloud/prowler/pull/11913))
+  - @alexchen-sys: Alibaba Cloud `oss_bucket_server_side_encryption_enabled` check ([#11981](https://github.com/prowler-cloud/prowler/pull/11981))
+  - @tomitobio: Huawei Cloud `vpc_security_group_open_egress` check ([#12209](https://github.com/prowler-cloud/prowler/pull/12209))
+  - @johannes-engler-mw: STACKIT `ske_cluster_no_public_endpoint` check ([#11943](https://github.com/prowler-cloud/prowler/pull/11943))
+  - @gabrielfrdev: cluster name in Kubernetes compliance report outputs ([#12506](https://github.com/prowler-cloud/prowler/pull/12506))
+  - @jfgmesquita: AWS FSBP compliance mapping fix for IAM.9 and EKS.1 ([#12372](https://github.com/prowler-cloud/prowler/pull/12372))
+  - @hackertwinten: `ec2_securitygroup_not_used` no longer flags security groups held only by scaled-down AWS Batch compute environments ([#12458](https://github.com/prowler-cloud/prowler/pull/12458))
+  - @0xTaoZ: ECS task-definition checks no longer report PASS when `DescribeTaskDefinition` fails, shipped early in v5.39.1 ([#12217](https://github.com/prowler-cloud/prowler/pull/12217))
+  - @ye11oc4t: `ses_identity_not_publicly_accessible` now evaluates every identity authorization policy, shipped early in v5.39.1 ([#12464](https://github.com/prowler-cloud/prowler/pull/12464))
+  - @Zuhef: IaC provider raises typed exceptions instead of `sys.exit` when cloning the scanned repository or running Trivy fails ([#12227](https://github.com/prowler-cloud/prowler/pull/12227)), Kubernetes kubelet checks no longer disappear from the scan when a `kubelet-config` ConfigMap is broken ([#12225](https://github.com/prowler-cloud/prowler/pull/12225)), and the CLI `--slack` summary is sent for scans with no findings instead of failing with `ZeroDivisionError` ([#12229](https://github.com/prowler-cloud/prowler/pull/12229))
+  - @m-khan-97: NCSC Cyber Essentials 3.3 compliance framework with Azure provider coverage across the five Cyber Essentials themes ([#11588](https://github.com/prowler-cloud/prowler/pull/11588))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.40.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.39.0" description="August 13, 2026">
+  ### 🤖 Lighthouse AI — Finding Skills
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Lighthouse AI now embeds a Skills menu on every finding, answering the questions an analyst actually asks. **Contextual Fix** produces the fix for the finding, **Triage Decision** judges whether it is real and closes it out when it is not, and **Systemic Scope** determines whether the problem is a one-off or everywhere. A free-form "Ask Lighthouse anything" prompt sits in the same menu, and each run shows its progress and offers follow-up actions such as creating a Jira issue or muting the finding.
+
+  ![Lighthouse AI Skills menu on a finding resource](/images/changelog/v5.39.0-lighthouse-finding-skills.png)
+
+  Read more in the [Lighthouse AI documentation](https://docs.prowler.com/getting-started/products/prowler-cloud-lighthouse).
+
+  ### ☁️ Azure Management Group Onboarding
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Azure subscriptions no longer onboard one at a time. Choose "Add Multiple Subscriptions With Azure Management Group" in the add-provider wizard, enter the Microsoft Entra tenant ID, and authenticate once with a single tenant-wide service principal: Prowler discovers the entire management-group hierarchy under the tenant root, lets you select the subscriptions to onboard, and creates their providers with the management-group structure preserved. Azure now matches the one-step onboarding that AWS Organizations and GCP organizations already have.
+
+  ![Azure onboarding method selector with the Management Group option](/images/changelog/v5.39.0-azure-mg-selector.png)
+
+  Read more in the [Azure Management Groups documentation](https://docs.prowler.com/user-guide/tutorials/prowler-cloud-azure-management-groups).
+
+  ### ✅ Findings Triage — Verify MANUAL Findings as PASS
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Checks that require human judgment report `MANUAL` findings. For these findings, and only for them, the triage status selector now offers **Resolved**: choosing it asks for the required written evidence and verifies the finding as passing. The finding then reports an effective `PASS` while preserving the raw `MANUAL` scan result, across findings, finding groups, compliance reports, and scans, with the attestation's author, evidence, and validity always visible. Attestations expire automatically after 90 days, or as soon as a new scan reports a real failure, returning the finding to the review queue.
+
+  ![Triage status selector offering Resolved on a MANUAL finding](/images/changelog/v5.39.0-manual-pass-selector.png)
+
+  ![Manual Pass details showing evidence, author, and validity](/images/changelog/v5.39.0-manual-pass-details.png)
+
+  Read more in the [Findings Triage documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage#verify-a-manual-finding-as-pass).
+
+  ### ☁️ Prowler Cloud MCP — Organizations Management and Grouped Jira Dispatch
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  The hosted Prowler Cloud MCP server adds eight organization tools, so an agent can onboard and manage entire cloud organizations end to end: create the organization, discover its accounts, subscriptions, and projects, apply the selection, and manage the resulting providers. The tools cover AWS Organizations, GCP organizations, and Azure tenant root management groups, and they are available to Lighthouse AI.
+
+  `prowler_send_findings_to_jira` also gains Cloud-only dispatch capabilities: select failed findings by check IDs against the latest completed scan, and send them in grouped mode, one Jira work item per check listing up to 50 affected resources, with per-group error reporting.
+
+  Read more in the [Prowler MCP tools documentation](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools) and its [Jira operations reference](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools#jira-operations).
+
+  ### 🕸️ Attack Paths — Grouped Graph with Outcome Destinations
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  The Attack Paths graph now reads from source to destination. Resources of the same class collapse into a single expandable node with a count, clicking reveals its members, and every path terminates in an explicit outcome node naming the destination impact: code execution, privilege escalation, public exposure, or resource inventory. The per-account hub node is gone, and the clicked resource stays highlighted while its findings are expanded.
+
+  ![Attack Paths graph from the Internet to a public exposure outcome node](/images/changelog/v5.39.0-attack-paths-graph.png)
+
+  Explore the full Attack Paths query catalog at [Prowler Hub](https://hub.prowler.com/attack-paths).
+
+  Read more in the [Attack Paths documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 📚 New Compliance Framework — CMMC 2.0
+
+  The Cybersecurity Maturity Model Certification (CMMC) is the certification the US Department of Defense requires from contractors and suppliers that handle federal contract data. Prowler now includes CMMC 2.0 as a universal framework with all 149 requirements defined by the CMMC Program rule (32 CFR Part 170), organized in its three levels:
+
+  - **Level 1 (Foundational):** 15 requirements for the basic safeguarding of Federal Contract Information, from FAR 52.204-21.
+  - **Level 2 (Advanced):** 110 requirements from NIST SP 800-171 Rev 2, protecting Controlled Unclassified Information.
+  - **Level 3 (Expert):** 24 enhanced requirements from NIST SP 800-172 for the most sensitive programs.
+
+  Requirements map to Prowler checks across AWS, Azure, GCP, Alibaba Cloud, Oracle Cloud, and Microsoft 365, so one framework reports the compliance posture of the whole estate.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  #### Microsoft 365
+
+  Twenty new Entra ID checks expand the coverage of CIS Microsoft 365 Foundations Benchmark v7.0.0:
+
+  - **Password protection:** custom banned password list, on-premises enforcement, and lockout threshold and duration.
+  - **Default user permissions:** security group and Microsoft 365 group creation restricted, and guest invitations limited to allowed domains.
+  - **Conditional Access:** high and medium sign-in risk blocked, authentication transfer blocked, untrusted locations blocked, trusted named locations defined, sign-in frequency enforced, and token protection enforced.
+  - **Sessions and authentication methods:** idle session timeout configured, email one-time passcodes disabled, and Microsoft Authenticator context shown.
+  - **PIM and access reviews:** approval required to activate the Global Administrator and Privileged Role Administrator roles, and access reviews configured for guest users and privileged roles.
+
+  Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
+
+  #### AWS
+
+  Two new checks detect hardcoded secrets:
+
+  - `batch_job_definition_no_secrets` scans Batch job definition environment variables and command parameters. Thanks to @praneetrajv!
+  - `awslambda_layer_no_secrets_in_content` scans Lambda layer package content. Thanks to @ganiganesh25!
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @praneetrajv: AWS `batch_job_definition_no_secrets` check ([#12117](https://github.com/prowler-cloud/prowler/pull/12117))
+  - @ganiganesh25: AWS `awslambda_layer_no_secrets_in_content` check ([#12233](https://github.com/prowler-cloud/prowler/pull/12233))
+  - @andoniaf: GitHub `organization_repository_creation_limited` now reports low severity when repository creation is limited to private or internal visibility ([#12164](https://github.com/prowler-cloud/prowler/pull/12164))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.39.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.38.0" description="August 6, 2026">
+  ### 📌 Compliance Watchlist
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Compliance Watchlist keeps the frameworks an organization tracks in one shared list. Pin frameworks from any compliance view, manage several at once through a searchable catalog, and filter the Compliance section to show only the pinned frameworks.
+
+  The Overview page now reports the latest score for every pinned framework, while finding details highlight the watched frameworks associated with each check. Universal frameworks remain a single watchlist entry across provider views, keeping the organization's priorities consistent everywhere.
+
+  ![Compliance Watchlist editor](/images/compliance/prowler-app-compliance-watchlist-editor.png)
+
+  Read more in the [Compliance Watchlist documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance#tracking-frameworks-with-the-compliance-watchlist).
+
+  ### 🔐 SAML SSO - Multiple Email Domains
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  One SAML configuration can now authorize a primary email domain and up to 19 additional domains through the same Identity Provider. Every domain shares one stable Assertion Consumer Service (ACS) URL based on the primary domain, so subsidiaries, acquired companies, regional domains, and multiple brands no longer require separate tenants or duplicated SAML applications.
+
+  Domain ownership remains tenant-bound throughout the authentication flow. During service provider-initiated sign-in, the discovery domain and the domain asserted by the Identity Provider must resolve to the same tenant before provisioning continues.
+
+  ![SAML configuration with multiple email domains](/images/prowler-app/saml/saml-multiple-domains.png)
+
+  Read more in the [SAML SSO documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-sso#add-multiple-saml-domains).
+
+  ### 👥 User Sign-In Methods
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  The Users table now shows each account's sign-in methods as tags, including email/password, Google, GitHub, SAML with linked domains, and Partner SSO. Accounts without a reported method display a placeholder.
+
+  ![Users table showing sign-in method tags](/images/changelog/v5.38.0-user-sign-in-methods.png)
+
+  ### 🕸️ Attack Paths - Expanded AWS Privilege-Escalation Coverage
+
+  Attack Paths adds 20 AWS privilege-escalation queries from [pathfinding.cloud](https://pathfinding.cloud), while `iam_policy_allows_privilege_escalation` gains 22 additional escalation combinations.
+
+  The new coverage includes service `iam:PassRole` paths across AWS Batch, Braket, Cognito Identity, ECS, EMR, EMR Serverless, GameLift, Glue, EC2 Image Builder, Kinesis Analytics, HealthOmics, EventBridge Scheduler, Systems Manager, and Step Functions. It also covers existing-resource abuse, permissions-boundary removal, role assumption, and IAM Identity Center permission-set policy injection.
+
+  The query catalog now exposes each AWS query's outcome category, distinguishing code execution, privilege escalation, public exposure, and resource inventory.
+
+  Explore the full Attack Paths query catalog at [Prowler Hub](https://hub.prowler.com/attack-paths).
+
+  Read more in the [Attack Paths documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 🔍 Checks
+
+  #### Microsoft 365
+
+  Twelve new checks expand the coverage of CIS Microsoft 365 Foundations Benchmark v7.0.0:
+
+  - **Admin Center:** Shared Bookings is disabled.
+  - **Defender:** Priority account protection and strict preset security policies are enabled.
+  - **Entra ID:** Six checks cover device registration restrictions, local administrator behavior, device limits, LAPS, and BitLocker key visibility.
+  - **Exchange Online:** Personal accounts in Outlook on the web are disabled and Direct Send is rejected.
+  - **Microsoft Teams:** External access from trial-only tenants is blocked.
+
+  Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
+
+  ### 🔐 Security
+
+  - Prowler API, UI, SDK, and MCP container images now publish per-architecture Software Bills of Materials (SBOMs) and build-provenance attestations. Prowler Cloud production and Prowler Private Cloud images carry the same attestations.
+  - SDK and API container builds verify the checksums of downloaded PowerShell, Trivy, and zizmor binaries before installation.
+  - Grype now complements Trivy across the container-image security gates, detecting components and vulnerabilities that manifest-based scanners can miss and blocking fixable high and critical findings.
+  - `aiohttp` was upgraded to 3.14.3 to address CVE-2026-69244. `cryptography` was upgraded to 50.0.0 to address CVE-2026-69247 and CVE-2026-69249.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.38.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.37.0" description="August 3, 2026">
+  ### 💬 Lighthouse AI — Context-Aware Chat and a Bigger Toolbox
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Lighthouse AI is now aware of your working context when in Prowler Cloud. Messages carry page-aware context — the page you are on, the finding or resource open in the side panel, and its metadata — so "explain this" just works, and each page offers concise contextual suggestions to start from.
+
+  ![Lighthouse AI answering "explain this finding" from the side panel, with the page context chip highlighted in the composer](/images/prowler-app/lighthouse/prowler-cloud/side-panel-context-aware.png)
+
+  Lighthouse also gained access to every tool family the Prowler MCP server advertises: scan configurations, scan scheduling, finding triage, alert rules and recipients, integrations, users, and roles. Every action remains gated by RBAC: Lighthouse AI can only do what the user asking could do themselves.
+
+  Read more in the [Lighthouse AI documentation](/getting-started/products/prowler-cloud-lighthouse).
+
+  ### 🔌 Prowler MCP — Integrations, Users, and Roles
+
+  Prowler MCP gained three tool families, available on both the Cloud and the self-hosted Local MCP Server:
+
+  - **[Integrations](/getting-started/basic-usage/prowler-mcp-tools#integrations-management)** — manage where Prowler sends its results, with the full lifecycle for Amazon S3, AWS Security Hub, and Jira: create them, update credentials, configuration and attached providers, re-check connections, and delete them — plus turning findings into Jira work items directly from a conversation.
+  - **[Users](/getting-started/basic-usage/prowler-mcp-tools#user-management)** — read-only tools to list the tenant users with their emails and identify the authenticated user.
+  - **[Roles](/getting-started/basic-usage/prowler-mcp-tools#role-management)** — browse the RBAC roles defined in the tenant, inspect the capabilities each one grants, and set the role a user holds.
+
+  ### ☁️ Prowler MCP — Cloud-Only Tools
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing). These tools are exposed only by the Cloud MCP Server at `https://mcp.prowler.com/mcp`; the self-hosted Local MCP Server **does not** include them.
+  </Note>
+
+  A new `prowler_cloud_*` namespace adds 32 tools so your AI assistant can run Prowler Cloud workflows end to end instead of only reading from them:
+
+  - **[Alerts](/getting-started/basic-usage/prowler-mcp-tools#alerts)** — create and manage alert rules and email recipients, and browse the fired-alert history. Rule conditions can be dry-run before saving, so you can see what a rule would match without persisting anything.
+  - **[Findings Triage](/getting-started/basic-usage/prowler-mcp-tools#findings-triage)** — set a finding's triage status and attach notes documenting the decision. Unlike muting, the finding stays visible.
+  - **[Scan Scheduling](/getting-started/basic-usage/prowler-mcp-tools#scan-scheduling)** — configure daily, interval, weekly, or monthly recurring scans, one provider at a time or applied across many at once.
+  - **[Scan Configurations](/getting-started/basic-usage/prowler-mcp-tools#scan-configurations)** — build reusable check and compliance selections and attach them to providers.
+
+  Read more in the [Prowler MCP tools reference](/getting-started/basic-usage/prowler-mcp-tools#prowler-cloud-tools).
+
+  ### 🧭 Compliance — Grouped by provider of the same type
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  One framework, every provider, a single answer. Building on the cross-provider-type roll-up, the Compliance section now groups compliance for all providers of the same type: a **single-provider framework** — CIS AWS, CIS GCP, ENS for Azure — is aggregated across the latest completed scan of every provider of that type. Each framework card rolls up into a consolidated posture with a per-provider breakdown, a findings drill-down, and a combined executive PDF report. Requirement status follows the same strict precedence (FAIL over PASS over MANUAL), so one failing provider flags the requirement for the whole estate.
+
+  ![Across providers compliance section](/images/compliance/prowler-app-across-providers-expanded.png)
+
+  The Compliance tabs were also renamed to say what they aggregate: "Per Scan" is now **Single Scan**, "Cross-Provider" is now **Multiple Scans**, and Compliance lands on Multiple Scans by default.
+
+  ![Cross-provider compliance detail across providers](/images/compliance/prowler-app-across-providers-detail.png)
+
+  Read more in the [Cross-Provider Compliance documentation](/user-guide/compliance/tutorials/cross-provider-compliance).
+
+  ### ☁️ GCP Organization Onboarding
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Onboarding an entire Google Cloud organization is now a single guided flow. Provide an organization-level credential and Prowler discovers the full hierarchy, every folder and project. Pick the folders and projects to onboard from a selection tree, set custom aliases, test the connection, and launch: each selected project is registered as a provider, with no need to add them one by one. Post-onboarding management is covered too, including credential replacement and organization-wide deletion.
+
+  Read more in the [GCP Organizations documentation](/user-guide/tutorials/prowler-cloud-gcp-organizations).
+
+  ### 🕸️ Attack Paths — More Privilege Escalation Queries
+
+  Attack Paths adds four AWS privilege-escalation detection queries from [pathfinding.cloud](https://pathfinding.cloud). Thanks to @paramanandmallik!
+
+  - **[STS-002](https://hub.prowler.com/attack-paths/aws-sts-privesc-cross-account-trust)** — cross-account role trust
+  - **[STS-003](https://hub.prowler.com/attack-paths/aws-sts-privesc-wildcard-trust)** — wildcard role trust
+  - **[IAM-022](https://hub.prowler.com/attack-paths/aws-iam-privesc-delete-user-permissions-boundary)** — user permissions-boundary removal
+  - **[SSO-001](https://hub.prowler.com/attack-paths/aws-sso-privesc-permission-set-escalation)** — IAM Identity Center permission-set escalation
+
+  The query info panel now links every query to its page on [Prowler Hub](https://hub.prowler.com), and the IAM privilege-escalation queries were reworked to run efficiently on accounts with many IAM roles, users, or groups, fixing runtime errors and timeouts on large graphs.
+
+  Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 🛡️ AWS Confidential Computing — Nitro Enclaves Checks
+
+  Prowler adds the first CSPM coverage for confidential computing workloads on AWS, with **11 new checks** for [Nitro Enclaves](https://aws.amazon.com/ec2/nitro/nitro-enclaves/), developed together with [Guillermo Ruiz](https://www.linkedin.com/in/gruizesteban/) from AWS.
+
+  - **Workload host environment (EC2)** — five `ec2_confidential_workload_host_*` checks for the parent instance: IMDSv2 not enforced, public IP exposure, unrestricted ingress, exposed vsock proxy ports, and hosts not running.
+  - **KMS attestation policy** — six `kms_key_enclave_*` checks for the key policies gating enclave secrets: attestation not enforced or bypassable, missing deployment binding, debug-mode attestations, PCR mismatches, and unknown enclave images.
+
+  All checks are fully passive, using AWS APIs and CloudTrail with no instance access or SSM agent required, and are mapped across 23 compliance frameworks, including NIST 800-53 Rev 5, PCI-DSS v4.0, ISO 27001:2022, SOC 2, HIPAA, and MITRE ATT&CK.
+
+  Read more about it in this [blog post](https://prowler.com/blog/your-llm-runs-in-a-nitro-enclave-who-is-checking-the-enclave).
+
+  Try them out now at [cloud.prowler.com](https://cloud.prowler.com/sign-up)!
+
+  ### 🏢 New Provider — Huawei Cloud
+
+  Prowler now scans [**Huawei Cloud**](https://www.huaweicloud.com/), with **25 checks** across ten services: CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC, and WAF, plus the CIS Huawei Cloud Foundations Benchmark 1.0 compliance framework. Thanks to @tomitobio for their 1st provider in Prowler!
+
+  To scan a Huawei Cloud account, export the IAM user's access key credentials and run Prowler CLI:
+
+  ```bash
+  export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+  export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+
+  prowler huaweicloud
+  ```
+
+  Read more in the [Huawei Cloud documentation](/user-guide/providers/huaweicloud/getting-started-huaweicloud). Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
+
+  ### 🔍 Checks
+
+  #### AWS
+
+  - `codecommit_repository_no_secrets`, alongside the new `codecommit` service, scans files tracked at the tip of each repository's default branch for hardcoded secrets. Thanks to @Sid-0602!
+  - `glue_catalog_connection_no_secrets` detects secrets in Glue Data Catalog connection properties. Thanks to @l46983284-cpu, @Rishi943, and @UTKARSH698!
+  - `ec2_instance_stopped_older_than_specific_days` detects EC2 instances stopped longer than a configurable number of days (default 30). Thanks to @Nithin078!
+  - `sagemaker_endpoint_config_kms_encryption_enabled` verifies SageMaker endpoint configurations use a KMS key for storage volume encryption. Thanks to @Nithin078 and @l46983284-cpu!
+
+  Read more in the [AWS documentation](/user-guide/providers/aws/getting-started-aws). Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 📤 OCSF Output — MITRE ATT&CK Enrichment
+
+  OCSF detection finding output now populates `finding_info.analytic` with the Prowler check rule and `finding_info.attacks` with MITRE ATT&CK technique and tactic objects for findings with MITRE ATT&CK compliance metadata. Thanks to @AlexanderSanin!
+
+  ### 🐞 Fixed
+
+  - AWS Security Hub integrations now persist successful recovery checks during finding delivery, keeping connection status and the last-checked time accurate.
+  - Social sign-up now creates authentication, tenant, and membership records in a single transaction, fully rolling back failed provisioning to prevent incomplete accounts.
+  - The SAML configuration form keeps the ACS URL field stable while generating the callback URL and exposes the copy action only after a valid URL is available.
+  - SAML users without a `userType` attribute and without an existing role now receive a least-privilege `read_only` fallback role, so role-dependent operations continue to work without granting management permissions.
+
+  ### 🔐 Security
+
+  - Provider deletion, connection checks, scan creation, provider secrets, provider groups, and daily schedules now respect role provider-group visibility.
+  - HTML reports escape provider-originated finding fields, preventing stored cross-site scripting through malicious cloud resource tags. https://github.com/prowler-cloud/prowler/security/advisories/GHSA-c2jg-2778-ggm4
+  - Authentication with an API key whose owning user was deleted now returns `401`, and user deletion revokes the user's API keys across all their tenants.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @tomitobio: Huawei Cloud provider with CIS 1.0 benchmark ([#11950](https://github.com/prowler-cloud/prowler/pull/11950))
+  - @paramanandmallik: four AWS privilege-escalation Attack Paths queries ([#11460](https://github.com/prowler-cloud/prowler/pull/11460))
+  - @Sid-0602: AWS `codecommit` service and `codecommit_repository_no_secrets` check ([#11846](https://github.com/prowler-cloud/prowler/pull/11846))
+  - @l46983284-cpu, @Rishi943, and @UTKARSH698: AWS `glue_catalog_connection_no_secrets` check ([#11963](https://github.com/prowler-cloud/prowler/pull/11963))
+  - @Nithin078: AWS `ec2_instance_stopped_older_than_specific_days` ([#12076](https://github.com/prowler-cloud/prowler/pull/12076)) and `sagemaker_endpoint_config_kms_encryption_enabled` ([#12118](https://github.com/prowler-cloud/prowler/pull/12118), co-authored with @l46983284-cpu) checks
+  - @AlexanderSanin: MITRE ATT&CK enrichment in OCSF detection finding output ([#11492](https://github.com/prowler-cloud/prowler/pull/11492))
+  - @stefanobaldo: GCP gen2 Cloud Functions IAM policy retrieval is now thread-safe ([#12107](https://github.com/prowler-cloud/prowler/pull/12107))
+  - @rayair250-droid: GCP SSH and RDP firewall checks now detect exposed ports in any position within multi-port rules ([#12115](https://github.com/prowler-cloud/prowler/pull/12115))
+  - @jbchief-dev: secret ignore patterns now use Kingfisher-compatible LF line indexing ([#12141](https://github.com/prowler-cloud/prowler/pull/12141))
+  - @bmbferreira: Helm chart improvements — immutable chart versions on release ([#12056](https://github.com/prowler-cloud/prowler/pull/12056)) and capped Celery worker concurrency ([#12054](https://github.com/prowler-cloud/prowler/pull/12054))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.37.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.36.0" description="July 24, 2026">
+  ### 🎫 Finding Groups - Jira
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Selected Findings, Finding Groups, and mixed selections can now be sent to Jira. When you select multiple findings, choose between one grouped issue or separate issues. Generated issues keep their Prowler context with deep links and filter details, while the UI provides clear dispatch and failure feedback.
+
+  ![Send findings to Jira](/images/changelog/v5.36.0-finding-groups-jira.png)
+
+  Read more in the [Jira integration documentation](/user-guide/tutorials/prowler-app-jira-integration).
+
+  ### 🕸️ Attack Paths - Queries
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Prowler Cloud now records which built-in Attack Paths queries returned data at the end of each scan. The query selector hides confirmed-empty queries for the selected scan, so you can focus on paths that exist without opening blank graph views. Errored, unknown, and parameterized queries remain available when they still require investigation or input.
+
+  All Attack Paths queries are now published on [Prowler Hub](https://hub.prowler.com), where you can browse the full catalog.
+
+  ![Attack Paths query selector](/images/changelog/v5.36.0-attack-paths-queries.png)
+
+  Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 🧑‍🏫 New Tutorials: Connect Your AI Agents to Prowler Cloud
+
+  <Note>
+  This feature needs a Prowler Cloud API key, so it is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  New tutorials walk you through connecting your own AI agents to Prowler Cloud, so they can query your security posture and act on it programmatically.
+
+  Read more in the [AI agents documentation](/user-guide/ai-agents/index).
+
+  ### ☁️ Region-less Oracle Cloud Infrastructure Setup
+
+  Oracle Cloud Infrastructure (OCI) provider credentials no longer require a region. Existing clients can still send the legacy `region` field for compatibility, but the API ignores it before storing credentials or starting a scan. This removes an unnecessary step from OCI onboarding.
+
+  Read more in the [OCI documentation](/user-guide/providers/oci/getting-started-oci).
+
+  ### 🔍 Checks
+
+  #### AWS
+
+  - `sagemaker_notebook_instance_no_secrets` scans the `OnCreate` and `OnStart` lifecycle scripts of SageMaker notebook instances for hardcoded API keys, passwords, tokens, connection strings, and other secrets. Thanks to @kiranrajsg!
+
+  Read more in the [AWS documentation](/user-guide/providers/aws/getting-started-aws). Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🔐 Security
+
+  - Integration responses and operations now respect provider visibility, preventing hidden-provider disclosure and blocking unauthorized attachment, connection checks, Jira dispatches, edits, and deletion.
+  - Next.js was updated from 16.2.9 to 16.2.11, patching four high-severity and five medium-severity vulnerabilities.
+  - The unused `npm` CLI was removed from the UI container image, eliminating the bundled `node-tar` CVE-2026-59873 and reducing exposure to future bundled npm vulnerabilities.
+  - Vitest and its browser packages were updated from 4.1.8 to 4.1.10, resolving the critical `@vitest/browser` file-access permission bypass. These are development dependencies and have no runtime impact.
+  - Kubernetes kubeconfig validation now blocks legacy `auth-provider.config.cmd-path` command authentication, closing a command-execution bypass.
+  - `next-auth` was updated from 5.0.0-beta.30 to 5.0.0-beta.32, patching two critical Auth.js advisories: existence-based authorization checks that could fail open when a provider is misconfigured, and a homoglyph `@` bypass in email address normalization. The bump also pulls in the patched `@auth/core` 0.41.3 transitively.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @kiranrajsg: AWS `sagemaker_notebook_instance_no_secrets` check ([#11843](https://github.com/prowler-cloud/prowler/pull/11843))
+  - @owenchenxy: Alibaba Cloud SSH and RDP security group checks now handle capitalized `Policy="Accept"` values correctly ([#12049](https://github.com/prowler-cloud/prowler/pull/12049))
+  - @rsaladra: S3 bucket name validation no longer raises an invalid escape sequence `SyntaxWarning` at startup ([#12041](https://github.com/prowler-cloud/prowler/pull/12041))
+  - @SujayKulkarni-2211: Updated the AWS check count in the README ([#12011](https://github.com/prowler-cloud/prowler/pull/12011))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.36.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.35.0" description="July 17, 2026">
+  ### 💬 Lighthouse AI - Side Chat
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Lighthouse AI now lives in a side panel you can open from anywhere in the app. Ask about the findings you are looking at without leaving the page, and expand to the full-page chat at any time: your draft, messages, and streaming response come along. Finding and resource details share the same panel, with tabs to switch between Details and Lighthouse AI.
+
+  ![Lighthouse AI side chat](/images/changelog/v5.35.0-lighthouse-ai-side-chat.png)
+
+  Read more in the [Lighthouse AI documentation](/getting-started/products/prowler-cloud-lighthouse#side-panel).
+
+  ### 🤖 Lighthouse AI - Take Action
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Lighthouse AI is no longer read-only. Ask it to do things and it will: connect or remove providers, trigger a scan, schedule daily scans, update scan settings, and manage your mutelist and mute rules, straight from the chat. Every action is gated by RBAC: Lighthouse can only do what the user asking could do themselves.
+
+  Read more in the [Lighthouse AI capabilities](/getting-started/products/prowler-cloud-lighthouse#capabilities).
+
+  ### ☁️ One-step AWS Organizations onboarding
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Onboarding an entire AWS Organization is now a single step. One CloudFormation quick-create link deploys the management account role and a service-managed StackSet that rolls the role out to every member account, replacing the manual StackSet console setup. Target the whole organization or a specific Organizational Unit or Root ID, and deploy from the management account or a delegated administrator. The S3 integration quick-create link also pre-fills the bucket owner account ID, preventing a stack validation error.
+
+  ![AWS Organizations onboarding wizard](/images/changelog/v5.35.0-aws-orgs-wizard.png)
+
+  Built on the full-organization CloudFormation template contributed by @jchrisfarris — thanks!
+
+  Read more in the [AWS Organizations documentation](/user-guide/tutorials/prowler-cloud-aws-organizations).
+
+  ### 🎯 Scan configurations: exclude checks and services
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Scan configurations now accept `excluded_checks` and `excluded_services` to narrow the execution scope. Skip individual checks or entire services per provider, and the scan does not run them at all: less noise, faster scans, and no findings you would mute anyway.
+
+  Read more in the [Scan Configuration documentation](/user-guide/tutorials/prowler-app-scan-configuration#limiting-the-scan-scope).
+
+  ### 🧭 Redesigned sidebar navigation
+
+  The sidebar was redesigned around how you actually work: grouped sections for security, settings, and help, a Home/Chat switch at the top, collapsible configuration entries, clearer active states, and a responsive mobile overlay.
+
+  ![Redesigned sidebar](/images/changelog/v5.35.0-new-menu.png)
+
+  ### 🔌 Prowler MCP tools renamed to `prowler_*`
+
+  Core Prowler tools in Prowler MCP moved from the `prowler_app_*` prefix to the shorter `prowler_*` namespace, and the MCP documentation was restructured around it. Legacy `prowler_app_*` names keep working in Lighthouse AI, so existing setups are not broken.
+
+  Read more in the [Prowler MCP tools reference](/getting-started/basic-usage/prowler-mcp-tools).
+
+  ### 🔐 Security
+
+  - Jira integration credentials now only accept bare Atlassian site names (letters, numbers, and hyphens), and Jira tenant information requests validate site names and no longer follow redirects.
+  - Social account linking now requires a verified matching email from both the identity provider and the existing user account, and account connection notification emails are disabled.
+  - 13 advisories reported by `pnpm audit` on the UI (3 high, 9 moderate, 1 low) are resolved with patched versions of `hono`, `ws`, `vite`, `dompurify`, `js-yaml`, `@opentelemetry/core`, and `@babel/core`, including `hono` CVE-2026-59896.
+
+  ### 🙌 External Contributors
+
+  No external contributors in this release.
+
+  Special mention to @jchrisfarris, whose full-organization CloudFormation template from v5.34.0 powers the new one-step AWS Organizations onboarding ([#10403](https://github.com/prowler-cloud/prowler/pull/10403)).
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.35.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.34.0" description="July 15, 2026">
+  ### 🏷️ New product names
+
+  The Prowler family has grown, and the names now say what each product is. Same products, clearer names:
+
+  **Prowler products:**
+
+  - **Prowler Cloud** — the managed cloud security platform operated by the Prowler team.
+  - **Prowler Private Cloud** (formerly *Prowler Enterprise*) — the self-hosted deployment of Prowler Cloud in your own environment.
+  - **Prowler Hub** — the free public library of versioned checks, cloud service artifacts, and compliance frameworks.
+  - **Prowler Lighthouse AI** — The Agentic Cloud Defender in Prowler Cloud and Prowler Private Cloud.
+  - **Prowler MCP** — the MCP server that connects AI assistants and agents to Prowler, including the IDE plugins.
+
+  **Open source projects:**
+
+  - **Prowler CLI** — the command-line scanner for all supported providers.
+  - **Prowler Local Server** (formerly *Prowler App*) — the self-hosted web application and API to run scans, visualize findings, and manage providers.
+  - **Prowler Local Dashboard** — the web dashboard for visualizing Prowler CLI scan results, distributed with the CLI.
+  - **Prowler SDK** — the Python library behind Prowler CLI and Prowler Local Server.
+
+  See the full family in the [Prowler products documentation](/getting-started/products).
+
+  ### 🧭 Cross-Provider Compliance
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  One framework, every cloud, a single answer. The new **Cross-provider** tab in Compliance takes the most recent completed scan of every compatible provider and rolls them up into a single compliance posture per framework, with a per-provider breakdown and a combined executive PDF report. Requirement status follows strict precedence (FAIL over PASS over MANUAL), so one failing provider is enough to flag a requirement across your whole estate.
+
+  ![Cross-provider compliance overview](/images/changelog/v5.34.0-cross-provider-compliance-overview.png)
+
+  Three universal frameworks support it today:
+
+  - **CIS Controls 8.1** — AWS, Azure, Google Cloud, Microsoft 365, Kubernetes, GitHub, Google Workspace, Okta, Oracle Cloud, Alibaba Cloud, Cloudflare, MongoDB Atlas, OpenStack, and Vercel.
+  - **CSA CCM 4.0** — AWS, Azure, Google Cloud, Alibaba Cloud, and Oracle Cloud.
+  - **DORA 2022/2554** — AWS, Azure, Google Cloud, Alibaba Cloud, and Cloudflare.
+
+  Filter by provider type, account, or provider group, drill into each framework's requirements, and export the combined PDF.
+
+  ![Cross-provider compliance detail](/images/changelog/v5.34.0-cross-provider-compliance-detail.png)
+
+  Read more in the [Cross-Provider Compliance documentation](/user-guide/compliance/tutorials/cross-provider-compliance).
+
+  ### 🏢 New Provider — E2E Networks
+
+  Prowler now scans [**E2E Networks**](https://www.e2enetworks.com/), with **27 checks** spanning compute nodes, networking, security groups, load balancers, block and file storage, and managed databases. Thanks to @deepak7093 for their 1st provider in Prowler!
+
+  Available in the Prowler CLI:
+
+  ```bash
+  export E2E_NETWORKS_API_KEY="your-api-key"
+  export E2E_NETWORKS_AUTH_TOKEN="your-auth-token"
+  export E2E_NETWORKS_PROJECT_ID="your-project-id"
+  prowler e2enetworks
+  ```
+
+  Read more in the [E2E Networks documentation](/user-guide/providers/e2enetworks/getting-started-e2enetworks). Explore all E2E Networks checks at [Prowler Hub](https://hub.prowler.com/check?provider=e2enetworks).
+
+  ### 🔐 Security
+
+  User role relationship updates in the API are now limited to the active tenant, preserving the role assignments the same user holds in other tenants.
+
+  ### 🔍 Checks
+
+  #### AWS
+
+  - `ec2_ami_account_block_public_access` — verifies AMI block public access is enabled at the account level in each Region, so AMIs cannot be shared publicly. Thanks to @goutham-hari!
+  - `datapipeline_pipeline_no_secrets_in_definition` — scans Data Pipeline object fields, parameter objects, and parameter values for hardcoded secrets with Kingfisher. Thanks to @YinkaMetrics!
+  - `elbv2_listener_pqc_tls_enabled` — verifies ELBv2 HTTPS/TLS listeners use post-quantum TLS security policies with TLS 1.2 or higher, helping reduce harvest-now-decrypt-later exposure.
+  - `amplify_app_no_secrets_in_environment` — scans Amplify app and branch environment variables and build settings (buildSpec) for hardcoded secrets with Kingfisher. Thanks to @Deep070203!
+
+  #### Azure
+
+  - `app_function_ensure_http_is_redirected_to_https` — verifies that Function Apps enforce HTTPS-only traffic. Thanks to @amandalal007!
+
+  #### Kubernetes
+
+  - `core_minimize_hostpath_volume_mounts` — detects Pods that use `hostPath` volumes. Thanks to @0xTaoZ!
+  - `core_readonly_root_filesystem_enabled` — verifies that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context. Thanks to @Weedle02!
+
+  #### STACKIT
+
+  - `iaas_server_public_ip_attached` — flags IaaS servers that have a public IP address directly attached to a network interface. Thanks to @johannes-engler-mw!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @jchrisfarris — Deploy AWS Organizations with the CloudFormation template in one step ([#10403](https://github.com/prowler-cloud/prowler/pull/10403))
+  - @deepak7093 — New E2E Networks provider: 27 checks across compute nodes, networking, security groups, load balancers, block/file storage, and managed databases ([#11654](https://github.com/prowler-cloud/prowler/pull/11654))
+  - @goutham-hari — AWS `ec2_ami_account_block_public_access` check ([#11828](https://github.com/prowler-cloud/prowler/pull/11828))
+  - @YinkaMetrics — AWS `datapipeline_pipeline_no_secrets_in_definition` check ([#11821](https://github.com/prowler-cloud/prowler/pull/11821))
+  - @amandalal007 — Azure `app_function_ensure_http_is_redirected_to_https` check ([#11929](https://github.com/prowler-cloud/prowler/pull/11929))
+  - @0xTaoZ — Kubernetes `core_minimize_hostpath_volume_mounts` check ([#11837](https://github.com/prowler-cloud/prowler/pull/11837))
+  - @Weedle02 — Kubernetes `core_readonly_root_filesystem_enabled` check ([#11835](https://github.com/prowler-cloud/prowler/pull/11835))
+  - @johannes-engler-mw — STACKIT `iaas_server_public_ip_attached` check ([#11549](https://github.com/prowler-cloud/prowler/pull/11549))
+  - @janderik — Trailing newlines added to compliance, region, and fixture data files for POSIX compliance ([#11765](https://github.com/prowler-cloud/prowler/pull/11765))
+  - @Deep070203 — AWS `amplify_app_no_secrets_in_environment` check ([#11825](https://github.com/prowler-cloud/prowler/pull/11825))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.34.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.33.0" description="July 7, 2026">
+  ### 🤖 Lighthouse AI — The Agentic Cloud Defender
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Lighthouse AI is now a full agentic assistant wired to the Prowler Cloud backend. Ask it about your findings, your compliance posture, or your riskiest resources, and watch it work: the agent discovers and runs the Prowler tools it needs to answer, with every tool call visible in the new agentic view. It reads your security data through read-only tools, so it can never touch secrets or modify your tenant.
+
+  ![Lighthouse AI agentic view](/images/changelog/v5.33.0-lighthouse-ai-1.webp)
+
+  The chat experience is rebuilt around **persistent sessions**: conversations stream in real time, stay in your session history, can be archived, and a **sidebar chat mode** lets you ask questions from any page in the app without losing your place.
+
+  ![Lighthouse AI sessions](/images/changelog/v5.33.0-lighthouse-ai-2.webp)
+
+  You control the brain behind it. Configure one or more LLM providers — **OpenAI**, **Amazon Bedrock**, or any **OpenAI-compatible** endpoint (OpenRouter, Ollama) — with connection testing built into the setup and per-provider model selection. Add a shared **business context** (your security goals, compliance needs, organizational priorities) and every session uses it to give answers that fit your environment.
+
+  ![Lighthouse AI LLM providers](/images/changelog/v5.33.0-lighthouse-ai-3.webp)
+
+  Read more in the [Lighthouse AI documentation](/getting-started/products/prowler-cloud-lighthouse) and the [multiple LLM providers guide](/user-guide/tutorials/prowler-cloud-lighthouse-multi-llm).
+
+  ### 📄 Compliance PDF Reports Without Credentials
+
+  Compliance PDF reports no longer require the provider's credentials to be present. Findings are now enriched from the provider metadata stored in the database, so a report still generates even after the provider secret has been deleted or its credentials have become invalid.
+
+  Read more in the [compliance documentation](/user-guide/compliance/tutorials/compliance).
+
+  ### ⏳ Scan Queueing
+
+  Overlapping scans for the same provider now queue behind the active one instead of dispatching concurrent scan workers. Launch a manual scan while a scheduled one is running and it waits its turn. No more duplicated work or racing scans.
+
+  ### 🔐 Security
+
+  The Kubernetes provider credentials now reject kubeconfigs using `exec` authentication in Prowler Cloud, at the API and in the credential form, preventing user-supplied commands from running on Cloud workers.
+
+  Read more in the [Kubernetes provider authentication documentation](/user-guide/providers/kubernetes/getting-started-k8s#step-2-configure-kubernetes-authentication).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @kratos0718 — Azure `postgresql_flexible_server_log_retention_days_greater_3` Flexible Server log retention fix ([#11761](https://github.com/prowler-cloud/prowler/pull/11761))
+  - @Sanjays2402 — `KeyError: 'MANUAL'` crash fix in the compliance summary table, shipped early in v5.32.1 ([#11823](https://github.com/prowler-cloud/prowler/pull/11823))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.33.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.32.0" description="July 2, 2026">
+  ### 🔎 Findings Triage
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Triage findings straight from the Findings view. Each finding gets a triage status you can move through its lifecycle:
+
+  **Open → Under Review → Remediating → Risk Accepted → False Positive → Resolved**
+
+  Add a triage note to record the decision, mute a finding, all from the row's actions menu. The current status shows inline on every finding row, so you keep track of what has been reviewed and stop re-checking the same issues scan after scan.
+
+  ![Findings triage statuses](/images/changelog/v5.32.0-triage-1.png)
+
+  The status also follows the finding automatically across scans: when a finding flips from `FAIL` to `PASS` on the next scan it moves to **Resolved**, and when it flips from `PASS` back to `FAIL` it moves to **Reopened**. You always know whether an issue is genuinely fixed or has regressed, without touching it by hand.
+
+  ![Findings triage lifecycle](/images/changelog/v5.32.0-triage-2.png)
+
+  Read more in the [Findings Triage documentation](/user-guide/tutorials/prowler-app-findings-triage).
+
+  ### ⚙️ Scan Configuration
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Create named, reusable scan configurations from a dedicated **Scans / Configuration** page. Each configuration is YAML that follows the structure of [`prowler/config/config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml), so you only include the keys you want to override; the rest fall back to the built-in defaults. Values are validated on save against a per-provider, type-safe configuration schema that range-checks each field and rejects unknown keys, so a malformed config is caught before it ever reaches a scan. Attach a configuration to one or more providers so it applies on their next scan, or save it now and attach providers later.
+
+  ![Scan configuration editor](/images/changelog/v5.32.0-config-1.png)
+
+  From the Providers view you can pick which configuration a provider uses (`Default` or any of your saved ones) without leaving the page. No more passing config files around by hand.
+
+  ![Scan configuration per provider](/images/changelog/v5.32.0-config-2.png)
+
+  Read more in the [Scan Configuration documentation](/user-guide/tutorials/prowler-app-scan-configuration).
+
+  ### ✅ Per-Requirement Configuration Validation
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Compliance frameworks can now declare `ConfigRequirements` on a requirement, so it's reported as **FAIL** when its mapped checks ran under a configuration too loose to satisfy it. Even if every individual finding PASSed. This applies across all compliance outputs: CSV, OCSF, and console tables, and is the engine behind Scan Configuration's "marked as FAIL" behavior described above.
+
+  ![Per-requirement configuration validation](/images/changelog/v5.32.0-per-requirement-validation.png)
+
+  Read more in the [Configuration File documentation](/user-guide/cli/tutorials/configuration_file).
+
+  ### ⏱️ Okta — Request Throttling & Retries
+
+  Prowler now proactively throttles Okta API requests to stay under rate limits, with reactive retries on HTTP 429 as a safety net. Both are set in the scan configuration (or their equivalent CLI flags):
+
+  - `okta_requests_per_second` (config file) / `--okta-requests-per-second` (CLI) — cap the request rate. Default: 4 req/s.
+  - `okta_max_retries` (config file) / `--okta-retries-max-attempts` (CLI) — bound retry attempts. Default: 5.
+
+  This makes large Okta scans more reliable and less likely to be rate-limited.
+
+  Read more in the [Okta rate limit documentation](/user-guide/providers/okta/retry-configuration#request-throttling-requests-per-second).
+
+  ### 📉 AWS — Cap Resources Scanned per Service
+
+  Large AWS accounts can now cap how many resources Prowler analyzes for the highest-volume services, keeping scan time and cost under control. Set a global limit with `max_scanned_resources_per_service`, or override it per service:
+
+  - EBS snapshots (`max_ebs_snapshots`)
+  - Backup recovery points (`max_backup_recovery_points`)
+  - CloudWatch log groups (`max_cloudwatch_log_groups`)
+  - Lambda functions (`max_lambda_functions`)
+  - ECS task definitions (`max_ecs_task_definitions`)
+  - CodeArtifact packages (`max_codeartifact_packages`)
+
+  Limits are **disabled by default** (`0` = unlimited); only positive values cap the analyzed resources.
+
+  <Warning>
+  When a positive limit is set, compliance results reflect only the sampled resources, not every matching resource in the account.
+  </Warning>
+
+  Read more in the [configuration file documentation](/user-guide/cli/tutorials/configuration_file#supported-aws-resource-limits).
+
+  ### 🏷️ Azure — Filter by Resource Group
+
+  Azure scans can now be scoped to one or more resource groups with the new `--azure-resource-group` / `--azure-resource-groups` option. This lets you run focused assessments against specific environments, teams, or workloads instead of scanning every accessible resource in the subscription. Thanks to @Legin-ML for contributing this feature!
+
+  ```bash
+  # Single resource group
+  prowler azure --az-cli-auth --azure-resource-group rg-prod
+
+  # Multiple resource groups
+  prowler azure --az-cli-auth --azure-resource-group rg-prod1 rg-prod2
+  ```
+
+  Read more in the [Azure Resource Groups documentation](/user-guide/providers/azure/resource-groups).
+
+  ### 🧭 Provider Group Filter
+
+  Filter the **Overview, Findings, Resources, Scans, and Providers** views by provider group. Scope the whole app to a team, an environment, or a business unit in one click instead of filtering provider by provider.
+
+  ![Provider group filter](/images/changelog/v5.32.0-provider-group-filter.png)
+
+  Read more about managing provider groups in the [RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
+
+  ### 🔬 API — Timestamp Precision in Findings Filters
+
+  The `/api/v1/findings` endpoint now accepts full timestamps on the `inserted_at` and `updated_at` filters (`filter[inserted_at__gte]`, `filter[inserted_at__lte]`, and the `updated_at` variants), so you can query narrow time windows instead of whole days. Date-only filtering keeps working, so existing integrations are unaffected.
+
+  ```bash
+  # Findings inserted within a precise timestamp window
+  curl --globoff \
+    'http://localhost:8080/api/v1/findings?filter[inserted_at__gte]=2026-07-01T06:12:18Z&filter[inserted_at__lte]=2026-07-02T19:25:55Z' \
+    -H 'Authorization: Bearer <YOUR_TOKEN>' \
+    -H 'Accept: application/vnd.api+json'
+  ```
+
+  ### 🕸️ Attack Paths — Neptune as a persistent sink
+
+  Attack Paths can now persist its graph in **AWS Neptune** in addition to Neo4j, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan ingest database stays on Neo4j. The scan task preflights the ingest database and the configured sink before ingestion, and provider graph cleanup now deletes relationships in directed batches before deleting nodes.
+
+  This is the groundwork for scale: a managed graph database lets Attack Paths hold much larger graphs, extend coverage to more providers, and link resources across them so an attack path can cross provider boundaries instead of stopping at one cloud's edge.
+
+  Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 🔐 New Secret-Scanning Engine — Kingfisher
+
+  Prowler's secret-scanning checks now run on [Kingfisher](https://github.com/mongodb/kingfisher) instead of `detect-secrets`. Scans run **fully offline by default**, and obvious placeholder values (e.g. `password123`, `changeme`) are no longer reported, cutting down false positives.
+
+  Opt in to **live validation** with the new `--scan-secrets-validate` flag (or the `aws.secrets_validate` config option): Prowler checks discovered secrets against the provider APIs, and any secret confirmed to be **live is reported as critical**, so you can prioritize the credentials that actually work.
+
+  <Note>
+  The `detect_secrets_plugins` configuration option has been removed, as it is no longer used by the new engine.
+  </Note>
+
+  Read more in the [secret detection documentation](/user-guide/cli/tutorials/pentesting#detect-secrets).
+
+  ### 🔍 Checks
+
+  #### AWS
+
+  - `stepfunctions_statemachine_encrypted_with_cmk` — Step Functions state machines use a customer-managed KMS key for encryption at rest instead of the default AWS-owned key. Thanks to @Sid-0602!
+  - `waf_regional_webacl_logging_enabled` — AWS WAF Classic Regional Web ACLs have logging enabled to a Kinesis Data Firehose stream. Thanks to @Sid-0602!
+  - **IAM privilege escalation** — the privesc checks now cover **AWS Bedrock AgentCore** paths across Runtime, Harness, Code Interpreter, and Custom Browser. Thanks to @MrCloudSec!
+  - `apigateway_restapi_no_secrets_in_stage_variables` — scans API Gateway REST API stage variables for hardcoded passwords, API keys, and tokens. Thanks to @chirag1206!
+  - `awslambda_function_no_secrets_in_code` — this check now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets.
+  - `s3_bucket_object_public` — spot-checks a configurable sample of object ACLs in each bucket and flags objects granted to the `AllUsers` or `AuthenticatedUsers` groups. Disabled by default; opt in via the `s3_bucket_object_public_enabled` configuration option. Thanks to @Synchx00!
+
+  #### Microsoft 365
+
+  New **Conditional Access** hardening checks:
+
+  - `entra_conditional_access_policy_explicitly_targets_azure_devops` — at least one enabled policy explicitly includes the Azure DevOps cloud application, rather than relying on a broad "All cloud apps" policy. Thanks to @mzl2233!
+  - `entra_conditional_access_policy_no_exclusion_gaps` — every user, group, role, or application excluded from an enabled policy stays in scope of another enabled policy. Thanks to @UTKARSH698 with @arieleli01212 as co-author!
+  - `entra_conditional_access_policy_groups_management_restricted` — every security group referenced by an enabled or report-only policy is management-restricted or role-assignable. Thanks to @SAMurai-16!
+  - `exchange_application_access_policy_restricts_mailbox_apps` — every service principal with Microsoft Graph application-level Exchange mailbox permissions is restricted by an Exchange Online Application Access Policy. Thanks to @VasistAcharya!
+
+  ### 📚 Compliance
+
+  #### CIS Benchmark Refresh — Six New Versions
+
+  Prowler ships a coordinated refresh of the CIS Benchmarks across six providers:
+
+  - **AWS** — CIS Amazon Web Services Foundations Benchmark v7.0.0, adding the new Organizations section (2.1.1-2.1.6), resource policy (2.21), web front-end access logging (4.10), and VPC Endpoints (6.8) recommendations.
+  - **Azure** — CIS Microsoft Azure Foundations Benchmark v6.0.0.
+  - **GCP** — CIS Google Cloud Platform Foundation Benchmark v5.0.0.
+  - **Kubernetes** — CIS Kubernetes Benchmark v2.0.1.
+  - **GitHub** — CIS GitHub Benchmark v1.2.0.
+  - **Microsoft 365** — CIS Microsoft 365 Foundations Benchmark v7.0.0.
+
+  #### CIS Controls v8.1 — Universal Framework
+
+  A new **universal** (cross-provider) compliance framework mapping existing checks across 18 providers — AWS, Azure, GCP, Kubernetes, M365, GitHub, AlibabaCloud, OracleCloud, GoogleWorkspace, Okta, Cloudflare, Vercel, MongoDB Atlas, OpenStack, Linode, StackIT, NHN, and Scaleway — to the 18 CIS Critical Security Controls and their Safeguards. Ships with a dedicated detail view and report mapping in the UI.
+
+  Read more in the [compliance documentation](/user-guide/compliance/tutorials/compliance). Explore the full compliance catalog at [Prowler Hub](https://hub.prowler.com/compliance).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @chirag1206 — `apigateway_restapi_no_secrets_in_stage_variables` check ([#11188](https://github.com/prowler-cloud/prowler/pull/11188))
+  - @MrCloudSec — AWS Bedrock AgentCore privilege escalation paths in the IAM privesc checks ([#11726](https://github.com/prowler-cloud/prowler/pull/11726))
+  - @Sid-0602 — `stepfunctions_statemachine_encrypted_with_cmk` ([#11538](https://github.com/prowler-cloud/prowler/pull/11538)) and `waf_regional_webacl_logging_enabled` ([#11539](https://github.com/prowler-cloud/prowler/pull/11539)) checks
+  - @mzl2233 — `entra_conditional_access_policy_explicitly_targets_azure_devops` check ([#11182](https://github.com/prowler-cloud/prowler/pull/11182))
+  - @UTKARSH698 with @arieleli01212 as co-author — `entra_conditional_access_policy_no_exclusion_gaps` check ([#11577](https://github.com/prowler-cloud/prowler/pull/11577))
+  - @SAMurai-16 — `entra_conditional_access_policy_groups_management_restricted` check ([#11342](https://github.com/prowler-cloud/prowler/pull/11342))
+  - @vahidg — Azure PostgreSQL flexible server collection resilience fix ([#11595](https://github.com/prowler-cloud/prowler/pull/11595))
+  - @davletd — Azure `keyvault_logging_enabled` `AuditEvent` category fix ([#11660](https://github.com/prowler-cloud/prowler/pull/11660))
+  - @VasistAcharya — `exchange_application_access_policy_restricts_mailbox_apps` ([#11247](https://github.com/prowler-cloud/prowler/pull/11247))
+  - @Legin-ML — Filter scans at Resource Group level ([#10657](https://github.com/prowler-cloud/prowler/pull/10657))
+  - @Synchx00 — `s3_bucket_object_public` check ([#9517](https://github.com/prowler-cloud/prowler/pull/9517))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.32.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.31.0" description="June 23, 2026">
+  ### 🗓️ Flexible Scan Scheduling
+
+  <Note>
+  Available exclusively in **Prowler Cloud**. Prowler Local Server supports daily scans only.
+  </Note>
+
+  ![Scan scheduling from the Providers page](/images/changelog/v5.31.0-schedule-1.png)
+
+  You can now set a per-provider scan schedule from the Providers page. Pick a **scan time** and a **repeat cadence**: Daily, Every 48 hours, Weekly (with a day-of-week selector), or Monthly. Schedules can be edited or removed at any time, and a new scan never interrupts access to existing data.
+
+  ![Schedule editor](/images/changelog/v5.31.0-schedule-2.png)
+
+  All schedules are listed in one place under the **Scheduled** tab in **Scan Jobs**, showing each provider's cadence, next scan, and last scan at a glance.
+
+  ![Scheduled tab in Scan Jobs](/images/changelog/v5.31.0-schedule-3.png)
+
+  Read more in the [scan scheduling documentation](/user-guide/tutorials/prowler-scan-scheduling).
+
+  ### 📚 DORA — Expanded Provider Coverage
+
+  Prowler extends [**DORA**](https://www.eiopa.europa.eu/digital-operational-resilience-act-dora_en) (Digital Operational Resilience Act, Regulation (EU) 2022/2554) coverage to **Azure**, **GCP**, **Cloudflare**, and **Alibaba Cloud**, mapping each provider's existing checks across the five DORA pillars.
+
+  ![DORA compliance for Alibaba Cloud](/images/changelog/v5.31.0-dora-alibaba.png)
+
+  <Note>
+  The framework follows the `<name>_<version>` naming convention as `DORA_2022_2554`.
+  </Note>
+
+  Read more in the [compliance documentation](/user-guide/compliance/tutorials/compliance).
+
+  ### 🚀 Guided Onboarding
+
+  <Note>
+  Available exclusively in **Prowler Cloud**.
+  </Note>
+
+  New accounts now get a guided first-run experience. The Overview greets you with an **"Add your first provider"** prompt: connect a provider so Prowler has something to scan and assess, then get started in one click (or skip for now).
+
+  ![Guided onboarding prompt](/images/changelog/v5.31.0-onboarding-1.png)
+
+  From there, contextual empty states across the product point you to the next action rather than leaving you stuck. Attack Paths, for example, explains that you need a completed scan before it can build a graph and links straight to **Scan Jobs**, with a **"See how it works"** affordance for first-timers.
+
+  ![Contextual empty states](/images/changelog/v5.31.0-onboarding-2.png)
+
+  ### 🔐 Optional SAML SSO `userType`
+
+  The SAML `userType` attribute is now optional. If your IdP does not send it, or sends it blank, Prowler keeps the user's existing roles unchanged instead of replacing them with a fallback role.
+
+  When `userType` is provided, Prowler still maps the user to the matching role. If that role does not exist yet, Prowler creates it with read-only access: visibility over all providers, with no management permissions.
+
+  Read more in the [SAML SSO documentation](/user-guide/tutorials/prowler-app-sso).
+
+  ### 🏢 New Provider — Linode
+
+  Prowler now scans [**Linode**](https://www.linode.com/) (Akamai Cloud), covering its administration, compute, and networking services. Thanks to @varunmamillapalli for their 1st provider in Prowler!
+
+  <Note>
+  Linode is not officially supported. For more information, [contact us](https://prowler.com/contact).
+  </Note>
+
+  Read more in the [Linode documentation](/user-guide/providers/linode/getting-started-linode). Explore all Linode checks at [Prowler Hub](https://hub.prowler.com/check?provider=linode).
+
+  ### 🔍 Checks
+
+  #### AWS
+
+  **Post-Quantum Cryptography readiness** — get ahead of the migration to quantum-resistant cryptography:
+
+  - `cloudfront_distributions_pqc_tls_enabled` — CloudFront distributions enforce a post-quantum TLS 1.3 security policy.
+  - `apigateway_domain_name_pqc_tls_enabled` — API Gateway custom domain names use a post-quantum TLS security policy.
+  - `transfer_server_pqc_ssh_kex_enabled` — Transfer Family servers use a post-quantum hybrid SSH key exchange.
+  - `acmpca_certificate_authority_pqc_key_algorithm` — Private CA authorities use a post-quantum (ML-DSA) key algorithm (new `acmpca` service).
+  - `rolesanywhere_trust_anchor_pqc_pki` — IAM Roles Anywhere trust anchors are backed by a post-quantum (ML-DSA) PKI (new `rolesanywhere` service).
+
+  **Organization-wide governance:**
+
+  - `securityhub_delegated_admin_enabled_all_regions` — Security Hub has a delegated administrator, active in all opted-in regions, with organization auto-enable on. Thanks to @ernestprovo23!
+  - `config_delegated_admin_and_org_aggregator_all_regions` — AWS Config has a delegated administrator and an organization aggregator covering all regions. Thanks to @ernestprovo23!
+
+  **Machine learning:**
+
+  - `sagemaker_clarify_exists` — verifies at least one SageMaker Clarify processing job exists per scanned region, so bias-detection and model-explainability controls are in place. Thanks to @AlexanderSanin!
+
+  #### Azure
+
+  A large batch of new Azure checks spanning data, compute, identity, and networking:
+
+  - **Cosmos DB** — automatic failover, continuous backup policy, minimum TLS 1.2, and public network access disabled.
+  - **MySQL & PostgreSQL Flexible Servers** — geo-redundant backup and high availability.
+  - **AKS** — auto-upgrade, Azure Monitor (Container Insights), local accounts disabled, and Microsoft Defender enabled.
+  - **Databricks** — public network access disabled and secure cluster connectivity (no public IP).
+  - **Defender** — CSPM on the Standard tier.
+  - **Networking** — NSG association on subnets and DDoS Network Protection on VNets.
+  - **Entra ID** — app registration credential expiry, users with recent sign-in and strong authentication enforcement.
+  - **Recovery Services** — vaults with at least one protected backup item and vaults with adequate backup policy.
+
+  Thanks to @s1ns3nz0 for all these contributions!
+
+  #### GCP
+
+  New coverage for high availability and public-exposure detection:
+
+  - `cloudsql_instance_high_availability_enabled` — Cloud SQL primary instances use `REGIONAL` availability for automatic zone failover.
+  - `cloudfunction_function_inside_vpc` — Cloud Functions use a Serverless VPC Access connector for private egress.
+  - `cloudfunction_function_not_publicly_accessible` — detects `allUsers` / `allAuthenticatedUsers` IAM invocation bindings.
+  - `secretmanager_secret_not_publicly_accessible` — detects Secret Manager secrets with public IAM bindings.
+  - `secretmanager_secret_rotation_enabled` — verifies Secret Manager secrets have automatic rotation configured with a period of 90 days or less and no missed rotation.
+
+  Thanks to @s1ns3nz0 for all these contributions!
+
+  #### Kubernetes
+
+  New core checks for container resource governance and reliability: CPU limits, CPU requests, memory limits, memory requests, fixed image tags, liveness probes, and readiness probes. Thanks to @Nikhilkumar2311 for all these contributions!
+
+  #### Microsoft 365
+
+  - `entra_directory_sync_object_takeover_blocked` — hybrid Entra tenants block cloud object takeover through soft-match and hard-match directory synchronization. Thanks to @PrettyFox0 and @omobolajiadeyan!
+  - `entra_conditional_access_policy_no_deleted_object_references` — flags Conditional Access policies that reference user, group, or role objects that no longer resolve in the directory. Thanks to @ernestprovo23!
+
+  #### Oracle Cloud Infrastructure
+
+  - `identity_storage_service_level_admins_scoped` — CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🐍 Python 3.13 Support
+
+  The Prowler SDK now supports **Python 3.13**. Thanks to @branchv!
+
+  ### 🔐 Security Updates
+
+  - **SDK** — `pytest` 8.3.5 → 9.0.3, `black` 25.1.0 → 26.3.1, `microsoft-kiota-*` → 1.9.9, and `aiohttp` → 3.14.0, patching known CVEs.
+  - **API** — `aiohttp` → 3.14.0 and `idna` → 3.15, patching known CVEs.
+  - **UI** — bumped vulnerable `Next.js`, React, AI SDK, `postcss`, `hono`, `qs`, `esbuild`, and Alpine OpenSSL packages; `dompurify` 3.4.2 → 3.4.10, patching XSS sanitization bypass advisories.
+  - **Containers** — base image bumped to `python:3.12.13-slim-bookworm` (patches `libgnutls30` CVE-2026-33845 and CVE-2026-42010) and `trivy` to 0.71.0 (patches embedded `golang.org/x/crypto` and Go stdlib CVEs).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @varunmamillapalli — New Linode provider: administration, compute, and networking services ([#11633](https://github.com/prowler-cloud/prowler/pull/11633))
+  - @s1ns3nz0 — 20+ Azure & GCP checks across Cosmos DB, AKS, Databricks, Flexible Servers, Entra, networking, and GCP public-exposure
+  - @Nikhilkumar2311 — Kubernetes resource limits, requests, image tag, and probe checks ([#11373](https://github.com/prowler-cloud/prowler/pull/11373))
+  - @ernestprovo23 — AWS Security Hub/Config org-wide delegated admin checks ([#11259](https://github.com/prowler-cloud/prowler/pull/11259)) and M365 conditional access check ([#11236](https://github.com/prowler-cloud/prowler/pull/11236))
+  - @AlexanderSanin — `sagemaker_clarify_exists` check ([#11211](https://github.com/prowler-cloud/prowler/pull/11211))
+  - @PrettyFox0 with @omobolajiadeyan as co-author — M365 directory sync object takeover check ([#11098](https://github.com/prowler-cloud/prowler/pull/11098))
+  - @branchv — Python 3.13 support ([#9293](https://github.com/prowler-cloud/prowler/pull/9293))
+  - @alinealfa — GCP audit-filtered aggregated sinks fix ([#11575](https://github.com/prowler-cloud/prowler/pull/11575))
+  - @b-abderrahmane — Configurable Celery worker concurrency ([#11075](https://github.com/prowler-cloud/prowler/pull/11075))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.31.0) for the complete list of changes.
+</Update>
+
+<Update label="Earlier releases">
+  Release notes for v5.30.0 and earlier, along with every patch release, are on [GitHub Releases](https://github.com/prowler-cloud/prowler/releases).
+</Update>

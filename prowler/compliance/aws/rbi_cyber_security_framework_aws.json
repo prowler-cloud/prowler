@@ -40,6 +40,7 @@
         "ec2_instance_public_ip",
         "efs_encryption_at_rest_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -108,9 +109,7 @@
         "guardduty_no_high_severity_findings",
         "rds_instance_minor_version_upgrade_enabled",
         "redshift_cluster_automatic_upgrades",
-        "ssm_managed_compliant_patching",
-        "ssm_managed_compliant_patching",
-        "rds_instance_minor_version_upgrade_enabled"
+        "ssm_managed_compliant_patching"
       ]
     },
     {

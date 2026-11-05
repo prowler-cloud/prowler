@@ -1,11 +1,86 @@
+import yaml from "js-yaml";
 import { z } from "zod";
 
+import { OCI_REGION_VALUES } from "@/lib/provider-credentials/oci-regions";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
-import { PROVIDER_TYPES, ProviderType } from "./providers";
+import { isKnownProviderType, PROVIDER_TYPES, ProviderType } from "./providers";
 
-export const addRoleFormSchema = z.object({
+export const KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR =
+  "Only inline Kubernetes credentials are supported. For user authentication use token, username/password, or client-certificate-data with client-key-data; clusters may use certificate-authority-data. File-path fields (tokenFile, client-certificate, client-key, certificate-authority), command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported.";
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const KUBECONFIG_ALLOWED_USER_KEYS = new Set([
+  "token",
+  "username",
+  "password",
+  "client-certificate-data",
+  "client-key-data",
+  "as",
+  "as-uid",
+  "as-groups",
+  "as-user-extra",
+]);
+const KUBECONFIG_ALLOWED_CLUSTER_KEYS = new Set([
+  "server",
+  "certificate-authority-data",
+  "insecure-skip-tls-verify",
+  "tls-server-name",
+  "disable-compression",
+  "extensions",
+]);
+
+// Mirrors the API key checks; structural validation stays in the API.
+export const kubeconfigIsInlineOnlyCredentials = (value: string): boolean => {
+  let parsed: unknown;
+  try {
+    parsed = yaml.load(value);
+  } catch {
+    return true;
+  }
+
+  if (!isRecord(parsed)) {
+    return true;
+  }
+
+  if (Array.isArray(parsed.users)) {
+    const usersInlineOnly = parsed.users.every((userEntry) => {
+      if (!isRecord(userEntry) || !isRecord(userEntry.user)) {
+        return true;
+      }
+      return Object.keys(userEntry.user).every((key) =>
+        KUBECONFIG_ALLOWED_USER_KEYS.has(key),
+      );
+    });
+    if (!usersInlineOnly) {
+      return false;
+    }
+  }
+
+  if (Array.isArray(parsed.clusters)) {
+    const clustersInlineOnly = parsed.clusters.every((clusterEntry) => {
+      if (!isRecord(clusterEntry) || !isRecord(clusterEntry.cluster)) {
+        return true;
+      }
+      return Object.keys(clusterEntry.cluster).every((key) =>
+        KUBECONFIG_ALLOWED_CLUSTER_KEYS.has(key),
+      );
+    });
+    if (!clustersInlineOnly) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+// Create and edit share the same shape, so a single schema backs both flows.
+export const roleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
   manage_account: z.boolean().default(false),
@@ -14,22 +89,14 @@ export const addRoleFormSchema = z.object({
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
   manage_alerts: z.boolean().default(false),
+  manage_lighthouse_ai_configuration: z.boolean().default(false),
+  manage_registry: z.boolean().default(false),
+  manage_prowler_realtime: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
 
-export const editRoleFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  manage_users: z.boolean().default(false),
-  manage_account: z.boolean().default(false),
-  manage_billing: z.boolean().default(false),
-  manage_providers: z.boolean().default(false),
-  manage_integrations: z.boolean().default(false),
-  manage_scans: z.boolean().default(false),
-  manage_alerts: z.boolean().default(false),
-  unlimited_visibility: z.boolean().default(false),
-  groups: z.array(z.string()).optional(),
-});
+export type RoleFormValues = z.input<typeof roleFormSchema>;
 
 export const onDemandScanFormSchema = () =>
   z.object({
@@ -161,6 +228,27 @@ export const addProviderFormSchema = z
     ]),
   );
 
+export const createAddProviderFormSchema = (
+  installedTypes: readonly string[],
+) =>
+  z.union([
+    addProviderFormSchema,
+    z.object({
+      providerType: z
+        .string()
+        .refine(
+          (type) => !isKnownProviderType(type) && installedTypes.includes(type),
+          "Select an installed Registry provider",
+        ),
+      providerUid: z.string().trim().min(1, "Provider UID is required"),
+      providerAlias: z.string(),
+    }),
+  ]);
+
+export type AddProviderFormValues = z.infer<
+  ReturnType<typeof createAddProviderFormSchema>
+>;
+
 export const addCredentialsFormSchema = (
   providerType: ProviderType,
   via?: string | null,
@@ -207,7 +295,13 @@ export const addCredentialsFormSchema = (
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .min(1, "Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required")
+                    .refine(
+                      (value) => kubeconfigIsInlineOnlyCredentials(value),
+                      {
+                        error: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+                      },
+                    ),
                 }
               : providerType === "m365"
                 ? {
@@ -264,7 +358,12 @@ export const addCredentialsFormSchema = (
                             .min(1, "Tenancy OCID is required"),
                           [ProviderCredentialFields.OCI_REGION]: z
                             .string()
-                            .min(1, "Region is required"),
+                            .refine(
+                              (region) => OCI_REGION_VALUES.includes(region),
+                              {
+                                error: "Home region is required",
+                              },
+                            ),
                           [ProviderCredentialFields.OCI_PASS_PHRASE]: z
                             .union([z.string(), z.literal("")])
                             .optional(),
@@ -686,16 +785,101 @@ export const editUserFormSchema = () =>
     role: z.string().optional(),
   });
 
-export const samlConfigFormSchema = z.object({
-  email_domain: z
+const createSamlEmailDomainSchema = (requiredMessage: string) =>
+  z
     .string()
     .trim()
-    .min(1, { message: "Email domain is required" }),
-  metadata_xml: z
-    .string()
-    .trim()
-    .min(1, { message: "Metadata XML is required" }),
+    .min(1, { error: requiredMessage })
+    .transform((domain) => domain.toLowerCase());
+
+export const samlEmailDomainSchema = createSamlEmailDomainSchema(
+  "Email domain is required",
+);
+
+export const samlAdditionalEmailDomainSchema = createSamlEmailDomainSchema(
+  "Additional email domain is required",
+);
+
+const samlConfigDomainSchema = z.object({
+  email_domain: samlEmailDomainSchema,
+  additional_email_domains: z
+    .array(samlAdditionalEmailDomainSchema)
+    .max(MAX_SAML_ADDITIONAL_EMAIL_DOMAINS, {
+      error: `A SAML configuration supports up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains.`,
+    })
+    .default([]),
 });
+
+const samlMetadataXmlSchema = z
+  .string()
+  .trim()
+  .min(1, { error: "Metadata XML is required" });
+
+const samlOptionalMetadataXmlSchema = z.string().trim();
+
+const validateSamlDomains = (
+  data: z.output<typeof samlConfigDomainSchema>,
+  ctx: z.RefinementCtx,
+) => {
+  const populatedAdditionalDomains = data.additional_email_domains.filter(
+    (domain) => domain.length > 0,
+  );
+
+  if (
+    new Set(populatedAdditionalDomains).size !==
+    populatedAdditionalDomains.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Additional email domains must be unique.",
+      path: ["additional_email_domains"],
+    });
+  }
+
+  if (
+    data.email_domain.length > 0 &&
+    populatedAdditionalDomains.includes(data.email_domain)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Additional email domains must differ from the primary email domain.",
+      path: ["additional_email_domains"],
+    });
+  }
+};
+
+export const getSamlConfigFormSchema = (isUpdate: boolean) =>
+  samlConfigDomainSchema
+    .extend({
+      metadata_xml: isUpdate
+        ? samlOptionalMetadataXmlSchema
+        : samlMetadataXmlSchema,
+    })
+    .superRefine(validateSamlDomains);
+
+export type SamlConfigFormInput = z.input<
+  ReturnType<typeof getSamlConfigFormSchema>
+>;
+export type SamlConfigFormValues = z.output<
+  ReturnType<typeof getSamlConfigFormSchema>
+>;
+
+export const samlConfigFormSchema = getSamlConfigFormSchema(false);
+
+export const samlConfigUpdateFormSchema = samlConfigDomainSchema
+  .extend({
+    metadata_xml: z.preprocess(
+      (value) =>
+        value === null ||
+        value === undefined ||
+        (typeof value === "string" && value.trim() === "")
+          ? undefined
+          : value,
+      samlMetadataXmlSchema.optional(),
+    ),
+  })
+  .superRefine(validateSamlDomains);
 
 export const mutedFindingsConfigFormSchema = z.object({
   configuration: z
@@ -723,10 +907,11 @@ export const mutedFindingsConfigFormSchema = z.object({
   id: z.string().optional(),
 });
 
-// The schema-driven (ranges/enums/types) validation lives in the editor via
-// `validateScanConfigPayload(yamlString, schema)` in `lib/yaml.ts`. Here we
-// only enforce the form-level shape: a name and a YAML string that parses.
-export const scanConfigFormSchema = z.object({
+// Mirrors the Mutelist contract: the client only validates YAML *syntax* (that
+// it parses to a mapping). The actual configuration validation (ranges, enums)
+// is performed by the API on create/update and surfaced inline — see
+// `validate_configuration` in the backend serializer.
+export const scanConfigurationFormSchema = z.object({
   name: z
     .string()
     .trim()
@@ -735,7 +920,7 @@ export const scanConfigFormSchema = z.object({
   configuration: z
     .string()
     .trim()
-    .min(1, { message: "Configuration is required" })
+    .min(1, { error: "Configuration is required" })
     .superRefine((val, ctx) => {
       const yamlValidation = validateYaml(val);
       if (!yamlValidation.isValid) {

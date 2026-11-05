@@ -1,7 +1,7 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 5000 to 5999 are reserved for M365 exceptions
+# Exceptions codes from 6000 to 6999 are reserved for M365 exceptions
 class M365BaseException(ProwlerException):
     """Base class for M365 Errors."""
 

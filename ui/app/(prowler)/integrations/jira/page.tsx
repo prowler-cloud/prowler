@@ -1,7 +1,7 @@
 import { getIntegrations } from "@/actions/integrations";
 import { JiraIntegrationsManager } from "@/components/integrations/jira/jira-integrations-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 interface JiraIntegrationsProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

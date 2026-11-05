@@ -21,6 +21,8 @@ from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
+RESOURCE_METADATA_WARNING_SIZE = 10 * 1024 * 1024
+
 
 class Finding(BaseModel):
     """
@@ -342,6 +344,18 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "e2enetworks":
+                output_data["auth_method"] = "api_key_and_bearer_token"
+                output_data["account_uid"] = str(
+                    get_nested_attribute(provider, "identity.project_id")
+                )
+                output_data["account_name"] = str(
+                    get_nested_attribute(provider, "identity.project_id")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
             elif provider.type == "stackit":
                 output_data["auth_method"] = getattr(
                     provider, "auth_method", "api_token"
@@ -502,6 +516,23 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = check_output.region
 
+            elif provider.type == "huaweicloud":
+                output_data["auth_method"] = get_nested_attribute(
+                    provider, "identity.identity_type"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.account_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.account_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = (
+                    getattr(check_output, "resource_arn", "")
+                    or check_output.resource_id
+                )
+                output_data["region"] = check_output.region
+
             elif provider.type == "openstack":
                 output_data["auth_method"] = (
                     f"Username: {get_nested_attribute(provider, 'identity.username')}"
@@ -572,8 +603,28 @@ class Finding(BaseModel):
             )
             raise error
 
+    @staticmethod
+    def _load_resource_metadata(resource, metadata_cache: dict | None) -> dict:
+        """Parse the stored metadata once per resource when a cache is given."""
+        if metadata_cache is None:
+            return json.loads(resource.metadata)
+        if resource.id in metadata_cache:
+            return metadata_cache[resource.id]
+
+        metadata_size = len(resource.metadata)
+        if metadata_size > RESOURCE_METADATA_WARNING_SIZE:
+            logger.warning(
+                f"Resource {resource.id} ({resource.uid}) has {metadata_size} characters of metadata"
+            )
+
+        metadata = json.loads(resource.metadata)
+        metadata_cache[resource.id] = metadata
+        return metadata
+
     @classmethod
-    def transform_api_finding(cls, finding, provider) -> "Finding":
+    def transform_api_finding(
+        cls, finding, provider, metadata_cache: dict | None = None
+    ) -> "Finding":
         """
         Transform a FindingModel instance into an API-friendly Finding object.
 
@@ -587,6 +638,8 @@ class Finding(BaseModel):
         Args:
             finding (API Finding): An API Finding instance containing data from the database.
             provider (Provider): the provider object.
+            metadata_cache (dict | None): parsed resource metadata keyed by resource id,
+                shared by the findings of a batch so each resource is parsed once.
 
         Returns:
             Finding: A new Finding instance populated with data from the provided model.
@@ -595,7 +648,7 @@ class Finding(BaseModel):
         resource = finding.resources.first()
         finding.resource_arn = resource.uid
         finding.resource_name = resource.name
-        finding.resource = json.loads(resource.metadata)
+        finding.resource = cls._load_resource_metadata(resource, metadata_cache)
         finding.resource_details = resource.details
 
         finding.resource_id = resource.name if provider.type == "aws" else resource.uid

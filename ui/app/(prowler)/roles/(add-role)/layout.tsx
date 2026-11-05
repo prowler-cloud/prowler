@@ -1,10 +1,10 @@
 import "@/styles/globals.css";
 
-import { Spacer } from "@heroui/spacer";
+import { X } from "lucide-react";
 import React from "react";
 
 import { WorkflowAddEditRole } from "@/components/roles/workflow";
-import { NavigationHeader } from "@/components/ui";
+import { NavigationHeader } from "@/components/shadcn";
 
 interface RoleLayoutProps {
   children: React.ReactNode;
@@ -13,12 +13,8 @@ interface RoleLayoutProps {
 export default function RoleLayout({ children }: RoleLayoutProps) {
   return (
     <>
-      <NavigationHeader
-        title="Role Management"
-        icon="icon-park-outline:close-small"
-        href="/roles"
-      />
-      <Spacer y={16} />
+      <NavigationHeader title="Role Management" icon={<X />} href="/roles" />
+      <div className="h-16" />
       <div className="grid grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:px-0">
         <div className="order-1 my-auto hidden h-full lg:col-span-4 lg:col-start-2 lg:block">
           <WorkflowAddEditRole />

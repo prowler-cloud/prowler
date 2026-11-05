@@ -1,0 +1,37 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_object_public",
+  "CheckTitle": "Spot-check S3 bucket objects for public ACLs",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::resource",
+  "Severity": "low",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Spot-checks a configurable sample of objects in each S3 bucket and flags any whose ACL grants access to the AllUsers or AuthenticatedUsers groups. This is a sampling-based check, not a comprehensive audit, so public objects outside the sample can be missed. It is disabled by default and must be enabled via the s3_bucket_object_public_enabled configuration flag.",
+  "Risk": "Public objects can be accessed by anyone on the internet, potentially leaking sensitive data. A bucket can appear private at the bucket-policy level while still containing individual objects with public ACL grants.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api put-object-acl --bucket <bucket_name> --key <object_key> --acl private",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "For complete coverage, enable the s3_bucket_acl_prohibited check, which enforces the BucketOwnerEnforced Object Ownership setting (AWS's recommended approach since April 2023) and prevents public object ACLs entirely. Use this spot-check as a supplementary tool for manual assessments.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_object_public"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "s3_bucket_acl_prohibited"
+  ],
+  "Notes": "Disabled by default. Configure s3_bucket_object_public_enabled, s3_bucket_object_public_max_objects, and s3_bucket_object_public_sample_size in the Prowler configuration. Because only a sample of objects is inspected, a PASS does not guarantee the bucket is free of public objects; use s3_bucket_acl_prohibited for full assurance."
+}

@@ -29,7 +29,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "VersionNumber": 123,
                     "LaunchTemplateData": {
                         "UserData": b64encode(
-                            "DB_PASSWORD=foobar123".encode(encoding_format_utf_8)
+                            'DB_PASSWORD="Tr0ub4dor3xKq9vLmZ"'.encode(
+                                encoding_format_utf_8
+                            )
                         ).decode(encoding_format_utf_8),
                         "NetworkInterfaces": [{"AssociatePublicIpAddress": True}],
                     },
@@ -164,7 +166,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential secret found in User Data for EC2 Launch Template tester1 in template versions: Version 123: Secret Keyword on line 1."
+                == "Potential secret found in User Data for EC2 Launch Template tester1 in template versions: Version 123: Generic Password on line 1."
             )
             assert result[0].resource_id == "lt-1234567890"
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -212,7 +214,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -236,7 +238,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4, Version 2: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Generic Password on line 1, JSON Web Token (base64url-encoded) on line 3, Generic Password on line 4, Version 2: Generic Password on line 1, JSON Web Token (base64url-encoded) on line 3, Generic Password on line 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -290,7 +292,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -314,7 +316,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Generic Password on line 1, JSON Web Token (base64url-encoded) on line 3, Generic Password on line 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -358,7 +360,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -382,7 +384,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Generic Password on line 1, JSON Web Token (base64url-encoded) on line 3, Generic Password on line 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -390,6 +392,81 @@ class Test_ec2_launch_template_no_secrets:
                 f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
             )
             assert result[0].resource_tags == []
+
+    def test_one_launch_template_with_verified_secret(self):
+        from prowler.lib.check.models import Severity
+
+        ec2_client = mock.MagicMock()
+        launch_template_name = "tester"
+        launch_template_id = "lt-1234567890"
+        launch_template_arn = (
+            f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+        )
+
+        launch_template_data = TemplateData(
+            user_data=b64encode(
+                "This is some user_data".encode(encoding_format_utf_8)
+            ).decode(encoding_format_utf_8),
+            associate_public_ip_address=True,
+        )
+
+        launch_template_versions = [
+            LaunchTemplateVersion(
+                version_number=1,
+                template_data=launch_template_data,
+            ),
+        ]
+
+        launch_template = LaunchTemplate(
+            name=launch_template_name,
+            id=launch_template_id,
+            arn=launch_template_arn,
+            region=AWS_REGION_US_EAST_1,
+            versions=launch_template_versions,
+        )
+
+        ec2_client.launch_templates = [launch_template]
+        ec2_client.audit_config = {"secrets_validate": True}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=ec2_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.ec2_client",
+                new=ec2_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets.detect_secrets_scan_batch",
+                return_value={
+                    (0, 0): [
+                        {
+                            "type": "JSON Web Token (base64url-encoded)",
+                            "line_number": 1,
+                            "filename": "data",
+                            "hashed_secret": "x",
+                            "is_verified": True,
+                        }
+                    ]
+                },
+            ) as mock_scan,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_launch_template_no_secrets.ec2_launch_template_no_secrets import (
+                ec2_launch_template_no_secrets,
+            )
+
+            check = ec2_launch_template_no_secrets()
+            result = check.execute()
+
+            # The check must forward secrets_validate from the config to the scan.
+            assert mock_scan.call_args.kwargs.get("validate") is True
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].check_metadata.Severity == Severity.critical
+            assert "confirmed to be live" in result[0].status_extended
+            assert result[0].resource_id == launch_template_id
 
     @mock_aws
     def test_one_launch_template_without_user_data(self):
@@ -506,7 +583,7 @@ class Test_ec2_launch_template_no_secrets:
             launch_template_secrets,
             launch_template_no_secrets,
         ]
-        ec2_client.audit_config = {"detect_secrets_plugins": None}
+        ec2_client.audit_config = {}
 
         with (
             mock.patch(
@@ -530,7 +607,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name1} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name1} in template versions: Version 1: Generic Password on line 1, JSON Web Token (base64url-encoded) on line 3, Generic Password on line 4."
             )
             assert result[0].resource_id == launch_template_id1
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -593,10 +670,10 @@ class Test_ec2_launch_template_no_secrets:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
             assert (
-                result[0].status_extended
-                == f"No secrets found in User Data of any version for EC2 Launch Template {launch_template_name}."
+                f"Could not decode User Data for EC2 Launch Template {launch_template_name}"
+                in result[0].status_extended
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1

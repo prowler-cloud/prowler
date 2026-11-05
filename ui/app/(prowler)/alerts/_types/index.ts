@@ -1,3 +1,4 @@
+import type { SlackChannelOption } from "@/types/integrations";
 import { SEVERITY_LEVELS } from "@/types/severities";
 
 // Canonical DSL vocabulary and resource types for the Alerts UI.
@@ -147,6 +148,8 @@ export interface AlertRuleAttributes {
    * `recipient_emails` attribute), not as a JSON:API relationships block.
    */
   recipient_emails?: string[];
+  /** Resolved by the API; the write side takes ids only. */
+  slack_channels?: SlackChannelOption[];
   created_by?: string | null;
   inserted_at: string;
   updated_at: string;

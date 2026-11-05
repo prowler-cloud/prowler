@@ -1,5 +1,5 @@
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { SeverityBadge } from "@/components/ui/table";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { SeverityBadge } from "@/components/shadcn/table";
 import { Requirement } from "@/types/compliance";
 
 import {

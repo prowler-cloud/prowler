@@ -7,8 +7,8 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "2.0"
-  scope: [root, ui, api, prowler]
+  version: "2.1"
+  scope: [root, ui, api, sdk]
   auto_invoke:
     - "Implementing feature"
     - "Fixing bug"
@@ -47,7 +47,7 @@ Before starting, identify which component you're working on:
 | Working in | Stack | Runner | Test pattern | Details |
 |------------|-------|--------|-------------|---------|
 | `ui/` | TypeScript / React | Vitest + RTL | `*.test.{ts,tsx}` (co-located) | See `vitest` skill |
-| `prowler/` | Python | pytest + moto | `*_test.py` (suffix) in `tests/` | See `prowler-test-sdk` skill |
+| `prowler/` | Python | pytest (moto for AWS, MagicMock elsewhere) | `*_test.py` (suffix) in `tests/` | See `prowler-test-sdk` skill |
 | `api/` | Python / Django | pytest + django | `test_*.py` (prefix) in `api/src/backend/**/tests/` | See `prowler-test-api` skill |
 
 ---
@@ -60,10 +60,10 @@ Before writing ANY code:
 
 ```bash
 # 1. Find existing tests
-fd "*.test.tsx" ui/components/feature/
+find ui/components/feature -name "*.test.ts*"
 
 # 2. Check coverage
-pnpm test:coverage -- components/feature/
+cd ui && pnpm test:coverage components/feature/
 
 # 3. Read existing tests
 ```
@@ -72,7 +72,7 @@ pnpm test:coverage -- components/feature/
 
 ```bash
 # 1. Find existing tests
-fd "*_test.py" tests/providers/aws/services/ec2/
+find tests/providers/aws/services/ec2 -name "*_test.py"
 
 # 2. Run specific test
 uv run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
@@ -84,10 +84,10 @@ uv run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
 
 ```bash
 # 1. Find existing tests
-fd "test_*.py" api/src/backend/api/tests/
+find api/src/backend -path "*/tests/*" -name "test_*.py"
 
-# 2. Run specific test
-uv run pytest api/src/backend/api/tests/test_models.py -v
+# 2. Run specific test (API commands run from api/)
+cd api && uv run pytest src/backend/api/tests/test_models.py -v
 
 # 3. Read existing tests
 ```
@@ -144,16 +144,28 @@ describe("PriceCalculator", () => {
 ```python
 class Test_ec2_ami_public:
     @mock_aws
-    def test_no_public_amis(self):
+    def test_no_amis(self):
         # Given - No AMIs exist
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch("prowler...ec2_service", new=EC2(aws_provider)):
-            from prowler...ec2_ami_public import ec2_ami_public
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+                new=EC2(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
+                ec2_ami_public,
+            )
 
             # When
-            check = ec2_ami_public()
-            result = check.execute()
+            result = ec2_ami_public().execute()
 
             # Then
             assert len(result) == 0
@@ -164,9 +176,9 @@ class Test_ec2_ami_public:
 ```python
 @pytest.mark.django_db
 class TestResourceModel:
-    def test_create_resource_with_tags(self, providers_fixture):
+    def test_create_resource_with_tags(self, aws_provider):
         # Given
-        provider, *_ = providers_fixture
+        provider = aws_provider
         tenant_id = provider.tenant_id
 
         # When
@@ -347,10 +359,12 @@ assert mock_service.call_count == 3         # BAD - brittle coupling
 ### UI (`ui/`)
 
 ```bash
-pnpm test                           # Watch mode
-pnpm test:run                       # Single run (CI)
+cd ui
+pnpm test                           # Single run (vitest run)
+pnpm test:watch                     # Watch mode
+pnpm test:unit                      # Unit project only
 pnpm test:coverage                  # Coverage report
-pnpm test ComponentName             # Filter by name
+pnpm test ComponentName             # Filter by file name
 ```
 
 ### SDK (`prowler/`)
@@ -365,7 +379,8 @@ uv run pytest --cov=./prowler tests/      # Coverage
 ### API (`api/`)
 
 ```bash
-uv run pytest -x --tb=short                           # Run all (stop on first fail)
-uv run pytest api/src/backend/api/tests/test_file.py     # Specific file
-uv run pytest -k "test_name" -v                       # Filter by name
+cd api
+uv run pytest -x --tb=short src/backend               # Run all (stop on first fail)
+uv run pytest src/backend/api/tests/test_file.py      # Specific file
+uv run pytest -k "test_name" -v src/backend           # Filter by name
 ```

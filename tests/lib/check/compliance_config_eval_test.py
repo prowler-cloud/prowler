@@ -351,6 +351,37 @@ class Test_accumulate_group_status:
         with pytest.raises(KeyError):
             accumulate_group_status(0, "Muted", counts, {})
 
+    def test_manual_status_is_ignored_not_counted(self):
+        # A MANUAL finding (from a manual, checks-less requirement) has no
+        # PASS/FAIL/Muted column: it must be skipped, not raise KeyError, and
+        # not appear in the tally. Regression test for the M365 CIS compliance
+        # crash "KeyError: 'MANUAL'" (issue #11822).
+        counts = {"FAIL": 0, "PASS": 0}
+        seen = {}
+        accumulate_group_status(0, "MANUAL", counts, seen)
+        assert counts == {"FAIL": 0, "PASS": 0}
+        assert seen == {}
+
+    def test_manual_mixed_with_pass_and_fail(self):
+        # MANUAL findings interleaved with real PASS/FAIL ones only skip
+        # themselves; the PASS/FAIL tally is unaffected.
+        counts = {"FAIL": 0, "PASS": 0}
+        seen = {}
+        accumulate_group_status(0, "MANUAL", counts, seen)
+        accumulate_group_status(1, "PASS", counts, seen)
+        accumulate_group_status(2, "FAIL", counts, seen)
+        accumulate_group_status(3, "MANUAL", counts, seen)
+        assert counts == {"FAIL": 1, "PASS": 1}
+
+    def test_manual_ignored_on_counts_with_muted_key(self):
+        # MANUAL is skipped regardless of the counts shape (e.g. the universal
+        # table's PASS/FAIL/Muted buckets), never creating a "MANUAL" key.
+        counts = {"FAIL": 0, "PASS": 0, "Muted": 0}
+        seen = {}
+        accumulate_group_status(0, "MANUAL", counts, seen)
+        assert counts == {"FAIL": 0, "PASS": 0, "Muted": 0}
+        assert "MANUAL" not in counts
+
 
 class Test_apply_config_status:
     def test_none_config_status_keeps_finding(self):

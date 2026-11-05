@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_pim_privileged_role_administrator_approval_required",
+  "CheckTitle": "PIM requires approval to activate the Privileged Role Administrator role",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Privileged Identity Management (PIM) should require **approval to activate** the **Privileged Role Administrator** role, with at least one approver configured. This role can manage role assignments, so its activation should require human authorization. Requires a Microsoft Entra ID P2 license.",
+  "Risk": "Without approval to activate **Privileged Role Administrator**, an eligible or compromised account can self-activate a role that grants control over role assignments, enabling privilege escalation across the tenant.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-change-default-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **ID Governance** > **Privileged Identity Management** > **Microsoft Entra Roles** > **Roles**\n3. Select **Privileged Role Administrator** > **Role settings**\n4. Set **Require approval to activate** to **Yes** and add at least one approver\n5. Save the settings",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require approval to activate the Privileged Role Administrator role in PIM and configure at least one approver so activations are authorized before use.",
+      "Url": "https://hub.prowler.com/check/entra_pim_privileged_role_administrator_approval_required"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires Microsoft Entra ID P2. If PIM role settings are unavailable (no P2), the check returns no findings for this role."
+}

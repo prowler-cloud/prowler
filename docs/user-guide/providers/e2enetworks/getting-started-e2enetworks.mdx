@@ -1,0 +1,66 @@
+---
+title: 'Getting Started With E2E Networks on Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.34.0" />
+
+Prowler for E2E Networks scans E2E Networks infrastructure for security misconfigurations across compute nodes, networking, security groups, load balancers, storage, and managed databases.
+
+<Note>
+E2E Networks support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Set up authentication for E2E Networks with the [E2E Networks Authentication](/user-guide/providers/e2enetworks/authentication) guide before starting:
+
+- Create an E2E Networks API key and auth token from the MyAccount API Tokens section
+- Note the numeric project ID of the project to scan
+
+## Prowler CLI
+
+### Run Prowler for E2E Networks
+
+Once authenticated, export the credentials as environment variables and run Prowler for E2E Networks. Environment variables keep secrets out of shell history and process listings:
+
+```bash
+export E2E_NETWORKS_API_KEY="your-api-key"
+export E2E_NETWORKS_AUTH_TOKEN="your-auth-token"
+export E2E_NETWORKS_PROJECT_ID="your-project-id"
+prowler e2enetworks
+```
+
+### Run Specific Checks
+
+```bash
+prowler e2enetworks --checks node_encryption_enabled storage_block_volume_not_orphaned
+```
+
+### Run a Specific Service
+
+```bash
+prowler e2enetworks --services node
+```
+
+### Scan Specific Regions
+
+Use `--region` (aliases `--filter-region` and `-f`) to limit the scan to one or more E2E Networks regions. When the flag is omitted, Prowler reads `E2E_NETWORKS_REGION` and otherwise scans all regions (Delhi, Chennai).
+
+```bash
+prowler e2enetworks --region Delhi Chennai
+```
+
+## Available Services
+
+Prowler for E2E Networks currently supports the following services:
+
+| Service | Description |
+|---------|-------------|
+| `database` | Managed database clusters and their backup, network, and encryption settings |
+| `loadbalancer` | Application load balancers and their TLS, health-check, and protection settings |
+| `network` | Virtual Private Clouds, peering, and reserved public IP addresses |
+| `node` | Compute nodes and their encryption, protection, and network configuration |
+| `securitygroup` | Security groups and their inbound and default traffic rules |
+| `storage` | Block volumes and file storage (EFS/EPFS) with their protection settings |

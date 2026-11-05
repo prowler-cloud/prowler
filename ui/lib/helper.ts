@@ -6,7 +6,7 @@ import {
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
@@ -188,9 +188,14 @@ export const downloadScanZip = async (
 };
 
 /**
- * Generic function to download a file from base64 data
+ * Generic function to download a file from base64 data.
+ *
+ * Exported so feature-local wrappers (e.g. the cross-provider PDF download in
+ * app/(prowler)/compliance/_lib) reuse the base64→blob handling instead of
+ * duplicating it; those wrappers cannot live here because their server
+ * actions import the @/lib barrel, which would create a cycle.
  */
-const downloadFile = async (
+export const downloadFile = async (
   result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
@@ -346,11 +351,19 @@ export const isGithubOAuthEnabled =
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
+/** Returned by {@link checkTaskStatus} when `maxRetries` is exhausted, so callers
+ * can tell an exhausted wait apart from a real task failure. */
+export const TASK_STATUS_MAX_RETRIES_ERROR = "Max retries exceeded";
+
+/**
+ * Polls a task until it settles. The settled task comes back with the verdict so
+ * callers can read its result without fetching the same task again.
+ */
 export const checkTaskStatus = async (
   taskId: string,
   maxRetries: number = 20,
   retryDelay: number = 1500,
-): Promise<{ completed: boolean; error?: string }> => {
+): Promise<{ completed: boolean; error?: string; task?: any }> => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const task = await getTask(taskId);
 
@@ -363,9 +376,13 @@ export const checkTaskStatus = async (
 
     switch (state) {
       case "completed":
-        return { completed: true };
+        return { completed: true, task };
       case "failed":
-        return { completed: false, error: task.data.attributes.result.error };
+        return {
+          completed: false,
+          error: task.data.attributes.result.error,
+          task,
+        };
       case "available":
       case "scheduled":
       case "executing":
@@ -377,26 +394,11 @@ export const checkTaskStatus = async (
     }
   }
 
-  return { completed: false, error: "Max retries exceeded" };
+  return { completed: false, error: TASK_STATUS_MAX_RETRIES_ERROR };
 };
 
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
-
-// Helper function to create dictionaries by type
-export function createDict(type: string, data: any) {
-  const includedField = data?.included?.filter(
-    (item: { type: string }) => item.type === type,
-  );
-
-  if (!includedField || includedField.length === 0) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    includedField.map((item: { id: string }) => [item.id, item]),
-  );
-}
 
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
@@ -448,7 +450,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Provides complete visibility across all the providers and its related resources",
+      "Grants organization-wide visibility across all providers, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",
@@ -471,7 +473,24 @@ export const permissionFormFields: PermissionInfo[] = [
     label: "Manage Alerts",
     description: "Allows creating and managing custom alerts",
   },
+  {
+    field: "manage_lighthouse_ai_configuration",
+    label: "Manage Lighthouse AI",
+    description:
+      "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
+  },
+  {
+    field: "manage_registry",
+    label: "Manage Registry",
+    description: "Allows managing tenant Registry credentials and artifacts",
+  },
 
+  {
+    field: "manage_prowler_realtime",
+    label: "Manage Realtime",
+    description:
+      "Allows setting up Prowler Realtime Detection and Remediation, including its policies, alerts and fixes",
+  },
   {
     field: "manage_billing",
     label: "Manage Billing",

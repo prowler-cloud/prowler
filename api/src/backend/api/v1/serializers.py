@@ -1,7 +1,10 @@
 import base64
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 
+import yaml
+from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
@@ -37,6 +40,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializer_utils.authentication import blacklist_user_refresh_tokens
 from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
@@ -45,6 +49,7 @@ from api.v1.serializer_utils.integrations import (
     JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
+    replace_integration_providers,
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
@@ -55,15 +60,18 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from api.validators import validate_lighthouse_openai_compatible_base_url
+from config.custom_logging import BackendLogger
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.providers.oraclecloud.config import OCI_REGIONS
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -71,9 +79,28 @@ from rest_framework_json_api.relations import SerializerMethodResourceRelatedFie
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import get_md5_hash_password
+
+logger = logging.getLogger(BackendLogger.API)
 
 # Base
+
+
+def _validate_lighthouse_base_url_without_dns(base_url: str) -> None:
+    try:
+        validate_lighthouse_openai_compatible_base_url(base_url, resolve_dns=False)
+    except DjangoValidationError as error:
+        raise ValidationError({"base_url": error.messages[0]}) from error
+
+
+def _reraise_lighthouse_credentials_errors(error: ValidationError) -> None:
+    details = error.detail.copy()
+    for key, value in details.items():
+        error.detail[f"credentials/{key}"] = value
+        del error.detail[key]
+    raise error
 
 
 class BaseModelSerializerV1(serializers.ModelSerializer):
@@ -101,6 +128,20 @@ class RLSSerializer(BaseModelSerializerV1):
         tenant_id = self.context.get("tenant_id")
         validated_data["tenant_id"] = tenant_id
         return super().create(validated_data)
+
+
+class ScopedProviderFieldMixin:
+    provider_field_name = "provider"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        provider_queryset = self.context.get("provider_queryset")
+        provider_field = self.fields.get(self.provider_field_name)
+        if provider_queryset is None or provider_field is None:
+            return
+
+        related_field = getattr(provider_field, "child_relation", provider_field)
+        related_field.queryset = provider_queryset
 
 
 class StateEnumSerializerField(serializers.ChoiceField):
@@ -231,6 +272,18 @@ class TokenRefreshSerializer(BaseSerializerV1):
         try:
             # Validate the refresh token
             refresh = RefreshToken(refresh_token)
+            if api_settings.CHECK_REVOKE_TOKEN:
+                user_id = refresh.payload.get(api_settings.USER_ID_CLAIM)
+                try:
+                    user = User.objects.using(MainRouter.admin_db).get(
+                        **{api_settings.USER_ID_FIELD: user_id}
+                    )
+                except User.DoesNotExist:
+                    raise TokenError("User not found.") from None
+                if refresh.get(api_settings.REVOKE_TOKEN_CLAIM) != (
+                    get_md5_hash_password(user.password)
+                ):
+                    raise TokenError("The user's password has been changed.")
             # Generate new access token
             access_token = refresh.access_token
 
@@ -277,6 +330,15 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
 # Users
 
 
+class ActiveMembershipRelatedField(SerializerMethodResourceRelatedField):
+    def to_representation(self, value):
+        representation = super().to_representation(value)
+        representation["meta"] = {
+            "active": str(value.tenant_id) == str(self.context["request"].tenant_id),
+        }
+        return representation
+
+
 class UserSerializer(BaseModelSerializerV1):
     """
     Serializer for the User model.
@@ -315,27 +377,54 @@ class UserSerializer(BaseModelSerializerV1):
     def _can_view_relationships(self, instance) -> bool:
         """Allow self to view own relationships. Require manage_account to view others."""
         role = self.context.get("role")
+        return self._is_self(instance) or bool(role and role.manage_account)
+
+    def _is_self(self, instance) -> bool:
         request = self.context.get("request")
-        is_self = bool(
+        return bool(
             request
             and getattr(request, "user", None)
             and getattr(instance, "id", None) == request.user.id
         )
-        return is_self or (role and role.manage_account)
+
+    def _active_tenant_id(self):
+        return getattr(self.context.get("request"), "tenant_id", None)
+
+    @staticmethod
+    def _in_tenant(related_manager, tenant_id):
+        """Filter a prefetched related manager in memory.
+
+        ``.filter()`` clones the queryset without its result cache, so it would
+        discard the viewset's prefetch and re-query once per serialized user.
+        """
+        return [
+            item
+            for item in related_manager.all()
+            if str(item.tenant_id) == str(tenant_id)
+        ]
 
     def get_roles(self, instance):
-        return (
-            instance.roles.all()
-            if self._can_view_relationships(instance)
-            else Role.objects.none()
-        )
+        tenant_id = self._active_tenant_id()
+        if not tenant_id or not self._can_view_relationships(instance):
+            return Role.objects.none()
+        return self._in_tenant(instance.roles, tenant_id)
 
     def get_memberships(self, instance):
-        return (
-            instance.memberships.all()
-            if self._can_view_relationships(instance)
-            else Membership.objects.none()
-        )
+        if not self._can_view_relationships(instance):
+            return Membership.objects.none()
+        # Own memberships span tenants on purpose: the tenant switcher reads them.
+        if self._is_self(instance):
+            return instance.memberships.all()
+        tenant_id = self._active_tenant_id()
+        if not tenant_id:
+            return Membership.objects.none()
+        return self._in_tenant(instance.memberships, tenant_id)
+
+
+class UserMeSerializer(UserSerializer):
+    memberships = ActiveMembershipRelatedField(
+        many=True, read_only=True, source="memberships", method_name="get_memberships"
+    )
 
 
 class UserIncludeSerializer(UserSerializer):
@@ -404,7 +493,13 @@ class UserUpdateSerializer(BaseWriteSerializer):
         password = validated_data.pop("password", None)
         if password:
             validate_password(password, user=instance)
-            instance.set_password(password)
+            with transaction.atomic(using=MainRouter.admin_db):
+                instance.set_password(password)
+                for attr, value in validated_data.items():
+                    setattr(instance, attr, value)
+                blacklist_user_refresh_tokens(instance.id)
+                instance.save(using=MainRouter.admin_db)
+                return instance
         return super().update(instance, validated_data)
 
 
@@ -443,8 +538,8 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
 
     def create(self, validated_data):
         role_ids = [item["id"] for item in validated_data["roles"]]
-        roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
+        roles = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
 
         new_relationships = [
             UserRoleRelationship(
@@ -458,8 +553,8 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
 
     def update(self, instance, validated_data):
         role_ids = [item["id"] for item in validated_data["roles"]]
-        roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
+        roles = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
 
         # Safeguard: A tenant must always have at least one user with MANAGE_ACCOUNT.
         # If the target roles do NOT include MANAGE_ACCOUNT, and the current user is
@@ -489,7 +584,7 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
                     }
                 )
 
-        instance.roles.clear()
+        UserRoleRelationship.objects.filter(user=instance, tenant_id=tenant_id).delete()
         new_relationships = [
             UserRoleRelationship(user=instance, role=r, tenant_id=tenant_id)
             for r in roles
@@ -568,13 +663,24 @@ class TaskSerializer(RLSSerializer, TaskBase):
 
     @extend_schema_field(serializers.JSONField())
     def get_task_args(self, obj):
-        task_args = self.get_json_field(obj, "task_kwargs")
-        # Celery task_kwargs are stored as a double string JSON in the database when not empty
-        if isinstance(task_args, str):
-            task_args = json.loads(task_args.replace("'", '"').replace("None", "null"))
-        # Remove tenant_id from task_kwargs if present
-        task_args.pop("tenant_id", None)
+        task_kwargs = (
+            getattr(obj.task_runner_task, "task_kwargs", None)
+            if obj.task_runner_task
+            else None
+        )
+        try:
+            task_args = decode_celery_field(task_kwargs, {})
+            if not isinstance(task_args, dict):
+                raise ValueError("Decoded task kwargs must be a dictionary")
+        except ValueError:
+            logger.warning(
+                "Unable to decode task kwargs for task %s; returning empty task_args.",
+                obj.id,
+            )
+            return {}
 
+        task_args = task_args.copy()
+        task_args.pop("tenant_id", None)
         return task_args
 
     @staticmethod
@@ -646,15 +752,39 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
 
     included_serializers = {"tenant": "api.v1.serializers.TenantIncludeSerializer"}
 
+    _REQUESTER_TENANTS_ATTR = "_prowler_requester_tenants"
+
+    def _requester_tenants(self):
+        """Tenants the requester belongs to, resolved once per request.
+
+        Memoised on the request because DRF builds a serializer instance per
+        included object, so a per-instance cache would still query per membership.
+        """
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None:
+            return {}
+        tenants = getattr(request, self._REQUESTER_TENANTS_ATTR, None)
+        if tenants is None:
+            tenants = {
+                tenant.id: tenant
+                for tenant in Tenant.objects.using(MainRouter.admin_db).filter(
+                    membership__user_id=user.id
+                )
+            }
+            setattr(request, self._REQUESTER_TENANTS_ATTR, tenants)
+        return tenants
+
     def get_tenant(self, instance):
-        try:
-            return Tenant.objects.using(MainRouter.admin_db).get(id=instance.tenant_id)
-        except Tenant.DoesNotExist:
-            return None
+        """Resolve the tenant only when the requester is a member of it."""
+        return self._requester_tenants().get(instance.tenant_id)
 
 
 # Provider Groups
-class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
+class ProviderGroupSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteSerializer
+):
+    provider_field_name = "providers"
     providers = serializers.ResourceRelatedField(
         queryset=Provider.objects.all(), many=True, required=False
     )
@@ -812,9 +942,27 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
         help_text="List of resource identifier objects representing providers.",
     )
 
+    def get_providers(self, validated_data):
+        provider_ids = {item["id"] for item in validated_data["providers"]}
+        provider_queryset = self.context.get("provider_queryset")
+        if provider_queryset is None:
+            provider_queryset = Provider.objects.filter(
+                tenant_id=self.context.get("tenant_id")
+            )
+
+        providers = list(provider_queryset.filter(id__in=provider_ids))
+        if {provider.id for provider in providers} != provider_ids:
+            raise serializers.ValidationError(
+                {
+                    "providers": (
+                        "One or more providers do not exist or are not accessible."
+                    )
+                }
+            )
+        return providers
+
     def create(self, validated_data):
-        provider_ids = [item["id"] for item in validated_data["providers"]]
-        providers = Provider.objects.filter(id__in=provider_ids)
+        providers = self.get_providers(validated_data)
         tenant_id = self.context.get("tenant_id")
 
         new_relationships = [
@@ -830,8 +978,7 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
         return self.context.get("provider_group")
 
     def update(self, instance, validated_data):
-        provider_ids = [item["id"] for item in validated_data["providers"]]
-        providers = Provider.objects.filter(id__in=provider_ids)
+        providers = self.get_providers(validated_data)
         tenant_id = self.context.get("tenant_id")
 
         instance.providers.clear()
@@ -1070,7 +1217,9 @@ class ScanIncludeSerializer(RLSSerializer):
     }
 
 
-class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
+class ScanCreateSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteSerializer
+):
     class Meta:
         model = Scan
         # TODO: add mutelist when implemented
@@ -1224,6 +1373,28 @@ class AttackPathsQuerySerializer(BaseSerializerV1):
     attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
     provider = serializers.CharField()
     parameters = AttackPathsQueryParameterSerializer(many=True)
+    # The terminal impact the query leads to (e.g. {"kind": "code_execution",
+    # "label": "Code execution"}), or null if the query has none. The UI renders
+    # this as the graph's terminal outcome node.
+    outcome = serializers.SerializerMethodField()
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "nullable": True,
+            "properties": {
+                "kind": {"type": "string"},
+                "label": {"type": "string"},
+                "partial": {"type": "boolean"},
+            },
+        }
+    )
+    def get_outcome(self, definition):
+        outcome = getattr(definition, "outcome", None)
+        if outcome is None:
+            return None
+        meta = outcome.value
+        return {"kind": meta.kind, "label": meta.label, "partial": meta.partial}
 
     class JSONAPIMeta:
         resource_name = "attack-paths-queries"
@@ -1530,6 +1701,76 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
+KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR = (
+    "Only inline Kubernetes credentials are supported. "
+    "For user authentication use token, username/password, or client-certificate-data with client-key-data; "
+    "clusters may use certificate-authority-data. "
+    "File-path fields (tokenFile, client-certificate, client-key, certificate-authority), "
+    "command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported."
+)
+KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
+
+
+KUBECONFIG_ALLOWED_USER_KEYS = frozenset(
+    {
+        "token",
+        "username",
+        "password",
+        "client-certificate-data",
+        "client-key-data",
+        "as",
+        "as-uid",
+        "as-groups",
+        "as-user-extra",
+    }
+)
+KUBECONFIG_ALLOWED_CLUSTER_KEYS = frozenset(
+    {
+        "server",
+        "certificate-authority-data",
+        "insecure-skip-tls-verify",
+        "tls-server-name",
+        "disable-compression",
+        "extensions",
+    }
+)
+
+
+def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
+    """Accept only inline credentials; reject file-reference and auth-provider fields."""
+    users = kubeconfig.get("users", [])
+    if not isinstance(users, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+    for user_entry in users:
+        if not isinstance(user_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        user = user_entry.get("user", {})
+        if not isinstance(user, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if any(key not in KUBECONFIG_ALLOWED_USER_KEYS for key in user):
+            return False
+
+    clusters = kubeconfig.get("clusters", [])
+    if not isinstance(clusters, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+    for cluster_entry in clusters:
+        if not isinstance(cluster_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        cluster = cluster_entry.get("cluster", {})
+        if not isinstance(cluster, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if any(key not in KUBECONFIG_ALLOWED_CLUSTER_KEYS for key in cluster):
+            return False
+
+    return True
+
+
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
     def validate_secret_based_on_provider(
@@ -1608,6 +1849,7 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 validation_error.detail[f"secret/{key}"] = value
                 del validation_error.detail[key]
             raise validation_error
+        return serializer.validated_data
 
 
 class AwsProviderSecret(serializers.Serializer):
@@ -1709,7 +1951,25 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 
 class KubernetesProviderSecret(serializers.Serializer):
-    kubeconfig_content = serializers.CharField()
+    kubeconfig_content = serializers.CharField(trim_whitespace=False)
+
+    def validate_kubeconfig_content(self, kubeconfig_content):
+        try:
+            kubeconfig = yaml.safe_load(kubeconfig_content)
+        except yaml.YAMLError as exc:
+            raise serializers.ValidationError(
+                KUBERNETES_KUBECONFIG_INVALID_ERROR
+            ) from exc
+
+        if not isinstance(kubeconfig, dict):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if not kubeconfig_is_inline_only_credentials(kubeconfig):
+            raise serializers.ValidationError(
+                KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
+            )
+
+        return kubeconfig_content
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1733,14 +1993,40 @@ class IacProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class OCIHomeRegionField(serializers.Field):
+    """Optional OCI home region; blank or non-string legacy values are dropped."""
+
+    def to_internal_value(self, data):
+        if not isinstance(data, str) or not data.strip():
+            return None
+        region = data.strip()
+        if region not in OCI_REGIONS:
+            raise serializers.ValidationError(f"Invalid OCI region: {region}")
+        return region
+
+    def to_representation(self, value):
+        return value
+
+
 class OracleCloudProviderSecret(serializers.Serializer):
     user = serializers.CharField()
     fingerprint = serializers.CharField()
     key_file = serializers.CharField(required=False)
     key_content = serializers.CharField(required=False)
     tenancy = serializers.CharField()
-    region = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
+    region = OCIHomeRegionField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        if not attrs.get("region"):
+            attrs.pop("region", None)
+
+        if "key_file" not in attrs and "key_content" not in attrs:
+            raise serializers.ValidationError(
+                {"key_file": "Either key_file or key_content must be provided."}
+            )
+
+        return attrs
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1861,7 +2147,9 @@ class ProviderSecretSerializer(RLSSerializer):
         ]
 
 
-class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSerializer):
+class ProviderSecretCreateSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteProviderSecretSerializer
+):
     secret = ProviderSecretField(write_only=True)
 
     class Meta:
@@ -1885,7 +2173,11 @@ class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSeria
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
-        self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
+        validated_secret = self.validate_secret_based_on_provider(
+            provider.provider, secret_type, secret
+        )
+        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+            validated_attrs["secret"] = validated_secret
         return validated_attrs
 
 
@@ -1917,7 +2209,11 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
-        self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
+        validated_secret = self.validate_secret_based_on_provider(
+            provider.provider, secret_type, secret
+        )
+        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+            validated_attrs["secret"] = validated_secret
         return validated_attrs
 
 
@@ -1936,6 +2232,12 @@ class InvitationSerializer(RLSSerializer):
         tenant_id = self.context.get("tenant_id")
         if tenant_id is not None:
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_lapsed:
+            data["state"] = Invitation.State.EXPIRED.value
+        return data
 
     class Meta:
         model = Invitation
@@ -1963,6 +2265,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
     def validate_email(self, value):
+        value = value.strip().lower()
         user = User.objects.filter(email=value).first()
         tenant_id = self.context["tenant_id"]
         if user and Membership.objects.filter(user=user, tenant=tenant_id).exists():
@@ -1970,9 +2273,13 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
                 "The user may already be a member of the tenant or there was an issue with the "
                 "email provided."
             )
-        if Invitation.objects.filter(
-            email=value, state=Invitation.State.PENDING
-        ).exists():
+        pending_invitations = Invitation.objects.filter(
+            tenant_id=tenant_id, email=value, state=Invitation.State.PENDING
+        )
+        pending_invitations.filter(Invitation.lapsed_q()).update(
+            state=Invitation.State.EXPIRED
+        )
+        if pending_invitations.filter(expires_at__gt=datetime.now(UTC)).exists():
             raise ValidationError(
                 "Unable to process your request. Please check the information provided and "
                 "try again."
@@ -2636,6 +2943,37 @@ class ScheduleDailyCreateSerializer(BaseSerializerV1):
 # Integrations
 
 
+class IntegrationProviderVisibilityMixin:
+    """
+    Keep the `providers` relationship within the provider visibility of the role.
+
+    The view injects `allowed_providers` in the serializer context: `None` when the role
+    has unlimited visibility, and the queryset of visible providers otherwise. Roles with
+    limited visibility can neither attach providers they cannot see nor discover, through
+    the serialized output, the ones already attached.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        allowed_providers = self.context.get("allowed_providers")
+        if allowed_providers is not None:
+            self.fields["providers"].child_relation.queryset = allowed_providers
+
+    def hide_restricted_providers(self, representation: dict) -> dict:
+        allowed_providers = self.context.get("allowed_providers")
+        # `providers` is missing when the request asks for a subset of the fields
+        if allowed_providers is None or "providers" not in representation:
+            return representation
+
+        allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
+        representation["providers"] = [
+            provider
+            for provider in representation["providers"]
+            if provider["id"] in allowed_provider_ids
+        ]
+        return representation
+
+
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
         integration_type = attrs.get("integration_type")
@@ -2768,7 +3106,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
             )
 
 
-class IntegrationSerializer(RLSSerializer):
+class IntegrationSerializer(IntegrationProviderVisibilityMixin, RLSSerializer):
     """
     Serializer for the Integration model.
     """
@@ -2797,23 +3135,24 @@ class IntegrationSerializer(RLSSerializer):
     }
 
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        allowed_providers = self.context.get("allowed_providers")
-        if allowed_providers:
-            allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
-            representation["providers"] = [
-                provider
-                for provider in representation["providers"]
-                if provider["id"] in allowed_provider_ids
-            ]
-        if instance.integration_type == Integration.IntegrationChoices.JIRA:
-            representation["configuration"].update(
-                {"domain": instance.credentials.get("domain")}
-            )
+        representation = self.hide_restricted_providers(
+            super().to_representation(instance)
+        )
+        # `configuration` is missing when the request asks for a subset of the fields
+        if (
+            instance.integration_type == Integration.IntegrationChoices.JIRA
+            and "configuration" in representation
+        ):
+            representation["configuration"] = {
+                **representation["configuration"],
+                "domain": instance.credentials.get("domain"),
+            }
         return representation
 
 
-class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
+class IntegrationCreateSerializer(
+    IntegrationProviderVisibilityMixin, BaseWriteIntegrationSerializer
+):
     credentials = IntegrationCredentialField(write_only=True)
     configuration = IntegrationConfigField()
     providers = serializers.ResourceRelatedField(
@@ -2864,22 +3203,18 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         tenant_id = self.context.get("tenant_id")
 
         providers = validated_data.pop("providers", [])
-        integration = Integration.objects.create(tenant_id=tenant_id, **validated_data)
-
-        through_model_instances = [
-            IntegrationProviderRelationship(
-                integration=integration,
-                provider=provider,
-                tenant_id=tenant_id,
+        with transaction.atomic():
+            integration = Integration.objects.create(
+                tenant_id=tenant_id, **validated_data
             )
-            for provider in providers
-        ]
-        IntegrationProviderRelationship.objects.bulk_create(through_model_instances)
+            replace_integration_providers(integration, providers, tenant_id)
 
         return integration
 
 
-class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
+class IntegrationUpdateSerializer(
+    IntegrationProviderVisibilityMixin, BaseWriteIntegrationSerializer
+):
     credentials = IntegrationCredentialField(write_only=True, required=False)
     configuration = IntegrationConfigField(required=False)
     providers = serializers.ResourceRelatedField(
@@ -2924,15 +3259,13 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
 
     def update(self, instance, validated_data):
         tenant_id = self.context.get("tenant_id")
-        if validated_data.get("providers") is not None:
-            instance.providers.clear()
-            new_relationships = [
-                IntegrationProviderRelationship(
-                    integration=instance, provider=provider, tenant_id=tenant_id
-                )
-                for provider in validated_data["providers"]
-            ]
-            IntegrationProviderRelationship.objects.bulk_create(new_relationships)
+        # Relationships are replaced here, so they are kept out of the default
+        # `ModelSerializer.update()`, which would otherwise reset them all. The view
+        # rejects updates on integrations shared with providers hidden to the role, so
+        # every existing relationship is visible to the requester at this point
+        providers = validated_data.pop("providers", None)
+        if providers is not None:
+            replace_integration_providers(instance, providers, tenant_id)
 
         # Preserve regions field for Security Hub integrations
         if instance.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
@@ -2944,12 +3277,19 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        # Ensure JIRA integrations show updated domain in configuration from credentials
-        if instance.integration_type == Integration.IntegrationChoices.JIRA:
-            representation["configuration"].update(
-                {"domain": instance.credentials.get("domain")}
-            )
+        representation = self.hide_restricted_providers(
+            super().to_representation(instance)
+        )
+        # Ensure JIRA integrations show updated domain in configuration from credentials.
+        # `configuration` is missing when the request asks for a subset of the fields
+        if (
+            instance.integration_type == Integration.IntegrationChoices.JIRA
+            and "configuration" in representation
+        ):
+            representation["configuration"] = {
+                **representation["configuration"],
+                "domain": instance.credentials.get("domain"),
+            }
         return representation
 
 
@@ -3147,6 +3487,9 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 
 class SamlInitiateSerializer(BaseSerializerV1):
     email_domain = serializers.CharField()
+    callback_url = serializers.CharField(
+        required=False, allow_blank=True, max_length=2048
+    )
 
     class JSONAPIMeta:
         resource_name = "saml-initiate"
@@ -3578,11 +3921,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             provider_type == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
         ):
@@ -3591,27 +3930,20 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
         ):
             if not base_url:
                 raise ValidationError({"base_url": "Base URL is required."})
+            _validate_lighthouse_base_url_without_dns(base_url)
             try:
                 OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
 
         return super().validate(attrs)
 
@@ -3674,11 +4006,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             credentials is not None
             and provider_type
@@ -3702,11 +4030,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
 
             # Then enforce invariants about not changing the auth method
             # If the existing config uses an API key, forbid introducing access keys.
@@ -3733,24 +4057,23 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     }
                 )
         elif (
-            credentials is not None
-            and provider_type
+            provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
         ):
-            if base_url is None:
-                pass
-            elif not base_url:
+            effective_base_url = (
+                base_url if "base_url" in attrs else getattr(self.instance, "base_url")
+            )
+            if not effective_base_url:
                 raise ValidationError({"base_url": "Base URL cannot be empty."})
-            try:
-                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
-                    raise_exception=True
-                )
-            except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+            if "base_url" in attrs:
+                _validate_lighthouse_base_url_without_dns(effective_base_url)
+            if credentials is not None:
+                try:
+                    OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
+                        raise_exception=True
+                    )
+                except ValidationError as e:
+                    _reraise_lighthouse_credentials_errors(e)
 
         return super().validate(attrs)
 

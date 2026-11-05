@@ -31,6 +31,8 @@ aws:
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
   max_ec2_instance_age_in_days: 180
+  # aws.ec2_instance_stopped_older_than_specific_days --> by default is 30 days
+  max_ec2_instance_stopped_days: 30
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_any_port
   # allowed network interface types for security groups open to the Internet
   ec2_allowed_interface_types:
@@ -91,6 +93,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -136,6 +160,14 @@ aws:
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
+
+  # AWS Inspector2
+  # aws.inspector2_coverage_recently_scanned
+  # Maximum days since Inspector2 last scanned an actively covered resource
+  inspector2_max_days_since_last_scan: 3
+  # aws.inspector2_active_findings_within_max_age
+  # Maximum days an Inspector2 finding can stay active since it was first observed
+  inspector2_active_finding_max_age_days: 192
 
   # AWS Trusted Advisor
   # aws.trustedadvisor_premium_support_plan_subscribed
@@ -362,6 +394,21 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # aws.elbv2_listener_pqc_tls_enabled
+  # Allowed post-quantum TLS security policies for ELBv2 HTTPS/TLS listeners
+  elbv2_listener_pqc_tls_allowed_policies:
+    - "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext2-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-3-FIPS-PQ-2025-09"
+
   # AWS Elasticache Configuration
   # aws.elasticache_redis_cluster_backup_enabled
   # Minimum number of days that a Redis cluster must have backups retention period
@@ -390,6 +437,7 @@ azure:
   defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
   php_latest_version: "8.2"
   # azure.app_ensure_python_version_is_latest

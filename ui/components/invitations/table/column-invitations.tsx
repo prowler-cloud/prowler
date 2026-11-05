@@ -2,8 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
 import { InvitationProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -27,11 +27,11 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
   {
     accessorKey: "state",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"State"} param="state" />
+      <DataTableColumnHeader column={column} title="Status" param="state" />
     ),
     cell: ({ row }) => {
       const { state } = getInvitationData(row);
-      return <p className="font-semibold">{state}</p>;
+      return <p className="font-semibold capitalize">{state}</p>;
     },
   },
   {

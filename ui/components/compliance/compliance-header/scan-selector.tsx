@@ -60,11 +60,7 @@ export const ScanSelector = ({
       </SelectTrigger>
       <SelectContent>
         {scans.map((scan) => (
-          <SelectItem
-            key={scan.id}
-            value={scan.id}
-            className="data-[state=checked]:bg-bg-neutral-tertiary [&_svg:not([class*='size-'])]:size-6"
-          >
+          <SelectItem key={scan.id} value={scan.id}>
             <ComplianceScanInfo scan={scan} />
           </SelectItem>
         ))}

@@ -3,12 +3,59 @@ constraint surface (CIDRs, account IDs, port ranges, enums, thresholds)."""
 
 import pytest
 
+from prowler.config.scan_config_schema import SCAN_CONFIG_SCHEMA
 from prowler.config.schema.aws import AWSProviderConfig
 from prowler.config.schema.validator import validate_provider_config
 
 
 def _validate(raw):
     return validate_provider_config("aws", raw, AWSProviderConfig)
+
+
+RESOURCE_LIMIT_KEYS = [
+    "max_scanned_resources_per_service",
+    "max_ebs_snapshots",
+    "max_backup_recovery_points",
+    "max_cloudwatch_log_groups",
+    "max_lambda_functions",
+    "max_ecs_task_definitions",
+    "max_codeartifact_packages",
+]
+
+
+class Test_AWS_Resource_Limits:
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_positive_values_round_trip(self, key):
+        assert _validate({key: 100}) == {key: 100}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_null_values_round_trip(self, key):
+        assert _validate({key: None}) == {key: None}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_zero_disable_sentinel_round_trips(self, key):
+        assert _validate({key: 0}) == {key: 0}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_numeric_strings_are_coerced_to_int(self, key):
+        assert _validate({key: "100"}) == {key: 100}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_disable_sentinel_minus_one_round_trips(self, key):
+        assert _validate({key: -1}) == {key: -1}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    @pytest.mark.parametrize("value", [True, False])
+    def test_booleans_are_dropped_not_coerced_to_int(self, key, value):
+        assert _validate({key: value}) == {}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_invalid_strings_are_dropped(self, key):
+        assert _validate({key: "not-an-int"}) == {}
+
+    @pytest.mark.parametrize("key", RESOURCE_LIMIT_KEYS)
+    def test_keys_are_exposed_in_scan_config_schema(self, key):
+        assert key in SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
 
 
 class Test_AWS_Threat_Detection_Thresholds:
@@ -129,44 +176,100 @@ class Test_AWS_Enums:
         assert _validate({"ecr_repository_vulnerability_minimum_severity": level}) == {}
 
 
-class Test_AWS_Detect_Secrets_Plugins:
-    def test_plugin_without_limit(self):
-        out = _validate({"detect_secrets_plugins": [{"name": "AWSKeyDetector"}]})
-        assert out == {"detect_secrets_plugins": [{"name": "AWSKeyDetector"}]}
+class TestAWSELBv2PQCTLSAllowedPolicies:
+    def test_valid_policy_list_round_trips(self):
+        policies = [
+            "ELBSecurityPolicy-TLS13-1-2-Res-2021-06",
+            "ELBSecurityPolicy-TLS13-1-3-2021-06",
+        ]
 
-    def test_plugin_with_limit(self):
-        out = _validate(
-            {
-                "detect_secrets_plugins": [
-                    {"name": "Base64HighEntropyString", "limit": 6.0}
-                ]
-            }
-        )
-        assert out == {
-            "detect_secrets_plugins": [
-                {"name": "Base64HighEntropyString", "limit": 6.0}
-            ]
+        assert _validate({"elbv2_listener_pqc_tls_allowed_policies": policies}) == {
+            "elbv2_listener_pqc_tls_allowed_policies": policies
         }
 
-    def test_plugin_missing_name_drops_whole_field(self):
-        # ``name`` is required by the upstream library.
-        out = _validate({"detect_secrets_plugins": [{"limit": 6.0}]})
-        assert out == {}
+    def test_key_is_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
 
-    def test_extra_plugin_kwargs_pass_through(self):
-        # Plugins can have arbitrary extra params (extra="allow" on the
-        # nested model). They must round-trip.
-        out = _validate(
-            {
-                "detect_secrets_plugins": [
-                    {"name": "Custom", "my_param": "abc", "other": 42}
-                ]
-            }
-        )
-        assert out == {
-            "detect_secrets_plugins": [
-                {"name": "Custom", "my_param": "abc", "other": 42}
-            ]
+        assert "elbv2_listener_pqc_tls_allowed_policies" in aws_properties
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "ELBSecurityPolicy-TLS13-1-2-Res-2021-06",
+            ["ELBSecurityPolicy-TLS13-1-2-Res-2021-06", 123],
+        ],
+    )
+    def test_invalid_policy_values_are_dropped(self, value):
+        assert _validate({"elbv2_listener_pqc_tls_allowed_policies": value}) == {}
+
+
+class TestAWSAgentCoreLogGroupNamePrefixes:
+    def test_valid_prefix_list_round_trips(self):
+        prefixes = [
+            "/aws/bedrock-agentcore/",
+            "/aws/vendedlogs/bedrock-agentcore/",
+        ]
+
+        assert _validate({"agentcore_log_group_name_prefixes": prefixes}) == {
+            "agentcore_log_group_name_prefixes": prefixes
+        }
+
+    def test_null_round_trips(self):
+        """A bare `agentcore_log_group_name_prefixes:` in the config file arrives as None.
+
+        It has to survive validation rather than be dropped, because the check distinguishes it
+        from an empty list: None means "use the built-in defaults" while [] means "match no log
+        group". Dropping it would collapse the two.
+        """
+        assert _validate({"agentcore_log_group_name_prefixes": None}) == {
+            "agentcore_log_group_name_prefixes": None
+        }
+
+    def test_empty_list_round_trips(self):
+        """[] is a valid instruction, not a missing value -- see test_null_round_trips."""
+        assert _validate({"agentcore_log_group_name_prefixes": []}) == {
+            "agentcore_log_group_name_prefixes": []
+        }
+
+    def test_key_is_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
+
+        assert "agentcore_log_group_name_prefixes" in aws_properties
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            # A single prefix written without the list, which is the mistake the YAML invites.
+            "/aws/bedrock-agentcore/",
+            ["/aws/bedrock-agentcore/", 123],
+            {"prefix": "/aws/bedrock-agentcore/"},
+            123,
+        ],
+    )
+    def test_invalid_prefix_values_are_dropped(self, value):
+        assert _validate({"agentcore_log_group_name_prefixes": value}) == {}
+
+
+class Test_AWS_Secrets_Ignore_Files:
+    def test_valid_file_patterns_round_trip(self):
+        files = ["*.deps.json", "vendor/*.js"]
+        assert _validate({"secrets_ignore_files": files}) == {
+            "secrets_ignore_files": files
+        }
+
+    def test_empty_list_is_valid(self):
+        assert _validate({"secrets_ignore_files": []}) == {"secrets_ignore_files": []}
+
+    def test_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
+
+        assert aws_properties["secrets_ignore_files"] == {
+            "anyOf": [
+                {"items": {"type": "string"}, "type": "array"},
+                {"type": "null"},
+            ],
+            "default": None,
+            "title": "Secrets Ignore Files",
         }
 
 
@@ -214,9 +317,5 @@ class Test_AWS_Full_Default_Config_Round_Trips:
             "threat_detection_enumeration_threshold": 0.3,
             "threat_detection_llm_jacking_threshold": 0.4,
             "ec2_high_risk_ports": [25, 110, 8088],
-            "detect_secrets_plugins": [
-                {"name": "AWSKeyDetector"},
-                {"name": "Base64HighEntropyString", "limit": 6.0},
-            ],
         }
         assert _validate(raw) == raw

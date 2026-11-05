@@ -1,4 +1,4 @@
-"""Provider Management tools for Prowler App MCP Server.
+"""Provider Management tools for Prowler MCP Server.
 
 This module provides tools for managing provider connections,
 including searching, connecting, and deleting providers.
@@ -6,10 +6,14 @@ including searching, connecting, and deleting providers.
 
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.providers import (
     ProviderConnectionStatus,
+    ProviderDeletionResult,
     ProvidersListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
@@ -19,9 +23,9 @@ class ProvidersTools(BaseTool):
     """Tools for provider management operations
 
     Provides tools for:
-    - prowler_app_search_providers: Search and view configured providers with their connection status
-    - prowler_app_connect_provider: Connect or register a provider for security scanning in Prowler
-    - prowler_app_delete_provider: Permanently remove a provider from Prowler
+    - prowler_search_providers: Search and view configured providers with their connection status
+    - prowler_connect_provider: Connect or register a provider for security scanning in Prowler
+    - prowler_delete_provider: Permanently remove a provider from Prowler
     """
 
     async def search_providers(
@@ -95,7 +99,7 @@ class ProvidersTools(BaseTool):
                 elif connected.lower() == "false":
                     params["filter[connected]"] = False
                 else:
-                    raise ValueError(
+                    raise InvalidArgument(
                         f"Invalid connected value: {connected}. Valid values are True, False, 'true', 'false' or None."
                     )
 
@@ -128,13 +132,13 @@ class ProvidersTools(BaseTool):
 
     async def connect_provider(
         self,
-        provider_uid: str = Field(
+        provider_uid: NonBlankStr = Field(
             description="Provider's unique identifier. For supported UID provider formats, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server"
         ),
-        provider_type: str = Field(
+        provider_type: NonBlankStr = Field(
             description="Type of provider to be scanned with Prowler. Valid values include: 'aws', 'azure', 'gcp', 'kubernetes'... For more valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server."
         ),
-        alias: str | None = Field(
+        alias: NonBlankStr | None = Field(
             default=None,
             description="Human-friendly name for this provider. Optional but recommended for easy identification. Use descriptive names to distinguish multiple accounts of the same type.",
         ),
@@ -145,7 +149,7 @@ class ProvidersTools(BaseTool):
     ) -> dict[str, Any]:
         """Register a provider to be scanned with Prowler.
 
-        This tool will register a provider in Prowler App, even if the UID is wrong.
+        This tool will register a provider in Prowler, even if the UID is wrong.
         If the provider is already registered, it will be updated with the new provided alias or credentials if provided.
         If credentials are provided, they will be added to the indicated provider, if the provider does not exist, it will be created and the credentials will be added to it.
         If the connection test is successful, the provider will be connected.
@@ -291,41 +295,128 @@ class ProvidersTools(BaseTool):
 
     async def delete_provider(
         self,
-        provider_id: str = Field(
-            description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_app_search_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
+        provider_id: NonBlankStr = Field(
+            description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_search_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
         ),
     ) -> dict[str, Any]:
         """Permanently remove a registered provider from Prowler.
 
         WARNING: This is a destructive operation that cannot be undone. The provider will need to be
-        re-added with prowler_app_connect_provider if you want to scan it again.
+        re-added with prowler_connect_provider if you want to scan it again.
 
-        The tool always returns the deletion status and message.
+        Prowler removes the provider and everything attached to it (its scans, findings and
+        resources) in a background task, so a large provider can take longer than the time
+        this tool waits for it.
+
+        The result includes:
+        - status: 'deleted' when Prowler finished removing the provider, 'in_progress' when
+          the deletion was accepted and is still running
+        - task_id: the background task, present when the deletion was still running
+
+        NEVER send the deletion again while status='in_progress'. Use prowler_search_providers
+        to check whether the provider is gone.
         """
         self.logger.info(f"Deleting provider {provider_id}...")
-        try:
-            # Initiate the deletion task
-            task_response = await self.api_client.delete(f"/providers/{provider_id}")
-            task_id = task_response.get("data", {}).get("id")
 
-            # Poll until task completes (with 60 second timeout)
+        # A failure of the request itself is left to the shared classifier: the
+        # deletion never started, so there is no partial state to describe.
+        task_response = await self.api_client.delete(f"/providers/{provider_id}")
+        task_id = task_response.get("data", {}).get("id")
+
+        if not task_id:
+            # The deletion may well be running, so this must not read as "nothing
+            # happened". No `from` clause: this names the provider and the tool
+            # that checks it, neither of which the shared classifier can know.
+            raise ToolError(
+                f"Prowler accepted the deletion of provider {provider_id} but did not "
+                "return the ID of the background task, so its outcome cannot be checked. "
+                "Use prowler_search_providers to see whether the provider is still there "
+                "before sending the deletion again."
+            )
+
+        try:
             await self.api_client.poll_task_until_complete(
                 task_id=task_id, timeout=60, poll_interval=1.0
             )
-
-            # If we reach here, the task completed successfully
-            return {
-                "deleted": True,
-                "message": f"Provider {provider_id} deleted successfully",
-            }
         except Exception as e:
-            self.logger.error(f"Provider deletion failed: {e}")
-            return {
-                "deleted": False,
-                "message": f"Provider {provider_id} deletion failed: {str(e)}",
-            }
+            self.logger.error(f"Provider deletion did not complete cleanly: {e}")
+            return await self._provider_deletion_fallback(provider_id, task_id)
+
+        return ProviderDeletionResult(
+            status="deleted",
+            message=f"Provider {provider_id} deleted successfully",
+        ).model_dump()
 
     # Private helper methods
+
+    async def _provider_deletion_fallback(
+        self, provider_id: str, task_id: str
+    ) -> dict[str, Any]:
+        """Report a provider deletion whose polling did not end on a completed task.
+
+        Running out of the polling window is not a failure: Prowler removes the
+        provider together with its scans, findings and resources, which outlives
+        60 seconds on a large account. The deletion was accepted and is still
+        going, so calling it failed would be wrong twice over -- it is not, and
+        it invites a retry of a destructive call already in flight.
+
+        The task is read once more here, because polling gives up on the clock
+        rather than on the task: a deletion that finished just after the last
+        poll is a finished deletion and is reported as one.
+
+        Only a task that actually stopped is an error, and it is raised rather
+        than returned, because then the provider is still there.
+
+        Raises:
+            ToolError: If the deletion task ended without deleting the provider.
+                Raised without a ``from`` clause because the message names what
+                was left behind, which the shared classifier cannot know.
+        """
+        state = None
+        try:
+            task = await self.api_client.get(f"/tasks/{task_id}")
+            state = task.get("data", {}).get("attributes", {}).get("state")
+        except Exception as e:
+            self.logger.error(f"Could not read the state of task {task_id}: {e}")
+
+        if state == "completed":
+            # The deletion outran the polling window by a moment, not by more.
+            return ProviderDeletionResult(
+                status="deleted",
+                message=f"Provider {provider_id} deleted successfully",
+            ).model_dump()
+
+        if state in ("failed", "cancelled"):
+            # The failure that got us here is logged, not relayed: it carries
+            # upstream text, and the classifier masks exactly this kind of
+            # message when a tool does not write it itself.
+            raise ToolError(
+                f"The task deleting provider {provider_id} ended as '{state}', so the "
+                "provider was not deleted. Prowler removes a provider together with its "
+                "scans, findings and resources, so part of that may already be gone. Use "
+                "prowler_search_providers to check the current state."
+            )
+
+        if state is None:
+            message = (
+                f"The deletion of provider {provider_id} was accepted, but its progress "
+                "could not be read, so whether it finished is unknown. Do not "
+                "send the deletion again. Use prowler_search_providers to check whether "
+                "the provider is gone."
+            )
+        else:
+            message = (
+                f"The deletion of provider {provider_id} was accepted and is still "
+                f"running (task state '{state}'), which is normal for a provider with "
+                "many scans and findings. Do not send the deletion again. Use "
+                "prowler_search_providers to check whether it is gone."
+            )
+
+        return ProviderDeletionResult(
+            status="in_progress",
+            task_id=task_id,
+            message=message,
+        ).model_dump()
 
     async def _check_provider_exists(self, provider_uid: str) -> str | None:
         """Check if a provider already exists by its UID.
@@ -357,7 +448,7 @@ class ProvidersTools(BaseTool):
             return prowler_provider_id
         else:
             # Multiple providers with the same UID is a data integrity issue
-            raise Exception(
+            raise ToolError(
                 f"Data integrity error: Found {len(providers)} providers with UID '{provider_uid}'. "
                 f"Each provider UID should be unique. Please contact support or manually clean up duplicate providers."
             )
@@ -392,7 +483,11 @@ class ProvidersTools(BaseTool):
 
         provider_id = await self._check_provider_exists(provider_uid)
         if provider_id is None:
-            raise Exception(f"Provider {provider_uid} creation failed")
+            raise ToolError(
+                f"Prowler accepted the creation of provider {provider_uid} but the "
+                "provider cannot be found afterwards. Use prowler_search_providers to "
+                "check whether it exists before creating it again."
+            )
         return provider_id
 
     async def _update_provider_alias(
@@ -418,7 +513,10 @@ class ProvidersTools(BaseTool):
             f"/providers/{prowler_provider_id}", json_data=update_body
         )
         if result.get("data", {}).get("attributes", {}).get("alias") != alias:
-            raise Exception(f"Provider {prowler_provider_id} alias update failed")
+            raise ToolError(
+                f"Provider {prowler_provider_id} exists, but its alias was not updated. "
+                "Use prowler_search_providers to read its current alias."
+            )
 
     def _determine_secret_type(self, credentials: dict[str, Any]) -> str:
         """Determine the secret type from credentials structure.
@@ -443,29 +541,32 @@ class ProvidersTools(BaseTool):
             prowler_provider_id: The Prowler-generated provider ID
 
         Returns:
-            The secret ID if exists, None otherwise
-        """
-        try:
-            response = await self.api_client.get(
-                "/providers/secrets",
-                params={"filter[provider]": prowler_provider_id},
-            )
-            secrets = response.get("data", [])
+            The secret ID if the provider has one, None if it has none
 
-            if len(secrets) > 0:
-                secret_id = secrets[0].get("id")
-                self.logger.info(
-                    f"Found existing secret {secret_id} for provider {prowler_provider_id}"
-                )
-                return secret_id
-            else:
-                self.logger.info(
-                    f"No existing secret found for provider {prowler_provider_id}"
-                )
-                return None
-        except Exception as e:
-            self.logger.error(f"Error checking for existing secret: {e}")
-            return None
+        Raises:
+            Exception: If the lookup itself failed, so that "no secret" is never
+                reported for a provider whose secret could not be read
+        """
+        # A failure here is not swallowed into None. None means "this provider has
+        # no secret", which sends `_store_credentials` down the create branch, and
+        # a provider holds at most one secret: creating a second one is refused,
+        # and the caller would be told its credentials were rejected when all that
+        # actually failed was this read.
+        response = await self.api_client.get(
+            "/providers/secrets",
+            params={"filter[provider]": prowler_provider_id},
+        )
+        secrets = response.get("data", [])
+
+        if len(secrets) > 0:
+            secret_id = secrets[0].get("id")
+            self.logger.info(
+                f"Found existing secret {secret_id} for provider {prowler_provider_id}"
+            )
+            return secret_id
+
+        self.logger.info(f"No existing secret found for provider {prowler_provider_id}")
+        return None
 
     async def _get_secret_type(self, secret_id: str) -> str | None:
         """Get the secret type for a given secret ID.
@@ -573,13 +674,24 @@ class ProvidersTools(BaseTool):
                 raise
 
     async def _test_connection(self, prowler_provider_id: str) -> dict[str, Any]:
-        """Test connection to a provider.
+        """Test connection to a provider and wait for the result.
+
+        A test that could not be run is reported as 'connected: None', which
+        `ProviderConnectionStatus` renders as 'not_tested', rather than as a
+        failure. Credentials that do not work come back as a completed task
+        carrying 'connected: False', so an exception here never describes them:
+        it means this server could not get the test run at all -- an expired
+        Prowler credential, a rate limit, a test that outlived the timeout.
+        Reporting that as 'failed' would blame the provider's credentials for
+        something they did not cause, and send the caller off to fix a working
+        role.
 
         Args:
             prowler_provider_id: The Prowler-generated provider ID
 
         Returns:
-            Connection status dictionary with 'connected' boolean and optional 'error' message
+            Connection status dictionary with a 'connected' boolean or None, and
+            an optional 'error' message
         """
         self.logger.info(f"Testing connection for provider {prowler_provider_id}...")
         try:
@@ -589,6 +701,11 @@ class ProvidersTools(BaseTool):
             )
             task_id = task_response.get("data", {}).get("id")
 
+            if not task_id:
+                raise ValueError(
+                    "Prowler did not return the ID of the connection test task."
+                )
+
             # Poll until task completes (with 60 second timeout)
             completed_task = await self.api_client.poll_task_until_complete(
                 task_id=task_id, timeout=60, poll_interval=1.0
@@ -596,13 +713,26 @@ class ProvidersTools(BaseTool):
 
             # Extract the result from the completed task
             task_result = (
-                completed_task.get("data", {}).get("attributes", {}).get("result", {})
+                completed_task.get("data", {}).get("attributes", {}).get("result")
             )
+
+            if not isinstance(task_result, dict):
+                raise ValueError(
+                    "The connection test task completed without reporting a result."
+                )
 
             return task_result
         except Exception as e:
-            self.logger.error(f"Connection test failed: {e}")
-            return {"connected": False, "error": str(e)}
+            self.logger.error(f"Connection test could not be completed: {e}")
+            return {
+                "connected": None,
+                "error": (
+                    "The connection test could not be completed. This says nothing "
+                    "about the provider's credentials, they were never tested. Use "
+                    "prowler_search_providers to read the connection state Prowler has "
+                    "stored for this provider."
+                ),
+            }
 
     async def _get_final_provider_state(
         self, prowler_provider_id: str

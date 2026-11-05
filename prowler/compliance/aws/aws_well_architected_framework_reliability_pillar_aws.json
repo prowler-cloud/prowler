@@ -53,7 +53,8 @@
         "opensearch_service_domains_audit_logging_enabled",
         "opensearch_service_domains_cloudwatch_logging_enabled",
         "rds_instance_enhanced_monitoring_enabled",
-        "rds_instance_integration_cloudwatch_logs"
+        "rds_instance_integration_cloudwatch_logs",
+        "ec2_confidential_workload_host_not_running"
       ]
     },
     {

@@ -74,6 +74,7 @@ celery_app.conf.task_annotations = {
         for name in (
             "scan-perform",
             "scan-perform-scheduled",
+            "attack-paths-scan-perform",
             "provider-deletion",
             "tenant-deletion",
         )

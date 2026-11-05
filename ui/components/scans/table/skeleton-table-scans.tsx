@@ -184,7 +184,7 @@ export const SkeletonTableScans = ({
   const columns = COLUMNS_BY_TAB[tab];
 
   return (
-    <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col justify-between gap-4 overflow-hidden border p-4">
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col justify-between gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm">
       {/* Toolbar — mirrors DataTable's flex-col → md:flex-row layout (no search, only total entries) */}
       <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
         <div className="w-full md:w-auto" />

@@ -2,11 +2,11 @@
 name: prowler-pr
 description: >
   Creates Pull Requests for Prowler following the project template and conventions.
-  Trigger: When working on pull request requirements or creation (PR template sections, PR title Conventional Commits check, changelog gate/no-changelog label), or when inspecting PR-related GitHub workflows like conventional-commit.yml, pr-check-changelog.yml, pr-conflict-checker.yml, labeler.yml, or CODEOWNERS.
+  Trigger: When working on pull request requirements or creation (PR template sections, PR title Conventional Commits check, changelog gate/no-changelog label, backport labels), or when inspecting PR-related GitHub workflows like conventional-commit.yml, pr-check-changelog.yml, pr-conflict-checker.yml, labeler.yml, or CODEOWNERS.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root]
   auto_invoke:
     - "Create a PR with gh pr create"
@@ -17,120 +17,76 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
+## Critical Rules
+
+- The default branch is **`master`** (not `main`). Patch fixes target `master` and are backported to `v5.X`.
+- ALWAYS build the body from the CURRENT `.github/pull_request_template.md` (read it; do not reuse a cached copy). Keep every heading and the License line; fill or delete component sections that do not apply.
+- PR title MUST pass `^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([^)]+\))?!?: .+` (it becomes the squash commit, see `prowler-commit`).
+- Changes in `prowler/`, `api/`, `ui/`, `mcp_server/` (or root `uv.lock`/`pyproject.toml`) need a fragment in `<component>/changelog.d/` (see `prowler-changelog`), or the `no-changelog` label when no entry is warranted.
+- Link issues in **Context** with `Fix #XXXX` (or `Fixes #XXXX`), never in changelog fragments.
+
 ## PR Creation Process
 
-1. **Analyze changes**: `git diff main...HEAD` to understand ALL commits
-2. **Determine affected components**: SDK, API, UI, MCP, Docs
-3. **Fill template sections** based on changes
-4. **Create PR** with `gh pr create`
+1. **Analyze ALL commits**: `git log master..HEAD --oneline` and `git diff master...HEAD`
+2. **Determine affected components** from paths: SDK (`prowler/`), API (`api/`), UI (`ui/`), MCP (`mcp_server/`), Docs (`docs/`)
+3. **Read and fill the template** (`cat .github/pull_request_template.md`)
+4. **Create the PR** with `gh pr create --base master`
 
-## PR Template Structure
+## Template Sections (current file)
 
-```markdown
-### Context
+| Section | What to write |
+|---------|---------------|
+| `### Context` | Why the change is needed; `Fix #XXXX` |
+| `### Description` | Summary of the change and new dependencies |
+| `### Steps to review` | How to verify: commands, scan flags, UI path, test commands |
+| `### Checklist` | Community checklist (collapsed `<details>`: issue listed/assigned, no duplicate open PR) + general items (tests, docstrings per Google style, backport, README, SDK changelog fragment) |
+| `#### SDK/CLI` | New checks? Yes/No; if yes, do provider permissions need updating? |
+| `#### UI` | Requirements work; npm dependency package-health evidence (maintenance, popularity, vulnerabilities, license, release age); screenshots for Mobile (<640px), Tablet (640-1024px), Desktop (>1024px); `ui/changelog.d/` fragment |
+| `#### API` | Requirements work; endpoint output; `EXPLAIN ANALYZE` for new/modified queries or indexes; performance results; API spec regeneration; version updates; `api/changelog.d/` fragment |
+| `#### MCP Server` | Requirements work; `mcp_server/changelog.d/` fragment |
+| `### License` | Keep: "By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |
 
-{Why this change? Link issues with `Fix #XXXX`}
+## Labels That Change PR Behavior
 
-### Description
+| Label | Effect |
+|-------|--------|
+| `no-changelog` | Skips the changelog gate (`pr-check-changelog.yml`) |
+| `backport-to-v5.X` | After merge, `backport.yml` opens the backport PR to `v5.X` (labels it `backport`, source gets `was-backported`) |
+| `no-compliance-check` | Skips the new-check compliance mapping review (`pr-check-compliance-mapping.yml`, which otherwise adds `needs-compliance-review` for unmapped new checks) |
+| `has-conflicts` | Added/removed automatically by `pr-conflict-checker.yml` |
+| `provider/*`, `component/*`, `documentation`, `compliance`, ... | Applied automatically from paths by `labeler.yml` + `.github/labeler.yml`; `community` is added for external authors |
 
-{Summary of changes and dependencies}
-
-### Steps to review
-
-{How to test/verify the changes}
-
-### Checklist
-
-<details>
-
-<summary><b>Community Checklist</b></summary>
-
-- [ ] This feature/issue is listed in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
-- [ ] Is it assigned to me, if not, request it via the issue/feature in [here](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](goto.prowler.com/slack)
-
-</details>
-
-- Are there new checks included in this PR? Yes / No
-    - If so, do we need to update permissions for the provider?
-- [ ] Review if the code is being covered by tests.
-- [ ] Review if code is being documented following https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
-- [ ] Review if backport is needed.
-- [ ] Review if is needed to change the Readme.md
-- [ ] Ensure new entries are added to CHANGELOG.md, if applicable.
-
-#### SDK/CLI
-- Are there new checks included in this PR? Yes / No
-    - If so, do we need to update permissions for the provider? Please review this carefully.
-
-#### UI (if applicable)
-- [ ] All issue/task requirements work as expected on the UI
-- [ ] Screenshots/Video - Mobile (X < 640px)
-- [ ] Screenshots/Video - Tablet (640px > X < 1024px)
-- [ ] Screenshots/Video - Desktop (X > 1024px)
-- [ ] Ensure new entries are added to ui/CHANGELOG.md
-
-#### API (if applicable)
-- [ ] All issue/task requirements work as expected on the API
-- [ ] Endpoint response output (if applicable)
-- [ ] EXPLAIN ANALYZE output for new/modified queries or indexes (if applicable)
-- [ ] Performance test results (if applicable)
-- [ ] Any other relevant evidence of the implementation (if applicable)
-- [ ] Verify if API specs need to be regenerated.
-- [ ] Check if version updates are required.
-- [ ] Ensure new entries are added to api/CHANGELOG.md
-
-### License
-
-By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
-```
-
-## Component-Specific Rules
-
-| Component | CHANGELOG | Extra Checks |
-|-----------|-----------|--------------|
-| SDK | `prowler/CHANGELOG.md` | New checks → permissions update? |
-| API | `api/CHANGELOG.md` | API specs, version bump, endpoint output, EXPLAIN ANALYZE, performance |
-| UI | `ui/CHANGELOG.md` | Screenshots for Mobile/Tablet/Desktop |
-| MCP | `mcp_server/CHANGELOG.md` | N/A |
+Review ownership: `.github/CODEOWNERS` assigns every path to `@prowler-cloud/engineering`.
 
 ## Commands
 
 ```bash
-# Check current branch status
 git status
-git log main..HEAD --oneline
+git log master..HEAD --oneline
+git diff master...HEAD --stat
 
-# View full diff
-git diff main...HEAD
-
-# Create PR with heredoc for body
-gh pr create --title "feat: description" --body "$(cat <<'EOF'
+# Create PR (body from the template, filled)
+gh pr create --base master --title "feat(aws): add <check_id> check" --body "$(cat <<'EOF'
 ### Context
 ...
 EOF
 )"
 
-# Create draft PR
-gh pr create --draft --title "feat: description"
+# Draft PR / add labels
+gh pr create --draft --base master --title "fix(ui): description"
+gh pr edit <number> --add-label no-changelog
+
+# Check CI after pushing
+gh pr checks <number>
 ```
-
-## Title Conventions
-
-Follow conventional commits:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `chore:` Maintenance
-- `refactor:` Code restructure
-- `test:` Tests
 
 ## Before Creating PR
 
-1. ✅ All tests pass locally
-2. ✅ Linting passes (`make lint` or component-specific)
-3. ✅ CHANGELOG updated (if applicable)
-4. ✅ Branch is up to date with main
-5. ✅ Commits are clean and descriptive
+1. Tests pass locally for the touched component (`uv run pytest ...`, `pnpm test:unit`, etc.)
+2. Hooks pass: `uv run prek run --files $(git diff --name-only master...HEAD)`
+3. Changelog fragment added (or `no-changelog` justified)
+4. Branch is up to date with `master`
+5. Commits are clean and descriptive
 
 ## Before Re-Requesting Review (REQUIRED)
 
@@ -140,10 +96,12 @@ Resolve or respond to **every** open inline review thread before re-requesting r
    > Fixed in `abc1234`.
 2. **Agreed but deferred**: Explain why it's out of scope for this PR and where it's tracked.
 3. **Disagreed**: Reply with clear technical reasoning. Do not leave threads silently open.
-4. **Re-request review** only after all threads are in a clean state — either resolved or explicitly responded to.
+4. **Re-request review** only after all threads are in a clean state, either resolved or explicitly responded to.
 
 > **Rule of thumb**: A reviewer should never have to wonder "did they see my comment?" when they re-open the PR.
 
 ## Resources
 
-- **Documentation**: See [references/](references/) for links to local developer guide
+- **Template**: `.github/pull_request_template.md`
+- **CI gates in depth**: `prowler-ci` skill
+- **Documentation**: See [references/](references/) for links to the local developer guide

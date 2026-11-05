@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
@@ -179,6 +179,7 @@ class APIGateway(AWSService):
                                 tracing_enabled=tracing_enabled,
                                 cache_enabled=cache_enabled,
                                 cache_data_encrypted=cache_data_encrypted,
+                                variables=stage.get("variables", {}),
                             )
                         )
                 except ClientError as error:
@@ -265,6 +266,8 @@ class Stage(BaseModel):
     tracing_enabled: Optional[bool] = None
     cache_enabled: Optional[bool] = None
     cache_data_encrypted: Optional[bool] = None
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("variables",)
+    variables: Optional[dict] = {}
 
 
 class PathResourceMethods(BaseModel):

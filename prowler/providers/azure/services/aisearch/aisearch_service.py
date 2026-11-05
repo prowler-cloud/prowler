@@ -17,7 +17,11 @@ class AISearch(AzureService):
         for subscription, client in self.clients.items():
             try:
                 aisearch_services.update({subscription: {}})
-                aisearch_services_list = client.services.list_by_subscription()
+                aisearch_services_list = self.list_with_rg_scope(
+                    subscription,
+                    client.services.list_by_subscription,
+                    client.services.list_by_resource_group,
+                )
                 for aisearch_service in aisearch_services_list:
                     aisearch_services[subscription].update(
                         {

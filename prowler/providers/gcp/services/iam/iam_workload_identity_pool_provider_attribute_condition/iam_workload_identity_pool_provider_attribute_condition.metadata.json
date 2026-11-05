@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "iam_workload_identity_pool_provider_attribute_condition",
+  "CheckTitle": "Workload Identity Federation providers trusting a multi-tenant issuer enforce an attribute condition",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "iam.googleapis.com/WorkloadIdentityPoolProvider",
+  "Description": "**Workload Identity Federation providers** define an `attributeCondition` (CEL) restricting which external identities may impersonate Google Cloud principals. When a provider trusts a **multi-tenant issuer** (GitHub Actions, GitLab.com and other shared issuers), omitting the condition trusts every identity that issuer can mint. Providers trusting a dedicated single-tenant issuer are not flagged.",
+  "Risk": "A provider trusting a multi-tenant issuer without an attribute condition accepts any external identity from that issuer - for example any GitHub repository when the issuer is GitHub Actions. An attacker controlling any tenant on that platform can authenticate through the provider and exchange tokens for federated credentials. Because no key is stored, this access survives credential rotation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/iam/docs/workload-identity-federation",
+    "https://cloud.google.com/iam/docs/workload-identity-federation#mapping",
+    "https://cloud.google.com/iam/docs/best-practices-for-using-workload-identity-federation"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud iam workload-identity-pools providers update-<oidc|aws|saml|x509> <PROVIDER_ID> --location=global --workload-identity-pool=<POOL_ID> --attribute-condition=\"<CEL_condition>\"   # use the update subcommand matching the provider type",
+      "NativeIaC": "",
+      "Other": "1. In the Google Cloud console, go to IAM & Admin > Workload Identity Federation\n2. Open the affected pool and provider\n3. Set an attribute condition (CEL) restricting the allowed external identities, using an assertion that fits the provider type: OIDC by subject or claim (assertion.sub), SAML by NameID or attribute (assertion.subject or assertion.attributes[...]), AWS by account/role (assertion.account or assertion.arn), X.509 by certificate subject\n4. For OIDC providers, also restrict allowedAudiences to your own audience\n5. Review providers regularly for entries you did not create",
+      "Terraform": "```hcl\nresource \"google_iam_workload_identity_pool_provider\" \"example\" {\n  workload_identity_pool_id          = \"my-pool\"\n  workload_identity_pool_provider_id = \"my-provider\"\n  attribute_condition                = \"assertion.repository_owner == 'my-org'\" # FIX: restrict trusted identities\n\n  # Declare exactly one of oidc {}, aws {}, saml {}, or x509 {} to match the provider type, e.g.:\n  oidc {\n    issuer_uri        = \"https://token.actions.githubusercontent.com\"\n    allowed_audiences = [\"https://my-audience.example.com\"]\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set an attribute condition on any active Workload Identity Federation provider that trusts a multi-tenant issuer so only the intended external identities can impersonate Google Cloud principals, and pair OIDC providers with a restricted audience. Providers trusting a dedicated single-tenant issuer should still add a condition as defense-in-depth. Audit pools and providers regularly for unexpected entries.",
+      "Url": "https://hub.prowler.com/check/iam_workload_identity_pool_provider_attribute_condition"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only active providers that trust a known multi-tenant issuer (GitHub Actions, GitLab.com, Google, HCP Terraform) are failed when they omit an attribute condition; providers trusting a dedicated single-tenant issuer, AWS/SAML/X.509 providers, and disabled or non-ACTIVE providers are reported as PASS. This check verifies that an attribute condition is present; it does not evaluate whether the condition's expression is sufficiently restrictive."
+}

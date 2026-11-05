@@ -1,17 +1,12 @@
 "use client";
 
-import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/shadcn";
+import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
+import { buildFocusedFindingContext } from "@/lib/lighthouse/context/contributions";
 import type { FindingResourceRow } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -28,9 +23,13 @@ interface ResourceDetailDrawerProps {
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
   showSyntheticResourceHint?: boolean;
+  // Forwarded to DetailSidePanel: false opens the Details tab without
+  // selecting it (skill launches keep the AI chat tab in front).
+  selectTabOnOpen?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
+  onTriageUpdate?: (input: UpdateFindingTriageInput) => void;
 }
 
 export function ResourceDetailDrawer({
@@ -45,40 +44,51 @@ export function ResourceDetailDrawer({
   currentFinding,
   otherFindings,
   showSyntheticResourceHint = false,
+  selectTabOnOpen,
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
+  onTriageUpdate,
 }: ResourceDetailDrawerProps) {
+  const pathname = usePathname();
+  const focusedFinding = isNavigating ? null : currentFinding;
+  const context = currentResource
+    ? buildFocusedFindingContext({
+        pathname,
+        findingId: focusedFinding?.id ?? currentResource.findingId,
+        checkId: focusedFinding?.checkId ?? currentResource.checkId,
+        severity: focusedFinding?.severity ?? currentResource.severity,
+        status: focusedFinding?.status ?? currentResource.status,
+        providerUid: focusedFinding?.providerUid ?? currentResource.providerUid,
+        resourceUid: focusedFinding?.resourceUid ?? currentResource.resourceUid,
+        region: focusedFinding?.resourceRegion ?? currentResource.region,
+      })
+    : undefined;
+
   return (
-    <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="3xl:w-1/3 h-full w-full overflow-hidden p-6 outline-none md:w-1/2 md:max-w-none md:min-w-[720px]">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>Resource Finding Details</DrawerTitle>
-          <DrawerDescription>
-            View finding details for the selected resource
-          </DrawerDescription>
-        </DrawerHeader>
-        <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
-          <X className="size-4" />
-          <span className="sr-only">Close</span>
-        </DrawerClose>
-        {open && (
-          <ResourceDetailDrawerContent
-            isLoading={isLoading}
-            isNavigating={isNavigating}
-            checkMeta={checkMeta}
-            currentIndex={currentIndex}
-            totalResources={totalResources}
-            currentResource={currentResource}
-            currentFinding={currentFinding}
-            otherFindings={otherFindings}
-            showSyntheticResourceHint={showSyntheticResourceHint}
-            onNavigatePrev={onNavigatePrev}
-            onNavigateNext={onNavigateNext}
-            onMuteComplete={onMuteComplete}
-          />
-        )}
-      </DrawerContent>
-    </Drawer>
+    <DetailSidePanel
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Resource Finding Details"
+      description="View finding details for the selected resource"
+      context={context}
+      selectTabOnOpen={selectTabOnOpen}
+    >
+      <ResourceDetailDrawerContent
+        isLoading={isLoading}
+        isNavigating={isNavigating}
+        checkMeta={checkMeta}
+        currentIndex={currentIndex}
+        totalResources={totalResources}
+        currentResource={currentResource}
+        currentFinding={currentFinding}
+        otherFindings={otherFindings}
+        showSyntheticResourceHint={showSyntheticResourceHint}
+        onNavigatePrev={onNavigatePrev}
+        onNavigateNext={onNavigateNext}
+        onMuteComplete={onMuteComplete}
+        onTriageUpdate={onTriageUpdate}
+      />
+    </DetailSidePanel>
   );
 }

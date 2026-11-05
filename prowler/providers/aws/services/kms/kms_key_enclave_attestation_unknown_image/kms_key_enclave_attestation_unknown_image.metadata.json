@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_attestation_unknown_image",
+  "CheckTitle": "No enclave with an unknown image identity has called this KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "Scans CloudTrail attestation activity and flags PCR values missing from `enclave_golden_pcr_values` (only for buckets with a configured golden list). Complements `kms_key_enclave_attestation_pcr_mismatch` by catching real enclave calls with an unrecognized image. MEDIUM by default, overridable to HIGH via `enclave_unknown_image_severity`.",
+  "Risk": "An attestation event whose PCRs cannot be traced back to a known-good enclave build indicates either a stale golden list, a policy broad enough to accept unaudited images, or a compromise scenario in which an unknown image is being executed with legitimate KMS access. Materiality depends on the operator's threat model.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/kms/latest/developerguide/ct-nitro-enclave.html",
+    "https://docs.aws.amazon.com/enclaves/latest/user/set-up-attestation.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Configure the Prowler `audit_config` with your golden PCR list, e.g. `enclave_golden_pcr_values: {PCR0: [<trusted-pcr0-hash-from-ci>], PCR8: [<trusted-signing-cert-hash>]}`. Optionally set `enclave_unknown_image_severity: high` to escalate findings.\n2. Compare the flagged PCR values against your enclave CI/CD build catalogue. If they map to a legitimate build that is missing from `enclave_golden_pcr_values`, extend the list.\n3. If the PCR values do NOT map to any legitimate build, treat as a suspected incident: identify the enclave via CloudTrail's `attestationDocumentModuleId`, terminate it, and audit the launch pipeline.\n4. Consider tightening the KMS key policy so only golden PCRs are accepted (paired with `kms_key_enclave_attestation_pcr_mismatch`).",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Treat the `enclave_golden_pcr_values` list as a **live registry of trusted enclave images**. Any runtime attestation from a PCR outside that list is either a *documentation gap* (extend the list) or a *suspected incident* (investigate).",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_attestation_unknown_image"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "logging",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "kms_key_enclave_attestation_pcr_mismatch",
+    "kms_key_enclave_debug_attestation_detected"
+  ],
+  "Notes": "Requires `enclave_golden_pcr_values` in `audit_config`. Debug-mode events (zeroed PCR0/1/2) are discarded to avoid double reporting with `kms_key_enclave_debug_attestation_detected`. **PCR buckets without a golden list are not evaluated**: to catch unknown values in a PCR bucket, add a golden list for that bucket. Only standard PCR fields (ImageDigest/PCR0, PCR1-4, PCR8) exposed by CloudTrail are inspected; custom PCRs are out of scope. Severity is overridable per-finding via `enclave_unknown_image_severity`."
+}

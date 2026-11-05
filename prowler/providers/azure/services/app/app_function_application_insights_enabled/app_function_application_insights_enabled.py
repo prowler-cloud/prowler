@@ -14,7 +14,7 @@ class app_function_application_insights_enabled(Check):
                 subscription_id, subscription_id
             )
             for function in functions.values():
-                if function.enviroment_variables is not None:
+                if function.environment_variables is not None:
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=function
                     )
@@ -22,9 +22,9 @@ class app_function_application_insights_enabled(Check):
                     report.status = "FAIL"
                     report.status_extended = f"Function {function.name} from subscription {subscription_name} ({subscription_id}) is not using Application Insights."
 
-                    if function.enviroment_variables.get(
+                    if function.environment_variables.get(
                         "APPINSIGHTS_INSTRUMENTATIONKEY", None
-                    ) or function.enviroment_variables.get(
+                    ) or function.environment_variables.get(
                         "APPLICATIONINSIGHTS_CONNECTION_STRING", None
                     ):
                         report.status = "PASS"

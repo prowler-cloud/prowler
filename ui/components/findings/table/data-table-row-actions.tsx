@@ -5,18 +5,43 @@ import { VolumeOff, VolumeX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
-import { JiraIcon } from "@/components/icons/services/IconServices";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
+import { isCloud } from "@/lib/shared/env";
+import { getOptionalText } from "@/lib/utils";
+import type {
+  FindingTriageContext,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageSummary,
+  FindingTriageUpdateHandler,
+} from "@/types/findings-triage";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
+import { FindingNoteActionItem } from "./finding-triage-cells";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import {
+  LighthouseSkillsSubmenu,
+  useLighthousePromptLaunch,
+  useLighthouseSkillLaunch,
+} from "./lighthouse-skills-launch";
 
 export interface FindingRowData {
   id: string;
@@ -24,6 +49,27 @@ export interface FindingRowData {
     muted?: boolean;
     check_metadata?: {
       checktitle?: string;
+    };
+  };
+  severity?: string;
+  status?: string;
+  triage?: FindingTriageSummary;
+  relationships?: {
+    resource?: {
+      attributes?: {
+        name?: string;
+        uid?: string;
+      };
+    };
+    provider?: {
+      // Expanded included providers carry their id at the top level.
+      id?: string;
+      data?: { id?: string };
+      attributes?: {
+        alias?: string;
+        provider?: string;
+        uid?: string;
+      };
     };
   };
   // Flat shape for FindingGroupRow
@@ -70,15 +116,25 @@ function extractRowInfo(data: FindingRowData) {
 interface DataTableRowActionsProps<T extends FindingRowData> {
   row: Row<T>;
   onMuteComplete?: (findingIds: string[]) => void;
+  findingContext?: FindingTriageContext;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 export function DataTableRowActions<T extends FindingRowData>({
   row,
   onMuteComplete,
+  findingContext,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const sampleDisabledReason = isSampleId(finding.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
   const [mutePreparationError, setMutePreparationError] = useState<
@@ -86,6 +142,18 @@ export function DataTableRowActions<T extends FindingRowData>({
   >(null);
 
   const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
+  const resolvedFindingContext = findingContext ?? {
+    title: findingTitle,
+    resource: getOptionalText(
+      finding.relationships?.resource?.attributes?.name,
+    ),
+    provider: getOptionalText(
+      finding.relationships?.provider?.attributes?.alias,
+    ),
+    providerType: getOptionalText(
+      finding.relationships?.provider?.attributes?.provider,
+    ) as ProviderType | undefined,
+  };
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
@@ -107,21 +175,33 @@ export function DataTableRowActions<T extends FindingRowData>({
   const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
 
-  const getDisplayIds = (): string[] => {
-    if (isCurrentSelected && hasMultipleSelected) {
-      return selectedFindingIds;
-    }
-    return [muteKey];
-  };
+  const actionTargetIds =
+    isCurrentSelected && hasMultipleSelected ? selectedFindingIds : [muteKey];
 
   const getMuteLabel = () => {
     if (isMuted) return "Muted";
-    const ids = getDisplayIds();
-    if (ids.length > 1) {
-      return `Mute ${ids.length} ${isGroup ? "Finding Groups" : "Findings"}`;
+    if (actionTargetIds.length > 1) {
+      return `Mute ${actionTargetIds.length} ${isGroup ? "Finding Groups" : "Findings"}`;
     }
     return isGroup ? "Mute Finding Group" : "Mute Finding";
   };
+
+  const jiraTargetType = isGroup
+    ? JIRA_DISPATCH_TARGET.CHECK_ID
+    : JIRA_DISPATCH_TARGET.FINDING_ID;
+  const selectedJiraResourceCount = isGroup
+    ? (finding.resourcesFail ?? 0)
+    : undefined;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: actionTargetIds,
+    targetType: jiraTargetType,
+    findingTitle,
+    selectedResourceCount: selectedJiraResourceCount,
+  });
+  const jiraLabel = buildJiraActionLabel({
+    findingGroupCount: isGroup ? actionTargetIds.length : 0,
+    findingCount: isGroup ? 0 : actionTargetIds.length,
+  });
 
   const handleMuteModalOpenChange = (
     nextOpen: boolean | ((previousOpen: boolean) => boolean),
@@ -138,8 +218,7 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleMuteClick = async () => {
-    const displayIds = getDisplayIds();
-
+    if (sampleDisabledReason) return;
     if (resolveMuteIds) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -147,7 +226,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       setIsMuteModalOpen(true);
       setIsResolving(true);
       try {
-        const ids = await resolveMuteIds(displayIds);
+        const ids = await resolveMuteIds(actionTargetIds);
         setResolvedIds(ids);
         setMutePreparationError(
           ids.length === 0
@@ -164,36 +243,52 @@ export function DataTableRowActions<T extends FindingRowData>({
       }
     } else {
       // Regular findings — IDs are already valid finding UUIDs
-      setResolvedIds(displayIds);
+      setResolvedIds(actionTargetIds);
       setIsMuteModalOpen(true);
     }
   };
 
   const handleMuteComplete = () => {
-    // Always clear selection when a finding is muted because:
-    // rowSelection uses indices (0, 1, 2...) not IDs, so after refresh
-    // the wrong findings would appear selected
+    // Muted findings may leave the filtered dataset after refresh.
     clearSelection();
     setResolvedIds([]);
     if (onMuteComplete) {
-      onMuteComplete(getDisplayIds());
+      onMuteComplete(actionTargetIds);
       return;
     }
 
     router.refresh();
   };
 
+  // Partial scans re-check one resource, so group rows never offer them.
+  const recheckTarget = isGroup
+    ? null
+    : {
+        providerId:
+          finding.relationships?.provider?.id ??
+          finding.relationships?.provider?.data?.id,
+        providerUid: finding.relationships?.provider?.attributes?.uid,
+        providerType: finding.relationships?.provider?.attributes?.provider,
+        providerAlias: finding.relationships?.provider?.attributes?.alias,
+        resourceUid: finding.relationships?.resource?.attributes?.uid,
+        resourceName: finding.relationships?.resource?.attributes?.name,
+      };
+
+  const launchSkill = useLighthouseSkillLaunch();
+  const launchPrompt = useLighthousePromptLaunch();
+  // Skills are finding-level only: group rows carry check ids, not finding
+  // UUIDs, so their menu never offers the Lighthouse entries (see below).
+  const buildSkillFindingItem = () =>
+    buildFindingResourceContext({ findingId: finding.id });
+  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
+    launchSkill(skill, buildSkillFindingItem());
+  };
+  const handleSubmitPrompt = (text: string) => {
+    launchPrompt(text, buildSkillFindingItem());
+  };
+
   return (
     <>
-      {!isGroup && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          findingId={finding.id}
-          findingTitle={findingTitle}
-        />
-      )}
-
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
         onOpenChange={handleMuteModalOpenChange}
@@ -204,8 +299,20 @@ export function DataTableRowActions<T extends FindingRowData>({
         preparationError={mutePreparationError}
       />
 
-      <div className="flex items-center justify-end">
+      <div
+        className="flex items-center justify-end"
+        onClick={(event) => event.stopPropagation()}
+      >
         <ActionDropdown ariaLabel="Finding actions">
+          {!isGroup && (
+            <FindingNoteActionItem
+              triage={finding.triage}
+              findingContext={resolvedFindingContext}
+              onTriageUpdateAction={onTriageUpdateAction}
+              onTriageNoteLoadAction={onTriageNoteLoadAction}
+              onTriageDetailLoadAction={onTriageDetailLoadAction}
+            />
+          )}
           <ActionDropdownItem
             icon={
               isMuted ? (
@@ -217,14 +324,24 @@ export function DataTableRowActions<T extends FindingRowData>({
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={!canMute || isResolving}
+            disabled={Boolean(sampleDisabledReason) || !canMute || isResolving}
+            disabledTooltip={sampleDisabledReason}
             onSelect={handleMuteClick}
           />
-          {!isGroup && (
-            <ActionDropdownItem
-              icon={<JiraIcon size={20} />}
-              label="Send to Jira"
-              onSelect={() => setIsJiraModalOpen(true)}
+          <JiraDispatchActionItem
+            label={jiraLabel}
+            payload={jiraPayload}
+            disabledReason={sampleDisabledReason}
+          />
+          <RecheckResourceActionItem
+            target={recheckTarget}
+            disabledReason={sampleDisabledReason}
+          />
+          {isCloud() && !isGroup && (
+            <LighthouseSkillsSubmenu
+              disabledReason={sampleDisabledReason}
+              onLaunch={handleLaunchSkill}
+              onSubmitPrompt={handleSubmitPrompt}
             />
           )}
         </ActionDropdown>

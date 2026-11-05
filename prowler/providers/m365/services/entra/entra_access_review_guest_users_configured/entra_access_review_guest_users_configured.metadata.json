@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_access_review_guest_users_configured",
+  "CheckTitle": "Access review for guest users is configured",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "An **access review** scoped to **guest users** should exist and be active so that external guest access is periodically recertified by reviewers. Requires a Microsoft Entra ID P2 license.",
+  "Risk": "Without recurring access reviews for guests, external accounts accumulate over time and retain access long after it is needed, expanding the attack surface and the risk of orphaned or abused guest accounts.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/create-access-review"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **ID Governance** > **Access reviews** > **New access review**\n3. Set the scope to **Guest users only**\n4. Assign at least one non-guest reviewer, enable mail notifications and reminders\n5. Set a recurring schedule and create the review",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a recurring access review scoped to guest users with assigned reviewers so guest access is periodically recertified.",
+      "Url": "https://hub.prowler.com/check/entra_access_review_guest_users_configured"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires Microsoft Entra ID P2."
+}

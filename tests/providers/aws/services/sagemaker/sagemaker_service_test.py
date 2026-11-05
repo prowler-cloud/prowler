@@ -28,6 +28,10 @@ test_training_job = "test-training-job"
 test_arn_training_job = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_model}"
 subnet_id = "subnet-" + str(uuid4())
 kms_key_id = str(uuid4())
+lifecycle_config_name = "test-lifecycle-config"
+# base64 of "echo OnCreate" / "echo OnStart"
+lifecycle_on_create_b64 = "ZWNobyBPbkNyZWF0ZQ=="
+lifecycle_on_start_b64 = "ZWNobyBPblN0YXJ0"
 endpoint_config_name = "endpoint-config-test"
 endpoint_config_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:endpoint-config/{endpoint_config_name}"
 prod_variant_name = "Variant1"
@@ -76,6 +80,12 @@ def mock_make_api_call(self, operation_name, kwarg):
             "KmsKeyId": kms_key_id,
             "DirectInternetAccess": "Enabled",
             "RootAccess": "Enabled",
+            "NotebookInstanceLifecycleConfigName": lifecycle_config_name,
+        }
+    if operation_name == "DescribeNotebookInstanceLifecycleConfig":
+        return {
+            "OnCreate": [{"Content": lifecycle_on_create_b64}],
+            "OnStart": [{"Content": lifecycle_on_start_b64}],
         }
     if operation_name == "DescribeModel":
         return {
@@ -247,6 +257,65 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_notebook_instances[0].subnet_id == subnet_id
         assert sagemaker.sagemaker_notebook_instances[0].direct_internet_access
         assert sagemaker.sagemaker_notebook_instances[0].kms_key_id == kms_key_id
+        assert (
+            sagemaker.sagemaker_notebook_instances[0].lifecycle_config_name
+            == lifecycle_config_name
+        )
+
+    def test_describe_notebook_instance_direct_internet_independent_of_root_access(
+        self,
+    ):
+        """DirectInternetAccess and RootAccess are separate settings and must be read separately.
+
+        The shared fixture sets both to "Enabled", so a collector that reads RootAccess while
+        testing for the DirectInternetAccess key produces the right answer by coincidence. These
+        two cases separate the fields, which is the only way the confusion is visible.
+        """
+
+        def only_direct_internet(self, operation_name, kwarg):
+            """Serve a notebook instance with internet access on and root access off.
+
+            The combination a collector reading RootAccess records as having NO direct internet
+            access, which is the false PASS.
+            """
+            if operation_name == "DescribeNotebookInstance":
+                return {"DirectInternetAccess": "Enabled", "RootAccess": "Disabled"}
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        def only_root_access(self, operation_name, kwarg):
+            """Serve a notebook instance with internet access off and root access on.
+
+            The mirror case: a collector reading RootAccess records direct internet access on an
+            instance that has none, which is the false FAIL.
+            """
+            if operation_name == "DescribeNotebookInstance":
+                return {"DirectInternetAccess": "Disabled", "RootAccess": "Enabled"}
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=only_direct_internet
+        ):
+            notebook = SageMaker(aws_provider).sagemaker_notebook_instances[0]
+            assert notebook.direct_internet_access
+            assert not notebook.root_access
+
+        with patch("botocore.client.BaseClient._make_api_call", new=only_root_access):
+            notebook = SageMaker(aws_provider).sagemaker_notebook_instances[0]
+            assert not notebook.direct_internet_access
+            assert notebook.root_access
+
+    # Test SageMaker describe notebook instance lifecycle config
+    def test_describe_notebook_instance_lifecycle_config(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        notebook_instance = sagemaker.sagemaker_notebook_instances[0]
+        assert notebook_instance.lifecycle_scan_failed is False
+        assert notebook_instance.lifecycle_scripts == {
+            "OnCreate[0]": "echo OnCreate",
+            "OnStart[0]": "echo OnStart",
+        }
 
     # Test SageMaker describe model
     def test_describe_model(self):

@@ -5,15 +5,15 @@ import { ChevronRight } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
 import {
+  DataTableColumnHeader,
+  SeverityBadge,
+  StatusFindingBadge,
+} from "@/components/shadcn/table";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import {
-  DataTableColumnHeader,
-  SeverityBadge,
-  StatusFindingBadge,
-} from "@/components/ui/table";
 import { cn } from "@/lib";
 import {
   canDrillDownFindingGroup,
@@ -199,20 +199,29 @@ export function getColumnFindingGroups({
                 <TooltipContent side="top">{providerName}</TooltipContent>
               </Tooltip>
             ) : null}
-            <div>
-              {canExpand ? (
-                <button
-                  type="button"
-                  className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
-                  onClick={() => onDrillDown(group.checkId, group)}
-                >
+            {/* Single line always: min room to stay readable, ellipsis beyond
+                the max, full title in the tooltip. */}
+            <div className="min-w-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {canExpand ? (
+                    <button
+                      type="button"
+                      className="text-text-neutral-primary hover:text-button-tertiary block max-w-[500px] min-w-[120px] cursor-pointer truncate border-none bg-transparent p-0 text-left text-sm hover:underline"
+                      onClick={() => onDrillDown(group.checkId, group)}
+                    >
+                      {group.checkTitle}
+                    </button>
+                  ) : (
+                    <span className="text-text-neutral-primary block max-w-[500px] min-w-[120px] truncate text-left text-sm">
+                      {group.checkTitle}
+                    </span>
+                  )}
+                </TooltipTrigger>
+                <TooltipContent side="top" maxWidth="md">
                   {group.checkTitle}
-                </button>
-              ) : (
-                <span className="text-text-neutral-primary w-full text-left text-sm break-words whitespace-normal">
-                  {group.checkTitle}
-                </span>
-              )}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         );

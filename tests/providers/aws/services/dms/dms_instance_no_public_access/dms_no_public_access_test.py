@@ -1,3 +1,5 @@
+import ast
+from pathlib import Path
 from unittest import mock
 
 import botocore
@@ -61,6 +63,42 @@ def mock_make_api_call_private(self, operation_name, kwargs):
 
 
 class Test_dms_instance_no_public_access:
+    def test_ec2_client_is_not_imported_at_module_level(self):
+        repo_root = Path(__file__).parents[6]
+        check_source = repo_root / (
+            "prowler/providers/aws/services/dms/dms_instance_no_public_access/dms_instance_no_public_access.py"
+        )
+        check_tree = ast.parse(check_source.read_text())
+
+        top_level_imports = [
+            node
+            for node in check_tree.body
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+        ]
+
+        top_level_ec2_client_imports = [
+            node
+            for node in top_level_imports
+            if (
+                isinstance(node, ast.ImportFrom)
+                and node.module == "prowler.providers.aws.services.ec2.ec2_client"
+            )
+            or (
+                isinstance(node, ast.ImportFrom)
+                and node.module == "prowler.providers.aws.services.ec2"
+                and any(alias.name == "ec2_client" for alias in node.names)
+            )
+            or (
+                isinstance(node, ast.Import)
+                and any(
+                    alias.name == "prowler.providers.aws.services.ec2.ec2_client"
+                    for alias in node.names
+                )
+            )
+        ]
+
+        assert top_level_ec2_client_imports == []
+
     @mock_aws
     def test_dms_no_instances(self):
         dms_client = client("dms", region_name=AWS_REGION_US_EAST_1)
@@ -79,6 +117,10 @@ class Test_dms_instance_no_public_access:
                 "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
                 new=DMS(aws_provider),
             ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access._get_ec2_client",
+                side_effect=AssertionError("EC2 client should not be loaded"),
+            ) as get_ec2_client_mock,
         ):
             from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                 dms_instance_no_public_access,
@@ -87,6 +129,7 @@ class Test_dms_instance_no_public_access:
             check = dms_instance_no_public_access()
             result = check.execute()
             assert len(result) == 0
+            get_ec2_client_mock.assert_not_called()
 
     @mock_aws
     def test_dms_private(self):
@@ -108,6 +151,10 @@ class Test_dms_instance_no_public_access:
                     "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
                     new=DMS(aws_provider),
                 ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access._get_ec2_client",
+                    side_effect=AssertionError("EC2 client should not be loaded"),
+                ) as get_ec2_client_mock,
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                     dms_instance_no_public_access,
@@ -125,6 +172,7 @@ class Test_dms_instance_no_public_access:
                 assert result[0].resource_id == DMS_INSTANCE_NAME
                 assert result[0].resource_arn == DMS_INSTANCE_ARN
                 assert result[0].resource_tags == []
+                get_ec2_client_mock.assert_not_called()
 
     @mock_aws
     def test_dms_public(self):
@@ -146,6 +194,10 @@ class Test_dms_instance_no_public_access:
                     "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
                     new=DMS(aws_provider),
                 ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access._get_ec2_client",
+                    side_effect=AssertionError("EC2 client should not be loaded"),
+                ) as get_ec2_client_mock,
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                     dms_instance_no_public_access,
@@ -163,6 +215,7 @@ class Test_dms_instance_no_public_access:
                 assert result[0].resource_id == DMS_INSTANCE_NAME
                 assert result[0].resource_arn == DMS_INSTANCE_ARN
                 assert result[0].resource_tags == []
+                get_ec2_client_mock.assert_not_called()
 
     @mock_aws
     def test_dms_public_with_public_sg(self):
@@ -218,8 +271,8 @@ class Test_dms_instance_no_public_access:
                     new=dms_client,
                 ),
                 mock.patch(
-                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
-                    new=EC2(aws_provider),
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access._get_ec2_client",
+                    return_value=EC2(aws_provider),
                 ),
             ):
                 # Test Check
@@ -298,8 +351,8 @@ class Test_dms_instance_no_public_access:
                     new=dms_client,
                 ),
                 mock.patch(
-                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
-                    new=EC2(aws_provider),
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access._get_ec2_client",
+                    return_value=EC2(aws_provider),
                 ),
             ):
                 # Test Check

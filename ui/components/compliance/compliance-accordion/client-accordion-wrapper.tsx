@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 
-import { Button } from "@/components/shadcn";
-import { Accordion, AccordionItemProps } from "@/components/ui";
+import { Button, Accordion, AccordionItemProps } from "@/components/shadcn";
+import { Card } from "@/components/shadcn/card/card";
 
 export const ClientAccordionWrapper = ({
   items,
@@ -71,7 +71,7 @@ export const ClientAccordionWrapper = ({
     lastScrolledKeyRef.current = scrollToKey;
     // Two nested rAFs: the first lets the accordion children commit to
     // the DOM, the second lands after the browser has run a layout pass
-    // so HeroUI's framer-motion expand has settled enough for
+    // so the Collapsible CSS expand animation has settled enough for
     // scrollIntoView to read a stable offset.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -83,16 +83,17 @@ export const ClientAccordionWrapper = ({
     });
   };
 
+  // Same enclosing-card design as the app's tables: the expand toggle sits
+  // top-right inside the card and the accordion fills the rest.
   return (
-    <div ref={containerRef}>
+    <Card ref={containerRef} variant="base" className="w-full gap-2">
       {!hideExpandButton && (
-        <div className="text-text-neutral-tertiary hover:text-text-neutral-primary mt-[-16px] flex justify-end text-xs font-medium transition-colors">
+        <div className="text-text-neutral-tertiary hover:text-text-neutral-primary flex justify-end text-xs font-medium transition-colors">
           <Button
             onClick={handleToggleExpand}
             aria-label={isExpanded ? "Collapse all" : "Expand all"}
             variant="ghost"
             size="sm"
-            className="mb-1"
           >
             {isExpanded ? "Collapse all" : "Expand all"}
           </Button>
@@ -105,6 +106,6 @@ export const ClientAccordionWrapper = ({
         selectedKeys={selectedKeys}
         onSelectionChange={handleSelectionChange}
       />
-    </div>
+    </Card>
   );
 };

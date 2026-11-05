@@ -43,6 +43,7 @@ interface ZeroDataProvider {
 }
 
 interface SankeyChartProps {
+  disableNavigation?: boolean;
   data: {
     nodes: SankeyNode[];
     links: SankeyLink[];
@@ -168,7 +169,8 @@ export const CustomNode = ({
   const color = colors[nodeName] || "var(--color-text-neutral-tertiary)";
   const isHidden = nodeName === "";
   const hasTooltip = !isHidden && payload.newFindings;
-  const isClickable = SEVERITY_FILTER_MAP[nodeName] !== undefined;
+  const isClickable =
+    Boolean(onNodeClick) && SEVERITY_FILTER_MAP[nodeName] !== undefined;
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     if (!hasTooltip) return;
@@ -387,7 +389,10 @@ const CustomLink = ({
         fill={color}
         fillOpacity={getOpacity()}
         stroke="none"
-        style={{ cursor: "pointer", transition: "fill-opacity 0.2s" }}
+        style={{
+          cursor: onLinkClick ? "pointer" : "default",
+          transition: "fill-opacity 0.2s",
+        }}
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -401,6 +406,7 @@ export function SankeyChart({
   data,
   zeroDataProviders = [],
   height = 400,
+  disableNavigation = false,
 }: SankeyChartProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -510,7 +516,7 @@ export function SankeyChart({
       onNodeHover={handleNodeHover}
       onNodeMove={handleNodeMove}
       onNodeLeave={handleNodeLeave}
-      onNodeClick={handleNodeClick}
+      onNodeClick={disableNavigation ? undefined : handleNodeClick}
     />
   );
 
@@ -532,7 +538,7 @@ export function SankeyChart({
       onLinkHover={handleLinkHover}
       onLinkMove={handleLinkMove}
       onLinkLeave={handleLinkLeave}
-      onLinkClick={handleLinkClick}
+      onLinkClick={disableNavigation ? undefined : handleLinkClick}
     />
   );
 
@@ -627,7 +633,7 @@ export function SankeyChart({
         </div>
       )}
       {zeroDataProviders.length > 0 && (
-        <div className="border-divider-primary mt-4 border-t pt-4">
+        <div className="border-border-neutral-secondary mt-4 border-t pt-4">
           <p className="text-text-neutral-tertiary mb-3 text-xs font-medium tracking-wide uppercase">
             Providers with no failed findings
           </p>

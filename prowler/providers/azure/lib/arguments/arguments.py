@@ -53,6 +53,16 @@ def init_parser(self):
         type=validate_azure_region,
         help="Azure region from `az cloud list --output table`, by default AzureCloud",
     )
+    # Resource Groups
+    azure_rg_subparser = azure_parser.add_argument_group("Resource Groups")
+    azure_rg_subparser.add_argument(
+        "--azure-resource-group",
+        "--azure-resource-groups",
+        nargs="+",
+        default=[],
+        dest="resource_groups",
+        help="Azure Resource Group names to scope the scan to specific groups.",
+    )
 
 
 def validate_azure_region(region):

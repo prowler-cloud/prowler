@@ -5,22 +5,22 @@ import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
-import { getScansByState } from "@/actions/scans/scans";
-import {
-  OnboardingCheckpointWatcher,
-  OnboardingGate,
-  OnboardingSequenceBanner,
-} from "@/components/onboarding";
+import { auth } from "@/auth.config";
+import MainLayout from "@/components/layout/main-layout/main-layout";
+import { FirstRunRedirect } from "@/components/providers/first-run-redirect";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
-import MainLayout from "@/components/ui/main-layout/main-layout";
-import { NavigationProgress } from "@/components/ui/navigation-progress";
-import { Toaster } from "@/components/ui/toast";
-import { fontSans } from "@/config/fonts";
+import { NavigationProgress } from "@/components/shadcn/navigation-progress";
+import { Toaster } from "@/components/shadcn/toast";
+import { TaskPollingWatcher } from "@/components/shared/task-polling-watcher";
+import { GlobalSidePanel } from "@/components/side-panel";
+import { FeedbackSurvey } from "@/components/survey/feedback-survey";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
+import { REGISTRY_ACCESS } from "@/lib/registry/access";
+import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import { StoreInitializer } from "@/store/ui/store-initializer";
-import { SCAN_STATES } from "@/types/attack-paths";
 
 import { Providers } from "../providers";
 
@@ -50,30 +50,28 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Onboarding is Cloud-only; skip its fetches and orchestrators in OSS.
-  const onboardingEnabled = isCloud();
+  const cloudEnabled = isCloud();
 
-  // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
-  // progression on a fetch error.
-  let hasCompletedScan = true;
+  // Every deployment needs the provider count: it drives the first-run redirect
+  // and the sidebar's Add Provider action.
+  const providersPromise = getProviders({ page: 1, pageSize: 1 });
+
+  const session = await auth();
+  // One-time server-side Registry gate per request: only an ELIGIBLE answer
+  // shows the sidebar entry; UNKNOWN and INELIGIBLE both hide it.
+  const registryAccessPromise = evaluateRegistryAccess(session?.accessToken);
+  // Scopes the first-run marker, so resolving it for one tenant does not
+  // silence it for another.
+  const tenantId = session?.tenantId ?? null;
+
+  const providersData = await providersPromise;
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
-  let hasProviders: boolean | undefined = false;
+  const hasProviders: boolean | undefined = Array.isArray(providersData?.data)
+    ? providersData.data.length > 0
+    : undefined;
 
-  if (onboardingEnabled) {
-    const [providersData, scansByState] = await Promise.all([
-      getProviders({ page: 1, pageSize: 1 }),
-      getScansByState(),
-    ]);
-    hasCompletedScan = Array.isArray(scansByState?.data)
-      ? scansByState.data.some(
-          (scan: { attributes?: { state?: string } }) =>
-            scan.attributes?.state === SCAN_STATES.COMPLETED,
-        )
-      : true;
-    hasProviders = Array.isArray(providersData?.data)
-      ? providersData.data.length > 0
-      : undefined;
-  }
+  const registryEligible =
+    (await registryAccessPromise).status === REGISTRY_ACCESS.ELIGIBLE;
 
   return (
     <html suppressHydrationWarning lang="en">
@@ -83,8 +81,9 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
@@ -93,18 +92,18 @@ export default async function RootLayout({
           <Suspense>
             <NavigationProgress />
           </Suspense>
-          {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
-          <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
-          {onboardingEnabled && (
-            <>
-              <OnboardingGate hasProviders={hasProviders} />
-              {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher />
-              {/* Persistent banner shown only while a guided sequence is active. */}
-              <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
-            </>
-          )}
+          {/* Tri-state for both: an unknown count leaves the store unresolved and the gate closed. */}
+          <StoreInitializer values={{ hasProviders, registryEligible }} />
+          {/* Every deployment: an empty tenant lands on the add-provider wizard once. */}
+          <FirstRunRedirect hasProviders={hasProviders} tenantId={tenantId} />
           <MainLayout>{children}</MainLayout>
+          {cloudEnabled && <FeedbackSurvey />}
+          {/* Always mounted: it hosts the detail (finding/resource) views in
+              every deployment; the AI tab inside is cloud-gated on its own. */}
+          <GlobalSidePanel />
+          {/* Resumes persisted background-task polling (e.g. cross-provider
+              PDF generation) so completion toasts survive hard reloads. */}
+          <TaskPollingWatcher />
           <Toaster />
         </Providers>
       </body>

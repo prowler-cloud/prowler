@@ -61,11 +61,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(routerMocks.currentSearch),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
-}));
-
-vi.mock("@/components/shadcn", () => ({
   Button: ({
     asChild,
     children,
@@ -114,13 +112,13 @@ vi.mock("../alert-form-modal", () => ({
       const result = await onSubmit({
         name: "Updated alert",
         description: "",
-        method: "email",
         frequency: ALERT_TRIGGER_KINDS.AFTER_SCAN,
         condition: {
           op: ALERT_AGGREGATE_OPS.ANY,
           filter: { severity: ["critical"] },
         },
         recipientEmails: [],
+        slackChannels: [],
         enabled: true,
       });
       setError(result.ok ? null : (result.error ?? null));

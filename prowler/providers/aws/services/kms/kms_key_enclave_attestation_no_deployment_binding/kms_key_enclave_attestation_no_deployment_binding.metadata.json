@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_attestation_no_deployment_binding",
+  "CheckTitle": "KMS enclave key attestation binds a specific deployment context",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "informational",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "Sensitive Allow statements on enclave KMS keys are checked for deployment-context binding: PCR3 (parent IAM role, AWS-recommended), PCR4 (parent instance ID), PCR8 (EIF signing cert), or an account-level condition (aws:PrincipalAccount / SourceAccount / OrgID / ResourceAccount / OrgPaths) paired with a RecipientAttestation binding. PCR0/PCR1/PCR2 travel with the EIF and do not bind deployment.",
+  "Risk": "A key policy bound only to image PCRs (PCR0/PCR1/PCR2) accepts the same EIF running anywhere, including an attacker-controlled account or instance. Deployment-context conditions bind attestation to a specific execution context so a leaked or replicated image cannot silently reuse the key. Materiality depends on application-layer controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/enclaves/latest/user/set-up-attestation.html",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-nitro-enclaves.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy-with-deployment-binding.json",
+      "NativeIaC": "",
+      "Other": "1. Pair every image binding (kms:RecipientAttestation:PCR0/PCR1/PCR2) with at least one deployment-context binding: kms:RecipientAttestation:PCR3 (parent IAM role, AWS-recommended), PCR4 (parent instance ID), or PCR8 (EIF signing certificate). AWS recommends PCR3 + PCR8 together for portability.\n2. Alternatively add an account/org condition (aws:PrincipalAccount, aws:SourceAccount, aws:PrincipalOrgID, aws:ResourceAccount, aws:PrincipalOrgPaths) so only calls from the audited account or organization can present the attestation.\n3. Ensure operators are restrictive (StringEquals, ArnEquals) and values do not contain wildcards.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Pair every image binding (`kms:RecipientAttestation:PCR0`, `PCR1`, `PCR2`) with **PCR3** (parent IAM role), **PCR4** (parent instance ID), **PCR8** (EIF signing cert), or an account/org condition so the key policy binds to a specific **deployment context** rather than just an image identity. AWS recommends **PCR3 + PCR8** together.",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_attestation_no_deployment_binding"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "kms_key_enclave_attestation_not_enforced",
+    "kms_key_enclave_attestation_pcr_mismatch"
+  ],
+  "Notes": "Statements with no sensitive Allow-with-attestation are covered by kms_key_enclave_attestation_not_enforced and are not flagged here (honest MANUAL when a key has none). ForAllValues:* attestation values are only counted when paired with a Null:false guard, matching the semantics used by attestation_condition_keys."
+}

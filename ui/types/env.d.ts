@@ -15,12 +15,12 @@ declare global {
       NEXT_PUBLIC_API_DOCS_URL?: string;
       UI_API_DOCS_URL?: string;
 
-      // GTM
+      UI_GOOGLE_TAG_MANAGER_ENABLED?: "true" | "false";
       /** @deprecated use UI_GOOGLE_TAG_MANAGER_ID */
       NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?: string;
       UI_GOOGLE_TAG_MANAGER_ID?: string;
 
-      // SENTRY
+      UI_SENTRY_ENABLED?: "true" | "false";
       /** @deprecated use UI_SENTRY_DSN */
       NEXT_PUBLIC_SENTRY_DSN?: string;
       UI_SENTRY_DSN?: string;
@@ -28,8 +28,25 @@ declare global {
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
       UI_SENTRY_ENVIRONMENT?: string;
 
+      // Prowler Cloud deployment flag — runtime read (server env, client island).
+      UI_CLOUD_ENABLED?: "true" | "false";
+      UI_REGISTRY_ENABLED?: "true" | "false";
+      // Registry base URL, shared with the backend installer.
+      PROWLER_REGISTRY_INDEX_URL?: string;
+      UI_REGISTRY_MEDIA_URL?: string;
+
+      CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
+
+      // Cloud-only Stripe publishable keys (public; shipped to the browser).
+      // V1 = legacy billing, V2 = metronome.
+      /** @deprecated use UI_CLOUD_STRIPE_PUBLISHABLE_KEY */
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string;
+      UI_CLOUD_STRIPE_PUBLISHABLE_KEY?: string;
+      /** @deprecated use UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2 */
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_V2?: string;
+      UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2?: string;
+
       // Build-time public config
-      NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";
       NEXT_PUBLIC_PROWLER_RELEASE_VERSION?: string;
 
       // Auth (NextAuth)
@@ -44,9 +61,15 @@ declare global {
       SENTRY_PROJECT?: string;
       SENTRY_AUTH_TOKEN?: string;
 
-      // TODO Reserved runtime public config (registered now; no UI consumer yet)
+      UI_POSTHOG_ENABLED?: "true" | "false";
+      /** @deprecated use UI_POSTHOG_KEY */
       POSTHOG_KEY?: string;
+      UI_POSTHOG_KEY?: string;
+      /** @deprecated use UI_POSTHOG_HOST */
       POSTHOG_HOST?: string;
+      UI_POSTHOG_HOST?: string;
+      UI_POSTHOG_UI_HOST?: string;
+      // TODO Reserved runtime public config (registered now; no UI consumer yet)
       REO_DEV_CLIENT_ID?: string;
 
       // Social OAuth
@@ -79,6 +102,7 @@ declare global {
       E2E_UNLIMITED_VISIBILITY_PASSWORD?: string;
       E2E_MANAGE_INTEGRATIONS_USER?: string;
       E2E_MANAGE_INTEGRATIONS_PASSWORD?: string;
+      E2E_REGISTRY_ACCEPTANCE_MODE?: "fixture";
       E2E_MANAGE_ACCOUNT_USER?: string;
       E2E_MANAGE_ACCOUNT_PASSWORD?: string;
       E2E_MANAGE_SCANS_USER?: string;

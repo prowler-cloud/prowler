@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "loadbalancer_alb_https_uses_ssl_certificate",
+  "CheckTitle": "E2E Networks ALB HTTPS load balancers use an SSL certificate",
+  "CheckType": [],
+  "ServiceName": "loadbalancer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**E2E Networks application load balancers** serving `HTTPS` traffic should have a valid **SSL certificate** configured so client connections are encrypted and authenticated.",
+  "Risk": "`HTTPS` load balancers without a valid **SSL certificate** expose traffic to interception and downgrade attacks, weakening **confidentiality** and **integrity** for client connections.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/load-balancer/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach a valid **SSL certificate** to every load balancer that serves `HTTPS` traffic.",
+      "Url": "https://hub.prowler.com/check/loadbalancer_alb_https_uses_ssl_certificate"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

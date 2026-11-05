@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_application_gateway_waf_enabled",
+  "CheckTitle": "Application Gateway has an enabled Web Application Firewall policy associated",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.network/applicationgateways",
+  "ResourceGroup": "network",
+  "Description": "**Azure Application Gateways** are evaluated for an enabled **Web Application Firewall (WAF) policy** associated at the gateway level, which requires the `WAF_v2` tier. The legacy WAF configuration does not count as a policy.",
+  "Risk": "Without a WAF, web applications behind the gateway receive **SQL injection**, **cross-site scripting** and other common exploits unfiltered, risking **data theft**, **account takeover** and **defacement** of internet-facing services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/ag-overview",
+    "https://learn.microsoft.com/en-us/azure/web-application-firewall/ag/upgrade-ag-waf-policy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network application-gateway update --resource-group <resource_group> --name <gateway_name> --set sku.name=WAF_v2 sku.tier=WAF_v2 firewallPolicy.id=<waf_policy_id> forceFirewallPolicyAssociation=true",
+      "NativeIaC": "```bicep\nresource appGw 'Microsoft.Network/applicationGateways@2024-05-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    sku: { name: 'WAF_v2', tier: 'WAF_v2' } // Critical: WAF tier\n    firewallPolicy: { id: '<example_resource_id>' } // Critical: associates the WAF policy\n    forceFirewallPolicyAssociation: true // Replaces a legacy WAF configuration with the policy\n    // ...existing gateway configuration, without webApplicationFirewallConfiguration\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the Application Gateway\n2. If the tier is Standard V2, select Configuration under Settings, set Tier to WAF V2 and click Save. A V1 gateway must first be migrated to V2, and a Basic gateway cannot change tier and must be redeployed on WAF V2\n3. Select Web Application Firewall. If the gateway uses the legacy WAF configuration, select Upgrade from WAF configuration, name the new policy and click Upgrade. This copies the legacy exclusions and rule settings into the policy, whereas the CLI and IaC examples force the association and apply the policy's own settings instead\n4. Otherwise associate a new or existing WAF policy and click Save\n5. If the associated policy is disabled, enable it, for example with `az network application-gateway waf-policy policy-setting update --resource-group <waf_policy_resource_group> --policy-name <waf_policy_name> --state Enabled --request-body-check true`. Keep `--request-body-check true`: without it, this command turns request body inspection off",
+      "Terraform": "```hcl\nresource \"azurerm_application_gateway\" \"example_resource\" {\n  # ...existing gateway configuration, without a waf_configuration block\n  sku {\n    name = \"WAF_v2\" # Critical: WAF tier\n    tier = \"WAF_v2\"\n  }\n  firewall_policy_id                = azurerm_web_application_firewall_policy.example_resource.id # Critical: associates the WAF policy\n  force_firewall_policy_association = true # Replaces a legacy WAF configuration with the policy\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Put an **enabled WAF policy in Prevention mode** in front of every internet-facing gateway, using the latest Default Rule Set. Migrate gateways that still use the legacy WAF configuration to a policy before it retires.",
+      "Url": "https://hub.prowler.com/check/network_application_gateway_waf_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Gateways using the legacy WAF configuration are reported as FAIL because Microsoft retires it on 15 March 2027 and newer WAF features, such as bot protection, require a policy. Only the gateway-level policy is evaluated, as in the CIS audit; policies attached to listeners or path rules are not. The policy state comes from the WAF policies collected in the same scan, or is read from the policy itself when it sits outside the scanned resource groups, and a disabled policy is reported as FAIL. The policy mode is not evaluated, so an enabled policy in Detection mode, which only logs requests, is reported as PASS."
+}

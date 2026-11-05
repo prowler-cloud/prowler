@@ -6,9 +6,11 @@ from api.exceptions import (
     TaskNotFoundException,
 )
 from api.models import Provider, StateChoices, Task
+from api.rbac.permissions import get_providers
 from api.v1.serializers import TaskSerializer
 from django.http import QueryDict
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -31,6 +33,22 @@ class DisablePaginationMixin:
         if self.should_disable_pagination():
             return None
         return super().paginate_queryset(queryset)
+
+
+class ProviderVisibilityMixin:
+    @cached_property
+    def provider_queryset(self):
+        if self.user_role.unlimited_visibility:
+            return Provider.objects.filter(tenant_id=self.request.tenant_id)
+        return get_providers(self.user_role)
+
+    def get_provider_queryset(self):
+        return self.provider_queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["provider_queryset"] = self.get_provider_queryset()
+        return context
 
 
 class PaginateByPkMixin:

@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1.0"
+  version: "1.2.0"
   scope: [root, api]
   auto_invoke:
     - "Writing Prowler API tests"
@@ -17,12 +17,15 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ## Critical Rules
 
 - ALWAYS use `response.json()["data"]` not `response.data`
-- ALWAYS use `content_type = "application/vnd.api+json"` for PATCH/PUT requests
-- ALWAYS use `format="vnd.api+json"` for POST requests
+- ALWAYS send JSON:API bodies (`{"data": {...}}`) with `content_type=API_JSON_CONTENT_TYPE` (from `conftest`) for POST/PATCH/PUT
+- `authenticated_client` is Django's test `Client`, NOT DRF's `APIClient`: `format=` is silently ignored and the body is sent multipart. Existing tests that pass `format="json"` only work because they post flat dicts
+- ALWAYS mark DB tests with `@pytest.mark.django_db`
 - ALWAYS test cross-tenant isolation - RLS returns 404, NOT 403
 - NEVER skip RLS isolation tests when adding new endpoints
 - NEVER use realistic-looking API keys in tests (TruffleHog will flag them)
-- ALWAYS mock BOTH `.delay()` AND `Task.objects.get` for async task tests
+- ALWAYS mock BOTH `.delay()` AND `Task.objects.get` for views that return 202 with a task
+- ALWAYS patch the job function where `tasks.tasks` imports it (e.g. `tasks.tasks.check_provider_connection`) when calling `task.apply()`; never reach real cloud APIs
+- Valid provider UIDs only: `Provider.save()` runs `full_clean()` and the `validate_<provider>_uid()` checks
 
 ---
 
@@ -31,7 +34,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ```text
 create_test_user (session) ─► tenants_fixture (function) ─► authenticated_client
                                      │
-                                     └─► providers_fixture ─► scans_fixture ─► findings_fixture
+                                     └─► aws_provider ─► scans_fixture ─► findings_fixture
 ```
 
 ### Key Fixtures
@@ -39,10 +42,15 @@ create_test_user (session) ─► tenants_fixture (function) ─► authenticate
 | Fixture | Description |
 |---------|-------------|
 | `create_test_user` | Session user (`dev@prowler.com`) |
-| `tenants_fixture` | 3 tenants: [0],[1] have membership, [2] isolated |
-| `authenticated_client` | JWT client for tenant[0] |
-| `providers_fixture` | 9 providers in tenant[0] |
-| `tasks_fixture` | 2 Celery tasks with TaskResult |
+| `tenants_fixture` | 3 tenants: [0],[1] have membership ([1] as OWNER), [2] isolated |
+| `authenticated_client` | Django test client with JWT for tenant[0] |
+| `authenticated_client_for_tenant_factory` | Creates a Django test client with JWT for a specific user and tenant |
+| `provider_factory` | Creates one validated provider with provider-specific defaults |
+| `aws_provider` | 1 AWS provider in tenant[0] |
+| `aws_provider_pair` | 2 AWS providers in tenant[0] |
+| `all_provider_types_fixture` | 1 provider for every supported provider type |
+| `tasks_fixture` | 2 `Task` rows in tenant[0] backed by `TaskResult` |
+| `authenticated_api_client` | DRF `APIClient` with a serializer-issued JWT (use only for token tests) |
 
 ### RBAC Fixtures
 
@@ -52,25 +60,37 @@ create_test_user (session) ─► tenants_fixture (function) ─► authenticate
 | `authenticated_client_rbac_noroles` | Membership but NO roles |
 | `authenticated_client_no_permissions_rbac` | All permissions = False |
 
+Use `authenticated_client` for normal view behavior tests. It uses a cheap JWT
+and still runs the real request authentication path. Use serializer-generated
+JWTs or API-key clients only when the test is specifically about token
+obtain/refresh, invalid tokens, expired tokens, tenant switching by token, API
+keys, or unauthenticated 401 behavior. Use
+`authenticated_client_for_tenant_factory` when a test needs a cheap JWT client
+for a different user or tenant.
+
 ---
 
 ## 2. JSON:API Requests
 
+```python
+from conftest import API_JSON_CONTENT_TYPE  # "application/vnd.api+json"
+```
+
 ### POST (Create)
 ```python
-response = client.post(
-    reverse("provider-list"),
-    data={"data": {"type": "providers", "attributes": {...}}},
-    format="vnd.api+json",  # NOT content_type!
+response = authenticated_client.post(
+    reverse("scan-list"),
+    data={"data": {"type": "scans", "attributes": {...}, "relationships": {...}}},
+    content_type=API_JSON_CONTENT_TYPE,
 )
 ```
 
 ### PATCH (Update)
 ```python
-response = client.patch(
+response = authenticated_client.patch(
     reverse("provider-detail", kwargs={"pk": provider.id}),
     data={"data": {"type": "providers", "id": str(provider.id), "attributes": {...}}},
-    content_type="application/vnd.api+json",  # NOT format!
+    content_type=API_JSON_CONTENT_TYPE,
 )
 ```
 
@@ -105,6 +125,7 @@ def test_cross_tenant_access_denied(self, authenticated_client, tenants_fixture)
 | Strategy | Use For |
 |----------|---------|
 | Mock `.delay()` + `Task.objects.get` | Testing views that trigger tasks |
+| Mock `api.v1.views.enqueue_scan_execution_on_commit` | Testing scan creation (`POST /scans`) |
 | `task.apply()` | Synchronous task logic testing |
 | Mock `chain`/`group` | Testing Canvas orchestration |
 | Mock `connection` | Testing `@set_tenant` decorator |
@@ -142,9 +163,10 @@ api_key = "sk-fake-test-key-for-unit-testing-only"
 |----------|------|
 | Successful GET | 200 |
 | Successful POST | 201 |
-| Async operation (DELETE/scan trigger) | 202 |
+| Async operation (provider DELETE, `POST /scans`, connection checks) | 202 |
 | Sync DELETE | 204 |
 | Validation error | 400 |
+| Missing/invalid token or no tenant in token | 401 |
 | Missing permission (RBAC) | 403 |
 | RLS isolation / not found | 404 |
 
@@ -153,10 +175,14 @@ api_key = "sk-fake-test-key-for-unit-testing-only"
 ## Commands
 
 ```bash
-cd api && uv run pytest -x --tb=short
-cd api && uv run pytest -k "test_provider"
-cd api && uv run pytest api/src/backend/api/tests/test_rbac.py
+# pytest.ini is in api/src/backend; needs PostgreSQL + Valkey and a shell WITHOUT the dev .env
+cd api/src/backend && uv run pytest -x --tb=short
+cd api/src/backend && uv run pytest -k "test_provider"
+cd api/src/backend && uv run pytest api/tests/test_rbac.py
+cd api/src/backend && uv run pytest tasks/tests/test_tasks.py
 ```
+
+Test order is randomized (`pytest-randomly`): never rely on state from another test.
 
 ---
 

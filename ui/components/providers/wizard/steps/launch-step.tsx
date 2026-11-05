@@ -11,7 +11,9 @@ import {
   saveScheduleWithInitialScan,
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
-import { Field, FieldLabel } from "@/components/shadcn";
+import { Field, FieldLabel, ToastAction, useToast } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
+import { EntityInfo } from "@/components/shadcn/entities";
 import {
   RadioGroup,
   RadioGroupItem,
@@ -19,19 +21,18 @@ import {
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import {
-  CloudFeatureBadge,
-  CloudFeatureBadgeLink,
-} from "@/components/shared/cloud-feature-badge";
-import { ToastAction, useToast } from "@/components/ui";
-import { EntityInfo } from "@/components/ui/entities";
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
 import {
   type ActionErrorResult,
   getActionErrorMessage,
   hasActionError,
+  isUsageLimitError,
 } from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -102,7 +103,7 @@ export function LaunchStep({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
 
   const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;
@@ -157,6 +158,9 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to launch scan",
         description: getActionErrorMessage(scanResult),
+        action: isUsageLimitError(scanResult)
+          ? usageLimitToastAction()
+          : undefined,
       });
       return;
     }
@@ -167,8 +171,8 @@ export function LaunchStep({
       title: "Scan launched",
       description: "The scan was launched successfully.",
       action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
+        <ToastAction altText="Go to findings" asChild>
+          <Link href="/findings">Go to findings</Link>
         </ToastAction>
       ),
     });
@@ -194,6 +198,7 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to save scan schedule",
         description: result.message,
+        action: result.usageLimited ? usageLimitToastAction() : undefined,
       });
       return;
     }
@@ -201,10 +206,14 @@ export function LaunchStep({
     onClose();
 
     const launched = result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
-    const targetTab = launched ? SCAN_JOBS_TAB.ACTIVE : SCAN_JOBS_TAB.SCHEDULED;
-    const goToScans = (
+    // A running scan already stores findings; a schedule only lists on Scans.
+    const nextStepAction = launched ? (
+      <ToastAction altText="Go to findings" asChild>
+        <Link href="/findings">Go to findings</Link>
+      </ToastAction>
+    ) : (
       <ToastAction altText="Go to scans" asChild>
-        <Link href={`/scans?tab=${targetTab}`}>Go to scans</Link>
+        <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
       </ToastAction>
     );
 
@@ -212,7 +221,8 @@ export function LaunchStep({
       toast({
         title: "Scan schedule saved",
         description: `The schedule was saved, but the initial scan could not be launched: ${result.message}`,
-        action: goToScans,
+        // Over the limit, the plans unblock the scan; the scans page would not.
+        action: result.usageLimited ? usageLimitToastAction() : nextStepAction,
       });
       return;
     }
@@ -224,7 +234,7 @@ export function LaunchStep({
       description: launched
         ? "The schedule was saved and the initial scan was launched."
         : "The scan schedule was saved successfully.",
-      action: goToScans,
+      action: nextStepAction,
     });
   });
 
@@ -296,11 +306,11 @@ export function LaunchStep({
 
       <div className="flex items-center gap-3">
         <TreeStatusIcon status={TREE_ITEM_STATUS.SUCCESS} className="size-6" />
-        <h3 className="text-sm font-semibold">Account Connected!</h3>
+        <h3 className="text-sm font-semibold">Provider Connected!</h3>
       </div>
 
       <p className="text-text-neutral-secondary text-sm">
-        Your account is connected to Prowler and ready to Scan!
+        Your provider is connected to Prowler and ready to Scan!
       </p>
 
       {!providerId && (
@@ -332,13 +342,11 @@ export function LaunchStep({
               disabled={!canUseScheduleMode}
             />
             On a schedule
-            {!canUseScheduleMode &&
-              !isBlocked &&
-              (isManualOnly ? (
-                <CloudFeatureBadge label="Requires subscription" size="sm" />
-              ) : (
-                <CloudFeatureBadgeLink size="sm" />
-              ))}
+            {isManualOnly && !isBlocked && (
+              <Badge variant="warning" size="sm">
+                Requires subscription
+              </Badge>
+            )}
           </label>
         </RadioGroup>
       </Field>
@@ -350,20 +358,7 @@ export function LaunchStep({
         </p>
       )}
 
-      {(isLimitBlocked || isBlocked) && (
-        <p className="text-text-error-primary text-sm">
-          You have exceeded the usage limit of one provider. You can add more
-          providers and run unlimited scans by adding a subscription.{" "}
-          <Link
-            href="https://cloud.prowler.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Manage Billing
-          </Link>
-        </p>
-      )}
+      {(isLimitBlocked || isBlocked) && <UsageLimitMessage />}
 
       {isScheduleMode && (
         <ScanScheduleFields

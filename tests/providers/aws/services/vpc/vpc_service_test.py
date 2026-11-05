@@ -528,9 +528,53 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].cidr_block == "10.0.0.0/16"
                 assert vpc.subnets[0].availability_zone == f"{AWS_REGION_US_EAST_1}a"
                 assert vpc.subnets[0].public
+                assert vpc.subnets[0].public_ipv6 is False
                 assert vpc.subnets[0].nat_gateway is False
                 assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
                 assert vpc.subnets[0].tags == []
+
+    @mock_aws
+    def test_describe_vpc_subnets_public_ipv6_route(self):
+        # ::/0 → IGW must set public_ipv6=True even when there is no
+        # IPv4 default route on the same table.
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        subnet_id = ec2_client.create_subnet(
+            VpcId=vpc_id,
+            CidrBlock="10.0.0.0/16",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
+        )["Subnet"]["SubnetId"]
+        igw_id = ec2_client.create_internet_gateway()["InternetGateway"][
+            "InternetGatewayId"
+        ]
+        ec2_client.attach_internet_gateway(InternetGatewayId=igw_id, VpcId=vpc_id)
+        route_table_id = ec2_client.create_route_table(VpcId=vpc_id)["RouteTable"][
+            "RouteTableId"
+        ]
+        ec2_client.associate_route_table(
+            RouteTableId=route_table_id, SubnetId=subnet_id
+        )
+        ec2_client.create_route(
+            RouteTableId=route_table_id,
+            DestinationIpv6CidrBlock="::/0",
+            GatewayId=igw_id,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        vpc = VPC(aws_provider)
+        target_subnet = None
+        for v in vpc.vpcs.values():
+            if v.cidr_block == "10.0.0.0/16":
+                target_subnet = v.subnets[0]
+                break
+        assert target_subnet is not None
+        assert target_subnet.id == subnet_id
+        assert target_subnet.public is False
+        assert target_subnet.public_ipv6 is True
 
     @mock_aws
     def test_vpc_subnet_with_open_nacl(self):

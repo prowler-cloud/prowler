@@ -6,6 +6,8 @@ class ecs_task_definitions_host_namespace_not_shared(Check):
     def execute(self):
         findings = []
         for task_definition in ecs_client.task_definitions.values():
+            if task_definition.container_definitions is None:
+                continue
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )

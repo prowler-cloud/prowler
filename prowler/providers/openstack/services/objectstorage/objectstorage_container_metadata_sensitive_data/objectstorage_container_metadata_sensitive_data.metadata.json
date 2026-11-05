@@ -35,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check uses the detect-secrets library to scan for credentials. May produce false positives on metadata keys containing secret-like keywords. Findings should be reviewed manually. The audit_config allows configuring secrets_ignore_patterns to exclude specific patterns and detect_secrets_plugins to customize detection."
+  "Notes": "This check uses Kingfisher to scan for credentials. May produce false positives on metadata keys containing secret-like keywords. Findings should be reviewed manually. The audit_config allows configuring secrets_ignore_patterns to exclude specific patterns."
 }

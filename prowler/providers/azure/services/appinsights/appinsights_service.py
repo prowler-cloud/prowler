@@ -17,8 +17,12 @@ class AppInsights(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                components_list = client.components.list()
                 components.update({subscription_id: {}})
+                components_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.components.list,
+                    client.components.list_by_resource_group,
+                )
 
                 for component in components_list:
                     components[subscription_id].update(

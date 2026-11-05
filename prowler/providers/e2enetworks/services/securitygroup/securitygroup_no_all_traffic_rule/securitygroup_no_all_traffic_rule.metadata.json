@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "securitygroup_no_all_traffic_rule",
+  "CheckTitle": "E2E Networks security groups do not allow all traffic",
+  "CheckType": [],
+  "ServiceName": "securitygroup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**E2E Networks security groups** should not have an **all-traffic rule**, which permits unrestricted inbound and outbound network access.",
+  "Risk": "Security groups that allow **all traffic** permit unrestricted network access, increasing exposure to **lateral movement** and **data exfiltration**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict security group rules to the required ports and sources only, removing any all-traffic rule.",
+      "Url": "https://hub.prowler.com/check/securitygroup_no_all_traffic_rule"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

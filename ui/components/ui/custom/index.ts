@@ -1,8 +1,3 @@
-export * from "./custom-banner";
-export * from "./custom-input";
-export * from "./custom-link";
-export * from "./custom-modal-buttons";
-export * from "./custom-radio";
-export * from "./custom-server-input";
-export * from "./custom-table-link";
-export * from "./custom-textarea";
+// Temporary re-export shim for prowler-cloud overlay imports.
+// Remove after the cloud repo migrates to @/components/shadcn paths.
+export * from "@/components/shadcn/custom";

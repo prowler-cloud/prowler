@@ -35,7 +35,11 @@ class KeyVault(AzureService):
         for subscription, client in self.clients.items():
             try:
                 key_vaults[subscription] = []
-                vaults_list = list(client.vaults.list_by_subscription())
+                vaults_list = self.list_with_rg_scope(
+                    subscription,
+                    client.vaults.list_by_subscription,
+                    client.vaults.list_by_resource_group,
+                )
 
                 if not vaults_list:
                     continue
@@ -79,6 +83,7 @@ class KeyVault(AzureService):
                     subscription,
                     resource_group,
                     keyvault_name,
+                    getattr(keyvault_properties, "vault_uri", ""),
                     provider,
                 )
                 secrets_future = executor.submit(
@@ -146,7 +151,22 @@ class KeyVault(AzureService):
             )
             return None
 
-    def _get_keys(self, subscription, resource_group, keyvault_name, provider):
+    def _get_keys(
+        self, subscription, resource_group, keyvault_name, vault_uri, provider
+    ):
+        """Get the keys of a Key Vault, enriched with their rotation policies.
+
+        Args:
+            subscription: Subscription ID the vault belongs to.
+            resource_group: Resource group name of the vault.
+            keyvault_name: Vault name, used for the management API and logs.
+            vault_uri: Data-plane URI of the vault as returned by ARM, valid in
+                any Azure cloud. When empty, rotation policies are skipped.
+            provider: Azure provider whose session authenticates the KeyClient.
+
+        Returns:
+            A list of Key objects; rotation_policy is set when it could be read.
+        """
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         keys_dict = {}
@@ -175,10 +195,15 @@ class KeyVault(AzureService):
                 f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+        if not vault_uri:
+            logger.warning(
+                f"KeyVault {keyvault_name} in {subscription} -- has no vault URI, skipping key rotation policies"
+            )
+            return keys
+
         try:
             key_client = KeyClient(
-                vault_url=f"https://{keyvault_name}.vault.azure.net/",
-                # TODO: review the following line
+                vault_url=vault_uri,
                 credential=provider.session,
             )
             properties = list(key_client.list_properties_of_keys())

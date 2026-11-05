@@ -1,3 +1,4 @@
+import { Warehouse } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -12,7 +13,7 @@ import {
 import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ResourcesTableWithSelection } from "@/components/resources/table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   createDict,
@@ -21,7 +22,10 @@ import {
   hasDateOrScanFilter,
   replaceFieldKey,
 } from "@/lib";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { ResourceProps, SearchParamsProps } from "@/types";
+
+import { ResourcesSamplePreview } from "./_components/resources-sample-preview";
 
 export default async function Resources({
   searchParams,
@@ -29,6 +33,20 @@ export default async function Resources({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
+
+  // No completed scan yet: the demo account stands in for the tenant's resources.
+  const preview = await getSamplePreviewState();
+  if (preview.active) {
+    return (
+      <ContentLayout title="Resources" icon={<Warehouse />}>
+        <ResourcesSamplePreview
+          state={preview}
+          searchParams={resolvedSearchParams}
+        />
+      </ContentLayout>
+    );
+  }
+
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
   const outputFilters = replaceFieldKey(filters, "inserted_at", "updated_at");
@@ -80,7 +98,7 @@ export default async function Resources({
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
   return (
-    <ContentLayout title="Resources" icon="lucide:warehouse">
+    <ContentLayout title="Resources" icon={<Warehouse />}>
       <FilterTransitionWrapper>
         <div className="mb-6">
           <ResourcesFilters
@@ -172,7 +190,7 @@ const SSRDataTable = async ({
   return (
     <>
       {resourcesData?.errors && (
-        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-sm text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{resourcesData.errors[0].detail}</p>
         </div>

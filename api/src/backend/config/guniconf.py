@@ -53,6 +53,10 @@ preload_app = not DEBUG
 # that may take longer, such as complex API operations.
 timeout = env.int("GUNICORN_TIMEOUT", default=120)
 
+# Recycle workers after N requests (+ jitter) to cap memory growth. GUNICORN_MAX_REQUESTS=0 disables.
+max_requests = env.int("GUNICORN_MAX_REQUESTS", default=10000)
+max_requests_jitter = env.int("GUNICORN_MAX_REQUESTS_JITTER", default=1000)
+
 # Logging
 logconfig_dict = DJANGO_LOGGERS
 gunicorn_logger = logging.getLogger(BackendLogger.GUNICORN)
@@ -101,7 +105,11 @@ def post_fork(_server, worker):
     try:
         graph_database.close_driver()
     except Exception:  # pragma: no cover - best-effort cleanup
-        pass
+        gunicorn_logger.debug(
+            "Failed to close inherited Neo4j driver in post_fork for worker pid=%s",
+            worker.pid,
+            exc_info=True,
+        )
     graph_database.init_driver()
     gunicorn_logger.info(f"Attack-paths drivers initialized for worker {worker.pid}")
 

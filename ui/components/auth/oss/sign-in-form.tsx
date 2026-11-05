@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
+import { KeyRound } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -12,10 +12,21 @@ import { AuthDivider } from "@/components/auth/oss/auth-divider";
 import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  useToast,
+} from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form } from "@/components/shadcn/form";
+import {
+  appendAttributionToCallbackPath,
+  getSafeCallbackPath,
+} from "@/lib/auth-callback-url";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
+import { extractUtmParams } from "@/lib/utm";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({
@@ -23,16 +34,22 @@ export const SignInForm = ({
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isSelfRegistrationEnabled = true,
 }: {
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isSelfRegistrationEnabled?: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = getSafeCallbackPath(searchParams, "callbackUrl");
+  const socialCallbackUrl = appendAttributionToCallbackPath(
+    callbackUrl,
+    extractUtmParams(searchParams),
+  );
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -64,6 +81,11 @@ export const SignInForm = ({
             title: "Session Error",
             description:
               "There was a problem with your session. Please sign in again.",
+          },
+          SelfRegistrationDisabled: {
+            title: "Registration Disabled",
+            description:
+              "Self-registration is disabled. Ask an administrator for an invitation.",
           },
         };
 
@@ -102,7 +124,7 @@ export const SignInForm = ({
         form.setValue("password", "");
       }
 
-      const result = await initiateSamlAuth(email);
+      const result = await initiateSamlAuth(email, callbackUrl);
 
       if (result.success && result.redirectUrl) {
         window.location.href = result.redirectUrl;
@@ -140,12 +162,24 @@ export const SignInForm = ({
     }
   };
 
-  const title = isSamlMode ? "Sign in with SAML SSO" : "Sign in";
+  const title = isSamlMode ? "Sign in with SAML SSO" : "Welcome back";
 
   return (
-    <AuthLayout title={title}>
+    <AuthLayout
+      title={title}
+      footer={
+        isSelfRegistrationEnabled ? (
+          <AuthFooterLink
+            text="Need to create an account?"
+            linkText="Sign up"
+            href="/sign-up"
+          />
+        ) : undefined
+      }
+    >
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
@@ -176,38 +210,47 @@ export const SignInForm = ({
 
       <AuthDivider />
 
-      <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
         {!isSamlMode && (
           <SocialButtons
             googleAuthUrl={googleAuthUrl}
             githubAuthUrl={githubAuthUrl}
+            callbackUrl={socialCallbackUrl}
             isGoogleOAuthEnabled={isGoogleOAuthEnabled}
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />
         )}
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={() => {
-            form.setValue("isSamlMode", !isSamlMode);
-          }}
-        >
-          {!isSamlMode && (
-            <Icon
-              className="text-default-500"
-              icon="mdi:shield-key"
-              width={24}
-            />
-          )}
-          {isSamlMode ? "Back" : "Continue with SAML SSO"}
-        </Button>
+        {isSamlMode ? (
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              form.setValue("isSamlMode", false);
+            }}
+          >
+            Back
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                aria-label="Continue with SAML SSO"
+                className="flex-1"
+                onClick={() => {
+                  form.setValue("isSamlMode", true);
+                }}
+              >
+                <KeyRound
+                  aria-hidden="true"
+                  className="text-text-neutral-tertiary"
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Continue with SAML SSO</TooltipContent>
+          </Tooltip>
+        )}
       </div>
-
-      <AuthFooterLink
-        text="Need to create an account?"
-        linkText="Sign up"
-        href="/sign-up"
-      />
     </AuthLayout>
   );
 };

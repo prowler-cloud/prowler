@@ -16,6 +16,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_attack_path_notifications_properly_configured:
     def test_no_subscriptions(self):
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {}
         defender_client.audit_config = {}
@@ -41,6 +42,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -89,6 +91,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -139,6 +142,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -189,6 +193,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -237,6 +242,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -285,6 +291,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -333,6 +340,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         resource_id = str(uuid4())
         contact_name = "default"
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {

@@ -17,22 +17,22 @@ export class ScansPage extends BasePage {
   readonly startNowButton: Locator;
 
   // Scan state elements
-  readonly successToast: Locator;
-  readonly viewScanLink: Locator;
+  readonly viewFindingsLink: Locator;
 
   constructor(page: Page) {
     super(page);
 
     // Scan provider selection elements
-    // The sidebar exposes its own icon-button labeled "Launch Scan"
-    // (aria-label, wrapped in a Tooltip), so scoping by accessible name
-    // alone hits a strict-mode duplicate. Scope to the page-shell's
-    // filters-and-actions group, which only contains the visible-text
+    // The sidebar exposes its own action labeled "Launch Scan" (it reads
+    // "Add Provider" only while the tenant has no providers), so scoping by
+    // accessible name alone hits a strict-mode duplicate. Scope to the page-shell's
+    // tabs-and-actions group, which only contains the visible-text
     // Launch Scan button.
     this.launchScanButton = page
-      .getByRole("group", { name: /scan filters and actions/i })
+      .getByRole("group", { name: /scan tabs/i })
       .getByRole("button", { name: /^Launch Scan$/i });
-    this.launchScanDialog = page.getByRole("dialog");
+    // By name: in Cloud the Lighthouse callout is also a dialog
+    this.launchScanDialog = page.getByRole("dialog", { name: "Launch A Scan" });
     // The modal renders the providers picker as the shared MultiSelect-based
     // AccountsSelector (used in single-select mode via closeOnSelect). Scoping
     // to the dialog avoids matching the search combobox that appears in the
@@ -56,19 +56,15 @@ export class ScansPage extends BasePage {
     });
 
     // Scan state elements
-    this.successToast = page.getByRole("alert", {
-      name: /The scan was launched successfully\.?/i,
-    });
-    // The success toast renders a ToastAction wrapping a Next.js Link whose
-    // visible text — and therefore its accessible name — is "View scan".
-    // (The longer "View scan in progress" is only the ToastAction altText,
-    // not the link's accessible name.)
-    this.viewScanLink = page.getByRole("link", {
-      name: /^View scan$/i,
+    // The toast exposes no alert role; its "View findings" action is the
+    // reliable handle (the accessible name is the link text, not altText).
+    this.viewFindingsLink = page.getByRole("link", {
+      name: /^View findings$/i,
     });
 
     // Main content elements
-    this.scanTable = page.locator("table");
+    // getByRole skips the hidden <table> shells React leaves while streaming rows
+    this.scanTable = page.getByRole("table");
     // The scans view renders each tab with its own empty state, so a <table>
     // is NOT guaranteed (an empty tab shows a NoScansEmptyState card instead).
     // The tabs group is always present once providers exist, so it is the
@@ -107,7 +103,11 @@ export class ScansPage extends BasePage {
     await expect(this.launchScanDialog).toBeVisible();
     await this.scanProviderSelect.click();
     await this.scanProviderSearchInput.fill(uid);
-    await this.scanProviderOption.first().click();
+
+    const providerOption = this.scanProviderOption.first();
+    await expect(providerOption).toBeVisible();
+    await expect(providerOption).toHaveAttribute("aria-disabled", "false");
+    await providerOption.click();
   }
 
   async fillScanNote(note: string): Promise<void> {
@@ -125,11 +125,10 @@ export class ScansPage extends BasePage {
 
   async viewLaunchedScan(): Promise<void> {
     // Newly launched scans land in the "In Progress" (active) tab, but /scans
-    // defaults to the "Completed" tab. Use the toast's "View scan" action to
-    // navigate to ?tab=active where the available/executing scan is listed.
-    await expect(this.viewScanLink).toBeVisible({ timeout: 5000 });
-    await this.viewScanLink.click();
-    await expect(this.page).toHaveURL(/\/scans\?tab=active/);
+    // defaults to the "Completed" tab, and the toast now points at Findings.
+    await expect(this.viewFindingsLink).toBeVisible({ timeout: 5000 });
+    await expect(this.viewFindingsLink).toHaveAttribute("href", "/findings");
+    await this.gotoTab("active");
     await expect(this.scanTable).toBeVisible();
   }
 
@@ -137,7 +136,7 @@ export class ScansPage extends BasePage {
     // Verify the scan was launched
 
     // Verify the success toast is visible
-    await this.successToast
+    await this.viewFindingsLink
       .waitFor({ state: "visible", timeout: 5000 })
       .catch(() => {});
 

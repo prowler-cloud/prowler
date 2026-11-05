@@ -10,6 +10,8 @@ from tasks.jobs.reports import (
     RequirementData,
     ThreatScoreReportGenerator,
 )
+from tasks.jobs.reports import threatscore as threatscore_report_module
+from tasks.tests.report_test_helpers import patch_chart_helpers
 
 # =============================================================================
 # Fixtures
@@ -21,6 +23,13 @@ def threatscore_generator():
     """Create a ThreatScoreReportGenerator instance for testing."""
     config = FRAMEWORK_REGISTRY["prowler_threatscore"]
     return ThreatScoreReportGenerator(config)
+
+
+@pytest.fixture
+def patched_threatscore_charts(monkeypatch):
+    return patch_chart_helpers(
+        monkeypatch, threatscore_report_module, ("create_vertical_bar_chart",)
+    )
 
 
 @pytest.fixture
@@ -677,7 +686,7 @@ class TestSectionScoreChart:
     """Test suite for section score chart generation."""
 
     def test_create_section_chart_empty_data(
-        self, threatscore_generator, basic_compliance_data
+        self, threatscore_generator, basic_compliance_data, patched_threatscore_charts
     ):
         """Test chart creation with no requirements."""
         basic_compliance_data.requirements = []
@@ -689,9 +698,22 @@ class TestSectionScoreChart:
 
         assert isinstance(result, io.BytesIO)
         assert result.getvalue()  # Should have content
+        chart_kwargs = patched_threatscore_charts["create_vertical_bar_chart"][0][
+            "kwargs"
+        ]
+        assert chart_kwargs["labels"] == []
+        assert chart_kwargs["values"] == []
+        assert chart_kwargs["ylabel"] == "Compliance Score (%)"
+        assert chart_kwargs["xlabel"] == ""
+        assert chart_kwargs["color_func"]
+        assert chart_kwargs["rotation"] == 0
 
     def test_create_section_chart_single_section(
-        self, threatscore_generator, basic_compliance_data, mock_requirement_attribute
+        self,
+        threatscore_generator,
+        basic_compliance_data,
+        mock_requirement_attribute,
+        patched_threatscore_charts,
     ):
         """Test chart creation with a single section."""
         basic_compliance_data.requirements = [
@@ -713,9 +735,14 @@ class TestSectionScoreChart:
         )
 
         assert isinstance(result, io.BytesIO)
+        chart_kwargs = patched_threatscore_charts["create_vertical_bar_chart"][0][
+            "kwargs"
+        ]
+        assert chart_kwargs["labels"] == ["1. IAM"]
+        assert chart_kwargs["values"] == [100.0]
 
     def test_create_section_chart_multiple_sections(
-        self, threatscore_generator, basic_compliance_data
+        self, threatscore_generator, basic_compliance_data, patched_threatscore_charts
     ):
         """Test chart creation with multiple sections."""
         mock_attr_1 = Mock()
@@ -756,9 +783,14 @@ class TestSectionScoreChart:
         )
 
         assert isinstance(result, io.BytesIO)
+        chart_kwargs = patched_threatscore_charts["create_vertical_bar_chart"][0][
+            "kwargs"
+        ]
+        assert chart_kwargs["labels"] == ["1. IAM", "2. Attack Surface"]
+        assert chart_kwargs["values"] == [100.0, 50.0]
 
     def test_create_section_chart_no_findings_section_gets_100(
-        self, threatscore_generator, basic_compliance_data
+        self, threatscore_generator, basic_compliance_data, patched_threatscore_charts
     ):
         """Test that sections without findings get 100% score."""
         mock_attr = Mock()
@@ -786,6 +818,11 @@ class TestSectionScoreChart:
         )
 
         assert isinstance(result, io.BytesIO)
+        chart_kwargs = patched_threatscore_charts["create_vertical_bar_chart"][0][
+            "kwargs"
+        ]
+        assert chart_kwargs["labels"] == ["1. IAM"]
+        assert chart_kwargs["values"] == [100.0]
 
 
 # =============================================================================
@@ -797,7 +834,11 @@ class TestExecutiveSummary:
     """Test suite for executive summary generation."""
 
     def test_executive_summary_contains_chart(
-        self, threatscore_generator, basic_compliance_data, mock_requirement_attribute
+        self,
+        threatscore_generator,
+        basic_compliance_data,
+        mock_requirement_attribute,
+        patched_threatscore_charts,
     ):
         """Test that executive summary contains a chart."""
         basic_compliance_data.requirements = [
@@ -818,9 +859,18 @@ class TestExecutiveSummary:
 
         assert len(elements) > 0
         assert any(isinstance(e, Image) for e in elements)
+        chart_kwargs = patched_threatscore_charts["create_vertical_bar_chart"][0][
+            "kwargs"
+        ]
+        assert chart_kwargs["labels"] == ["1. IAM"]
+        assert chart_kwargs["values"] == [100.0]
 
     def test_executive_summary_contains_score_table(
-        self, threatscore_generator, basic_compliance_data, mock_requirement_attribute
+        self,
+        threatscore_generator,
+        basic_compliance_data,
+        mock_requirement_attribute,
+        patched_threatscore_charts,
     ):
         """Test that executive summary contains a score table."""
         basic_compliance_data.requirements = [

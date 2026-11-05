@@ -1,8 +1,8 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   AttributesData,
   Control,
@@ -10,7 +10,6 @@ import {
   isOktaIDaaSStigAttributesMetadata,
   OktaIDaaSStigRequirement,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -21,13 +20,8 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 export const mapComplianceData = (
   attributesData: AttributesData,

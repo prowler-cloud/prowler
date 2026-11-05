@@ -1,7 +1,7 @@
-import { Skeleton } from "@heroui/skeleton";
 import { Suspense } from "react";
 
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table";
+import { Skeleton } from "@/components/shadcn";
 import { SearchParamsProps } from "@/types";
 
 import { GraphsTabsClient } from "./_components/graphs-tabs-client";

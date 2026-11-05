@@ -11,9 +11,13 @@ export function useAuth() {
     manage_account: false,
     manage_providers: false,
     manage_scans: false,
+    manage_ingestions: false,
     manage_integrations: false,
     manage_billing: false,
     manage_alerts: false,
+    manage_lighthouse_ai_configuration: false,
+    manage_registry: false,
+    manage_prowler_realtime: false,
     unlimited_visibility: false,
   };
 

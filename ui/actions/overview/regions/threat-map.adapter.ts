@@ -1,4 +1,5 @@
 import { getProviderDisplayName } from "@/types/providers";
+import type { ApiResult } from "@/types/server-actions";
 
 import { RegionsOverviewResponse } from "./types";
 
@@ -366,7 +367,7 @@ function formatRegionName(providerType: string, region: string): string {
  * Adapts regions overview API response to threat map format.
  */
 export function adaptRegionsOverviewToThreatMap(
-  regionsResponse: RegionsOverviewResponse | undefined,
+  regionsResponse: ApiResult<RegionsOverviewResponse> | undefined,
 ): ThreatMapData {
   if (!regionsResponse?.data || regionsResponse.data.length === 0) {
     return {

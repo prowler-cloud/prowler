@@ -1,19 +1,19 @@
 ---
 title: 'Import Findings'
-description: 'Upload OCSF scan results to Prowler Cloud from external sources or the CLI'
+sidebarTitle: 'Import Findings'
+description: 'Upload OCSF scan results to Prowler Cloud from the UI, the CLI or the API'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.19.0" />
 
-Findings Ingestion enables uploading OCSF (Open Cybersecurity Schema Framework) scan results to Prowler Cloud. This feature supports importing findings from Prowler CLI output files that use the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class.
+Findings Ingestion enables uploading OCSF (Open Cybersecurity Schema Framework) scan results to Prowler Cloud. This feature supports importing findings from Prowler CLI output files that use the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class. Reports can be imported from the Scans page in the Prowler Cloud UI, pushed by the CLI with `--push-to-cloud`, or submitted through the API.
 
-<Note>
-This feature is available exclusively in **Prowler Cloud** and **Prowler Enterprise** with a [paid subscription](https://prowler.com/pricing).
-</Note>
+<SubscriptionBanner />
 
-## OCSF Detection Finding format
+## OCSF Detection Finding Format
 
 The ingestion API accepts `.ocsf.json` files containing a JSON array of OCSF Detection Finding records. Each finding represents a security check result from Prowler.
 
@@ -130,11 +130,33 @@ The ingestion API accepts `.ocsf.json` files containing a JSON array of OCSF Det
 Only **Detection Finding** (`class_uid: 2004`) records are accepted. Other OCSF classes are not supported for ingestion.
 </Note>
 
-## Required permissions
+## Required Permissions
 
-The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted via the API or `--push-to-cloud`.
+The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted from the Scans page, via the API or with `--push-to-cloud`.
 
-For more information about RBAC permissions, refer to the [Prowler App RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
+For more information about RBAC permissions, refer to the [Prowler Cloud RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
+
+## Using the UI
+
+<VersionBadge version="5.41.0" />
+
+The Scans page imports a Prowler OCSF report from the browser, with no CLI or API key involved. The import runs as a regular ingestion job, so the [status values](#ingestion-status-values), the [billing impact](#billing-impact) and the [errors endpoint](#get-ingestion-errors) apply as they do for the CLI and the API.
+
+1. Go to **Scans** and click **Import Findings**. The button is shown only to roles with the **Manage Ingestions** permission.
+
+    ![Import Findings button on the Scans page](/images/prowler-app/import-findings/import-findings-button.png)
+
+2. Drag a `.ocsf.json` report onto the drop area, or click **Select File** to pick one. The dialog takes one file per import. A file whose name does not end in `.ocsf.json`, or an empty file, is rejected before the upload starts.
+
+    ![Import findings dialog with the drag-and-drop area](/images/prowler-app/import-findings/import-findings-dialog.png)
+
+3. Click **Start import**. The dialog uploads the report, creates the ingestion job and follows its status until the job finishes. On completion it reports the total number of records, how many were processed and how many were invalid.
+
+Closing the dialog while an import is running does not cancel the job. When the job completes in the background, a notification confirms it and the imported findings appear in Scans.
+
+If the upload is rejected or the job fails, the dialog shows the reason and a **Retry import** button that sends the same file again. A failed job also shows the progress it reported before failing. A different file can be selected instead of retrying. If the status check fails after the upload was accepted, **Retry status** resumes tracking the same job without uploading the file again.
+
+Invalid records are counted in the summary but not listed in the dialog. To see why each one was rejected, [list the ingestion jobs](#list-ingestion-jobs) through the API and query the [errors endpoint](#get-ingestion-errors) for that job.
 
 ## Using the CLI
 
@@ -145,7 +167,7 @@ The `--push-to-cloud` flag uploads scan results directly to Prowler Cloud after 
 - A valid Prowler Cloud API key (see [API Keys](/user-guide/tutorials/prowler-app-api-keys))
 - The `PROWLER_CLOUD_API_KEY` environment variable configured
 
-### Basic usage
+### Basic Usage
 
 ```bash
 export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
@@ -153,7 +175,19 @@ export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
 prowler aws --push-to-cloud
 ```
 
-### Combining with output formats
+### TLS Certificate Trust
+
+For `--push-to-cloud` uploads, Prowler CLI creates one ingestion-scoped TLS context and validates HTTPS certificates with one handshake and one POST request. The upload does not retry or fall back to another TLS configuration. Redirect responses are rejected.
+
+The ingestion context combines the operating system roots with the default certificate authority (CA) roots bundled with Requests. If `REQUESTS_CA_BUNDLE` is configured, Prowler CLI also loads that file or directory into the ingestion context. Otherwise, Prowler CLI loads `CURL_CA_BUNDLE` when configured.
+
+`REQUESTS_CA_BUNDLE` and `CURL_CA_BUNDLE` can also affect other Requests-based connections throughout the Prowler CLI process, including provider authentication. A bundle containing only a private CA can cause connections to public services to fail before the upload starts. Installing the private CA in the operating system or container trust store is recommended. If a custom bundle is required, it must include both the public CA roots, such as the certifi bundle, and the required private CA certificates.
+
+For Prowler Private Cloud deployments that use an organization CA or a TLS-intercepting corporate proxy, installing the required root CA in the operating system or container store remains the recommended approach. Containers have an isolated system CA store, so add the organization or proxy CA to the container image or runtime, then run the operating system's CA update command, such as `update-ca-certificates`, before starting Prowler CLI. Installing a CA on the container host does not automatically install it inside the container.
+
+Prowler CLI does not create, modify, or remove these environment variables. The custom TLS context created by `--push-to-cloud` applies only to the temporary ingestion session and does not change API, provider, integration, global SSL, or unrelated Requests session behavior.
+
+### Combining with Output Formats
 
 When using `--push-to-cloud` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:
 
@@ -169,7 +203,7 @@ When default output formats include OCSF, Prowler reuses the existing file. Defa
 prowler aws --services accessanalyzer --push-to-cloud -o /tmp/scan-output
 ```
 
-### CLI output examples
+### CLI Output Examples
 
 **Successful upload:**
 ```
@@ -228,7 +262,7 @@ curl -X POST \
   https://api.prowler.com/api/v1/ingestions
 ```
 
-### Submit an ingestion batch
+### Submit an Ingestion Batch
 
 Upload a `.ocsf.json` file containing a JSON array of OCSF Detection Finding records. See [OCSF Detection Finding format](#ocsf-detection-finding-format) for the expected structure.
 
@@ -266,7 +300,7 @@ curl -X POST \
 }
 ```
 
-### Get ingestion status
+### Get Ingestion Status
 
 Monitor the progress of an ingestion job.
 
@@ -304,7 +338,7 @@ curl -X GET \
 }
 ```
 
-### List ingestion jobs
+### List Ingestion Jobs
 
 Retrieve a list of ingestion jobs for the tenant.
 
@@ -332,7 +366,7 @@ curl -X GET \
   "https://api.prowler.com/api/v1/ingestions?filter[status]=completed&page[size]=10"
 ```
 
-### Get ingestion errors
+### Get Ingestion Errors
 
 Retrieve error details for a specific ingestion job.
 
@@ -346,7 +380,7 @@ curl -X GET \
   https://api.prowler.com/api/v1/ingestions/3650fef9-8e5f-4808-a95f-74f0afae8499/errors
 ```
 
-## Ingestion status values
+## Ingestion Status Values
 
 | Status | Description |
 |--------|-------------|
@@ -355,7 +389,7 @@ curl -X GET \
 | `completed` | All records processed successfully |
 | `failed` | Job encountered errors during processing |
 
-## CI/CD integration
+## CI/CD Integration
 
 Automate findings ingestion in CI/CD pipelines by setting the API key as a secret.
 
@@ -391,7 +425,7 @@ prowler_scan:
     PROWLER_CLOUD_API_KEY: $PROWLER_CLOUD_API_KEY
 ```
 
-## Billing impact
+## Billing Impact
 
 Each unique cloud account discovered in ingested OCSF findings counts as one **provider** in the Prowler Cloud subscription.
 
@@ -432,7 +466,7 @@ For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
 - The user associated with the API key lacks the **Manage Ingestions** permission
 - Contact the tenant administrator to grant the required permission
 
-### Ingestion job status is "failed"
+### Ingestion Job Status Is "failed"
 
 - Check the `/api/v1/ingestions/{id}/errors` endpoint for details
 - Verify the OCSF file format is valid

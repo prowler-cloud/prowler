@@ -39,6 +39,11 @@ class IaaSService:
         self.server_nics: list = []
         self.in_use_sg_ids: set[str] = set()
 
+        # Initialize server list and supporting indices
+        self.servers: list[Server] = []
+        self._nic_device_index: dict[str, str] = {}  # nic_id → server_id
+        self._public_ip_server_ids: set[str] = set()
+
         # Fetch resources from all regions
         self._fetch_all_regions()
         self._log_skipped_security_groups()
@@ -83,6 +88,8 @@ class IaaSService:
             try:
                 self._list_server_nics(client, region)
                 self._list_security_groups(client, region)
+                self._list_public_ips(client, region)
+                self._list_servers(client, region)
             except Exception as error:
                 if getattr(error, "status", None) == 404:
                     logger.info(
@@ -117,6 +124,28 @@ class IaaSService:
             f"Unexpected response type from {endpoint_name}: {type(response)}"
         )
         return []
+
+    @staticmethod
+    def _get_item_field(item, *keys, default=None):
+        """Read a field from an SDK model (attribute) or a raw ``dict`` (key).
+
+        ``_extract_items`` already yields either SDK models or raw dicts, so the
+        correlation logic must read fields from both shapes. Multiple key aliases
+        are accepted so snake_case SDK attributes and camelCase API/dict keys are
+        both supported (e.g. ``network_interface`` / ``networkInterface``).
+        Returns the first non-None match, otherwise ``default``.
+        """
+        if isinstance(item, dict):
+            for key in keys:
+                value = item.get(key)
+                if value is not None:
+                    return value
+            return default
+        for key in keys:
+            value = getattr(item, key, None)
+            if value is not None:
+                return value
+        return default
 
     def _handle_api_call(self, api_function, *args, **kwargs):
         """
@@ -334,10 +363,93 @@ class IaaSService:
         used_sg_ids = self._get_used_security_group_ids(nics_list)
         self.in_use_sg_ids.update(used_sg_ids)
 
+        # Build nic_id → server_id index for public IP cross-reference
+        for nic in nics_list:
+            try:
+                nic_id = str(self._get_item_field(nic, "id") or "")
+                device = self._get_item_field(nic, "device")
+                if nic_id and device:
+                    self._nic_device_index[nic_id] = str(device)
+            except Exception as e:
+                logger.debug(f"Error indexing NIC device: {e}")
+                continue
+
         logger.info(
             f"Successfully listed {len(nics_list)} NICs in {region}. "
             f"Found {len(used_sg_ids)} security groups attached to NICs."
         )
+
+    def _list_public_ips(self, client, region: str):
+        """
+        List all public IPs in the project and record which servers have one attached.
+
+        A public IP is considered attached to a server when its ``network_interface``
+        field (a NIC UUID) matches a NIC whose ``device`` field points to a server.
+        The result is stored in ``self._public_ip_server_ids`` so that
+        ``_list_servers`` can set ``has_public_ip`` when creating Server objects.
+        """
+        if not client:
+            logger.warning(
+                f"Cannot list public IPs in {region}: StackIT IaaS client not available"
+            )
+            return
+
+        response = self._handle_api_call(
+            client.list_public_ips, project_id=self.project_id, region=region
+        )
+        ips_list = self._extract_items(response, "list_public_ips")
+
+        for ip_data in ips_list:
+            try:
+                network_interface = self._get_item_field(
+                    ip_data, "network_interface", "networkInterface"
+                )
+                if network_interface is None:
+                    continue
+                server_id = self._nic_device_index.get(str(network_interface))
+                if server_id:
+                    self._public_ip_server_ids.add(server_id)
+            except Exception as e:
+                logger.debug(f"Error processing public IP: {e}")
+                continue
+
+        logger.info(f"Successfully listed {len(ips_list)} public IPs in {region}")
+
+    def _list_servers(self, client, region: str):
+        """
+        List all servers in the project and populate ``self.servers``.
+
+        ``has_public_ip`` is set to True for any server whose ID appears in
+        ``self._public_ip_server_ids`` (populated by ``_list_public_ips``).
+        """
+        if not client:
+            logger.warning(
+                f"Cannot list servers in {region}: StackIT IaaS client not available"
+            )
+            return
+
+        response = self._handle_api_call(
+            client.list_servers, project_id=self.project_id, region=region
+        )
+        servers_list = self._extract_items(response, "list_servers")
+
+        for server_data in servers_list:
+            try:
+                server_id = str(self._get_item_field(server_data, "id") or "")
+                server_name = self._get_item_field(server_data, "name") or server_id
+                server = Server(
+                    id=server_id,
+                    name=server_name,
+                    project_id=self.project_id,
+                    region=region,
+                    has_public_ip=server_id in self._public_ip_server_ids,
+                )
+                self.servers.append(server)
+            except Exception as e:
+                logger.error(f"Error processing server: {e}")
+                continue
+
+        logger.info(f"Successfully listed {len(servers_list)} servers in {region}")
 
     def _get_used_security_group_ids(self, nics_list) -> set[str]:
         """
@@ -475,3 +587,22 @@ class SecurityGroup(BaseModel):
     region: str
     rules: list[SecurityGroupRule] = []
     in_use: bool = False
+
+
+class Server(BaseModel):
+    """
+    Represents a StackIT IaaS Server.
+
+    Attributes:
+        id: The unique identifier of the server
+        name: The name of the server
+        project_id: The StackIT project ID containing the server
+        region: The region where the server is located
+        has_public_ip: Whether a public IP is directly attached to any of the server's NICs
+    """
+
+    id: str
+    name: str
+    project_id: str
+    region: str
+    has_public_ip: bool = False

@@ -58,8 +58,9 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="outline"
-              className="border-border-input-primary-fill relative h-8 w-8 rounded-full bg-transparent p-2"
+              variant="ghost"
+              size="icon-sm"
+              className="relative"
               aria-label={
                 hasUnseenFeeds
                   ? "New updates available - Click to view"
@@ -67,15 +68,15 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
               }
             >
               <BellRing
-                size={18}
                 className={cn(
+                  "size-5",
                   hasFeeds &&
                     hasUnseenFeeds &&
                     "text-button-primary animate-pulse",
                 )}
               />
               {hasFeeds && hasUnseenFeeds && (
-                <span className="absolute top-0 right-0 flex h-2 w-2">
+                <span className="absolute top-1 right-1 flex h-2 w-2">
                   <span className="bg-button-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
                   <span className="bg-button-primary relative inline-flex h-2 w-2 rounded-full"></span>
                 </span>

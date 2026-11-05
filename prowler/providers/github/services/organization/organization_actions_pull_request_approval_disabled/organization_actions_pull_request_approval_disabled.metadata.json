@@ -1,0 +1,39 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_actions_pull_request_approval_disabled",
+  "CheckTitle": "Organization prevents GitHub Actions from approving pull requests",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "GitHub Actions organization settings define whether workflows are allowed to create and approve pull requests.\n\nThe evaluation determines whether that permission is disabled, so that approving a pull request always requires a human reviewer.",
+  "Risk": "When workflows can approve pull requests, automation can satisfy the review requirement it was meant to be checked by, leading to:\n- Required reviews being cleared without any human inspecting the change\n- Self-approving pull requests opened by a workflow\n- Merge gates that appear enforced while providing no real oversight",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/organizations/managing-organization-settings/disabling-or-limiting-github-actions-for-your-organization#preventing-github-actions-from-creating-or-approving-pull-requests",
+    "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication",
+    "https://docs.github.com/en/rest/actions/permissions"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gh api --method PUT /orgs/<organization>/actions/permissions/workflow -F can_approve_pull_request_reviews=false",
+      "NativeIaC": "",
+      "Other": "1. Sign in to GitHub as an organization owner\n2. Go to your organization > Settings\n3. In the left sidebar, click Actions > General\n4. Under Workflow permissions, clear Allow GitHub Actions to create and approve pull requests\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **Allow GitHub Actions to create and approve pull requests** so that pull request approvals always come from a human reviewer.\n\nWhere automation genuinely needs to open pull requests, let it create them without granting approval rights, and keep the approval step with a reviewer who is not the author.",
+      "Url": "https://hub.prowler.com/check/organization_actions_pull_request_approval_disabled"
+    }
+  },
+  "Categories": [
+    "ci-cd",
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

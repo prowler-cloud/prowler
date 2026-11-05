@@ -2,9 +2,27 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { MuteFindingsModalMock } = vi.hoisted(() => ({
-  MuteFindingsModalMock: vi.fn(() => null),
-}));
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import { usePartialScanStore } from "@/store/partial-scan/store";
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
+
+import {
+  DataTableRowActions,
+  type FindingRowData,
+} from "./data-table-row-actions";
+import { FindingsSelectionContext } from "./findings-selection-context";
+
+const { isCloudMock, launchSkillMock, MuteFindingsModalMock } = vi.hoisted(
+  () => ({
+    isCloudMock: vi.fn(() => false),
+    launchSkillMock: vi.fn(),
+    MuteFindingsModalMock: vi.fn((_props: unknown) => null),
+  }),
+);
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -14,13 +32,35 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: MuteFindingsModalMock,
 }));
 
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: () => null,
-}));
-
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
+
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: () => true,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
+}));
+
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
+}));
+
+vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./lighthouse-skills-launch")>();
+  return {
+    ...actual,
+    useLighthouseSkillLaunch: () => launchSkillMock,
+  };
+});
 
 vi.mock("@/components/shadcn/dropdown", () => ({
   ActionDropdown: ({ children }: { children: React.ReactNode }) => (
@@ -32,12 +72,25 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     disabled,
   }: {
     label: string;
-    onSelect: () => void;
+    onSelect?: () => void;
     disabled?: boolean;
   }) => (
     <button onClick={onSelect} disabled={disabled}>
       {label}
     </button>
+  ),
+  DropdownMenuLabel: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
   ),
 }));
 
@@ -45,8 +98,34 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => <span>Loading</span>,
 }));
 
-import { DataTableRowActions } from "./data-table-row-actions";
-import { FindingsSelectionContext } from "./findings-selection-context";
+vi.mock("./finding-note-modal", () => ({
+  FindingNoteModal: ({
+    open,
+    triage,
+  }: {
+    open: boolean;
+    triage: {
+      noteBody: string;
+      canEdit: boolean;
+      disabledReason?: string;
+      billingHref: string;
+    };
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Note">
+        <textarea
+          aria-label="Note text"
+          value={triage.noteBody}
+          disabled={!triage.canEdit}
+          readOnly
+        />
+        {triage.disabledReason === "cloud_only" && (
+          <a href={triage.billingHref}>Available in Prowler Cloud</a>
+        )}
+        <button disabled={!triage.canEdit}>Save changes</button>
+      </div>
+    ) : null,
+}));
 
 function deferredPromise<T>() {
   let resolve!: (value: T) => void;
@@ -59,9 +138,167 @@ function deferredPromise<T>() {
   return { promise, resolve, reject };
 }
 
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    isMuted: false,
+    canEdit: true,
+    billingHref: "https://prowler.com/pricing",
+    ...overrides,
+  };
+}
+
+function makeFindingRow(overrides?: Partial<FindingRowData>) {
+  return {
+    original: {
+      id: "finding-1",
+      attributes: {
+        muted: false,
+        check_metadata: {
+          checktitle: "S3 public access",
+        },
+      },
+      triage: makeTriageSummary(),
+      ...overrides,
+    },
+  } as never;
+}
+
 describe("DataTableRowActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("blocks sample group actions even though their target check IDs are real", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          id: "sample-group-s3_bucket_public_access",
+          rowType: "group",
+          checkId: "s3_bucket_public_access",
+        })}
+      />,
+    );
+    const jira = screen.getByRole("button", { name: /Jira/ });
+    const mute = screen.getByRole("button", { name: /Mute Finding Group/ });
+    expect(jira).toBeDisabled();
+    expect(mute).toBeDisabled();
+    await user.click(jira);
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
+  });
+
+  it("offers a Cloud re-check of the row's resource with its provider id", async () => {
+    // Given — a flat finding row expanded with its resource and provider
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          relationships: {
+            resource: {
+              attributes: { name: "my-bucket", uid: "arn:aws:s3:::my-bucket" },
+            },
+            provider: {
+              id: "provider-1",
+              attributes: { alias: "prod", provider: "aws", uid: "123" },
+            },
+          },
+        })}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerId: "provider-1",
+      providerUid: "123",
+      providerType: "aws",
+      providerAlias: "prod",
+      resourceUid: "arn:aws:s3:::my-bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("does not offer a re-check outside Prowler Cloud", () => {
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          relationships: {
+            resource: { attributes: { uid: "arn:aws:s3:::my-bucket" } },
+            provider: { id: "provider-1", attributes: { provider: "aws" } },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("launches a Lighthouse skill from the row submenu with finding context", async () => {
+    // Given
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    render(<DataTableRowActions row={makeFindingRow()} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
+
+    // Then
+    expect(launchSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      expect.objectContaining({
+        kind: "finding",
+        findingId: "finding-1",
+      }),
+    );
+  });
+
+  it("hides the Lighthouse skills submenu on finding group rows", () => {
+    // Group rows carry check ids, not finding UUIDs, so the finding-level
+    // skills (and their Jira/mute follow-up actions) must not launch there.
+    isCloudMock.mockReturnValue(true);
+    render(
+      <DataTableRowActions
+        row={
+          {
+            original: {
+              id: "group-row-1",
+              rowType: "group",
+              checkId: "ecs_task_definitions_no_environment_secrets",
+              checkTitle: "ECS task definitions no environment secrets",
+              mutedCount: 0,
+              resourcesFail: 475,
+              resourcesTotal: 475,
+            },
+          } as never
+        }
+      />,
+    );
+
+    expect(screen.queryByText("Lighthouse Skills")).not.toBeInTheDocument();
+    // A group spans many resources, so a single-resource re-check is not offered.
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Triage Decision" }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the mute modal immediately in preparing state for finding groups", async () => {
@@ -104,41 +341,18 @@ describe("DataTableRowActions", () => {
     );
 
     // Then
-    const preparingCall = (
-      MuteFindingsModalMock.mock.calls as unknown as Array<
-        [
-          {
-            isOpen: boolean;
-            isPreparing?: boolean;
-            findingIds: string[];
-          },
-        ]
-      >
-    ).at(-1);
-
-    expect(preparingCall?.[0]).toMatchObject({
+    expect(MuteFindingsModalMock.mock.calls.at(-1)?.[0]).toMatchObject({
       isOpen: true,
       isPreparing: true,
       findingIds: [],
     });
 
-    // And when the resolver finishes
+    // When
     deferred.resolve(["finding-1", "finding-2"]);
 
+    // Then
     await waitFor(() => {
-      const resolvedCall = (
-        MuteFindingsModalMock.mock.calls as unknown as Array<
-          [
-            {
-              isOpen: boolean;
-              isPreparing?: boolean;
-              findingIds: string[];
-            },
-          ]
-        >
-      ).at(-1);
-
-      expect(resolvedCall?.[0]).toMatchObject({
+      expect(MuteFindingsModalMock.mock.calls.at(-1)?.[0]).toMatchObject({
         isOpen: true,
         isPreparing: false,
         findingIds: ["finding-1", "finding-2"],
@@ -147,6 +361,7 @@ describe("DataTableRowActions", () => {
   });
 
   it("disables the mute action for groups without impacted resources", () => {
+    // Given / When
     render(
       <FindingsSelectionContext.Provider
         value={{
@@ -175,8 +390,129 @@ describe("DataTableRowActions", () => {
       </FindingsSelectionContext.Provider>,
     );
 
+    // Then
     expect(
       screen.getByRole("button", { name: "Mute Finding Group" }),
     ).toBeDisabled();
+  });
+
+  it("opens Jira from the row action for a finding group", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: [],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+          resolveMuteIds: vi.fn(),
+        }}
+      >
+        <DataTableRowActions
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "s3_bucket_public_access",
+                checkTitle: "S3 bucket public access",
+                mutedCount: 0,
+                resourcesFail: 2,
+                resourcesTotal: 2,
+              },
+            } as never
+          }
+        />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding Group to Jira" }),
+    );
+
+    // Then
+    expect(useJiraDispatchStore.getState().activePayload).toEqual({
+      selection: {
+        kind: "single",
+        targetId: "s3_bucket_public_access",
+        targetType: "check_id",
+      },
+      findingTitle: "S3 bucket public access",
+      selectedResourceCount: 2,
+    });
+  });
+
+  it("shows Add Triage Note for editable findings without a note", () => {
+    // Given / When
+    render(
+      <DataTableRowActions
+        row={makeFindingRow()}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
+  });
+
+  it("loads an existing note before opening the note modal", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageNoteLoadAction = vi.fn().mockResolvedValue({
+      noteId: "note-1",
+      noteBody: "Loaded existing note",
+    });
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          triage: makeTriageSummary({ hasVisibleNote: true, notesCount: 1 }),
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageNoteLoadAction={onTriageNoteLoadAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Open note" }));
+
+    // Then
+    expect(onTriageNoteLoadAction).toHaveBeenCalledWith(
+      expect.objectContaining({ triageId: "triage-1", notesCount: 1 }),
+    );
+    expect(await screen.findByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toHaveValue(
+      "Loaded existing note",
+    );
+  });
+
+  it("opens a disabled Cloud-only note modal from finding actions", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          triage: makeTriageSummary({
+            canEdit: false,
+            hasVisibleNote: false,
+            disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+          }),
+        })}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
+
+    // Then
+    expect(screen.getByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(
+      screen.getByRole("link", { name: "Available in Prowler Cloud" }),
+    ).toHaveAttribute("href", "https://prowler.com/pricing");
   });
 });

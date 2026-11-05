@@ -8,7 +8,8 @@ export interface CriticalRequirement {
   title: string;
 }
 
-export type SectionScores = Record<string, number>;
+// The multi-provider aggregation branch serializes values as decimal strings.
+export type SectionScores = Record<string, number | string>;
 
 export interface ThreatScoreSnapshotAttributes {
   id: string;

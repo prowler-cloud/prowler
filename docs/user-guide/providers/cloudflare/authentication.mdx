@@ -17,18 +17,29 @@ Prowler for Cloudflare supports two authentication methods, both available in Pr
 
 ## Required Permissions
 
-Prowler requires read-only access to Cloudflare zones and their settings. The following permissions must be configured when creating the API Token:
+Prowler requires read-only access to Cloudflare accounts, zones, and developer platform resources. The following permissions must be configured when creating the API Token:
 
 | Resource | Permission | Access | Description |
 |----------|------------|--------|-------------|
-| `Account` | `Account Settings` | `Read` | Required to list accounts and verify user identity |
-| `Zone` | `Zone` | `Read` | Required to list zones, rulesets, bot management, and SSL settings |
-| `Zone` | `Zone Settings` | `Read` | Required to read zone security settings (TLS, HSTS, WAF, etc.) |
-| `Zone` | `DNS` | `Read` | Required to read DNS records and DNSSEC status |
+| `Account` | `Account Settings` | `Read` | Required to list accounts, verify user identity, and read account members and 2FA enforcement |
+| `Account` | `Account API Tokens` | `Read` | Required to read account-owned API tokens (expiration, IP filtering, last use) |
+| `Account` | `Workers Scripts` | `Read` | Required to read Workers scripts, their settings, bindings, and `workers.dev` exposure |
+| `Account` | `Workers R2 Storage` | `Read` | Required to read R2 buckets, public `r2.dev` access, custom domains, and CORS policies |
+| `User` | `API Tokens` | `Read` | Optional. Required to read the authenticated user's own API tokens |
+| `Zone` | `Zone` | `Read` | Required to list zones |
+| `Zone` | `Zone Settings` | `Read` | Required to read zone security settings (SSL/TLS mode, TLS versions, HSTS, Always Use HTTPS, WAF, etc.) |
+| `Zone` | `DNS` | `Read` | Required to read DNS records (SPF, DMARC, DKIM, CAA) and DNSSEC status |
+| `Zone` | `SSL and Certificates` | `Read` | Required to read Universal SSL settings |
+| `Zone` | `Bot Management` | `Read` | Required to read Bot Fight Mode |
+| `Zone` | `Zone WAF` | `Read` | Required to read WAF custom, rate limiting, and managed rulesets |
 
 <Warning>
 Ensure the API Token has access to all zones targeted for scanning. Missing permissions may cause some checks to fail or return incomplete results.
 </Warning>
+
+<Note>
+Account-owned API tokens can only be listed by tokens created by a Super Administrator. When a permission is missing, the affected checks report one `MANUAL` finding per account naming the missing permission, and the rest of the scan continues. User-owned tokens are still evaluated when the optional `API Tokens Read` user permission is granted.
+</Note>
 
 ---
 
@@ -44,10 +55,10 @@ User API Tokens are the recommended authentication method because they:
 Create a **User API Token**, not an Account API Token. User API Tokens are created from the profile settings and offer finer permission control.
 </Note>
 
-**Quick Setup:** Use these pre-configured links to open the Cloudflare Dashboard with the required permissions already selected:
+**Quick Setup:** Use these pre-configured links to open the Cloudflare Dashboard with most of the required permissions already selected. Add the `Account API Tokens`, `Workers Scripts`, and `Workers R2 Storage` read permissions manually before creating the token:
 
-- [Create User API Token](https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner) — creates a **User API Token** (recommended). Opens the **Create Custom Token** form prefilled with the four required read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`) and the name `Prowler Security Scanner`. Adjust **Account Resources** and **Zone Resources** to match the accounts and zones you want to scan, then click **Create Token**.
-- [Create Account-Owned API Token](https://dash.cloudflare.com/?to=/:account/api-tokens&permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&name=Prowler%20Security%20Scanner) — creates an [account-owned token](https://developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template/) instead. Use this for automation or CI/CD where the token should not depend on a specific user account remaining active. Requires the **Super Administrator** or **Administrator** role on the account.
+- [Create User API Token](https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner) — creates a **User API Token** (recommended). Opens the **Create Custom Token** form prefilled with the seven required read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`, `SSL and Certificates`, `Bot Management`, `Zone WAF`) and the name `Prowler Security Scanner`. Then add the `Account API Tokens`, `Workers Scripts`, and `Workers R2 Storage` read permissions (and optionally the user `API Tokens` read permission) manually. Adjust **Account Resources** and **Zone Resources** to match the accounts and zones you want to scan, then click **Create Token**.
+- [Create Account-Owned API Token](https://dash.cloudflare.com/?to=/:account/api-tokens&permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&name=Prowler%20Security%20Scanner) — creates an [account-owned token](https://developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template/) instead. Use this for automation or CI/CD where the token should not depend on a specific user account remaining active. Requires the **Super Administrator** or **Administrator** role on the account. As with the user token link, add the `Account API Tokens`, `Workers Scripts`, and `Workers R2 Storage` read permissions manually.
 
 <Note>
 Template URLs only pre-fill the token creation form. Review the permissions, configure resources, and click **Create Token** to complete the process.
@@ -56,16 +67,23 @@ Template URLs only pre-fill the token creation form. Review the permissions, con
 ### Step 1: Create a User API Token
 
 1. Log into the [Cloudflare Dashboard](https://dash.cloudflare.com).
-2. Click on the profile icon in the top right corner, then select "My Profile".
-3. Click on the **API Tokens** tab.
+2. Click the profile icon in the top right corner, then select "My Profile".
+3. Click the **API Tokens** tab.
 4. Click **Create Token**, then select **Create Custom Token** at the bottom of the page.
 5. Configure the token with the following settings:
    - **Token name:** A descriptive name (e.g., "Prowler Security Scanner")
    - **Permissions:**
      - `Account` — `Account Settings` — `Read`
+     - `Account` — `Account API Tokens` — `Read`
+     - `Account` — `Workers Scripts` — `Read`
+     - `Account` — `Workers R2 Storage` — `Read`
+     - `User` — `API Tokens` — `Read` (optional, for user token checks)
      - `Zone` — `Zone` — `Read`
      - `Zone` — `Zone Settings` — `Read`
      - `Zone` — `DNS` — `Read`
+     - `Zone` — `SSL and Certificates` — `Read`
+     - `Zone` — `Bot Management` — `Read`
+     - `Zone` — `Zone WAF` — `Read`
    - **Zone Resources:** Select either:
      - **Include → All zones** (to scan all zones in the account)
      - **Include → Specific zone** (to limit access to specific zones)
@@ -102,8 +120,8 @@ API Keys provide full access to the Cloudflare account. While supported, this me
 ### Step 1: Get the Global API Key
 
 1. Log into the [Cloudflare Dashboard](https://dash.cloudflare.com).
-2. Click on the profile icon in the top right corner, then select "My Profile".
-3. Click on the **API Tokens** tab.
+2. Click the profile icon in the top right corner, then select "My Profile".
+3. Click the **API Tokens** tab.
 4. Scroll down to the **API Keys** section.
 5. Click **View** next to **Global API Key**.
 6. Enter the account password to reveal the key, then copy it.

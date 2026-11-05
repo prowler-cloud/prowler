@@ -4,30 +4,23 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-    get_api_tokens,
-    get_authorization_header,
-)
+from conftest import API_JSON_CONTENT_TYPE
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import Provider, Scan, StateChoices
-from api.rls import Tenant
+from api.models import Provider, Scan
 
 
 @pytest.mark.django_db
 class TestProviderViewSet:
     """Example API tests for Provider endpoints."""
 
-    def test_list_providers(self, authenticated_client, providers_fixture):
+    def test_list_providers(self, authenticated_client, aws_provider):
         """GET list returns all providers for authenticated tenant."""
         response = authenticated_client.get(reverse("provider-list"))
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(providers_fixture)
+        assert len(response.json()["data"]) == 1
 
     def test_create_provider(self, authenticated_client):
         """POST with JSON:API format creates provider."""
@@ -43,15 +36,15 @@ class TestProviderViewSet:
                     },
                 }
             },
-            format="vnd.api+json",  # Use format= for POST
+            content_type=API_JSON_CONTENT_TYPE,  # nested JSON:API body needs content_type
         )
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["data"]["attributes"]["uid"] == "123456789012"
 
-    def test_update_provider(self, authenticated_client, providers_fixture):
+    def test_update_provider(self, authenticated_client, aws_provider):
         """PATCH with JSON:API format updates provider."""
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         payload = {
             "data": {
@@ -64,7 +57,7 @@ class TestProviderViewSet:
         response = authenticated_client.patch(
             reverse("provider-detail", kwargs={"pk": provider.id}),
             data=payload,
-            content_type="application/vnd.api+json",  # Use content_type= for PATCH
+            content_type=API_JSON_CONTENT_TYPE,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -95,22 +88,22 @@ class TestRLSIsolation:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_list_excludes_other_tenants(
-        self, authenticated_client, providers_fixture, tenants_fixture
+        self, authenticated_client, aws_provider, tenants_fixture
     ):
         """List endpoints only return resources from user's tenants."""
         # Create provider in isolated tenant
         other_tenant = tenants_fixture[2]
         Provider.objects.create(
             provider="aws",
-            uid="foreign123",
+            uid="999888777666",  # Provider.save() runs full_clean(): uid must be valid
             tenant_id=other_tenant.id,
         )
 
         response = authenticated_client.get(reverse("provider-list"))
         assert response.status_code == status.HTTP_200_OK
 
-        # Should only see providers_fixture (9 providers in tenant[0])
-        assert len(response.json()["data"]) == len(providers_fixture)
+        # Should only see the AWS provider in tenant[0]
+        assert len(response.json()["data"]) == 1
 
 
 @pytest.mark.django_db
@@ -127,7 +120,7 @@ class TestRBACPermissions:
                     "attributes": {"provider": "aws", "uid": "123456789012"},
                 }
             },
-            format="vnd.api+json",
+            content_type=API_JSON_CONTENT_TYPE,
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -136,7 +129,7 @@ class TestRBACPermissions:
         response = authenticated_client_rbac_noroles.get(reverse("user-list"))
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_admin_sees_all(self, authenticated_client_rbac, providers_fixture):
+    def test_admin_sees_all(self, authenticated_client_rbac, aws_provider):
         """Admin with unlimited_visibility=True sees all providers."""
         response = authenticated_client_rbac.get(reverse("provider-list"))
         assert response.status_code == status.HTTP_200_OK
@@ -153,11 +146,11 @@ class TestAsyncOperations:
         mock_delete_task,
         mock_task_get,
         authenticated_client,
-        providers_fixture,
+        aws_provider,
         tasks_fixture,
     ):
         """DELETE returns 202 Accepted with Content-Location header."""
-        provider = providers_fixture[0]
+        provider = aws_provider
         prowler_task = tasks_fixture[0]
 
         # Mock the Celery task
@@ -177,40 +170,39 @@ class TestAsyncOperations:
         # Verify task was called
         mock_delete_task.assert_called_once()
 
-    @patch("api.v1.views.Task.objects.get")
-    @patch("api.v1.views.perform_scan_task.delay")
-    def test_trigger_scan_returns_202(
-        self,
-        mock_scan_task,
-        mock_task_get,
-        authenticated_client,
-        providers_fixture,
-        tasks_fixture,
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_create_scan_returns_202(
+        self, mock_enqueue, authenticated_client, aws_provider
     ):
-        """POST to scan trigger returns 202 with task location."""
-        provider = providers_fixture[0]
-        prowler_task = tasks_fixture[0]
-
-        task_mock = Mock()
-        task_mock.id = prowler_task.id
-        mock_scan_task.return_value = task_mock
-        mock_task_get.return_value = prowler_task
-
+        """POST /scans creates the Scan and defers the broker publish to on_commit."""
         response = authenticated_client.post(
-            reverse("provider-scan", kwargs={"pk": provider.id}),
-            format="vnd.api+json",
+            reverse("scan-list"),
+            data={
+                "data": {
+                    "type": "scans",
+                    "attributes": {"name": "manual scan"},
+                    "relationships": {
+                        "provider": {
+                            "data": {"type": "providers", "id": str(aws_provider.id)}
+                        }
+                    },
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
         )
 
         assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Scan.objects.count() == 1
+        mock_enqueue.assert_called_once()
 
 
 @pytest.mark.django_db
 class TestJSONAPIResponses:
     """Example JSON:API response handling."""
 
-    def test_read_single_resource(self, authenticated_client, providers_fixture):
+    def test_read_single_resource(self, authenticated_client, aws_provider):
         """Read data from single resource response."""
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client.get(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -222,12 +214,12 @@ class TestJSONAPIResponses:
         assert resource_id == str(provider.id)
         assert attrs["provider"] == provider.provider
 
-    def test_read_list_response(self, authenticated_client, providers_fixture):
+    def test_read_list_response(self, authenticated_client, aws_provider):
         """Read data from list response."""
         response = authenticated_client.get(reverse("provider-list"))
 
         items = response.json()["data"]
-        assert len(items) == len(providers_fixture)
+        assert len(items) == 1
 
     def test_read_relationships(self, authenticated_client, scans_fixture):
         """Read relationship data."""
@@ -248,7 +240,7 @@ class TestJSONAPIResponses:
         response = authenticated_client.post(
             reverse("user-list"),
             data={"email": "invalid"},  # Missing required fields
-            format="json",
+            format="json",  # ignored by Django's test Client: flat dict is sent multipart
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -262,9 +254,9 @@ class TestJSONAPIResponses:
 class TestSoftDelete:
     """Example soft-delete manager tests."""
 
-    def test_objects_excludes_soft_deleted(self, providers_fixture):
+    def test_objects_excludes_soft_deleted(self, aws_provider):
         """Default manager excludes soft-deleted records."""
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.is_deleted = True
         provider.save()
 
@@ -284,12 +276,18 @@ class TestSoftDelete:
 class TestCeleryTaskLogic:
     """Example: Testing Celery task logic directly with apply()."""
 
-    def test_task_logic_directly(self, tenants_fixture, providers_fixture):
-        """Use apply() for synchronous execution without Celery worker."""
+    @patch("tasks.tasks.check_provider_connection")
+    def test_task_logic_directly(self, mock_check, tenants_fixture, aws_provider):
+        """Use apply() for synchronous execution without Celery worker.
+
+        Patch the job function where tasks.tasks imports it: real connection
+        checks would call the cloud provider.
+        """
         from tasks.tasks import check_provider_connection_task
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
+        mock_check.return_value = {"connected": True, "error": None}
 
         # Execute task synchronously (no broker needed)
         result = check_provider_connection_task.apply(
@@ -298,6 +296,7 @@ class TestCeleryTaskLogic:
 
         assert result.successful()
         assert result.result["connected"] is True
+        mock_check.assert_called_once_with(provider_id=str(provider.id))
 
 
 @pytest.mark.django_db
@@ -328,12 +327,12 @@ class TestSetTenantDecorator:
     """Example: Testing @set_tenant decorator behavior."""
 
     @patch("api.decorators.connection")
-    def test_sets_rls_context(self, mock_conn, tenants_fixture, providers_fixture):
+    def test_sets_rls_context(self, mock_conn, tenants_fixture, aws_provider):
         """Verify @set_tenant sets RLS context via SET_CONFIG_QUERY."""
         from tasks.tasks import check_provider_connection_task
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         # Call task with tenant_id - decorator sets RLS and pops it
         check_provider_connection_task.apply(
@@ -349,13 +348,13 @@ class TestBeatScheduling:
     """Example: Testing Beat scheduled task creation."""
 
     @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
-    def test_schedule_provider_scan(self, mock_apply, providers_fixture):
+    def test_schedule_provider_scan(self, mock_apply, aws_provider):
         """Verify periodic task is created with correct settings."""
         from django_celery_beat.models import PeriodicTask
 
         from tasks.beat import schedule_provider_scan
 
-        provider = providers_fixture[0]
+        provider = aws_provider
         mock_apply.return_value = Mock(id="task-123")
 
         schedule_provider_scan(provider)

@@ -2,41 +2,33 @@
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 
-import { DataTableRowActions } from "@/components/findings/table";
 import {
-  DeltaType,
-  NotificationIndicator,
-} from "@/components/findings/table/notification-indicator";
+  DataTableRowActions,
+  FindingTriageStatusCell,
+} from "@/components/findings/table";
+import { NotificationIndicator } from "@/components/findings/table/notification-indicator";
 import { Checkbox } from "@/components/shadcn";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
-  Severity,
   SeverityBadge,
   StatusFindingBadge,
-} from "@/components/ui/table";
-
-export interface ResourceFinding {
-  type: "findings";
-  id: string;
-  attributes: {
-    status: "PASS" | "FAIL" | "MANUAL";
-    severity: Severity;
-    muted?: boolean;
-    muted_reason?: string;
-    delta?: DeltaType;
-    updated_at?: string;
-    check_metadata?: {
-      checktitle?: string;
-    };
-  };
-}
+} from "@/components/shadcn/table";
+import type {
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageUpdateHandler,
+} from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
 export const getResourceFindingsColumns = (
   rowSelection: RowSelectionState,
   selectableRowCount: number,
   onNavigate: (id: string) => void,
   onMuteComplete?: (findingIds: string[]) => void,
+  onTriageUpdateAction?: FindingTriageUpdateHandler,
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler,
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler,
 ): ColumnDef<ResourceFinding>[] => {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -137,10 +129,34 @@ export const getResourceFindingsColumns = (
       enableSorting: false,
     },
     {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          findingContext={{
+            title:
+              row.original.attributes.check_metadata?.checktitle || "Finding",
+          }}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
+      ),
+      enableSorting: false,
+    },
+    {
       id: "actions",
       header: () => <div className="w-10" />,
       cell: ({ row }) => (
-        <DataTableRowActions row={row} onMuteComplete={onMuteComplete} />
+        <DataTableRowActions
+          row={row}
+          onMuteComplete={onMuteComplete}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
       ),
       enableSorting: false,
     },

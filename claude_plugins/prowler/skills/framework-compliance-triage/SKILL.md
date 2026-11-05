@@ -38,12 +38,12 @@ If the framework is not supported, tell the user, suggest they request it or con
 
 ### 1.1 Connect to Prowler Cloud
 
-Verify the Prowler MCP connection by calling `prowler_app_search_providers` — a successful response returns the list of providers. If the call fails, walk the user through troubleshooting: internet connectivity, Prowler Cloud credentials, and permissions on the Prowler Cloud account.
+Verify the Prowler MCP connection by calling `prowler_search_providers` — a successful response returns the list of providers. If the call fails, walk the user through troubleshooting: internet connectivity, Prowler Cloud credentials, and permissions on the Prowler Cloud account.
 For getting accurate information about configurations use `prowler_docs_search` to pull relevant instructions from the Prowler documentation.
 
 ### 1.2 Verify the provider is configured (or configure it)
 
-Call `prowler_app_search_providers` to check whether the target provider (AWS account, Azure Subscription, GitHub Account...) exists in the user's Prowler Cloud account. Handle the result based on what's found:
+Call `prowler_search_providers` to check whether the target provider (AWS account, Azure Subscription, GitHub Account...) exists in the user's Prowler Cloud account. Handle the result based on what's found:
 
 - **Provider not present.** Guide the user through adding and configuring it. Retrieve the relevant connection, credential, and permission instructions with `prowler_docs_search`.
 - **Provider present but misconfigured** (missing credentials, insufficient permissions, etc.). Walk the user through fixing the configuration, pulling the relevant guidance with `prowler_docs_search`.
@@ -57,15 +57,15 @@ Call `prowler_app_search_providers` to check whether the target provider (AWS ac
 
 The flow needs at least one completed scan with a compliance report available.
 
-Look for a completed scan first: call `prowler_app_list_scans` with the selected `provider_id` and `state: ["completed"]`, then call `prowler_app_get_compliance_overview` with each `scan_id` to find one whose compliance report is available. If one is found, continue to the next section.
+Look for a completed scan first: call `prowler_list_scans` with the selected `provider_id` and `state: ["completed"]`, then call `prowler_get_compliance_overview` with each `scan_id` to find one whose compliance report is available. If one is found, continue to the next section.
 
-If no completed scan has a report, call `prowler_app_list_scans` again with `state: ["available", "executing"]` to detect a scan in progress.
+If no completed scan has a report, call `prowler_list_scans` again with `state: ["available", "executing"]` to detect a scan in progress.
 
 > **Checkpoint — Scan-in-progress decision** *(conditional: an in-progress scan was detected)*
 >
 > Tell the user a scan is already running and ask whether to wait for it to complete or start a fresh one. Wait for the answer.
 
-If no scan is running (or the user chose to start a fresh one), trigger a new scan with `prowler_app_trigger_scan` and the `provider_id`. The link `https://cloud.prowler.com/scans?filter%5Bprovider_uid__in%5D={provider_id}` lets the user monitor progress.
+If no scan is running (or the user chose to start a fresh one), trigger a new scan with `prowler_trigger_scan` and the `provider_id`. The link `https://cloud.prowler.com/scans?filter%5Bprovider_uid__in%5D={provider_id}` lets the user monitor progress.
 
 When a scan is in progress (either pre-existing and elected to wait, or just triggered), stop the flow and ask the user to return when it's completed — restart this section to re-check the results.
 
@@ -85,7 +85,7 @@ Status taxonomy for failed requirements and their findings:
 
 ### Report template
 
-A fresh report is rendered like this (substituting values from the `prowler_app_get_compliance_framework_state_details` Prowler MCP tool response):
+A fresh report is rendered like this (substituting values from the `prowler_get_compliance_framework_state_details` Prowler MCP tool response):
 
 ````markdown
 # Compliance report: <compliance_id>
@@ -120,7 +120,7 @@ A fresh report is rendered like this (substituting values from the `prowler_app_
 
 Resolve the report path for the current `compliance_id` and provider account.
 
-If the file does not exist, call `prowler_app_get_compliance_framework_state_details` for the target scan, render the template above, and write the file with one initialization entry in the activity log.
+If the file does not exist, call `prowler_get_compliance_framework_state_details` for the target scan, render the template above, and write the file with one initialization entry in the activity log.
 
 If the file exists, read it and compare its `Scan ID` to the target scan from section 1.3. When the scan matches, reuse the file and summarize remaining `[FAIL]` and `[IN PROGRESS]` items in chat.
 
@@ -128,7 +128,7 @@ If the file exists, read it and compare its `Scan ID` to the target scan from se
 >
 > Tell the user the report on disk was generated from a different scan and ask whether to refresh it from the new scan. Wait for the answer.
 
-On confirmation, regenerate the failed-requirements section from the new `prowler_app_get_compliance_framework_state_details` response, carry forward the **Global remediation approach** block and the full activity log, and append an activity-log entry noting the scan change.
+On confirmation, regenerate the failed-requirements section from the new `prowler_get_compliance_framework_state_details` response, carry forward the **Global remediation approach** block and the full activity log, and append an activity-log entry noting the scan change.
 
 Once the file is current, surface the top failing requirements in chat: sort by finding count descending, show the top 5 with their codes and counts, and point to the file path for the full list.
 
@@ -174,7 +174,7 @@ Once approved, the loop proceeds through the batch without further prompts unles
 
 Pick the first `[FAIL]` requirement at the top of the failed-requirements section. Move its status and every finding under it to `[IN PROGRESS]`, and add a `**Fix plan**:` sub-bullet describing what will be done.
 
-Call `prowler_app_get_finding_details` for each `finding_id` to retrieve the failing resource and the Prowler Hub's remediation guidance for that check using the tool `prowler_hub_get_check_details` with the `check_id` from the finding details. Summarize the guidance in chat, and append it to the `**Fix plan**` note for each finding.
+Call `prowler_get_finding_details` for each `finding_id` to retrieve the failing resource and the Prowler Hub's remediation guidance for that check using the tool `prowler_hub_get_check_details` with the `check_id` from the finding details. Summarize the guidance in chat, and append it to the `**Fix plan**` note for each finding.
 
 If a finding does not apply to the target resource (Organization-only check on a User account, paid-tier feature, missing resource type, etc.), set the requirement status to `[SKIPPED]` with the reason, log it in the activity log, and move on without attempting the fix — even if it was missed during §3.2.
 
@@ -194,6 +194,6 @@ Move to the next `[FAIL]` requirement and repeat from section 3.3.
 
 > **Checkpoint — Rescan trigger** *(conditional: no `[FAIL]` requirements remain; all are `[FIXED-UNVERIFIED]` or `[SKIPPED]`)*
 >
-> Summarize what was applied, list any `[SKIPPED]` items with reasons, and ask whether to trigger a fresh scan with `prowler_app_trigger_scan` to verify the fixes end-to-end. Wait for the answer.
+> Summarize what was applied, list any `[SKIPPED]` items with reasons, and ask whether to trigger a fresh scan with `prowler_trigger_scan` to verify the fixes end-to-end. Wait for the answer.
 
 On confirmation, trigger the rescan. When it completes, restart section 2.1 with the carry-forward path — requirements no longer in the new FAIL list move to `[PASS]`, anything still failing reverts to `[FAIL]` with the previous fix attempt visible in the activity log.

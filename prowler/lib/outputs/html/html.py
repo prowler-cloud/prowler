@@ -1,7 +1,10 @@
+import re
 import sys
 from io import TextIOWrapper
+from urllib.parse import urlparse
 
 import markdown
+from markupsafe import escape
 
 from prowler.config.config import (
     html_logo_url,
@@ -15,8 +18,98 @@ from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.providers.common.provider import Provider
 
+_SAFE_URL_SCHEMES = {"http", "https"}
+
+# Prowler Cloud hand-off block. Only the OSS CLI opts in (see `show_cloud_cta`),
+# so Prowler Cloud and Private Cloud reports never contain it. These URLs are
+# static: no assessment data is ever appended to them.
+PROWLER_CLOUD_CTA_URL = (
+    "https://cloud.prowler.com/sign-up"
+    "?utm_source=prowler-html-report&utm_medium=oss&utm_campaign=report-handoff"
+)
+PROWLER_CLOUD_PRICING_URL = "https://prowler.com/pricing"
+PROWLER_CLOUD_IMPORT_DOCS_URL = (
+    "https://docs.prowler.com/user-guide/tutorials/prowler-import-findings"
+)
+
+
+def _safe_url(url: str) -> str:
+    """Return url if its scheme is http/https, otherwise return empty string."""
+    if not url:
+        return ""
+    scheme = urlparse(url).scheme.lower()
+    return url if scheme in _SAFE_URL_SCHEMES else ""
+
+
+def _strip_unsafe_links(html_content: str) -> str:
+    """Replace <a href> tags whose href is not http/https with their link text."""
+
+    def _replace(match: re.Match) -> str:
+        href = match.group("href")
+        body = match.group("body")
+        safe = _safe_url(href)
+        return f'<a href="{safe}">{body}</a>' if safe else body
+
+    return re.sub(
+        r'<a\s[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<body>.*?)</a>',
+        _replace,
+        html_content,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
 
 class HTML(Output):
+    def __init__(
+        self,
+        findings: list[Finding],
+        file_path: str = None,
+        file_extension: str = "",
+        from_cli: bool = True,
+        show_cloud_cta: bool = False,
+    ) -> None:
+        """
+        Initializes the HTML output.
+
+        Args:
+            findings (list[Finding]): findings to transform
+            file_path (str): path of the output file
+            file_extension (str): extension of the output file
+            from_cli (bool): whether the output is written in one go (CLI) or in batches (API)
+            show_cloud_cta (bool): whether to render the Prowler Cloud hand-off block after the
+                assessment summary. Disabled by default; only the OSS CLI enables it.
+        """
+        self._show_cloud_cta = show_cloud_cta
+        super().__init__(
+            findings,
+            file_path=file_path,
+            file_extension=file_extension,
+            from_cli=from_cli,
+        )
+
+    @staticmethod
+    def get_cloud_cta() -> str:
+        """
+        Returns the Prowler Cloud hand-off block shown after the assessment summary in OSS CLI
+        reports. It is static markup: no scripts, no requests, and no assessment data in URLs.
+
+        Returns:
+            str: HTML markup of the block
+        """
+        return f"""
+        <div class="row mt-3 prowler-cloud-cta" role="complementary" aria-labelledby="prowler-cloud-cta-title">
+        <div class="col-md-12">
+            <div class="card">
+            <div class="card-body">
+                <h5 class="card-title" id="prowler-cloud-cta-title">Keep scanning locally. Bring your findings to Prowler Cloud.</h5>
+                <p class="card-text">Import your accompanying OCSF report to explore managed security workflows. <a href="{PROWLER_CLOUD_IMPORT_DOCS_URL}" target="_blank" rel="noopener noreferrer">How to import findings</a></p>
+                <a class="btn btn-primary" href="{PROWLER_CLOUD_CTA_URL}" target="_blank" rel="noopener noreferrer">Explore Prowler Cloud</a>
+                <a class="btn btn-link" href="{PROWLER_CLOUD_PRICING_URL}" target="_blank" rel="noopener noreferrer">Compare editions</a>
+                <p class="card-text text-muted mt-2 mb-0"><small>Nothing is uploaded automatically.</small></p>
+            </div>
+            </div>
+        </div>
+        </div>"""
+
     @staticmethod
     def process_markdown(text: str) -> str:
         """
@@ -51,7 +144,7 @@ class HTML(Output):
             html_content = html_content.replace("<p>", "")
             html_content = html_content.replace("</p>", "")
 
-        return html_content
+        return _strip_unsafe_links(html_content)
 
     def transform(self, findings: list[Finding]) -> None:
         """Transforms the findings into the HTML format.
@@ -76,17 +169,17 @@ class HTML(Output):
                 self._data.append(f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
-                            <td>{finding.metadata.Severity.value}</td>
-                            <td>{finding.metadata.ServiceName}</td>
-                            <td>{finding.region.lower()}</td>
-                            <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
-                            <td>{finding.metadata.CheckTitle}</td>
-                            <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
-                            <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
-                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-                            <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
+                            <td>{str(escape(finding.metadata.Severity.value))}</td>
+                            <td>{str(escape(finding.metadata.ServiceName))}</td>
+                            <td>{str(escape(finding.region.lower()))}</td>
+                            <td>{str(escape(finding.metadata.CheckID)).replace("_", "<wbr />_")}</td>
+                            <td>{str(escape(finding.metadata.CheckTitle))}</td>
+                            <td>{str(escape(finding.resource_uid)).replace("_", "<wbr />_")}</td>
+                            <td>{parse_html_string(str(escape(unroll_dict(finding.resource_tags))))}</td>
+                            <td>{str(escape(finding.status_extended)).replace("_", "<wbr />_")}</td>
+                            <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Risk)))}</p></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Remediation.Recommendation.Text)))}</p> <a class="read-more" href="{str(escape(_safe_url(finding.metadata.Remediation.Recommendation.Url)))}"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">{parse_html_string(str(escape(unroll_dict(finding.compliance, separator=": "))))}</p></td>
                         </tr>
                         """)
         except Exception as error:
@@ -112,7 +205,11 @@ class HTML(Output):
             ):
                 if self._file_descriptor.tell() == 0:
                     HTML.write_header(
-                        self._file_descriptor, provider, stats, self._from_cli
+                        self._file_descriptor,
+                        provider,
+                        stats,
+                        self._from_cli,
+                        show_cloud_cta=getattr(self, "_show_cloud_cta", False),
                     )
                 for finding in self._data:
                     self._file_descriptor.write(finding)
@@ -130,6 +227,7 @@ class HTML(Output):
         provider: Provider,
         stats: dict,
         from_cli: bool = True,
+        show_cloud_cta: bool = False,
     ) -> None:
         """
         Writes the header of the HTML file.
@@ -139,8 +237,17 @@ class HTML(Output):
             provider (Provider): the provider object
             stats (dict): the statistics of the findings
             from_cli (bool): whether the request is from the CLI or not
+            show_cloud_cta (bool): whether to include the Prowler Cloud hand-off block. When
+                False the block, its styles and its URLs are omitted entirely.
         """
         try:
+            cloud_cta_style = (
+                """
+        @media print { .prowler-cloud-cta { display: none !important; } }"""
+                if show_cloud_cta
+                else ""
+            )
+            cloud_cta = HTML.get_cloud_cta() if show_cloud_cta else ""
             file_descriptor.write(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -169,7 +276,7 @@ class HTML(Output):
 
         .container-fluid {{font-size: 14px;}}
 
-        .float-left {{ float: left !important; max-width: 100%; }}
+        .float-left {{ float: left !important; max-width: 100%; }}{cloud_cta_style}
     </style>
     <title>Prowler - The Handy Cloud Security Tool</title>
     </head>
@@ -229,7 +336,7 @@ class HTML(Output):
                 </ul>
             </div>
         </div>
-        </div>
+        </div>{cloud_cta}
         </div>
         <div class="row-mt-3">
         <div class="col-md-12">
@@ -433,6 +540,11 @@ class HTML(Output):
                 audited_regions = "All Regions"
             else:
                 audited_regions = ", ".join(provider.identity.audited_regions)
+            account = escape(str(provider.identity.account))
+            profile = escape(str(profile))
+            audited_regions = escape(str(audited_regions))
+            user_id = escape(str(provider.identity.user_id))
+            identity_arn = escape(str(provider.identity.identity_arn))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -441,7 +553,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>AWS Account:</b> {provider.identity.account}
+                                <b>AWS Account:</b> {account}
                             </li>
                             <li class="list-group-item">
                                 <b>AWS-CLI Profile:</b> {profile}
@@ -459,10 +571,10 @@ class HTML(Output):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>User Id:</b> {provider.identity.user_id}
+                            <b>User Id:</b> {user_id}
                             </li>
                             <li class="list-group-item">
-                                <b>Caller Identity ARN:</b> {provider.identity.identity_arn}
+                                <b>Caller Identity ARN:</b> {identity_arn}
                             </li>
                         </ul>
                     </div>
@@ -500,6 +612,11 @@ class HTML(Output):
                 )
             else:
                 html_identity = provider.identity.identity_id
+            tenant_ids = escape(" ".join(provider.identity.tenant_ids))
+            tenant_domain = escape(str(provider.identity.tenant_domain))
+            subscriptions = escape(" ".join(printed_subscriptions))
+            identity_type = escape(str(provider.identity.identity_type))
+            html_identity = escape(str(html_identity))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -508,13 +625,13 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Azure Tenant IDs:</b> {" ".join(provider.identity.tenant_ids)}
+                                <b>Azure Tenant IDs:</b> {tenant_ids}
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Tenant Domain:</b> {provider.identity.tenant_domain}
+                                <b>Azure Tenant Domain:</b> {tenant_domain}
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Subscriptions:</b> {" ".join(printed_subscriptions)}
+                                <b>Azure Subscriptions:</b> {subscriptions}
                             </li>
                         </ul>
                     </div>
@@ -526,7 +643,7 @@ class HTML(Output):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>Azure Identity Type:</b> {provider.identity.identity_type}
+                            <b>Azure Identity Type:</b> {identity_type}
                             </li>
                             <li class="list-group-item">
                                 <b>Azure Identity ID:</b> {html_identity}
@@ -561,6 +678,8 @@ class HTML(Output):
                 )
             except AttributeError:
                 profile = "default"
+            project_ids = escape(", ".join(provider.project_ids))
+            profile = escape(str(profile))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -569,7 +688,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>GCP Project IDs:</b> {", ".join(provider.project_ids)}
+                                <b>GCP Project IDs:</b> {project_ids}
                             </li>
                         </ul>
                     </div>
@@ -604,6 +723,8 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            cluster = escape(str(provider.identity.cluster))
+            context = escape(str(provider.identity.context))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -613,7 +734,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>Kubernetes Cluster:</b> {provider.identity.cluster}
+                                <b>Kubernetes Cluster:</b> {cluster}
                             </li>
                         </ul>
                     </div>
@@ -626,7 +747,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>Kubernetes Context:</b> {provider.identity.context}
+                                <b>Kubernetes Context:</b> {context}
                             </li>
                         </ul>
                     </div>
@@ -649,11 +770,13 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            auth_method = escape(str(provider.auth_method))
             if hasattr(provider.identity, "account_name"):
                 # GithubIdentityInfo (Personal Access Token, OAuth)
+                account_name = escape(str(provider.identity.account_name))
                 account_info_items = f"""
                             <li class="list-group-item">
-                                <b>GitHub account:</b> {provider.identity.account_name}
+                                <b>GitHub account:</b> {account_name}
                             </li>
                             """
                 # Add email if available
@@ -661,23 +784,27 @@ class HTML(Output):
                     hasattr(provider.identity, "account_email")
                     and provider.identity.account_email
                 ):
+                    account_email = escape(str(provider.identity.account_email))
                     account_info_items += f"""
                                 <li class="list-group-item">
-                                    <b>GitHub account email:</b> {provider.identity.account_email}
+                                    <b>GitHub account email:</b> {account_email}
                                 </li>"""
             elif hasattr(provider.identity, "app_id"):
                 # GithubAppIdentityInfo (GitHub App)
                 # Assessment items: App Name and Installations
+                app_name = escape(str(provider.identity.app_name))
                 account_info_items = f"""
                                 <li class="list-group-item">
-                                    <b>GitHub App Name:</b> {provider.identity.app_name}
+                                    <b>GitHub App Name:</b> {app_name}
                                 </li>"""
                 # Add installations if available
                 if (
                     hasattr(provider.identity, "installations")
                     and provider.identity.installations
                 ):
-                    installations_display = ", ".join(provider.identity.installations)
+                    installations_display = escape(
+                        ", ".join(provider.identity.installations)
+                    )
                     account_info_items += f"""
                             <li class="list-group-item">
                                 <b>Installations:</b> {installations_display}
@@ -689,26 +816,27 @@ class HTML(Output):
                             </li>"""
 
                 # Credentials items: Authentication method and App ID
+                app_id = escape(str(provider.identity.app_id))
                 credentials_items = f"""
                             <li class="list-group-item">
-                                <b>GitHub authentication method:</b> {provider.auth_method}
+                                <b>GitHub authentication method:</b> {auth_method}
                             </li>
                             <li class="list-group-item">
-                                <b>GitHub App ID:</b> {provider.identity.app_id}
+                                <b>GitHub App ID:</b> {app_id}
                             </li>"""
             else:
                 # Fallback for other identity types
                 account_info_items = ""
                 credentials_items = f"""
                             <li class="list-group-item">
-                                <b>GitHub authentication method:</b> {provider.auth_method}
+                                <b>GitHub authentication method:</b> {auth_method}
                             </li>"""
 
             # For PAT/OAuth, use default credentials structure
             if hasattr(provider.identity, "account_name"):
                 credentials_items = f"""
                             <li class="list-group-item">
-                                <b>GitHub authentication method:</b> {provider.auth_method}
+                                <b>GitHub authentication method:</b> {auth_method}
                             </li>"""
 
             return f"""
@@ -749,6 +877,18 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            tenant_domain = escape(str(provider.identity.tenant_domain))
+            identity_type = escape(str(provider.identity.identity_type))
+            identity_id = escape(str(provider.identity.identity_id))
+            user_item = ""
+            if (
+                hasattr(provider.identity, "user")
+                and provider.identity.user is not None
+            ):
+                user = escape(str(provider.identity.user))
+                user_item = f"""<li class="list-group-item">
+                                <b>M365 User:</b> {user}
+                            </li>"""
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -757,9 +897,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>M365 Tenant Domain:</b> {
-                provider.identity.tenant_domain
-            }
+                                <b>M365 Tenant Domain:</b> {tenant_domain}
                             </li>
                         </ul>
                     </div>
@@ -771,19 +909,12 @@ class HTML(Output):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>M365 Identity Type:</b> {provider.identity.identity_type}
+                            <b>M365 Identity Type:</b> {identity_type}
                             </li>
                             <li class="list-group-item">
-                                <b>M365 Identity ID:</b> {provider.identity.identity_id}
+                                <b>M365 Identity ID:</b> {identity_id}
                             </li>
-                            {
-                f'''<li class="list-group-item">
-                                <b>M365 User:</b> {provider.identity.user}
-                            </li>'''
-                if hasattr(provider.identity, "user")
-                and provider.identity.user is not None
-                else ""
-            }
+                            {user_item}
                         </ul>
                     </div>
                 </div>"""
@@ -804,6 +935,9 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            tenant_domain = escape(str(provider.identity.tenant_domain))
+            identity_type = escape(str(provider.identity.identity_type))
+            identity_id = escape(str(provider.identity.identity_id))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -812,7 +946,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>NHN Tenant Domain:</b> {provider.identity.tenant_domain}
+                                <b>NHN Tenant Domain:</b> {tenant_domain}
                             </li>
                         </ul>
                     </div>
@@ -824,10 +958,10 @@ class HTML(Output):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>NHN Identity Type:</b> {provider.identity.identity_type}
+                            <b>NHN Identity Type:</b> {identity_type}
                             </li>
                             <li class="list-group-item">
-                                <b>NHN Identity ID:</b> {provider.identity.identity_id}
+                                <b>NHN Identity ID:</b> {identity_id}
                             </li>
                         </ul>
                     </div>
@@ -850,6 +984,7 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            organization_name = escape(str(provider.identity.organization_name))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -859,7 +994,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>MongoDB Atlas organization:</b> {provider.identity.organization_name}
+                                <b>MongoDB Atlas organization:</b> {organization_name}
                             </li>
                         </ul>
                     </div>
@@ -895,6 +1030,13 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            if provider.scan_repository_url:
+                target_info = "<b>IAC repository URL:</b> " + str(
+                    escape(str(provider.scan_repository_url))
+                )
+            else:
+                target_info = "<b>IAC path:</b> " + str(escape(str(provider.scan_path)))
+            auth_method = escape(str(provider.auth_method))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -904,7 +1046,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                {"<b>IAC repository URL:</b> " + provider.scan_repository_url if provider.scan_repository_url else "<b>IAC path:</b> " + provider.scan_path}
+                                {target_info}
                             </li>
                         </ul>
                     </div>
@@ -917,7 +1059,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>IAC authentication method:</b> {provider.auth_method}
+                                <b>IAC authentication method:</b> {auth_method}
                             </li>
                         </ul>
                     </div>
@@ -941,10 +1083,13 @@ class HTML(Output):
         """
         try:
             if provider.registry:
-                target_info = f"<b>Registry URL:</b> {provider.registry}"
+                registry = escape(str(provider.registry))
+                target_info = f"<b>Registry URL:</b> {registry}"
             else:
-                target_info = f'<b>Images:</b> {", ".join(provider.images)}'
+                images = escape(", ".join(provider.images))
+                target_info = f"<b>Images:</b> {images}"
 
+            auth_method = escape(str(provider.auth_method))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -967,7 +1112,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>Image authentication method:</b> {provider.auth_method}
+                                <b>Image authentication method:</b> {auth_method}
                             </li>
                         </ul>
                     </div>
@@ -990,6 +1135,14 @@ class HTML(Output):
             str: HTML assessment summary for the LLM provider
         """
         try:
+            model = escape(str(provider.model))
+            plugins = escape(", ".join(provider.plugins))
+            max_concurrency = escape(str(provider.max_concurrency))
+            config_file = escape(
+                str(provider.config_path)
+                if provider.config_path
+                else "Using promptfoo defaults"
+            )
             return f"""
                 <div class="card">
                     <div class="card-header">
@@ -1001,16 +1154,16 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>Target LLM:</b> {provider.model}
+                                <b>Target LLM:</b> {model}
                             </li>
                             <li class="list-group-item">
-                                <b>Plugins:</b> {", ".join(provider.plugins)}
+                                <b>Plugins:</b> {plugins}
                             </li>
                             <li class="list-group-item">
-                                <b>Max concurrency:</b> {provider.max_concurrency}
+                                <b>Max concurrency:</b> {max_concurrency}
                             </li>
                             <li class="list-group-item">
-                                <b>Config file:</b> {provider.config_path if provider.config_path else "Using promptfoo defaults"}
+                                <b>Config file:</b> {config_file}
                             </li>
                         </ul>
                     </div>
@@ -1039,6 +1192,10 @@ class HTML(Output):
             tenancy_name = getattr(provider.identity, "tenancy_name", "unknown")
             tenancy_id = getattr(provider.identity, "tenancy_id", "unknown")
 
+            tenancy = escape(
+                str(tenancy_name if tenancy_name != "unknown" else tenancy_id)
+            )
+            profile = escape(str(profile))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -1047,7 +1204,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>OracleCloud Tenancy:</b> {tenancy_name if tenancy_name != "unknown" else tenancy_id}
+                                <b>OracleCloud Tenancy:</b> {tenancy}
                             </li>
                         </ul>
                     </div>
@@ -1086,10 +1243,11 @@ class HTML(Output):
             project_name = getattr(provider.identity, "project_name", "")
             audited_regions = getattr(provider.identity, "audited_regions", set())
 
+            project_id = escape(str(project_id))
             project_name_item = (
                 f"""
                             <li class="list-group-item">
-                                <b>Project Name:</b> {project_name}
+                                <b>Project Name:</b> {escape(str(project_name))}
                             </li>"""
                 if project_name
                 else ""
@@ -1098,7 +1256,7 @@ class HTML(Output):
             regions_item = (
                 f"""
                             <li class="list-group-item">
-                                <b>Regions:</b> {", ".join(sorted(audited_regions))}
+                                <b>Regions:</b> {escape(", ".join(sorted(audited_regions)))}
                             </li>"""
                 if audited_regions
                 else ""
@@ -1152,7 +1310,7 @@ class HTML(Output):
             # Build assessment summary items (only non-None values)
             assessment_items = ""
             if provider.accounts:
-                accounts = ", ".join([acc.id for acc in provider.accounts])
+                accounts = escape(", ".join([str(acc.id) for acc in provider.accounts]))
                 assessment_items += f"""
                             <li class="list-group-item">
                                 <b>Accounts:</b> {accounts}
@@ -1178,6 +1336,7 @@ class HTML(Output):
                 provider.session, "api_email", None
             )
             if email:
+                email = escape(str(email))
                 credentials_items += f"""
                             <li class="list-group-item">
                                 <b>Email:</b> {email}
@@ -1231,11 +1390,15 @@ class HTML(Output):
             account_name_item = (
                 f"""
                             <li class="list-group-item">
-                                <b>Account Name:</b> {account_name}
+                                <b>Account Name:</b> {escape(str(account_name))}
                             </li>"""
                 if account_name
                 else ""
             )
+            account_id = escape(str(account_id))
+            audited_regions = escape(str(audited_regions))
+            user_name = escape(str(user_name))
+            identity_arn = escape(str(identity_arn))
 
             return f"""
                 <div class="col-md-2">
@@ -1296,7 +1459,7 @@ class HTML(Output):
             project_name_item = (
                 f"""
                             <li class="list-group-item">
-                                <b>Project Name:</b> {project_name}
+                                <b>Project Name:</b> {escape(str(project_name))}
                             </li>"""
                 if project_name
                 else ""
@@ -1305,11 +1468,14 @@ class HTML(Output):
             user_id_item = (
                 f"""
                             <li class="list-group-item">
-                                <b>User ID:</b> {user_id}
+                                <b>User ID:</b> {escape(str(user_id))}
                             </li>"""
                 if user_id
                 else ""
             )
+            project_id = escape(str(project_id))
+            region_name = escape(str(region_name))
+            username = escape(str(username))
 
             return f"""
                 <div class="col-md-2">
@@ -1359,6 +1525,9 @@ class HTML(Output):
             str: HTML assessment summary for the Google Workspace provider
         """
         try:
+            domain = escape(str(provider.identity.domain))
+            customer_id = escape(str(provider.identity.customer_id))
+            delegated_user = escape(str(provider.identity.delegated_user))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -1367,10 +1536,10 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Domain:</b> {provider.identity.domain}
+                                <b>Domain:</b> {domain}
                             </li>
                             <li class="list-group-item">
-                                <b>Customer ID:</b> {provider.identity.customer_id}
+                                <b>Customer ID:</b> {customer_id}
                             </li>
                         </ul>
                     </div>
@@ -1382,10 +1551,50 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Delegated User:</b> {provider.identity.delegated_user}
+                                <b>Delegated User:</b> {delegated_user}
                             </li>
                             <li class="list-group-item">
                                 <b>Authentication Method:</b> Service Account with Domain-Wide Delegation
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_e2enetworks_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Networks provider."""
+        try:
+            locations = escape(", ".join(provider.identity.locations))
+            project_id = escape(str(provider.identity.project_id))
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Locations:</b> {locations}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Bearer Token
                             </li>
                         </ul>
                     </div>
@@ -1412,9 +1621,11 @@ class HTML(Output):
 
             team = getattr(provider.identity, "team", None)
             if team:
+                team_name = escape(str(team.name))
+                team_id = escape(str(team.id))
                 assessment_items += f"""
                             <li class="list-group-item">
-                                <b>Team:</b> {team.name} ({team.id})
+                                <b>Team:</b> {team_name} ({team_id})
                             </li>"""
 
             credentials_items = """
@@ -1424,6 +1635,7 @@ class HTML(Output):
 
             email = getattr(provider.identity, "email", None)
             if email:
+                email = escape(str(email))
                 credentials_items += f"""
                             <li class="list-group-item">
                                 <b>Email:</b> {email}
@@ -1431,6 +1643,7 @@ class HTML(Output):
 
             username = getattr(provider.identity, "username", None)
             if username:
+                username = escape(str(username))
                 credentials_items += f"""
                             <li class="list-group-item">
                                 <b>Username:</b> {username}
@@ -1473,17 +1686,20 @@ class HTML(Output):
             str: HTML assessment summary for the Okta provider
         """
         try:
+            org_domain = escape(str(provider.identity.org_domain))
+            auth_method = escape(str(provider.auth_method))
+            client_id = escape(str(provider.identity.client_id))
             assessment_items = f"""
                             <li class="list-group-item">
-                                <b>Okta Domain:</b> {provider.identity.org_domain}
+                                <b>Okta Domain:</b> {org_domain}
                             </li>"""
 
             credentials_items = f"""
                             <li class="list-group-item">
-                                <b>Authentication:</b> {provider.auth_method}
+                                <b>Authentication:</b> {auth_method}
                             </li>
                             <li class="list-group-item">
-                                <b>Client ID:</b> {provider.identity.client_id}
+                                <b>Client ID:</b> {client_id}
                             </li>"""
 
             return f"""
@@ -1523,9 +1739,10 @@ class HTML(Output):
             str: HTML assessment summary for the Scaleway provider
         """
         try:
+            organization_id = escape(str(provider.identity.organization_id))
             assessment_items = f"""
                             <li class="list-group-item">
-                                <b>Organization ID:</b> {provider.identity.organization_id}
+                                <b>Organization ID:</b> {organization_id}
                             </li>"""
 
             credentials_items = """
@@ -1535,6 +1752,7 @@ class HTML(Output):
 
             access_key = getattr(provider.session, "access_key", None)
             if access_key:
+                access_key = escape(str(access_key))
                 credentials_items += f"""
                             <li class="list-group-item">
                                 <b>Access Key:</b> {access_key}
@@ -1545,6 +1763,8 @@ class HTML(Output):
             bearer_id = getattr(provider.identity, "bearer_id", None)
             if bearer_type:
                 bearer_label = bearer_email or bearer_id or "-"
+                bearer_type = escape(str(bearer_type))
+                bearer_label = escape(str(bearer_label))
                 credentials_items += f"""
                             <li class="list-group-item">
                                 <b>Bearer:</b> {bearer_type} ({bearer_label})
@@ -1552,6 +1772,7 @@ class HTML(Output):
 
             region = getattr(provider.session, "default_region", None)
             if region:
+                region = escape(str(region))
                 credentials_items += f"""
                             <li class="list-group-item">
                                 <b>Default Region:</b> {region}
@@ -1598,6 +1819,9 @@ class HTML(Output):
             email = getattr(provider.identity, "email", None) or "-"
             account_id = getattr(provider.identity, "account_id", None) or "-"
 
+            username = escape(str(username))
+            email = escape(str(email))
+            account_id = escape(str(account_id))
             assessment_items = f"""
                             <li class="list-group-item">
                                 <b>Account ID:</b> {account_id}
@@ -1632,6 +1856,86 @@ class HTML(Output):
                         <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_huaweicloud_assessment_summary(provider: Provider) -> str:
+        """
+        get_huaweicloud_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider
+
+        Args:
+            provider (Provider): the Huawei Cloud provider object
+
+        Returns:
+            str: HTML assessment summary for the Huawei Cloud provider
+        """
+        try:
+            profile = (
+                provider.identity.profile
+                if provider.identity.profile is not None
+                else "default"
+            )
+            if isinstance(provider.identity.regions, set):
+                audited_regions = ", ".join(sorted(provider.identity.regions))
+            elif not provider.identity.regions:
+                audited_regions = "All Regions"
+            else:
+                audited_regions = ", ".join(provider.identity.regions)
+            account_id = escape(str(provider.identity.account_id))
+            account_name = escape(str(provider.identity.account_name))
+            profile = escape(str(profile))
+            audited_regions = escape(str(audited_regions))
+            domain_id = escape(str(provider.identity.domain_id))
+            user_id = escape(str(provider.identity.user_id))
+            user_name = escape(str(provider.identity.user_name))
+            identity_type = escape(str(provider.identity.identity_type))
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Huawei Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {account_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Profile:</b> {profile}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Audited Regions:</b> {audited_regions}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Huawei Cloud Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Domain ID:</b> {domain_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User ID:</b> {user_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User Name:</b> {user_name}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Identity Type:</b> {identity_type}
+                        </li>
+                    </ul>
+                </div>
                 </div>"""
         except Exception as error:
             logger.error(

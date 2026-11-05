@@ -104,7 +104,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
-            UserData="DB_PASSWORD=foobar123",
+            UserData='DB_PASSWORD="Tr0ub4dor3xKq9vLmZ"',
         )
         launch_configuration_arn = autoscaling_client.describe_launch_configurations(
             LaunchConfigurationNames=[launch_configuration_name]
@@ -341,7 +341,9 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             check = autoscaling_find_secrets_ec2_launch_configuration()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not decode User Data" in result[0].status_extended
 
     @mock_aws
     def test_one_autoscaling_file_invalid_gzip_error(self):
@@ -381,4 +383,6 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             check = autoscaling_find_secrets_ec2_launch_configuration()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not decode User Data" in result[0].status_extended

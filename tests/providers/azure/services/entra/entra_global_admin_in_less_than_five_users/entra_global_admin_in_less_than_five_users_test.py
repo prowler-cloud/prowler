@@ -1,13 +1,18 @@
 from unittest import mock
 from uuid import uuid4
 
-from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
+from tests.providers.azure.azure_fixtures import (
+    DOMAIN,
+    TENANT_IDS,
+    set_mocked_azure_provider,
+)
 
 
 class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -32,7 +37,8 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -57,7 +63,8 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_less_than_five_global_admins(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -110,7 +117,8 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_more_than_five_global_admins(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -178,7 +186,8 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_exactly_five_global_admins(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -240,3 +249,46 @@ class Test_entra_global_admin_in_less_than_five_users:
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+
+    def test_entra_users_retrieval_error_reports_single_manual(self):
+        """Graph could not return the tenant's users -> one tenant-level MANUAL."""
+        entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
+        entra_client.tenant_ids = [TENANT_IDS[0]]
+        entra_client.users_retrieval_errors = {DOMAIN: "ODataError HTTP 503"}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
+                entra_global_admin_in_less_than_five_users,
+            )
+            from prowler.providers.azure.services.entra.entra_service import (
+                DirectoryRole,
+            )
+
+            # Directory roles were retrieved, but every member was filtered
+            # out because the users could not be fetched: without the error
+            # tracking this would be a false PASS with 0 administrators.
+            entra_client.directory_roles = {
+                DOMAIN: {
+                    "Global Administrator": DirectoryRole(id=str(uuid4()), members=[])
+                }
+            }
+            entra_client.users = {DOMAIN: {}}
+
+            result = entra_global_admin_in_less_than_five_users().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "did not return the tenant's users" in result[0].status_extended
+            assert "503" in result[0].status_extended
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
+            assert result[0].resource_id == TENANT_IDS[0]

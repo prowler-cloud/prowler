@@ -135,7 +135,7 @@ class Test_entra_password_hash_sync_enabled:
 
     def test_empty_organization(self):
         entra_client = mock.MagicMock()
-        entra_client.organization = []
+        entra_client.organizations = []
 
         with (
             mock.patch(

@@ -7,6 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_policy_default_users_cannot_create_security_groups:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         entra_client.authorization_policy = {}
 
         with (
@@ -29,6 +30,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -75,6 +77,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         self,
     ):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -124,6 +127,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
         self,
     ):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (

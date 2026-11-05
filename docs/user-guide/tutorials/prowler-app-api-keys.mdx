@@ -3,14 +3,17 @@ title: 'API Keys'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <VersionBadge version="5.13.0" />
 
-API key authentication in Prowler App provides an alternative to JWT tokens and empowers automation, CI/CD pipelines, and third-party integrations. This guide explains how to create, manage, and safeguard API keys when working with the Prowler API.
+<AppliesTo />
+
+API key authentication in Prowler Cloud provides an alternative to JWT tokens and empowers automation, CI/CD pipelines, and third-party integrations. This guide explains how to create, manage, and safeguard API keys when working with the Prowler API.
 
 ## API Key Advantages
 
-- **Programmatic access:** Enables automated workflows and scripts to interact with Prowler App.
+- **Programmatic access:** Enables automated workflows and scripts to interact with Prowler Cloud.
 - **Long-lived authentication:** Allows optional expiration dates, with a default of 1 year.
 - **Granular control:** Supports multiple keys with distinct names and purposes.
 - **Secure automation:** Simplifies safe integration into CI/CD pipelines and infrastructure-as-code tooling.
@@ -19,7 +22,7 @@ API key authentication in Prowler App provides an alternative to JWT tokens and 
 
 API keys provide a secure authentication mechanism for accessing the Prowler API:
 
-1. API keys are created through Prowler App with a user-defined name and optional expiration date.
+1. API keys are created through Prowler Cloud with a user-defined name and optional expiration date.
 2. The full API key appears only once upon creation and cannot be retrieved later.
 3. Each API key consists of a prefix (visible in the interface) and an encrypted secret portion.
 4. Requests include the API key in the header as `Authorization: Api-Key <api-key>`.
@@ -63,13 +66,13 @@ Creating, viewing, or managing API keys requires the **MANAGE_ACCOUNT** RBAC per
 
 Without this permission, the API Keys section remains hidden. Access requests should be routed through the tenant administrator.
 
-For more information about RBAC permissions, refer to the [Prowler App RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
+For more information about RBAC permissions, refer to the [Prowler Cloud RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
 
 ## Creating API Keys
 
-Follow these steps to create an API key in Prowler App:
+Follow these steps to create an API key in Prowler Cloud:
 
-1. Navigate to **Profile** → **Account** in Prowler App.
+1. Navigate to **Profile** → **Account** in Prowler Cloud.
 2. Select the **Create API Key** button.
 
     ![API Keys list](/images/cli/api-keys/list.png)
@@ -206,7 +209,7 @@ When using API keys in CI/CD pipelines:
 * Ensure the key has not been revoked by checking the Revoked column in the API Keys list.
 * Confirm that the key has not expired by reviewing the expiration date.
 * Confirm that the correct API key format is in use, including both prefix and secret portions.
-* Verify that the key prefix matches what is displayed in Prowler App.
+* Verify that the key prefix matches what is displayed in Prowler Cloud.
 
 ### API Key Not Working After Creation
 

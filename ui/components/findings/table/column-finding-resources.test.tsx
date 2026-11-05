@@ -1,9 +1,30 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { InputHTMLAttributes, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+} from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { isCloudMock, isGroupedJiraDispatchEnabledMock, launchSkillMock } =
+  vi.hoisted(() => ({
+    isCloudMock: vi.fn(() => false),
+    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+    launchSkillMock: vi.fn(),
+  }));
+
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
 
 vi.mock("@/components/shadcn", () => ({
+  Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props}>{children}</button>
+  ),
   Checkbox: ({
     "aria-label": ariaLabel,
     onCheckedChange,
@@ -26,22 +47,6 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
 }));
 
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: ({
-    findingId,
-    isOpen,
-  }: {
-    findingId: string;
-    isOpen: boolean;
-  }) => (
-    <div
-      data-testid="jira-modal"
-      data-finding-id={findingId}
-      data-open={isOpen ? "true" : "false"}
-    />
-  ),
-}));
-
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
@@ -54,30 +59,95 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     label,
     onSelect,
     disabled,
+    disabledTooltip,
   }: {
     label: string;
     onSelect?: () => void;
     disabled?: boolean;
+    disabledTooltip?: string;
   }) => (
-    <button disabled={disabled} onClick={onSelect}>
+    <button disabled={disabled} onClick={onSelect} title={disabledTooltip}>
       {label}
     </button>
+  ),
+  DropdownMenuLabel: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubTrigger: ({ children }: { children: ReactNode }) => (
+    <span>{children}</span>
   ),
 }));
 
 vi.mock("@/components/shadcn/info-field/info-field", () => ({
-  InfoField: () => null,
+  InfoField: ({
+    children,
+    label,
+  }: {
+    children: ReactNode;
+    label: string;
+    variant?: string;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <div>{children}</div>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => null,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
-  DateWithTime: () => null,
+vi.mock("@/components/shadcn/select/select", () => ({
+  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({
+    children,
+    disabled,
+    "aria-label": ariaLabel,
+  }: {
+    children: ReactNode;
+    disabled?: boolean;
+    "aria-label"?: string;
+  }) => (
+    <button aria-label={ariaLabel} disabled={disabled}>
+      {children}
+    </button>
+  ),
+  SelectValue: ({ children }: { children?: ReactNode }) => (
+    <span>{children}</span>
+  ),
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <span>{children}</span>
+  ),
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@/components/shadcn/entities", () => ({
+  DateWithTime: ({
+    dateTime,
+    inline,
+  }: {
+    dateTime: string | null;
+    inline?: boolean;
+  }) => <time data-inline={inline ? "true" : "false"}>{dateTime ?? "-"}</time>,
+}));
+
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -92,23 +162,49 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/data-table-column-header", () => ({
+vi.mock("@/components/shadcn/table/data-table-column-header", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
 
 vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: () => "2d",
 }));
+
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
+}));
+
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
+}));
+
+vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./lighthouse-skills-launch")>();
+  return {
+    ...actual,
+    useLighthouseSkillLaunch: () => launchSkillMock,
+  };
+});
 
 const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
@@ -119,9 +215,38 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import { usePartialScanStore } from "@/store/partial-scan/store";
 import type { FindingResourceRow } from "@/types";
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { getColumnFindingResources } from "./column-finding-resources";
+import {
+  CLOUD_ONLY_TOOLTIP_COPY,
+  EDITING_UNAVAILABLE_COPY,
+} from "./finding-triage-cells";
+
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    isMuted: false,
+    canEdit: true,
+    billingHref: "https://prowler.com/pricing",
+    ...overrides,
+  };
+}
 
 function makeResource(
   overrides?: Partial<FindingResourceRow>,
@@ -150,81 +275,414 @@ function makeResource(
   };
 }
 
-describe("column-finding-resources", () => {
-  it("should pass delta to NotificationIndicator for resource rows", () => {
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
+function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
+  return columns.map(
+    (column) =>
+      (column as { id?: string; accessorKey?: string }).id ??
+      (column as { id?: string; accessorKey?: string }).accessorKey,
+  );
+}
+
+describe("sample resource actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isCloudMock.mockReturnValue(true);
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  const sampleResource = () =>
+    makeResource({
+      id: "sample-resource-s3_bucket-1",
+      findingId: "sample-finding-s3_bucket_public_access-1",
+      checkId: "s3_bucket_public_access",
+      providerUid: "123456789012",
+      providerAlias: "Sample AWS account",
+      resourceName: "acme-customer-exports",
+      resourceUid: "arn:aws:s3:::acme-customer-exports",
+      triage: makeTriageSummary({
+        findingId: "sample-finding-s3_bucket_public_access-1",
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.SAMPLE,
+      }),
     });
 
-    const selectColumn = columns.find(
-      (col) => (col as { id?: string }).id === "select",
-    );
-    if (!selectColumn?.cell) {
-      throw new Error("select column not found");
-    }
+  it("does not send sample IDs to Lighthouse from a resource row", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Lighthouse Skills" });
 
-    const CellComponent = selectColumn.cell as (props: {
-      row: {
-        id: string;
-        original: FindingResourceRow;
-        toggleSelected: (selected: boolean) => void;
-      };
-    }) => ReactNode;
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
 
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            id: "0",
-            original: makeResource(),
-            toggleSelected: vi.fn(),
-          },
-        })}
-      </div>,
-    );
+    // Then
+    expect(launchSkillMock).not.toHaveBeenCalled();
+  });
 
-    expect(screen.getByLabelText("Select resource")).toBeInTheDocument();
-    expect(notificationIndicatorMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        delta: "new",
-        isMuted: false,
-      }),
+  it("does not dispatch sample findings to the real Jira workflow", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: /Send.*Jira/ });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
+  });
+
+  it("does not start the real re-check workflow for a sample resource", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Re-check resource" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toBeNull();
+  });
+});
+
+function renderResourceActionsCell({
+  resource = makeResource(),
+  onSkillLaunchOpenDrawer,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+}: {
+  resource?: FindingResourceRow;
+  onSkillLaunchOpenDrawer?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onSkillLaunchOpenDrawer"];
+  onTriageUpdateAction?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onTriageUpdateAction"];
+  onTriageNoteLoadAction?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onTriageNoteLoadAction"];
+} = {}) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+    onSkillLaunchOpenDrawer,
+    onTriageUpdateAction,
+    onTriageNoteLoadAction,
+  });
+
+  const actionsColumn = columns.find(
+    (col) => (col as { id?: string }).id === "actions",
+  );
+  if (!actionsColumn?.cell) {
+    throw new Error("actions column not found");
+  }
+  const CellComponent = actionsColumn.cell as (props: {
+    row: { original: FindingResourceRow; index: number };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
+}
+
+function renderLastSeenCell(resource: FindingResourceRow = makeResource()) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+  });
+  const column = columns.find(
+    (col) => (col as { id?: string }).id === "lastSeen",
+  );
+  if (!column?.cell) {
+    throw new Error("lastSeen column not found");
+  }
+  const CellComponent = column.cell as (props: {
+    row: { original: FindingResourceRow; index: number };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
+}
+
+describe("column-finding-resources", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("offers a Cloud re-check identified by provider uid and type", async () => {
+    // Given — drill-down rows carry no provider id, only its uid and type
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderResourceActionsCell();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerUid: "123456789",
+      providerType: "aws",
+      providerAlias: "production",
+      resourceUid: "arn:aws:s3:::my-bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("offers the re-check beside Last seen on Cloud rows", async () => {
+    // The quiet icon next to the timestamp opens the same confirmation as ⋮.
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderLastSeenCell();
+
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({ resourceUid: "arn:aws:s3:::my-bucket" }),
     );
   });
 
-  it("should render the resource EntityInfo with resourceName as alias", () => {
+  it("keeps Last seen plain outside Prowler Cloud", () => {
+    renderLastSeenCell();
+
+    expect(screen.getByText("2024-01-01T00:00:00Z")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("hides the re-check outside Prowler Cloud", () => {
+    renderResourceActionsCell();
+
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the finding drawer and launches a row skill with full context", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSkillLaunchOpenDrawer = vi.fn();
+    isCloudMock.mockReturnValue(true);
+    renderResourceActionsCell({ onSkillLaunchOpenDrawer });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
+
+    // Then
+    expect(onSkillLaunchOpenDrawer).toHaveBeenCalledWith(0);
+    expect(launchSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      expect.objectContaining({
+        kind: "finding",
+        findingId: "finding-1",
+        checkId: "s3_check",
+        providerUid: "123456789",
+        resourceUid: "arn:aws:s3:::my-bucket",
+        region: "us-east-1",
+      }),
+    );
+    expect(onSkillLaunchOpenDrawer.mock.invocationCallOrder[0]).toBeLessThan(
+      launchSkillMock.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("should render actions as the last visible column after Triage without Notes", () => {
+    // Given
     const columns = getColumnFindingResources({
       rowSelection: {},
       selectableRowCount: 1,
     });
 
-    const resourceColumn = columns.find(
-      (col) => (col as { id?: string }).id === "resource",
-    );
-    if (!resourceColumn?.cell) {
-      throw new Error("resource column not found");
-    }
+    // When
+    const columnIds = getColumnIds(columns);
 
-    const CellComponent = resourceColumn.cell as (props: {
+    // Then
+    expect(columnIds.slice(-2)).toEqual(["triage", "actions"]);
+    expect(columnIds).not.toContain("status");
+    expect(columnIds).not.toContain("notes");
+    expect(
+      (columns.at(-1) as { id?: string; size?: number } | undefined)?.size,
+    ).toBe(56);
+  });
+
+  it("should render Open note in resource actions without exposing note preview metadata", () => {
+    // Given
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({ hasVisibleNote: true }),
+      }),
+      onTriageUpdateAction: vi.fn(),
+      onTriageNoteLoadAction: vi.fn(),
+    });
+
+    // Then
+    expect(screen.getByRole("button", { name: "Open note" })).toBeEnabled();
+    expect(screen.queryByText("Sensitive note body")).not.toBeInTheDocument();
+    expect(screen.queryByText(/author/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/timestamp/i)).not.toBeInTheDocument();
+  });
+
+  it("should disable Add Triage Note when no update handler is wired", () => {
+    // Given
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({ hasVisibleNote: false }),
+      }),
+    });
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeDisabled();
+  });
+
+  it("should enable Add Triage Note when an update handler is wired", () => {
+    // Given
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({ hasVisibleNote: false }),
+      }),
+      onTriageUpdateAction: vi.fn(),
+    });
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
+  });
+
+  it("should enable Add Triage Note for Cloud-only rows so users can open the billing upsell modal", () => {
+    // Given
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({
+          canEdit: false,
+          hasVisibleNote: false,
+          disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+        }),
+      }),
+    });
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
+  });
+
+  it("should disable editable triage control when no update handler is wired", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
       row: { original: FindingResourceRow };
     }) => ReactNode;
 
+    // When
     render(
       <div>
         {CellComponent({
           row: {
-            original: makeResource(),
+            original: makeResource({
+              triage: makeTriageSummary({ canEdit: true }),
+            }),
           },
         })}
       </div>,
     );
 
-    expect(screen.getByText("my-bucket")).toBeInTheDocument();
-    expect(screen.getByText("arn:aws:s3:::my-bucket")).toBeInTheDocument();
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(screen.getByText(EDITING_UNAVAILABLE_COPY)).toBeInTheDocument();
   });
 
-  it("should open Send to Jira modal with finding UUID directly", async () => {
+  it("should keep the compact Triage label on resource cells for headerless nested rows", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({ triage: makeTriageSummary() }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then — expanded finding-group rows render without a header row, so the
+    // cell itself must carry the label, like Service/Region/Last seen do.
+    expect(screen.getByText("Triage")).toBeInTheDocument();
+  });
+
+  it("should disable non-paying Cloud triage control with only-in-Cloud tooltip copy", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              triage: makeTriageSummary({
+                canEdit: false,
+                disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+              }),
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
+  });
+
+  it("should open Jira dispatch with the finding UUID directly", async () => {
     // Given
     const user = userEvent.setup();
 
@@ -257,16 +715,15 @@ describe("column-finding-resources", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
+    );
 
     // Then
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-finding-id",
-      "real-finding-uuid",
-    );
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-open",
-      "true",
-    );
+    expect(useJiraDispatchStore.getState().activePayload?.selection).toEqual({
+      kind: "single",
+      targetId: "real-finding-uuid",
+      targetType: "finding_id",
+    });
   });
 });

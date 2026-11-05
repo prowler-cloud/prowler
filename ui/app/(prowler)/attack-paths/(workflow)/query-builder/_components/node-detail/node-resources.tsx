@@ -63,7 +63,7 @@ export const NodeResources = ({ node, allNodes = [] }: NodeResourcesProps) => {
                       {resource.labels[0]}
                     </Badge>
                   )}
-                  <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
+                  <h5 className="dark:text-text-neutral-primary/90 text-sm font-medium">
                     {String(resource.properties?.name || resourceId)}
                   </h5>
                 </div>

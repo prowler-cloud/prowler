@@ -228,7 +228,7 @@ class FindingGroupResource(MinimalSerializerMixin):
     resource: FindingGroupResourceInfo = Field(description="Affected resource")
     provider: FindingGroupProviderInfo = Field(description="Affected provider")
     finding_id: str = Field(
-        description="Finding UUID to use with prowler_app_get_finding_details"
+        description="Finding UUID to use with prowler_get_finding_details"
     )
     status: FindingStatus = Field(description="Finding status for this resource")
     severity: FindingSeverity = Field(description="Finding severity")

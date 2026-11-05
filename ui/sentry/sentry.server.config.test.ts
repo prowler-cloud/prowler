@@ -21,6 +21,7 @@ describe("sentry.server.config", () => {
 
   it("should initialize with the resolved environment and production sampling", async () => {
     // Given
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
     vi.stubEnv("UI_SENTRY_ENVIRONMENT", "pro");
 
@@ -38,7 +39,18 @@ describe("sentry.server.config", () => {
   });
 
   it("should not initialize when the DSN is absent", async () => {
-    // Given no DSN
+    // Given no DSN (and no enable flag)
+
+    // When
+    await import("./sentry.server.config");
+
+    // Then
+    expect(initMock).not.toHaveBeenCalled();
+  });
+
+  it("should not initialize when UI_SENTRY_ENABLED is unset even if a DSN is set", async () => {
+    // Given - DSN configured but the enable flag is not "true"
+    vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
 
     // When
     await import("./sentry.server.config");
@@ -48,7 +60,8 @@ describe("sentry.server.config", () => {
   });
 
   it("should default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT does not enable dev sampling", async () => {
-    // Given - DSN set but environment unset
+    // Given - enabled with a DSN but environment unset
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
 
     // When

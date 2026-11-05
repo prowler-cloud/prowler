@@ -12,7 +12,16 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 
 class Defender(AzureService):
+    """Microsoft Defender for Cloud service: pricings, settings, assessments,
+    security contacts, IoT solutions and JIT policies per subscription."""
+
     def __init__(self, provider: AzureProvider):
+        """Collect the Defender configuration of every audited subscription.
+
+        Args:
+            provider: Azure provider supplying the session, subscriptions and
+                the region config whose endpoints are used for every call.
+        """
         super().__init__(SecurityCenter, provider)
 
         self.pricings = self._get_pricings()
@@ -21,7 +30,7 @@ class Defender(AzureService):
         self.settings = self._get_settings()
         self.security_contact_configurations = self._get_security_contacts(
             token=provider.session.get_token(
-                "https://management.azure.com/.default"
+                *self.region_config.credential_scopes
             ).token
         )
         self.iot_security_solutions = self._get_iot_security_solutions()
@@ -168,7 +177,7 @@ class Defender(AzureService):
         security_contacts = {}
         for subscription_id, display_name in self.subscriptions.items():
             try:
-                url = f"https://management.azure.com/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
+                url = f"{self.region_config.base_url}/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
                 headers = {
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
@@ -230,10 +239,12 @@ class Defender(AzureService):
         iot_security_solutions = {}
         for subscription_id, client in self.clients.items():
             try:
-                iot_security_solutions_list = (
-                    client.iot_security_solution.list_by_subscription()
-                )
                 iot_security_solutions.update({subscription_id: {}})
+                iot_security_solutions_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.iot_security_solution.list_by_subscription,
+                    client.iot_security_solution.list_by_resource_group,
+                )
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_id].update(
                         {
@@ -267,8 +278,13 @@ class Defender(AzureService):
         for subscription_id, client in self.clients.items():
             try:
                 jit_policies[subscription_id] = {}
-                policies = client.jit_network_access_policies.list()
-                for policy in policies:
+                policies_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.jit_network_access_policies.list,
+                    client.jit_network_access_policies.list_by_resource_group,
+                )
+
+                for policy in policies_list:
                     vm_ids = set()
                     for vm in getattr(policy, "virtual_machines", []):
                         vm_ids.add(vm.id)

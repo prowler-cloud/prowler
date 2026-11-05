@@ -325,7 +325,9 @@ class M365PowerShell(PowerShellSession):
         """
         Get Teams User Settings.
 
-        Retrieves the current Microsoft Teams user settings.
+        Retrieves the current Microsoft Teams user settings. Enum-typed properties
+        (e.g. ExternalAccessWithTrialTenants) are serialized as their string names
+        rather than numeric values.
 
         Returns:
             dict: Teams user settings in JSON format.
@@ -337,7 +339,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTenantFederationConfiguration | ConvertTo-Json -Depth 10",
+            "Get-CsTenantFederationConfiguration | ConvertTo-Json -Depth 10 -EnumsAsStrings",
             json_parse=True,
         )
 
@@ -400,6 +402,39 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-MalwareFilterPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_eop_protection_policy_rule(self) -> dict:
+        """
+        Get Exchange Online Protection (EOP) preset security policy rules.
+
+        Returns:
+            dict: EOP protection policy rules in JSON format.
+        """
+        return self.execute(
+            "Get-EOPProtectionPolicyRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_atp_protection_policy_rule(self) -> dict:
+        """
+        Get Defender for Office 365 (ATP) preset security policy rules.
+
+        Returns:
+            dict: ATP protection policy rules in JSON format.
+        """
+        return self.execute(
+            "Get-ATPProtectionPolicyRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_email_tenant_settings(self) -> dict:
+        """
+        Get Defender email tenant settings.
+
+        Returns:
+            dict: Email tenant settings (e.g. EnablePriorityAccountProtection).
+        """
+        return self.execute(
+            "Get-EmailTenantSettings | ConvertTo-Json -Depth 10", json_parse=True
         )
 
     def get_malware_filter_rule(self) -> dict:
@@ -999,6 +1034,34 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-EXOMailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited | Select-Object DisplayName, UserPrincipalName, ExternalDirectoryObjectId, Identity | ConvertTo-Json -Depth 10",
+            json_parse=True,
+        )
+
+    def get_application_access_policies(self) -> dict:
+        """
+        Get Exchange Online Application Access Policies.
+
+        Retrieves all Exchange Online Application Access Policies.
+
+        Returns:
+            dict: Application access policies in JSON format.
+
+        Example:
+            >>> get_application_access_policies()
+            [
+                {
+                    "Identity": "Policy1",
+                    "AppId": "12345678-1234-1234-1234-123456789012",
+                    "AccessRight": "RestrictAccess",
+                    "Description": "Restrict mailbox access"
+                }
+            ]
+        """
+        # -ErrorAction SilentlyContinue: tenants with no application access
+        # policies raise a localized "object not found" error instead of
+        # returning an empty result; the error output never carries data.
+        return self.execute(
+            "Get-ApplicationAccessPolicy -ErrorAction SilentlyContinue | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 

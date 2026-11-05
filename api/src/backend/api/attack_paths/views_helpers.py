@@ -15,6 +15,7 @@ from api.attack_paths.queries.schema import (
     RAW_SCHEMA_URL,
     get_cartography_schema_query,
 )
+from api.attack_paths.sink.base import SinkDatabase
 from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -115,8 +116,27 @@ def execute_query(
         # TODO: drop after Neptune cutover
         # Route reads by the scan row's recorded sink, not by current settings.
         backend = sink_module.get_backend_for_scan(scan)
-        graph = backend.execute_read_query(database_name, definition.cypher, parameters)
-        return _serialize_graph(graph, provider_id)
+
+        cypher = definition.cypher
+        # Every synced node carries a `_Provider_{uuid}` isolation label (the
+        # sync labels the whole provider subgraph). Injecting it into the
+        # predefined query's node patterns gives the planner a selective label
+        # index to seed from instead of a global label scan (`:AWSRole` across
+        # every tenant), which on Neptune is the difference between a sub-second
+        # plan and a query that times out. The custom-query path relies on this
+        # same injection.
+        #
+        # Restrict it to migrated scans: that catalog runs on the Neptune sink
+        # where the plan blowup happens, while the pre-cutover legacy catalog
+        # runs on the old sink and is dropped after the cutover, so leave it
+        # byte-for-byte unchanged. This only affects the query plan, not
+        # isolation - `_serialize_graph` already label-filters both catalogs.
+        # TODO: drop the is_migrated guard after Neptune cutover
+        if scan.is_migrated:
+            cypher = inject_provider_label(cypher, provider_id)
+
+        graph = backend.execute_read_query(database_name, cypher, parameters)
+        return _serialize_graph(graph, provider_id, backend)
 
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
@@ -152,10 +172,12 @@ def execute_custom_query(
     scan: AttackPathsScan,
 ) -> dict[str, Any]:
     # Defense-in-depth for custom queries:
-    # 1. `neo4j.READ_ACCESS` — prevents mutations at the driver level
-    # 2. `inject_provider_label()` — regex-based label injection scopes node patterns
-    # 3. `_serialize_graph()` — post-query filter drops nodes without the provider label
-    # 4. `USING QUERY:TIMEOUTMILLISECONDS` on Neptune — server-side runaway cutoff
+    # 1. `neo4j.READ_ACCESS` - prevents mutations at the driver level
+    # 2. `inject_provider_label()` - regex-based label injection scopes node patterns
+    # 3. `_serialize_graph()` - post-query filter drops nodes without the provider label
+    #    and any node or relationship the backend did not store (APOC virtual
+    #    entities can carry an arbitrary label and arbitrary properties)
+    # 4. `USING QUERY:TIMEOUTMILLISECONDS` on Neptune - server-side runaway cutoff
     #
     # Layer 2 is best-effort (regex can't fully parse Cypher);
     # layer 3 is the safety net that guarantees provider isolation.
@@ -174,7 +196,7 @@ def execute_custom_query(
 
     try:
         graph = backend.execute_read_query(database_name, cypher, None)
-        serialized = _serialize_graph(graph, provider_id)
+        serialized = _serialize_graph(graph, provider_id, backend)
         return _truncate_graph(serialized)
 
     except graph_database.ClientStatementException as exc:
@@ -246,13 +268,15 @@ def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
     return graph
 
 
-def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
+def _serialize_graph(graph, provider_id: str, backend: SinkDatabase) -> dict[str, Any]:
     provider_label = get_provider_label(provider_id)
 
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if provider_label not in node.labels:
+        if provider_label not in node.labels or not backend.is_persisted_element_id(
+            node.element_id
+        ):
             continue
 
         kept_node_ids.add(node.element_id)
@@ -267,7 +291,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     filtered_count = len(graph.nodes) - len(nodes)
     if filtered_count > 0:
         logger.debug(
-            f"Filtered {filtered_count} nodes without provider label {provider_label}"
+            f"Filtered {filtered_count} nodes without provider label {provider_label} or not stored"
         )
 
     relationships = []
@@ -275,6 +299,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
         if (
             relationship.start_node.element_id not in kept_node_ids
             or relationship.end_node.element_id not in kept_node_ids
+            or not backend.is_persisted_element_id(relationship.element_id)
         ):
             continue
 

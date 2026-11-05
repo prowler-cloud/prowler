@@ -15,10 +15,10 @@ export const GoogleWorkspaceCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via Service Account
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide your Service Account JSON and the admin email to impersonate.
         </div>
       </div>
@@ -48,7 +48,7 @@ export const GoogleWorkspaceCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         Credentials never leave your browser unencrypted and are stored as
         secrets in the backend. You can revoke the Service Account from the
         Google Cloud Console anytime if needed.

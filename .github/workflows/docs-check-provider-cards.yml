@@ -1,0 +1,50 @@
+name: 'Docs: Check Provider Cards Snippet'
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'docs/user-guide/providers/**/getting-started-*.mdx'
+      - 'docs/scripts/generate_provider_cards.py'
+      - 'docs/snippets/provider-cards.mdx'
+      - 'api/src/backend/api/models.py'
+      - '.github/workflows/docs-check-provider-cards.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  check-provider-cards:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Verify provider cards snippet is up to date
+        run: |
+          if ! python3 docs/scripts/generate_provider_cards.py; then
+            echo "::error::docs/snippets/provider-cards.mdx is out of sync with the provider getting-started pages or the API ProviderChoices enum."
+            echo "Run 'python3 docs/scripts/generate_provider_cards.py' locally and commit the regenerated snippet."
+            echo "--- diff ---"
+            git diff docs/snippets/provider-cards.mdx
+            exit 1
+          fi

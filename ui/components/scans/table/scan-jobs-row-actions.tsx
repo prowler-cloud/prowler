@@ -24,12 +24,13 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { useToast } from "@/components/ui";
-import { toLocalDateString } from "@/lib/date-utils";
+import { useReportDownload } from "@/hooks/use-report-download";
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -54,14 +55,18 @@ interface ScanJobsRowActionsProps {
    * Schedule capability override. Only for Prowler Cloud.
    */
   capability?: ScanScheduleCapability;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export function ScanJobsRowActions({
   scan,
   tab,
   capability,
+  subscriptionOnly = false,
 }: ScanJobsRowActionsProps) {
   const router = useRouter();
+  const runReportDownload = useReportDownload(subscriptionOnly);
   const canEditSchedule =
     (capability ?? getScanScheduleCapability(isCloud())) ===
     SCAN_SCHEDULE_CAPABILITY.ADVANCED;
@@ -78,8 +83,15 @@ export function ScanJobsRowActions({
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
+  // Findings are stored check by check, so a running scan can already show some.
+  const isExecuting = scanState === "executing";
+  // Prowler Cloud partial scans re-check a few resources: they compute no
+  // compliance and write no report files, so neither entry applies.
+  const isPartial = scan.attributes.is_partial === true;
   const taskId = scan.relationships.task.data?.id;
-  const scanDate = toLocalDateString(scan.attributes.completed_at);
+  // The findings page bounds the UTC day range with completed_at; without it the
+  // range collapses to the start day and can miss later findings.
+  const hasCompletedAt = Boolean(scan.attributes.completed_at);
   const providerId = scan.relationships.provider.data?.id;
   const scheduleProvider: ScanScheduleProvider | undefined = providerId
     ? {
@@ -91,15 +103,15 @@ export function ScanJobsRowActions({
     : undefined;
 
   const openFindings = () => {
-    if (!isCompleted || !scanDate) return;
+    if (!isExecuting && (!isCompleted || !hasCompletedAt)) return;
     router.push(
-      `/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
+      `/findings?filter[scan__in]=${scan.id}&filter[status__in]=FAIL`,
     );
   };
 
   const openCompliance = () => {
     if (!isCompleted) return;
-    router.push(`/compliance?scanId=${scan.id}`);
+    router.push(buildPerScanComplianceHref({ scanId: scan.id }));
   };
 
   const openErrorDetails = async () => {
@@ -195,24 +207,37 @@ export function ScanJobsRowActions({
             onSelect={() => setEditOpen(true)}
           />
         )}
+        {isExecuting && (
+          <ActionDropdownItem
+            icon={<Eye />}
+            label="View Early Findings"
+            onSelect={openFindings}
+          />
+        )}
         {isCompleted && (
           <>
             <ActionDropdownItem
               icon={<Eye />}
               label="View Findings"
               onSelect={openFindings}
-              disabled={!isCompleted || !scanDate}
+              disabled={!isCompleted || !hasCompletedAt}
             />
-            <ActionDropdownItem
-              icon={<ShieldCheck />}
-              label="View Compliance"
-              onSelect={openCompliance}
-            />
-            <ActionDropdownItem
-              icon={<Download />}
-              label="Download Scan Reports"
-              onSelect={() => downloadScanZip(scan.id, toast)}
-            />
+            {!isPartial && (
+              <ActionDropdownItem
+                icon={<ShieldCheck />}
+                label="View Compliance"
+                onSelect={openCompliance}
+              />
+            )}
+            {!isPartial && (
+              <ActionDropdownItem
+                icon={<Download />}
+                label="Download Scan Reports"
+                onSelect={() =>
+                  runReportDownload(() => downloadScanZip(scan.id, toast))
+                }
+              />
+            )}
           </>
         )}
         {isFailed && (

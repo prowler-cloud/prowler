@@ -7,6 +7,7 @@ from config.settings.eventstream import *  # noqa
 from config.settings.partitions import *  # noqa
 from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
+from django.core.exceptions import ImproperlyConfigured
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -129,6 +130,8 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    # redoc@latest is 3.x, whose standalone bundle fails as a classic script
+    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@2.5.1",
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
     ],
@@ -230,6 +233,7 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "sub",
+    "CHECK_REVOKE_TOKEN": True,
     # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the
     # future.
     "AUDIENCE": env.str("DJANGO_JWT_AUDIENCE", "https://api.prowler.com"),
@@ -294,6 +298,14 @@ DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = env.str(
 )
 DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = env.str("DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN", "")
 DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = env.str("DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION", "")
+# Storage endpoint the API and Celery workers use to talk to S3-compatible object storage
+# such as MinIO. Empty means the real AWS S3 endpoint, which is unaffected.
+DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL = env.str("DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL", "")
+# Browser-reachable storage host used to sign download URLs. Empty means sign against the
+# same endpoint the API talks to, which is what Prowler Cloud on S3 does.
+DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL = env.str(
+    "DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL", ""
+)
 
 # HTTP Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -302,19 +314,47 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
 
+# Public base URL of the Prowler UI (for example https://cloud.prowler.com). Used to
+# build links back to findings in outbound integrations such as Jira. Empty by
+# default, so self-hosted deployments emit no links unless they configure it.
+UI_BASE_URL = env.str("DJANGO_UI_BASE_URL", "").rstrip("/")
+
 # SAML requirement
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 # Attack Paths
+ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int(
+    "ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES", 30
+)
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
-    "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
-)  # 48h
+    "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 960
+)  # 16h
+
+# Minimum age (of the scan row, or of the scan id itself when the row is gone) before
+# the periodic reaper will drop an orphaned temp Neo4j database. Keeps a scan that is
+# still legitimately in flight from ever losing its staging database mid-run.
+ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS = env.int(
+    "ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS", 6
+)
+if ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS <= 0:
+    raise ImproperlyConfigured(
+        "ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS must be a positive number of hours"
+    )
 
 # Selects where the persistent attack-paths graph is stored. The scan
 # temporary database is always Neo4j; only the sink is configurable.
 # Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
 ATTACK_PATHS_SINK_DATABASE = env.str("ATTACK_PATHS_SINK_DATABASE", default="neo4j")
+
+# Lighthouse AI
+# Comma-separated hostnames (or IP literals) that bypass the SSRF validation
+# applied to OpenAI-compatible provider base URLs, so self-hosted deployments
+# can point Lighthouse AI at internal endpoints. Empty by default: every base
+# URL must resolve to a public endpoint.
+LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS = env.list(
+    "LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS", default=[]
+)
 
 # Orphan task recovery feature flags. The master switch is OFF by default, so task
 # recovery is opt-in; enable it with DJANGO_TASK_RECOVERY_ENABLED=true. The per-group

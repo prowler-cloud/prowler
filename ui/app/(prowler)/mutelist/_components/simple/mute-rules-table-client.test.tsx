@@ -19,13 +19,9 @@ vi.mock("@/actions/mute-rules", () => ({
   deleteMuteRule: deleteMuteRuleMock,
 }));
 
-vi.mock("@/components/ui", () => ({
-  useToast: () => ({
-    toast: toastMock,
-  }),
-}));
-
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useToast: () => ({ toast: toastMock }),
   Button: ({
     children,
     ...props
@@ -52,7 +48,7 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: (props: {
     columns: Array<{
       id?: string;

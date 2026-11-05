@@ -106,25 +106,24 @@ class Identity(OCIService):
                                 identity_client, user.id, compartment.id
                             )
 
+                            capabilities = getattr(user, "capabilities", None)
+
                             # Check if user can use API keys
-                            can_use_api_keys = (
-                                user.capabilities.can_use_api_keys
-                                if hasattr(user, "capabilities")
-                                else True
+                            can_use_api_keys = getattr(
+                                capabilities, "can_use_api_keys", None
                             )
+                            if can_use_api_keys is None:
+                                can_use_api_keys = True
 
                             # Check if console password is enabled
                             can_use_console_password = (
-                                user.capabilities.can_use_console_password
-                                if hasattr(user, "capabilities")
-                                else False
+                                getattr(capabilities, "can_use_console_password", None)
+                                or False
                             )
 
                             # Check MFA status
                             is_mfa_activated = (
-                                user.is_mfa_activated
-                                if hasattr(user, "is_mfa_activated")
-                                else False
+                                getattr(user, "is_mfa_activated", None) or False
                             )
 
                             self.users.append(
@@ -132,19 +131,11 @@ class Identity(OCIService):
                                     id=user.id,
                                     name=user.name,
                                     description=(
-                                        user.description or ""
-                                        if hasattr(user, "description")
-                                        else ""
+                                        getattr(user, "description", None) or ""
                                     ),
-                                    email=(
-                                        user.email or ""
-                                        if hasattr(user, "email")
-                                        else ""
-                                    ),
+                                    email=(getattr(user, "email", None) or ""),
                                     email_verified=(
-                                        user.email_verified
-                                        if hasattr(user, "email_verified")
-                                        else False
+                                        getattr(user, "email_verified", None) or False
                                     ),
                                     compartment_id=compartment.id,
                                     time_created=user.time_created,
@@ -207,9 +198,7 @@ class Identity(OCIService):
                 auth_tokens.append(
                     AuthToken(
                         id=token.id,
-                        description=(
-                            token.description if hasattr(token, "description") else ""
-                        ),
+                        description=(getattr(token, "description", None) or ""),
                         lifecycle_state=token.lifecycle_state,
                         time_created=token.time_created,
                         time_expires=(
@@ -239,9 +228,7 @@ class Identity(OCIService):
                 customer_secret_keys.append(
                     CustomerSecretKey(
                         id=key.id,
-                        display_name=(
-                            key.display_name if hasattr(key, "display_name") else ""
-                        ),
+                        display_name=(getattr(key, "display_name", None) or ""),
                         lifecycle_state=key.lifecycle_state,
                         time_created=key.time_created,
                         time_expires=(
@@ -335,9 +322,7 @@ class Identity(OCIService):
                                     id=group.id,
                                     name=group.name,
                                     description=(
-                                        group.description
-                                        if hasattr(group, "description")
-                                        else ""
+                                        getattr(group, "description", None) or ""
                                     ),
                                     compartment_id=compartment.id,
                                     time_created=group.time_created,
@@ -379,9 +364,7 @@ class Identity(OCIService):
                                     id=policy.id,
                                     name=policy.name,
                                     description=(
-                                        policy.description
-                                        if hasattr(policy, "description")
-                                        else ""
+                                        getattr(policy, "description", None) or ""
                                     ),
                                     compartment_id=compartment.id,
                                     statements=policy.statements,
@@ -424,15 +407,11 @@ class Identity(OCIService):
                                 id=dynamic_group.id,
                                 name=dynamic_group.name,
                                 description=(
-                                    dynamic_group.description or ""
-                                    if hasattr(dynamic_group, "description")
-                                    else ""
+                                    getattr(dynamic_group, "description", None) or ""
                                 ),
                                 compartment_id=self.audited_tenancy,
                                 matching_rule=(
-                                    dynamic_group.matching_rule
-                                    if hasattr(dynamic_group, "matching_rule")
-                                    else ""
+                                    getattr(dynamic_group, "matching_rule", None) or ""
                                 ),
                                 time_created=dynamic_group.time_created,
                                 lifecycle_state=dynamic_group.lifecycle_state,

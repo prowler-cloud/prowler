@@ -1,14 +1,15 @@
 "use client";
 
 import { Button, Card, CardContent } from "@/components/shadcn";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet/sheet";
+} from "@/components/shadcn/sheet/sheet";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { isProwlerFindingNode } from "@/lib/attack-paths";
 import type { GraphNode } from "@/types/attack-paths";
 
 import { NodeFindings } from "./node-findings";
@@ -37,16 +38,14 @@ export const NodeDetailContent = ({
   onViewFinding?: (findingId: string) => void;
   viewFindingLoading?: boolean;
 }) => {
-  const isProwlerFinding = node?.labels.some((label) =>
-    label.toLowerCase().includes("finding"),
-  );
+  const isProwlerFinding = isProwlerFindingNode(node.labels);
 
   return (
     <div className="flex flex-col gap-6">
       {/* Node Overview Section */}
       <Card className="border-border-neutral-secondary">
         <CardContent className="flex flex-col gap-3 p-4">
-          <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+          <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
             Node Overview
           </h3>
           <NodeOverview node={node} />
@@ -57,7 +56,7 @@ export const NodeDetailContent = ({
       {!isProwlerFinding && (
         <Card className="border-border-neutral-secondary">
           <CardContent className="flex flex-col gap-3 p-4">
-            <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+            <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
               Related Findings
             </h3>
             <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
@@ -77,7 +76,7 @@ export const NodeDetailContent = ({
       {isProwlerFinding && (
         <Card className="border-border-neutral-secondary">
           <CardContent className="flex flex-col gap-3 p-4">
-            <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+            <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
               Affected Resources
             </h3>
             <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
@@ -105,14 +104,12 @@ export const NodeDetailPanel = ({
 }: NodeDetailPanelProps) => {
   const isOpen = node !== null;
 
-  const isProwlerFinding = node?.labels.some((label) =>
-    label.toLowerCase().includes("finding"),
-  );
+  const isProwlerFinding = node ? isProwlerFindingNode(node.labels) : false;
   const findingId = node ? String(node.properties?.id || node.id) : "";
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
-      <SheetContent className="dark:bg-prowler-theme-midnight my-4 max-h-[calc(100vh-2rem)] max-w-[95vw] overflow-y-auto rounded-l-xl pt-10 md:my-8 md:max-h-[calc(100vh-4rem)] md:max-w-[55vw]">
+      <SheetContent className="my-4 max-h-[calc(100vh-2rem)] max-w-[95vw] overflow-y-auto rounded-l-xl pt-10 md:my-8 md:max-h-[calc(100vh-4rem)] md:max-w-[55vw]">
         <SheetHeader>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">

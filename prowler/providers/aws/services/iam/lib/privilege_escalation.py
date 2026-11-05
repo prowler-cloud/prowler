@@ -19,6 +19,7 @@ from prowler.providers.aws.services.iam.lib.policy import get_effective_actions
 # - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
 # - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 # - https://github.com/DataDog/pathfinding.cloud (AWS IAM Privilege Escalation Path Library)
+# - https://www.beyondtrust.com/blog/entry/aws-agentcore-privilege-escalation (AWS Bedrock AgentCore)
 
 privilege_escalation_policies_combination = {
     # IAM self-escalation and policy manipulation
@@ -299,6 +300,7 @@ privilege_escalation_policies_combination = {
     "PassRole+AgentCoreCreateInterpreter+InvokeInterpreter": {
         "iam:PassRole",
         "bedrock-agentcore:CreateCodeInterpreter",
+        "bedrock-agentcore:StartCodeInterpreterSession",
         "bedrock-agentcore:InvokeCodeInterpreter",
     },
     # Prerequisite: Existing Bedrock code interpreter with admin role
@@ -306,6 +308,156 @@ privilege_escalation_policies_combination = {
         "bedrock-agentcore:StartCodeInterpreterSession",
         "bedrock-agentcore:InvokeCodeInterpreter",
     },
+    # Prerequisite: Existing AgentCore Runtime or Harness with admin execution role.
+    # InvokeAgentRuntimeCommand runs shell commands as root inside the microVM and
+    # reads the execution role credentials from MMDS, bypassing the agent and guardrails.
+    "AgentCoreInvokeRuntimeCommand": {
+        "bedrock-agentcore:InvokeAgentRuntimeCommand",
+    },
+    "PassRole+AgentCoreCreateRuntime+InvokeRuntimeCommand": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateAgentRuntime",
+        "bedrock-agentcore:CreateAgentRuntimeEndpoint",
+        "bedrock-agentcore:CreateWorkloadIdentity",
+        "bedrock-agentcore:InvokeAgentRuntimeCommand",
+    },
+    "PassRole+AgentCoreCreateHarness+InvokeRuntimeCommand": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateHarness",
+        "bedrock-agentcore:CreateAgentRuntime",
+        "bedrock-agentcore:CreateAgentRuntimeEndpoint",
+        "bedrock-agentcore:CreateWorkloadIdentity",
+        "bedrock-agentcore:GetAgentRuntime",
+        "bedrock-agentcore:InvokeAgentRuntimeCommand",
+    },
+    # Prerequisite: Existing AgentCore Custom Browser with admin execution role.
+    # A remote CDP driver on the browser session reads the role credentials from MMDS.
+    "AgentCoreBrowserSessionConnect": {
+        "bedrock-agentcore:StartBrowserSession",
+        "bedrock-agentcore:ConnectBrowserAutomationStream",
+    },
+    "PassRole+AgentCoreCreateBrowser+ConnectBrowser": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateBrowser",
+        "bedrock-agentcore:StartBrowserSession",
+        "bedrock-agentcore:ConnectBrowserAutomationStream",
+    },
+    # Batch-based privilege escalation patterns (pathfinding.cloud BATCH-001/002)
+    "PassRole+BatchRegisterJobDef+SubmitJob": {
+        "iam:PassRole",
+        "batch:RegisterJobDefinition",
+        "batch:SubmitJob",
+    },
+    # Prerequisite: Existing Batch job definition with admin role
+    "BatchSubmitJob": {"batch:SubmitJob"},
+    # Braket-based privilege escalation patterns (pathfinding.cloud BRAKET-001)
+    "PassRole+BraketCreateJob": {
+        "iam:PassRole",
+        "braket:CreateJob",
+    },
+    # CodeDeploy-based privilege escalation patterns (pathfinding.cloud CODEDEPLOY-001)
+    # Prerequisite: Existing CodeDeploy application and deployment group with admin role
+    "CodeDeployCreateDeployment": {
+        "codedeploy:CreateDeployment",
+        "codedeploy:RegisterApplicationRevision",
+        "codedeploy:GetDeploymentConfig",
+    },
+    # Cognito Identity-based privilege escalation patterns (pathfinding.cloud COGNITOIDENTITY-001)
+    "PassRole+CognitoSetIdentityPoolRoles": {
+        "iam:PassRole",
+        "cognito-identity:SetIdentityPoolRoles",
+    },
+    # ECS StartTask on an existing cluster (pathfinding.cloud ECS-009)
+    "PassRole+ECSStartTaskExistingCluster": {
+        "iam:PassRole",
+        "ecs:StartTask",
+    },
+    # EMR-based privilege escalation patterns (pathfinding.cloud EMR-001)
+    "PassRole+EMRRunJobFlow": {
+        "iam:PassRole",
+        "elasticmapreduce:RunJobFlow",
+    },
+    # EMR Serverless-based privilege escalation patterns (pathfinding.cloud EMRSERVERLESS-001)
+    "PassRole+EMRServerlessCreateApp+StartJobRun": {
+        "iam:PassRole",
+        "emr-serverless:CreateApplication",
+        "emr-serverless:StartJobRun",
+    },
+    # GameLift-based privilege escalation patterns (pathfinding.cloud GAMELIFT-001)
+    "PassRole+GameLiftCreateBuild+CreateFleet": {
+        "iam:PassRole",
+        "gamelift:CreateBuild",
+        "gamelift:CreateFleet",
+        "gamelift:RequestUploadCredentials",
+    },
+    # Glue interactive session-based privilege escalation patterns (pathfinding.cloud GLUE-007)
+    "PassRole+GlueCreateSession+RunStatement": {
+        "iam:PassRole",
+        "glue:CreateSession",
+        "glue:RunStatement",
+    },
+    # EC2 Image Builder-based privilege escalation patterns (pathfinding.cloud IMAGEBUILDER-001)
+    "PassRole+ImageBuilderCreateComponent+CreateImage": {
+        "iam:PassRole",
+        "imagebuilder:CreateComponent",
+        "imagebuilder:CreateImageRecipe",
+        "imagebuilder:CreateInfrastructureConfiguration",
+        "imagebuilder:CreateImage",
+    },
+    # Kinesis Data Analytics-based privilege escalation patterns (pathfinding.cloud KINESISANALYTICS-001)
+    "PassRole+KinesisAnalyticsCreateApp+StartApp": {
+        "iam:PassRole",
+        "kinesisanalytics:CreateApplication",
+        "kinesisanalytics:StartApplication",
+    },
+    # HealthOmics-based privilege escalation patterns (pathfinding.cloud OMICS-001)
+    "PassRole+OmicsCreateWorkflow+StartRun": {
+        "iam:PassRole",
+        "omics:CreateWorkflow",
+        "omics:StartRun",
+        "s3:GetObject",
+    },
+    # EventBridge Scheduler-based privilege escalation patterns (pathfinding.cloud SCHEDULER-001)
+    "PassRole+SchedulerCreateSchedule": {
+        "iam:PassRole",
+        "scheduler:CreateSchedule",
+    },
+    # SSM Automation document-based privilege escalation patterns (pathfinding.cloud SSM-003)
+    "PassRole+SSMCreateDocument+StartAutomation": {
+        "iam:PassRole",
+        "ssm:CreateDocument",
+        "ssm:StartAutomationExecution",
+    },
+    # Step Functions-based privilege escalation patterns (pathfinding.cloud STEPFUNCTIONS-001)
+    "PassRole+StepFunctionsCreateStateMachine+StartExecution": {
+        "iam:PassRole",
+        "states:CreateStateMachine",
+        "states:StartExecution",
+    },
+    # Prerequisite: Existing Step Functions state machine with admin role (pathfinding.cloud STEPFUNCTIONS-002)
+    "StepFunctionsUpdateStateMachine+StartExecution": {
+        "states:UpdateStateMachine",
+        "states:StartExecution",
+    },
+    # IAM permissions boundary removal self-escalation (pathfinding.cloud IAM-022)
+    "iam:DeleteUserPermissionsBoundary": {"iam:DeleteUserPermissionsBoundary"},
+    # Role permissions boundary removal plus role assumption (pathfinding.cloud IAM-023)
+    "AssumeRole+DeleteRolePermissionsBoundary": {
+        "sts:AssumeRole",
+        "iam:DeleteRolePermissionsBoundary",
+    },
+    # IAM Identity Center (SSO)-based privilege escalation patterns (pathfinding.cloud SSO-001)
+    "SSOCreatePermissionSet+CreateAccountAssignment+AttachManagedPolicy": {
+        "sso:CreatePermissionSet",
+        "sso:CreateAccountAssignment",
+        "sso:AttachManagedPolicyToPermissionSet",
+    },
+    # Prerequisite: Existing permission set assigned to the attacker (pathfinding.cloud SSO-002)
+    "sso:AttachManagedPolicyToPermissionSet": {
+        "sso:AttachManagedPolicyToPermissionSet"
+    },
+    # Prerequisite: Existing permission set assigned to the attacker (pathfinding.cloud SSO-003)
+    "sso:PutInlinePolicyToPermissionSet": {"sso:PutInlinePolicyToPermissionSet"},
     # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
     # "sts:AssumeRole": {"sts:AssumeRole"},
 }

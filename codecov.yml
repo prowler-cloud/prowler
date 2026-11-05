@@ -6,6 +6,19 @@ component_management:
     - component_id: "api"
       paths:
         - "api/**"
+    - component_id: "mcp_server"
+      paths:
+        - "mcp_server/**"
+
+flags:
+  api:
+    paths:
+      - "api/**"
+    carryforward: true
+  mcp:
+    paths:
+      - "mcp_server/**"
+    carryforward: true
 
 comment:
   layout: "header, diff, flags, components"

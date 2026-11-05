@@ -10,6 +10,7 @@ hierarchy; sink-internal behavior is exercised in `test_sink.py`.
 from unittest.mock import MagicMock, patch
 
 import api.attack_paths.database as db_module
+import pytest
 
 
 class TestDatabaseNameHelper:
@@ -72,6 +73,71 @@ class TestExecuteReadQueryRoutes:
         )
 
 
+class TestScanDatabaseAvailability:
+    def test_verify_scan_databases_available_checks_ingest_and_sink(self):
+        with (
+            patch("api.attack_paths.database.ingest") as mock_ingest,
+            patch("api.attack_paths.database.get_driver") as mock_get_driver,
+        ):
+            db_module.verify_scan_databases_available()
+
+        mock_ingest.get_driver.return_value.verify_connectivity.assert_called_once_with()
+        mock_get_driver.return_value.verify_connectivity.assert_called_once_with()
+
+    def test_verify_scan_databases_available_raises_when_ingest_is_down(self):
+        with (
+            patch("api.attack_paths.database.ingest") as mock_ingest,
+            patch("api.attack_paths.database.get_driver"),
+        ):
+            mock_ingest.get_driver.return_value.verify_connectivity.side_effect = (
+                RuntimeError("ingest down")
+            )
+
+            with pytest.raises(RuntimeError) as exc:
+                db_module.verify_scan_databases_available()
+
+        assert "Attack Paths graph database unavailable before scan start" in str(
+            exc.value
+        )
+        assert "ingest Neo4j: ingest down" in str(exc.value)
+
+    def test_verify_scan_databases_available_raises_when_sink_is_down(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+
+        with (
+            patch("api.attack_paths.database.ingest"),
+            patch("api.attack_paths.database.get_driver") as mock_get_driver,
+        ):
+            mock_get_driver.return_value.verify_connectivity.side_effect = RuntimeError(
+                "writer down"
+            )
+
+            with pytest.raises(RuntimeError) as exc:
+                db_module.verify_scan_databases_available()
+
+        assert "sink neptune: writer down" in str(exc.value)
+
+    def test_verify_scan_databases_available_reports_both_failures(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+
+        with (
+            patch("api.attack_paths.database.ingest") as mock_ingest,
+            patch("api.attack_paths.database.get_driver") as mock_get_driver,
+        ):
+            mock_ingest.get_driver.return_value.verify_connectivity.side_effect = (
+                RuntimeError("ingest down")
+            )
+            mock_get_driver.return_value.verify_connectivity.side_effect = RuntimeError(
+                "sink down"
+            )
+
+            with pytest.raises(RuntimeError) as exc:
+                db_module.verify_scan_databases_available()
+
+        assert "ingest Neo4j: ingest down" in str(exc.value)
+        assert "sink neo4j: sink down" in str(exc.value)
+
+
 class TestSinkOperationsDelegation:
     def test_has_provider_data_delegates_to_sink(self, sink_backend_stub):
         sink_backend_stub.has_provider_data.return_value = True
@@ -120,6 +186,27 @@ class TestRoutingByDatabasePrefix:
 
         sink_backend_stub.drop_database.assert_called_once_with("db-tenant-abc")
         mock_ingest.drop_database.assert_not_called()
+
+    def test_list_databases_always_routes_to_ingest(self, sink_backend_stub):
+        with patch("api.attack_paths.database.ingest") as mock_ingest:
+            mock_ingest.list_databases.return_value = ["db-tmp-scan-uuid-1"]
+
+            assert db_module.list_databases() == ["db-tmp-scan-uuid-1"]
+
+        mock_ingest.list_databases.assert_called_once_with()
+
+    def test_ingest_list_databases_dedupes_cluster_rows(self):
+        from api.attack_paths.ingest import driver as ingest_driver
+
+        with patch.object(ingest_driver, "get_session") as mock_get_session:
+            session = mock_get_session.return_value.__enter__.return_value
+            session.run.return_value = [{"name": "db-tmp-scan-uuid-1"}]
+
+            assert ingest_driver.list_databases() == ["db-tmp-scan-uuid-1"]
+
+        session.run.assert_called_once_with(
+            "SHOW DATABASES YIELD name RETURN DISTINCT name"
+        )
 
     def test_clear_cache_routes_temp_to_ingest(self, sink_backend_stub):
         with patch("api.attack_paths.database.ingest") as mock_ingest:

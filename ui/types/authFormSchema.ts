@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isCloud } from "@/lib/shared/env";
 import { SPECIAL_CHARACTERS } from "@/lib/utils";
 
 export type AuthSocialProvider = "google" | "github";
@@ -104,12 +105,12 @@ export const signUpSchema = baseAuthSchema
     }),
     company: z.string().optional(),
     invitationToken: z.string().optional(),
-    termsAndConditions:
-      process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-        ? z.boolean().refine((value) => value === true, {
-            message: "You must accept the terms and conditions.",
-          })
-        : z.boolean().optional(),
+    termsAndConditions: z
+      .boolean()
+      .optional()
+      .refine((value) => !isCloud() || value === true, {
+        error: "You must accept the terms and conditions.",
+      }),
   })
   .refine(
     (data) => {

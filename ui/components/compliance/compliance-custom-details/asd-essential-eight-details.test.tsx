@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 // `next-auth` (server-only). Stub it with a plain anchor — we only need
 // the `<a>` semantics here so the regex/extraction tests can assert on
 // `href` and accessible name.
-vi.mock("@/components/ui/custom/custom-link", () => ({
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
   CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
     <a href={href}>{children}</a>
   ),

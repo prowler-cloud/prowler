@@ -19,8 +19,12 @@ class MySQL(AzureService):
         servers = {}
         for subscription_id, client in self.clients.items():
             try:
-                servers_list = client.servers.list()
                 servers.update({subscription_id: {}})
+                servers_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.servers.list,
+                    client.servers.list_by_resource_group,
+                )
                 for server in servers_list:
                     backup = getattr(server, "backup", None)
                     ha = getattr(server, "high_availability", None)

@@ -1,18 +1,17 @@
+import { Mail } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
-import { FilterControls } from "@/components/filters";
-import { filterInvitations } from "@/components/filters/data-filters";
-import { AddIcon } from "@/components/icons";
+import { InvitationsFilters } from "@/app/(prowler)/invitations/_components/invitations-filters";
 import {
   ColumnsInvitation,
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
 import { Button } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DataTable } from "@/components/shadcn/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
 
 export default async function Invitations({
@@ -24,18 +23,13 @@ export default async function Invitations({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Invitations" icon="lucide:mail">
-      <FilterControls search />
-
+    <ContentLayout title="Invitations" icon={<Mail />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-between">
-          <DataTableFilterCustom filters={filterInvitations || []} />
+          <InvitationsFilters />
 
           <Button asChild>
-            <Link href="/invitations/new">
-              Send Invitation
-              <AddIcon size={20} />
-            </Link>
+            <Link href="/invitations/new">Send Invitation</Link>
           </Button>
         </div>
 
@@ -124,6 +118,7 @@ const SSRDataTable = async ({
       columns={ColumnsInvitation}
       data={expandedResponse?.data || []}
       metadata={invitationsData?.meta}
+      showSearch
     />
   );
 };

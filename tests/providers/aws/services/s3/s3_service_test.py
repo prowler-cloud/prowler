@@ -642,3 +642,47 @@ class Test_S3_Service:
         assert s3control.access_points[arn].public_access_block.ignore_public_acls
         assert s3control.access_points[arn].public_access_block.block_public_policy
         assert s3control.access_points[arn].public_access_block.restrict_public_buckets
+
+    # Test S3 object ACL sampling is skipped unless the check is enabled
+    @mock_aws
+    def test_get_public_objects_disabled_by_default(self):
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
+        s3_client.create_bucket(Bucket=bucket_name)
+        s3_client.put_object(Bucket=bucket_name, Key="a.txt", Body=b"x")
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
+
+        assert s3.buckets[bucket_arn].object_sampling is None
+
+    # Test S3 object ACL sampling detects a public object when enabled
+    @mock_aws
+    def test_get_public_objects_detects_public_acl(self):
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
+        s3_client.create_bucket(Bucket=bucket_name)
+        s3_client.put_object(Bucket=bucket_name, Key="public.txt", Body=b"x")
+        s3_client.put_object_acl(
+            Bucket=bucket_name, Key="public.txt", ACL="public-read"
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+            audit_config={"s3_bucket_object_public_enabled": True},
+        )
+        s3 = S3(aws_provider)
+
+        sampling = s3.buckets[bucket_arn].object_sampling
+        assert sampling is not None
+        assert sampling.performed is True
+        assert sampling.is_empty is False
+        assert len(sampling.objects) == 1
+        assert sampling.objects[0].key == "public.txt"
+        assert any(
+            grantee.type == "Group"
+            and grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers"
+            for grantee in sampling.objects[0].grantees
+        )

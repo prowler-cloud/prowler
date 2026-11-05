@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_versioning_enabled",
+  "CheckTitle": "Versioning is enabled for OSS buckets",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "ALIYUN::OSS::Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Alibaba Cloud OSS Bucket Versioning** stores previous versions of objects when they are overwritten or deleted, allowing any version to be restored at a later time. Enabling versioning on all OSS buckets ensures that data can be recovered after unintended changes or deletions.",
+  "Risk": "Without **OSS bucket versioning** enabled, objects that are overwritten or deleted cannot be recovered. This increases the impact of **accidental deletion**, **misconfigured automation**, and **malicious activity such as ransomware-style overwrites**, as no prior object versions are retained for recovery.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/109695.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ossutil bucket-versioning --method put oss://<bucket-name> enabled",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **OSS Console**\n2. In the bucket-list pane, click on a target OSS bucket\n3. Find the **Versioning** setting\n4. Click **Configure** and select **Enabled**\n5. Click **Save**",
+      "Terraform": "resource \"alicloud_oss_bucket_versioning\" \"example\" {\n  bucket = alicloud_oss_bucket.example.bucket\n  status = \"Enabled\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable versioning on all OSS buckets so that overwritten or deleted objects can be recovered, protecting data against accidental loss and malicious overwrites.",
+      "Url": "https://hub.prowler.com/check/oss_bucket_versioning_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

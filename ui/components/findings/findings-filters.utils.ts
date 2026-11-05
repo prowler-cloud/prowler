@@ -7,14 +7,29 @@ import {
 } from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
 import { ProviderGroup } from "@/types/components";
+import type { FilterOption } from "@/types/filters";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
+
+export interface FindingCheckFilterOption {
+  checkId: string;
+  checkTitle?: string;
+}
+
+export interface FindingGroupLazyOptions {
+  onOpen: () => void;
+  isLoading: boolean;
+}
+
+export const FILTER_CONTROL_COLUMN_CLASS =
+  "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 
 interface GetFindingsFilterDisplayValueOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
   providerGroups?: ProviderGroup[];
+  checkTitles?: Record<string, string>;
 }
 
 const FINDING_DELTA_DISPLAY_NAMES: Record<string, string> = {
@@ -64,6 +79,12 @@ export function getFindingsFilterDisplayValue(
   if (filterKey === "filter[scan__in]" || filterKey === "filter[scan]") {
     return getScanDisplayValue(value, options.scans || []);
   }
+  if (
+    filterKey === "filter[check_id]" ||
+    filterKey === "filter[check_id__in]"
+  ) {
+    return options.checkTitles?.[value] || value;
+  }
   if (filterKey === "filter[severity__in]") {
     return (
       SEVERITY_DISPLAY_NAMES[
@@ -100,6 +121,47 @@ export function getFindingsFilterDisplayValue(
   return formatLabel(value);
 }
 
+function uniqueNonEmptyValues(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+export function buildFindingGroupFilterOption({
+  checkOptions,
+  selectedCheckIds,
+  selectedCheckIdsIn,
+  checkTitles,
+  lazy,
+}: {
+  checkOptions: FindingCheckFilterOption[];
+  selectedCheckIds: string[];
+  selectedCheckIdsIn: string[];
+  checkTitles: Record<string, string>;
+  /** Keeps the dropdown visible with no values so they can load on open. */
+  lazy?: FindingGroupLazyOptions;
+}): FilterOption | null {
+  const values = uniqueNonEmptyValues([
+    ...checkOptions.map((option) => option.checkId),
+    ...selectedCheckIds,
+    ...selectedCheckIdsIn,
+  ]);
+
+  if (values.length === 0 && !lazy) {
+    return null;
+  }
+
+  return {
+    key: "check_id__in",
+    labelCheckboxGroup: "Finding Group",
+    values,
+    labelFormatter: (value: string) =>
+      getFindingsFilterDisplayValue("filter[check_id]", value, {
+        checkTitles,
+      }),
+    index: 3,
+    ...(lazy && { onOpen: lazy.onOpen, isLoading: lazy.isLoading }),
+  };
+}
+
 /**
  * Maps raw filter param keys (e.g. "filter[severity__in]") to human-readable labels.
  * Used to render chips in the FilterSummaryStrip.
@@ -108,6 +170,8 @@ export function getFindingsFilterDisplayValue(
  * label is missing.
  */
 export const FILTER_KEY_LABELS: Record<FindingsFilterParam, string> = {
+  "filter[check_id]": "Finding Group",
+  "filter[check_id__in]": "Finding Group",
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
   "filter[provider_groups__in]": "Provider Group",
@@ -134,6 +198,7 @@ interface BuildFindingsFilterChipsOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
   providerGroups?: ProviderGroup[];
+  checkTitles?: Record<string, string>;
   includeMuted?: boolean;
 }
 

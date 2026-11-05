@@ -1,5 +1,7 @@
+import asyncio
+from types import SimpleNamespace
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.defender.defender_service import (
@@ -9,6 +11,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     Defender,
     DefenderInboundSpamPolicy,
     DkimConfig,
+    DomainDmarcConfiguration,
     InboundSpamRule,
     MalwarePolicy,
     MalwareRule,
@@ -210,6 +213,19 @@ def mock_defender_get_outbound_spam_filter_rule(_):
             users=["test@example.com"],
             groups=["example_group"],
             domains=["example.com"],
+        ),
+    }
+
+
+async def mock_defender_get_domain_dmarc_configurations(_):
+    return {
+        "domain1.com": DomainDmarcConfiguration(
+            domain="domain1.com",
+            dmarc_record="v=DMARC1; p=reject",
+        ),
+        "domain2.com": DomainDmarcConfiguration(
+            domain="domain2.com",
+            dmarc_record=None,
         ),
     }
 
@@ -554,3 +570,233 @@ class Test_Defender_Service:
             assert report_submission_policy.report_not_junk_addresses == []
             assert report_submission_policy.report_phish_addresses == []
             assert report_submission_policy.report_chat_message_enabled is True
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_domain_dmarc_configurations",
+        new=mock_defender_get_domain_dmarc_configurations,
+    )
+    def test_get_domain_dmarc_configurations(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            domain_dmarc_configurations = defender_client.domain_dmarc_configurations
+            assert len(domain_dmarc_configurations) == 2
+            assert (
+                domain_dmarc_configurations["domain1.com"].dmarc_record
+                == "v=DMARC1; p=reject"
+            )
+            assert domain_dmarc_configurations["domain2.com"].dmarc_record is None
+            defender_client.powershell.close()
+
+    def test_get_dmarc_txt_record_found(self):
+        class FakeAnswer:
+            def __init__(self, strings):
+                self.strings = strings
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
+            new=AsyncMock(return_value=[FakeAnswer([b"v=DMARC1; p=reject"])]),
+        ):
+            record, lookup_failed = asyncio.run(
+                Defender._get_dmarc_txt_record("domain1.com")
+            )
+            assert record == "v=DMARC1; p=reject"
+            assert lookup_failed is False
+
+    def test_get_dmarc_txt_record_not_found(self):
+        import dns.resolver
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
+            new=AsyncMock(side_effect=dns.resolver.NXDOMAIN),
+        ):
+            record, lookup_failed = asyncio.run(
+                Defender._get_dmarc_txt_record("domain2.com")
+            )
+            assert record is None
+            # A confirmed absence, not an unverifiable lookup.
+            assert lookup_failed is False
+
+    def test_get_dmarc_txt_record_lookup_failed(self):
+        import dns.exception
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
+            new=AsyncMock(side_effect=dns.exception.Timeout),
+        ):
+            record, lookup_failed = asyncio.run(
+                Defender._get_dmarc_txt_record("domain3.com")
+            )
+            assert record is None
+            # A transient failure leaves the DMARC status unknown.
+            assert lookup_failed is True
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_eop_protection_policy_rule",
+        return_value=[
+            {
+                "Name": "Standard Preset Security Policy",
+                "State": "Disabled",
+                "SentTo": None,
+                "SentToMemberOf": None,
+                "RecipientDomainIs": "contoso.com",
+            },
+            {
+                "Name": "Strict Preset Security Policy",
+                "State": "Enabled",
+                "SentTo": ["user@contoso.com"],
+                "SentToMemberOf": None,
+                "RecipientDomainIs": None,
+            },
+        ],
+    )
+    def test__get_eop_protection_policy_rules(self, _mock_get_eop_rules):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            eop_rules = defender_client.eop_protection_policy_rules
+            assert len(eop_rules) == 2
+            assert eop_rules[0].name == "Standard Preset Security Policy"
+            assert eop_rules[0].state == "Disabled"
+            assert eop_rules[0].sent_to == []
+            assert eop_rules[0].recipient_domain_is == ["contoso.com"]
+            assert eop_rules[1].name == "Strict Preset Security Policy"
+            assert eop_rules[1].state == "Enabled"
+            assert eop_rules[1].sent_to == ["user@contoso.com"]
+            assert eop_rules[1].recipient_domain_is == []
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_atp_protection_policy_rule",
+        return_value={
+            "Name": "Strict Preset Security Policy",
+            "State": "Enabled",
+            "SentTo": None,
+            "SentToMemberOf": None,
+            "RecipientDomainIs": None,
+        },
+    )
+    def test__get_atp_protection_policy_rules_single_dict(self, _mock_get_atp_rules):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            atp_rules = defender_client.atp_protection_policy_rules
+            assert len(atp_rules) == 1
+            assert atp_rules[0].name == "Strict Preset Security Policy"
+            assert atp_rules[0].state == "Enabled"
+            assert atp_rules[0].sent_to == []
+            assert atp_rules[0].sent_to_member_of == []
+            assert atp_rules[0].recipient_domain_is == []
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_email_tenant_settings",
+        return_value={
+            "Identity": "Default",
+            "EnablePriorityAccountProtection": True,
+        },
+    )
+    def test__get_email_tenant_settings(self, _mock_get_email_tenant_settings):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            email_tenant_settings = defender_client.email_tenant_settings
+            assert email_tenant_settings.priority_account_protection_enabled is True
+            defender_client.powershell.close()
+
+
+def test_defender__get_domain_dmarc_configurations_handles_pagination():
+    defender_service = Defender.__new__(Defender)
+
+    domains_page_one = [
+        SimpleNamespace(id="domain1.com", is_verified=True),
+        SimpleNamespace(id="unverified.com", is_verified=False),
+    ]
+    domains_page_two = [
+        SimpleNamespace(id="domain2.com", is_verified=True),
+    ]
+
+    domains_response_page_one = SimpleNamespace(
+        value=domains_page_one,
+        odata_next_link="next-link",
+    )
+    domains_response_page_two = SimpleNamespace(
+        value=domains_page_two, odata_next_link=None
+    )
+
+    domains_with_url_builder = SimpleNamespace(
+        get=AsyncMock(return_value=domains_response_page_two)
+    )
+    with_url_mock = MagicMock(return_value=domains_with_url_builder)
+
+    domains_builder = SimpleNamespace(
+        get=AsyncMock(return_value=domains_response_page_one),
+        with_url=with_url_mock,
+    )
+
+    defender_service.client = SimpleNamespace(domains=domains_builder)
+
+    with mock.patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_dmarc_txt_record",
+        new=AsyncMock(return_value=("v=DMARC1; p=reject", False)),
+    ):
+        domain_dmarc_configurations = asyncio.run(
+            defender_service._get_domain_dmarc_configurations()
+        )
+
+    assert set(domain_dmarc_configurations) == {"domain1.com", "domain2.com"}
+    assert (
+        domain_dmarc_configurations["domain1.com"].dmarc_record == "v=DMARC1; p=reject"
+    )
+    assert domains_builder.get.await_count == 1
+    assert domains_with_url_builder.get.await_count == 1
+    with_url_mock.assert_called_once_with("next-link")
+
+
+def test_defender__get_domain_dmarc_configurations_marks_discovery_failure():
+    defender_service = Defender.__new__(Defender)
+    defender_service.domain_discovery_failed = False
+
+    domains_builder = SimpleNamespace(
+        get=AsyncMock(side_effect=Exception("Graph domains request failed"))
+    )
+    defender_service.client = SimpleNamespace(domains=domains_builder)
+
+    domain_dmarc_configurations = asyncio.run(
+        defender_service._get_domain_dmarc_configurations()
+    )
+
+    # An empty result caused by a discovery failure must be distinguishable.
+    assert domain_dmarc_configurations == {}
+    assert defender_service.domain_discovery_failed is True

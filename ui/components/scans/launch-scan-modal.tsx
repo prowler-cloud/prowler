@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudCog, Loader2, Rocket } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -11,16 +11,30 @@ import { z } from "zod";
 import { scanOnDemand } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import {
+  Badge,
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
-import { FormButtons } from "@/components/ui/form";
-import { toast, ToastAction } from "@/components/ui/toast";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import { toast, ToastAction } from "@/components/shadcn/toast";
+import {
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+  USAGE_LIMIT_ERROR_TYPE,
+} from "@/lib/action-errors";
 import {
   buildScheduleAttributesFromProvider,
   getScanScheduleCapability,
@@ -39,7 +53,6 @@ import {
 } from "@/types/schedules";
 
 import { scanAliasSchema } from "./scan-alias-validation";
-import { getScanJobsTab } from "./scans.utils";
 import {
   SAVE_SCHEDULE_STATUS,
   saveScheduleWithInitialScan,
@@ -93,7 +106,6 @@ function LaunchScanForm({
   isScanLimitReached,
 }: LaunchScanFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const form = useForm<LaunchScanFormValues>({
     resolver: zodResolver(launchScanSchema),
     defaultValues: { providerId: "", scanAlias: "" },
@@ -110,16 +122,16 @@ function LaunchScanForm({
   const requestedProviderRef = useRef<string>("");
 
   const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const isDailyLegacy = capability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
+  const canUseScheduleMode = isAdvanced || isDailyLegacy;
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
   const isBlocked =
     capability === SCAN_SCHEDULE_CAPABILITY.BLOCKED ||
     (isManualOnly && isScanLimitReached);
-  const isScheduleMode = isAdvanced && mode === LAUNCH_MODE.SCHEDULE;
+  const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;
 
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const providerId = useWatch({ control: form.control, name: "providerId" });
-  const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
-  const shouldShowActiveTabAction = activeTab !== SCAN_JOBS_TAB.ACTIVE;
   const disconnectedProviderIds = providers
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
@@ -168,13 +180,15 @@ function LaunchScanForm({
 
   const handleProviderChange = (id: string) => {
     form.setValue("providerId", id, { shouldValidate: true });
-    if (isScheduleMode) void loadSchedule(id);
+    if (isScheduleMode && isAdvanced) void loadSchedule(id);
   };
 
   const handleModeChange = (nextMode: string) => {
-    if (nextMode === LAUNCH_MODE.SCHEDULE && !isAdvanced) return;
+    if (nextMode === LAUNCH_MODE.SCHEDULE && !canUseScheduleMode) return;
     setMode(nextMode as LaunchMode);
-    if (nextMode === LAUNCH_MODE.SCHEDULE) void loadSchedule(providerId);
+    if (nextMode === LAUNCH_MODE.SCHEDULE && isAdvanced) {
+      void loadSchedule(providerId);
+    }
   };
 
   const launchNow = form.handleSubmit(async ({ providerId, scanAlias }) => {
@@ -190,7 +204,10 @@ function LaunchScanForm({
     const result = await scanOnDemand(formData);
 
     if (hasActionError(result)) {
-      form.setError("root", { message: getActionErrorMessage(result) });
+      form.setError("root", {
+        type: isUsageLimitError(result) ? USAGE_LIMIT_ERROR_TYPE : "server",
+        message: getActionErrorMessage(result),
+      });
       return;
     }
 
@@ -204,18 +221,19 @@ function LaunchScanForm({
     toast({
       title: "Scan launched",
       description: "The scan was launched successfully.",
-      action: shouldShowActiveTabAction ? (
-        <ToastAction altText="View scan in progress" asChild>
-          <Link href="/scans?tab=active">View scan</Link>
+      // Findings are stored as the scan runs, so they are the next stop.
+      action: (
+        <ToastAction altText="View findings" asChild>
+          <Link href="/findings">View findings</Link>
         </ToastAction>
-      ) : undefined,
+      ),
     });
     onClose();
     router.refresh();
   });
 
   const saveSchedule = async () => {
-    if (isBlocked || !isAdvanced) return;
+    if (isBlocked || !canUseScheduleMode) return;
 
     const providerValid = await form.trigger("providerId");
     if (!providerValid) return;
@@ -224,10 +242,14 @@ function LaunchScanForm({
       const result = await saveScheduleWithInitialScan({
         providerId: form.getValues("providerId"),
         values,
+        useLegacyDaily: isDailyLegacy,
       });
 
       if (result.status === SAVE_SCHEDULE_STATUS.ERROR) {
-        form.setError("root", { message: result.message });
+        form.setError("root", {
+          type: result.usageLimited ? USAGE_LIMIT_ERROR_TYPE : "server",
+          message: result.message,
+        });
         return;
       }
 
@@ -243,7 +265,15 @@ function LaunchScanForm({
             : launched
               ? "The schedule was saved and the initial scan was launched."
               : "The scan schedule was saved successfully.",
-        action: (
+        // Over the limit, the plans unblock the scan; the schedule would not.
+        // A running scan already stores findings; a schedule only lists on Scans.
+        action: result.usageLimited ? (
+          usageLimitToastAction()
+        ) : launched ? (
+          <ToastAction altText="View findings" asChild>
+            <Link href="/findings">View findings</Link>
+          </ToastAction>
+        ) : (
           <ToastAction altText="View scheduled scans" asChild>
             <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>
               View schedule
@@ -270,6 +300,8 @@ function LaunchScanForm({
   const providerError = form.formState.errors.providerId?.message;
   const aliasError = form.formState.errors.scanAlias?.message;
   const rootError = form.formState.errors.root?.message;
+  const isRootUsageLimit =
+    form.formState.errors.root?.type === USAGE_LIMIT_ERROR_TYPE;
   const isSubmitting =
     form.formState.isSubmitting || scheduleForm.formState.isSubmitting;
   const isScheduleLoading = scheduleLoad === SCHEDULE_LOAD_STATE.LOADING;
@@ -319,28 +351,17 @@ function LaunchScanForm({
               <RadioGroupItem
                 value={LAUNCH_MODE.SCHEDULE}
                 aria-label="On a schedule"
-                disabled={!isAdvanced}
+                disabled={!canUseScheduleMode}
               />
               On a schedule
-              {!isAdvanced && <CloudFeatureBadgeLink size="sm" />}
+              {isDailyLegacy && (
+                <Badge variant="cloud" size="sm">
+                  Cloud
+                </Badge>
+              )}
             </label>
           </RadioGroup>
         </Field>
-      )}
-
-      {isBlocked && (
-        <p className="text-text-error-primary text-sm">
-          You have exceeded the usage limit of one provider. You can add more
-          providers and run unlimited scans by adding a subscription.{" "}
-          <Link
-            href="https://cloud.prowler.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Manage Billing
-          </Link>
-        </p>
       )}
 
       {!isScheduleMode && (
@@ -354,6 +375,8 @@ function LaunchScanForm({
           {aliasError && <FieldError>{aliasError}</FieldError>}
         </Field>
       )}
+
+      {isBlocked && <UsageLimitMessage />}
 
       {isScheduleMode && isScheduleLoading && (
         <div className="flex items-center gap-3 py-2">
@@ -374,10 +397,17 @@ function LaunchScanForm({
           disabled={isSubmitting || !providerId}
           showLaunchInitialScan
           showNextScheduledCopy
+          canUseAdvancedSchedule={isAdvanced}
+          showCloudUpgradeBadge={isDailyLegacy}
         />
       )}
 
-      {rootError && <FieldError>{rootError}</FieldError>}
+      {rootError &&
+        (isRootUsageLimit ? (
+          <UsageLimitMessage />
+        ) : (
+          <FieldError>{rootError}</FieldError>
+        ))}
 
       <FormButtons
         onCancel={onClose}

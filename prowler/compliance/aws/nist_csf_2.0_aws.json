@@ -876,7 +876,8 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_level_public_access_block",
         "s3_bucket_public_access",
-        "s3_multi_region_access_point_public_access_block"
+        "s3_multi_region_access_point_public_access_block",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ]
     },
     {
@@ -938,7 +939,8 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {
@@ -1694,7 +1696,9 @@
         "vpc_flow_logs_enabled",
         "guardduty_is_enabled",
         "inspector2_is_enabled",
-        "accessanalyzer_enabled_without_findings"
+        "accessanalyzer_enabled_without_findings",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ],
       "ConfigRequirements": [
         {

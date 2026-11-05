@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 
 type MuteRuleActionResult = {
   success?: string;

@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_confidential_workload_host_public_ip",
+  "CheckTitle": "Confidential-workload host is not exposed to the internet",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "Instances hosting **Nitro Enclave** workloads (`EnclaveOptions.Enabled=true`) are evaluated for direct internet reachability. The host must not carry a public IP and must not sit in a subnet whose route table sends `0.0.0.0/0` or `::/0` to an Internet Gateway. NAT Gateway routes are not flagged. This check assesses the host environment; it does not audit the enclave itself.",
+  "Risk": "A publicly reachable host expands the workload **attack surface** unnecessarily and increases the exposure of the enclave's **I/O path over vsock**. Public reachability is rarely required for enclave workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 disassociate-address --association-id <eipalloc-association-id>",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::EC2::Instance\n    Properties:\n      EnclaveOptions: { Enabled: true }\n      SubnetId: <private-subnet-id>  # critical: private subnet only\n      NetworkInterfaces:\n        - AssociatePublicIpAddress: false  # critical: no public IP\n          DeviceIndex: 0\n          SubnetId: <private-subnet-id>\n```",
+      "Other": "1. Launch confidential-workload hosts only in private subnets whose route tables have no 0.0.0.0/0 route to an Internet Gateway.\n2. Do not assign an Elastic IP or auto-assigned public IPv4/IPv6 to hosts.\n3. Route outbound internet traffic through a NAT Gateway if the workload needs egress.",
+      "Terraform": "```hcl\nresource \"aws_instance\" \"example_resource\" {\n  enclave_options { enabled = true }\n  subnet_id = var.private_subnet_id\n  associate_public_ip_address = false  # critical: no public IP\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply the **minimum-exposure** principle: place confidential-workload hosts on **private subnets only** and route required outbound traffic via managed egress (NAT). Keep the host invisible from the public internet.",
+      "Url": "https://hub.prowler.com/check/ec2_confidential_workload_host_public_ip"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

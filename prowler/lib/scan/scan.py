@@ -29,6 +29,8 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.image.image_provider import ImageProvider
 
+SEVERITY_ORDER = {severity: index for index, severity in enumerate(Severity)}
+
 
 class Scan:
     _provider: Provider
@@ -164,7 +166,7 @@ class Scan:
         if provider.type in ("iac", "image"):
             self._checks_to_execute = [f"{provider.type}_scan"]
         else:
-            self._checks_to_execute = sorted(
+            self._checks_to_execute = self._sort_checks(
                 load_checks_to_execute(
                     bulk_checks_metadata=self._bulk_checks_metadata,
                     bulk_compliance_frameworks=self._bulk_compliance_frameworks,
@@ -178,25 +180,58 @@ class Scan:
                 )
             )
 
-        # Exclude checks
+        # Validate excluded checks against the FULL provider catalog — not
+        # just the selected scope — so a global config can exclude a valid
+        # check even when that check is not part of a particular scoped run.
+        excluded_check_set: set[str] = set()
         if excluded_checks:
-            for check in excluded_checks:
-                if check in self._checks_to_execute:
-                    self._checks_to_execute.remove(check)
-                else:
-                    raise ScanInvalidCheckError(
-                        f"Invalid check provided: {check}. Check does not exist in the provider."
-                    )
+            excluded_check_set = set(excluded_checks)
+            if len(excluded_check_set) != len(excluded_checks):
+                raise ScanInvalidCheckError(
+                    "Duplicate excluded checks are not allowed."
+                )
+            unknown_checks = excluded_check_set.difference(self._bulk_checks_metadata)
+            if unknown_checks:
+                raise ScanInvalidCheckError(
+                    f"Invalid excluded check(s) provided: {sorted(unknown_checks)}."
+                )
 
-        # Exclude services
+        # Validate excluded services against the provider service catalog.
+        # Only resolve the catalog when there is something to check to avoid
+        # walking the provider package tree unnecessarily.
+        excluded_service_set: set[str] = set()
         if excluded_services:
-            for check in self._checks_to_execute:
-                if get_service_name_from_check_name(check) in excluded_services:
-                    self._checks_to_execute.remove(check)
-                else:
-                    raise ScanInvalidServiceError(
-                        f"Invalid service provided: {check}. Service does not exist in the provider."
-                    )
+            excluded_service_set = set(excluded_services)
+            if len(excluded_service_set) != len(excluded_services):
+                raise ScanInvalidServiceError(
+                    "Duplicate excluded services are not allowed."
+                )
+            unknown_services = excluded_service_set.difference(
+                list_services(provider.type)
+            )
+            if unknown_services:
+                raise ScanInvalidServiceError(
+                    f"Invalid excluded service(s) provided: {sorted(unknown_services)}."
+                )
+
+        if excluded_check_set or excluded_service_set:
+            previous_scope = self._checks_to_execute
+            selected_checks = {
+                check
+                for check in previous_scope
+                if check not in excluded_check_set
+                and get_service_name_from_check_name(check) not in excluded_service_set
+            }
+            # Only complain when exclusions actually emptied a non-empty
+            # scope. If the scope was already empty (e.g. a severity or
+            # category filter matched nothing) the exclusions did not
+            # cause the emptiness and the misleading error would obscure
+            # the real reason.
+            if previous_scope and not selected_checks:
+                raise ScanInvalidCheckError(
+                    "The scan configuration excludes every selected check."
+                )
+            self._checks_to_execute = self._sort_checks(selected_checks)
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
@@ -211,6 +246,28 @@ class Scan:
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
+
+    def _sort_checks(self, checks) -> list[str]:
+        """Order checks by severity, highest first, then by name.
+
+        A long scan then stores its most valuable findings early.
+
+        Args:
+            checks: Check names to order.
+
+        Returns:
+            list[str]: The ordered check names.
+        """
+        return sorted(
+            checks,
+            key=lambda check: (
+                SEVERITY_ORDER.get(
+                    getattr(self._bulk_checks_metadata.get(check), "Severity", None),
+                    len(SEVERITY_ORDER),
+                ),
+                check,
+            ),
+        )
 
     @property
     def checks_to_execute(self) -> list[str]:

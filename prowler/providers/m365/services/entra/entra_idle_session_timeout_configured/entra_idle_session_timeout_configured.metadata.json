@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_idle_session_timeout_configured",
+  "CheckTitle": "Idle session timeout of 3 hours or less is configured",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "An activity-based timeout policy should sign out inactive users from Microsoft 365 web apps after a period of inactivity. The web session idle timeout (**WebSessionIdleTimeout**) should be set to **3 hours or less** so that unattended sessions are terminated.",
+  "Risk": "Without an idle session timeout, an unattended and unlocked session on a shared or public device remains authenticated indefinitely, allowing anyone with physical access to act as the signed-in user.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/manage/idle-session-timeout-web-apps"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft 365 admin center at https://admin.microsoft.com/\n2. Go to **Settings** > **Org settings** > **Security & Privacy** > **Idle session timeout**\n3. Turn on the setting and set the period of inactivity to **3 hours** or less\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an idle session timeout of 3 hours or less so inactive users are automatically signed out of Microsoft 365 web apps.",
+      "Url": "https://hub.prowler.com/check/entra_idle_session_timeout_configured"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

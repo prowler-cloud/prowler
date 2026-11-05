@@ -49,6 +49,16 @@ class ProviderOutputOptions:
             if updated_audit_config:
                 provider._audit_config = updated_audit_config
 
+        # Secrets validation: --scan-secrets-validate opts into live validation
+        # of discovered secrets. Set the audit_config key directly so it applies
+        # even for providers whose default config does not declare it.
+        self.scan_secrets_validate = getattr(arguments, "scan_secrets_validate", False)
+        if self.scan_secrets_validate:
+            provider = Provider.get_global_provider()
+            audit_config = provider.audit_config or {}
+            audit_config["secrets_validate"] = True
+            provider._audit_config = audit_config
+
         # Check output directory, if it is not created -> create it
         if self.output_directory and not self.fixer:
             if not isdir(self.output_directory):

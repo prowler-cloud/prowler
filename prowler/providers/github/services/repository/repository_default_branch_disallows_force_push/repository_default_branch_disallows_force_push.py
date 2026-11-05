@@ -26,6 +26,11 @@ class repository_default_branch_disallows_force_push(Check):
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does allow force pushes on default branch ({repo.default_branch.name})."
+                if (
+                    repo.default_branch.allow_force_pushes_source
+                    == "ruleset_not_active"
+                ):
+                    report.status_extended = f"Repository {repo.name} has force pushes disallowed in a ruleset on default branch ({repo.default_branch.name}), but the ruleset is not active."
 
                 if not repo.default_branch.allow_force_pushes:
                     report.status = "PASS"

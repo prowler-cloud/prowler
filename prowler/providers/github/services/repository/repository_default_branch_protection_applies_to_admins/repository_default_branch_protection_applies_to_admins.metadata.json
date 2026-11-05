@@ -9,12 +9,13 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**GitHub repository default branch** applies **branch protection rules** to **administrators** via `enforce_admins`, holding admin pushes to the same requirements as other contributors (reviews, status checks, and push restrictions).",
+  "Description": "**GitHub repository default branch** applies **branch protection rules** to **administrators** via `enforce_admins`, holding admin pushes to the same requirements as other contributors (reviews, status checks, and push restrictions). This protection can be enforced through classic **branch protection** or repository **rulesets**.",
   "Risk": "Without admin enforcement, privileged users can bypass reviews and checks, enabling **unauthorized code changes**. A compromised admin token can inject backdoors, alter dependencies, or disable safeguards, undermining **integrity**, exposing secrets (**confidentiality**), and causing outages (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#do-not-allow-bypassing-the-above-settings"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#do-not-allow-bypassing-the-above-settings",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
   ],
   "Remediation": {
     "Code": {

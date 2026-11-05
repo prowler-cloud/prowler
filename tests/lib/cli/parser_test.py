@@ -17,7 +17,7 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,dashboard,iac,image,llm} ..."
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks,dashboard,iac,image,llm} ..."
 
 
 def mock_get_available_providers():
@@ -40,6 +40,7 @@ def mock_get_available_providers():
         "openstack",
         "stackit",
         "linode",
+        "e2enetworks",
     ]
 
 
@@ -1150,6 +1151,35 @@ class Test_Parser:
         command = [prowler_command, argument, max_retries]
         parsed = self.parser.parse(command)
         assert parsed.aws_retries_max_attempts == int(max_retries)
+
+    def test_aws_parser_retries_max_attempts_zero(self):
+        command = [prowler_command, "--aws-retries-max-attempts", "0"]
+        parsed = self.parser.parse(command)
+        assert parsed.aws_retries_max_attempts == 0
+
+    def test_aws_parser_timeouts_default_to_none(self):
+        parsed = self.parser.parse([prowler_command])
+        assert parsed.aws_connect_timeout is None
+        assert parsed.aws_read_timeout is None
+
+    @pytest.mark.parametrize(
+        "argument, attribute",
+        [
+            ("--aws-connect-timeout", "aws_connect_timeout"),
+            ("--aws-read-timeout", "aws_read_timeout"),
+        ],
+    )
+    def test_aws_parser_timeouts(self, argument, attribute):
+        timeout = "5"
+        command = [prowler_command, argument, timeout]
+        parsed = self.parser.parse(command)
+        assert getattr(parsed, attribute) == int(timeout)
+
+    @pytest.mark.parametrize("value", ["0", "-1", "abc"])
+    def test_aws_parser_connect_timeout_rejects_non_positive(self, value):
+        command = [prowler_command, "--aws-connect-timeout", value]
+        with pytest.raises(SystemExit):
+            self.parser.parse(command)
 
     def test_aws_parser_scan_unused_services(self):
         argument = "--scan-unused-services"

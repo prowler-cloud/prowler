@@ -11,7 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_no_tenant(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -35,7 +35,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -65,7 +65,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
 
     def test_entra_users_cannot_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -114,7 +114,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
 
     def test_entra_users_can_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -161,7 +161,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
 
     def test_entra_users_can_create_microsoft_365_groups_no_setting(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

@@ -154,6 +154,88 @@ def test_execute_query_serializes_graph(
     assert result["relationships"][0]["label"] == "OWNS"
 
 
+def test_execute_query_injects_provider_label_when_migrated(
+    attack_paths_query_definition_factory,
+    sink_backend_stub,
+):
+    # On migrated graphs the predefined cypher must be scoped with the
+    # provider label so the planner seeds from the label index instead of a
+    # global label scan (the Neptune cartesian/timeout fix).
+    definition = attack_paths_query_definition_factory(
+        id="aws-iam",
+        name="IAM",
+        short_description="Short desc",
+        description="",
+        cypher="MATCH (aws:AWSAccount)--(target_role:AWSRole) RETURN target_role",
+        parameters=[],
+    )
+    provider_id = "test-provider-123"
+    plabel = get_provider_label(provider_id)
+    parameters = {"provider_uid": "123"}
+
+    graph_result = MagicMock()
+    graph_result.nodes = []
+    graph_result.relationships = []
+    sink_backend_stub.execute_read_query.return_value = graph_result
+
+    # Injection is gated on `is_migrated`, not the sink (it is a pure string
+    # transform), so `neo4j` exercises the same code path as Neptune here.
+    views_helpers.execute_query(
+        "db-tenant-test",
+        definition,
+        parameters,
+        provider_id=provider_id,
+        scan=MagicMock(is_migrated=True, sink_backend="neo4j"),
+    )
+
+    executed_cypher = sink_backend_stub.execute_read_query.call_args[0][1]
+    assert executed_cypher != definition.cypher
+    # Both node patterns are scoped - not just one. Asserting the exact rewrite
+    # (rather than `f":{plabel}" in executed_cypher`, which a partial injection
+    # would still satisfy) proves every node got the label and that injection
+    # inserted labels and nothing else.
+    assert executed_cypher == (
+        f"MATCH (aws:AWSAccount:{plabel})--(target_role:AWSRole:{plabel}) "
+        "RETURN target_role"
+    )
+    # Parameters are passed through untouched.
+    assert sink_backend_stub.execute_read_query.call_args[0][2] == parameters
+
+
+def test_execute_query_does_not_inject_label_when_deprecated(
+    attack_paths_query_definition_factory,
+    sink_backend_stub,
+):
+    # The pre-cutover legacy catalog runs on the old sink and is removed after
+    # the Neptune cutover, so it must run verbatim (no injection).
+    definition = attack_paths_query_definition_factory(
+        id="aws-iam",
+        name="IAM",
+        short_description="Short desc",
+        description="",
+        cypher="MATCH (aws:AWSAccount)--(target_role:AWSRole) RETURN target_role",
+        parameters=[],
+    )
+    parameters = {"provider_uid": "123"}
+
+    graph_result = MagicMock()
+    graph_result.nodes = []
+    graph_result.relationships = []
+    sink_backend_stub.execute_read_query.return_value = graph_result
+
+    views_helpers.execute_query(
+        "db-tenant-test",
+        definition,
+        parameters,
+        provider_id="test-provider-123",
+        scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
+    )
+
+    sink_backend_stub.execute_read_query.assert_called_once_with(
+        "db-tenant-test", definition.cypher, parameters
+    )
+
+
 def test_execute_query_wraps_graph_errors(
     attack_paths_query_definition_factory,
     sink_backend_stub,
@@ -239,12 +321,77 @@ def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_class
         relationships=[rel_keep, rel_drop_orphaned],
     )
 
-    result = views_helpers._serialize_graph(graph, provider_id)
+    result = views_helpers._serialize_graph(graph, provider_id, _all_persisted())
 
     assert len(result["nodes"]) == 1
     assert result["nodes"][0]["id"] == "n1"
     assert len(result["relationships"]) == 1
     assert result["relationships"][0]["id"] == "r1"
+
+
+def _all_persisted():
+    return SimpleNamespace(is_persisted_element_id=lambda element_id: True)
+
+
+def test_serialize_graph_drops_virtual_entities(attack_paths_graph_stub_classes):
+    provider_id = "provider-keep"
+    plabel = get_provider_label(provider_id)
+    stored_ids = {"n1", "n2", "r1"}
+    backend = SimpleNamespace(
+        is_persisted_element_id=lambda element_id: element_id in stored_ids
+    )
+
+    node_1 = attack_paths_graph_stub_classes.Node("n1", ["AWSAccount", plabel], {})
+    node_2 = attack_paths_graph_stub_classes.Node("n2", ["AWSRole", plabel], {})
+    # apoc.create.vNode can carry the provider label and any payload
+    node_virtual = attack_paths_graph_stub_classes.Node(
+        "-1", ["AWSAccount", plabel], {"body": "fetched"}
+    )
+
+    rel_stored = attack_paths_graph_stub_classes.Relationship(
+        "r1", "OWNS", node_1, node_2, {}
+    )
+    # apoc.create.vRelationship between two stored nodes passes the endpoint check
+    rel_virtual = attack_paths_graph_stub_classes.Relationship(
+        "45cc10ea-9618-47fb-abaa-8e82a58d6b40", "V", node_1, node_2, {"body": "fetched"}
+    )
+    rel_to_virtual = attack_paths_graph_stub_classes.Relationship(
+        "r2", "OWNS", node_1, node_virtual, {}
+    )
+
+    graph = SimpleNamespace(
+        nodes=[node_1, node_2, node_virtual],
+        relationships=[rel_stored, rel_virtual, rel_to_virtual],
+    )
+
+    result = views_helpers._serialize_graph(graph, provider_id, backend)
+
+    assert [node["id"] for node in result["nodes"]] == ["n1", "n2"]
+    assert [rel["id"] for rel in result["relationships"]] == ["r1"]
+    assert "fetched" not in str(result)
+
+
+@pytest.mark.parametrize(
+    "element_id, persisted",
+    [
+        ("4:9f1d9d76-bb08-478c-b25d-7e577f967732:0", True),
+        ("5:9f1d9d76-bb08-478c-b25d-7e577f967732:12", True),
+        ("-2", False),
+        ("45cc10ea-9618-47fb-abaa-8e82a58d6b40", False),
+        ("", False),
+    ],
+    ids=[
+        "stored_node",
+        "stored_relationship",
+        "virtual_node",
+        "virtual_relationship",
+        "empty",
+    ],
+)
+def test_neo4j_sink_is_persisted_element_id(element_id, persisted):
+    from api.attack_paths.sink.neo4j import Neo4jSink
+
+    assert Neo4jSink().is_persisted_element_id(element_id) is persisted
 
 
 # -- serialize_graph_as_text -------------------------------------------------------

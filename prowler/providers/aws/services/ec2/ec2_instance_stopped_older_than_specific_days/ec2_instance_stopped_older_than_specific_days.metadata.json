@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_stopped_older_than_specific_days",
+  "CheckTitle": "EC2 instance has not been stopped longer than the configured maximum days",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Patch Management"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:ec2:region:account-id:instance/instance-id",
+  "Severity": "low",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** in the `stopped` state are evaluated for how long they have remained stopped. Instances stopped beyond the configurable limit (`max_ec2_instance_stopped_days`, default `30`) are flagged. Running, pending, and other non-stopped instances pass.",
+  "Risk": "Long-stopped instances remain **unmonitored and unpatched** while still retaining EBS volumes, network configuration, IAM instance profiles, and SSH keys. This expands attack surface and incurs unnecessary storage cost. Stale AMIs and credentials attached to abandoned instances increase the chance of compromise if the instance is later started.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 terminate-instances --instance-ids <example_resource_id>",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the AWS Management Console and open EC2\n2. Go to Instances and select the long-stopped instance\n3. Review attached EBS volumes, tags, and ownership\n4. Choose Instance state > Terminate instance (or Start instance if still needed, then patch/rebuild)\n5. Confirm and verify the instance is terminated or returned to an actively managed lifecycle",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Establish a lifecycle policy for stopped instances:\n- Tag instances with owner and expiry\n- Terminate instances no longer needed to reclaim EBS cost\n- If retained, start regularly for patching or rebuild from a hardened AMI\n- Prefer ephemeral, autoscaled workloads over long-lived stopped hosts\n\nAdjust `max_ec2_instance_stopped_days` to match policy.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_stopped_older_than_specific_days"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [
+    "ec2_instance_older_than_specific_days"
+  ],
+  "Notes": ""
+}

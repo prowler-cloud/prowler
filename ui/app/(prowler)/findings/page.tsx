@@ -1,3 +1,4 @@
+import { Info, Tag } from "lucide-react";
 import { Suspense } from "react";
 
 import {
@@ -5,47 +6,104 @@ import {
   getFindingGroups,
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
-import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
-import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
-import { getAllProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
-import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
-import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { ContentLayout } from "@/components/ui";
+import { AutoRefresh } from "@/components/scans/auto-refresh";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   applyDefaultMutedFilter,
-  createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
-import { ScanEntity, ScanProps } from "@/types";
+import {
+  FINDINGS_PREVIEW_ROW_LIMIT,
+  isFindingsPreviewLocked,
+} from "@/lib/findings-access";
+import {
+  getEarlyFindingScanFilters,
+  getScanFilterIds,
+  isScanSettled,
+  resolveFindingScanDateFilters,
+} from "@/lib/findings-scan-filters";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
+
+import { FindingsFiltersSection } from "./_components/findings-filters-section";
+import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton";
+import { FindingsSamplePreview } from "./_components/findings-sample-preview";
+import { shouldShowFindingsSample } from "./_lib/should-show-findings-sample";
 
 export default async function Findings({
   searchParams,
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
+  // Sample data replaces the page (and its paywall) until the running first
+  // scan has stored findings, then the early findings view takes over.
+  const preview = await getSamplePreviewState();
+  if (preview.active && (await shouldShowFindingsSample(preview))) {
+    return (
+      <ContentLayout title="Findings" icon={<Tag />}>
+        <FindingsSamplePreview
+          state={preview}
+          searchParams={await searchParams}
+        />
+      </ContentLayout>
+    );
+  }
+
   const resolvedSearchParams = await searchParams;
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  const [providersData, providerGroupsData, scansData] = await Promise.all([
-    getAllProviders(),
-    getAllProviderGroups(),
-    getScans({ pageSize: 50 }),
+  // The page shell awaits only what both the filters and the table depend on:
+  // the completed scans (scan filter), the running ones (early findings) and
+  // the scan date range.
+  const [scansData, executingScansData] = await Promise.all([
+    getScans({
+      pageSize: 50,
+      filters: { "filter[state]": "completed" },
+      fields: {
+        scans:
+          "name,state,unique_resource_count,started_at,completed_at,provider",
+      },
+    }),
+    // The scans action throws on 5xx: without running scans the page falls
+    // back to the latest view instead of failing.
+    getScans({
+      pageSize: 50,
+      filters: { "filter[state]": "executing" },
+      fields: { scans: "progress,started_at,completed_at" },
+    }).catch(() => undefined),
   ]);
-
-  const filtersWithScanDates = await resolveFindingScanDateFilters({
+  const executingScans: ScanProps[] = executingScansData?.data ?? [];
+  const now = Date.now();
+  const allCompletedScans: ScanProps[] = scansData?.data ?? [];
+  const justCompletedScans = allCompletedScans.filter(
+    (scan) => !isScanSettled(scan.attributes.completed_at, now),
+  );
+  const earlyScans = [...executingScans, ...justCompletedScans];
+  const earlyFilters = getEarlyFindingScanFilters(
     filters,
-    scans: scansData?.data || [],
+    justCompletedScans.length < allCompletedScans.length,
+    earlyScans.map((scan) => scan.id),
+  );
+  const isEarlyView = earlyFilters !== filters;
+  // A scan picked by the user (e.g. "View Early Findings") may still be running too.
+  const pickedScanIds = getScanFilterIds(filters);
+  const runningScans = isEarlyView
+    ? executingScans
+    : executingScans.filter((scan) => pickedScanIds.includes(scan.id));
+  const filtersWithScanDates = await resolveFindingScanDateFilters({
+    filters: earlyFilters,
+    scans: earlyScans,
     loadScan: async (scanId: string) => {
       const response = await getScan(scanId);
       return response?.data;
@@ -53,76 +111,43 @@ export default async function Findings({
   });
   const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
-  const metadataInfoData = await (
-    hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
-  )({
-    query,
-    sort: encodedSort,
-    filters: resolvedFilters,
-  });
 
-  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
-  const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
-  const uniqueResourceTypes =
-    metadataInfoData?.data?.attributes?.resource_types || [];
-  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
-  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
-
-  const completedScans = scansData?.data?.filter(
-    (scan: ScanProps) =>
-      scan.attributes.state === "completed" &&
-      scan.attributes.unique_resource_count > 1,
-  );
-
-  const completedScanIds =
-    completedScans?.map((scan: ScanProps) => scan.id) || [];
-  const onboardingAction =
-    completedScanIds.length > 0
-      ? { flowId: "explore-findings" }
-      : {
-          flowId: "explore-findings",
-          fallbackFlowId: "view-first-scan",
-          useFallback: true,
-        };
-
-  const scanDetails = createScanDetailsMapping(
-    completedScans || [],
-    providersData,
-  ) as { [uid: string]: ScanEntity }[];
-  const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const completedScans: ScanProps[] =
+    scansData?.data?.filter(
+      (scan: ScanProps) =>
+        scan.attributes.state === "completed" &&
+        scan.attributes.unique_resource_count > 1,
+    ) || [];
 
   return (
-    <ContentLayout
-      title="Findings"
-      icon="lucide:tag"
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
+        {(isEarlyView || runningScans.length > 0) && (
+          <>
+            <AutoRefresh hasExecutingScan />
+            <Alert variant="info" className="mb-6">
+              <Info className="size-4" />
+              <AlertDescription>
+                {runningScans.length > 0
+                  ? `${isEarlyView ? "Your first scan" : "This scan"} is running (${Math.min(
+                      ...runningScans.map((scan) => scan.attributes.progress),
+                    )}% done). These are the findings found so far, and the page updates on its own as more come in.`
+                  : "Your first scan just finished. The full view, with every filter, is getting ready and loads on its own in a moment."}
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
         <div className="mb-6">
-          <FindingsFilters
-            providers={providersData?.data || []}
-            providerGroups={providerGroupsData?.data || []}
-            completedScanIds={completedScanIds}
-            scanDetails={scanDetails}
-            uniqueRegions={uniqueRegions}
-            uniqueServices={uniqueServices}
-            uniqueResourceTypes={uniqueResourceTypes}
-            uniqueCategories={uniqueCategories}
-            uniqueGroups={uniqueGroups}
-            trailingControls={
-              <SeedFromFindingsButton
-                filterBag={filters}
-                providers={providersData?.data || []}
-                scans={scanDetails}
-                uniqueRegions={uniqueRegions}
-                uniqueServices={uniqueServices}
-                uniqueResourceTypes={uniqueResourceTypes}
-                uniqueCategories={uniqueCategories}
-                uniqueGroups={uniqueGroups}
-                isCloudEnabled={alertsEnabled}
-              />
-            }
-          />
+          <Suspense fallback={<FindingsFiltersSkeleton />}>
+            <FindingsFiltersSection
+              filters={filters}
+              resolvedFilters={resolvedFilters}
+              hasHistoricalData={hasHistoricalData}
+              query={query}
+              encodedSort={encodedSort}
+              completedScans={completedScans}
+            />
+          </Suspense>
         </div>
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable
@@ -142,8 +167,20 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
   filters: Record<string, string>;
 }) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  // A locked preview ignores the URL paging: it always shows the first page,
+  // the readable rows plus one blurred page as a teaser. Filters and sort
+  // still apply, so the readable rows are the most critical of the selection.
+  const previewLocked = await isFindingsPreviewLocked();
+  const page = previewLocked
+    ? 1
+    : parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = previewLocked
+    ? FINDINGS_PREVIEW_ROW_LIMIT * 2
+    : parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const expandedCheckIdParam = searchParams.expandedCheckId;
+  const expandedCheckId = Array.isArray(expandedCheckIdParam)
+    ? expandedCheckIdParam[0]
+    : expandedCheckIdParam;
 
   const { encodedSort } = extractSortAndKey(searchParams);
   const hasHistoricalData = hasDateOrScanFilter(filters);
@@ -166,7 +203,7 @@ const SSRDataTable = async ({
   return (
     <>
       {findingGroupsData?.errors?.length > 0 && (
-        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-sm text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{findingGroupsData.errors[0].detail}</p>
         </div>
@@ -177,6 +214,8 @@ const SSRDataTable = async ({
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
         hasHistoricalData={hasHistoricalData}
+        expandedCheckId={expandedCheckId}
+        previewRowLimit={previewLocked ? FINDINGS_PREVIEW_ROW_LIMIT : undefined}
       />
     </>
   );

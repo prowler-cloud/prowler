@@ -1,5 +1,7 @@
 from dash import dcc, html
 
+from dashboard.pages.cloud import build_compliance_handoff_card
+
 
 def create_layout_overview(
     account_dropdown: html.Div,
@@ -156,7 +158,7 @@ def create_layout_compliance(
                             html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
                             html.Span("Subscribe to Prowler Cloud"),
                         ],
-                        href="https://cloud.prowler.com/",
+                        href="https://cloud.prowler.com/sign-up?utm_source=prowler-local-dashboard&utm_content=compliance",
                         target="_blank",
                         className="text-prowler-stone-900 inline-flex px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 border-solid border-1 hover:border-prowler-stone-900/10 hover:border-solid hover:border-1 border-prowler-stone-900/10",
                     ),
@@ -194,6 +196,7 @@ def create_layout_compliance(
                 className="text-prowler-stone-900 text-lg font-bold",
             ),
             html.Div(className="flex flex-wrap", id="output"),
+            build_compliance_handoff_card(),
         ],
         className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
     )

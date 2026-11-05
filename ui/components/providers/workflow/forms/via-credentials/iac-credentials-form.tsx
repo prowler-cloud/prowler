@@ -11,10 +11,10 @@ export const IacCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via Repository
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide an access token if the repository is private (optional).
         </div>
       </div>

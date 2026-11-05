@@ -1,6 +1,5 @@
 "use client";
 
-import { useDisclosure } from "@heroui/use-disclosure";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -12,9 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { DataTable } from "@/components/ui/table";
+import { Badge } from "@/components/shadcn/badge/badge";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { DataTable } from "@/components/shadcn/table";
+import { isCloud } from "@/lib/shared/env";
+import { useCloudUpgradeStore } from "@/store";
 import { MetaDataProps } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
 import { createApiKeyColumns } from "./api-keys/column-api-keys";
@@ -33,20 +36,34 @@ export const ApiKeysCardClient = ({
   metadata,
 }: ApiKeysCardClientProps) => {
   const router = useRouter();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
+  // API key creation is a Prowler Cloud feature; Local Server gets the upsell.
+  const canCreateApiKeys = isCloud();
   const [selectedApiKey, setSelectedApiKey] = useState<EnrichedApiKey | null>(
     null,
   );
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
 
-  const createModal = useDisclosure();
-  const successModal = useDisclosure();
-  const revokeModal = useDisclosure();
-  const editModal = useDisclosure();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleCreateSuccess = (apiKey: string) => {
     setCreatedApiKey(apiKey);
-    successModal.onOpen();
+    setIsSuccessModalOpen(true);
     router.refresh();
+  };
+
+  const handleCreateClick = () => {
+    if (!canCreateApiKeys) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.API_KEYS);
+      return;
+    }
+
+    setIsCreateModalOpen(true);
   };
 
   const handleRevokeSuccess = () => {
@@ -59,22 +76,29 @@ export const ApiKeysCardClient = ({
 
   const handleRevokeClick = (apiKey: EnrichedApiKey) => {
     setSelectedApiKey(apiKey);
-    revokeModal.onOpen();
+    setIsRevokeModalOpen(true);
   };
 
   const handleEditClick = (apiKey: EnrichedApiKey) => {
     setSelectedApiKey(apiKey);
-    editModal.onOpen();
+    setIsEditModalOpen(true);
   };
 
   const columns = createApiKeyColumns(handleEditClick, handleRevokeClick);
 
   return (
     <>
-      <Card variant="base" padding="none" className="p-4">
+      <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
         <CardHeader>
           <div className="flex flex-col gap-2">
-            <CardTitle>API Keys</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>API Keys</CardTitle>
+              {!canCreateApiKeys && (
+                <Badge variant="cloud" size="sm">
+                  Cloud
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-gray-500">
               Manage API keys for programmatic access.{" "}
               <CustomLink href="https://docs.prowler.com/user-guide/tutorials/prowler-app-api-keys">
@@ -83,7 +107,7 @@ export const ApiKeysCardClient = ({
             </p>
           </div>
           <CardAction>
-            <Button variant="default" size="sm" onClick={createModal.onOpen}>
+            <Button variant="default" size="sm" onClick={handleCreateClick}>
               Create API Key
             </Button>
           </CardAction>
@@ -105,29 +129,29 @@ export const ApiKeysCardClient = ({
 
       {/* Modals */}
       <CreateApiKeyModal
-        isOpen={createModal.isOpen}
-        onClose={createModal.onClose}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleCreateSuccess}
       />
 
       {createdApiKey && (
         <ApiKeySuccessModal
-          isOpen={successModal.isOpen}
-          onClose={successModal.onClose}
+          isOpen={isSuccessModalOpen}
+          onClose={() => setIsSuccessModalOpen(false)}
           apiKey={createdApiKey}
         />
       )}
 
       <RevokeApiKeyModal
-        isOpen={revokeModal.isOpen}
-        onClose={revokeModal.onClose}
+        isOpen={isRevokeModalOpen}
+        onClose={() => setIsRevokeModalOpen(false)}
         apiKey={selectedApiKey}
         onSuccess={handleRevokeSuccess}
       />
 
       <EditApiKeyNameModal
-        isOpen={editModal.isOpen}
-        onClose={editModal.onClose}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
         apiKey={selectedApiKey}
         onSuccess={handleEditSuccess}
         existingApiKeys={initialApiKeys}

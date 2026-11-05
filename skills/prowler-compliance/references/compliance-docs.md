@@ -1,137 +1,165 @@
-# Compliance Framework Documentation
+# Compliance Architecture and Code Reference
 
-## Code References
+Four layers. Most bugs come from one layer disagreeing with another.
 
-Key files for understanding and modifying compliance frameworks:
+## Layer 1: SDK models and loaders (`prowler/lib/check/`)
 
-| File | Purpose |
-|------|---------|
-| `prowler/lib/check/compliance_models.py` | Pydantic models defining attribute structures for each framework type |
-| `prowler/lib/check/compliance.py` | Core compliance processing logic |
-| `prowler/lib/check/utils.py` | Utility functions including `list_compliance_modules()` |
-| `prowler/lib/outputs/compliance/` | Framework-specific output generators |
-| `prowler/compliance/{provider}/` | JSON compliance framework definitions |
+| Symbol | File | Notes |
+|---|---|---|
+| `Compliance`, `Compliance_Requirement`, `Mitre_Requirement`, `*_Requirement_Attribute` | `compliance_models.py` | Legacy tree |
+| `ComplianceFramework`, `UniversalComplianceRequirement`, `AttributeMetadata`, `OutputsConfig`, `TableConfig`, `PDFConfig` | `compliance_models.py` | Universal tree |
+| `Compliance_Requirement_ConfigConstraint` | `compliance_models.py` | Guardrail model, shared by both trees |
+| `Compliance.get_bulk(provider)` | `compliance_models.py` | Legacy loader |
+| `get_bulk_compliance_frameworks_universal(provider)` | `compliance_models.py` | Universal loader |
+| `load_compliance_framework(path, fatal=True)` | `compliance_models.py` | Legacy single-file load |
+| `load_compliance_framework_universal(path)` | `compliance_models.py` | Universal or adapted-legacy load; returns `None` on error |
+| `adapt_legacy_to_universal()` | `compliance_models.py` | Flattens `Attributes[0]`, wraps `Checks` as `{provider: [...]}`, infers `attributes_metadata` |
+| `update_checks_metadata_with_compliance()` | `compliance.py` (only function there) | Attaches legacy frameworks to `CheckMetadata.Compliance` |
+| `evaluate_config_constraints()` etc. | `compliance_config_eval.py` | Guardrail evaluation (CLI + API) |
+| `get_check_compliance()` | `prowler/lib/outputs/compliance/compliance_check.py` | Per-finding `{"{Framework}-{Version}": [ids]}` |
+| `list_compliance_modules()` | `utils.py` | `walk_packages` over `prowler.compliance` |
+| `get_available_compliance_frameworks()` | `prowler/config/config.py` | Feeds `--compliance` choices (built-in + entry points) |
 
-## Attribute Model Classes
+### Loader behavior
 
-Each framework type has a specific Pydantic model in `compliance_models.py`:
+| | `Compliance.get_bulk(provider)` | `get_bulk_compliance_frameworks_universal(provider)` |
+|---|---|---|
+| Built-in dirs | `prowler/compliance/{provider}/` only | Every `prowler/compliance/{p}/` + top-level `prowler/compliance/*.json` |
+| Included when | File is in the provider dir | `fw.provider` matches, or any requirement has a `checks` key for the provider |
+| External | `prowler.compliance` entry points whose name equals the provider (legacy JSON) | `prowler.compliance.universal` entry points (`UNIVERSAL_COMPLIANCE_ENTRY_POINT_GROUP`) |
+| Invalid built-in file | `logger.critical` + `sys.exit(1)` | Logged, skipped |
+| Invalid external file | Warning, skipped (`fatal=False`) | Logged, skipped |
+| Name collision | Built-in wins | Built-in wins |
 
-| Framework | Model Class |
-|-----------|-------------|
-| CIS | `CIS_Requirement_Attribute` |
-| ISO 27001 | `ISO27001_2013_Requirement_Attribute` |
-| ENS | `ENS_Requirement_Attribute` |
-| MITRE ATT&CK | `Mitre_Requirement` (uses different structure) |
-| AWS Well-Architected | `AWS_Well_Architected_Requirement_Attribute` |
-| KISA ISMS-P | `KISA_ISMSP_Requirement_Attribute` |
-| Prowler ThreatScore | `Prowler_ThreatScore_Requirement_Attribute` |
-| CCC | `CCC_Requirement_Attribute` |
-| C5 Germany | `C5Germany_Requirement_Attribute` |
-| Generic/Fallback | `Generic_Compliance_Requirement_Attribute` |
+Framework key = JSON basename without `.json` (also the `--compliance` value).
 
-## How Compliance Frameworks are Loaded
+### External compliance plug-ins (entry points)
 
-1. `Compliance.get_bulk(provider)` is called at startup
-2. Scans `prowler/compliance/{provider}/` for `.json` files
-3. Each file is parsed using `load_compliance_framework()`
-4. Pydantic validates against `Compliance` model
-5. Framework is stored in dictionary with filename (without `.json`) as key
+A third-party package can ship frameworks without touching Prowler:
 
-## How Checks Map to Compliance
+```toml
+# Legacy per-provider JSONs: the entry point NAME must be the provider key
+[project.entry-points."prowler.compliance"]
+aws = "my_pkg.compliance.aws"      # package/module whose directory holds *.json
 
-1. After loading, `update_checks_metadata_with_compliance()` is called
-2. For each check, it finds all compliance requirements that reference it
-3. Compliance info is attached to `CheckMetadata.Compliance` list
-4. During output, `get_check_compliance()` retrieves mappings per finding
-
-## File Naming Convention
-
-```text
-{framework}_{version}_{provider}.json
+# Universal multi-provider JSONs: the name is free
+[project.entry-points."prowler.compliance.universal"]
+my_frameworks = "my_pkg.universal"
 ```
 
-Examples:
-- `cis_5.0_aws.json`
-- `iso27001_2022_azure.json`
-- `mitre_attack_gcp.json`
-- `ens_rd2022_aws.json`
-- `nist_800_53_revision_5_aws.json`
+The loader resolves the module directory (`module.__path__[0]` or `dirname(module.__file__)`) and reads
+every `*.json` in it. Universal directories are deduplicated by resolved path; a package that fails to
+import is logged and skipped. Loader tests: `tests/lib/check/universal_compliance_models_test.py`.
 
-## Validation
+## Layer 2: JSON catalogs (`prowler/compliance/`)
 
-Prowler validates compliance JSON at startup. Invalid files cause:
-- `ValidationError` logged with details
-- Application exit with error code
+Do not trust hardcoded counts; regenerate:
 
-Common validation errors:
-- Missing required fields (`Id`, `Description`, `Checks`, `Attributes`)
-- Invalid enum values (e.g., `Profile` must be "Level 1" or "Level 2" for CIS)
-- Type mismatches (e.g., `Checks` must be array of strings)
+```bash
+ls prowler/compliance/*.json                                   # universal
+for d in prowler/compliance/*/; do printf "%s: %s\n" "$(basename "$d")" "$(ls "$d"*.json 2>/dev/null | wc -l)"; done
+jq -r '[.requirements[].checks | keys[]] | unique | join(",")' prowler/compliance/<file>.json
+```
 
-## Adding a New Framework
+At 5.48 the universal files are `cis_controls_8.1`, `cmmc_2.0`, `csa_ccm_4.0`, `cyber_essentials_3.3`,
+`dora_2022_2554`, `fedramp_20x_frr_class_c_2026` and `fedramp_20x_ksi_2026`. Some provider directories have
+only `__init__.py` (cloudflare, iac, linode, llm, mongodbatlas, openstack, stackit).
 
-1. Create JSON file in `prowler/compliance/{provider}/`
-2. Use appropriate attribute model (see table above)
-3. Map existing checks to requirements via `Checks` array
-4. Use empty `Checks: []` for manual-only requirements
-5. Test with `prowler {provider} --list-compliance` to verify loading
-6. Run `prowler {provider} --compliance {framework_name}` to test execution
+## Layer 3: Output formatters (`prowler/lib/outputs/compliance/`)
 
-## Templates
+### Universal (data driven)
 
-See `assets/` directory for example templates:
-- `cis_framework.json` - CIS Benchmark template
-- `iso27001_framework.json` - ISO 27001 template
-- `ens_framework.json` - ENS (Spain) template
-- `mitre_attack_framework.json` - MITRE ATT&CK template
-- `prowler_threatscore_framework.json` - Prowler ThreatScore template
-- `generic_framework.json` - Generic/custom framework template
+- `universal/universal_table.py` `get_universal_table()`: CLI table from `table_config`.
+- `universal/universal_output.py` `UniversalComplianceOutput`: CSV, columns built from `attributes_metadata`.
+- `universal/ocsf_compliance.py` `OCSFComplianceOutput`: OCSF JSON, always written for universal frameworks.
+- `compliance.py` `process_universal_compliance_frameworks()`: runs first, only for frameworks with
+  `outputs.table_config`, and returns the processed names so the legacy loop skips them.
+- Universal-only frameworks are not passed to `update_checks_metadata_with_compliance()`, so they do not
+  appear in the per-finding compliance field of the regular finding outputs; they get their own
+  `output/compliance/<prefix>_<name>.csv` and `.ocsf.json`.
 
-## Prowler ThreatScore Details
+### Legacy (per framework package)
 
-Prowler ThreatScore is a custom security scoring framework that calculates an overall security posture score based on:
+```text
+{framework}/
+├── __init__.py
+├── {framework}.py            # get_{framework}_table(); must not import Finding (circular import)
+├── {framework}_{provider}.py # {Provider}{Framework}(ComplianceOutput).transform(); may import Finding
+└── models.py                 # one CSV row model per provider; field names are public API
+```
 
-### Four Pillars
-1. **IAM (Identity and Access Management)**
-   - SubSections: Authentication, Authorization, Credentials Management
+Packages: `asd_essential_eight`, `aws_well_architected`, `c5`, `ccc`, `cis`, `cisa_scuba`, `ens`,
+`generic`, `iso27001`, `kisa_ismsp`, `mitre_attack`, `okta_idaas_stig`, `prowler_threatscore`. Known
+deviations: `iso27001/` and `cisa_scuba/` have no table file (generic table), `aws_well_architected/` has a
+single writer module, `cisa_scuba` is googleworkspace-only.
 
-2. **Attack Surface**
-   - SubSections: Network Exposure, Storage Exposure, Service Exposure
+`display_compliance_table()` dispatch order: universal (`table_config`) → `cis_` → `ens_` → `mitre_attack`
+→ `kisa` → `prowler_threatscore_` → `c5_` → `ccc_` → `"asd_essential_eight" in name` → `okta_idaas_stig` →
+`provider.display_compliance_table()` (external providers; may raise `NotImplementedError`) →
+`get_generic_compliance_table()`.
 
-3. **Logging and Monitoring**
-   - SubSections: Audit Logging, Threat Detection, Alerting
+CSV writer base: `ComplianceOutput` in `compliance_output.py` (`;` delimiter, UPPERCASE headers).
 
-4. **Encryption**
-   - SubSections: Data at Rest, Data in Transit
+`prowler/__main__.py` has explicit legacy writer branches only for aws, azure, gcp, kubernetes, m365, nhn,
+github, googleworkspace, oraclecloud, alibabacloud and okta. Any other provider goes through
+`global_provider.generate_compliance_output()` and falls back to `GenericCompliance` on
+`NotImplementedError`.
 
-### Scoring Algorithm
-The ThreatScore uses `LevelOfRisk` and `Weight` to calculate severity:
+### Local dashboard (`dashboard/compliance/`)
 
-| LevelOfRisk | Weight | Example Controls |
-|-------------|--------|------------------|
-| 5 (Critical) | 1000 | Root MFA, No root access keys, Public S3 buckets |
-| 4 (High) | 100 | User MFA, Public EC2, GuardDuty enabled |
-| 3 (Medium) | 10 | Password policies, EBS encryption, CloudTrail |
-| 2 (Low) | 1-10 | Best practice recommendations |
-| 1 (Info) | 1 | Informational controls |
+`dashboard/pages/compliance.py` imports `dashboard.compliance.<key with dots replaced by underscores>` and
+falls back to `dashboard/compliance/generic.py` when that module does not exist. A dedicated dashboard file
+is optional.
 
-### ID Numbering Convention
-- `1.x.x` - IAM controls
-- `2.x.x` - Attack Surface controls
-- `3.x.x` - Logging and Monitoring controls
-- `4.x.x` - Encryption controls
+## Layer 4: API and UI
 
-## External Resources
+| Concern | Location | Notes |
+|---|---|---|
+| Lazy framework caches | `api/src/backend/api/compliance.py` | `LazyComplianceTemplate`, `LazyChecksMapping`, warm-up under Gunicorn; built on the universal loader |
+| Overview ingestion | `api/src/backend/tasks/jobs/scan.py` `create_compliance_requirements()` | |
+| Compliance CSV export | `api/src/backend/tasks/tasks.py` + `tasks/jobs/export.py` `COMPLIANCE_CLASS_MAP` | `COMPLIANCE_CLASS_MAP` serves legacy frameworks only (`GenericCompliance` fallback). Universal-only frameworks are exported automatically via `process_universal_compliance_frameworks()` |
+| PDF reports | `api/src/backend/tasks/jobs/reports/` + `tasks/jobs/report.py` | Hardcoded `FRAMEWORK_REGISTRY` (`prowler_threatscore`, `ens`, `nis2`, `csa_ccm`, `cis`); `pdf_config` is not read |
+| UI mapper routing | `ui/lib/compliance/compliance-mapper.ts` `getComplianceMapper()` | Keyed by JSON `framework`; unknown values use the generic mapper |
+| UI mappers / detail panels | `ui/lib/compliance/*.tsx`, `ui/components/compliance/compliance-custom-details/` | |
+| UI types | `ui/types/compliance.ts` | `*AttributesMetadata` interfaces |
+| UI icons | `ui/components/icons/compliance/IconCompliance.tsx` `COMPLIANCE_LOGOS` | Ordered substring match: `essentials` before `essential`, `cisa` before `cis`, `nist` before `nis2` |
 
-### Official Framework Documentation
-- [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks)
-- [ISO 27001:2022](https://www.iso.org/standard/27001)
-- [NIST 800-53](https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final)
-- [NIST CSF](https://www.nist.gov/cyberframework)
-- [PCI DSS](https://www.pcisecuritystandards.org/)
-- [MITRE ATT&CK](https://attack.mitre.org/)
-- [ENS (Spain)](https://www.ccn-cert.cni.es/es/ens.html)
+`COMPLIANCE_CLASS_MAP` predicates mix `startswith` (families) and exact `==` (`mitre_attack_*`,
+`prowler_threatscore_*`, `asd_essential_eight_aws`, and `c5_azure`/`c5_gcp` while aws uses
+`startswith("c5_")`). Prefer `startswith` for anything that can get versions.
 
-### Prowler Documentation
-- [Prowler Docs - Compliance](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
-- [Prowler GitHub](https://github.com/prowler-cloud/prowler)
+## CLI pipeline
+
+```text
+prowler aws --compliance cis_7.0_aws
+  Compliance.get_bulk("aws")                       # legacy only
+  update_checks_metadata_with_compliance()         # legacy only -> CheckMetadata.Compliance
+  get_bulk_compliance_frameworks_universal("aws")  # universal + adapted legacy
+  execute checks -> findings (get_check_compliance per finding)
+  process_universal_compliance_frameworks()        # universal CSV + OCSF, removed from the set
+  per-provider legacy writer branches in __main__  # legacy CSV
+  display_compliance_table()                       # universal table first, then legacy dispatch
+```
+
+`--list-compliance` and `--list-compliance-requirements` print the union of both bulks.
+
+## Repo tooling (`util/compliance/`)
+
+| Path | Purpose |
+|---|---|
+| `generate_json_from_csv/` | CSV→JSON generators (CIS 1.5, CIS 2.0 GCP, CIS 1.0 GitHub, CIS 4.0 M365, ENS, ThreatScore) |
+| `ccc/from_yaml_to_json.py` | FINOS CCC YAML→JSON |
+| `compliance_mapper/` | Compliance mapper |
+| `threatscore/get_prowler_threatscore_from_generic_output.py` | ThreatScore from generic output |
+
+## Useful one-liners
+
+```bash
+jq -r '.Requirements[].Id' f.json | sort | uniq -d                     # duplicate ids (legacy)
+jq -r '.requirements[].id' f.json | sort | uniq -d                     # duplicate ids (universal)
+jq '[.Requirements[] | select((.Checks|length)==0)] | length' f.json   # manual reqs (legacy)
+jq '[.requirements[] | select((.checks.aws // [] | length)==0)] | length' f.json
+jq '[.Requirements[].Attributes[0].Section] | unique' f.json          # grouping drift (UI branches)
+diff <(jq -r '.Requirements[].Id' a.json | sort) <(jq -r '.Requirements[].Id' b.json | sort)
+grep -rl "my_check_name" prowler/compliance/                           # where a check is mapped
+```

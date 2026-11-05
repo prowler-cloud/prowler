@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "database_cluster_running",
+  "CheckTitle": "E2E Networks database clusters are in RUNNING status",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**E2E Networks database clusters** should be in the `RUNNING` state, confirming they are operational rather than stopped, failed, or stuck in a transitional status.",
+  "Risk": "Database clusters that are not `RUNNING` may indicate outages, failed provisioning, or misconfiguration that impacts **availability** and the ability to recover data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Start database clusters that are not in the `RUNNING` state and investigate the root cause of any stopped or failed clusters.",
+      "Url": "https://hub.prowler.com/check/database_cluster_running"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

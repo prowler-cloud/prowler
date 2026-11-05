@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_security_defaults_enabled:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -30,7 +30,7 @@ class Test_entra_security_defaults_enabled:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -58,7 +58,7 @@ class Test_entra_security_defaults_enabled:
 
     def test_entra_security_default_enabled(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -93,7 +93,7 @@ class Test_entra_security_defaults_enabled:
 
     def test_entra_security_default_disabled(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

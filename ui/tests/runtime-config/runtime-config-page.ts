@@ -16,9 +16,17 @@ export const RUNTIME_CONFIG_KEYS = [
   "googleTagManagerId",
   "apiBaseUrl",
   "apiDocsUrl",
+  "posthogEnabled",
   "posthogKey",
-  "posthogHost",
+  "posthogIngestionHost",
+  "posthogUiHost",
   "reoDevClientId",
+  "cloudBillingEnabled",
+  "cloudEnabled",
+  "registryEnabled",
+  "selfRegistrationEnabled",
+  "stripePublishableKey",
+  "stripePublishableKeyV2",
 ] as const satisfies ReadonlyArray<keyof RuntimePublicConfig>;
 
 /**

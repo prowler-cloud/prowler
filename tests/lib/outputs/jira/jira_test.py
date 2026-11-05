@@ -1,28 +1,148 @@
 import base64
+import hashlib
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta
+from logging import ERROR, WARNING
+from threading import Barrier
+from time import sleep
+from types import SimpleNamespace
 from typing import List, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import requests
 from freezegun import freeze_time
 
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
     JiraBasicAuthError,
     JiraCreateIssueError,
+    JiraGetAccessTokenError,
     JiraGetAvailableIssueTypesError,
     JiraGetCloudIDError,
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraNoProjectsError,
     JiraRefreshTokenError,
+    JiraRefreshTokenResponseError,
     JiraRequiredCustomFieldsError,
     JiraTestConnectionError,
 )
-from prowler.lib.outputs.jira.jira import Jira
+from prowler.lib.outputs.jira.jira import Jira, MarkdownToADFConverter
+from prowler.lib.outputs.jira.models import (
+    JiraCreationOutcome,
+    JiraCreationResult,
+    JiraIssueLookupOutcome,
+    JiraIssueReference,
+    JiraIssueSearchMatch,
+    JiraIssueSearchOutcome,
+    JiraIssueSearchResult,
+    JiraIssueStatusResult,
+)
 
 TEST_DATETIME = "2023-01-01T12:01:01+00:00"
+
+
+class TestMarkdownToADFConverter:
+    def setup_method(self):
+        self.converter = MarkdownToADFConverter()
+
+    def test_inline_code_nested_in_strong_has_only_code_mark(self):
+        result = self.converter.convert("**before `code` after**")
+
+        assert result[0]["content"] == [
+            {"type": "text", "text": "before ", "marks": [{"type": "strong"}]},
+            {"type": "text", "text": "code", "marks": [{"type": "code"}]},
+            {"type": "text", "text": " after", "marks": [{"type": "strong"}]},
+        ]
+
+    def test_inline_code_nested_in_emphasis_has_only_code_mark(self):
+        result = self.converter.convert("*before `code` after*")
+
+        assert result[0]["content"] == [
+            {"type": "text", "text": "before ", "marks": [{"type": "em"}]},
+            {"type": "text", "text": "code", "marks": [{"type": "code"}]},
+            {"type": "text", "text": " after", "marks": [{"type": "em"}]},
+        ]
+
+    def test_inline_code_in_link_preserves_link_and_code_marks(self):
+        result = self.converter.convert("[`code`](https://example.com)")
+
+        assert result[0]["content"][0]["marks"] == [
+            {"type": "link", "attrs": {"href": "https://example.com"}},
+            {"type": "code"},
+        ]
+
+    def test_inline_code_in_emphasized_link_preserves_link_and_code_marks(self):
+        result = self.converter.convert("*[`code`](https://example.com)*")
+
+        assert result[0]["content"][0]["marks"] == [
+            {"type": "link", "attrs": {"href": "https://example.com"}},
+            {"type": "code"},
+        ]
+
+    def test_standalone_inline_code_has_code_mark(self):
+        result = self.converter.convert("`code`")
+
+        assert result[0]["content"][0]["marks"] == [{"type": "code"}]
+
+
+@pytest.mark.parametrize("missing_field", ["issue_key", "issue_id", "issue_url"])
+def test_confirmed_creation_requires_complete_identity(missing_field):
+    identity = {
+        "issue_key": "SEC-1",
+        "issue_id": "10001",
+        "issue_url": "https://example.atlassian.net/browse/SEC-1",
+    }
+    identity[missing_field] = None
+
+    with pytest.raises(ValueError, match="requires an issue key, ID, and URL"):
+        JiraCreationResult(JiraCreationOutcome.CONFIRMED_SUCCESS, **identity)
+
+
+@pytest.mark.parametrize(
+    ("instance", "field"),
+    [
+        (JiraCreationResult(JiraCreationOutcome.UNCERTAIN), "error_code"),
+        (JiraIssueReference("10001", "SEC-1"), "issue_key"),
+        (
+            JiraIssueStatusResult(
+                JiraIssueReference("10001", "SEC-1"), JiraIssueLookupOutcome.OPEN
+            ),
+            "status",
+        ),
+        (JiraIssueSearchMatch("10001", "SEC-1", "https://example"), "issue_key"),
+        (JiraIssueSearchResult(JiraIssueSearchOutcome.SUCCESS), "matches"),
+    ],
+)
+def test_jira_result_models_are_immutable(instance, field):
+    with pytest.raises(FrozenInstanceError):
+        setattr(instance, field, None)
+
+
+@pytest.mark.parametrize(
+    ("enum", "values"),
+    [
+        (
+            JiraCreationOutcome,
+            {
+                "confirmed_success",
+                "confirmed_rejection",
+                "retryable_failure",
+                "uncertain",
+            },
+        ),
+        (
+            JiraIssueLookupOutcome,
+            {"open", "done", "moved", "missing", "forbidden", "unknown"},
+        ),
+        (JiraIssueSearchOutcome, {"success", "retryable_failure", "unknown"}),
+    ],
+)
+def test_jira_outcome_values_are_stable(enum, values):
+    assert {outcome.value for outcome in enum} == values
 
 
 class TestJiraIntegration:
@@ -53,13 +173,59 @@ class TestJiraIntegration:
 
         self.user_mail = "test_user_mail"
         self.api_token = "test_api_token"
-        self.domain = "test_domain"
+        self.domain = "test-domain"
 
         self.jira_integration_basic_auth = Jira(
             user_mail=self.user_mail,
             api_token=self.api_token,
             domain=self.domain,
         )
+
+    @pytest.fixture
+    def jira_response(self):
+        def build(status_code=200, payload=None, headers=None, json_error=None):
+            response = MagicMock(status_code=status_code, headers=headers or {})
+            if json_error:
+                response.json.side_effect = json_error
+            else:
+                response.json.return_value = payload
+            return response
+
+        return build
+
+    @pytest.fixture
+    def jira_issue(self):
+        def build(issue_id, key, status=None, category=None):
+            status_data = None
+            if status is not None:
+                status_data = {"name": status, "statusCategory": {"key": category}}
+            return {"id": issue_id, "key": key, "fields": {"status": status_data}}
+
+        return build
+
+    @pytest.fixture
+    def oauth_post(self):
+        with (
+            patch.object(Jira, "get_access_token", return_value="token"),
+            patch.object(
+                Jira, "cloud_id", new_callable=PropertyMock, return_value="cloud"
+            ),
+            patch("prowler.lib.outputs.jira.jira.requests.post") as post,
+        ):
+            yield post
+
+    @pytest.fixture
+    def send_finding_post(self, oauth_post):
+        self.jira_integration._site_url = "https://example.atlassian.net"
+        with (
+            patch.object(Jira, "get_projects", return_value={"TEST": {}}) as projects,
+            patch.object(
+                Jira, "get_available_issue_types", return_value=["Bug"]
+            ) as issue_types,
+        ):
+            yield SimpleNamespace(
+                post=oauth_post, projects=projects, issue_types=issue_types
+            )
 
     @staticmethod
     def _collect_text_from_cell(cell: dict) -> str:
@@ -94,6 +260,41 @@ class TestJiraIntegration:
             if found:
                 return found
         return None
+
+    @staticmethod
+    def _find_link_mark_by_href(nodes: List[dict], href: str) -> Optional[dict]:
+        for node in nodes:
+            if node.get("type") == "text":
+                for mark in node.get("marks", []):
+                    if (
+                        mark.get("type") == "link"
+                        and mark.get("attrs", {}).get("href") == href
+                    ):
+                        return mark
+            found = TestJiraIntegration._find_link_mark_by_href(
+                node.get("content", []), href
+            )
+            if found:
+                return found
+        return None
+
+    @staticmethod
+    def _collect_link_texts_by_href(nodes: List[dict], href: str) -> List[str]:
+        link_texts: List[str] = []
+
+        for node in nodes:
+            if node.get("type") == "text" and any(
+                mark.get("type") == "link" and mark.get("attrs", {}).get("href") == href
+                for mark in node.get("marks", [])
+            ):
+                link_texts.append(node.get("text", ""))
+            link_texts.extend(
+                TestJiraIntegration._collect_link_texts_by_href(
+                    node.get("content", []), href
+                )
+            )
+
+        return link_texts
 
     @staticmethod
     def _find_table_row(rows: List[dict], header: str) -> dict:
@@ -256,6 +457,36 @@ class TestJiraIntegration:
         assert access_token == "new_access_token"
         mock_refresh_access_token.assert_called_once()
 
+    def test_get_access_token_concurrent_refresh_happens_once(self):
+        self.jira_integration.auth_expiration = (
+            datetime.now() - timedelta(seconds=1)
+        ).isoformat()
+        refresh_calls = []
+        # All 5 pass the expiry check together, so without a lock every one of
+        # them would refresh.
+        barrier = Barrier(5, timeout=5)
+
+        def fake_refresh():
+            refresh_calls.append(1)
+            # Keep the token expired while the other threads check it.
+            sleep(0.2)
+            self.jira_integration._access_token = "refreshed_token"
+            self.jira_integration.auth_expiration = (
+                datetime.now() + timedelta(hours=1)
+            ).isoformat()
+            return "refreshed_token"
+
+        def get_token(_):
+            barrier.wait()
+            return self.jira_integration.get_access_token()
+
+        with patch.object(Jira, "refresh_access_token", side_effect=fake_refresh):
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                tokens = list(executor.map(get_token, range(5)))
+
+        assert tokens == ["refreshed_token"] * 5
+        assert len(refresh_calls) == 1
+
     @freeze_time(TEST_DATETIME)
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
@@ -382,6 +613,35 @@ class TestJiraIntegration:
         self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
 
         assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @pytest.mark.parametrize(
+        "domain",
+        (
+            "169.254.169.254#",
+            "internal/service",
+            "internal?target",
+            "internal\\target",
+            "internal:8000",
+            "user@internal",
+        ),
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_rejects_invalid_domain(self, mock_get, domain):
+        with pytest.raises(JiraGetCloudIDError):
+            self.jira_integration_basic_auth.get_cloud_id(domain=domain)
+
+        mock_get.assert_not_called()
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_disables_redirects(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"cloudId": "test_cloud_id"}
+        mock_get.return_value = mock_response
+
+        self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
+
+        assert mock_get.call_args.kwargs["allow_redirects"] is False
 
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_refresh_access_token_sends_timeout(self, mock_post):
@@ -522,6 +782,77 @@ class TestJiraIntegration:
                 api_token=self.api_token,
                 domain=self.domain,
             )
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
+    )
+    def test_test_connection_partial_issue_types_failure(
+        self, mock_get_projects, mock_get_auth, caplog
+    ):
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+        caplog.set_level(WARNING)
+
+        def fake_issue_types(project_key):
+            if project_key == "PROJ2":
+                raise JiraGetAvailableIssueTypesError("no create permission")
+            return ["Task"]
+
+        with patch.object(
+            Jira, "get_available_issue_types", side_effect=fake_issue_types
+        ):
+            connection = Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        assert connection.is_connected
+        assert connection.error is None
+        assert connection.issue_types == {"PROJ1": ["Task"]}
+        assert any(
+            record.levelno == WARNING
+            and "Failed to get issue types for project PROJ2" in record.message
+            for record in caplog.records
+        )
+        assert not any(record.levelno >= ERROR for record in caplog.records)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={f"PROJ{i}": f"Project {i}" for i in range(5)},
+    )
+    def test_test_connection_fetches_issue_types_concurrently(
+        self, mock_get_projects, mock_get_auth
+    ):
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+
+        # Every call blocks until all 5 arrive; a sequential fetch would time out
+        # at the barrier and surface as a per-project failure instead of a result.
+        barrier = Barrier(5, timeout=5)
+
+        def fake_issue_types(project_key):
+            barrier.wait()
+            return [project_key]
+
+        with patch.object(
+            Jira, "get_available_issue_types", side_effect=fake_issue_types
+        ):
+            connection = Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        assert connection.is_connected
+        assert connection.issue_types == {f"PROJ{i}": [f"PROJ{i}"] for i in range(5)}
 
     @patch.object(Jira, "get_auth", return_value=None)
     @patch.object(
@@ -702,6 +1033,20 @@ class TestJiraIntegration:
         with pytest.raises(JiraRefreshTokenError):
             self.jira_integration.get_projects()
 
+    @pytest.mark.parametrize(
+        ("method_name", "args", "error"),
+        [
+            ("get_projects", (), JiraGetProjectsError),
+            ("get_available_issue_types", ("TEST",), JiraGetAvailableIssueTypesError),
+        ],
+    )
+    @patch.object(Jira, "get_access_token", return_value=None)
+    def test_catalog_methods_raise_without_access_token(
+        self, mock_get_access_token, method_name, args, error
+    ):
+        with pytest.raises(error):
+            getattr(self.jira_integration, method_name)(*args)
+
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
         Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
@@ -757,6 +1102,76 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraGetAvailableIssueTypesError):
             self.jira_integration.get_available_issue_types(project_key="TEST")
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_available_issue_types_no_projects_does_not_log(
+        self, mock_get, mock_cloud_id, mock_get_access_token, caplog
+    ):
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        caplog.set_level(WARNING)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetAvailableIssueTypesError):
+            self.jira_integration.get_available_issue_types(project_key="TEST")
+
+        assert not any(record.levelno >= WARNING for record in caplog.records)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"TEST": "Test Project"},
+    )
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_test_connection_empty_issue_types_logs_one_warning(
+        self,
+        mock_get,
+        mock_cloud_id,
+        mock_get_access_token,
+        mock_get_projects,
+        mock_get_auth,
+        caplog,
+    ):
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+        caplog.set_level(WARNING)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        connection = Jira.test_connection(
+            redirect_uri=self.redirect_uri,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+        )
+
+        warnings = [
+            record
+            for record in caplog.records
+            if record.levelno == WARNING and "project TEST" in record.message
+        ]
+        assert connection.is_connected
+        assert len(warnings) == 1
+        assert not any(record.levelno >= ERROR for record in caplog.records)
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -845,6 +1260,7 @@ class TestJiraIntegration:
         finding.compliance = {"CIS": ["2.1.1", "2.1.2"], "NIST": ["AC-3", "AC-6"]}
 
         self.jira_integration.cloud_id = "valid_cloud_id"
+        self.jira_integration._site_url = "https://example.atlassian.net"
 
         self.jira_integration.send_findings(
             findings=[finding],
@@ -886,6 +1302,12 @@ class TestJiraIntegration:
         intro_text = intro_paragraph["content"][0]
         assert intro_text["type"] == "text"
         assert intro_text["text"] == "Prowler has discovered the following finding:"
+        assert all(
+            self._collect_text_from_cell({"content": node.get("content", [])})
+            != "Summary"
+            for node in description_content
+            if node.get("type") == "heading"
+        )
 
         table = description_content[1]
         assert table["type"] == "table"
@@ -1168,6 +1590,218 @@ class TestJiraIntegration:
         row = self._find_table_row(table["content"], header)
         value_cell = row["content"][1]
         assert self._collect_text_from_cell(value_cell) == "-"
+
+    def test_get_grouped_adf_description_uses_capped_finding_group_link_copy(self):
+        finding_group_url = (
+            "https://security.example.com/findings?"
+            "filter%5Bcheck_id%5D=admincenter_users_admins_reduced_license_footprint&"
+            "expandedCheckId=admincenter_users_admins_reduced_license_footprint"
+        )
+        finding_group_link_text = "View the remaining grouped findings."
+        recommendation_url = (
+            "https://hub.prowler.com/check/"
+            "admincenter_users_admins_reduced_license_footprint"
+        )
+        adf_description = self.jira_integration.get_grouped_adf_description(
+            check_id="admincenter_users_admins_reduced_license_footprint",
+            check_title="Administrative user has no license or an allowed license",
+            check_description="Administrative users are assigned productivity licenses.",
+            severity="HIGH",
+            status="FAIL",
+            provider="m365",
+            service="exchange",
+            affected_failing_resources=123,
+            last_seen="Jul 09, 2026 11:38AM UTC",
+            failing_for="< 1 day",
+            grouped_resources=[
+                {
+                    "resource_name": "rich@prowler.com",
+                    "resource_uid": "3f9a216b-b66b-4d5d-a812-2ad538732cfb",
+                    "provider": "m365",
+                    "service": "exchange",
+                    "provider_account": "ProwlerPro.onmicrosoft.com",
+                    "status": "FAIL",
+                    "severity": "high",
+                    "region": "global",
+                    "last_seen": "Jul 09, 2026 11:38AM UTC",
+                    "failing_for": "< 1 day",
+                    "triage": "Open",
+                }
+            ],
+            resources_total=123,
+            resources_shown=100,
+            finding_group_url=finding_group_url,
+            finding_group_link_text=finding_group_link_text,
+            risk="Productivity licenses on privileged identities create risk.",
+            recommendation_text="Maintain dedicated admin accounts.",
+            recommendation_url=recommendation_url,
+        )
+
+        assert adf_description["type"] == "doc"
+        assert self._find_empty_text_nodes(adf_description) == []
+
+        main_table = adf_description["content"][1]
+        main_rows = {}
+        for row in main_table["content"]:
+            key_cell, value_cell = row["content"]
+            main_rows[self._collect_text_from_cell(key_cell)] = (
+                self._collect_text_from_cell(value_cell)
+            )
+
+        assert (
+            main_rows["Check Id"]
+            == "admincenter_users_admins_reduced_license_footprint"
+        )
+        assert main_rows["Service"] == "exchange"
+        assert main_rows["Affected Failing Resources"] == "123"
+        assert (
+            main_rows["Risk"]
+            == "Productivity licenses on privileged identities create risk."
+        )
+        assert main_rows["Recommendation"] == (
+            "Maintain dedicated admin accounts. " + recommendation_url
+        )
+        assert "Finding Group Link" not in main_rows
+        assert "Region" not in main_rows
+
+        top_level_headings = [
+            self._collect_text_from_cell({"content": node.get("content", [])})
+            for node in adf_description["content"]
+            if node.get("type") == "heading"
+        ]
+        assert "Risk" not in top_level_headings
+        assert "Recommendation" not in top_level_headings
+        assert "Summary" not in top_level_headings
+
+        def text_marks(cell: dict) -> list[dict]:
+            return cell["content"][0]["content"][0]["marks"]
+
+        severity_marks = text_marks(
+            self._find_table_row(main_table["content"], "Severity")["content"][1]
+        )
+        status_marks = text_marks(
+            self._find_table_row(main_table["content"], "Status")["content"][1]
+        )
+        assert {
+            "type": "backgroundColor",
+            "attrs": {"color": "#FFA500"},
+        } in severity_marks
+        assert {"type": "textColor", "attrs": {"color": "#FF0000"}} in status_marks
+
+        resource_table = next(
+            node
+            for node in adf_description["content"]
+            if node.get("type") == "table"
+            and self._collect_text_from_cell(node["content"][0]["content"][0])
+            == "Resource"
+        )
+        resource_cells = resource_table["content"][1]["content"]
+        assert {"type": "textColor", "attrs": {"color": "#FF0000"}} in text_marks(
+            resource_cells[5]
+        )
+        assert {
+            "type": "backgroundColor",
+            "attrs": {"color": "#FFA500"},
+        } in text_marks(resource_cells[6])
+
+        document_text = self._collect_text_from_cell(
+            {"content": adf_description["content"]}
+        )
+        assert (
+            "Administrative users are assigned productivity licenses."
+            not in document_text
+        )
+        assert "Affected failing resources" in document_text
+        capped_link_copy = (
+            f"Showing 100 of 123 Findings in this Jira issue. {finding_group_link_text}"
+        )
+        assert document_text.count(capped_link_copy) == 1
+        assert "Finding Group Link" not in document_text
+        assert recommendation_url in document_text
+        recommendation_link_mark = self._find_link_mark_by_href(
+            adf_description["content"], recommendation_url
+        )
+        assert recommendation_link_mark is not None
+        link_mark = self._find_link_mark_by_href(
+            adf_description["content"], finding_group_url
+        )
+        assert link_mark is not None
+        assert link_mark["attrs"]["href"] == finding_group_url
+        assert self._collect_link_texts_by_href(
+            adf_description["content"], finding_group_url
+        ) == [finding_group_link_text]
+        assert (
+            len(
+                self._collect_link_texts_by_href(
+                    adf_description["content"], finding_group_url
+                )
+            )
+            == 1
+        )
+        assert "filter%5Bcheck_id%5D=" in link_mark["attrs"]["href"]
+        assert "expandedCheckId=" in link_mark["attrs"]["href"]
+
+    def test_get_grouped_adf_description_includes_link_when_not_capped(self):
+        finding_group_url = (
+            "https://security.example.com/findings?"
+            "filter%5Bcheck_id%5D=s3_bucket_public_access&"
+            "expandedCheckId=s3_bucket_public_access"
+        )
+        finding_group_link_text = "View this grouped finding."
+        adf_description = self.jira_integration.get_grouped_adf_description(
+            check_id="s3_bucket_public_access",
+            check_title="S3 bucket public access",
+            severity="HIGH",
+            status="FAIL",
+            provider="aws",
+            service="s3",
+            affected_failing_resources=1,
+            grouped_resources=[
+                {
+                    "resource_name": "bucket-a",
+                    "resource_uid": "arn:aws:s3:::bucket-a",
+                    "provider": "aws",
+                    "service": "s3",
+                    "provider_account": "production (123456789012)",
+                    "status": "FAIL",
+                    "severity": "high",
+                    "region": "us-east-1",
+                    "last_seen": "Jul 09, 2026 11:38AM UTC",
+                    "failing_for": "< 1 day",
+                    "triage": "Open",
+                }
+            ],
+            resources_total=1,
+            resources_shown=1,
+            finding_group_url=finding_group_url,
+            finding_group_link_text=finding_group_link_text,
+        )
+
+        document_text = self._collect_text_from_cell(
+            {"content": adf_description["content"]}
+        )
+        assert "Showing 1 of 1 Findings." not in document_text
+        assert "remaining Findings" not in document_text
+        assert document_text.count(finding_group_link_text) == 1
+        assert "Finding Group Link" not in document_text
+        main_table = adf_description["content"][1]
+        main_row_headers = [
+            self._collect_text_from_cell(row["content"][0])
+            for row in main_table["content"]
+        ]
+        assert "Finding Group Link" not in main_row_headers
+        link_mark = self._find_link_mark_by_href(
+            adf_description["content"], finding_group_url
+        )
+        assert link_mark is not None
+        assert link_mark["attrs"]["href"] == finding_group_url
+        assert self._collect_link_texts_by_href(
+            adf_description["content"], finding_group_url
+        ) == [finding_group_link_text]
+        assert (
+            "filter%5Bcheck_id%5D=s3_bucket_public_access" in link_mark["attrs"]["href"]
+        )
+        assert "expandedCheckId=s3_bucket_public_access" in link_mark["attrs"]["href"]
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1652,18 +2286,17 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns True when the finding is sent successfully."""
+        """Test that send_finding returns a confirmed typed result."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
         mock_get_projects = mock_get_projects
         mock_get_issue_types = mock_get_issue_types
 
-        # Mock successful response
-        mock_response = MagicMock()
-        mock_response.status_code = 201
-        mock_response.json.return_value = {"id": "ISSUE-123", "key": "TEST-123"}
+        mock_response = MagicMock(status_code=201, headers={})
+        mock_response.json.return_value = {"id": "10001", "key": "TEST-123"}
         mock_post.return_value = mock_response
+        self.jira_integration._site_url = "https://example.atlassian.net"
 
         result = self.jira_integration.send_finding(
             check_id="test-check",
@@ -1674,8 +2307,789 @@ class TestJiraIntegration:
             issue_type="Bug",
         )
 
-        assert result is True
+        assert result.outcome == JiraCreationOutcome.CONFIRMED_SUCCESS
+        assert result.issue_key == "TEST-123"
+        assert result.issue_id == "10001"
+        assert result.issue_url == "https://example.atlassian.net/browse/TEST-123"
+        assert result.is_confirmed_success is True
+        assert bool(result) is True
         mock_post.assert_called_once()
+
+    @pytest.mark.parametrize(
+        ("payload", "json_error", "site_url", "error_code"),
+        [
+            (
+                None,
+                ValueError("invalid JSON"),
+                "https://example",
+                "malformed_success_response",
+            ),
+            ({"id": "10001"}, None, "https://example", "incomplete_success_response"),
+            ({"key": "TEST-1"}, None, "https://example", "incomplete_success_response"),
+            (
+                {"id": "10001", "key": "invalid key"},
+                None,
+                "https://example",
+                "incomplete_success_response",
+            ),
+            (
+                {"id": "not-an-id", "key": "TEST-1"},
+                None,
+                "https://example",
+                "incomplete_success_response",
+            ),
+            (
+                {"id": "10001", "key": "TEST-1"},
+                None,
+                None,
+                "incomplete_success_response",
+            ),
+        ],
+    )
+    def test_send_finding_invalid_201_is_uncertain(
+        self,
+        send_finding_post,
+        jira_response,
+        payload,
+        json_error,
+        site_url,
+        error_code,
+    ):
+        self.jira_integration._site_url = site_url
+        send_finding_post.post.return_value = jira_response(
+            201, payload, json_error=json_error
+        )
+        result = self.jira_integration.send_finding(
+            project_key="TEST", issue_type="Bug", delivery_attempt_marker="attempt-123"
+        )
+
+        assert result.outcome == JiraCreationOutcome.UNCERTAIN
+        assert result.error_code == error_code
+        assert result.delivery_marker == "attempt-123"
+        assert result.http_status == 201
+        assert bool(result) is False
+        if site_url is None:
+            assert (result.issue_id, result.issue_key, result.issue_url) == (
+                "10001",
+                "TEST-1",
+                None,
+            )
+
+    @pytest.mark.parametrize(
+        ("status_code", "outcome", "retry_after"),
+        [
+            (401, JiraCreationOutcome.CONFIRMED_REJECTION, None),
+            (403, JiraCreationOutcome.CONFIRMED_REJECTION, None),
+            (408, JiraCreationOutcome.UNCERTAIN, None),
+            (429, JiraCreationOutcome.RETRYABLE_FAILURE, "17"),
+        ],
+    )
+    def test_send_finding_classifies_http_failures(
+        self, send_finding_post, jira_response, status_code, outcome, retry_after
+    ):
+        send_finding_post.post.return_value = jira_response(
+            status_code,
+            {"errorMessages": ["Jira error"]},
+            {"Retry-After": retry_after} if retry_after else None,
+        )
+        result = self.jira_integration.send_finding(
+            project_key="TEST", issue_type="Bug"
+        )
+
+        assert result.outcome == outcome
+        assert result.http_status == status_code
+        assert result.retry_after == retry_after
+
+    @pytest.mark.parametrize(
+        "transport_error, expected_outcome",
+        [
+            (
+                requests.exceptions.ConnectTimeout(),
+                JiraCreationOutcome.RETRYABLE_FAILURE,
+            ),
+            (requests.exceptions.ReadTimeout(), JiraCreationOutcome.UNCERTAIN),
+            (requests.exceptions.ConnectionError(), JiraCreationOutcome.UNCERTAIN),
+        ],
+    )
+    def test_send_finding_classifies_transport_failures(
+        self, send_finding_post, transport_error, expected_outcome
+    ):
+        send_finding_post.post.side_effect = transport_error
+        result = self.jira_integration.send_finding(
+            project_key="TEST",
+            issue_type="Bug",
+            delivery_attempt_marker="stable-marker",
+        )
+
+        assert result.outcome == expected_outcome
+        assert result.delivery_marker == "stable-marker"
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_returns_issue_url_with_basic_auth(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding builds the browse URL from the basic auth site name."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock(status_code=201, headers={})
+        mock_response.json.return_value = {"id": "10001", "key": "TEST-7"}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration_basic_auth.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result.outcome == JiraCreationOutcome.CONFIRMED_SUCCESS
+        assert result.issue_key == "TEST-7"
+        assert result.issue_id == "10001"
+        assert result.issue_url == "https://test-domain.atlassian.net/browse/TEST-7"
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_sanitizes_issue_labels(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that labels are sanitized, deduplicated and empties dropped before sending."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock(status_code=201, headers={})
+        mock_response.json.return_value = {"id": "10001", "key": "TEST-123"}
+        mock_post.return_value = mock_response
+
+        self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+            issue_labels=[
+                "prowler",
+                "prowler-finding-arn:aws:s3:::my bucket/with space",
+                "prowler",
+                "",
+                "   ",
+            ],
+        )
+
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["fields"]["labels"] == [
+            "prowler",
+            "prowler-finding-arn:aws:s3:::my_bucket/with_space",
+        ]
+
+    def test_send_finding_reuses_marker_and_caches_valid_destinations(
+        self, send_finding_post, jira_response
+    ):
+        """Test retries keep one marker and catalogs are cached per destination."""
+        responses = [
+            jira_response(
+                201,
+                {
+                    "id": str(10001 + index),
+                    "key": f"TEST-{index + 1}",
+                },
+            )
+            for index in range(3)
+        ]
+        send_finding_post.projects.return_value = {"TEST": {}, "OPS": {}}
+        send_finding_post.issue_types.side_effect = [["Bug"], ["Task"]]
+        send_finding_post.post.side_effect = responses
+
+        for _ in range(2):
+            self.jira_integration.send_finding(
+                project_key="TEST",
+                issue_type="Bug",
+                delivery_attempt_marker="marker 123",
+            )
+        self.jira_integration.send_finding(
+            project_key="OPS",
+            issue_type="Task",
+            delivery_attempt_marker="marker 123",
+        )
+
+        assert send_finding_post.projects.call_count == 2
+        assert send_finding_post.issue_types.call_count == 2
+        labels = [
+            call.kwargs["json"]["fields"]["labels"]
+            for call in send_finding_post.post.call_args_list
+        ]
+        assert labels == [["prowler-attempt-marker_123"]] * 3
+
+    @pytest.mark.parametrize(
+        "projects, issue_types, expected_code",
+        [
+            ({}, ["Bug"], "invalid_project"),
+            ({"TEST": {}}, [], "invalid_issue_type"),
+            (JiraNoProjectsError(message="No projects"), ["Bug"], "invalid_project"),
+        ],
+    )
+    def test_send_finding_invalid_destination_is_confirmed_rejection(
+        self, send_finding_post, projects, issue_types, expected_code
+    ):
+        if isinstance(projects, Exception):
+            send_finding_post.projects.side_effect = projects
+        else:
+            send_finding_post.projects.return_value = projects
+        send_finding_post.issue_types.return_value = issue_types
+        result = self.jira_integration.send_finding(
+            project_key="TEST", issue_type="Bug"
+        )
+
+        assert result.outcome == JiraCreationOutcome.CONFIRMED_REJECTION
+        assert result.error_code == expected_code
+        send_finding_post.post.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("failure_stage", "status_code", "outcome", "error_code", "retry_after"),
+        [
+            (
+                "projects",
+                403,
+                JiraCreationOutcome.CONFIRMED_REJECTION,
+                "invalid_credentials",
+                None,
+            ),
+            (
+                "issue_types",
+                403,
+                JiraCreationOutcome.CONFIRMED_REJECTION,
+                "invalid_credentials",
+                None,
+            ),
+            (
+                "projects",
+                429,
+                JiraCreationOutcome.RETRYABLE_FAILURE,
+                "destination_temporarily_unavailable",
+                "23",
+            ),
+        ],
+    )
+    def test_send_finding_classifies_catalog_failures(
+        self,
+        oauth_post,
+        jira_response,
+        failure_stage,
+        status_code,
+        outcome,
+        error_code,
+        retry_after,
+    ):
+        failure = jira_response(
+            status_code, headers={"Retry-After": retry_after} if retry_after else None
+        )
+        failure.text = "unsafe response body"
+        responses = [failure]
+        if failure_stage == "issue_types":
+            projects = jira_response(200, [{"key": "TEST", "name": "Test"}])
+            responses = [projects, failure]
+
+        with patch("prowler.lib.outputs.jira.jira.requests.get", side_effect=responses):
+            result = self.jira_integration.send_finding(
+                project_key="TEST", issue_type="Bug"
+            )
+
+        assert result.outcome == outcome
+        assert result.http_status == status_code
+        assert result.error_code == error_code
+        assert result.retry_after == retry_after
+        assert "unsafe response body" not in result.error_message
+        oauth_post.assert_not_called()
+
+    def test_sanitize_label(self):
+        """Test the deterministic Jira label sanitizer."""
+        assert Jira.sanitize_label("") == ""
+        assert Jira.sanitize_label(None) == ""
+        assert Jira.sanitize_label("   ") == ""
+        assert Jira.sanitize_label("simple") == "simple"
+        assert Jira.sanitize_label("with space") == "with_space"
+        assert Jira.sanitize_label("  many   spaces \t tabs\nnewline ") == (
+            "many_spaces_tabs_newline"
+        )
+        assert Jira.sanitize_label("ctrl\x00char\x07here") == "ctrlcharhere"
+        assert Jira.sanitize_label("__ Keep__CASE  Here __") == "Keep_CASE_Here"
+        assert Jira.sanitize_label("arn:aws:iam::123456789012:role/Admin") == (
+            "arn:aws:iam::123456789012:role/Admin"
+        )
+        long_label = "x" * 300
+        assert Jira.sanitize_label(long_label) == "x" * 255
+        # Idempotent: sanitizing an already sanitized value is a no-op
+        once = Jira.sanitize_label("a b\tc")
+        assert Jira.sanitize_label(once) == once
+
+    def test_prefixed_labels_are_length_safe_and_collision_resistant(self):
+        """Test finding and attempt labels preserve identity at Jira's limit."""
+        assert Jira.build_finding_label("") == ""
+        assert Jira.build_delivery_attempt_label(None) == ""
+        finding_prefix = f"{Jira.FINDING_LABEL_PREFIX}-"
+        exact_uid = "A" * (Jira.LABEL_MAX_LENGTH - len(finding_prefix))
+        assert Jira.build_finding_label(exact_uid) == f"{finding_prefix}{exact_uid}"
+
+        long_prefix = "A" * 400
+        first_uid = f"{long_prefix}-first"
+        second_uid = f"{long_prefix}-second"
+        first_label = Jira.build_finding_label(first_uid)
+        second_label = Jira.build_finding_label(second_uid)
+
+        assert len(first_label) == Jira.LABEL_MAX_LENGTH
+        assert len(second_label) == Jira.LABEL_MAX_LENGTH
+        assert first_label.endswith(hashlib.sha256(first_uid.encode()).hexdigest())
+        assert second_label.endswith(hashlib.sha256(second_uid.encode()).hexdigest())
+        assert first_label != second_label
+        assert Jira.build_delivery_attempt_label("Attempt  CASE") == (
+            "prowler-attempt-Attempt_CASE"
+        )
+        long_attempt_label = Jira.build_delivery_attempt_label(first_uid)
+        assert len(long_attempt_label) == Jira.LABEL_MAX_LENGTH
+        assert long_attempt_label.endswith(
+            hashlib.sha256(first_uid.encode()).hexdigest()
+        )
+
+    def test_sanitize_labels(self):
+        """Test list sanitization keeps order, drops empties and duplicates."""
+        assert Jira.sanitize_labels(None) == []
+        assert Jira.sanitize_labels([]) == []
+        assert Jira.sanitize_labels(["b", "a b", "b", "", "a_b"]) == ["b", "a_b"]
+
+    def test_site_url_and_issue_url(self):
+        """Test site_url derivation and browse URL building for both auth modes."""
+        assert (
+            self.jira_integration_basic_auth.site_url
+            == "https://test-domain.atlassian.net"
+        )
+        assert (
+            self.jira_integration_basic_auth.get_issue_url("TEST-1")
+            == "https://test-domain.atlassian.net/browse/TEST-1"
+        )
+        # OAuth: unknown until accessible-resources is fetched
+        assert self.jira_integration.site_url is None
+        assert self.jira_integration.get_issue_url("TEST-1") is None
+        self.jira_integration._site_url = "https://oauth-site.atlassian.net/"
+        assert (
+            self.jira_integration.get_issue_url("TEST-1")
+            == "https://oauth-site.atlassian.net/browse/TEST-1"
+        )
+        assert self.jira_integration.get_issue_url("") is None
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status(self, mock_post, mock_cloud_id, mock_get_access_token):
+        """Test bulk status lookup returns explicit outcomes in input order."""
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_response = MagicMock(status_code=200, headers={})
+        mock_response.json.return_value = {
+            "issues": [
+                {
+                    "id": "10001",
+                    "key": "SEC-1",
+                    "fields": {
+                        "status": {
+                            "name": "Resolved by policy",
+                            "statusCategory": {"key": "done"},
+                        }
+                    },
+                },
+                {
+                    "id": "10002",
+                    "key": "SEC-2",
+                    "fields": {
+                        "status": {
+                            "name": "In Progress",
+                            "statusCategory": {"key": "indeterminate"},
+                        }
+                    },
+                },
+            ],
+            "issueErrors": [{"id": "10003", "statusCode": 404}],
+        }
+        mock_post.return_value = mock_response
+
+        references = [
+            JiraIssueReference("10001", "SEC-1"),
+            JiraIssueReference("10002", "SEC-2"),
+            JiraIssueReference("10003", "SEC-3"),
+            JiraIssueReference("10001", "SEC-1"),
+        ]
+        result = self.jira_integration.get_issues_status(references)
+
+        assert [item.reference for item in result] == references[:3]
+        assert [item.outcome for item in result] == [
+            JiraIssueLookupOutcome.DONE,
+            JiraIssueLookupOutcome.OPEN,
+            JiraIssueLookupOutcome.MISSING,
+        ]
+        assert result[0].status == "Resolved by policy"
+        assert result[1].status_category == "indeterminate"
+        assert result[2].http_status == 404
+        mock_post.assert_called_once()
+        assert mock_post.call_args.args[0].endswith("/rest/api/3/issue/bulkfetch")
+        assert mock_post.call_args.kwargs["json"] == {
+            "issueIdsOrKeys": ["10001", "10002", "10003"],
+            "fields": ["status"],
+        }
+
+    def test_get_issues_status_moved_precedes_status_and_parses_mixed_errors(
+        self, oauth_post, jira_response, jira_issue
+    ):
+        self.jira_integration._site_url = "https://example.atlassian.net"
+        oauth_post.return_value = jira_response(
+            200,
+            {
+                "issues": [
+                    jira_issue("10001", "OPS-9", "Custom completion", "done"),
+                    jira_issue("10004", "SEC-4"),
+                    jira_issue("10006", "SEC-6", "Custom", "unclassified"),
+                ],
+                "issueErrors": [
+                    {"issueIdOrKey": "10002", "errorCode": 403},
+                    {"issueId": "10003", "status": 404},
+                ],
+            },
+        )
+        references = [
+            JiraIssueReference("10001", "SEC-1"),
+            JiraIssueReference("10002", "SEC-2"),
+            JiraIssueReference("10003", "SEC-3"),
+            JiraIssueReference("10004", "SEC-4"),
+            JiraIssueReference("10005", "SEC-5"),
+            JiraIssueReference("10006", "SEC-6"),
+        ]
+
+        results = self.jira_integration.get_issues_status(references)
+
+        assert [result.outcome for result in results] == [
+            JiraIssueLookupOutcome.MOVED,
+            JiraIssueLookupOutcome.FORBIDDEN,
+            JiraIssueLookupOutcome.MISSING,
+            JiraIssueLookupOutcome.UNKNOWN,
+            JiraIssueLookupOutcome.UNKNOWN,
+            JiraIssueLookupOutcome.UNKNOWN,
+        ]
+        assert results[0].current_issue_key == "OPS-9"
+        assert results[0].current_issue_url.endswith("/browse/OPS-9")
+        assert results[0].status == "Custom completion"
+        assert results[3].error_code == "malformed_issue"
+        assert results[4].error_code == "omitted_issue"
+        assert results[5].error_code == "malformed_issue"
+
+    def test_get_issues_status_malformed_batch_is_unknown(
+        self, oauth_post, jira_response
+    ):
+        oauth_post.return_value = jira_response(200, {"issues": "invalid"})
+        reference = JiraIssueReference("10001", "SEC-1")
+
+        result = self.jira_integration.get_issues_status([reference])[0]
+
+        assert result.outcome == JiraIssueLookupOutcome.UNKNOWN
+        assert result.error_code == "malformed_response"
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_batches_requests(
+        self, mock_post, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that more than ISSUE_STATUS_BATCH_SIZE keys are fetched in batches."""
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_response = MagicMock(status_code=200, headers={})
+        mock_response.json.return_value = {"issues": []}
+        mock_post.return_value = mock_response
+
+        references = [JiraIssueReference(str(i), f"SEC-{i}") for i in range(1, 251)]
+        results = self.jira_integration.get_issues_status(references)
+        assert len(results) == 250
+        assert all(
+            result.outcome == JiraIssueLookupOutcome.UNKNOWN for result in results
+        )
+        assert mock_post.call_count == 3
+        sizes = [
+            len(call.kwargs["json"]["issueIdsOrKeys"])
+            for call in mock_post.call_args_list
+        ]
+        assert sizes == [100, 100, 50]
+
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_without_keys(self, mock_post):
+        """Test that no request is made when there is nothing to look up."""
+        assert self.jira_integration.get_issues_status([]) == []
+        invalid_references = [
+            JiraIssueReference("1", "SEC-1\n"),
+            JiraIssueReference("2", "SEC-١"),
+            JiraIssueReference("not-an-id", "SEC-3"),
+        ]
+        results = self.jira_integration.get_issues_status(invalid_references)
+        assert [result.outcome for result in results] == [
+            JiraIssueLookupOutcome.UNKNOWN,
+            JiraIssueLookupOutcome.UNKNOWN,
+            JiraIssueLookupOutcome.UNKNOWN,
+        ]
+        assert all(result.error_code == "invalid_reference" for result in results)
+        mock_post.assert_not_called()
+
+    def test_get_issues_status_preserves_success_when_later_batch_fails(
+        self, oauth_post, jira_response, jira_issue
+    ):
+        """Test that a failing later batch does not erase earlier results."""
+        ok = jira_response(
+            200,
+            {"issues": [jira_issue("1", "SEC-1", "Done", "done")]},
+        )
+        failed = jira_response(502, headers={"Retry-After": "12"})
+        oauth_post.side_effect = [ok, failed]
+
+        references = [JiraIssueReference(str(i), f"SEC-{i}") for i in range(1, 102)]
+        results = self.jira_integration.get_issues_status(references)
+        assert results[0].outcome == JiraIssueLookupOutcome.DONE
+        assert all(
+            result.outcome == JiraIssueLookupOutcome.UNKNOWN for result in results[1:]
+        )
+        assert results[-1].http_status == 502
+        assert results[-1].retry_after == "12"
+        assert oauth_post.call_count == 2
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_response_error(
+        self, mock_post, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that a whole-batch error produces unknown without losing input."""
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_response = MagicMock(status_code=403, headers={})
+        mock_response.text = "forbidden"
+        mock_post.return_value = mock_response
+
+        reference = JiraIssueReference("10001", "SEC-1")
+        result = self.jira_integration.get_issues_status([reference])[0]
+        assert result.reference == reference
+        assert result.outcome == JiraIssueLookupOutcome.UNKNOWN
+        assert result.http_status == 403
+
+    @patch.object(Jira, "get_access_token", side_effect=JiraGetAccessTokenError())
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_access_token_error_returns_unknown(
+        self, mock_post, mock_get_access_token
+    ):
+        reference = JiraIssueReference("10001", "SEC-1")
+        result = self.jira_integration.get_issues_status([reference])[0]
+
+        assert result.outcome == JiraIssueLookupOutcome.UNKNOWN
+        assert result.error_code == "authentication_failed"
+        mock_get_access_token.assert_called_once_with()
+        mock_post.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "issues",
+        [
+            [],
+            [{"id": "10001", "key": "SEC-1"}],
+            [
+                {"id": "10001", "key": "SEC-1"},
+                {"id": "10002", "key": "SEC-2"},
+            ],
+        ],
+    )
+    def test_search_issues_by_delivery_attempt_returns_all_matches(
+        self, oauth_post, jira_response, issues
+    ):
+        self.jira_integration._site_url = "https://example.atlassian.net"
+        oauth_post.return_value = jira_response(200, {"issues": issues})
+        result = self.jira_integration.search_issues_by_delivery_attempt("attempt 123")
+
+        assert result.outcome == JiraIssueSearchOutcome.SUCCESS
+        assert [match.issue_id for match in result.matches] == [
+            issue["id"] for issue in issues
+        ]
+        assert all(
+            match.issue_url.endswith(match.issue_key) for match in result.matches
+        )
+        assert oauth_post.call_args.args[0].endswith("/rest/api/3/search/jql")
+        assert oauth_post.call_args.kwargs["json"]["jql"] == (
+            'labels = "prowler-attempt-attempt_123"'
+        )
+
+    @pytest.mark.parametrize(
+        "response_kwargs, side_effect, expected_outcome, expected_code, retry_after",
+        [
+            (
+                {"status_code": 429, "headers": {"Retry-After": "9"}},
+                None,
+                JiraIssueSearchOutcome.RETRYABLE_FAILURE,
+                "jira_http_429",
+                "9",
+            ),
+            (
+                {"json_error": ValueError("invalid JSON")},
+                None,
+                JiraIssueSearchOutcome.UNKNOWN,
+                "malformed_response",
+                None,
+            ),
+            (
+                {},
+                requests.exceptions.ReadTimeout(),
+                JiraIssueSearchOutcome.RETRYABLE_FAILURE,
+                "transport_failure",
+                None,
+            ),
+            (
+                {"payload": {"issues": [], "nextPageToken": "repeated"}},
+                None,
+                JiraIssueSearchOutcome.UNKNOWN,
+                "pagination_stalled",
+                None,
+            ),
+        ],
+    )
+    def test_search_issues_by_delivery_attempt_classifies_failures(
+        self,
+        oauth_post,
+        jira_response,
+        response_kwargs,
+        side_effect,
+        expected_outcome,
+        expected_code,
+        retry_after,
+    ):
+        oauth_post.return_value = jira_response(**response_kwargs)
+        oauth_post.side_effect = side_effect
+        result = self.jira_integration.search_issues_by_delivery_attempt("attempt-123")
+
+        assert result.outcome == expected_outcome
+        assert result.error_code == expected_code
+        assert result.retry_after == retry_after
+
+    @patch.object(Jira, "get_access_token", side_effect=JiraGetAccessTokenError())
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_search_issues_by_delivery_attempt_access_token_error_returns_unknown(
+        self, mock_post, mock_get_access_token
+    ):
+        result = self.jira_integration.search_issues_by_delivery_attempt("attempt-123")
+
+        assert result.outcome == JiraIssueSearchOutcome.UNKNOWN
+        assert result.error_code == "authentication_failed"
+        mock_get_access_token.assert_called_once_with()
+        mock_post.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "issue",
+        [
+            {"id": "not-an-id", "key": "SEC-1"},
+            {"id": "10001", "key": "invalid key"},
+        ],
+    )
+    def test_search_issues_by_delivery_attempt_rejects_invalid_identity(
+        self, oauth_post, jira_response, issue
+    ):
+        self.jira_integration._site_url = "https://example.atlassian.net"
+        oauth_post.return_value = jira_response(200, {"issues": [issue]})
+        result = self.jira_integration.search_issues_by_delivery_attempt("attempt-123")
+
+        assert result.outcome == JiraIssueSearchOutcome.UNKNOWN
+        assert result.error_code == "malformed_issue"
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_captures_site_url(self, mock_get):
+        """Test that the OAuth cloud id lookup records the site URL."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"id": "cloud-1", "url": "https://oauth-site.atlassian.net"}
+        ]
+        mock_get.return_value = mock_response
+
+        assert self.jira_integration.get_cloud_id("token") == "cloud-1"
+        assert self.jira_integration.site_url == "https://oauth-site.atlassian.net"
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_sanitizes_summary_control_characters(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that Jira summary is sent as one line."""
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+        mock_response = MagicMock(status_code=201, headers={})
+        mock_response.json.return_value = {"id": "10001", "key": "TEST-123"}
+        mock_post.return_value = mock_response
+        long_check_id = "check\nwith\rcontrol\tcharacters " + "x" * 260
+
+        result = self.jira_integration.send_finding(
+            check_id=long_check_id,
+            check_title="Test Finding",
+            severity="High\n",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+            affected_failing_resources=2,
+            grouped_resources=[],
+        )
+
+        assert result.issue_key == "TEST-123"
+        payload = mock_post.call_args.kwargs["json"]
+        expected_summary = (
+            f"[Prowler] HIGH - {' '.join(long_check_id.split())} - "
+            "2 affected failing resources"
+        )[:255]
+        assert payload["fields"]["summary"] == expected_summary
+        assert len(payload["fields"]["summary"]) == 255
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1692,17 +3106,16 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns False when the request fails."""
-        # To disable vulture
+        """Test that a definitive Jira 400 is a confirmed rejection."""
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
         mock_get_projects = mock_get_projects
         mock_get_issue_types = mock_get_issue_types
-
-        # Mock failed response
-        mock_response = MagicMock()
-        mock_response.status_code = 400
-        mock_response.json.return_value = {"errors": {"summary": "Required field"}}
+        mock_response = MagicMock(status_code=400, headers={})
+        mock_response.json.return_value = {
+            "errors": {"Team": "Team is required."},
+            "errorMessages": ["Field 'Team' cannot be set."],
+        }
         mock_post.return_value = mock_response
 
         result = self.jira_integration.send_finding(
@@ -1714,7 +3127,48 @@ class TestJiraIntegration:
             issue_type="Bug",
         )
 
-        assert result is False
+        assert result.outcome == JiraCreationOutcome.CONFIRMED_REJECTION
+        assert result.error_code == "jira_http_400"
+        assert "'Team': 'Team is required.'" in result.error_message
+        assert "Field 'Team' cannot be set." in result.error_message
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_response_error_without_json_body(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test a 5xx response is uncertain even without a JSON body."""
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+        mock_response = MagicMock(status_code=502, headers={})
+        mock_response.json.side_effect = ValueError("No JSON body")
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result.outcome == JiraCreationOutcome.UNCERTAIN
+        assert result.error_code == "jira_http_502"
+        assert "Jira returned status code 502" in result.error_message
         mock_post.assert_called_once()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
@@ -1732,16 +3186,12 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns False when custom fields cause an error."""
-        # To disable vulture
+        """Test that required custom fields are a confirmed rejection."""
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
         mock_get_projects = mock_get_projects
         mock_get_issue_types = mock_get_issue_types
-
-        # Mock response with custom fields error
-        mock_response = MagicMock()
-        mock_response.status_code = 400
+        mock_response = MagicMock(status_code=400, headers={})
         mock_response.json.return_value = {
             "errors": {
                 "customfield_10001": "This custom field is required",
@@ -1759,8 +3209,71 @@ class TestJiraIntegration:
             issue_type="Bug",
         )
 
-        assert result is False
+        assert result.outcome == JiraCreationOutcome.CONFIRMED_REJECTION
+        assert "customfield_10001" in result.error_message
         mock_post.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "access_token_error",
+        [
+            JiraRefreshTokenError(message="Failed to refresh the access token"),
+            JiraGetAccessTokenError(message="Failed to get the access token"),
+        ],
+    )
+    @patch.object(Jira, "get_access_token")
+    def test_send_finding_access_token_errors_are_retryable(
+        self, mock_get_access_token, access_token_error
+    ):
+        """Test access-token failures before sending are retryable."""
+        mock_get_access_token.side_effect = access_token_error
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result.outcome == JiraCreationOutcome.RETRYABLE_FAILURE
+
+    @patch.object(Jira, "get_access_token", return_value=None)
+    def test_send_finding_reraises_no_token_error(self, mock_get_access_token):
+        """Test missing credentials are a confirmed rejection."""
+        mock_get_access_token = mock_get_access_token
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result.outcome == JiraCreationOutcome.CONFIRMED_REJECTION
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenResponseError(
+            message="Failed to refresh the access token, response code did not match 200"
+        ),
+    )
+    def test_send_finding_reraises_refresh_token_response_error(
+        self, mock_get_access_token
+    ):
+        """Test refresh response failures before sending are retryable."""
+        mock_get_access_token = mock_get_access_token
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result.outcome == JiraCreationOutcome.RETRYABLE_FAILURE
 
     def test_get_headers_oauth_with_access_token(self):
         """Test get_headers returns correct OAuth headers with access token."""

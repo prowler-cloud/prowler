@@ -17,6 +17,10 @@ def scp_restrict_regions_with_deny():
     return '{"Version":"2012-10-17","Statement":{"Effect":"Deny","NotAction":"s3:*","Resource":"*","Condition":{"StringNotEquals":{"aws:RequestedRegion":["eu-central-1","eu-west-1"]}}}}'
 
 
+def scp_restrict_regions_with_allow():
+    return '{"Version":"2012-10-17","Statement":{"Effect":"Allow","Action":"*","Resource":"*","Condition":{"StringEquals":{"aws:RequestedRegion":["eu-central-1","eu-west-1"]}}}}'
+
+
 def scp_restrict_regions_without_statement():
     return '{"Version":"2012-10-17"}'
 
@@ -350,5 +354,139 @@ class Test_organizations_scp_check_deny_regions:
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies but don't restrict AWS Regions."
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_organization_with_scp_allow_regions_valid(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.describe_organization()
+        response_policy = conn.create_policy(
+            Content=scp_restrict_regions_with_allow(),
+            Description="Test",
+            Name="Test",
+            Type="SERVICE_CONTROL_POLICY",
+        )
+        org_id = response["Organization"]["Id"]
+        policy_id = response_policy["Policy"]["PolicySummary"]["Id"]
+
+        aws_provider._audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+                new=Organizations(aws_provider),
+            ):
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} has SCP policy {policy_id} restricting all configured regions found."
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_organization_with_scp_allow_regions_not_valid(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.describe_organization()
+        response_policy = conn.create_policy(
+            Content=scp_restrict_regions_with_allow(),
+            Description="Test",
+            Name="Test",
+            Type="SERVICE_CONTROL_POLICY",
+        )
+        org_id = response["Organization"]["Id"]
+        policy_id = response_policy["Policy"]["PolicySummary"]["Id"]
+
+        aws_provider._audit_config = {"organizations_enabled_regions": ["us-east-1"]}
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+                new=Organizations(aws_provider),
+            ):
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert (
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
+                )
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} has SCP policies {policy_id} restricting some AWS Regions, but not all the configured ones, please check config."
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_organization_with_scp_allow_all_regions_valid(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.describe_organization()
+        response_policy = conn.create_policy(
+            Content=scp_restrict_regions_with_allow(),
+            Description="Test",
+            Name="Test",
+            Type="SERVICE_CONTROL_POLICY",
+        )
+        org_id = response["Organization"]["Id"]
+        policy_id = response_policy["Policy"]["PolicySummary"]["Id"]
+
+        aws_provider._audit_config = {
+            "organizations_enabled_regions": [
+                AWS_REGION_EU_WEST_1,
+                AWS_REGION_EU_CENTRAL_1,
+            ]
+        }
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+                new=Organizations(aws_provider),
+            ):
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} has SCP policy {policy_id} restricting all configured regions found."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1

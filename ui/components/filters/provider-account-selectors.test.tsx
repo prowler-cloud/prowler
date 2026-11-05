@@ -77,6 +77,7 @@ const makeProvider = ({
   type: "providers",
   attributes: {
     provider,
+    is_dynamic: false,
     uid,
     alias,
     status: "completed",

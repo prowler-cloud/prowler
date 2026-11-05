@@ -14,7 +14,7 @@ The template and its source files live in the Prowler repository under [`contrib
 The setup requires the following components:
 
 * **Microsoft Power BI Desktop:** free download from Microsoft.
-* **Prowler compliance CSV exports:** produced by Prowler CLI or downloaded from Prowler Cloud or Prowler App.
+* **Prowler compliance CSV exports:** produced by Prowler CLI or downloaded from Prowler Cloud or Prowler Local Server.
 * **Local directory:** holds the CSV exports that the template ingests at load time.
 
 ## Supported CIS Benchmarks
@@ -40,7 +40,7 @@ Download and install Microsoft Power BI Desktop from the official Microsoft site
 
 ### Step 2: Generate Compliance CSV Exports
 
-Compliance CSV exports can be generated through Prowler CLI or downloaded from Prowler Cloud and Prowler App.
+Compliance CSV exports can be generated through Prowler CLI or downloaded from Prowler Cloud and Prowler Local Server.
 
 #### Option A: Prowler CLI
 
@@ -55,7 +55,7 @@ prowler kubernetes --compliance cis_1.12_kubernetes
 
 The compliance CSV exports are written to `output/compliance/` by default.
 
-#### Option B: Prowler Cloud or Prowler App
+#### Option B: Prowler Cloud or Prowler Local Server
 
 Open the Compliance section, select the desired CIS Benchmark, and download the CSV export.
 
@@ -160,7 +160,7 @@ A full walkthrough is available on YouTube:
 
 <CardGroup cols={2}>
   <Card title="Compliance Frameworks" icon="shield-check" href="/user-guide/compliance/tutorials/compliance">
-    Review the Compliance workflow across Prowler Cloud, Prowler App, and Prowler CLI.
+    Review the Compliance workflow across Prowler Cloud, Prowler Local Server, and Prowler CLI.
   </Card>
   <Card title="Prowler Dashboard" icon="chart-line" href="/user-guide/cli/tutorials/dashboard">
     Explore the built-in local dashboard for Prowler CSV exports.

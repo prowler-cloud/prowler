@@ -1,4 +1,5 @@
 import type { ScheduleFrequency } from "./schedules";
+import { TASK_OUTCOME, type TaskOutcome } from "./tasks";
 
 export const PROVIDER_TYPES = [
   "aws",
@@ -19,9 +20,34 @@ export const PROVIDER_TYPES = [
   "okta",
 ] as const;
 
-export type ProviderType = (typeof PROVIDER_TYPES)[number];
+/** The closed set of provider types this UI build ships bespoke assets for. */
+export type KnownProviderType = (typeof PROVIDER_TYPES)[number];
 
-export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
+/**
+ * Outcome of a provider connection check (or a poll of one): confirmed
+ * connected, confirmed failed, or still running past the wait. An alias of the
+ * generic `TASK_OUTCOME` (see `types/tasks.ts`), which `pollTaskCompletion` also
+ * returns for the unrelated task it polls (organization/node deletion). Kept
+ * import-free (types only) so it can be used by test doubles and UI-only code
+ * without pulling in `lib/provider-helpers.ts`'s server-action dependencies.
+ */
+export const CONNECTION_CHECK_STATUS = TASK_OUTCOME;
+export type ConnectionCheckStatus = TaskOutcome;
+
+// Autocomplete for predefined + open for dynamic providers
+export type ProviderType = KnownProviderType | (string & {});
+
+/** Type guard: narrows an arbitrary provider value to the known set. */
+export const isKnownProviderType = (
+  provider: string,
+): provider is KnownProviderType =>
+  (PROVIDER_TYPES as readonly string[]).includes(provider);
+
+export const isConfigurableProvider = (
+  provider: string,
+): provider is KnownProviderType => isKnownProviderType(provider);
+
+export const PROVIDER_DISPLAY_NAMES: Record<KnownProviderType, string> = {
   aws: "AWS",
   azure: "Azure",
   gcp: "Google Cloud",
@@ -40,11 +66,24 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   okta: "Okta",
 };
 
+/**
+ * Turns a raw provider id into a human-readable label: splits on `-`/`_` and
+ * capitalizes each word (e.g. `template` → "Template", `local-template` →
+ * "Local Template"). Used as the display fallback for dynamic providers
+ */
+export function humanizeProviderId(id: string): string {
+  return id
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function getProviderDisplayName(providerId: string): string {
-  return (
-    PROVIDER_DISPLAY_NAMES[providerId.toLowerCase() as ProviderType] ||
-    providerId
-  );
+  const normalized = providerId.toLowerCase();
+  return isKnownProviderType(normalized)
+    ? PROVIDER_DISPLAY_NAMES[normalized]
+    : humanizeProviderId(normalized);
 }
 
 export interface ProviderProps {
@@ -52,13 +91,16 @@ export interface ProviderProps {
   type: "providers";
   attributes: {
     provider: ProviderType;
+    is_dynamic: boolean;
+    /** Import Findings provenance returned only by the Prowler Cloud API. */
+    is_imported?: boolean;
     uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
     resources: number;
     connection: {
-      connected: boolean;
-      last_checked_at: string;
+      connected: boolean | null;
+      last_checked_at: string | null;
     };
     scanner_args: {
       only_logs: boolean;

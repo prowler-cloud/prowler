@@ -1,5 +1,6 @@
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { formatLabel } from "@/lib/categories";
+import type { ApiResult } from "@/types/server-actions";
 
 import { ComplianceWatchlistResponse } from "./compliance-watchlist.types";
 
@@ -36,7 +37,7 @@ function formatComplianceLabel(complianceId: string): string {
 }
 
 export function adaptComplianceWatchlistResponse(
-  response: ComplianceWatchlistResponse | undefined,
+  response: ApiResult<ComplianceWatchlistResponse> | undefined,
 ): EnrichedComplianceWatchlistItem[] {
   if (!response?.data) {
     return [];

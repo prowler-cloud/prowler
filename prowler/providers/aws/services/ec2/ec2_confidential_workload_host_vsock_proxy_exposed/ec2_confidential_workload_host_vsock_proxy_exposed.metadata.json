@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_confidential_workload_host_vsock_proxy_exposed",
+  "CheckTitle": "Confidential-workload host does not expose likely vsock-proxy TCP ports to the internet",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "Hosts of **Nitro Enclave** workloads are evaluated for unrestricted ingress on TCP ports commonly used by *vsock-proxy* applications (`enclave_vsock_ports`, default `[5000, 8000-8090, 9000]`). vsock is AF_VSOCK, but proxy applications bridge to TCP; this heuristic targets the bridge. Assesses the host environment only.",
+  "Risk": "Publicly reachable vsock-proxy TCP ports let an attacker interact with the proxy and potentially reach the enclave communication channel the host was expected to keep private.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <sg-id> --protocol tcp --port <port> --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: confidential-workload host ingress\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 8000\n          ToPort: 8090\n          CidrIp: 10.0.0.0/16  # critical: private CIDR only, not 0.0.0.0/0\n```",
+      "Other": "1. Confirm which TCP ports the vsock-proxy actually needs on the host.\n2. Restrict ingress to those ports to internal CIDRs or peer security groups only.\n3. Adjust `enclave_vsock_ports` in the audit config if the deployment uses a non-default proxy scheme.",
+      "Terraform": "```hcl\nresource \"aws_security_group_rule\" \"example_resource\" {\n  type = \"ingress\"\n  from_port = 8000\n  to_port = 8090\n  protocol = \"tcp\"\n  cidr_blocks = [\"10.0.0.0/16\"]  # critical: private CIDR only\n  security_group_id = var.host_sg_id\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Keep any TCP bridge to vsock off the public internet on confidential-workload hosts. Because this control is heuristic, review flagged ports against the actual proxy scheme before broad remediation.",
+      "Url": "https://hub.prowler.com/check/ec2_confidential_workload_host_vsock_proxy_exposed"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Heuristic check: vsock is AF_VSOCK, but vsock-proxy applications commonly bridge to TCP; false positives are possible for non-vsock services on the same ports."
+}

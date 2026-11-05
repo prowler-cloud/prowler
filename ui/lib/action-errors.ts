@@ -6,9 +6,14 @@ export const ACTION_ERROR_STATUS = {
 export type ActionErrorStatus =
   (typeof ACTION_ERROR_STATUS)[keyof typeof ACTION_ERROR_STATUS];
 
+// Shown whenever the API returns 402 for an over-limit (trial-expired) tenant.
+// Rendered with a pricing link by the `UsageLimitMessage` component, and as
+// plain text in toasts/field errors.
+export const USAGE_LIMIT_MESSAGE =
+  "You have exceeded the usage limit of one provider. You can add more providers and run unlimited scans by adding a subscription.";
+
 export const ACTION_ERROR_MESSAGES = {
-  [ACTION_ERROR_STATUS.PAYMENT_REQUIRED]:
-    "Your subscription doesn't allow this action. Upgrade your plan or contact an administrator.",
+  [ACTION_ERROR_STATUS.PAYMENT_REQUIRED]: USAGE_LIMIT_MESSAGE,
   [ACTION_ERROR_STATUS.FORBIDDEN]:
     "You don't have permission to perform this action. Ask an administrator to update your role.",
 } as const satisfies Record<ActionErrorStatus, string>;
@@ -28,7 +33,7 @@ interface GetActionErrorMessageOptions {
   fallback?: string;
 }
 
-const isActionErrorStatus = (
+export const isActionErrorStatus = (
   status: number | undefined,
 ): status is ActionErrorStatus =>
   status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED ||
@@ -36,6 +41,26 @@ const isActionErrorStatus = (
 
 const isHttpErrorStatus = (status: number | undefined): boolean =>
   typeof status === "number" && status >= 400;
+
+/** Form error `type` marking a usage-limit refusal, rendered with the plans link. */
+export const USAGE_LIMIT_ERROR_TYPE = "usage_limit";
+
+/** Thrown client-side when a usage-limit refusal must unwind a handler. */
+export class UsageLimitError extends Error {
+  constructor() {
+    super(USAGE_LIMIT_MESSAGE);
+    this.name = "UsageLimitError";
+  }
+}
+
+/** The API refused the action because the tenant is over its plan's usage limit. */
+export const isUsageLimitError = (
+  result: ActionErrorResult | null | undefined,
+): boolean => result?.status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED;
+
+/** Same check for one JSON:API error object, whose status is a string. */
+export const isUsageLimitApiError = (error: { status?: string }): boolean =>
+  error.status === String(ACTION_ERROR_STATUS.PAYMENT_REQUIRED);
 
 export const hasActionError = (
   result: ActionErrorResult | null | undefined,

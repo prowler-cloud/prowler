@@ -37,7 +37,7 @@ class TestEcsSecurityGroupRestrictSSHInternet:
                         "ip_protocol": "tcp",
                         "source_cidr_ip": "0.0.0.0/0",
                         "port_range": "22/22",
-                        "policy": "accept",
+                        "policy": "Accept",
                     }
                 ],
             )
@@ -81,7 +81,7 @@ class TestEcsSecurityGroupRestrictSSHInternet:
                         "ip_protocol": "tcp",
                         "source_cidr_ip": "10.0.0.0/24",
                         "port_range": "22/22",
-                        "policy": "accept",
+                        "policy": "Accept",
                     }
                 ],
             )

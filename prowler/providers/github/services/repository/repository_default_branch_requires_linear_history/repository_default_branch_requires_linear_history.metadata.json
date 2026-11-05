@@ -9,12 +9,13 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**GitHub repository default branch** enforces `Require linear history`, blocking merge commits and allowing only `squash` or `rebase` merges",
+  "Description": "**GitHub repository default branch** enforces `Require linear history`, blocking merge commits and allowing only `squash` or `rebase` merges. This protection can be enforced through classic **branch protection** or repository **rulesets**.",
   "Risk": "Without a **linear history**, commit provenance is harder to verify, weakening **integrity** and **accountability**.\n\nMerge commits can obscure diffs entering the default branch, hindering audits and rollbacks, enabling unnoticed **malicious or unreviewed code**, and delaying incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-linear-history",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
   ],
   "Remediation": {
     "Code": {

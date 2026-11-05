@@ -18,6 +18,8 @@ added to the catalog.
 import json
 import time
 from collections import defaultdict
+from collections.abc import Iterator
+from hashlib import sha256
 from typing import Any
 
 import neo4j
@@ -28,7 +30,6 @@ from tasks.jobs.attack_paths.config import (
     PROVIDER_CONFIGS,
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
-    SYNC_BATCH_SIZE,
     NormalizedList,
     get_provider_label,
     get_tenant_label,
@@ -114,6 +115,7 @@ def sync_nodes(
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
     """
+    batch_size = sink.sync_batch_size
     t0 = time.perf_counter()
     last_id = -1
     parents_synced = 0
@@ -135,7 +137,7 @@ def sync_nodes(
         with graph_database.get_session(source_database) as source_session:
             result = source_session.run(
                 NODE_FETCH_QUERY,
-                {"last_id": last_id, "batch_size": SYNC_BATCH_SIZE},
+                {"last_id": last_id, "batch_size": batch_size},
             )
             for record in result:
                 batch_count += 1
@@ -153,20 +155,21 @@ def sync_nodes(
             break
 
         for labels, batch in parent_groups.items():
-            sink.write_nodes(
-                target_database, _render_labels(labels, extra_labels), batch
-            )
+            rendered_labels = _render_labels(labels, extra_labels)
+            for sink_batch in _iter_sink_batches(batch, batch_size):
+                sink.write_nodes(target_database, rendered_labels, sink_batch)
 
         for child_label, batch in child_groups.items():
-            sink.write_nodes(
-                target_database,
-                _render_labels((child_label,), extra_labels),
-                batch,
-            )
+            rendered_labels = _render_labels((child_label,), extra_labels)
+            for sink_batch in _iter_sink_batches(batch, batch_size):
+                sink.write_nodes(target_database, rendered_labels, sink_batch)
             children_synced += len(batch)
 
         for rel_type, batch in rel_groups.items():
-            sink.write_relationships(target_database, rel_type, provider_id, batch)
+            for sink_batch in _iter_sink_batches(batch, batch_size):
+                sink.write_relationships(
+                    target_database, rel_type, provider_id, sink_batch
+                )
             parent_child_rels += len(batch)
 
         parents_synced += batch_count
@@ -202,6 +205,7 @@ def sync_relationships(
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
     """
+    batch_size = sink.sync_batch_size
     t0 = time.perf_counter()
     last_id = -1
     total_synced = 0
@@ -214,7 +218,7 @@ def sync_relationships(
         with graph_database.get_session(source_database) as source_session:
             result = source_session.run(
                 RELATIONSHIPS_FETCH_QUERY,
-                {"last_id": last_id, "batch_size": SYNC_BATCH_SIZE},
+                {"last_id": last_id, "batch_size": batch_size},
             )
             for record in result:
                 batch_count += 1
@@ -226,7 +230,10 @@ def sync_relationships(
             break
 
         for rel_type, batch in grouped.items():
-            sink.write_relationships(target_database, rel_type, provider_id, batch)
+            for sink_batch in _iter_sink_batches(batch, batch_size):
+                sink.write_relationships(
+                    target_database, rel_type, provider_id, sink_batch
+                )
 
         total_synced += batch_count
         batch_dt = time.perf_counter() - tb
@@ -237,6 +244,18 @@ def sync_relationships(
         )
 
     return total_synced
+
+
+def _iter_sink_batches(
+    rows: list[dict[str, Any]],
+    batch_size: int,
+) -> Iterator[list[dict[str, Any]]]:
+    """Yield final sink write batches after source rows have been transformed."""
+    if batch_size <= 0:
+        raise ValueError("Sink batch size must be greater than zero")
+
+    for index in range(0, len(rows), batch_size):
+        yield rows[index : index + batch_size]
 
 
 def _node_to_sync_dict(
@@ -374,11 +393,11 @@ def _build_child_props(
 def _build_child_id(provider_id: str, child_label: str, value_key: str) -> str:
     """Deterministic `_provider_element_id` for a list-item child node.
 
-    Dedupes within (tenant, provider): multiple parents referencing the same
-    value share one child node via the existing MERGE-on-_provider_element_id
-    index in both sinks.
+    Hashing the value keeps the ID bounded while preserving deduplication within
+    each provider and child label.
     """
-    return f"{provider_id}::{child_label}::{value_key}"
+    value_digest = sha256(value_key.encode("utf-8")).hexdigest()
+    return f"{provider_id}::{child_label}::{value_digest}"
 
 
 def _build_catalog_index(

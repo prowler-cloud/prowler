@@ -3,11 +3,25 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScanProps } from "@/types";
+import { type ScanProps, SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
-vi.mock("@/components/shadcn", () => ({
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  Badge: ({
+    children,
+    tabIndex,
+  }: {
+    children: ReactNode;
+    tabIndex?: number;
+  }) => <span tabIndex={tabIndex}>{children}</span>,
   Progress: () => <div />,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: () => null,
   StackedCell: ({
     primary,
     secondary,
@@ -22,7 +36,7 @@ vi.mock("@/components/shadcn", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: () => <time />,
   EntityInfo: ({
     entityAlias,
@@ -42,7 +56,7 @@ vi.mock("@/components/ui/entities", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/custom", () => ({
+vi.mock("@/components/shadcn/custom", () => ({
   TableLink: ({
     href,
     isDisabled,
@@ -54,7 +68,7 @@ vi.mock("@/components/ui/custom", () => ({
   }) => (isDisabled ? <span>{label}</span> : <a href={href}>{label}</a>),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 
@@ -63,12 +77,6 @@ vi.mock("./scan-jobs-row-actions", () => ({
     <button type="button">{capability ?? "no-capability"}</button>
   ),
 }));
-
-import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
-import {
-  SCAN_SCHEDULE_CAPABILITY,
-  type ScanScheduleCapability,
-} from "@/types/schedules";
 
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
@@ -187,6 +195,25 @@ describe("getScanJobsColumns", () => {
 
     expect(screen.getByText("Production scan")).toBeInTheDocument();
     expect(screen.getByText("ID: scan-1")).toBeInTheDocument();
+  });
+
+  it("labels a partial scan next to its alias", () => {
+    // Prowler Cloud exposes is_partial for re-checks of a few resources.
+    const scan = makeCompletedScan();
+    renderCell("scanInfo", {
+      ...scan,
+      attributes: { ...scan.attributes, is_partial: true },
+    });
+
+    expect(screen.getByText("Production scan")).toBeInTheDocument();
+    // Focusable so keyboard users can reach the tooltip.
+    expect(screen.getByText("Partial")).toHaveAttribute("tabindex", "0");
+  });
+
+  it("shows no partial label on a full scan", () => {
+    renderCell("scanInfo", makeCompletedScan());
+
+    expect(screen.queryByText("Partial")).not.toBeInTheDocument();
   });
 
   it("renders the completed duration column", () => {

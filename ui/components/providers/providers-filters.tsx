@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -15,7 +16,6 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isConnectionStatus, isGroupFilterEntity } from "@/lib/helper-filters";
 import { FilterEntity, FilterOption, ProviderEntity } from "@/types";

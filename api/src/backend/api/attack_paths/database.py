@@ -27,6 +27,7 @@ from django.conf import (
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
 
 TEMP_DB_PREFIX = "db-tmp-scan-"
+DATABASE_NOT_FOUND_CODE = "Neo.ClientError.Database.DatabaseNotFound"
 
 
 # Exceptions
@@ -42,6 +43,10 @@ class GraphDatabaseQueryException(Exception):
         if self.code:
             return f"{self.code}: {self.message}"
         return self.message
+
+
+class NeptuneWriteRetryExhaustedException(GraphDatabaseQueryException):
+    pass
 
 
 class WriteQueryNotAllowedException(GraphDatabaseQueryException):
@@ -104,6 +109,31 @@ def verify_connectivity() -> None:
     driver, Neptune verifies the reader endpoint.
     """
     sink_module.get_backend().verify_connectivity()
+
+
+def verify_scan_databases_available() -> None:
+    """Raise if either graph database needed by an Attack Paths scan is unavailable."""
+    errors: list[str] = []
+    first_error: Exception | None = None
+
+    try:
+        ingest.get_driver().verify_connectivity()
+    except Exception as exc:
+        errors.append(f"ingest Neo4j: {exc}")
+        first_error = exc
+
+    try:
+        get_driver().verify_connectivity()
+    except Exception as exc:
+        errors.append(f"sink {settings.ATTACK_PATHS_SINK_DATABASE}: {exc}")
+        if first_error is None:
+            first_error = exc
+
+    if errors:
+        raise RuntimeError(
+            "Attack Paths graph database unavailable before scan start: "
+            + "; ".join(errors)
+        ) from first_error
 
 
 def get_uri() -> str:
@@ -175,6 +205,11 @@ def drop_database(database: str) -> None:
         return
 
     sink_module.get_backend().drop_database(database)
+
+
+def list_databases() -> list[str]:
+    """List database names on the ingest cluster. Temp scan DBs always live here."""
+    return ingest.list_databases()
 
 
 def drop_subgraph(database: str, provider_id: str) -> int:
