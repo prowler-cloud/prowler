@@ -275,14 +275,6 @@ else:
     data["REGION"].fillna("-")
     regions = ["All"] + list(data["REGION"].unique())
     regions = [x for x in regions if str(x) != "nan" and x.__class__.__name__ == "str"]
-    # Correct the values
-    options = []
-    for value in regions:
-        if " " in value:
-            options.append(value.split(" ")[1])
-        else:
-            options.append(value)
-    regions = options
     region_dropdown = create_region_dropdown(regions)
 
     # Severity Dropdown
@@ -621,6 +613,9 @@ def filter_data(
     # Use n_clicks for vulture
     n_clicks_csv = n_clicks_csv
     n_clicks_xlsx = n_clicks_xlsx
+    # Normalize account/region selections without changing callback inputs.
+    cloud_account_values = list(cloud_account_values)
+    region_account_values = list(region_account_values)
     # Filter the data
     filtered_data = data.copy()
 
@@ -717,6 +712,26 @@ def filter_data(
         (filtered_data["TIMESTAMP"] >= start_date)
         & (filtered_data["TIMESTAMP"] <= end_date)
     ]
+    # Explicit account selections also scope the historical chart. All/cleared
+    # selections must keep accounts that only appear in older assessments.
+    chart_accounts = [
+        item.split(" - ")[0] for item in cloud_account_values if item != "All"
+    ]
+    if chart_accounts:
+        account_mask = pd.Series(False, index=filtered_data_sp.index)
+        for column in ("ACCOUNT_UID", "ACCOUNT_NAME"):
+            if column in filtered_data_sp.columns:
+                account_mask |= filtered_data_sp[column].isin(chart_accounts)
+        filtered_data_sp = filtered_data_sp[account_mask]
+
+    chart_regions = [item for item in region_account_values if item != "All"]
+    if chart_regions:
+        if "REGION" not in filtered_data_sp.columns:
+            filtered_data_sp = filtered_data_sp.assign(REGION="-")
+        filtered_data_sp = filtered_data_sp[
+            filtered_data_sp["REGION"].isin(chart_regions)
+        ]
+
     # We are taking the latest date if there is only one account
     # Filter Assessment Time
     if assessment_value in account_date:
@@ -874,16 +889,6 @@ def filter_data(
         for x in region_filter_options
         if str(x) != "nan" and x.__class__.__name__ == "str"
     ]
-    # Correct the values
-    options = []
-    for value in region_filter_options:
-        if " " in value:
-            options.append(value.split(" ")[1])
-        else:
-            options.append(value)
-
-    region_filter_options = options
-
     # Filter Severity
     if severity_values == ["All"]:
         updated_severity_values = filtered_data["SEVERITY"].unique()
@@ -1126,6 +1131,8 @@ def filter_data(
 
     # If the data is out of range Make the while dashaboard empty
     if len(filtered_data) == 0:
+        # Provider cards also need an empty frame for unmatched selections.
+        full_filtered_data = filtered_data.copy()
         fig = px.pie()
         pie_2 = dcc.Graph(
             figure=fig,
