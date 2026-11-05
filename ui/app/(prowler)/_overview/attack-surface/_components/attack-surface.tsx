@@ -17,7 +17,7 @@ export function AttackSurface({ items, filters }: AttackSurfaceProps) {
       <CardContent className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isEmpty ? (
           <div
-            className="flex w-full items-center justify-center py-8"
+            className="col-span-full flex w-full items-center justify-center py-8"
             role="status"
           >
             <p className="text-text-neutral-tertiary text-sm">

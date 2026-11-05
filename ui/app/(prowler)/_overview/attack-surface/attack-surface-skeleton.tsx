@@ -20,7 +20,7 @@ export function AttackSurfaceSkeleton() {
           >
             <div className="flex flex-col gap-2">
               <Skeleton className="h-12 w-20 rounded-xl" />
-              <Skeleton className="h-5 w-40 rounded-xl" />
+              <Skeleton className="h-5 w-40 max-w-full rounded-xl" />
             </div>
           </Card>
         ))}
