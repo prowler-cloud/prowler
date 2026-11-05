@@ -29,6 +29,7 @@ import {
 import {
   LIGHTHOUSE_SKILL_SURFACE,
   type LighthouseSkillDefinition,
+  type LighthouseSkillSurface,
 } from "@/types/lighthouse-skills";
 
 // Launching from a table row bypasses the context-contribution store: the row
@@ -72,9 +73,14 @@ export function useLighthousePromptLaunch() {
 
 // The one skills-menu catalog split, shared by every surface: the first
 // enabled skill leads as RECOMMENDED, the rest follow in catalog order.
-const MENU_SKILLS = getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING);
-const RECOMMENDED_SKILL = MENU_SKILLS.find((skill) => skill.enabled);
-const REST_SKILLS = MENU_SKILLS.filter((skill) => skill !== RECOMMENDED_SKILL);
+function splitMenuSkills(surface: LighthouseSkillSurface) {
+  const skills = getSkillsForSurface(surface);
+  const recommended = skills.find((skill) => skill.enabled);
+  return {
+    recommended,
+    rest: skills.filter((skill) => skill !== recommended),
+  };
+}
 
 // THE Lighthouse skills menu. Every surface that opens a skills dropdown
 // (row ⋮ submenu, hover pill, finding-detail rail) must render this body so
@@ -83,10 +89,14 @@ const REST_SKILLS = MENU_SKILLS.filter((skill) => skill !== RECOMMENDED_SKILL);
 export function LighthouseSkillsMenuItems({
   onLaunch,
   onSubmitPrompt,
+  surface = LIGHTHOUSE_SKILL_SURFACE.FINDING,
 }: {
   onLaunch: (skill: LighthouseSkillDefinition) => void;
   onSubmitPrompt?: (text: string) => void;
+  surface?: LighthouseSkillSurface;
 }) {
+  const { recommended: RECOMMENDED_SKILL, rest: REST_SKILLS } =
+    splitMenuSkills(surface);
   return (
     <>
       {RECOMMENDED_SKILL && (
