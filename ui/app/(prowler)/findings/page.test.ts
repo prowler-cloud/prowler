@@ -48,6 +48,18 @@ describe("findings page", () => {
     );
   });
 
+  it("hands the sample preview over to early findings once the running first scan has some", () => {
+    expect(source).toContain(
+      "preview.active && (await shouldShowFindingsSample(preview))",
+    );
+  });
+
+  it("keeps the page up when the executing-scans lookup fails", () => {
+    expect(source).toMatch(
+      /"filter\[state\]": "executing" },\s*fields: \{ scans: "progress,started_at,completed_at" },\s*\}\)\.catch\(\(\) => undefined\)/,
+    );
+  });
+
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
   });

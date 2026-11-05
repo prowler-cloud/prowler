@@ -88,8 +88,17 @@ function formatCandidateCount(count: number, noun: OrgCandidateNoun): string {
   return `${count} ${count === 1 ? noun.singular : noun.plural}`;
 }
 
-function getScansHref(tab: (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB]) {
-  return `/scans?tab=${tab}`;
+// A running scan already stores findings; a schedule only lists on Scans.
+function launchedScansToastAction(launched: boolean) {
+  return launched ? (
+    <ToastAction altText="Go to findings" asChild>
+      <Link href="/findings">Go to findings</Link>
+    </ToastAction>
+  ) : (
+    <ToastAction altText="Go to scans" asChild>
+      <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
+    </ToastAction>
+  );
 }
 
 export function OrgLaunchScan({
@@ -235,10 +244,6 @@ export function OrgLaunchScan({
       failedCount > 0
         ? `The schedule was saved for ${formatCandidateCount(updatedCount, noun)}, but ${formatCandidateCount(failedCount, noun)} could not be updated${failureReasons ? `: ${failureReasons}.` : "."}`
         : `The scan schedule was saved for ${formatCandidateCount(updatedCount, noun)}.`;
-    const targetTab =
-      initialScanSuccessCount > 0
-        ? SCAN_JOBS_TAB.ACTIVE
-        : SCAN_JOBS_TAB.SCHEDULED;
 
     toast({
       title:
@@ -252,13 +257,9 @@ export function OrgLaunchScan({
             : `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
           : description,
       // Over the limit, the plans unblock the scans; the scans page would not.
-      action: initialScanUsageLimited ? (
-        usageLimitToastAction()
-      ) : (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={getScansHref(targetTab)}>Go to scans</Link>
-        </ToastAction>
-      ),
+      action: initialScanUsageLimited
+        ? usageLimitToastAction()
+        : launchedScansToastAction(initialScanSuccessCount > 0),
     });
   });
 
@@ -294,10 +295,6 @@ export function OrgLaunchScan({
       const result = await scheduleOrganizationDailyScans(createdProviderIds);
       successCount = result.successCount;
     }
-    const targetTab =
-      effectiveScheduleOption === SCAN_SCHEDULE.SINGLE
-        ? SCAN_JOBS_TAB.ACTIVE
-        : SCAN_JOBS_TAB.SCHEDULED;
 
     setIsLaunching(false);
     finishSuccess();
@@ -308,10 +305,8 @@ export function OrgLaunchScan({
         effectiveScheduleOption === SCAN_SCHEDULE.DAILY
           ? `Daily scan scheduled for ${formatCandidateCount(successCount, noun)}.`
           : `Single scan launched for ${formatCandidateCount(successCount, noun)}.`,
-      action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={getScansHref(targetTab)}>Go to scans</Link>
-        </ToastAction>
+      action: launchedScansToastAction(
+        effectiveScheduleOption === SCAN_SCHEDULE.SINGLE,
       ),
     });
   };

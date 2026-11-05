@@ -25,6 +25,7 @@ from api.compliance import (
     COMPLIANCE_WARMING_STARTED,
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_prowler_check_title,
     get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
@@ -8023,7 +8024,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
                 .values("check_id", "check_title", "check_description")
             }
             for row in rows:
-                metadata = metadata_by_check.get(row["check_id"], {})
+                # A tenant's first scan writes no summaries until it completes.
+                metadata = metadata_by_check.get(
+                    row["check_id"]
+                ) or get_prowler_check_title(
+                    row["check_id"],
+                    (row.get("impacted_providers_str") or "").split(","),
+                )
                 row["check_title"] = metadata.get("check_title")
                 row["check_description"] = metadata.get("check_description")
 

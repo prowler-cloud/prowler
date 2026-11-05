@@ -142,9 +142,7 @@ describe("LaunchStep", () => {
       expect(updateScheduleMock).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalledTimes(1);
       const toastPayload = toastMock.mock.calls[0]?.[0];
-      expect(toastPayload.action.props.children.props.href).toBe(
-        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
-      );
+      expect(toastPayload.action.props.children.props.href).toBe("/findings");
     });
 
     it("launches only an on-demand scan when run now is selected", async () => {
@@ -241,9 +239,7 @@ describe("LaunchStep", () => {
       expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
       expect(onClose).toHaveBeenCalledTimes(1);
       const toastPayload = toastMock.mock.calls[0]?.[0];
-      expect(toastPayload.action.props.children.props.href).toBe(
-        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
-      );
+      expect(toastPayload.action.props.children.props.href).toBe("/findings");
     });
 
     it("saves only the schedule when the initial scan is unticked", async () => {

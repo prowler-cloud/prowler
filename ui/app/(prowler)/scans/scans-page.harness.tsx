@@ -293,6 +293,11 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
+  /** A previous test's status poll still in flight when this test's handlers take over. */
+  async receiveLeftoverStatusPoll(): Promise<void> {
+    await fetch(`/api/ingestions/${this.fixture.id}`);
+  }
+
   /** Outlast an uncancelled poll: its response lands, then the modal's 5s interval passes and the next would fire. */
   async waitPastTheNextPoll(): Promise<void> {
     await this.waitForTransition(this.statusDelayMs + 5700);
