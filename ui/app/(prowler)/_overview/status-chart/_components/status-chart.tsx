@@ -114,49 +114,53 @@ export const StatusChart = ({
           />
         </div>
 
-        <Card
-          variant="inner"
-          padding="md"
-          className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between"
-        >
-          <ResourceStatsCard
-            containerless
-            badge={{
-              icon: TriangleAlert,
-              count: failFindingsData.total,
-              variant: CardVariant.fail,
-            }}
-            label="Fail Findings"
-            stats={[{ icon: Bell, label: `${failFindingsData.new} New` }]}
-            emptyState={
-              failFindingsData.total === 0
-                ? { message: "No failed findings to display" }
-                : undefined
-            }
-            className="w-full lg:min-w-0 lg:flex-1"
-          />
+        {/* Sized by the card, not the page: in a narrow card the two totals
+            stack instead of squeezing side by side. */}
+        <div className="@container">
+          <Card
+            variant="inner"
+            padding="md"
+            className="flex w-full flex-col items-start justify-center gap-4 @[24rem]:flex-row @[24rem]:justify-between"
+          >
+            <ResourceStatsCard
+              containerless
+              badge={{
+                icon: TriangleAlert,
+                count: failFindingsData.total,
+                variant: CardVariant.fail,
+              }}
+              label="Fail Findings"
+              stats={[{ icon: Bell, label: `${failFindingsData.new} New` }]}
+              emptyState={
+                failFindingsData.total === 0
+                  ? { message: "No failed findings to display" }
+                  : undefined
+              }
+              className="w-full @[24rem]:min-w-0 @[24rem]:flex-1"
+            />
 
-          <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
-            <div className="bg-border-neutral-primary h-px w-full lg:h-full lg:w-px" />
-          </div>
+            <div className="flex w-full items-center justify-center @[24rem]:w-auto @[24rem]:self-stretch">
+              <div className="bg-border-neutral-primary h-px w-full @[24rem]:h-full @[24rem]:w-px" />
+            </div>
 
-          <ResourceStatsCard
-            containerless
-            badge={{
-              icon: ShieldCheck,
-              count: passFindingsData.total,
-              variant: CardVariant.pass,
-            }}
-            label="Pass Findings"
-            stats={[{ icon: Bell, label: `${passFindingsData.new} New` }]}
-            emptyState={
-              passFindingsData.total === 0
-                ? { message: "No passed findings to display" }
-                : undefined
-            }
-            className="w-full lg:min-w-0 lg:flex-1"
-          />
-        </Card>
+            <ResourceStatsCard
+              containerless
+              badge={{
+                icon: ShieldCheck,
+                count: passFindingsData.total,
+                variant: CardVariant.pass,
+              }}
+              label="Pass Findings"
+              stats={[{ icon: Bell, label: `${passFindingsData.new} New` }]}
+              emptyState={
+                passFindingsData.total === 0
+                  ? { message: "No passed findings to display" }
+                  : undefined
+              }
+              className="w-full @[24rem]:min-w-0 @[24rem]:flex-1"
+            />
+          </Card>
+        </div>
       </CardContent>
     </Card>
   );

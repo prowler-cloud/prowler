@@ -64,7 +64,8 @@ describe("OverviewGrid top row", () => {
     { width: 375, columns: [1, 1, 1, 1] },
     { width: 700, columns: [2, 2] },
     { width: 1100, columns: [2, 2] },
-    { width: 1400, columns: [2, 2] },
+    // A 16" MacBook Pro window with the sidebar open.
+    { width: 1160, columns: [4] },
     { width: 1600, columns: [4] },
   ])(
     "lays out the Cloud cards as $columns at $width px with no gap on the right",
@@ -84,8 +85,8 @@ describe("OverviewGrid top row", () => {
   it.each([
     { width: 375, columns: [1, 1, 1] },
     { width: 700, columns: [2, 1] },
-    { width: 1100, columns: [2, 1] },
-    { width: 1300, columns: [3] },
+    { width: 1000, columns: [2, 1] },
+    { width: 1100, columns: [3] },
   ])(
     "lays out the OSS cards as $columns at $width px with no gap on the right",
     async ({ width, columns }) => {
@@ -101,22 +102,58 @@ describe("OverviewGrid top row", () => {
     },
   );
 
-  it("keeps the narrow cards at their 312px design width beside the wide ones", async () => {
+  it("keeps the narrow cards wide enough for the ThreatScore gauge", async () => {
     // Given - Arrange
-    await renderAt(1600, true);
+    await renderAt(1160, true);
 
     // When - Act
     const threatScore = cardRect("Prowler ThreatScore");
     const exploitability = cardRect("Exploitability");
-    const checkFindings = cardRect("Check Findings");
 
     // Then - Assert
-    expect(threatScore.width).toBe(312);
-    expect(exploitability.width).toBe(312);
-    expect(checkFindings.width).toBeGreaterThanOrEqual(420);
+    expect(threatScore.width).toBeGreaterThanOrEqual(272);
+    expect(exploitability.width).toBeGreaterThanOrEqual(272);
   });
 
-  it.each([375, 640, 1100, 1600])(
+  it.each([
+    { width: 375, showIssues: true },
+    { width: 700, showIssues: true },
+    { width: 1160, showIssues: true },
+    { width: 1600, showIssues: true },
+    { width: 1100, showIssues: false },
+  ])(
+    "keeps every card's content inside its card at $width px",
+    async ({ width, showIssues }) => {
+      // Given - Arrange
+      await renderAt(width, showIssues);
+
+      // When - Act
+      const cards = (showIssues ? CLOUD_CARDS : OSS_CARDS).map(
+        (title) =>
+          Array.from(document.querySelectorAll('[data-slot="card"]')).find(
+            (node) =>
+              node.querySelector('[data-slot="card-title"]')?.textContent ===
+              title,
+          )!,
+      );
+      const spilling = cards.flatMap((card) => {
+        const bounds = card.getBoundingClientRect();
+        return Array.from(card.querySelectorAll("*"))
+          .map((node) => node.getBoundingClientRect())
+          .filter(
+            (rect) =>
+              rect.width > 0 &&
+              (rect.left < bounds.left - 0.5 ||
+                rect.right > bounds.right + 0.5),
+          );
+      });
+
+      // Then - Assert
+      expect(spilling).toHaveLength(0);
+    },
+  );
+
+  it.each([375, 640, 1160, 1600])(
     "keeps the Risk Severity bars readable in a %i px layout",
     async (width) => {
       // Given - Arrange
@@ -137,7 +174,7 @@ describe("OverviewGrid top row", () => {
 
       // Then - Assert
       expect(tracks).toHaveLength(5);
-      for (const track of tracks) expect(track).toBeGreaterThanOrEqual(80);
+      for (const track of tracks) expect(track).toBeGreaterThanOrEqual(60);
     },
   );
 });

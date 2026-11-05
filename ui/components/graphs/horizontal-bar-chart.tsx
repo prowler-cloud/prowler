@@ -185,7 +185,7 @@ export function HorizontalBarChart({
 
               {/* Percentage and Count */}
               <div
-                className="text-text-neutral-secondary flex min-w-[90px] shrink-0 items-center gap-2 text-sm @sm:ml-6"
+                className="text-text-neutral-secondary flex shrink-0 items-center gap-2 text-sm @sm:ml-6 @sm:min-w-[90px]"
                 style={{
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",

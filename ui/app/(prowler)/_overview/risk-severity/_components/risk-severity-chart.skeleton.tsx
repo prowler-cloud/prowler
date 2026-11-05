@@ -7,7 +7,7 @@ export function RiskSeverityChartSkeleton() {
         <Skeleton className="h-7 w-[260px] rounded-xl" />
       </CardHeader>
 
-      <CardContent className="flex flex-1 items-center justify-start lg:px-6">
+      <CardContent className="flex flex-1 items-center justify-start">
         <div className="flex w-full flex-col gap-6">
           {/* 5 horizontal bar skeletons */}
           {Array.from({ length: 5 }).map((_, index) => (

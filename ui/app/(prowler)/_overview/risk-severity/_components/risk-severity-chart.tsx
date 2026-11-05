@@ -82,7 +82,7 @@ export const RiskSeverityChart = ({
         <CardTitle>Risk Severity</CardTitle>
       </CardHeader>
 
-      <CardContent className="flex flex-1 items-center justify-start lg:px-6">
+      <CardContent className="flex flex-1 items-center justify-start">
         <HorizontalBarChart data={chartData} onBarClick={handleBarClick} />
       </CardContent>
     </Card>

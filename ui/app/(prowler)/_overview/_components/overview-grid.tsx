@@ -34,14 +34,15 @@ export function OverviewGrid({
   return (
     <>
       {/* The grid owns every card width, so no row ever leaves a hole: two
-          even columns until the narrow cards can keep their 312px design
-          width beside two wide cards of at least ~420px. */}
+          even columns on tablets, then every card in one row. Narrow cards
+          take 5 parts to the wide cards' 7, never under the 17rem the
+          ThreatScore gauge needs. */}
       <div
         className={cn(
           "grid grid-cols-1 gap-6 sm:grid-cols-2",
           exploitability
-            ? "2xl:grid-cols-[312px_312px_minmax(0,1fr)_minmax(0,1fr)]"
-            : "xl:grid-cols-[312px_minmax(0,1fr)_minmax(0,1fr)]",
+            ? "@min-[72rem]:grid-cols-[minmax(17rem,5fr)_minmax(17rem,5fr)_minmax(0,7fr)_minmax(0,7fr)]"
+            : "lg:grid-cols-[minmax(17rem,5fr)_minmax(0,7fr)_minmax(0,7fr)]",
         )}
       >
         {threatScore}
@@ -52,7 +53,7 @@ export function OverviewGrid({
         <div
           className={cn(
             "grid min-w-0",
-            !exploitability && "sm:col-span-2 xl:col-span-1",
+            !exploitability && "sm:col-span-2 lg:col-span-1",
           )}
         >
           {riskSeverity}
