@@ -93,6 +93,33 @@
       "allowedVersions": "<3.14"
     },
     {
+      "description": "SDK and API Docker base images - patches only; the pip cleanup hardcodes python3.12 paths, so a minor bump must be done by hand",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "matchFileNames": [
+        "Dockerfile",
+        "api/Dockerfile"
+      ],
+      "allowedVersions": "/^3\\.12\\./"
+    },
+    {
+      "description": "MCP server Docker base image - patches only; the pip cleanup hardcodes python3.13 paths, so a minor bump must be done by hand",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "matchFileNames": [
+        "mcp_server/Dockerfile"
+      ],
+      "allowedVersions": "/^3\\.13\\./"
+    },
+    {
       "description": "Docker images - single grouped PR, no changelog, scope=docker",
       "matchManagers": [
         "dockerfile",
