@@ -10,7 +10,6 @@ from tests.providers.aws.utils import (
 
 
 class Test_ecs_task_definitions_no_dangerous_capabilities:
-
     @mock_aws
     def test_no_task_definitions(self):
         result = self._run_check()
@@ -66,6 +65,70 @@ class Test_ecs_task_definitions_no_dangerous_capabilities:
             "sys-admin-task:1": "FAIL",
             "all-capabilities-task:1": "FAIL",
         }
+
+    @mock_aws
+    def test_mixed_safe_and_dangerous_containers(self):
+        ecs = client("ecs", region_name=AWS_REGION_US_EAST_1)
+
+        for family, capabilities in [
+            ("safe-first-task", ["NET_BIND_SERVICE", "SYS_ADMIN"]),
+            ("dangerous-first-task", ["SYS_ADMIN", "NET_BIND_SERVICE"]),
+        ]:
+            ecs.register_task_definition(
+                family=family,
+                containerDefinitions=[
+                    {
+                        "name": f"container-{index}",
+                        "image": "nginx",
+                        "memory": 128,
+                        "linuxParameters": {"capabilities": {"add": [capability]}},
+                    }
+                    for index, capability in enumerate(capabilities)
+                ],
+            )
+
+        result = self._run_check()
+
+        statuses = {finding.resource_id: finding.status for finding in result}
+
+        assert len(result) == 2
+        assert statuses == {
+            "safe-first-task:1": "FAIL",
+            "dangerous-first-task:1": "FAIL",
+        }
+
+    @mock_aws
+    def test_unavailable_task_definition(self):
+        from prowler.providers.aws.services.ecs.ecs_service import ECS
+
+        ecs = client("ecs", region_name=AWS_REGION_US_EAST_1)
+
+        ecs.register_task_definition(
+            family="unavailable-task",
+            containerDefinitions=[
+                {
+                    "name": "app",
+                    "image": "nginx",
+                    "memory": 128,
+                }
+            ],
+        )
+
+        def mock_describe_task_definition(self, task_definition):
+            return None
+
+        with patch.object(
+            ECS,
+            "_describe_task_definition",
+            new=mock_describe_task_definition,
+        ):
+            result = self._run_check()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_id == "ecs-task-definitions-unavailable"
+        assert "unavailable-task:1" in result[0].status_extended
+        assert "ecs:DescribeTaskDefinition" in result[0].status_extended
 
     def _run_check(self):
         from prowler.providers.aws.services.ecs.ecs_service import ECS

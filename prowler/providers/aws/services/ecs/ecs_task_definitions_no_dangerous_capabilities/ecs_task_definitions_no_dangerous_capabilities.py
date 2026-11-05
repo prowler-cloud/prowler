@@ -1,3 +1,4 @@
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
@@ -7,9 +8,13 @@ DANGEROUS_CAPABILITIES = {"SYS_ADMIN", "ALL"}
 class ecs_task_definitions_no_dangerous_capabilities(Check):
     def execute(self):
         findings = []
+        unavailable_task_definitions = []
 
         for task_definition in ecs_client.task_definitions.values():
             if task_definition.container_definitions is None:
+                unavailable_task_definitions.append(
+                    f"{task_definition.name}:{task_definition.revision}"
+                )
                 continue
 
             report = Check_Report_AWS(
@@ -43,6 +48,23 @@ class ecs_task_definitions_no_dangerous_capabilities(Check):
                     "does not add SYS_ADMIN or ALL capabilities."
                 )
 
+            findings.append(report)
+
+        if unavailable_task_definitions:
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource={},
+            )
+            report.resource_name = "ECS task definitions"
+            report.resource_id = "ecs-task-definitions-unavailable"
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Cannot evaluate ECS task definitions for dangerous Linux "
+                "capabilities: container definitions could not be retrieved for "
+                f"{', '.join(sorted(unavailable_task_definitions))}. "
+                "Verify that ecs:DescribeTaskDefinition is granted to "
+                "the scanning identity."
+            )
             findings.append(report)
 
         return findings
