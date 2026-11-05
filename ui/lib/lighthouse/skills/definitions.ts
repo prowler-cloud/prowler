@@ -74,7 +74,9 @@ Then work in this order:
 
 1. Read the issue from the context block: its pattern, where the attacker starts, the
    outcome, each leg and the suggested fix. Each leg is "open" (it favours the attacker),
-   "closed", "partial" or "unknown"; closing any open leg breaks the path.
+   "closed", "partial" or "unknown". Closing an open leg breaks the path only when the
+   change stops the attacker's step. Detection alone (the verification leg: logging,
+   alerting) never breaks it; name such changes as defence in depth, not as the fix.
 2. prowler_get_finding_details — for each finding id in the context, establish what
    failed and on which resource. The context lists at most 20 ids, so if the issue has
    more findings than that, say how many you did not read. If there are no finding ids,
