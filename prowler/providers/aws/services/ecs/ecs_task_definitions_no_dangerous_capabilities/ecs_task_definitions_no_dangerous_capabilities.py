@@ -1,4 +1,3 @@
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
@@ -6,14 +5,18 @@ DANGEROUS_CAPABILITIES = {"SYS_ADMIN", "ALL"}
 
 
 class ecs_task_definitions_no_dangerous_capabilities(Check):
+    """Check ECS task definitions for dangerous Linux capabilities."""
+
     def execute(self):
+        """Report dangerous capabilities and unavailable ECS task data."""
         findings = []
         unavailable_task_definitions = []
 
         for task_definition in ecs_client.task_definitions.values():
             if task_definition.container_definitions is None:
                 unavailable_task_definitions.append(
-                    f"{task_definition.name}:{task_definition.revision}"
+                    f"{task_definition.name}:{task_definition.revision} "
+                    f"({task_definition.arn})"
                 )
                 continue
 
@@ -64,6 +67,24 @@ class ecs_task_definitions_no_dangerous_capabilities(Check):
                 f"{', '.join(sorted(unavailable_task_definitions))}. "
                 "Verify that ecs:DescribeTaskDefinition is granted to "
                 "the scanning identity."
+            )
+            findings.append(report)
+
+        failed_regions = sorted(ecs_client.task_definition_list_failed_regions)
+
+        if failed_regions:
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource={},
+            )
+            report.resource_name = "ECS task definitions"
+            report.resource_id = "ecs-task-definitions-inventory-unavailable"
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Cannot evaluate ECS task definition inventory in regions: "
+                f"{', '.join(failed_regions)}. "
+                "Verify that ecs:ListTaskDefinitions is granted to "
+                "the scanning identity and that the API is accessible."
             )
             findings.append(report)
 

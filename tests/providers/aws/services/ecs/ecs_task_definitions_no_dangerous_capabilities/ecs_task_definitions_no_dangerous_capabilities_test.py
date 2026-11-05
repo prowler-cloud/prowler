@@ -129,6 +129,40 @@ class Test_ecs_task_definitions_no_dangerous_capabilities:
         assert result[0].resource_id == "ecs-task-definitions-unavailable"
         assert "unavailable-task:1" in result[0].status_extended
         assert "ecs:DescribeTaskDefinition" in result[0].status_extended
+        assert "arn:aws:ecs:" in result[0].status_extended
+
+    @mock_aws
+    def test_list_task_definitions_failure(self):
+        from botocore.client import BaseClient
+        from botocore.exceptions import ClientError
+
+        original_get_paginator = BaseClient.get_paginator
+
+        def mock_get_paginator(self, operation_name):
+            if (
+                self.meta.service_model.service_name == "ecs"
+                and operation_name == "list_task_definitions"
+            ):
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access denied",
+                        }
+                    },
+                    "ListTaskDefinitions",
+                )
+
+            return original_get_paginator(self, operation_name)
+
+        with patch.object(BaseClient, "get_paginator", new=mock_get_paginator):
+            result = self._run_check()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_id == "ecs-task-definitions-inventory-unavailable"
+        assert AWS_REGION_US_EAST_1 in result[0].status_extended
+        assert "ecs:ListTaskDefinitions" in result[0].status_extended
 
     def _run_check(self):
         from prowler.providers.aws.services.ecs.ecs_service import ECS
