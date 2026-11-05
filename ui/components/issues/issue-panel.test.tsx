@@ -554,21 +554,35 @@ describe("IssuePanel", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("offers no path fix on an issue that is not one attack path", async () => {
-    // Given: Prowler Cloud and a hygiene issue, with no start or outcome
+  it("offers the fix on an issue with no modelled start or outcome", async () => {
+    // Given: Prowler Cloud and an exploitable issue the API sends without a
+    // start or outcome, which the prompt handles as a group of findings
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
     getIssue.mockResolvedValue(detailWith([]));
+    renderPanel(
+      issueWith({
+        pattern: "aws_public_bucket",
+        verdict: "exploitable",
+        attacker_start: "",
+        outcome: "",
+      }),
+    );
+    await screen.findByRole("tab", { name: "Remediation" });
 
     // When
-    renderPanel(issueWith({ attacker_start: "", outcome: "" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Contextual Fix" }),
+    );
 
-    // Then
-    expect(
-      await screen.findByRole("tab", { name: "Remediation" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Contextual Fix" }),
-    ).not.toBeInTheDocument();
+    // Then: the context says nothing about a start or outcome it lacks
+    await waitFor(() => expect(requestPanelSkillLaunch).toHaveBeenCalled());
+    const [, context] = requestPanelSkillLaunch.mock.calls[0];
+    const issueItem = context.items.find(
+      (item: { kind: string }) => item.kind === "issue",
+    );
+    expect(issueItem).toMatchObject({ pattern: "aws_public_bucket" });
+    expect(issueItem.attackerStart).toBeUndefined();
+    expect(issueItem.outcome).toBeUndefined();
   });
 
   it("launches the issue's Contextual Fix with the issue and its findings", async () => {

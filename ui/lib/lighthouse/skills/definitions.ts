@@ -77,6 +77,9 @@ Then work in this order:
    "closed", "partial" or "unknown". Closing an open leg breaks the path only when the
    change stops the attacker's step. Detection alone (the verification leg: logging,
    alerting) never breaks it; name such changes as defence in depth, not as the fix.
+   If the context has no attacker start or no outcome, the issue is a group of related
+   findings rather than one modelled path: say so in one line, skip the single
+   path-closing change below, and give the fixes grouped by check.
 2. prowler_get_finding_details — for each finding id in the context, establish what
    failed and on which resource. The context lists at most 20 ids, so if the issue has
    more findings than that, say how many you did not read. If there are no finding ids,

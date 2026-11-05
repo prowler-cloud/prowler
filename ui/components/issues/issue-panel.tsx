@@ -37,7 +37,6 @@ import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
 import { useFindingDetails } from "@/hooks/use-finding-details";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import {
-  attackPathLabel,
   LEG_LABELS,
   LEG_QUESTIONS,
   LEG_STATE_LABELS,
@@ -346,10 +345,8 @@ const IssuePanelContent = ({
             />
           )
         )}
-        {/* Same skills rail as the finding panel, offering the issue's skills.
-            Only a real attack path has one fix; hygiene issues are fixed
-            finding by finding. */}
-        {isCloud() && !isSampleId(issue.id) && attackPathLabel(attributes) && (
+        {/* Same skills rail as the finding panel, offering the issue's skills. */}
+        {isCloud() && !isSampleId(issue.id) && (
           <LighthouseSkillsRail
             surface={LIGHTHOUSE_SKILL_SURFACE.ISSUE}
             onLaunchSkill={(skill) =>
