@@ -10,17 +10,51 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     CloudWatch,
     LogGroup,
     Logs,
+    _watched_metric_ids,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
     build_metric_filter_pattern,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
+    mocked_api_response,
     set_mocked_aws_provider,
 )
 
 make_api_call = botocore.client.BaseClient._make_api_call
+
+
+@pytest.mark.parametrize(
+    ("expression_queries", "expected"),
+    [
+        (
+            [
+                {"Id": "base", "Expression": "agent_calls", "ReturnData": False},
+                {"Id": "alarm", "Expression": "base * 2", "ReturnData": True},
+            ],
+            {"agent_calls"},
+        ),
+        (
+            [
+                {
+                    "Id": "alarm",
+                    "Expression": 'SUM(METRICS("agent"))',
+                    "ReturnData": True,
+                }
+            ],
+            {"agent_calls"},
+        ),
+    ],
+)
+def test_watched_metric_ids(expression_queries, expected):
+    metric_queries = [
+        {"Id": "agent_calls", "MetricStat": {}, "ReturnData": False},
+        {"Id": "requests", "MetricStat": {}, "ReturnData": False},
+    ]
+
+    assert _watched_metric_ids(metric_queries + expression_queries) == expected
 
 
 class Test_CloudWatch_Service:
@@ -134,6 +168,7 @@ class Test_CloudWatch_Service:
         )
         cloudwatch = CloudWatch(aws_provider)
         assert len(cloudwatch.metric_alarms) == 1
+        assert len(cloudwatch.all_metric_alarms) == 1
         assert (
             cloudwatch.metric_alarms[0].arn
             == f"arn:aws:cloudwatch:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:alarm:test"
@@ -141,12 +176,310 @@ class Test_CloudWatch_Service:
         assert cloudwatch.metric_alarms[0].name == "test"
         assert cloudwatch.metric_alarms[0].metric == "test_metric"
         assert cloudwatch.metric_alarms[0].name_space == "test_namespace"
+        assert cloudwatch.metric_alarms[0].namespaces == ["test_namespace"]
+        assert [
+            (reference.namespace, reference.name)
+            for reference in cloudwatch.metric_alarms[0].metric_references
+        ] == [("test_namespace", "test_metric")]
+        assert cloudwatch.metric_alarms[0].metric_references[0].dimensions == {
+            "InstanceId": "i-0123457"
+        }
+        assert cloudwatch.metric_alarms[0].metric_references[0].account_id is None
         assert cloudwatch.metric_alarms[0].region == AWS_REGION_US_EAST_1
         assert cloudwatch.metric_alarms[0].tags == [
             {"Key": "key-1", "Value": "value-1"}
         ]
         assert cloudwatch.metric_alarms[0].alarm_actions == ["arn:alarm"]
         assert cloudwatch.metric_alarms[0].actions_enabled
+        assert cloudwatch.metric_alarms_scanned_regions == {AWS_REGION_US_EAST_1}
+        assert cloudwatch.metric_alarms_scan_errors == {}
+
+    @mock_aws
+    def test_describe_metric_math_alarm(self):
+        cw_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
+        cw_client.put_metric_alarm(
+            AlarmName="agent-rate",
+            ComparisonOperator="GreaterThanThreshold",
+            EvaluationPeriods=1,
+            Threshold=10,
+            ActionsEnabled=True,
+            Metrics=[
+                {
+                    "Id": "agent_calls",
+                    "MetricStat": {
+                        "Metric": {
+                            "Namespace": "AWS/Bedrock/Agents",
+                            "MetricName": "InvocationCount",
+                            "Dimensions": [
+                                {"Name": "Operation", "Value": "InvokeAgent"}
+                            ],
+                        },
+                        "Period": 60,
+                        "Stat": "Sum",
+                    },
+                    "ReturnData": False,
+                },
+                {
+                    "Id": "requests",
+                    "MetricStat": {
+                        "Metric": {
+                            "Namespace": "Custom/App",
+                            "MetricName": "RequestCount",
+                        },
+                        "Period": 60,
+                        "Stat": "Sum",
+                    },
+                    "ReturnData": False,
+                },
+                {
+                    "Id": "rate",
+                    "Expression": "agent_calls / requests",
+                    "ReturnData": True,
+                },
+            ],
+        )
+
+        cloudwatch = CloudWatch(set_mocked_aws_provider())
+
+        assert len(cloudwatch.metric_alarms) == 1
+        alarm = cloudwatch.metric_alarms[0]
+        assert alarm.metric is None
+        assert alarm.name_space is None
+        assert alarm.namespaces == ["AWS/Bedrock/Agents", "Custom/App"]
+        assert [
+            (reference.namespace, reference.name)
+            for reference in alarm.metric_references
+        ] == [
+            ("AWS/Bedrock/Agents", "InvocationCount"),
+            ("Custom/App", "RequestCount"),
+        ]
+        assert alarm.metric_references[0].dimensions == {"Operation": "InvokeAgent"}
+        assert alarm.metric_references[0].account_id is None
+        assert alarm.metric_references[1].dimensions == {}
+        assert alarm.metric_references[1].account_id is None
+
+    def test_describe_metric_math_alarm_keeps_account_id(self):
+        class Paginator:
+            def paginate(self):
+                yield mocked_api_response(
+                    "cloudwatch",
+                    "DescribeAlarms",
+                    {
+                        "MetricAlarms": [
+                            {
+                                "AlarmArn": "arn:aws:cloudwatch:us-east-1:123456789012:alarm:cross-account",
+                                "AlarmName": "cross-account",
+                                "ActionsEnabled": True,
+                                "Metrics": [
+                                    {
+                                        "Id": "agent_calls",
+                                        "AccountId": AWS_ACCOUNT_NUMBER,
+                                        "MetricStat": {
+                                            "Metric": {
+                                                "Namespace": "AWS/Bedrock/Agents",
+                                                "MetricName": "InvocationCount",
+                                                "Dimensions": [
+                                                    {
+                                                        "Name": "Operation",
+                                                        "Value": "InvokeAgent",
+                                                    }
+                                                ],
+                                            },
+                                            "Period": 60,
+                                            "Stat": "Sum",
+                                        },
+                                        "ReturnData": True,
+                                    }
+                                ],
+                            }
+                        ]
+                    },
+                )
+
+        class CloudWatchClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "describe_alarms"
+                return Paginator()
+
+        cloudwatch = CloudWatch.__new__(CloudWatch)
+        cloudwatch.audit_resources = [
+            "arn:aws:bedrock:us-east-1:123456789012:agent/agent-id"
+        ]
+        cloudwatch.metric_alarms = []
+        cloudwatch.all_metric_alarms = []
+        cloudwatch.metric_alarms_scanned_regions = set()
+        cloudwatch.metric_alarms_scan_errors = {}
+
+        cloudwatch._describe_alarms(CloudWatchClient())
+
+        assert cloudwatch.metric_alarms == []
+        reference = cloudwatch.all_metric_alarms[0].metric_references[0]
+        assert reference.account_id == AWS_ACCOUNT_NUMBER
+
+    @mock_aws
+    def test_describe_metric_math_ignores_unused_metric(self):
+        cw_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
+        cw_client.put_metric_alarm(
+            AlarmName="request-rate",
+            ComparisonOperator="GreaterThanThreshold",
+            EvaluationPeriods=1,
+            Threshold=10,
+            ActionsEnabled=True,
+            Metrics=[
+                {
+                    "Id": "agent_calls",
+                    "MetricStat": {
+                        "Metric": {
+                            "Namespace": "AWS/Bedrock/Agents",
+                            "MetricName": "InvocationCount",
+                            "Dimensions": [
+                                {"Name": "Operation", "Value": "InvokeAgent"}
+                            ],
+                        },
+                        "Period": 60,
+                        "Stat": "Sum",
+                    },
+                    "ReturnData": False,
+                },
+                {
+                    "Id": "requests",
+                    "MetricStat": {
+                        "Metric": {
+                            "Namespace": "Custom/App",
+                            "MetricName": "RequestCount",
+                        },
+                        "Period": 60,
+                        "Stat": "Sum",
+                    },
+                    "ReturnData": False,
+                },
+                {
+                    "Id": "rate",
+                    "Expression": "requests",
+                    "ReturnData": True,
+                },
+            ],
+        )
+
+        cloudwatch = CloudWatch(set_mocked_aws_provider())
+
+        assert [
+            (reference.namespace, reference.name)
+            for reference in cloudwatch.metric_alarms[0].metric_references
+        ] == [("Custom/App", "RequestCount")]
+
+    def test_describe_alarms_keeps_partial_region_error(self):
+        class PartialPaginator:
+            def paginate(self):
+                yield mocked_api_response(
+                    "cloudwatch",
+                    "DescribeAlarms",
+                    {
+                        "MetricAlarms": [
+                            {
+                                "AlarmArn": "arn:aws:cloudwatch:us-east-1:123456789012:alarm:partial",
+                                "AlarmName": "partial",
+                                "Namespace": "AWS/Bedrock/Agents",
+                                "MetricName": "InvocationCount",
+                                "ActionsEnabled": True,
+                            }
+                        ]
+                    },
+                )
+                raise ClientError(
+                    {"Error": {"Code": "AccessDenied", "Message": "denied"}},
+                    "DescribeAlarms",
+                )
+
+        class PartialCloudWatchClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "describe_alarms"
+                return PartialPaginator()
+
+        cloudwatch = CloudWatch.__new__(CloudWatch)
+        cloudwatch.audit_resources = []
+        cloudwatch.metric_alarms = []
+        cloudwatch.all_metric_alarms = []
+        cloudwatch.metric_alarms_scanned_regions = set()
+        cloudwatch.metric_alarms_scan_errors = {}
+
+        cloudwatch._describe_alarms(PartialCloudWatchClient())
+
+        assert len(cloudwatch.metric_alarms) == 1
+        assert cloudwatch.metric_alarms_scan_errors == {
+            AWS_REGION_US_EAST_1: "AccessDenied"
+        }
+        assert cloudwatch.metric_alarms_scanned_regions == set()
+
+    def test_describe_alarms_tracks_regions_independently(self):
+        class Paginator:
+            def __init__(self, error=None):
+                self.error = error
+
+            def paginate(self):
+                if self.error:
+                    raise self.error
+                yield mocked_api_response(
+                    "cloudwatch", "DescribeAlarms", {"MetricAlarms": []}
+                )
+
+        class CloudWatchClient:
+            def __init__(self, region, error=None):
+                self.region = region
+                self.error = error
+
+            def get_paginator(self, name):
+                assert name == "describe_alarms"
+                return Paginator(self.error)
+
+        denied = ClientError(
+            {"Error": {"Code": "AccessDenied", "Message": "denied"}},
+            "DescribeAlarms",
+        )
+        cloudwatch = CloudWatch.__new__(CloudWatch)
+        cloudwatch.audit_resources = []
+        cloudwatch.metric_alarms = []
+        cloudwatch.all_metric_alarms = []
+        cloudwatch.metric_alarms_scanned_regions = set()
+        cloudwatch.metric_alarms_scan_errors = {}
+
+        cloudwatch._describe_alarms(CloudWatchClient(AWS_REGION_US_EAST_1, denied))
+        cloudwatch._describe_alarms(CloudWatchClient(AWS_REGION_EU_WEST_1))
+
+        assert cloudwatch.metric_alarms == []
+        assert cloudwatch.metric_alarms_scan_errors == {
+            AWS_REGION_US_EAST_1: "AccessDenied"
+        }
+        assert cloudwatch.metric_alarms_scanned_regions == {AWS_REGION_EU_WEST_1}
+
+    @mock_aws
+    def test_describe_alarms_access_denied_keeps_legacy_none(self):
+        def deny_describe_alarms(self, operation_name, kwargs):
+            if operation_name == "DescribeAlarms":
+                raise ClientError(
+                    {"Error": {"Code": "AccessDenied", "Message": "denied"}},
+                    operation_name,
+                )
+            return make_api_call(self, operation_name, kwargs)
+
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=deny_describe_alarms,
+        ):
+            cloudwatch = CloudWatch(provider)
+
+        assert cloudwatch.metric_alarms is None
+        assert cloudwatch.all_metric_alarms == []
+        assert cloudwatch.metric_alarms_unavailable
+        assert cloudwatch.metric_alarms_scan_errors == {
+            AWS_REGION_US_EAST_1: "AccessDenied"
+        }
+        assert cloudwatch.metric_alarms_scanned_regions == set()
 
     # Test Logs Filters
     @mock_aws
