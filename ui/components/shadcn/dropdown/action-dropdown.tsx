@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  type DropdownContentVariant,
 } from "./dropdown";
 
 const ACTION_TRIGGER_STYLES = {
@@ -31,8 +32,14 @@ interface ActionDropdownProps {
   align?: "start" | "center" | "end";
   /** Additional className for the content */
   className?: string;
+  /** Content style variant, e.g. the Lighthouse gradient border */
+  menuVariant?: DropdownContentVariant;
   /** Accessible label for the trigger */
   ariaLabel?: string;
+  /** Controlled open state. Omit for the default uncontrolled behavior. */
+  open?: boolean;
+  /** Open-state change notifications; pairs with `open` for controlled use. */
+  onOpenChange?: (open: boolean) => void;
   children: ReactNode;
 }
 
@@ -41,29 +48,42 @@ export function ActionDropdown({
   variant = "table",
   align = "end",
   className,
+  menuVariant,
   ariaLabel = "Open actions menu",
+  open: openProp,
+  onOpenChange,
   children,
 }: ActionDropdownProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = openProp ?? uncontrolledOpen;
 
-  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events),
-  // but ignore scrolls originating inside a nested dialog (e.g. pasting into a modal
-  // textarea) so they don't unmount a modal rendered within this menu.
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
+
+  // Close dropdown when any ancestor scrolls (capture phase catches all scroll
+  // events), but ignore scrolls originating inside a nested dialog (e.g.
+  // pasting into a modal textarea) or inside the menu's own content, so they
+  // don't unmount what the user is interacting with.
   useEffect(() => {
     if (!open) return;
     const handleScroll = (event: Event) => {
       const target = event.target;
       if (
         target instanceof Element &&
-        target.closest('[data-slot="dialog-content"]')
+        target.closest(
+          '[data-slot="dialog-content"], [data-slot="dropdown-menu-content"]',
+        )
       ) {
         return;
       }
-      setOpen(false);
+      if (openProp === undefined) setUncontrolledOpen(false);
+      onOpenChange?.(false);
     };
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
-  }, [open]);
+  }, [open, openProp, onOpenChange]);
 
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
@@ -85,6 +105,7 @@ export function ActionDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align={align}
+        variant={menuVariant}
         className={cn(
           "border-border-neutral-secondary bg-bg-neutral-secondary w-56 rounded-xl",
           className,
@@ -127,9 +148,14 @@ export function ActionDropdownItem({
   const item = (
     <DropdownMenuItem
       className={cn(
-        "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
+        "hover:bg-border-neutral-secondary flex cursor-pointer items-start gap-2 rounded-lg transition-colors",
         destructive &&
           "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
+        // A disabled item with a tooltip stays interactive so hover can fire,
+        // which means Radix never stamps data-disabled — mirror its disabled
+        // styling manually.
+        disabled &&
+          "cursor-not-allowed opacity-50 hover:bg-transparent focus:bg-transparent",
         className,
       )}
       aria-disabled={disabled || undefined}

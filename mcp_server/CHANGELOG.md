@@ -4,6 +4,105 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- `readOnlyHint` and `destructiveHint` annotations on every MCP tool, with mute rule and mutelist writes marked destructive [(#13196)](https://github.com/prowler-cloud/prowler/pull/13196)
+
+### 🔐 Security
+
+- Authlib from 1.7.2 to 1.9.1 and dnspython from 2.8.0 to 2.9.0 in the MCP Server container image, patching CVE-2026-96760 (critical), CVE-2026-114615, CVE-2026-114616 and CVE-2026-114605 [(#13186)](https://github.com/prowler-cloud/prowler/pull/13186)
+
+---
+
+## [0.12.4] (Prowler v5.46.0)
+
+### 🔐 Security
+
+- certifi from 2026.4.22 to 2026.10.19 in the MCP Server container image, dropping the emSign root CAs whose intermediate keys were compromised [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+
+---
+
+## [0.12.3] (Prowler v5.45.0)
+
+### 🔐 Security
+
+- `pyjwt` from 2.13.0 to 2.14.0, patching GHSA-ffc3-869f-jxw9 [(#12911)](https://github.com/prowler-cloud/prowler/pull/12911)
+- Python from 3.13.14 to 3.13.16 in the MCP container image, patching CVE-2026-19445 and CVE-2026-19553 [(#13009)](https://github.com/prowler-cloud/prowler/pull/13009)
+
+---
+
+## [0.12.2] (Prowler v5.43.0)
+
+### 🔐 Security
+
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
+## [0.12.1] (Prowler v5.42.0)
+
+### 🔐 Security
+
+- `libuuid` upgraded to 2.41.6-r1 in the container image, patching CVE-2026-53612, CVE-2026-53613, CVE-2026-53614, CVE-2026-76642, CVE-2026-78408 and CVE-2026-78410 [(#12780)](https://github.com/prowler-cloud/prowler/pull/12780)
+
+---
+
+## [0.12.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, explanation in `content`) instead of as a successful result carrying an `{"error": ...}` object, which clients and models read as a success [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🔄 Changed
+
+- `prowler_get_compliance_framework_state_details` now rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider, which could report on a scan belonging to a different provider than the one that was asked about [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🐞 Fixed
+
+- `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now report a check ID that belongs to another provider as such, naming that provider, instead of reporting the ID as one that does not exist [(#12533)](https://github.com/prowler-cloud/prowler/pull/12533)
+- `prowler_docs_search` no longer reports a failed search as zero matches or an unreadable answer as a bad search term, and `prowler_docs_get_document` no longer reports a failed fetch as a missing page [(#12534)](https://github.com/prowler-cloud/prowler/pull/12534)
+
+---
+
+## [0.11.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- Failures shared by every tool - a rejected credential, a missing permission, a rate limit, an outage, an unreachable API, a bad argument - are now explained with a message that says what went wrong and what to do about it [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+
+### 🐞 Fixed
+
+- `prowler_docs_search` returns results again: it calls the search endpoint docs.prowler.com moved to, since the one it used no longer exists, and each result now names the page's title, the section it matched and a URL anchored at that section [(#12578)](https://github.com/prowler-cloud/prowler/pull/12578)
+
+### 🔐 Security
+
+- Stop relaying upstream response bodies to agents: a failed request now reaches the caller as a sentence this server wrote, with the full body kept to the logs, so a gateway error page or a debug traceback can no longer be replayed into a model's context [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+- `sqlite-libs` upgraded to 3.53.4-r0 in the container image, patching CVE-2026-11822 and CVE-2026-11824 [(#12537)](https://github.com/prowler-cloud/prowler/pull/12537)
+- `libcrypto3` and `libssl3` upgraded to 3.5.8-r0 in the container image, patching CVE-2026-14456 [(#12547)](https://github.com/prowler-cloud/prowler/pull/12547)
+
+---
+
+## [0.10.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- Test foundation for the MCP server with shared fixtures, JSON:API builders, mocked HTTP transports and CI coverage reporting [(#12291)](https://github.com/prowler-cloud/prowler/pull/12291)
+- Test coverage for the integrations tools and models, pinning the connection-check choreography and the Jira dispatch retry safety [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- `prowler_send_findings_to_jira` now reports `safe_to_retry` on every outcome, true only when Prowler knows no Jira work item was created: a dispatch the API refused is retryable, one that failed on the server or got no answer is not [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+- `prowler_list_integrations` no longer requests the `configuration` it discards, now that the API tolerates a sparse fieldset without it [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+
+### 🔐 Security
+
+- Upgrade cryptography to 50.0.0, closing CVE-2026-69247 and CVE-2026-69249 [(#12356)](https://github.com/prowler-cloud/prowler/pull/12356)
+
+---
+
 ## [0.9.1] (Prowler v5.37.1)
 
 ### 🔐 Security

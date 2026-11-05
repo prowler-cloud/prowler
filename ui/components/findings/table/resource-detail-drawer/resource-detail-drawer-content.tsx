@@ -2,7 +2,6 @@
 
 import {
   Box,
-  CircleArrowRight,
   CircleChevronLeft,
   CircleChevronRight,
   Container,
@@ -10,22 +9,28 @@ import {
   VolumeOff,
   VolumeX,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { getCompliancesOverview } from "@/actions/compliances";
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   type ResourceDrawerFinding,
-  updateFindingTriage,
 } from "@/actions/findings";
-import { requestPanelChatMessage } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
+  requestPanelChatMessage,
+  requestPanelSkillLaunch,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
+  buildComplianceDetailHref,
+  ComplianceFrameworkChip,
+} from "@/components/compliance/compliance-framework-chip";
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { getComplianceIcon } from "@/components/icons";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
+import { RecheckResourceIconButton } from "@/components/findings/recheck-resource-icon-button";
 import {
   Badge,
   Button,
@@ -71,29 +76,39 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
+import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badge";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
-import type { ComplianceOverviewData } from "@/types/compliance";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import type { FindingResourceRow } from "@/types/findings-table";
-import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type {
+  FindingTriageUpdateResult,
+  UpdateFindingTriageInput,
+} from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import {
   FindingNoteActionItem,
-  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
 
+import { LighthouseSkillsRail } from "./lighthouse-skills-rail";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -168,96 +183,6 @@ function renderRemediationCodeBlock({
   );
 }
 
-function normalizeComplianceFrameworkName(framework: string): string {
-  return framework
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
-}
-
-function stripComplianceVersionSuffix(framework: string): string {
-  return framework.replace(/-\d+(?:\.\d+)*$/g, "");
-}
-
-function canonicalComplianceKey(framework: string): string {
-  return stripComplianceVersionSuffix(
-    normalizeComplianceFrameworkName(framework),
-  )
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
-}
-
-function complianceTokens(framework: string): string[] {
-  return stripComplianceVersionSuffix(
-    normalizeComplianceFrameworkName(framework),
-  )
-    .split("-")
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !/^\d+(?:\.\d+)*$/.test(token));
-}
-
-function complianceMatchScore(
-  sourceFramework: string,
-  targetFramework: string,
-): number {
-  const normalizedSource = normalizeComplianceFrameworkName(sourceFramework);
-  const normalizedTarget = normalizeComplianceFrameworkName(targetFramework);
-
-  if (normalizedSource === normalizedTarget) {
-    return 5;
-  }
-
-  const canonicalSource = canonicalComplianceKey(sourceFramework);
-  const canonicalTarget = canonicalComplianceKey(targetFramework);
-
-  if (canonicalSource === canonicalTarget) {
-    return 4;
-  }
-
-  if (canonicalSource && canonicalTarget) {
-    const sourceTokens = canonicalSource.split("-");
-    const targetTokens = canonicalTarget.split("-");
-    if (
-      sourceTokens.length !== targetTokens.length &&
-      (sourceTokens.every((t) => targetTokens.includes(t)) ||
-        targetTokens.every((t) => sourceTokens.includes(t)))
-    ) {
-      return 3;
-    }
-  }
-
-  const sourceTokens = complianceTokens(sourceFramework);
-  const targetTokens = complianceTokens(targetFramework);
-  if (!sourceTokens.length || !targetTokens.length) {
-    return 0;
-  }
-
-  const sourceMatchesTarget = sourceTokens.every((token) =>
-    targetTokens.includes(token),
-  );
-  const targetMatchesSource = targetTokens.every((token) =>
-    sourceTokens.includes(token),
-  );
-
-  if (sourceMatchesTarget || targetMatchesSource) {
-    return 2;
-  }
-
-  if (
-    sourceTokens.some((token) => targetTokens.includes(token)) &&
-    canonicalSource &&
-    canonicalTarget &&
-    (canonicalTarget.includes(canonicalSource) ||
-      canonicalSource.includes(canonicalTarget))
-  ) {
-    return 1;
-  }
-
-  return 0;
-}
-
 function parseSelectedScanIds(scanFilterValue: string | null): string[] {
   if (!scanFilterValue) {
     return [];
@@ -267,64 +192,6 @@ function parseSelectedScanIds(scanFilterValue: string | null): string[] {
     .split(",")
     .map((scanId) => scanId.trim())
     .filter(Boolean);
-}
-
-function resolveComplianceMatch(
-  compliances: ComplianceOverviewData[] | undefined,
-  framework: string,
-): {
-  complianceId: string;
-  framework: string;
-  version: string;
-} | null {
-  if (!compliances?.length) {
-    return null;
-  }
-
-  const match = compliances
-    .map((compliance) => ({
-      compliance,
-      score: complianceMatchScore(framework, compliance.attributes.framework),
-    }))
-    .filter(({ score }) => score > 0)
-    .sort((a, b) => b.score - a.score)[0]?.compliance;
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    complianceId: match.id,
-    framework: match.attributes.framework,
-    version: match.attributes.version,
-  };
-}
-
-function buildComplianceDetailHref({
-  complianceId,
-  framework,
-  version,
-  scanId,
-  regionFilter,
-}: {
-  complianceId: string;
-  framework: string;
-  version: string;
-  scanId: string;
-  regionFilter: string | null;
-}): string {
-  const params = new URLSearchParams();
-  params.set("complianceId", complianceId);
-  if (version) {
-    params.set("version", version);
-  }
-  params.set("scanId", scanId);
-
-  if (regionFilter) {
-    params.set("filter[region__in]", regionFilter);
-  }
-
-  return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
 }
 
 function buildResourceDetailHref(resourceId: string): string {
@@ -368,36 +235,45 @@ export function ResourceDetailDrawerContent({
   const openSidePanel = useSidePanelStore((state) => state.openPanel);
   const lighthouseContext = useLighthouseCurrentContext();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [resolvingFramework, setResolvingFramework] = useState<string | null>(
-    null,
-  );
   const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
     Set<string>
   >(new Set());
 
-  // Initial load — no check metadata yet
+  // Initial load — no check metadata yet. Mirrors the loaded layout 1:1:
+  // header (badges, title, compliance chips), navigation row, and the
+  // resource card with metadata grid, tabs bar and overview blocks.
   if (!checkMeta && isLoading) {
     return (
       <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
-        {/* Header skeleton */}
-        <div className="flex flex-col gap-2">
+        {/* Header skeleton — status/severity badges, title, compliance chips */}
+        <div className="flex flex-col gap-2" aria-hidden="true">
           <div className="flex items-center gap-3">
             <Skeleton className="h-6 w-14 rounded-md" />
             <Skeleton className="h-6 w-16 rounded-md" />
           </div>
           <Skeleton className="h-6 w-3/4 rounded" />
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-28 rounded" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="size-7 rounded-md" />
+              <Skeleton className="size-7 rounded-md" />
+              <Skeleton className="size-7 rounded-md" />
+            </div>
+          </div>
         </div>
-        {/* Navigation skeleton */}
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-7 w-48 rounded" />
+        {/* Navigation skeleton — "Resource X of N" tag + carousel chevrons */}
+        <div className="flex items-center justify-between" aria-hidden="true">
+          <Skeleton className="h-7 w-32 rounded" />
           <div className="flex gap-1">
             <Skeleton className="size-8 rounded-md" />
             <Skeleton className="size-8 rounded-md" />
           </div>
         </div>
         {/* Resource card skeleton */}
-        <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 rounded-lg border p-4">
+        <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
           <ResourceDetailSkeleton />
+          <TabsBarSkeleton />
+          <OverviewNavigationSkeleton />
         </div>
       </div>
     );
@@ -417,6 +293,9 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
+  const sampleDisabledReason = isSampleId(f?.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const jiraPayload = createJiraDispatchPayload({
     targetIds: f ? [f.id] : [],
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
@@ -442,31 +321,46 @@ export function ResourceDetailDrawerContent({
   const resourceRegionLabel = resourceRegion || "-";
   const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
   const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
+  const recheckTarget = {
+    providerId: f?.providerId,
+    providerUid,
+    providerType,
+    providerAlias,
+    resourceUid,
+    resourceName,
+  };
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
   const selectedScanIds = parseSelectedScanIds(
     searchParams.get("filter[scan__in]"),
   );
   const complianceScanId =
-    selectedScanIds.length === 1
-      ? selectedScanIds[0]
-      : selectedScanIds.length === 0
-        ? (f?.scan?.id ?? null)
-        : null;
+    isSampleId(f?.id) || isSampleId(f?.scan?.id)
+      ? null
+      : selectedScanIds.length === 1
+        ? selectedScanIds[0]
+        : selectedScanIds.length === 0
+          ? (f?.scan?.id ?? null)
+          : null;
   const regionFilter = searchParams.get("filter[region__in]");
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
-  const resourceDetailHref = f?.resourceId
-    ? buildResourceDetailHref(f.resourceId)
-    : null;
-  const externalResourceTarget = resolveExternalTarget({
-    providerType,
-    resourceUid,
-    providerUid,
-    resourceName,
-    findingUid: f?.uid,
-    region: resourceRegion,
-  });
+  // Resources and Scans have no sample data, so sample records link nowhere.
+  const resourceDetailHref =
+    f?.resourceId && !isSampleId(f.resourceId)
+      ? buildResourceDetailHref(f.resourceId)
+      : null;
+  // The sample account is not theirs: its console links would open nothing.
+  const externalResourceTarget = isSampleId(f?.resourceId)
+    ? null
+    : resolveExternalTarget({
+        providerType,
+        resourceUid,
+        providerUid,
+        resourceName,
+        findingUid: f?.uid,
+        region: resourceRegion,
+      });
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -485,56 +379,54 @@ export function ResourceDetailDrawerContent({
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
     if (shouldRefreshAfterTriageUpdate(input)) {
       onMuteComplete();
-      return;
+      return result;
     }
 
     onTriageUpdate?.(input);
+    return result;
   };
 
-  const handleAnalyzeFinding = () => {
+  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
-    requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
+    requestPanelSkillLaunch(skill, lighthouseContext.context);
   };
 
-  const handleOpenCompliance = async (framework: string) => {
-    if (!complianceScanId || resolvingFramework) {
+  const handleSubmitPrompt = (text: string) => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    requestPanelChatMessage(text, lighthouseContext.context);
+  };
+
+  /**
+   * The API hands us the framework's `complianceId`, which is the same string
+   * the per-scan detail page keys on — universal frameworks included, since
+   * their id is the SDK's file stem and the provider template carries it
+   * verbatim. So the destination is known up front: no lookup against the
+   * scan's overview, no matching by display name, and `window.open` stays
+   * inside the click gesture instead of running after an `await`, where a
+   * pop-up blocker would eat it.
+   */
+  const handleOpenCompliance = (framework: FindingComplianceFramework) => {
+    if (!complianceScanId) {
       return;
     }
 
-    setResolvingFramework(framework);
-
-    try {
-      const compliancesOverview = await getCompliancesOverview({
+    window.open(
+      buildComplianceDetailHref({
+        complianceId: framework.complianceId,
+        // Same fallback the chip's label uses: `framework` is empty for one the
+        // SDK exposes no metadata for, and it is a path segment here, so
+        // without it the destination collapses to `/compliance/`.
+        framework: framework.framework || framework.name,
+        version: framework.version,
         scanId: complianceScanId,
-      });
-      const complianceMatch = resolveComplianceMatch(
-        compliancesOverview?.data,
-        framework,
-      );
-
-      if (!complianceMatch) {
-        return;
-      }
-
-      window.open(
-        buildComplianceDetailHref({
-          complianceId: complianceMatch.complianceId,
-          framework: complianceMatch.framework,
-          version: complianceMatch.version,
-          scanId: complianceScanId,
-          regionFilter,
-        }),
-        "_blank",
-        "noopener,noreferrer",
-      );
-    } catch (error) {
-      console.error("Error resolving compliance detail:", error);
-    } finally {
-      setResolvingFramework(null);
-    }
+        regionFilter,
+      }),
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (
@@ -569,7 +461,7 @@ export function ResourceDetailDrawerContent({
           {findingIsMuted !== undefined && (
             <Muted isMuted={findingIsMuted} mutedReason={findingMutedReason} />
           )}
-          {findingTriage && <FindingTriageStatusBadge triage={findingTriage} />}
+          {findingTriage && <TriageStatusBadge status={findingTriage.status} />}
         </div>
 
         {showCheckMetaContent ? (
@@ -584,81 +476,14 @@ export function ResourceDetailDrawerContent({
                   Compliance Frameworks:
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
-                  {checkMeta.complianceFrameworks.map((framework) => {
-                    const icon = getComplianceIcon(framework);
-                    const isNavigable = Boolean(complianceScanId);
-                    const isResolving = resolvingFramework === framework;
-
-                    return icon ? (
-                      <Tooltip key={framework}>
-                        <TooltipTrigger asChild>
-                          {isNavigable ? (
-                            <button
-                              type="button"
-                              aria-label={`Open ${framework} compliance details`}
-                              onClick={() =>
-                                void handleOpenCompliance(framework)
-                              }
-                              disabled={Boolean(resolvingFramework)}
-                              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                            >
-                              <Image
-                                src={icon}
-                                alt={framework}
-                                width={20}
-                                height={20}
-                                className="size-5 object-contain"
-                              />
-                              {isResolving && (
-                                <span className="sr-only">
-                                  Opening compliance
-                                </span>
-                              )}
-                            </button>
-                          ) : (
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                              <Image
-                                src={icon}
-                                alt={framework}
-                                width={20}
-                                height={20}
-                                className="size-5 object-contain"
-                              />
-                            </div>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent>{framework}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip key={framework}>
-                        <TooltipTrigger asChild>
-                          {isNavigable ? (
-                            <button
-                              type="button"
-                              aria-label={`Open ${framework} compliance details`}
-                              onClick={() =>
-                                void handleOpenCompliance(framework)
-                              }
-                              disabled={Boolean(resolvingFramework)}
-                              className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                            >
-                              {framework}
-                              {isResolving && (
-                                <span className="sr-only">
-                                  Opening compliance
-                                </span>
-                              )}
-                            </button>
-                          ) : (
-                            <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                              {framework}
-                            </span>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent>{framework}</TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
+                  {checkMeta.complianceFrameworks.map((framework) => (
+                    <ComplianceFrameworkChip
+                      key={framework.id}
+                      framework={framework}
+                      isNavigable={Boolean(complianceScanId)}
+                      onOpen={handleOpenCompliance}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -673,11 +498,21 @@ export function ResourceDetailDrawerContent({
             <div className="flex flex-col gap-1.5">
               <Skeleton className="h-4 w-28 rounded" />
               <div className="flex flex-wrap items-center gap-2">
-                <Skeleton className="h-7 w-16 rounded-md" />
-                <Skeleton className="h-7 w-20 rounded-md" />
+                <Skeleton className="size-7 rounded-md" />
+                <Skeleton className="size-7 rounded-md" />
+                <Skeleton className="size-7 rounded-md" />
               </div>
             </div>
           </div>
+        )}
+
+        {/* Lighthouse skill launcher: chip rail under the title. Sample
+            findings exist only in the UI, so Lighthouse has nothing to read. */}
+        {isCloud() && !isNavigating && !isSampleId(currentFinding?.id) && (
+          <LighthouseSkillsRail
+            onLaunchSkill={handleLaunchSkill}
+            onSubmitPrompt={handleSubmitPrompt}
+          />
         )}
       </div>
 
@@ -811,7 +646,15 @@ export function ResourceDetailDrawerContent({
                     variant="compact"
                     className="min-w-0"
                   >
-                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                    <span className="group flex items-center gap-1.5">
+                      <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                      {f && (
+                        <RecheckResourceIconButton
+                          target={recheckTarget}
+                          disabledReason={sampleDisabledReason}
+                        />
+                      )}
+                    </span>
                   </InfoField>
                   <InfoField
                     label="First seen"
@@ -850,6 +693,7 @@ export function ResourceDetailDrawerContent({
                         }}
                         onTriageUpdateAction={handleDrawerTriageUpdate}
                         onTriageNoteLoadAction={loadLatestFindingTriageNote}
+                        onTriageDetailLoadAction={loadFindingTriageDetail}
                       />
                     )}
                     <ActionDropdownItem
@@ -861,12 +705,17 @@ export function ResourceDetailDrawerContent({
                         )
                       }
                       label={f.isMuted ? "Muted" : "Mute"}
-                      disabled={f.isMuted}
+                      disabled={f.isMuted || Boolean(sampleDisabledReason)}
+                      disabledTooltip={sampleDisabledReason}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
                     <JiraDispatchActionItem
                       label={buildJiraActionLabel({ findingCount: 1 })}
                       payload={jiraPayload}
+                    />
+                    <RecheckResourceActionItem
+                      target={recheckTarget}
+                      disabledReason={sampleDisabledReason}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem
@@ -1180,7 +1029,7 @@ export function ResourceDetailDrawerContent({
                 </p>
               )
             ) : (
-              <OverviewNavigationSkeleton testId="remediation-navigation-skeleton" />
+              <RemediationNavigationSkeleton />
             )}
           </TabsContent>
 
@@ -1303,16 +1152,18 @@ export function ResourceDetailDrawerContent({
                   <p className="text-text-neutral-secondary text-xs">
                     Showing the latest scan that evaluated this finding
                   </p>
-                  <Button variant="link" size="link-sm" asChild>
-                    <Link
-                      href={`/scans?filter[id__in]=${f?.scan?.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View scan
-                      <ExternalLink className="size-3" />
-                    </Link>
-                  </Button>
+                  {!isSampleId(f?.scan?.id) && (
+                    <Button variant="link" size="link-sm" asChild>
+                      <Link
+                        href={`/scans?filter[id__in]=${f?.scan?.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View scan
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Scan Name" variant="compact">
@@ -1382,42 +1233,77 @@ export function ResourceDetailDrawerContent({
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Lighthouse AI button */}
-      {isCloud() && !isNavigating && (
-        <button
-          type="button"
-          onClick={handleAnalyzeFinding}
-          className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
-          style={{
-            background: "var(--gradient-lighthouse)",
-          }}
-        >
-          <CircleArrowRight className="size-5" />
-          Analyze This Finding With Lighthouse AI
-        </button>
-      )}
     </div>
   );
 }
 
-function OverviewNavigationSkeleton({ testId }: { testId?: string } = {}) {
+// Mirrors the loaded Overview tab: risk callout, description and the IDs card.
+function OverviewNavigationSkeleton() {
   return (
     <div
       className="flex flex-col gap-4"
-      data-testid={testId ?? "overview-navigation-skeleton"}
+      data-testid="overview-navigation-skeleton"
+      aria-hidden="true"
     >
+      {/* Risk — left-bordered callout */}
+      <div className="border-border-neutral-primary flex flex-col gap-2 border-l-4 pl-3">
+        <Skeleton className="h-4 w-12 rounded" />
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-5/6 rounded" />
+      </div>
+      {/* Description */}
+      <div className="flex flex-col gap-2 px-1">
+        <Skeleton className="h-4 w-24 rounded" />
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-2/3 rounded" />
+      </div>
+      {/* Check ID / Finding ID / Finding UID card */}
       <Card variant="inner">
-        <OverviewCardSkeleton lineWidths={["w-24", "w-full", "w-5/6"]} />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-x-6">
+          {["w-16", "w-20", "w-20"].map((labelWidth, index) => (
+            <div key={index} className="flex flex-col gap-1">
+              <Skeleton className={`h-3.5 ${labelWidth} rounded`} />
+              <Skeleton className="h-5 w-28 rounded" />
+            </div>
+          ))}
+        </div>
       </Card>
+    </div>
+  );
+}
+
+// Mirrors the loaded Remediation tab: heading row with link, text, code card.
+function RemediationNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="remediation-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <div className="flex flex-col gap-2 px-1">
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-4 w-28 rounded" />
+          <Skeleton className="h-4 w-24 rounded" />
+        </div>
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-3/4 rounded" />
+      </div>
       <Card variant="inner">
-        <OverviewCardSkeleton
-          lineWidths={["w-28", "w-3/4", "w-full", "w-2/3"]}
-        />
+        <Skeleton className="h-24 w-full rounded" />
       </Card>
-      <Card variant="inner">
-        <OverviewCardSkeleton lineWidths={["w-20", "w-40", "w-24"]} />
-      </Card>
+    </div>
+  );
+}
+
+// Mirrors the tabs bar: six text triggers with their separators' spacing.
+function TabsBarSkeleton() {
+  return (
+    <div className="mt-2 mb-4 flex items-center gap-8" aria-hidden="true">
+      {["w-16", "w-24", "w-16", "w-24", "w-12", "w-12"].map(
+        (tabWidth, index) => (
+          <Skeleton key={index} className={`h-5 ${tabWidth} rounded`} />
+        ),
+      )}
     </div>
   );
 }
@@ -1561,10 +1447,15 @@ function OtherFindingRow({
   finding: ResourceDrawerFinding;
   isOptimisticallyMuted: boolean;
   onMuted: () => void;
-  onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
+  onTriageUpdateAction: (
+    input: UpdateFindingTriageInput,
+  ) => Promise<FindingTriageUpdateResult | void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
+  const sampleDisabledReason = isSampleId(finding.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const jiraPayload = createJiraDispatchPayload({
     targetIds: [finding.id],
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
@@ -1623,7 +1514,14 @@ function OtherFindingRow({
         <TableCell>
           <FindingTriageStatusCell
             triage={finding.triage}
+            findingContext={{
+              title: finding.checkTitle,
+              resource: finding.resourceName,
+              provider: finding.providerAlias,
+              providerType: finding.providerType,
+            }}
             onTriageUpdateAction={onTriageUpdateAction}
+            onTriageDetailLoadAction={loadFindingTriageDetail}
           />
         </TableCell>
         <TableCell className={OTHER_FINDINGS_ACTION_CELL_CLASS}>
@@ -1640,6 +1538,7 @@ function OtherFindingRow({
                   }}
                   onTriageUpdateAction={onTriageUpdateAction}
                   onTriageNoteLoadAction={loadLatestFindingTriageNote}
+                  onTriageDetailLoadAction={loadFindingTriageDetail}
                 />
               )}
               <ActionDropdownItem
@@ -1651,7 +1550,8 @@ function OtherFindingRow({
                   )
                 }
                 label={isMuted ? "Muted" : "Mute"}
-                disabled={isMuted}
+                disabled={isMuted || Boolean(sampleDisabledReason)}
+                disabledTooltip={sampleDisabledReason}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
               <JiraDispatchActionItem

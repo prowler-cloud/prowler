@@ -27,7 +27,13 @@ class chat_external_messaging_restricted(Check):
             allow_external = chat_client.policies.allow_external_chat
             restriction = chat_client.policies.external_chat_restriction
 
-            if allow_external is False:
+            if chat_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Chat is turned off for everyone in domain "
+                    f"{chat_client.provider.identity.domain}, so no external messaging can take place."
+                )
+            elif allow_external is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"External Chat messaging is disabled "

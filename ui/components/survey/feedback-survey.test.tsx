@@ -1,9 +1,20 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Survey } from "posthog-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { clampSidePanelWidth } from "@/lib/ui-layout";
+
 type SurveyCallback = (surveys: Survey[]) => void;
+
+interface PostHogInitConfig {
+  api_host?: string;
+  loaded?: (client: unknown) => void;
+  ui_host?: string;
+}
 
 const mocks = vi.hoisted(() => ({
   isCloud: vi.fn(),
@@ -12,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   onSurveysLoaded: vi.fn(),
   capture: vi.fn(),
   moduleLoaded: vi.fn(),
+  pathname: "/",
+  isPushViewport: false,
   // Mirrors the singleton's `__loaded` flag: true when a PostHog instance
   // already exists (as on Prowler Cloud, initialized in app/providers.tsx).
   loaded: false,
@@ -20,6 +33,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/shared/env", () => ({ isCloud: mocks.isCloud }));
 vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: mocks.useRuntimeConfig,
+}));
+vi.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: () => mocks.isPushViewport,
+}));
+vi.mock("next/navigation", () => ({
+  usePathname: () => mocks.pathname,
 }));
 vi.mock("posthog-js", () => {
   mocks.moduleLoaded();
@@ -36,6 +55,10 @@ vi.mock("posthog-js", () => {
 });
 
 const POSTHOG_KEY = "phc_key";
+const GLOBAL_STYLES = readFileSync(
+  resolve(process.cwd(), "styles/globals.css"),
+  "utf8",
+);
 
 const SURVEY_FIXTURE = {
   id: "survey-123",
@@ -67,7 +90,11 @@ const provideSurveys = (surveys: Survey[]): void => {
   });
 };
 
-const renderSurvey = async () => {
+// Pre-evaluating the lazy chunk keeps findBy* queries from racing module
+// evaluation under full-suite load; guard tests that assert the chunk is never
+// touched opt out via preloadRuntime: false.
+const renderSurvey = async ({ preloadRuntime = true } = {}) => {
+  if (preloadRuntime) await import("./runtime-feedback-survey");
   const { FeedbackSurvey } = await import("./feedback-survey");
   return render(<FeedbackSurvey />);
 };
@@ -77,12 +104,17 @@ describe("FeedbackSurvey", () => {
     vi.resetModules();
     vi.resetAllMocks();
     mocks.loaded = false;
+    mocks.pathname = "/";
+    mocks.isPushViewport = false;
+    vi.stubEnv("NODE_ENV", "development");
+    localStorage.clear();
     mocks.isCloud.mockReturnValue(true);
     mocks.useRuntimeConfig.mockReturnValue({
       cloudEnabled: true,
       posthogEnabled: true,
       posthogKey: POSTHOG_KEY,
-      posthogHost: "https://eu.posthog.com",
+      posthogIngestionHost: "https://us.i.posthog.com",
+      posthogUiHost: "https://us.posthog.com",
     });
     provideSurveys([SURVEY_FIXTURE]);
   });
@@ -90,9 +122,11 @@ describe("FeedbackSurvey", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, "posthog");
   });
 
-  it("renders the feedback trigger when Cloud and the survey is available", async () => {
+  it("renders an accessible icon-only circular feedback trigger", async () => {
     // When
     await renderSurvey();
 
@@ -101,7 +135,134 @@ describe("FeedbackSurvey", () => {
       name: "Give feedback",
     });
     expect(trigger).toBeVisible();
-    expect(trigger).toHaveTextContent("Feedback");
+    expect(trigger).toHaveAccessibleName("Give feedback");
+    expect(trigger).not.toHaveTextContent("Feedback");
+    expect(trigger.querySelector("svg")).toBeInTheDocument();
+    expect(trigger).toHaveClass("rounded-full", "size-10");
+  });
+
+  it("activates feedback clearance only on the semantic main page scroller", async () => {
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toHaveAttribute("data-feedback-survey-trigger");
+    expect(GLOBAL_STYLES).toMatch(
+      /body:has\(\[data-feedback-survey-trigger\]\)\s+main\[data-responsive-container\]\s*{\s*@apply pb-36;\s*}/,
+    );
+    expect(GLOBAL_STYLES).not.toMatch(
+      /body:has\(\[data-feedback-survey-trigger\]\)\s+\[data-responsive-container\]\s*{/,
+    );
+  });
+
+  it("keeps the normal right gutter above page content when the side panel is closed", async () => {
+    // Given
+    mocks.isPushViewport = true;
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toHaveClass("right-6", "z-50");
+    expect(trigger.style.right).toBe("");
+  });
+
+  it("moves left by the clamped panel width on push viewports", async () => {
+    // Given - persisted widths are consumed defensively, just like MainLayout.
+    const persistedWidth = 2000;
+    vi.stubGlobal("innerWidth", 1200);
+    mocks.isPushViewport = true;
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({
+      isOpen: true,
+      width: persistedWidth,
+    });
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    await waitFor(() =>
+      expect(trigger).toHaveStyle({
+        right: `${clampSidePanelWidth(persistedWidth) + 24}px`,
+      }),
+    );
+    expect(trigger).toHaveClass("transition-[right,transform]", "duration-200");
+  });
+
+  it("keeps the normal gutter on Lighthouse when stale state says the absent panel is open", async () => {
+    // Given
+    mocks.pathname = "/lighthouse";
+    mocks.isPushViewport = true;
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({ isOpen: true, width: 720 });
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toBeVisible();
+    expect(trigger.style.right).toBe("");
+  });
+
+  it("hides the feedback trigger when the side panel overlays on mobile", async () => {
+    // Given
+    mocks.isPushViewport = false;
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({ isOpen: true, width: 720 });
+
+    // When
+    await renderSurvey();
+
+    // Then
+    await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
+    expect(
+      screen.queryByRole("button", { name: "Give feedback" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the feedback form closed after the mobile side panel closes", async () => {
+    // Given
+    mocks.isPushViewport = false;
+    const user = userEvent.setup();
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({ isOpen: false });
+    await renderSurvey();
+    await user.click(
+      await screen.findByRole("button", { name: "Give feedback" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "What could we do better?" }),
+    ).toBeVisible();
+
+    // When
+    act(() => useSidePanelStore.setState({ isOpen: true }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Give feedback" }),
+      ).not.toBeInTheDocument(),
+    );
+    act(() => useSidePanelStore.setState({ isOpen: false }));
+
+    // Then
+    expect(
+      await screen.findByRole("button", { name: "Give feedback" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "What could we do better?" }),
+    ).not.toBeInTheDocument();
   });
 
   it("ignores a same-name non-API survey and selects the API survey", async () => {
@@ -163,6 +324,7 @@ describe("FeedbackSurvey", () => {
     ).toBeVisible();
     const input = screen.getByPlaceholderText("Type your answer here");
     expect(input).toBeVisible();
+    expect(input).not.toHaveAttribute("maxlength");
     expect(screen.getByRole("button", { name: "Submit answer" })).toBeVisible();
   });
 
@@ -290,13 +452,47 @@ describe("FeedbackSurvey", () => {
     await waitFor(() => expect(mocks.init).toHaveBeenCalledTimes(1));
     expect(mocks.init.mock.calls[0][0]).toBe(POSTHOG_KEY);
     expect(mocks.init.mock.calls[0][1]).toMatchObject({
-      api_host: "https://eu.posthog.com",
-      ui_host: "https://eu.posthog.com",
+      api_host: "https://us.i.posthog.com",
+      ui_host: "https://us.posthog.com",
       autocapture: false,
       capture_pageview: false,
       capture_pageleave: false,
     });
     await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
+  });
+
+  it("exposes the initialized PostHog client for the development Toolbar", async () => {
+    // Given
+    await renderSurvey();
+    await waitFor(() => expect(mocks.init).toHaveBeenCalledOnce());
+    const config = mocks.init.mock.calls[0]?.[1] as
+      | PostHogInitConfig
+      | undefined;
+    const { default: posthogClient } = await import("posthog-js");
+
+    // When
+    config?.loaded?.(posthogClient);
+
+    // Then
+    expect(config?.loaded).toBeTypeOf("function");
+    expect(Reflect.get(window, "posthog")).toBe(posthogClient);
+  });
+
+  it("keeps the initialized PostHog client off window in production", async () => {
+    // Given
+    vi.stubEnv("NODE_ENV", "production");
+    await renderSurvey();
+    await waitFor(() => expect(mocks.init).toHaveBeenCalledOnce());
+    const config = mocks.init.mock.calls[0]?.[1] as
+      | PostHogInitConfig
+      | undefined;
+    const { default: posthogClient } = await import("posthog-js");
+
+    // When
+    config?.loaded?.(posthogClient);
+
+    // Then
+    expect(Reflect.has(window, "posthog")).toBe(false);
   });
 
   it("consumes the already-initialized Cloud instance without re-initializing", async () => {
@@ -311,6 +507,8 @@ describe("FeedbackSurvey", () => {
     // the trigger renders.
     await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
     expect(mocks.init).not.toHaveBeenCalled();
+    const { default: posthogClient } = await import("posthog-js");
+    expect(Reflect.get(window, "posthog")).toBe(posthogClient);
     expect(
       await screen.findByRole("button", { name: "Give feedback" }),
     ).toBeVisible();
@@ -323,11 +521,12 @@ describe("FeedbackSurvey", () => {
       cloudEnabled: false,
       posthogEnabled: false,
       posthogKey: null,
-      posthogHost: null,
+      posthogIngestionHost: null,
+      posthogUiHost: null,
     });
 
     // When
-    const view = await renderSurvey();
+    const view = await renderSurvey({ preloadRuntime: false });
 
     // Then - no init, no survey fetch, nothing rendered
     expect(mocks.init).not.toHaveBeenCalled();
@@ -343,11 +542,12 @@ describe("FeedbackSurvey", () => {
       cloudEnabled: true,
       posthogEnabled: false,
       posthogKey: POSTHOG_KEY,
-      posthogHost: "https://eu.posthog.com",
+      posthogIngestionHost: "https://eu.i.posthog.com",
+      posthogUiHost: "https://eu.posthog.com",
     });
 
     // When
-    const view = await renderSurvey();
+    const view = await renderSurvey({ preloadRuntime: false });
 
     // Then
     expect(view.container).toBeEmptyDOMElement();
@@ -367,7 +567,7 @@ describe("FeedbackSurvey", () => {
     provideSurveys([SURVEY_FIXTURE]);
 
     // When
-    const view = await renderSurvey();
+    const view = await renderSurvey({ preloadRuntime: false });
 
     // Then - no init, no trigger, no survey fetch, no capture, regardless of config
     expect(view.container).toBeEmptyDOMElement();

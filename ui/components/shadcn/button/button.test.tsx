@@ -21,6 +21,18 @@ describe("Button", () => {
     );
   });
 
+  it("supports extra-small text buttons", () => {
+    render(
+      <Button variant="outline" size="xs">
+        Create Jira ticket
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: "Create Jira ticket" });
+    expect(button).toHaveClass("h-7");
+    expect(button).toHaveClass("text-xs");
+  });
+
   it("supports extra-small link buttons", () => {
     render(
       <Button variant="link" size="link-xs">
@@ -35,13 +47,36 @@ describe("Button", () => {
 
   it("supports extra-small icon buttons", () => {
     render(
-      <Button size="icon-xs" aria-label="Open tour">
-        Open tour
+      <Button size="icon-xs" aria-label="Open menu">
+        Open menu
       </Button>,
     );
 
-    expect(screen.getByRole("button", { name: "Open tour" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveClass(
       "size-7",
+    );
+  });
+
+  it("supports circular icon buttons without changing the default shape", () => {
+    // Given / When
+    const { rerender } = render(
+      <Button shape="circle" size="icon-lg" aria-label="Give feedback">
+        <svg aria-hidden="true" />
+      </Button>,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Give feedback" })).toHaveClass(
+      "rounded-full",
+      "size-10",
+    );
+
+    // When
+    rerender(<Button>Default shape</Button>);
+
+    // Then
+    expect(screen.getByRole("button", { name: "Default shape" })).toHaveClass(
+      "rounded-[8px]",
     );
   });
 

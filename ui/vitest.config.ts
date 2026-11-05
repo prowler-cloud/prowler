@@ -1,8 +1,33 @@
-import react from "@vitejs/plugin-react";
+import react, { type BabelOptions } from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
+import fs from "fs";
 import path from "path";
 import type { TestProjectConfiguration } from "vitest/config";
 import { defineConfig } from "vitest/config";
+
+/**
+ * Next runs the React Compiler on the client compilation only — its
+ * `getReactCompilerPlugins` returns nothing when `isServer` — so a Server
+ * Component ships uncompiled. Mirror that: compiled, it calls `useMemoCache`
+ * on the active dispatcher, which a harness invoking the component as a
+ * function has none of, and `react/compiler-runtime` reads the client
+ * internals the `react-server` build does not export anyway.
+ */
+const isServerModule = (id: string): boolean => {
+  const file = id.split("?")[0];
+  if (!file.includes("/app/")) return false;
+  try {
+    return !/^\s*["']use client["']/.test(fs.readFileSync(file, "utf8"));
+  } catch {
+    return false;
+  }
+};
+
+const reactCompilerBabel = (id: string): BabelOptions => ({
+  plugins: isServerModule(id)
+    ? []
+    : [["babel-plugin-react-compiler", { target: "19" }]],
+});
 
 export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
@@ -48,6 +73,7 @@ export default defineConfig(() => {
             setupFiles: ["./vitest.setup.ts"],
             include: ["**/*.test.{ts,tsx}"],
             exclude: [
+              ".claude/**",
               "node_modules",
               ".next",
               "tests/**/*",
@@ -57,18 +83,12 @@ export default defineConfig(() => {
         },
         {
           extends: true,
-          plugins: [
-            react({
-              babel: {
-                plugins: [["babel-plugin-react-compiler", { target: "19" }]],
-              },
-            }),
-          ],
+          plugins: [react({ babel: reactCompilerBabel })],
           test: {
             name: "integration",
             setupFiles: ["./vitest.integration.setup.ts"],
             include: ["**/*.integration.test.{ts,tsx}"],
-            exclude: ["node_modules", ".next", "tests/**/*"],
+            exclude: [".claude/**", "node_modules", ".next", "tests/**/*"],
             browser: {
               enabled: true,
               // Vitest's browser default viewport is 414×896 (phone-sized),
@@ -76,7 +96,9 @@ export default defineConfig(() => {
               // vertically and ends up overlapping the graph, so Playwright
               // can't click nodes. Use a standard desktop viewport.
               viewport: { width: 1280, height: 800 },
-              provider: playwright(),
+              // Playwright waits forever for an actionable element by default;
+              // fail inside the test budget so the log names the blocker.
+              provider: playwright({ actionTimeout: 10_000 }),
               headless: true,
               instances: [{ browser: "chromium" }],
             },
@@ -99,6 +121,8 @@ export default defineConfig(() => {
       // Without this, Vite optimizes them on demand at the first request and
       // reloads the page, killing the test run. Keep this list aligned with
       // imports through the page's render tree.
+      // Kept identical to the prowler-cloud overlay's list so it stops
+      // re-conflicting on sync; an entry with no importer here is deliberate.
       include: [
         // Test stack
         "vitest-browser-react",
@@ -107,20 +131,27 @@ export default defineConfig(() => {
         // React runtime (pre-bundle so a cold run doesn't re-optimize and
         // reload mid-test — see the on-demand-reload note above).
         "react-dom/client",
+        // What the compiler's output imports. `@vitejs/plugin-react` adds it
+        // itself only when `babel` is a plain object, and ours is a function.
+        "react/compiler-runtime",
 
         // Next runtime
+        "next/headers",
         "next/navigation",
         "next/link",
         "next/image",
         "next/cache",
         "next/server",
+        "next/dynamic",
         "next-auth",
         "next-auth/react",
         "next-auth/providers/credentials",
         "next-themes",
 
         // App component lib
-        "@iconify/react",
+        "react-day-picker",
+        "posthog-js",
+        "posthog-js/react",
 
         // Radix
         "@radix-ui/react-alert-dialog",
@@ -148,6 +179,11 @@ export default defineConfig(() => {
         "@xyflow/react",
         "@dagrejs/dagre",
 
+        // Charts (the Overview sample's graph tabs)
+        "recharts",
+        "d3",
+        "topojson-client",
+
         // Forms / state
         "react-hook-form",
         "@hookform/resolvers/zod",
@@ -166,10 +202,8 @@ export default defineConfig(() => {
         "@tanstack/react-table",
         "@react-aria/ssr",
         "@react-aria/visually-hidden",
-        "modern-screenshot",
         "framer-motion",
         "cmdk",
-        "driver.js",
         "react-markdown",
         "streamdown",
         "jwt-decode",
@@ -181,6 +215,7 @@ export default defineConfig(() => {
         "@uiw/react-codemirror",
         "@sentry/nextjs",
         "@extractus/feed-extractor",
+        "@stripe/stripe-js",
       ],
     },
   };

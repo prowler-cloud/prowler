@@ -45,7 +45,9 @@ export function SidePanelHeader({
   return (
     <div
       className={cn(
-        "border-border-neutral-secondary flex items-center gap-1 border-b px-3 py-2",
+        // min-h = py-2 + 44px tab row + border-b, so the header keeps the same
+        // height (and stays aligned with the navbar) when a panel has no tabs.
+        "border-border-neutral-secondary flex min-h-[61px] items-center gap-1 border-b px-3 py-2",
         className,
       )}
       {...props}

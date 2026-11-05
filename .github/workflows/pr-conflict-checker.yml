@@ -28,12 +28,12 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
       - name: Checkout PR head
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
@@ -74,15 +74,15 @@ jobs:
           done <<< "$STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES"
 
           if [ "$HAS_CONFLICTS" = true ]; then
-            echo "has_conflicts=true" >> $GITHUB_OUTPUT
+            echo "has_conflicts=true" >> "$GITHUB_OUTPUT"
             {
               echo "conflict_files<<EOF"
               echo "$CONFLICT_FILES"
               echo "EOF"
-            } >> $GITHUB_OUTPUT
+            } >> "$GITHUB_OUTPUT"
             echo "Conflict markers detected"
           else
-            echo "has_conflicts=false" >> $GITHUB_OUTPUT
+            echo "has_conflicts=false" >> "$GITHUB_OUTPUT"
             echo "No conflict markers found in changed files"
           fi
         env:

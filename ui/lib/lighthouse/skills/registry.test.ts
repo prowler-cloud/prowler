@@ -1,0 +1,94 @@
+import { describe, expect, it } from "vitest";
+
+import { LIGHTHOUSE_SKILL_SURFACE } from "@/types/lighthouse-skills";
+
+import {
+  getAllSkills,
+  getLaunchableSkills,
+  getNextSkill,
+  getSkillById,
+  getSkillsForSurface,
+} from "./registry";
+
+describe("skills registry", () => {
+  it("should expose the four finding-level skills with unique ids", () => {
+    const skills = getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING);
+
+    expect(skills.map((skill) => skill.id)).toEqual([
+      "contextual-fix",
+      "triage-decision",
+      "systemic-scope",
+      "compliance-impact",
+    ]);
+    const allIds = getAllSkills().map((skill) => skill.id);
+    expect(new Set(allIds).size).toBe(allIds.length);
+  });
+
+  it("should keep the provider connection guide out of the finding menus", () => {
+    expect(
+      getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.PROVIDER_WIZARD).map(
+        (skill) => skill.id,
+      ),
+    ).toEqual(["provider-connection-guide"]);
+    expect(getSkillById("provider-connection-guide")?.enabled).toBe(true);
+  });
+
+  it("should keep the issue fix apart from the finding menus", () => {
+    // Given / When
+    const issueSkills = getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.ISSUE);
+
+    // Then: an issue is a group of findings, so it gets its own prompt
+    expect(issueSkills.map((skill) => skill.id)).toEqual([
+      "issue-contextual-fix",
+    ]);
+    expect(issueSkills[0].prompt).toContain("finding id in the context");
+    expect(
+      getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING).map(
+        (skill) => skill.id,
+      ),
+    ).not.toContain("issue-contextual-fix");
+  });
+
+  it("should only offer enabled skills for launch", () => {
+    expect(
+      getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.FINDING).map(
+        (skill) => skill.id,
+      ),
+    ).toEqual(["contextual-fix", "triage-decision", "systemic-scope"]);
+    // Compliance Impact ships disabled until MCP exposes a
+    // compliance-requirements-per-finding tool and DyR authors its prompt.
+    expect(getSkillById("compliance-impact")?.enabled).toBe(false);
+  });
+
+  it("should carry the DyR prompt on every launchable finding skill", () => {
+    for (const skill of getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.FINDING)) {
+      expect(skill.prompt).toContain(
+        "The finding under discussion is the one in the UI context block.",
+      );
+      expect(skill.prompt).toContain("Start by calling load_tools");
+    }
+  });
+
+  it("should resolve a skill by id and return undefined for unknown ids", () => {
+    expect(getSkillById("triage-decision")?.name).toBe("Triage Decision");
+    expect(getSkillById("nope")).toBeUndefined();
+  });
+
+  it("should chain only triage-decision to contextual-fix", () => {
+    expect(getNextSkill("triage-decision")?.id).toBe("contextual-fix");
+    expect(getNextSkill("contextual-fix")).toBeUndefined();
+    expect(getNextSkill("systemic-scope")).toBeUndefined();
+    expect(getNextSkill("compliance-impact")).toBeUndefined();
+    for (const skill of getAllSkills()) {
+      if (skill.nextSkillId !== null) {
+        expect(getSkillById(skill.nextSkillId)).toBeDefined();
+      }
+    }
+  });
+
+  it("should version every skill", () => {
+    for (const skill of getAllSkills()) {
+      expect(skill.version).toBeGreaterThanOrEqual(1);
+    }
+  });
+});

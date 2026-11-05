@@ -28,7 +28,13 @@ class drive_desktop_access_disabled(Check):
 
             allow_desktop = drive_client.policies.allow_drive_for_desktop
 
-            if allow_desktop is False:
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so Drive for desktop cannot sync any content."
+                )
+            elif allow_desktop is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Google Drive for desktop is disabled in domain "

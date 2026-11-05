@@ -178,8 +178,8 @@ def test_changelog_attribution_tests_use_pinned_python():
 
     assert match is not None
     job = match.group("body")
-    assert "uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c" in job
-    assert "python-version: '3.12'" in job
+    assert re.search(r"uses: actions/setup-python@[0-9a-f]{40} # v\d", job)
+    assert re.search(r"python-version: '3\.12(\.\d+)?'", job)
     assert "python3 -m pip install" in job
     assert "python3 -m pytest tests/github" in job
     assert "objects.githubusercontent.com:443" in job

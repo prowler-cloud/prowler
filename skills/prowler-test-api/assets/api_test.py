@@ -4,18 +4,11 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-    get_api_tokens,
-    get_authorization_header,
-)
+from conftest import API_JSON_CONTENT_TYPE
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import Provider, Scan, StateChoices
-from api.rls import Tenant
+from api.models import Provider, Scan
 
 
 @pytest.mark.django_db
@@ -43,7 +36,7 @@ class TestProviderViewSet:
                     },
                 }
             },
-            format="vnd.api+json",  # Use format= for POST
+            content_type=API_JSON_CONTENT_TYPE,  # nested JSON:API body needs content_type
         )
 
         assert response.status_code == status.HTTP_201_CREATED
@@ -64,7 +57,7 @@ class TestProviderViewSet:
         response = authenticated_client.patch(
             reverse("provider-detail", kwargs={"pk": provider.id}),
             data=payload,
-            content_type="application/vnd.api+json",  # Use content_type= for PATCH
+            content_type=API_JSON_CONTENT_TYPE,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -102,7 +95,7 @@ class TestRLSIsolation:
         other_tenant = tenants_fixture[2]
         Provider.objects.create(
             provider="aws",
-            uid="foreign123",
+            uid="999888777666",  # Provider.save() runs full_clean(): uid must be valid
             tenant_id=other_tenant.id,
         )
 
@@ -127,7 +120,7 @@ class TestRBACPermissions:
                     "attributes": {"provider": "aws", "uid": "123456789012"},
                 }
             },
-            format="vnd.api+json",
+            content_type=API_JSON_CONTENT_TYPE,
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -177,31 +170,30 @@ class TestAsyncOperations:
         # Verify task was called
         mock_delete_task.assert_called_once()
 
-    @patch("api.v1.views.Task.objects.get")
-    @patch("api.v1.views.perform_scan_task.delay")
-    def test_trigger_scan_returns_202(
-        self,
-        mock_scan_task,
-        mock_task_get,
-        authenticated_client,
-        aws_provider,
-        tasks_fixture,
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_create_scan_returns_202(
+        self, mock_enqueue, authenticated_client, aws_provider
     ):
-        """POST to scan trigger returns 202 with task location."""
-        provider = aws_provider
-        prowler_task = tasks_fixture[0]
-
-        task_mock = Mock()
-        task_mock.id = prowler_task.id
-        mock_scan_task.return_value = task_mock
-        mock_task_get.return_value = prowler_task
-
+        """POST /scans creates the Scan and defers the broker publish to on_commit."""
         response = authenticated_client.post(
-            reverse("provider-scan", kwargs={"pk": provider.id}),
-            format="vnd.api+json",
+            reverse("scan-list"),
+            data={
+                "data": {
+                    "type": "scans",
+                    "attributes": {"name": "manual scan"},
+                    "relationships": {
+                        "provider": {
+                            "data": {"type": "providers", "id": str(aws_provider.id)}
+                        }
+                    },
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
         )
 
         assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Scan.objects.count() == 1
+        mock_enqueue.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -248,7 +240,7 @@ class TestJSONAPIResponses:
         response = authenticated_client.post(
             reverse("user-list"),
             data={"email": "invalid"},  # Missing required fields
-            format="json",
+            format="json",  # ignored by Django's test Client: flat dict is sent multipart
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -284,12 +276,18 @@ class TestSoftDelete:
 class TestCeleryTaskLogic:
     """Example: Testing Celery task logic directly with apply()."""
 
-    def test_task_logic_directly(self, tenants_fixture, aws_provider):
-        """Use apply() for synchronous execution without Celery worker."""
+    @patch("tasks.tasks.check_provider_connection")
+    def test_task_logic_directly(self, mock_check, tenants_fixture, aws_provider):
+        """Use apply() for synchronous execution without Celery worker.
+
+        Patch the job function where tasks.tasks imports it: real connection
+        checks would call the cloud provider.
+        """
         from tasks.tasks import check_provider_connection_task
 
         tenant = tenants_fixture[0]
         provider = aws_provider
+        mock_check.return_value = {"connected": True, "error": None}
 
         # Execute task synchronously (no broker needed)
         result = check_provider_connection_task.apply(
@@ -298,6 +296,7 @@ class TestCeleryTaskLogic:
 
         assert result.successful()
         assert result.result["connected"] is True
+        mock_check.assert_called_once_with(provider_id=str(provider.id))
 
 
 @pytest.mark.django_db

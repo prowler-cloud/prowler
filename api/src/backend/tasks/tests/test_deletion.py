@@ -4,6 +4,7 @@ import pytest
 from api.attack_paths import database as graph_database
 from api.models import Provider, Tenant, TenantComplianceSummary
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import override_settings
 from tasks.jobs.deletion import delete_provider, delete_tenant
 
 
@@ -123,6 +124,60 @@ class TestDeleteProvider:
             "tenant-db", str(instance.id)
         )
 
+    @override_settings(ATTACK_PATHS_SINK_DATABASE="neo4j")
+    def test_delete_provider_skips_unconfigured_retired_sink(
+        self, aws_provider, create_attack_paths_scan
+    ):
+        instance = aws_provider
+        tenant_id = str(instance.tenant_id)
+        create_attack_paths_scan(instance, sink_backend="neo4j")
+        create_attack_paths_scan(instance, sink_backend="neptune")
+        neo4j_backend = MagicMock()
+
+        def get_backend_for_name(name):
+            if name == "neptune":
+                raise RuntimeError("NEPTUNE_WRITER_ENDPOINT and AWS_REGION must be set")
+            return neo4j_backend
+
+        with (
+            patch(
+                "tasks.jobs.deletion.graph_database.get_database_name",
+                return_value="tenant-db",
+            ),
+            patch(
+                "tasks.jobs.deletion.sink_module.get_backend_for_name",
+                side_effect=get_backend_for_name,
+            ),
+            patch("tasks.jobs.deletion.graph_database.drop_database"),
+        ):
+            result = delete_provider(tenant_id, instance.id)
+
+        assert result
+        assert not Provider.all_objects.filter(pk=instance.id).exists()
+        neo4j_backend.drop_subgraph.assert_called_once_with(
+            "tenant-db", str(instance.id)
+        )
+
+    @override_settings(ATTACK_PATHS_SINK_DATABASE="neo4j")
+    def test_delete_provider_raises_when_active_sink_unconfigured(
+        self, aws_provider, create_attack_paths_scan
+    ):
+        instance = aws_provider
+        tenant_id = str(instance.tenant_id)
+        create_attack_paths_scan(instance, sink_backend="neo4j")
+
+        with (
+            patch(
+                "tasks.jobs.deletion.sink_module.get_backend_for_name",
+                side_effect=RuntimeError("NEO4J_HOST / NEO4J_PORT must be set"),
+            ),
+            patch("tasks.jobs.deletion.graph_database.drop_database"),
+            pytest.raises(RuntimeError),
+        ):
+            delete_provider(tenant_id, instance.id)
+
+        assert Provider.all_objects.filter(pk=instance.id).exists()
+
     def test_delete_provider_continues_when_temp_db_drop_fails(
         self, aws_provider, create_attack_paths_scan
     ):
@@ -149,10 +204,10 @@ class TestDeleteProvider:
         assert result
         assert not Provider.all_objects.filter(pk=instance.id).exists()
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_delete_provider_recalculates_tenant_compliance_summary(
         self,
         aws_provider_pair,
-        provider_compliance_scores_fixture,
     ):
         instance = aws_provider_pair[0]
         tenant_id = instance.tenant_id

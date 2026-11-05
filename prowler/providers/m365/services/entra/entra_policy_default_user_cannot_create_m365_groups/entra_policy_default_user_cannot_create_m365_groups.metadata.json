@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_default_user_cannot_create_m365_groups",
+  "CheckTitle": "Non-admin users cannot create Microsoft 365 groups",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant Group.Unified directory setting should have **EnableGroupCreation** set to false so that non-admin users cannot create Microsoft 365 groups through the portal, API, or PowerShell. Microsoft 365 group creation should be delegated to a controlled set of users.",
+  "Risk": "When any user can create Microsoft 365 groups, they can provision associated resources (SharePoint sites, Teams, mailboxes) without oversight, leading to group sprawl, ungoverned data locations, and a larger attack surface.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/solutions/manage-creation-of-groups"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Groups** > **General**\n3. Set **Users can create Microsoft 365 groups in Azure portals, API or PowerShell** to **No**\n4. Optionally grant creation rights to a specific security group\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable self-service Microsoft 365 group creation for non-admin users and delegate creation to an approved security group as needed.",
+      "Url": "https://hub.prowler.com/check/entra_policy_default_user_cannot_create_m365_groups"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

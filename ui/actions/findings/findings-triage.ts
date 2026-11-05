@@ -1,13 +1,28 @@
 "use server";
 
-import { adaptLatestFindingTriageNote } from "@/actions/findings/findings-triage.adapter";
+import { revalidatePath } from "next/cache";
+
+import {
+  adaptFindingTriageUpdateResponse,
+  adaptFindingTriageDetailResponse,
+  adaptLatestFindingTriageNote,
+} from "@/actions/findings/findings-triage.adapter";
 import { createMuteRule } from "@/actions/mute-rules";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { ACTION_ERROR_STATUS, UsageLimitError } from "@/lib/action-errors";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   FINDING_TRIAGE_STATUS_LABELS,
+  FINDING_TRIAGE_NOTE_MAX_LENGTH,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageDetail,
   type FindingTriageLoadedNote,
   type FindingTriageSummary,
+  type FindingTriageUsageLimitedResult,
   isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
@@ -64,16 +79,38 @@ const throwIfApiError = (result: unknown) => {
   if (
     result &&
     typeof result === "object" &&
+    "status" in result &&
+    result.status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED
+  ) {
+    throw new UsageLimitError();
+  }
+
+  if (
+    result &&
+    typeof result === "object" &&
     ("error" in result ||
+      ("errors" in result && Array.isArray(result.errors)) ||
       ("status" in result &&
         typeof result.status === "number" &&
         result.status >= 400))
   ) {
-    throw new Error(
-      "error" in result && typeof result.error === "string"
+    const jsonApiDetail =
+      "errors" in result && Array.isArray(result.errors)
+        ? result.errors.find((error): error is { detail: string } =>
+            Boolean(
+              error &&
+                typeof error === "object" &&
+                "detail" in error &&
+                typeof error.detail === "string",
+            ),
+          )?.detail
+        : undefined;
+    const message =
+      ("error" in result && typeof result.error === "string"
         ? result.error
-        : "Finding triage request failed.",
-    );
+        : jsonApiDetail) || "Finding triage request failed.";
+
+    throw new Error(message);
   }
 };
 
@@ -225,7 +262,41 @@ export async function loadLatestFindingTriageNote(
   return latestNote;
 }
 
+export async function loadFindingTriageDetail(
+  triage: FindingTriageSummary,
+): Promise<FindingTriageDetail> {
+  const findingUid = triage.findingUid || (await resolveFindingUid(triage));
+  const apiResponse = await getJsonApi(
+    `/findings/${encodePathSegment(findingUid)}/triage`,
+  );
+  throwIfApiError(apiResponse);
+  const detail = adaptFindingTriageDetailResponse(apiResponse, {
+    canEdit: triage.canEdit,
+    disabledReason: triage.disabledReason,
+    billingHref: triage.billingHref,
+  });
+
+  return {
+    ...detail,
+    findingId: triage.findingId,
+    findingUid,
+    isMuted: triage.isMuted,
+  };
+}
+
 export async function updateFindingTriage(input: UpdateFindingTriageInput) {
+  if (isSampleId(input.findingId)) throw new Error(SAMPLE_WRITE_MESSAGE);
+  try {
+    return await applyFindingTriageUpdate(input);
+  } catch (error) {
+    if (error instanceof UsageLimitError) {
+      return { usageLimited: true } satisfies FindingTriageUsageLimitedResult;
+    }
+    throw error;
+  }
+}
+
+async function applyFindingTriageUpdate(input: UpdateFindingTriageInput) {
   let findingUid: string | undefined;
   let triagePath: `/${string}`;
 
@@ -234,6 +305,29 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
   } else {
     findingUid = await resolveFindingUid(input);
     triagePath = `/findings/${encodePathSegment(findingUid)}/triage`;
+  }
+
+  if (input.status === FINDING_TRIAGE_STATUS.RESOLVED) {
+    const evidence = input.manualPassEvidence?.trim();
+    if (!evidence) {
+      throw new Error("Fresh evidence is required to pass a MANUAL finding.");
+    }
+    if (evidence.length > FINDING_TRIAGE_NOTE_MAX_LENGTH) {
+      throw new Error(
+        `Manual pass evidence cannot exceed ${FINDING_TRIAGE_NOTE_MAX_LENGTH} characters.`,
+      );
+    }
+
+    const result = await patchJsonApi(
+      triagePath,
+      buildFindingTriageBody({
+        status: input.status,
+        note: evidence,
+      }),
+    );
+
+    revalidatePath("/findings");
+    return adaptFindingTriageUpdateResponse(result);
   }
 
   if (input.note !== undefined && input.notesCount > 0 && input.noteId) {

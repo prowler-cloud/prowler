@@ -7,7 +7,7 @@ class Test_defenderxdr_endpoint_privileged_user_exposed_credentials:
     """Tests for the defenderxdr_endpoint_privileged_user_exposed_credentials check."""
 
     def test_mde_status_api_failed(self):
-        """Test FAIL when MDE status API call fails (None): missing permission."""
+        """Test MANUAL when MDE status API call fails (None): missing permission."""
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
@@ -32,8 +32,11 @@ class Test_defenderxdr_endpoint_privileged_user_exposed_credentials:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "Unable to query Microsoft Defender XDR" in result[0].status_extended
+            assert result[0].status == "MANUAL"
+            assert (
+                "unable to query Microsoft Defender XDR Advanced Hunting"
+                in result[0].status_extended
+            )
             assert "ThreatHunting.Read.All" in result[0].status_extended
             assert result[0].resource_id == "mdeStatus"
 
@@ -103,7 +106,7 @@ class Test_defenderxdr_endpoint_privileged_user_exposed_credentials:
             assert result[0].resource_id == "mdeDevices"
 
     def test_exposed_credentials_query_failed(self):
-        """Test FAIL when exposed credentials query fails (None)."""
+        """Test MANUAL when exposed credentials query fails (None)."""
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
@@ -128,9 +131,9 @@ class Test_defenderxdr_endpoint_privileged_user_exposed_credentials:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
-                "Unable to query Security Exposure Management"
+                "unable to query Security Exposure Management"
                 in result[0].status_extended
             )
             assert result[0].resource_id == "exposedCredentials"

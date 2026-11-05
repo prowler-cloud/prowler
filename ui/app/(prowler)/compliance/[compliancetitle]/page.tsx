@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
+  COMPLIANCE_OVERVIEW_RESOURCE_TYPE,
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
@@ -37,6 +38,9 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
+import { isReportDownloadLocked } from "@/lib/report-download-access";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import type { SearchParamsProps } from "@/types";
@@ -48,9 +52,9 @@ import {
 import { isKnownProviderType } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
+import { ComplianceDetailSamplePreview } from "../_components/compliance-detail-sample-preview";
 import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
-import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
 
 const getSingleSearchParam = (
@@ -77,6 +81,30 @@ export default async function ComplianceDetail({
     notFound();
   }
 
+  // The sample scan never reaches the API: its detail is built from the catalog.
+  if (scanId && isSampleId(scanId)) {
+    const preview = await getSamplePreviewState();
+    if (!preview.active) redirect("/compliance");
+
+    return (
+      <ComplianceDetailSamplePreview
+        state={preview}
+        compliancetitle={compliancetitle}
+        complianceId={complianceId}
+        version={version}
+        filter={getSingleSearchParam(
+          resolvedSearchParams["filter[cis_profile_level]"],
+        )}
+        targetSection={section}
+        region={getSingleSearchParam(
+          resolvedSearchParams["filter[region__in]"],
+        )}
+      />
+    );
+  }
+
+  const subscriptionOnlyPromise = isReportDownloadLocked();
+
   // Cross-provider mode replaces the per-scan pipeline with the universal
   // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
   // the route is blocked in OSS the same way the compliance tab is.
@@ -85,20 +113,12 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
-    const framework = resolveCrossProviderFramework(
-      complianceId,
-      compliancetitle,
-    );
-    if (!framework) {
-      notFound();
-    }
-
-    const crossProviderTitle = framework.title.split("-").join(" ");
+    const subscriptionOnly = await subscriptionOnlyPromise;
     return (
-      <ContentLayout title={`${crossProviderTitle} - ${framework.version}`}>
-        <Suspense
-          key={buildSearchParamsKey(resolvedSearchParams)}
-          fallback={
+      <Suspense
+        key={buildSearchParamsKey(resolvedSearchParams)}
+        fallback={
+          <ContentLayout title="Compliance">
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
                 <RequirementsStatusCardSkeleton />
@@ -106,16 +126,17 @@ export default async function ComplianceDetail({
               </div>
               <SkeletonAccordion />
             </div>
-          }
-        >
-          <CrossProviderDetail
-            compliancetitle={compliancetitle}
-            complianceId={complianceId}
-            searchParams={resolvedSearchParams}
-            targetSection={section}
-          />
-        </Suspense>
-      </ContentLayout>
+          </ContentLayout>
+        }
+      >
+        <CrossProviderDetail
+          compliancetitle={compliancetitle}
+          complianceId={complianceId}
+          searchParams={resolvedSearchParams}
+          targetSection={section}
+          subscriptionOnly={subscriptionOnly}
+        />
+      </Suspense>
     );
   }
   // Cross-account mode: one regular framework aggregated across every
@@ -133,6 +154,7 @@ export default async function ComplianceDetail({
     }
 
     const crossAccountTitle = compliancetitle.split("-").join(" ");
+    const subscriptionOnly = await subscriptionOnlyPromise;
     return (
       <ContentLayout
         title={
@@ -157,6 +179,7 @@ export default async function ComplianceDetail({
             providerType={providerType}
             searchParams={resolvedSearchParams}
             targetSection={section}
+            subscriptionOnly={subscriptionOnly}
           />
         </Suspense>
       </ContentLayout>
@@ -181,18 +204,23 @@ export default async function ComplianceDetail({
   let selectedScan: ScanEntity | null = null;
   const selectedScanId = scanId || null;
 
-  const [metadataInfoData, attributesData, selectedScanResponse] =
-    await Promise.all([
-      getComplianceOverviewMetadataInfo({
-        filters: {
-          "filter[scan_id]": selectedScanId ?? undefined,
-        },
-      }),
-      getComplianceAttributes(complianceId, selectedScanId ?? undefined),
-      selectedScanId
-        ? getScan(selectedScanId, { include: "provider" })
-        : Promise.resolve(null),
-    ]);
+  const [
+    metadataInfoData,
+    attributesData,
+    selectedScanResponse,
+    subscriptionOnly,
+  ] = await Promise.all([
+    getComplianceOverviewMetadataInfo({
+      filters: {
+        "filter[scan_id]": selectedScanId ?? undefined,
+      },
+    }),
+    getComplianceAttributes(complianceId, selectedScanId ?? undefined),
+    selectedScanId
+      ? getScan(selectedScanId, { include: "provider" })
+      : Promise.resolve(null),
+    subscriptionOnlyPromise,
+  ]);
 
   // The compliance catalog is still warming after a deploy/restart. Show the
   // "still loading" state with a Try Again instead of rendering an empty page.
@@ -318,6 +346,7 @@ export default async function ComplianceDetail({
                   complianceId,
                   latestCisIds.has(complianceId),
                 )}
+                subscriptionOnly={subscriptionOnly}
               />
             </div>
           )}
@@ -397,9 +426,14 @@ const SSRComplianceContent = async ({
     scanId,
     region,
   });
-  const type = requirementsData?.data?.[0]?.type;
+  const requirements = requirementsData?.data;
+  const type = Array.isArray(requirements) ? undefined : requirements?.type;
 
-  if (!scanId || type === "tasks") {
+  if (
+    !scanId ||
+    type === COMPLIANCE_OVERVIEW_RESOURCE_TYPE.TASK ||
+    !Array.isArray(requirements)
+  ) {
     return (
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
@@ -416,7 +450,7 @@ const SSRComplianceContent = async ({
   const mapper = getComplianceMapper(framework);
   const data = mapper.mapComplianceData(
     attributesData,
-    requirementsData,
+    { data: requirements },
     filter,
   );
   // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);

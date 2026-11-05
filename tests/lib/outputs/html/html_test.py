@@ -1,12 +1,19 @@
+import re
 import sys
 from io import StringIO
 
+import pytest
 from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
 from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
-from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.html.html import (
+    HTML,
+    PROWLER_CLOUD_CTA_URL,
+    PROWLER_CLOUD_IMPORT_DOCS_URL,
+    PROWLER_CLOUD_PRICING_URL,
+)
 from prowler.providers.github.models import GithubAppIdentityInfo
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
@@ -676,6 +683,192 @@ html_footer = """
 """
 
 
+def _setup_aws_xss(provider, payload):
+    provider.identity.account = payload
+    provider.identity.profile = payload
+    provider.identity.audited_regions = [payload]
+    provider.identity.user_id = payload
+    provider.identity.identity_arn = payload
+
+
+def _setup_azure_xss(provider, payload):
+    provider.identity.tenant_ids = [payload]
+    provider.identity.tenant_domain = payload
+    provider.identity.subscriptions = {payload: payload}
+    provider.identity.identity_type = payload
+    provider.identity.identity_id = payload
+
+
+def _setup_gcp_xss(provider, payload):
+    provider.project_ids = [payload]
+    provider.session._service_account_email = payload
+
+
+def _setup_kubernetes_xss(provider, payload):
+    provider.identity.cluster = payload
+    provider.identity.context = payload
+
+
+def _setup_github_xss(provider, payload):
+    provider.identity = MagicMock(spec=["account_name", "account_email"])
+    provider.identity.account_name = payload
+    provider.identity.account_email = payload
+    provider.auth_method = payload
+
+
+def _setup_m365_xss(provider, payload):
+    provider.identity.tenant_domain = payload
+    provider.identity.identity_type = payload
+    provider.identity.identity_id = payload
+    provider.identity.user = payload
+
+
+def _setup_nhn_xss(provider, payload):
+    provider.identity.tenant_domain = payload
+    provider.identity.identity_type = payload
+    provider.identity.identity_id = payload
+
+
+def _setup_mongodbatlas_xss(provider, payload):
+    provider.identity.organization_name = payload
+
+
+def _setup_iac_xss(provider, payload):
+    provider.scan_repository_url = payload
+    provider.scan_path = None
+    provider.auth_method = payload
+
+
+def _setup_image_xss(provider, payload):
+    provider.registry = payload
+    provider.images = [payload]
+    provider.auth_method = payload
+
+
+def _setup_llm_xss(provider, payload):
+    provider.model = payload
+    provider.plugins = [payload]
+    provider.max_concurrency = payload
+    provider.config_path = payload
+
+
+def _setup_oraclecloud_xss(provider, payload):
+    provider.session.profile = payload
+    provider.identity.tenancy_name = payload
+    provider.identity.tenancy_id = payload
+
+
+def _setup_stackit_xss(provider, payload):
+    provider.identity.project_id = payload
+    provider.identity.project_name = payload
+    provider.identity.audited_regions = {payload}
+
+
+def _setup_cloudflare_xss(provider, payload):
+    account = MagicMock()
+    account.id = payload
+    provider.accounts = [account]
+    provider.session.api_token = "token"
+    provider.session.api_key = None
+    provider.session.api_email = None
+    provider.identity.email = payload
+
+
+def _setup_alibabacloud_xss(provider, payload):
+    provider.identity.account_id = payload
+    provider.identity.account_name = payload
+    provider.identity.audited_regions = payload
+    provider.identity.identity_arn = payload
+    provider.identity.user_name = payload
+
+
+def _setup_openstack_xss(provider, payload):
+    provider.identity.project_id = payload
+    provider.identity.project_name = payload
+    provider.identity.region_name = payload
+    provider.identity.username = payload
+    provider.identity.user_id = payload
+
+
+def _setup_googleworkspace_xss(provider, payload):
+    provider.identity.domain = payload
+    provider.identity.customer_id = payload
+    provider.identity.delegated_user = payload
+
+
+def _setup_e2enetworks_xss(provider, payload):
+    provider.identity.project_id = payload
+    provider.identity.locations = [payload]
+
+
+def _setup_vercel_xss(provider, payload):
+    team = MagicMock()
+    team.name = payload
+    team.id = payload
+    provider.identity.team = team
+    provider.identity.email = payload
+    provider.identity.username = payload
+
+
+def _setup_okta_xss(provider, payload):
+    provider.identity.org_domain = payload
+    provider.auth_method = payload
+    provider.identity.client_id = payload
+
+
+def _setup_scaleway_xss(provider, payload):
+    provider.identity.organization_id = payload
+    provider.session.access_key = payload
+    provider.identity.bearer_type = payload
+    provider.identity.bearer_email = payload
+    provider.identity.bearer_id = payload
+    provider.session.default_region = payload
+
+
+def _setup_linode_xss(provider, payload):
+    provider.identity.username = payload
+    provider.identity.email = payload
+    provider.identity.account_id = payload
+
+
+def _setup_huaweicloud_xss(provider, payload):
+    provider.identity.account_id = payload
+    provider.identity.account_name = payload
+    provider.identity.profile = payload
+    provider.identity.regions = {payload}
+    provider.identity.domain_id = payload
+    provider.identity.user_id = payload
+    provider.identity.user_name = payload
+    provider.identity.identity_type = payload
+
+
+PROVIDER_XSS_SETUPS = [
+    ("aws", _setup_aws_xss),
+    ("azure", _setup_azure_xss),
+    ("gcp", _setup_gcp_xss),
+    ("kubernetes", _setup_kubernetes_xss),
+    ("github", _setup_github_xss),
+    ("m365", _setup_m365_xss),
+    ("nhn", _setup_nhn_xss),
+    ("mongodbatlas", _setup_mongodbatlas_xss),
+    ("iac", _setup_iac_xss),
+    ("image", _setup_image_xss),
+    ("llm", _setup_llm_xss),
+    ("oraclecloud", _setup_oraclecloud_xss),
+    ("stackit", _setup_stackit_xss),
+    ("cloudflare", _setup_cloudflare_xss),
+    ("alibabacloud", _setup_alibabacloud_xss),
+    ("openstack", _setup_openstack_xss),
+    ("googleworkspace", _setup_googleworkspace_xss),
+    ("e2enetworks", _setup_e2enetworks_xss),
+    ("vercel", _setup_vercel_xss),
+    ("okta", _setup_okta_xss),
+    ("scaleway", _setup_scaleway_xss),
+    ("linode", _setup_linode_xss),
+    ("huaweicloud", _setup_huaweicloud_xss),
+]
+
+
 class TestHTML:
     def test_transform_fail_finding(self):
         findings = [
@@ -721,6 +914,23 @@ class TestHTML:
         assert "status&amp;&lt;&gt;&#39;&#34;<wbr />_&lt;img" in output_data
         assert "&#x2022;key&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
         assert "=value&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
+
+    def test_transform_escapes_compliance(self):
+        xss_payload = '<img src=x onerror="window.PROWLER_COMPLIANCE_XSS=1">'
+        findings = [
+            generate_finding_output(
+                compliance={f"Framework{xss_payload}-1.0": [xss_payload, "1.1"]},
+            )
+        ]
+
+        output_data = HTML(findings).data[0]
+
+        assert xss_payload not in output_data
+        assert (
+            "&#x2022;Framework&lt;img src=x "
+            "onerror=&#34;window.PROWLER_COMPLIANCE_XSS=1&#34;&gt;-1.0: "
+            "&lt;img src=x onerror=&#34;window.PROWLER_COMPLIANCE_XSS=1&#34;&gt;, 1.1"
+        ) in output_data
 
     def test_transform_escapes_metadata_fields(self):
         finding = generate_finding_output()
@@ -1100,6 +1310,103 @@ class TestHTML:
         assert "<script>alert(1)</script>" not in summary
         assert "Delhi&#34;&gt;&lt;script&gt;alert(1)&lt;/script&gt;" in summary
 
+    @pytest.mark.parametrize(
+        "provider_type,setup_fn",
+        PROVIDER_XSS_SETUPS,
+        ids=[t for t, _ in PROVIDER_XSS_SETUPS],
+    )
+    def test_get_assessment_summary_escapes_provider_identity(
+        self, provider_type, setup_fn
+    ):
+        """Every provider header must HTML-escape tenant-controlled identity fields."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = provider_type
+        setup_fn(provider, payload)
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    def test_provider_xss_setups_covers_every_assessment_summary_method(self):
+        """Adding a new get_<provider>_assessment_summary without a PROVIDER_XSS_SETUPS
+        entry must fail this test, so the escape guarantee cannot silently regress."""
+        pattern = re.compile(r"^get_(.+)_assessment_summary$")
+        discovered = set()
+        for name in dir(HTML):
+            match = pattern.match(name)
+            if match:
+                discovered.add(match.group(1))
+
+        covered = {ptype for ptype, _ in PROVIDER_XSS_SETUPS}
+
+        missing = discovered - covered
+        extra = covered - discovered
+        assert (
+            not missing
+        ), f"providers without XSS coverage in PROVIDER_XSS_SETUPS: {sorted(missing)}"
+        assert (
+            not extra
+        ), f"PROVIDER_XSS_SETUPS entries with no matching HTML method: {sorted(extra)}"
+
+    def test_github_app_get_assessment_summary_escapes_app_identity(self):
+        """The GitHub App branch (elif hasattr app_id) must escape app_name/app_id/installations,
+        which the PAT setup does not exercise."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "github"
+        provider.identity = MagicMock(spec=["app_id", "app_name", "installations"])
+        provider.identity.app_id = payload
+        provider.identity.app_name = payload
+        provider.identity.installations = [payload]
+        provider.auth_method = payload
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    def test_iac_get_assessment_summary_escapes_scan_path(self):
+        """The IAC scan_path branch (else of `if scan_repository_url`) must escape it."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "iac"
+        provider.scan_repository_url = None
+        provider.scan_path = payload
+        provider.auth_method = payload
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    def test_image_get_assessment_summary_escapes_images_list(self):
+        """The Image `else` branch (no registry, images list) must escape each image."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "image"
+        provider.registry = None
+        provider.images = [payload]
+        provider.auth_method = payload
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""
         test_text = "This is **bold text** and this is **also bold**"
@@ -1219,3 +1526,133 @@ class TestHTML:
         ]
         output_data = HTML(findings).data[0]
         assert 'href="https://hub.prowler.com/check/check-id"' in output_data
+
+    def test_write_header_omits_cloud_cta_by_default(self):
+        mock_file = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file, provider, html_stats)
+
+        content = mock_file.getvalue()
+        assert content == get_aws_html_header(sys.argv[1:])
+        assert "prowler-cloud-cta" not in content
+        assert PROWLER_CLOUD_CTA_URL not in content
+        assert "utm_campaign=report-handoff" not in content
+        assert PROWLER_CLOUD_PRICING_URL not in content
+        assert PROWLER_CLOUD_IMPORT_DOCS_URL not in content
+
+    def test_write_header_omits_cloud_cta_when_from_cli_but_not_enabled(self):
+        # `from_cli` alone must never turn the block on: it is a batching flag, not an
+        # OSS marker, and it defaults to True for every library consumer.
+        mock_file = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file, provider, html_stats, from_cli=True)
+
+        content = mock_file.getvalue()
+        assert "prowler-cloud-cta" not in content
+        assert "cloud.prowler.com" not in content
+
+    def test_write_header_includes_cloud_cta_when_enabled(self):
+        mock_file = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file, provider, html_stats, show_cloud_cta=True)
+
+        content = mock_file.getvalue()
+        assert content.count('class="row mt-3 prowler-cloud-cta"') == 1
+        assert "Keep scanning locally. Bring your findings to Prowler Cloud." in content
+        assert (
+            "Import your accompanying OCSF report to explore managed security workflows."
+            in content
+        )
+        assert f'href="{PROWLER_CLOUD_CTA_URL}"' in content
+        assert ">Explore Prowler Cloud</a>" in content
+        assert f'href="{PROWLER_CLOUD_PRICING_URL}"' in content
+        assert ">Compare editions</a>" in content
+        assert f'href="{PROWLER_CLOUD_IMPORT_DOCS_URL}"' in content
+        assert ">How to import findings</a>" in content
+        assert "Nothing is uploaded automatically." in content
+        assert 'rel="noopener noreferrer"' in content
+        assert (
+            "@media print { .prowler-cloud-cta { display: none !important; } }"
+            in content
+        )
+        # Placed after the assessment summary and before the findings table
+        assert (
+            content.index("AWS Assessment Summary")
+            < content.index('class="row mt-3 prowler-cloud-cta"')
+            < content.index('id="findingsTable"')
+        )
+        # No script, form or automatic request is introduced by the block
+        cta_block = HTML.get_cloud_cta()
+        assert "<script" not in cta_block
+        assert "<form" not in cta_block
+        assert "<img" not in cta_block
+        assert "<iframe" not in cta_block
+
+    def test_cloud_cta_does_not_change_assessment_content(self):
+        mock_file_oss = StringIO()
+        mock_file_cloud = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file_oss, provider, html_stats, show_cloud_cta=True)
+        HTML.write_header(mock_file_cloud, provider, html_stats, show_cloud_cta=False)
+
+        oss = mock_file_oss.getvalue()
+        cloud = mock_file_cloud.getvalue()
+        stripped = oss.replace(HTML.get_cloud_cta(), "").replace(
+            "\n        @media print { .prowler-cloud-cta { display: none !important; } }",
+            "",
+        )
+        assert stripped == cloud
+
+    def test_batch_write_data_to_file_oss_cli_includes_cloud_cta(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings, show_cloud_cta=True)
+        output._file_descriptor = mock_file
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file(provider, html_stats)
+
+        content = mock_file.getvalue()
+        assert PROWLER_CLOUD_CTA_URL in content
+        assert content.count('class="row mt-3 prowler-cloud-cta"') == 1
+        # Findings and footer are untouched
+        assert pass_html_finding in content
+        assert content.endswith(html_footer)
+
+    def test_batch_write_data_to_file_api_omits_cloud_cta(self):
+        # Mirrors how Prowler Cloud / Private Cloud construct the output in the API
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(
+            findings,
+            file_path=None,
+            file_extension=".html",
+            from_cli=False,
+        )
+        output._file_descriptor = mock_file
+        output.close_file = True
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file(provider, html_stats)
+
+        content = mock_file.getvalue()
+        assert "prowler-cloud-cta" not in content
+        assert "cloud.prowler.com" not in content
+        assert "utm_campaign=report-handoff" not in content
+        assert PROWLER_CLOUD_PRICING_URL not in content
+        assert PROWLER_CLOUD_IMPORT_DOCS_URL not in content
+        assert pass_html_finding in content

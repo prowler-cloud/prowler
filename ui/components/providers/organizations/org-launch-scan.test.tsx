@@ -8,6 +8,7 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   SCAN_JOBS_TAB,
@@ -20,17 +21,20 @@ import { OrgLaunchScan } from "./org-launch-scan";
 const {
   launchOrganizationScansMock,
   pushMock,
+  scheduleOrganizationDailyScansMock,
   toastMock,
   updateSchedulesBulkMock,
 } = vi.hoisted(() => ({
   launchOrganizationScansMock: vi.fn(),
   pushMock: vi.fn(),
+  scheduleOrganizationDailyScansMock: vi.fn(),
   toastMock: vi.fn(),
   updateSchedulesBulkMock: vi.fn(),
 }));
 
 vi.mock("@/actions/scans/scans", () => ({
   launchOrganizationScans: launchOrganizationScansMock,
+  scheduleOrganizationDailyScans: scheduleOrganizationDailyScansMock,
 }));
 
 vi.mock("@/actions/schedules/schedules", () => ({
@@ -67,9 +71,16 @@ describe("OrgLaunchScan", () => {
     localStorage.clear();
     launchOrganizationScansMock.mockReset();
     pushMock.mockReset();
+    scheduleOrganizationDailyScansMock.mockReset();
     toastMock.mockReset();
     updateSchedulesBulkMock.mockReset();
     launchOrganizationScansMock.mockResolvedValue({
+      data: [
+        { type: "scans", id: "scan-1" },
+        { type: "scans", id: "scan-2" },
+      ],
+    });
+    scheduleOrganizationDailyScansMock.mockResolvedValue({
       successCount: 2,
       failureCount: 0,
       totalCount: 2,
@@ -89,7 +100,7 @@ describe("OrgLaunchScan", () => {
   });
 
   describe("when capability is ADVANCED", () => {
-    it("should save schedules through the bulk endpoint", async () => {
+    it("should save schedules through the bulk endpoint and launch the initial scans by default", async () => {
       // Given
       const onFooterChange = vi.fn();
 
@@ -104,6 +115,14 @@ describe("OrgLaunchScan", () => {
 
       // When
       await screen.findByText("Scan Schedule");
+      expect(
+        screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
+      ).toBeChecked();
+      await waitFor(() =>
+        expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe(
+          "Save and launch scan",
+        ),
+      );
       await act(async () => {
         lastFooterConfig(onFooterChange)?.onAction?.();
       });
@@ -121,23 +140,17 @@ describe("OrgLaunchScan", () => {
           scan_timezone: "Europe/Madrid",
         }),
       );
-      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
+      expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1");
       expect(pushMock).toHaveBeenCalledWith("/providers");
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
+      ).toBe("/findings");
     });
 
-    it("should launch initial scans only for updated providers", async () => {
+    it("should save only the schedules when the initial scan is unticked", async () => {
       // Given
       const user = userEvent.setup();
       const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({
-        data: {
-          updated: ["provider-2"],
-          failed: [{ id: "provider-1", error: "Denied" }],
-        },
-      });
 
       render(
         <OrgLaunchScan
@@ -149,10 +162,12 @@ describe("OrgLaunchScan", () => {
       );
 
       // When
+      await screen.findByText("Scan Schedule");
       await user.click(
-        await screen.findByRole("checkbox", {
-          name: /launch an initial scan now/i,
-        }),
+        screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
+      );
+      await waitFor(() =>
+        expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save"),
       );
       await act(async () => {
         lastFooterConfig(onFooterChange)?.onAction?.();
@@ -160,15 +175,12 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledTimes(1),
+        expect(updateSchedulesBulkMock).toHaveBeenCalledTimes(1),
       );
-      expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-        ["provider-2"],
-        "single",
-      );
+      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
+      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
     });
 
     it("should disable launch actions while schedule capability is loading", async () => {
@@ -237,63 +249,18 @@ describe("OrgLaunchScan", () => {
       expect(launchOrganizationScansMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(PRICING_URL);
     });
 
-    it("should treat a fully-failed bulk response as an error without navigating away", async () => {
-      // Given
-      const onClose = vi.fn();
-      const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({
-        data: {
-          updated: [],
-          failed: [
-            { id: "provider-1", error: "Denied" },
-            { id: "provider-2", error: "Denied" },
-          ],
-        },
-      });
-
-      render(
-        <OrgLaunchScan
-          onClose={onClose}
-          onBack={vi.fn()}
-          onFooterChange={onFooterChange}
-          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        />,
-      );
-
-      // When
-      await screen.findByText("Scan Schedule");
-      await act(async () => {
-        lastFooterConfig(onFooterChange)?.onAction?.();
-      });
-
-      // Then
-      await waitFor(() =>
-        expect(toastMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            variant: "destructive",
-            title: "Unable to save scan schedules",
-            description:
-              "The scan schedule could not be saved for 2 accounts: Denied.",
-          }),
-        ),
-      );
-      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
-      expect(pushMock).not.toHaveBeenCalled();
-      expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it("should describe partial failures in the success toast", async () => {
+    it("should offer the plans when the schedules saved but the limit refused the initial scans", async () => {
       // Given
       const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({
-        data: {
-          updated: ["provider-2"],
-          failed: [{ id: "provider-1", error: "Denied" }],
-        },
+      launchOrganizationScansMock.mockResolvedValue({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
       });
-
       render(
         <OrgLaunchScan
           onClose={vi.fn()}
@@ -311,55 +278,10 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() => expect(toastMock).toHaveBeenCalled());
-      expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Scan schedules saved",
-          description:
-            "The schedule was saved for 1 account, but 1 account could not be updated: Denied.",
-        }),
-      );
-    });
-
-    it("should proceed when the response carries no result lists", async () => {
-      // Given — an empty 200/204 body. The endpoint commits each schedule before
-      // answering, so this is not a failure.
-      const user = userEvent.setup();
-      const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({ success: true });
-
-      render(
-        <OrgLaunchScan
-          onClose={vi.fn()}
-          onBack={vi.fn()}
-          onFooterChange={onFooterChange}
-          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        />,
-      );
-
-      // When
-      await user.click(
-        await screen.findByRole("checkbox", {
-          name: /launch an initial scan now/i,
-        }),
-      );
-      await act(async () => {
-        lastFooterConfig(onFooterChange)?.onAction?.();
-      });
-
-      // Then — every created provider is treated as saved and scanned.
-      await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-          PROVIDER_IDS,
-          "single",
-        ),
-      );
-      expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Scan schedules saved and initial scans launched",
-          description: "The scan schedule was saved for 2 accounts.",
-        }),
-      );
-      expect(pushMock).toHaveBeenCalledWith("/providers");
+      expect(toastMock.mock.calls[0]?.[0].title).toBe("Scan schedules saved");
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(PRICING_URL);
     });
   });
 
@@ -387,12 +309,12 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
+        expect(scheduleOrganizationDailyScansMock).toHaveBeenCalledWith(
           PROVIDER_IDS,
-          "daily",
         ),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
@@ -426,15 +348,48 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-          PROVIDER_IDS,
-          "single",
-        ),
+        expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1"),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Single scan launched for 2 accounts.",
+        }),
+      );
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
+      ).toBe("/findings");
+    });
+
+    it("should offer the plans when the limit refuses the single scan", async () => {
+      // Given
+      const onFooterChange = vi.fn();
+      launchOrganizationScansMock.mockResolvedValue({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      render(
+        <OrgLaunchScan
+          onClose={vi.fn()}
+          onBack={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      // When
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(toastMock).toHaveBeenCalled());
+      expect(toastMock.mock.calls[0]?.[0].title).toBe(
+        "Unable to launch organization scan",
+      );
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(PRICING_URL);
     });
   });
 

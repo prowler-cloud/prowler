@@ -30,7 +30,7 @@ jobs:
       pull-requests: write
     steps:
     - name: Harden the runner (Audit all outbound calls)
-      uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+      uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
       with:
         egress-policy: audit
 
@@ -41,7 +41,7 @@ jobs:
         gh variable set RELEASE_FREEZE --body true --repo "${GITHUB_REPOSITORY}"
 
     - name: Checkout repository
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       with:
         fetch-depth: 0
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
@@ -77,13 +77,15 @@ jobs:
 
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
-          echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
+          echo "Is minor release: $([ "$PATCH_VERSION" -eq 0 ] && echo 'true' || echo 'false')"
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
           exit 1
         fi
 
     - name: Checkout release branch
+      env:
+        GH_TOKEN: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
       run: |
         echo "Checking out branch $BRANCH_NAME for release $PROWLER_VERSION..."
         if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
@@ -92,8 +94,33 @@ jobs:
         elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
           echo "Branch $BRANCH_NAME exists remotely, checking out..."
           git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        elif [ "$PATCH_VERSION" -eq 0 ]; then
+          # Only cut the branch once the compiled changelogs are on master
+          MASTER_SHA=$(git rev-parse origin/master)
+          VERSION_REGEX="${PROWLER_VERSION//./\\.}"
+          FOUND_CHANGELOG=false
+          for changelog in prowler/CHANGELOG.md api/CHANGELOG.md ui/CHANGELOG.md mcp_server/CHANGELOG.md; do
+            if git show "origin/master:$changelog" 2>/dev/null | grep -qE "^## \[.*\(Prowler v?${VERSION_REGEX}\)"; then
+              FOUND_CHANGELOG=true
+              break
+            fi
+          done
+          if [ "$FOUND_CHANGELOG" != "true" ]; then
+            echo "ERROR: No changelog entry for Prowler $PROWLER_VERSION on master. Merge the compiled changelogs PR first."
+            exit 1
+          fi
+          # Check the SDK version on master before creating the remote branch
+          if ! git show "origin/master:pyproject.toml" | grep -qE "^version = \"${VERSION_REGEX}\"$" \
+            || ! git show "origin/master:prowler/config/config.py" | grep -qE "^prowler_version = \"${VERSION_REGEX}\"$"; then
+            echo "ERROR: pyproject.toml or prowler/config/config.py on master is not at version $PROWLER_VERSION. Fix master before creating $BRANCH_NAME."
+            exit 1
+          fi
+          echo "Branch $BRANCH_NAME does not exist, creating it from master ($MASTER_SHA)..."
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/heads/${BRANCH_NAME}" -f sha="${MASTER_SHA}"
+          git update-ref "refs/remotes/origin/${BRANCH_NAME}" "$MASTER_SHA"
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
         else
-          echo "ERROR: Branch $BRANCH_NAME does not exist. For minor releases (X.Y.0), create it manually first. For patch releases (X.Y.Z), the branch should already exist."
+          echo "ERROR: Branch $BRANCH_NAME does not exist. For patch releases (X.Y.Z), the branch should already exist."
           exit 1
         fi
 
@@ -107,7 +134,8 @@ jobs:
           if [ -f "$changelog_file" ]; then
             # Extract version that matches this Prowler release
             # Format: ## [version] (Prowler X.Y.Z) or ## [vversion] (Prowler vX.Y.Z)
-            local version=$(grep '^## \[' "$changelog_file" | grep "(Prowler v\?${prowler_version})" | head -1 | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
+            local version
+            version=$(grep '^## \[' "$changelog_file" | grep "(Prowler v\?${prowler_version})" | head -1 | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
             echo "$version"
           else
             echo ""
@@ -178,55 +206,55 @@ jobs:
 
         # Determine if components have changes for this specific release
         if [ -n "$SDK_VERSION" ]; then
-          echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_SDK_CHANGES=true" >> "$GITHUB_ENV"
           HAS_SDK_CHANGES="true"
           echo "✓ SDK changes detected - version: $SDK_VERSION"
           extract_changelog "prowler/CHANGELOG.md" "$SDK_VERSION" "prowler_changelog.md"
         else
-          echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_SDK_CHANGES=false" >> "$GITHUB_ENV"
           HAS_SDK_CHANGES="false"
           echo "ℹ No SDK changes for this release"
           touch "prowler_changelog.md"
         fi
 
         if [ -n "$API_VERSION" ]; then
-          echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_API_CHANGES=true" >> "$GITHUB_ENV"
           HAS_API_CHANGES="true"
           echo "✓ API changes detected - version: $API_VERSION"
           extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
         else
-          echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_API_CHANGES=false" >> "$GITHUB_ENV"
           HAS_API_CHANGES="false"
           echo "ℹ No API changes for this release"
           touch "api_changelog.md"
         fi
 
         if [ -n "$UI_VERSION" ]; then
-          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_UI_CHANGES=true" >> "$GITHUB_ENV"
           HAS_UI_CHANGES="true"
           echo "✓ UI changes detected - version: $UI_VERSION"
           extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
         else
-          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_UI_CHANGES=false" >> "$GITHUB_ENV"
           HAS_UI_CHANGES="false"
           echo "ℹ No UI changes for this release"
           touch "ui_changelog.md"
         fi
 
         if [ -n "$MCP_VERSION" ]; then
-          echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_MCP_CHANGES=true" >> "$GITHUB_ENV"
           HAS_MCP_CHANGES="true"
           echo "✓ MCP changes detected - version: $MCP_VERSION"
           extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
         else
-          echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_MCP_CHANGES=false" >> "$GITHUB_ENV"
           HAS_MCP_CHANGES="false"
           echo "ℹ No MCP changes for this release"
           touch "mcp_changelog.md"
         fi
 
         # Combine changelogs in order: UI, API, SDK, MCP
-        > combined_changelog.md
+        : > combined_changelog.md
 
         if [ "$HAS_UI_CHANGES" = "true" ] && [ -s "ui_changelog.md" ]; then
           echo "## UI" >> combined_changelog.md
@@ -375,7 +403,7 @@ jobs:
           no-changelog
 
     - name: Create draft release
-      uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+      uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
       with:
         tag_name: ${{ env.PROWLER_VERSION }}
         name: Prowler ${{ env.PROWLER_VERSION }}
@@ -389,4 +417,3 @@ jobs:
       if: always()
       run: |
         rm -f prowler_changelog.md api_changelog.md ui_changelog.md mcp_changelog.md combined_changelog.md
-

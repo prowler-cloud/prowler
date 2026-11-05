@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
+    ROOT_ORG_UNIT_ID,
     set_mocked_googleworkspace_provider,
 )
 
@@ -236,6 +239,115 @@ class TestSecurityService:
             assert security.policies.google_services_restricted is True
             assert security.policies.dlp_drive_rules_exist is True
 
+    def test_the_admin_policy_outranks_the_system_defaults_returned_after_it(self):
+        """The API returns Google's SYSTEM defaults next to the ADMIN policy saved in the console.
+
+        The greatest sortOrder is the value in force, whatever the order the
+        API lists them in. This is the shape of a real tenant, where the last
+        policy returned used to overwrite the admin's password policy.
+        """
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        root_ou = f"orgUnits/{ROOT_ORG_UNIT_ID}"
+        mock_security_list = MagicMock()
+        mock_security_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 201.00131},
+                    "setting": {
+                        "type": "settings/security.password",
+                        "value": {
+                            "allowedStrength": "STRONG",
+                            "minimumLength": 12,
+                            "maximumLength": 100,
+                            "enforceRequirementsAtLogin": True,
+                            "allowReuse": False,
+                            "expirationDuration": "15552000s",
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 100.00001},
+                    "setting": {
+                        "type": "settings/security.password",
+                        "value": {
+                            "allowedStrength": "STRONG",
+                            "minimumLength": 8,
+                            "maximumLength": 100,
+                            "enforceRequirementsAtLogin": False,
+                            "allowReuse": False,
+                            "expirationDuration": "0s",
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 100.00003},
+                    "setting": {
+                        "type": "settings/security.password",
+                        "value": {
+                            "allowedStrength": "STRONG",
+                            "minimumLength": 8,
+                            "maximumLength": 100,
+                            "enforceRequirementsAtLogin": False,
+                            "allowReuse": False,
+                            "expirationDuration": "0s",
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 100.00003},
+                    "setting": {
+                        "type": "settings/security.session_controls",
+                        "value": {"webSessionDuration": "1209600s"},
+                    },
+                },
+            ]
+        }
+        mock_api_controls_list = MagicMock()
+        mock_api_controls_list.execute.return_value = {"policies": []}
+        mock_dlp_list = MagicMock()
+        mock_dlp_list.execute.return_value = {"policies": []}
+        mock_service = MagicMock()
+        mock_service.policies().list.side_effect = [
+            mock_security_list,
+            mock_api_controls_list,
+            mock_dlp_list,
+        ]
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies_fetched is True
+            assert security.policies.password_minimum_length == 12
+            assert security.policies.password_enforce_at_login is True
+            assert security.policies.password_allow_reuse is False
+            assert security.policies.password_expiration_duration == "15552000s"
+            assert security.policies.web_session_duration == "1209600s"
+            assert security.policies.overridden_settings == []
+
     def test_fetch_policies_empty_response(self):
         """Test handling empty policies response across all namespaces"""
         mock_provider = set_mocked_googleworkspace_provider()
@@ -279,6 +391,141 @@ class TestSecurityService:
             assert security.policies.less_secure_apps_allowed is None
             assert security.policies.trust_internal_apps is None
             assert security.policies.dlp_drive_rules_exist is None
+
+    def test_group_and_sub_ou_policies_are_recorded_as_overrides(self):
+        """The customer-level value is not what the overridden users get"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_empty = MagicMock()
+        mock_empty.execute.return_value = {
+            "policies": [
+                {
+                    "policyQuery": {"group": "groups/abc123"},
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement",
+                        "value": {"enforcedFrom": "1970-01-01T00:00:00Z"},
+                    },
+                },
+                {
+                    "policyQuery": {"orgUnit": "orgUnits/03ph8a2z1xdnme9"},
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement_factor",
+                        "value": {"allowedSignInFactorSet": "ALL"},
+                    },
+                },
+                {
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement",
+                        "value": {"enforcedFrom": "2026-05-25T15:27:52.352Z"},
+                    }
+                },
+            ]
+        }
+        mock_service.policies().list.side_effect = [
+            mock_empty,
+            mock_empty,
+            mock_empty,
+        ]
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies.overridden_settings == [
+                "security.two_step_verification_enforcement",
+                "security.two_step_verification_enforcement_factor",
+            ]
+            assert security.policies.unresolved_scope is False
+            # The customer-level policy is still read, it is just not effective
+            # for everyone.
+            assert security.policies.two_sv_enforced_from == "2026-05-25T15:27:52.352Z"
+
+    @pytest.mark.parametrize(
+        "root_org_unit_id, org_unit, expected_enforced_from, expected_unresolved",
+        [
+            # The root OU is the whole domain: read it, do not call it an override.
+            (
+                ROOT_ORG_UNIT_ID,
+                f"orgUnits/{ROOT_ORG_UNIT_ID}",
+                "2026-05-25T15:27:52.352Z",
+                False,
+            ),
+            # Without the root id a sub-OU cannot be told apart from the root, so
+            # the value is dropped and the scope is flagged as unresolved.
+            (None, "orgUnits/03ph8a2z1xdnme9", None, True),
+        ],
+    )
+    def test_an_org_unit_is_never_reported_as_an_override(
+        self, root_org_unit_id, org_unit, expected_enforced_from, expected_unresolved
+    ):
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_provider.identity = mock_provider.identity.copy(
+            update={"root_org_unit_id": root_org_unit_id}
+        )
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies = MagicMock()
+        mock_policies.execute.return_value = {
+            "policies": [
+                {
+                    "policyQuery": {"orgUnit": org_unit},
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement",
+                        "value": {"enforcedFrom": "2026-05-25T15:27:52.352Z"},
+                    },
+                }
+            ]
+        }
+        mock_service.policies().list.side_effect = [
+            mock_policies,
+            mock_policies,
+            mock_policies,
+        ]
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies.overridden_settings == []
+            assert security.policies.two_sv_enforced_from == expected_enforced_from
+            assert security.policies.unresolved_scope is expected_unresolved
 
     def test_fetch_policies_api_error(self):
         """Test handling of API errors during policy fetch"""

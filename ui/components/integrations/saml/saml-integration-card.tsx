@@ -15,10 +15,15 @@ import {
 } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
+import type { SamlConfiguration } from "@/types/saml";
 
 import { SamlConfigForm } from "./saml-config-form";
 
-export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
+export const SamlIntegrationCard = ({
+  samlConfig,
+}: {
+  samlConfig?: SamlConfiguration;
+}) => {
   const [isSamlModalOpen, setIsSamlModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

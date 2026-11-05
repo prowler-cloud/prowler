@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound, Loader2, PlugZap, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import {
   createLighthouseV2Configuration,
@@ -12,6 +12,7 @@ import {
   updateLighthouseV2Configuration,
 } from "@/app/(prowler)/lighthouse/_actions";
 import {
+  BEDROCK_AUTH_METHOD,
   buildCredentialPayload,
   buildLighthouseV2ConfigFormSchema,
   buildLighthouseV2ConfigurationInput,
@@ -61,14 +62,27 @@ export function LighthouseV2ConfigurationForm({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const providerType = provider.id;
   const hasConfiguration = Boolean(configuration);
+  const capabilities = { credentialsOptional: provider.credentialsOptional };
   const form = useForm<LighthouseV2ConfigFormValues>({
     resolver: zodResolver(
-      buildLighthouseV2ConfigFormSchema(providerType, hasConfiguration),
+      buildLighthouseV2ConfigFormSchema(
+        providerType,
+        hasConfiguration,
+        capabilities,
+      ),
     ),
     defaultValues: getFormDefaults(configuration),
     mode: "onSubmit",
   });
   const status = getConnectionStatus(configuration);
+  const bedrockAuthMethod = useWatch({
+    control: form.control,
+    name: "bedrockAuthMethod",
+  });
+  // An API key has no instance-role fallback, so the hint only fits access keys.
+  const usesInstanceRoleHint =
+    provider.credentialsOptional &&
+    bedrockAuthMethod !== BEDROCK_AUTH_METHOD.API_KEY;
 
   const runConnectionTest = async (configurationId: string) => {
     setTesting(true);
@@ -107,6 +121,7 @@ export function LighthouseV2ConfigurationForm({
       providerType,
       values,
       hasConfiguration,
+      capabilities,
     );
     const baseUrl = trimToNullable(values.baseUrl);
     const shouldTestAfterSave =
@@ -137,7 +152,12 @@ export function LighthouseV2ConfigurationForm({
         return;
       }
 
-      form.reset(getFormDefaults(result.data));
+      // Keep the chosen Bedrock auth method only when its credentials were
+      // saved; a blank save keeps the stored ones, whatever method they use.
+      form.reset({
+        ...getFormDefaults(result.data),
+        ...(credentials ? { bedrockAuthMethod: values.bedrockAuthMethod } : {}),
+      });
       onConfigurationSaved(result.data);
       notifyLighthouseV2ConfigurationsChanged();
       if (shouldTestAfterSave) {
@@ -254,12 +274,18 @@ export function LighthouseV2ConfigurationForm({
                 icon={<KeyRound className="size-4" />}
                 title="Credentials"
                 description={
-                  configuration
-                    ? "Leave blank to keep existing credentials."
-                    : "Credentials are required for new configurations."
+                  usesInstanceRoleHint
+                    ? configuration
+                      ? "Leave blank to keep existing credentials, or enter only the region to use this installation's own AWS role."
+                      : "Leave the keys blank to use this installation's own AWS role; only the region is needed."
+                    : configuration
+                      ? "Leave blank to keep existing credentials."
+                      : "Credentials are required for new configurations."
                 }
               >
                 <CredentialFields
+                  control={form.control}
+                  credentialsOptional={provider.credentialsOptional}
                   errors={form.formState.errors}
                   hasStoredCredentials={hasConfiguration}
                   provider={providerType}

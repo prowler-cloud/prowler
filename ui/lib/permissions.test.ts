@@ -12,12 +12,42 @@ const attributes = {
   manage_integrations: false,
   manage_billing: false,
   manage_alerts: true,
+  manage_lighthouse_ai_configuration: true,
+  manage_registry: true,
   unlimited_visibility: false,
 } satisfies RolePermissionAttributes;
 
 describe("getRolePermissions", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it("includes Manage Registry in Prowler Cloud when role attributes provide it", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    const permissions = getRolePermissions(attributes);
+
+    // Then
+    expect(permissions).toContainEqual({
+      key: "manage_registry",
+      label: "Manage Registry",
+      enabled: true,
+    });
+  });
+
+  it("hides Manage Registry outside Prowler Cloud", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    const permissions = getRolePermissions(attributes);
+
+    // Then
+    expect(
+      permissions.some((permission) => permission.key === "manage_registry"),
+    ).toBe(false);
   });
 
   it("includes Manage Alerts in Prowler Cloud when role attributes provide it", () => {
@@ -45,6 +75,36 @@ describe("getRolePermissions", () => {
     // Then
     expect(
       permissions.some((permission) => permission.key === "manage_alerts"),
+    ).toBe(false);
+  });
+
+  it("includes Manage Lighthouse AI in Prowler Cloud when role attributes provide it", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    const permissions = getRolePermissions(attributes);
+
+    // Then
+    expect(permissions).toContainEqual({
+      key: "manage_lighthouse_ai_configuration",
+      label: "Manage Lighthouse AI",
+      enabled: true,
+    });
+  });
+
+  it("hides Manage Lighthouse AI outside Prowler Cloud", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    const permissions = getRolePermissions(attributes);
+
+    // Then
+    expect(
+      permissions.some(
+        (permission) => permission.key === "manage_lighthouse_ai_configuration",
+      ),
     ).toBe(false);
   });
 });

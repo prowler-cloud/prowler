@@ -1,0 +1,104 @@
+# Findings excluded from the Grype gate, each with a reason.
+# Anything not listed here blocks the pull request at critical or high severity.
+# Pairs are explicit: a new CVE against an already-listed package still blocks.
+#
+# Every entry below has a published fix we cannot take. Findings with no fix at all are
+# not listed: the scan runs with only-fixed, so they never reach the gate.
+
+ignore:
+
+  # Shipped inside the PowerShell tarball, in its bundled MicrosoftTeams module.
+  # Not a dependency we declare, and not one we can upgrade independently.
+  - vulnerability: CVE-2026-26127
+    package:
+      name: Microsoft.Bcl.Memory
+
+  # Documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
+  # 3.10.1, the latest gallery release. Re-check on the next EXO release.
+  - vulnerability: CVE-2026-84008
+    package:
+      name: System.Security.Cryptography.Pkcs
+      version: 10.0.0
+
+  # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
+  # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
+  # fixed in .NET 9.0.19 / 10.0.11 (2026-08-11), but no published PowerShell release
+  # ships a patched runtime yet (7.5.9 bundles 9.0.18; 7.6.4 bundles 10.0.x < 10.0.11).
+  # pwsh runs only local M365 module cmdlets; nothing listens for inbound WebSocket
+  # connections. Remove with the Trivy exception by 2026-09-15.
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-x64
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-arm64
+
+
+  # The CPython interpreter, compiled into the official base image.
+  # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and
+  # that is a runtime upgrade pending its own evaluation. The remaining three need 3.15 and
+  # are unfixable either way -- the MCP image already runs 3.13.14 and still reports them.
+  - vulnerability: CVE-2026-11940
+    package:
+      name: python
+  - vulnerability: CVE-2026-11972
+    package:
+      name: python
+  - vulnerability: CVE-2026-15308
+    package:
+      name: python
+  - vulnerability: CVE-2026-3298
+    package:
+      name: python
+  - vulnerability: CVE-2026-3644
+    package:
+      name: python
+  - vulnerability: CVE-2026-4224
+    package:
+      name: python
+  - vulnerability: CVE-2026-4786
+    package:
+      name: python
+  - vulnerability: CVE-2026-6100
+    package:
+      name: python
+  - vulnerability: CVE-2026-7210
+    package:
+      name: python
+  - vulnerability: CVE-2026-9669
+    package:
+      name: python
+  # CVE-2026-82049 (tarfile data/tar filter bypass via a hard link to a symlink) has no
+  # fixed CPython release on any branch: the fix is merged on main and 3.13 only, and the
+  # 3.12 backport is still open. Grype records 3.14.0b1 as the fix, so only-fixed does not
+  # drop it, yet python:3.12.14-slim-trixie reports it too. Prowler never extracts tar
+  # archives to disk: the ECR image inspection reads members in memory with extractfile().
+  # Remove once the base image ships a 3.12 release that includes the backport.
+  # https://github.com/python/cpython/issues/157190
+  # https://github.com/python/cpython/pull/157454
+  - vulnerability: CVE-2026-82049
+    package:
+      name: python
+
+  # zlib in the Alpine base image of the MCP (python:3.13.16-alpine3.23) container.
+  # CVE-2026-85091 is a heap overflow in gz_vacate() reached only through non-blocking
+  # gzwrite() followed by gzprintf() after a write stall; the MCP server never writes
+  # gzip files, so the image never calls that path. The UI image no longer needs this:
+  # node:24.22.1-alpine is built on Alpine 3.24 and ships 1.3.2-r1. TEMPORARY: the fix
+  # landed in the 3.23 index on 2026-10-06, two days after the pinned python image was
+  # built, and could be taken with `apk add --upgrade`, but we wait for the base image
+  # to ship it instead (python:3.13.17-alpine3.23, built 2026-10-22, already does).
+  # Pinned to that version so the rule stops matching on its own once the base image
+  # moves forward. Remove when the MCP digest is bumped, by 2026-11-07.
+  # https://security.alpinelinux.org/vuln/CVE-2026-85091
+  - vulnerability: CVE-2026-85091
+    package:
+      name: zlib
+      version: 1.3.2-r0
+
+  # Documented in .trivyignore.yaml: go-jose 4.1.5 compiled into the Trivy binary (0.76.1,
+  # the latest release). Pinned to 4.1.5 so it stops matching with the next Trivy bump.
+  - vulnerability: CVE-2026-116587
+    package:
+      name: github.com/go-jose/go-jose/v4
+      version: v4.1.5

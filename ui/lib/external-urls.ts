@@ -14,9 +14,15 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+  AZURE_ORGANIZATIONS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-azure-management-groups",
   GCP_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-gcp-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
+  SLACK_INTEGRATION:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration",
+  SLACK_INTEGRATION_PRIVATE_CHANNELS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration#why-a-private-channel-is-missing-from-the-channel-list",
   SCAN_CONFIGURATION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
   ATTACK_PATHS_CUSTOM_QUERIES:
@@ -40,11 +46,91 @@ export const PROWLER_CF_TEMPLATE_URL =
 
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
+export const PRICING_URL = "https://prowler.com/pricing";
 
 // Base URL for the CloudFormation "quick create stack" console flow.
 // Hardcoded to us-east-1 because the public template is hosted for that flow.
 const CF_QUICKCREATE_BASE_URL =
   "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
+
+// Deep links that open each provider's cloud console with the credential
+// creation form pre-filled with the exact permissions, scopes and name
+// Prowler needs. The full 16-provider audit (which providers support this and
+// which do not) lives in the PROWLER-2187 PR description; keep both in sync
+// when adding or removing entries here.
+// AWS has its own CloudFormation quick-create link built in
+// `getAWSCredentialsTemplateLinks` below.
+export const PRECONFIGURED_CREDENTIAL_URLS = {
+  // Opens the Cloudflare "Create Custom Token" form under the user profile
+  // pre-filled with the seven read-only scopes Prowler needs (`Account
+  // Settings`, `Zone`, `Zone Settings`, `DNS`, `SSL and Certificates`,
+  // `Bot Management`, `Zone WAF`) and the token name.
+  // Kept in sync with the "User API Token" URL published in
+  // docs/user-guide/providers/cloudflare/authentication.mdx.
+  CLOUDFLARE_API_TOKEN_USER:
+    "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
+  // Opens the GitHub fine-grained PAT creation form pre-filled with the four
+  // read-only permissions Prowler needs to scan a user's own repositories.
+  // Kept in sync with the "user repositories" URL published in
+  // docs/user-guide/providers/github/authentication.mdx.
+  GITHUB_PERSONAL_ACCESS_TOKEN_USER:
+    "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read",
+} as const;
+
+// Builds the account-owned Cloudflare API Token URL for the given account.
+// Uses the dashboard router pattern (`?to=/<accountId>/api-tokens&...`)
+// published in docs/user-guide/providers/cloudflare/authentication.mdx, with
+// the account id substituted in place of the docs' `:account` placeholder to
+// avoid ambiguity when the user is signed into multiple accounts. Navigating
+// directly to `/<accountId>/api-tokens/create` does NOT pre-fill the form —
+// Cloudflare only reads the pre-fill params when they arrive via the router.
+// Same seven read-only scopes as the user token URL.
+export const buildCloudflareAccountOwnedApiTokenUrl = (
+  accountId: string,
+): string => {
+  // Cloudflare's router expects the `to=` value with unencoded slashes; using
+  // URLSearchParams would percent-encode them and break the redirect, so we
+  // assemble the query string manually and only encode the pieces that need
+  // it.
+  const encodedAccountId = encodeURIComponent(accountId);
+  const permissionGroupKeys = encodeURIComponent(
+    JSON.stringify([
+      { key: "account_settings", type: "read" },
+      { key: "zone", type: "read" },
+      { key: "zone_settings", type: "read" },
+      { key: "dns", type: "read" },
+      { key: "ssl_and_certificates", type: "read" },
+      { key: "bot_management", type: "read" },
+      { key: "zone_waf", type: "read" },
+    ]),
+  );
+  const name = encodeURIComponent("Prowler Security Scanner");
+  return `https://dash.cloudflare.com/?to=/${encodedAccountId}/api-tokens&permissionGroupKeys=${permissionGroupKeys}&name=${name}`;
+};
+
+// Builds the organization-scoped GitHub fine-grained PAT URL. GitHub validates
+// permissions against the token's Resource Owner and only surfaces
+// `organization_administration` and `members` when it is an organization, so
+// we pin the owner via `target_name` and skip account-only permissions
+// (`emails`) that the docs' org template does not request. Kept in sync with
+// the "organization scanning" URL published in
+// docs/user-guide/providers/github/authentication.mdx.
+export const buildGitHubPersonalAccessTokenOrgUrl = (
+  targetName: string,
+): string => {
+  const params = new URLSearchParams({
+    name: "Prowler Security Scanner",
+    description: "Fine-grained PAT for Prowler organization security scanning",
+    expires_in: "90",
+    target_name: targetName,
+    administration: "read",
+    contents: "read",
+    vulnerability_alerts: "read",
+    organization_administration: "read",
+    members: "read",
+  });
+  return `https://github.com/settings/personal-access-tokens/new?${params.toString()}`;
+};
 
 export interface AWSOrgDeploymentQuickLinkParams {
   externalId: string;
@@ -64,7 +150,7 @@ const buildCloudFormationQuickCreateLink = (
   return `${CF_QUICKCREATE_BASE_URL}?${searchParams.toString()}`;
 };
 
-// Shortlinks are used for all wizard steps except credentials so link
+// Shortlinks are used for every wizard step but connect so link
 // ownership stays with the docs/marketing team: they can retarget
 // destinations from the shortener panel without a UI PR.
 const PROVIDER_DOCS_SHORTLINK: Record<string, string> = {
@@ -86,7 +172,7 @@ const PROVIDER_DOCS_SHORTLINK: Record<string, string> = {
   okta: "https://goto.prowler.com/provider-okta",
 };
 
-// Default target for the credentials step: the section of the provider's
+// Default target for the connect step: the section of the provider's
 // getting-started page that introduces the credentials flow. The getting-
 // started page keeps the user in the same mental model as the wizard, and
 // each section already links to `authentication.mdx` for readers who need
@@ -123,7 +209,7 @@ const PROVIDER_CREDENTIALS_STEP_DOCS_URL: Record<string, string> = {
   okta: "https://docs.prowler.com/user-guide/providers/okta/getting-started-okta#step-2-provide-credentials",
 };
 
-// When the user has picked a specific auth method inside the credentials
+// When the user has picked a specific auth method in the connect
 // step, jump directly to that method's subsection in the getting-started
 // page. Only providers whose docs have a heading per method are listed —
 // GCP and GitHub render their methods inside a Mintlify `<Tabs>` component
@@ -171,7 +257,8 @@ const resolveDocsLink = (
 ) => {
   const shortlink = getOwnRecordValue(PROVIDER_DOCS_SHORTLINK, provider);
 
-  if (step === PROVIDER_WIZARD_STEP.CREDENTIALS) {
+  // The connect step holds the credentials form, so it links to their docs.
+  if (step === PROVIDER_WIZARD_STEP.CONNECT) {
     if (credentialsMethod) {
       const methodDocs = getOwnRecordValue(
         PROVIDER_CREDENTIALS_METHOD_DOCS_URL,

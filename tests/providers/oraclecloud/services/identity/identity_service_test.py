@@ -122,6 +122,55 @@ class TestIdentityService:
                 and all(len(d.password_policies) == 1 for d in identity_client.domains)
             )
 
+    def test_list_dynamic_groups_with_null_optional_fields(self):
+        """OCI can return `matching_rule` and `description` as null; the
+        dynamic group must still be retrieved instead of failing the whole
+        listing with a pydantic ValidationError."""
+        with patch(
+            "prowler.providers.oraclecloud.services.identity.identity_service.Identity.__init__",
+            return_value=None,
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_service import (
+                Identity,
+            )
+
+            identity_client = Identity(None)
+            identity_client.service = "identity"
+            identity_client.provider = set_mocked_oraclecloud_provider()
+            identity_client.provider._home_region = "us-ashburn-1"
+            identity_client.audited_tenancy = "ocid1.tenancy.oc1..aaaaaaaexample"
+            identity_client.dynamic_groups = []
+            identity_client.session_signer = None
+            identity_client.session_config = None
+
+            regional_client = MagicMock()
+            regional_client.region = "us-ashburn-1"
+
+            dynamic_group = MagicMock()
+            dynamic_group.id = "ocid1.dynamicgroup.oc1..aaaaaaaexample"
+            dynamic_group.name = "prowler-instances"
+            dynamic_group.description = None
+            dynamic_group.matching_rule = None
+            dynamic_group.time_created = datetime.now()
+            dynamic_group.lifecycle_state = "ACTIVE"
+
+            with (
+                patch(
+                    "prowler.providers.oraclecloud.services.identity.identity_service.Identity.__get_client__",
+                    return_value=MagicMock(),
+                ),
+                patch(
+                    "prowler.providers.oraclecloud.services.identity.identity_service.oci.pagination.list_call_get_all_results",
+                    return_value=MagicMock(data=[dynamic_group]),
+                ),
+            ):
+                identity_client.__list_dynamic_groups__(regional_client)
+
+            assert len(identity_client.dynamic_groups) == 1
+            assert identity_client.dynamic_groups[0].name == "prowler-instances"
+            assert identity_client.dynamic_groups[0].matching_rule == ""
+            assert identity_client.dynamic_groups[0].description == ""
+
     def test_list_domains_concurrent_dedupes_and_prefers_home_region(self):
         """__list_domains__ runs across regions in parallel; the dedupe
         must stay correct under concurrent calls (no duplicates, home

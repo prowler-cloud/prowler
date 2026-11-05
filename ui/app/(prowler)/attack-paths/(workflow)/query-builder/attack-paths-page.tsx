@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Maximize2 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
@@ -12,10 +12,9 @@ import {
   getAvailableQueries,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
+import type { GraphHandle } from "@/components/attack-paths/graph/attack-path-graph";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
-import { PageReady } from "@/components/onboarding";
-import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import { Button, Card, useToast } from "@/components/shadcn";
 import {
@@ -27,21 +26,22 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
-import { useMountEffect } from "@/hooks/use-mount-effect";
-import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
-import { isCloud } from "@/lib/shared/env";
-import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
+import { useFindingDetails } from "@/hooks/use-finding-details";
+import { exportGraphAsPNG, isProwlerFindingNode } from "@/lib/attack-paths";
 import {
-  attackPathsTour,
-  type AttackPathsTourTarget,
-  pickDemoQuery,
-  pickDemoScan,
-} from "@/lib/tours/attack-paths.tour";
-import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
+  buildAttackPathView,
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+} from "@/lib/attack-paths/group-graph";
+import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
+import type { SampleAttackPaths } from "@/lib/sample-preview/sample-attack-paths";
+import { isCloud } from "@/lib/shared/env";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
   GraphNode,
+  AttackPathOutcome,
 } from "@/types/attack-paths";
 import {
   ATTACK_PATH_QUERY_IDS,
@@ -62,11 +62,9 @@ import {
   ScanListTable,
 } from "./_components";
 import { AttackPathsStatusPanel } from "./_components/attack-paths-status-panel";
-import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
@@ -77,27 +75,24 @@ import {
 const SCROLL_CONTAINER_CLASS =
   "minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm";
 
-export default function AttackPathsPage() {
+interface AttackPathsPageProps {
+  /** Sample mode: renders this data, never calls the attack-paths API. */
+  sample?: SampleAttackPaths;
+}
+
+export default function AttackPathsPage({ sample }: AttackPathsPageProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
-  const scanId = searchParams.get("scanId");
-  // Onboarding tours are Cloud-only.
-  const onboardingEnabled = isCloud();
-  const isAttackPathsReplay =
-    onboardingEnabled && searchParams.get("onboarding") === "attack-paths";
+  // The sample scan id stays out of the URL, so the real page never sees it.
+  const scanId = sample ? sample.scan.id : searchParams.get("scanId");
   const graphState = useGraphState();
   const finding = useFindingDetails();
   const { toast } = useToast();
 
   const { scans, scansLoading, loadError, refreshScans, retryLoadScans } =
-    useAttackPathScans({
-      onNoReadyScan: isAttackPathsReplay
-        ? () => router.push("/scans?onboarding=view-first-scan")
-        : undefined,
-    });
+    useAttackPathScans(sample ? [sample.scan] : undefined);
 
-  const [queriesLoading, setQueriesLoading] = useState(true);
+  const [queriesLoading, setQueriesLoading] = useState(!sample);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const graphRef = useRef<GraphHandle>(null);
@@ -106,64 +101,25 @@ export default function AttackPathsPage() {
   const hasResetRef = useRef(false);
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
-  const [queries, setQueries] = useState<AttackPathQuery[]>([]);
-
-  const queryBuilder = useQueryBuilder(queries);
-
-  const hasReadyScan = scans.some((scan) => scan.attributes.graph_data_ready);
-  const hasNoScans = scans.length === 0;
-
-  useDriverTour(attackPathsEmptyTour, {
-    // Gate on !loadError: the empty-scans CTA anchor only renders in the
-    // NO_SCANS view-state, not in the ERROR state (which also has scans === []).
-    enabled: onboardingEnabled && !scansLoading && !loadError && hasNoScans,
-  });
-
-  const { start: startAttackPathsTour } = useDriverTour<AttackPathsTourTarget>(
-    attackPathsTour,
-    {
-      enabled: onboardingEnabled && !scansLoading && hasReadyScan,
-      autoOpen: !isAttackPathsReplay,
-      // Page owns tour auto-open; OnboardingSequenceBanner is the sole Continue/Skip control.
-      // pickDemoScan/pickDemoQuery policy lives in attack-paths.tour.ts.
-      stepHandlers: {
-        "scan-list": {
-          onNext: async ({ waitForStep }) => {
-            const selected = pickDemoScan(scans);
-            if (!selected) return;
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("scanId", selected.id);
-            router.push(`${pathname}?${params.toString()}`);
-            await waitForStep("query-selector");
-          },
-        },
-        "query-selector": {
-          onNext: async ({ waitForStep }) => {
-            const selected = pickDemoQuery(queries);
-            if (!selected) return;
-            queryBuilder.handleQueryChange(selected.id);
-            await waitForStep("execute-button");
-          },
-        },
-      },
-    },
+  const [queries, setQueries] = useState<AttackPathQuery[]>(
+    sample ? [sample.query] : [],
   );
+  // Snapshot of the executed query's outcome, so the graph's terminal node
+  // reflects the query that produced the current graph (not a later selection).
+  const [executedOutcome, setExecutedOutcome] =
+    useState<AttackPathOutcome | null>(null);
 
-  // Onboarding replay entry: start the tour once and strip the `onboarding`
-  // param. Invoked from <AttackPathsReplayTrigger>, which mounts only when the
-  // replay conditions hold — so `useMountEffect` fires it exactly once and the
-  // old `replayStartedRef` run-once guard is gone.
-  const startAttackPathsReplay = () => {
-    startAttackPathsTour();
+  const queryBuilder = useQueryBuilder(queries, sample?.query.id ?? null);
 
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("onboarding");
-    const query = params.toString();
-    window.history.replaceState(
-      null,
-      "",
-      query ? `${pathname}?${query}` : pathname,
-    );
+  // The sample has one precomputed result: "running" its query shows it.
+  const showSampleGraph = (sampleData: SampleAttackPaths) => {
+    graphState.updateGraphData(adaptQueryResultToGraphData(sampleData.result), {
+      queryId: sampleData.query.id,
+      queryLabel: sampleData.query.attributes.name,
+      queryKind: ATTACK_PATH_QUERY_KIND.PREDEFINED,
+      parameters: {},
+    });
+    setExecutedOutcome(sampleData.query.attributes.outcome ?? null);
   };
 
   useEffect(() => {
@@ -174,7 +130,8 @@ export default function AttackPathsPage() {
   }, [graphState]);
 
   useEffect(() => {
-    graphState.resetGraph();
+    if (sample) showSampleGraph(sample);
+    else graphState.resetGraph();
   }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
   // Poll while a scan is in flight so the page auto-advances when the graph is ready.
@@ -190,6 +147,8 @@ export default function AttackPathsPage() {
     selectedScan.attributes.state !== SCAN_STATES.COMPLETED;
 
   useEffect(() => {
+    if (sample) return;
+
     const loadQueries = async () => {
       if (!scanId) {
         setQueriesError("No scan selected");
@@ -232,7 +191,7 @@ export default function AttackPathsPage() {
     };
 
     loadQueries();
-  }, [scanId, toast]);
+  }, [sample, scanId, toast]);
 
   const showErrorToast = (title: string, description: string) => {
     toast({
@@ -243,6 +202,11 @@ export default function AttackPathsPage() {
   };
 
   const handleExecuteQuery = async () => {
+    if (sample) {
+      showSampleGraph(sample);
+      return;
+    }
+
     if (!scanId || !queryBuilder.selectedQuery) {
       showErrorToast("Error", "Please select both a scan and a query");
       return;
@@ -257,9 +221,6 @@ export default function AttackPathsPage() {
       return;
     }
 
-    // The tour's execute step is autoAdvance: the real Execute click moves it forward.
-    advanceActiveTour();
-
     graphState.startLoading();
     graphState.setError(null);
 
@@ -269,6 +230,11 @@ export default function AttackPathsPage() {
         queryBuilder.selectedQueryData?.attributes.name ?? queryId;
       const parameters = { ...queryBuilder.getQueryParameters() };
       const isCustomQuery = queryId === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      // Snapshot before awaiting: the selected query can change while the
+      // request is in flight. Custom queries have no catalog outcome → null.
+      const queryOutcome = isCustomQuery
+        ? null
+        : (queryBuilder.selectedQueryData?.attributes.outcome ?? null);
       const result = isCustomQuery
         ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
         : await executeQuery(scanId, queryId, parameters);
@@ -305,6 +271,7 @@ export default function AttackPathsPage() {
             : ATTACK_PATH_QUERY_KIND.PREDEFINED,
           parameters,
         });
+        setExecutedOutcome(queryOutcome);
         toast({
           title: "Success",
           description: "Query executed successfully",
@@ -339,7 +306,41 @@ export default function AttackPathsPage() {
     }
   };
 
+  // Shared attack-path view: the same grouped/outcome transform the graph
+  // renders, computed here so the PNG export and collapse-state pruning use the
+  // exact view the user sees. Cloud-only (OSS keeps the flat graph).
+  const attackPathView =
+    isCloud() && graphState.data
+      ? buildAttackPathView({
+          data: graphState.data,
+          expandedClasses: graphState.expandedClasses,
+          outcome: executedOutcome,
+        })
+      : null;
+
+  const membersOfClass = (classKey: string): string[] =>
+    attackPathView?.groupMembers.get(classKey) ?? [];
+
+  // Collapse every open class, pruning findings-expansion/selection that pointed
+  // at any member the collapse hides.
+  const handleCollapseAll = () => {
+    const memberIds = Array.from(graphState.expandedClasses).flatMap(
+      membersOfClass,
+    );
+    graphState.collapseAllClasses(memberIds);
+  };
+
   const handleNodeClick = (node: GraphNode) => {
+    // A collapsed class group expands to its members; the outcome node is inert.
+    if (node.labels.includes(GROUP_NODE_LABEL)) {
+      const key = String(node.properties[GROUP_PROPS.KEY] ?? "");
+      if (key) graphState.toggleExpandedClass(key, membersOfClass(key));
+      return;
+    }
+    if (node.labels.includes(OUTCOME_NODE_LABEL)) {
+      return;
+    }
+
     const isFinding = isProwlerFindingNode(node.labels);
 
     if (isFinding) {
@@ -347,10 +348,10 @@ export default function AttackPathsPage() {
         return;
       }
 
-      findingNavigationInFlightRef.current = true;
       // Open finding drawer directly, bypassing the node-details modal.
       graphState.enterFilteredView(node.id);
       graphState.selectNode(null); // clear so node-details modal doesn't open first
+      findingNavigationInFlightRef.current = true;
       void handleViewFinding(String(node.properties?.id || node.id));
       return;
     }
@@ -364,7 +365,19 @@ export default function AttackPathsPage() {
     });
 
     if (hasFindings) {
+      // Highlight the resource whose findings are on screen; clear on collapse.
+      const willExpand = !graphState.expandedResources.has(node.id);
       graphState.toggleExpandedResource(node.id);
+      graphState.selectNode(willExpand ? node.id : null);
+    }
+  };
+
+  // Double-click a member (or its group) collapses its class back.
+  const handleNodeDoubleClick = (node: GraphNode) => {
+    const memberKey = node.properties[GROUP_PROPS.MEMBER_KEY];
+    if (memberKey) {
+      const key = String(memberKey);
+      graphState.toggleExpandedClass(key, membersOfClass(key));
     }
   };
 
@@ -387,12 +400,18 @@ export default function AttackPathsPage() {
     const handle = ref.current;
     if (!handle) return;
 
+    // Export the same grouped/outcome view the canvas renders (Cloud); OSS
+    // exports the raw flat graph.
+    const exportData = attackPathView
+      ? { nodes: attackPathView.nodes, edges: attackPathView.edges }
+      : graphState.data;
+
     try {
       await exportGraphAsPNG(
         handle.getContainerElement(),
         handle.getNodesBounds(),
         "attack-path-graph.png",
-        graphState.data,
+        exportData,
         {
           expandedResources: graphState.expandedResources,
           isFilteredView: graphState.isFilteredView,
@@ -415,24 +434,26 @@ export default function AttackPathsPage() {
     graphState.selectedNode ?? graphState.filteredNode;
   const lighthouseGraphData = graphState.fullData ?? graphState.data;
   const lighthouseExecution = graphState.loading ? null : graphState.execution;
-  const lighthouseContext = scanId
-    ? buildAttackPathContext({
-        pathname,
-        scanId,
-        queryId: lighthouseExecution?.queryId,
-        queryLabel: lighthouseExecution?.queryLabel,
-        queryKind: lighthouseExecution?.queryKind,
-        parameters: lighthouseExecution?.parameters,
-        graphData: lighthouseExecution ? lighthouseGraphData : null,
-        selectedNode:
-          lighthouseExecution && lighthouseSelectedNode
-            ? {
-                id: lighthouseSelectedNode.id,
-                type: lighthouseSelectedNode.labels[0],
-              }
-            : null,
-      })
-    : null;
+  // Sample data never reaches Lighthouse.
+  const lighthouseContext =
+    scanId && !sample
+      ? buildAttackPathContext({
+          pathname,
+          scanId,
+          queryId: lighthouseExecution?.queryId,
+          queryLabel: lighthouseExecution?.queryLabel,
+          queryKind: lighthouseExecution?.queryKind,
+          parameters: lighthouseExecution?.parameters,
+          graphData: lighthouseExecution ? lighthouseGraphData : null,
+          selectedNode:
+            lighthouseExecution && lighthouseSelectedNode
+              ? {
+                  id: lighthouseSelectedNode.id,
+                  type: lighthouseSelectedNode.labels[0],
+                }
+              : null,
+        })
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -440,13 +461,6 @@ export default function AttackPathsPage() {
         hasExecutingScan={hasScanInFlight}
         onRefresh={refreshScans}
       />
-
-      {isAttackPathsReplay && !scansLoading && hasReadyScan && (
-        <AttackPathsReplayTrigger onReplay={startAttackPathsReplay} />
-      )}
-
-      {/* Enables the navbar replay icon once the initial scan load resolves. */}
-      {!scansLoading && <PageReady />}
 
       {lighthouseContext && (
         <LighthouseContextContributor
@@ -456,7 +470,7 @@ export default function AttackPathsPage() {
         />
       )}
 
-      <div data-tour-id="attack-paths-intro">
+      <div>
         <p className="text-text-neutral-secondary text-sm">
           Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
@@ -472,12 +486,7 @@ export default function AttackPathsPage() {
           <p className="text-sm">Loading scans...</p>
         </Card>
       ) : viewState === ATTACK_PATHS_VIEW_STATES.NO_SCANS ? (
-        // Keep the empty-scans tour anchor: attackPathsEmptyTour targets
-        // data-tour-id="attack-paths-empty-scans-cta". The panel's NO_SCANS
-        // render is the same "No scans available" + Go to Scan Jobs CTA.
-        <div data-tour-id="attack-paths-empty-scans-cta">
-          <AttackPathsStatusPanel state={viewState} />
-        </div>
+        <AttackPathsStatusPanel state={viewState} />
       ) : viewState !== ATTACK_PATHS_VIEW_STATES.READY ? (
         <AttackPathsStatusPanel
           state={viewState}
@@ -486,8 +495,13 @@ export default function AttackPathsPage() {
         />
       ) : (
         <>
+          {/* The sample scan is the only one: nothing to pick or page. */}
           <Suspense fallback={<div>Loading scans...</div>}>
-            <ScanListTable scans={scans} />
+            <ScanListTable
+              scans={scans}
+              selectedScanId={sample?.scan.id}
+              readOnly={Boolean(sample)}
+            />
           </Suspense>
 
           {isViewingPreviousCycleData && (
@@ -515,13 +529,11 @@ export default function AttackPathsPage() {
               ) : (
                 <>
                   <FormProvider {...queryBuilder.form}>
-                    <div data-tour-id="attack-paths-query-selector">
-                      <QuerySelector
-                        queries={queries}
-                        selectedQueryId={queryBuilder.selectedQuery}
-                        onQueryChange={queryBuilder.handleQueryChange}
-                      />
-                    </div>
+                    <QuerySelector
+                      queries={queries}
+                      selectedQueryId={queryBuilder.selectedQuery}
+                      onQueryChange={queryBuilder.handleQueryChange}
+                    />
 
                     {queryBuilder.selectedQueryData && (
                       <QueryDescription
@@ -536,10 +548,7 @@ export default function AttackPathsPage() {
                     )}
                   </FormProvider>
 
-                  <div
-                    data-tour-id="attack-paths-execute-button"
-                    className="flex justify-end gap-3"
-                  >
+                  <div className="flex justify-end gap-3">
                     <ExecuteButton
                       isLoading={graphState.loading}
                       isDisabled={
@@ -623,6 +632,10 @@ export default function AttackPathsPage() {
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
                         onExport={() => handleGraphExport("main")}
+                        collapseAll={{
+                          can: graphState.expandedClasses.size > 0,
+                          onCollapse: handleCollapseAll,
+                        }}
                       />
 
                       <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
@@ -660,6 +673,10 @@ export default function AttackPathsPage() {
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
                                 onExport={() => handleGraphExport("fullscreen")}
+                                collapseAll={{
+                                  can: graphState.expandedClasses.size > 0,
+                                  onCollapse: handleCollapseAll,
+                                }}
                               />
                             </div>
                             <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
@@ -668,11 +685,15 @@ export default function AttackPathsPage() {
                                   ref={fullscreenGraphRef}
                                   data={graphState.data}
                                   onNodeClick={handleNodeClick}
+                                  onNodeDoubleClick={handleNodeDoubleClick}
                                   selectedNodeId={graphState.selectedNodeId}
                                   isFilteredView={graphState.isFilteredView}
                                   expandedResources={
                                     graphState.expandedResources
                                   }
+                                  expandedClasses={graphState.expandedClasses}
+                                  outcome={executedOutcome}
+                                  view={attackPathView}
                                 />
                               </div>
                             </div>
@@ -690,9 +711,13 @@ export default function AttackPathsPage() {
                       ref={graphRef}
                       data={graphState.data}
                       onNodeClick={handleNodeClick}
+                      onNodeDoubleClick={handleNodeDoubleClick}
                       selectedNodeId={graphState.selectedNodeId}
                       isFilteredView={graphState.isFilteredView}
                       expandedResources={graphState.expandedResources}
+                      expandedClasses={graphState.expandedClasses}
+                      outcome={executedOutcome}
+                      view={attackPathView}
                     />
                   </div>
 
@@ -722,27 +747,4 @@ export default function AttackPathsPage() {
       )}
     </div>
   );
-}
-
-interface AttackPathsReplayTriggerProps {
-  onReplay: () => void;
-}
-
-// Conditional-mount trigger: the parent renders this only when the replay
-// should start. The microtask keeps driver.js/flushSync outside React's
-// mount lifecycle while still running before the next browser task.
-function AttackPathsReplayTrigger({ onReplay }: AttackPathsReplayTriggerProps) {
-  useMountEffect(() => {
-    let cancelled = false;
-
-    queueMicrotask(() => {
-      if (!cancelled) onReplay();
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  });
-
-  return null;
 }

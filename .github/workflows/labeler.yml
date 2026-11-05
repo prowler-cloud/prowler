@@ -27,12 +27,12 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
       - name: Apply labels to PR
-        uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
+        uses: actions/labeler@b8dd2d9be0f68b860e7dae5dae7d772984eacd6d # v6.2.0
         with:
           sync-labels: true
 
@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -85,10 +85,10 @@ jobs:
 
           # Check if author is in the org members list
           if printf '%s\n' "${ORG_MEMBERS[@]}" | grep -q "^${AUTHOR}$"; then
-            echo "is_member=true" >> $GITHUB_OUTPUT
+            echo "is_member=true" >> "$GITHUB_OUTPUT"
             echo "$AUTHOR is an organization member"
           else
-            echo "is_member=false" >> $GITHUB_OUTPUT
+            echo "is_member=false" >> "$GITHUB_OUTPUT"
             echo "$AUTHOR is not an organization member"
           fi
 

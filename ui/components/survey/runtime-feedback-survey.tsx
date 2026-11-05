@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageSquareText } from "lucide-react";
+import { usePathname } from "next/navigation";
 import posthogClient from "posthog-js";
 import type { Survey } from "posthog-js";
 import { useState } from "react";
@@ -11,10 +12,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/shadcn/popover";
-import { Textarea } from "@/components/shadcn/textarea/textarea";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { useStore } from "@/hooks/use-store";
+import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
+import { resolvePosthogUiHost } from "@/lib/posthog-hosts";
+import { exposePosthogForToolbar } from "@/lib/posthog-toolbar";
+import {
+  clampSidePanelWidth,
+  SIDE_PANEL_PUSH_MEDIA_QUERY,
+} from "@/lib/ui-layout";
+import { cn } from "@/lib/utils";
+import { useSidePanelStore } from "@/store/side-panel";
+
+import { FeedbackForm } from "./feedback-form";
 
 const SURVEY_NAME = "Prowler Feedback";
+const FEEDBACK_GUTTER_PX = 24;
 
 const SURVEY_EVENT = {
   SHOWN: "survey shown",
@@ -24,26 +38,74 @@ const SURVEY_EVENT = {
 
 interface RuntimeFeedbackSurveyProps {
   posthogKey: string;
-  posthogHost: string;
+  posthogIngestionHost: string;
+  posthogUiHost: string | null;
+}
+
+interface VisibleFeedbackSurveyProps extends RuntimeFeedbackSurveyProps {
+  isPushViewport: boolean;
+  sidePanelResizing: boolean | undefined;
+  sidePanelVisible: boolean;
+  sidePanelWidth: number | undefined;
 }
 
 export default function RuntimeFeedbackSurvey({
   posthogKey,
-  posthogHost,
+  posthogIngestionHost,
+  posthogUiHost,
 }: RuntimeFeedbackSurveyProps) {
+  const pathname = usePathname();
+  const sidePanelOpen = useStore(useSidePanelStore, (state) => state.isOpen);
+  const sidePanelWidth = useStore(useSidePanelStore, (state) => state.width);
+  const sidePanelResizing = useStore(
+    useSidePanelStore,
+    (state) => state.isResizing,
+  );
+  const isPushViewport = useMediaQuery(SIDE_PANEL_PUSH_MEDIA_QUERY);
+  const sidePanelVisible =
+    Boolean(sidePanelOpen) && !isLighthouseChatRoute(pathname);
+
+  // Reset the open survey by unmounting it while an overlay panel is visible.
+  if (sidePanelVisible && !isPushViewport) return null;
+
+  return (
+    <VisibleFeedbackSurvey
+      posthogKey={posthogKey}
+      posthogIngestionHost={posthogIngestionHost}
+      posthogUiHost={posthogUiHost}
+      isPushViewport={isPushViewport}
+      sidePanelResizing={sidePanelResizing}
+      sidePanelVisible={sidePanelVisible}
+      sidePanelWidth={sidePanelWidth}
+    />
+  );
+}
+
+function VisibleFeedbackSurvey({
+  posthogKey,
+  posthogIngestionHost,
+  posthogUiHost,
+  isPushViewport,
+  sidePanelResizing,
+  sidePanelVisible,
+  sidePanelWidth,
+}: VisibleFeedbackSurveyProps) {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [open, setOpen] = useState(false);
   const [response, setResponse] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   useMountEffect(() => {
-    if (!posthogClient.__loaded) {
+    if (posthogClient.__loaded) {
+      exposePosthogForToolbar(posthogClient);
+    } else {
       posthogClient.init(posthogKey, {
-        api_host: posthogHost,
-        ui_host: posthogHost,
+        api_host: posthogIngestionHost,
+        ui_host: resolvePosthogUiHost(posthogIngestionHost, posthogUiHost),
         autocapture: false,
         capture_pageview: false,
         capture_pageleave: false,
+        loaded: exposePosthogForToolbar,
       });
     }
 
@@ -63,6 +125,10 @@ export default function RuntimeFeedbackSurvey({
   const appearance = survey.appearance;
   const trimmedResponse = response.trim();
   const identity = { $survey_id: survey.id, $survey_name: survey.name };
+  const pushedRight =
+    sidePanelVisible && sidePanelWidth !== undefined && isPushViewport
+      ? clampSidePanelWidth(sidePanelWidth) + FEEDBACK_GUTTER_PX
+      : undefined;
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
@@ -98,14 +164,19 @@ export default function RuntimeFeedbackSurvey({
         <Button
           type="button"
           aria-label="Give feedback"
-          size="xl"
-          className="group fixed right-6 bottom-20 z-50 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none"
+          data-feedback-survey-trigger
+          shape="circle"
+          size="icon-lg"
+          className={cn(
+            "group fixed right-6 bottom-20 z-50 transition-[right,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none",
+            sidePanelVisible && sidePanelResizing && "transition-none",
+          )}
+          style={{ right: pushedRight }}
         >
           <MessageSquareText
             aria-hidden="true"
             className="transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6 motion-reduce:transform-none motion-reduce:transition-none"
           />
-          <span>Feedback</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -125,35 +196,17 @@ export default function RuntimeFeedbackSurvey({
             ) : null}
           </div>
         ) : (
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleSubmit();
-            }}
-          >
-            <div className="flex flex-col gap-1">
-              <h2 className="text-text-neutral-primary text-base font-semibold">
-                {question.question}
-              </h2>
-              {question.description ? (
-                <p className="text-text-neutral-secondary text-sm">
-                  {question.description}
-                </p>
-              ) : null}
-            </div>
-            <Textarea
-              aria-label={question.question}
-              placeholder={appearance?.placeholder ?? ""}
-              value={response}
-              onChange={(event) => setResponse(event.target.value)}
-              textareaSize="lg"
-              className="min-h-32"
-            />
-            <Button type="submit" disabled={!trimmedResponse}>
-              {appearance?.submitButtonText ?? "Submit"}
-            </Button>
-          </form>
+          <FeedbackForm
+            title={question.question}
+            description={question.description ?? undefined}
+            detailsLabel={question.question}
+            placeholder={appearance?.placeholder ?? ""}
+            details={response}
+            submitLabel={appearance?.submitButtonText ?? "Submit"}
+            submitDisabled={!trimmedResponse}
+            onDetailsChange={setResponse}
+            onSubmit={handleSubmit}
+          />
         )}
       </PopoverContent>
     </Popover>

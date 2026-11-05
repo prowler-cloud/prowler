@@ -9,8 +9,8 @@ import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
-  updateFindingTriage,
 } from "@/actions/findings";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import {
   getFilteredFindingGroupDelta,
   getFindingGroupImpactedCounts,
@@ -95,8 +96,9 @@ export function FindingsGroupDrillDown({
     selectableRowCount,
     findingTitle: group.checkTitle,
     onTriageUpdateAction: (input) =>
-      updateTriageOptimistically(input, updateFindingTriage),
+      updateTriageOptimistically(input, updateFindingTriageOrThrow),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
+    onTriageDetailLoadAction: loadFindingTriageDetail,
   });
 
   const table = useReactTable({

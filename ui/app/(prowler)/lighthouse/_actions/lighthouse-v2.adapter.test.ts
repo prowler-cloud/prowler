@@ -73,6 +73,7 @@ describe("lighthouse-v2.adapter", () => {
       expect(mapLighthouseV2Provider(provider)).toEqual({
         id: "openai-compatible",
         name: "OpenAI Compatible",
+        credentialsOptional: false,
       });
       expect(mapLighthouseV2Model(model)).toEqual({
         id: "gpt-5.5",
@@ -122,6 +123,27 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
+    it("should not expose removed feedback state on mapped messages", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
+        id: "message-1",
+        type: "lighthouse-messages",
+        attributes: {
+          role: "user",
+          model: null,
+          token_usage: null,
+          inserted_at: "2026-06-24T10:01:00Z",
+          parts: [],
+        },
+      };
+
+      // When
+      const message = mapLighthouseV2Message(resource);
+
+      // Then
+      expect(message).not.toHaveProperty("feedback");
+    });
+
     it("should give id-less parts stable fallback keys instead of empty strings", () => {
       // Given
       const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
@@ -158,6 +180,28 @@ describe("lighthouse-v2.adapter", () => {
           attributes: { name: "Mystery" },
         }),
       ).toThrow(/Unsupported Lighthouse v2 provider/);
+    });
+  });
+
+  describe("when reading provider capabilities", () => {
+    it("should mark Bedrock credentials optional only when the API says so", () => {
+      // Given
+      const resource = (credentials_optional?: boolean) => ({
+        id: "bedrock",
+        type: "lighthouse-supported-providers",
+        attributes: { name: "AWS Bedrock", credentials_optional },
+      });
+
+      // When / Then
+      expect(mapLighthouseV2Provider(resource(true)).credentialsOptional).toBe(
+        true,
+      );
+      expect(mapLighthouseV2Provider(resource(false)).credentialsOptional).toBe(
+        false,
+      );
+      expect(
+        mapLighthouseV2Provider(resource(undefined)).credentialsOptional,
+      ).toBe(false);
     });
   });
 
@@ -286,6 +330,20 @@ describe("lighthouse-v2.adapter", () => {
         part_type: "text",
         content: { text: "Summarize critical findings" },
       });
+    });
+
+    it("should reject an unknown skill id instead of downgrading it", () => {
+      // Given
+      const invalidInput = {
+        displayText: "Removed skill",
+        skillId: "removed-skill",
+        provider: "openai",
+      } as unknown as Parameters<typeof buildLighthouseV2MessagePayload>[0];
+
+      // When / Then
+      expect(() => buildLighthouseV2MessagePayload(invalidInput)).toThrow(
+        "Unknown Lighthouse skill: removed-skill.",
+      );
     });
 
     it("should build per-provider update payloads with default_model and business_context", () => {

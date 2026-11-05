@@ -268,7 +268,7 @@ Accounts:
 
 ## AWS Mutelist
 
-### Muting specific AWS regions
+### Muting Specific AWS Regions
 
 If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
@@ -322,7 +322,7 @@ The Mutelist Table must have the following columns:
 
   - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
 
-  - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contains an `*` to apply all scanned regions).
+  - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contain an `*` to apply all scanned regions).
 
   - Resources (List): This field contains a list of regular expressions (regex) that applies to the resources that are wanted to be muted.
 

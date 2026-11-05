@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from api.models import StatusChoices
+from reportlab.lib.units import inch
 from reportlab.platypus import Image, LongTable, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
 from tasks.jobs.reports import cis as cis_report_module
@@ -582,3 +583,24 @@ class TestCISCoverPage:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "AWS" in content
+
+    def test_cover_page_wraps_long_account_id(
+        self, cis_generator, basic_cis_compliance_data
+    ):
+        provider = Mock()
+        provider.provider = "oraclecloud"
+        provider.uid = "ocid1.tenancy.oc1.." + "a" * 70
+        provider.alias = None
+        basic_cis_compliance_data.provider_obj = provider
+        elements = cis_generator.create_cover_page(basic_cis_compliance_data)
+        table = next(
+            e
+            for e in elements
+            if isinstance(e, Table)
+            and any(row[0] == "Account ID:" for row in e._cellvalues)
+        )
+        values = [row[1] for row in table._cellvalues]
+        assert all(isinstance(v, Paragraph) for v in values)
+        account_id = next(v for v in values if v.text == provider.uid)
+        _, height = account_id.wrap(4 * inch, 1000)
+        assert height > account_id.style.leading

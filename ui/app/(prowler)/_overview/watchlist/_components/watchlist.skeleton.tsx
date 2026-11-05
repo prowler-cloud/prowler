@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 
 export function WatchlistCardSkeleton() {
   return (
-    <Card variant="base" className="flex min-h-[500px] min-w-[312px] flex-col">
+    <Card variant="base" className="flex min-h-[405px] w-full min-w-0 flex-col">
       <CardTitle>
         <Skeleton className="h-7 w-[168px] rounded-xl" />
       </CardTitle>

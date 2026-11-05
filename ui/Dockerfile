@@ -1,12 +1,13 @@
 # Keep in sync with ui/.nvmrc.
-FROM node:24.18.1-alpine@sha256:f70403e87646dc51b45295f4b8b70cdad0b63d2297c4c9899119b03f7af7a6b3 AS base
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
 # The build uses pnpm via corepack, so npm is unused — remove it (and npx) to drop
 # the bundled-npm CVE surface from every stage, incl. prod.
-# No apk upgrade: it resolves against Alpine's live repo, so the digest pin above
-# would not make the image reproducible. Move the digest forward instead.
+# No blanket apk upgrade: it resolves against Alpine's live repo, so the digest pin
+# above would not make the image reproducible. Move the digest forward instead, or
+# take a named package as a targeted, commented exception.
 RUN corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Install dependencies only when needed
@@ -83,6 +84,9 @@ ENV HOSTNAME="0.0.0.0"
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
 #   - optional: UI_API_DOCS_URL
 #   - optional: UI_CLOUD_ENABLED ("true" only in Prowler Cloud deployments)
+#   - optional: UI_SELF_REGISTRATION_ENABLED (Prowler Cloud only; "false" hides sign-up, invited users can still register)
+#   - optional: UI_REGISTRY_ENABLED ("true" only after the Registry dependency,
+#     Cloud role grant, and controlled acceptance are ready; unset/false hides Registry)
 #   - gated integrations (load only when *_ENABLED="true"; the value is then
 #     required or boot fails). Their legacy names (NEXT_PUBLIC_SENTRY_*,
 #     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:

@@ -1,5 +1,8 @@
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_STATUS_LABELS,
+  FINDING_TRIAGE_STATUS,
+  MANUAL_PASS_PROVENANCE,
   type FindingTriageSummary,
   isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
@@ -8,6 +11,7 @@ import {
 interface FindingTriageRowAttributes {
   muted?: boolean;
   muted_reason?: string;
+  status?: string;
 }
 
 export interface FindingTriageRow {
@@ -29,21 +33,33 @@ export const getOptimisticTriageMutedReason = (
 ): string =>
   `Finding triage status changed to ${FINDING_TRIAGE_STATUS_LABELS[status]}.`;
 
+export const isManualPassTriageUpdate = (
+  input: UpdateFindingTriageInput,
+): boolean =>
+  input.status === FINDING_TRIAGE_STATUS.RESOLVED &&
+  Boolean(input.manualPassEvidence);
+
 export const applyOptimisticTriageSummaryUpdate = (
   triage: FindingTriageSummary,
   input: UpdateFindingTriageInput,
 ): FindingTriageSummary => {
-  const noteWasUpdated = Object.prototype.hasOwnProperty.call(input, "note");
+  const manualPassHasEvidence = Boolean(input.manualPassEvidence?.trim());
+  const noteWasUpdated =
+    Object.prototype.hasOwnProperty.call(input, "note") ||
+    manualPassHasEvidence;
   const noteHasContent =
-    typeof input.note === "string" && input.note.length > 0;
+    (typeof input.note === "string" && input.note.length > 0) ||
+    manualPassHasEvidence;
   const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
-
   return {
     ...triage,
     ...(input.status
       ? {
           status: input.status,
           label: FINDING_TRIAGE_STATUS_LABELS[input.status],
+          manualPassProvenance: input.manualPassEvidence
+            ? MANUAL_PASS_PROVENANCE
+            : triage.manualPassProvenance,
           isMuted: shouldMarkMuted ? true : triage.isMuted,
         }
       : {}),
@@ -67,12 +83,14 @@ export const applyOptimisticFindingTriageRowUpdate = <
   }
 
   const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+  const isManualPass = isManualPassTriageUpdate(input);
 
   return {
     ...finding,
     triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
     attributes: {
       ...finding.attributes,
+      status: isManualPass ? FINDING_STATUS.PASS : finding.attributes.status,
       muted: shouldMarkMuted ? true : finding.attributes.muted,
       muted_reason:
         shouldMarkMuted && input.isMuted !== true && input.status

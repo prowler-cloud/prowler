@@ -2,16 +2,25 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ThreatScore } from "./threat-score";
+import { ThreatScoreSkeleton } from "./threat-score.skeleton";
 
 describe("ThreatScore", () => {
-  it("keeps the card full width until the overview row becomes horizontal", () => {
-    render(<ThreatScore score={75} />);
+  it("keeps the skeleton width aligned with the loaded card", () => {
+    // Given
+    const { container, rerender } = render(<ThreatScoreSkeleton />);
+    const skeletonCard = container.querySelector('[data-slot="card"]');
+    const skeletonClassName = skeletonCard?.className;
 
-    const card = screen
+    // When
+    rerender(<ThreatScore score={75} />);
+    const loadedCard = screen
       .getByText("Prowler ThreatScore")
       .closest('[data-slot="card"]');
 
-    expect(card).toHaveClass("xl:max-w-[312px]");
-    expect(card).not.toHaveClass("lg:max-w-[312px]");
+    // Then
+    expect(skeletonClassName).toBeDefined();
+    expect(loadedCard?.className.split(" ").sort()).toEqual(
+      skeletonClassName?.split(" ").sort(),
+    );
   });
 });

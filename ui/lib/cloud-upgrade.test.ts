@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  PAID_PLAN_UPGRADE_FEATURE,
+} from "@/types/cloud-upgrade";
 
 import {
   CLOUD_UPGRADE_CONTENT,
   CLOUD_UPGRADE_FOOTER_NOTE,
   getCloudUpgradeCompareUrl,
   getCloudUpgradePrimaryUrl,
+  getPaidPlanUpgradeBillingHref,
+  isPaidPlanUpgradeFeature,
+  PAID_PLAN_UPGRADE_CONTENT,
 } from "./cloud-upgrade";
 
 describe("cloud upgrade content", () => {
@@ -20,7 +26,9 @@ describe("cloud upgrade content", () => {
     expect(titles).toEqual([
       "Keep Every Provider Checked Automatically",
       "Turn Findings into Alerts",
+      "Automate Prowler with API Keys",
       "Add Your Entire AWS Organization",
+      "Add Your Entire Azure Management Group",
       "Add Your Entire GCP Organization",
       "Bring CLI Findings into One Cloud View",
       "See Compliance Across Every Provider",
@@ -29,6 +37,7 @@ describe("cloud upgrade content", () => {
       "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
       "Configure Every Scan Once",
+      "Use One SAML Configuration Across Domains",
     ]);
   });
 
@@ -66,7 +75,9 @@ describe("cloud upgrade URLs", () => {
   it.each([
     [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
     [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
+    [CLOUD_UPGRADE_FEATURE.API_KEYS, "api-keys"],
     [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
+    [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS, "azure-organization"],
     [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, "cli-import"],
     [
       CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
@@ -78,11 +89,28 @@ describe("cloud upgrade URLs", () => {
     [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI, "lighthouse-ai"],
     [CLOUD_UPGRADE_FEATURE.GENERAL, "general"],
     [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, "scan-configuration"],
+    [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS, "saml-domains"],
   ])("should use the canonical content slug for %s", (feature, contentSlug) => {
     // Given / When
     const url = new URL(getCloudUpgradePrimaryUrl(feature));
 
     // Then
     expect(url.searchParams.get("utm_content")).toBe(contentSlug);
+  });
+});
+
+describe("paid plan upgrade content", () => {
+  it("sends the findings preview upgrade to billing with its feature", () => {
+    // Given / When / Then
+    expect(
+      isPaidPlanUpgradeFeature(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW),
+    ).toBe(true);
+    expect(
+      getPaidPlanUpgradeBillingHref(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW),
+    ).toBe("/billing?feature=findings_preview");
+    expect(
+      PAID_PLAN_UPGRADE_CONTENT[PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]
+        .title,
+    ).toBe("See Every Finding in Your Account");
   });
 });

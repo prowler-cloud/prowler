@@ -1782,7 +1782,7 @@
       "Name": "EKS cluster endpoints should not be publicly accessible",
       "Description": "This control checks whether an Amazon EKS cluster endpoint is publicly accessible. The control fails if an EKS cluster has an endpoint that is publicly accessible.",
       "Checks": [
-        "eks_endpoints_not_publicly_accessible"
+        "eks_cluster_not_publicly_accessible"
       ],
       "Attributes": [
         {
@@ -2634,7 +2634,9 @@
       "Id": "IAM.9",
       "Name": "MFA should be enabled for the root user",
       "Description": "The root user has complete access to all the services and resources in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled, when a user signs in to the AWS Management Console, they're prompted for their user name and password and for an authentication code from their AWS MFA device.",
-      "Checks": [],
+      "Checks": [
+        "iam_root_mfa_enabled"
+      ],
       "Attributes": [
         {
           "ItemId": "IAM.9",

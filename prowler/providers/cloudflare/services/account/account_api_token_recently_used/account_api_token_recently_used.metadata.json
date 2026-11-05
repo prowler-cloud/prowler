@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "account_api_token_recently_used",
+  "CheckTitle": "Cloudflare API token has been used recently",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "APIToken",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare API tokens** (user-owned and account-owned) are assessed for **recent use**. Active tokens not used within a configurable window (`max_unused_api_token_days`, default 90) are flagged.",
+  "Risk": "**Unused tokens** are forgotten credentials that keep their permissions.\n- **Confidentiality**: a token leaked long ago can still be used\n- **Detection**: activity on dormant tokens is rarely monitored\n- **Attack surface**: every active token is an additional path into the account",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard\n2. For user tokens go to My Profile > API Tokens; for account-owned tokens go to Manage Account > Account API Tokens\n3. Review the Last used column\n4. Delete tokens that are no longer needed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly **revoke unused API tokens**.\n- Review tokens on a fixed schedule\n- Set expiration dates so stale tokens stop working automatically\n- Document the owner and purpose of every token",
+      "Url": "https://hub.prowler.com/checks/cloudflare/account_api_token_recently_used"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The window is configurable with `max_unused_api_token_days` in the Cloudflare section of config.yaml. Tokens that have never been used are flagged once they are older than the window."
+}

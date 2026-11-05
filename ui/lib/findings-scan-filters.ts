@@ -1,11 +1,10 @@
 interface ScanDateSource {
   id: string;
   attributes?: {
-    // Findings are persisted when the scan finishes, so their `inserted_at`
-    // aligns with the scan's `completed_at` — not the scan's `inserted_at`
-    // (which is when the scan row was first created and can fall on a
-    // different UTC day for scans that cross midnight).
-    completed_at?: string;
+    // Findings are written throughout the run, so the range spans both
+    // timestamps, not the scan's `inserted_at` (when the row was created).
+    started_at?: string | null;
+    completed_at?: string | null;
   };
 }
 
@@ -22,7 +21,7 @@ const INSERTED_AT_FILTER_KEYS = [
   "filter[inserted_at__lte]",
 ] as const;
 
-function getScanFilterIds(filters: Record<string, string>): string[] {
+export function getScanFilterIds(filters: Record<string, string>): string[] {
   const scanIds = filters["filter[scan__in]"] || filters["filter[scan]"] || "";
   return Array.from(new Set(scanIds.split(",").filter(Boolean)));
 }
@@ -37,11 +36,50 @@ function hasInsertedAtFilter(filters: Record<string, string>): boolean {
   return INSERTED_AT_FILTER_KEYS.some((key) => Boolean(filters[key]));
 }
 
+// The latest view reads summaries written seconds after a scan completes.
+// shortcut: fixed grace period, replace with a "summaries ready" flag on Scan if this ships.
+const SCAN_SUMMARY_GRACE_MS = 2 * 60 * 1000;
+
+/** Whether a completed scan's summaries have had time to reach the latest view. */
+export function isScanSettled(
+  completedAt: string | null | undefined,
+  now: number,
+): boolean {
+  return (
+    Boolean(completedAt) &&
+    now - Date.parse(completedAt as string) >= SCAN_SUMMARY_GRACE_MS
+  );
+}
+
+/**
+ * The latest view reads settled scans only, so until the first one settles it
+ * is empty. Point it at the early scans (running or just finished), which store
+ * findings as they go.
+ */
+// shortcut: decided tenant-wide, so a new provider scanned next to an already
+// scanned one waits for completion; per-provider fallback if this ships.
+export function getEarlyFindingScanFilters(
+  filters: Record<string, string>,
+  hasSettledScan: boolean,
+  earlyScanIds: string[],
+): Record<string, string> {
+  if (
+    hasSettledScan ||
+    earlyScanIds.length === 0 ||
+    getScanFilterIds(filters).length > 0 ||
+    hasInsertedAtFilter(filters)
+  ) {
+    return filters;
+  }
+
+  return { ...filters, "filter[scan__in]": earlyScanIds.join(",") };
+}
+
 export function buildFindingScanDateFilters(
-  scanCompletedAtValues: string[],
+  scanDateTimes: string[],
 ): Record<string, string> {
   const dates = Array.from(
-    new Set(scanCompletedAtValues.map(formatScanDate).filter(Boolean)),
+    new Set(scanDateTimes.map(formatScanDate).filter(Boolean)),
   ).sort() as string[];
 
   if (dates.length === 0) {
@@ -86,11 +124,18 @@ export async function resolveFindingScanDateFilters({
     });
   }
 
-  const scanCompletedAtValues = scanIds
-    .map((scanId) => scansById.get(scanId)?.attributes?.completed_at)
-    .filter((completedAt): completedAt is string => Boolean(completedAt));
+  const scanDateTimes = scanIds
+    .flatMap((scanId) => {
+      const attributes = scansById.get(scanId)?.attributes;
+      // A running scan keeps writing findings, so its range ends today.
+      const endedAt =
+        attributes?.completed_at ||
+        (attributes?.started_at ? new Date().toISOString() : undefined);
+      return [attributes?.started_at, endedAt];
+    })
+    .filter((dateTime): dateTime is string => Boolean(dateTime));
 
-  const dateFilters = buildFindingScanDateFilters(scanCompletedAtValues);
+  const dateFilters = buildFindingScanDateFilters(scanDateTimes);
 
   if (Object.keys(dateFilters).length === 0) {
     return filters;

@@ -47,6 +47,14 @@ repos:
         priority: 20
 
   ## GITHUB ACTIONS
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        # SC2129 only suggests grouping consecutive redirects; not worth restructuring for.
+        args: ['-shellcheck=-e SC2129']
+        priority: 30
+
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.24.1
     hooks:
@@ -197,7 +205,7 @@ repos:
       - id: trufflehog
         name: TruffleHog
         description: Detect secrets in your data.
-        entry: bash -c 'trufflehog --no-update git file://. --since-commit HEAD --only-verified --fail'
+        entry: bash -c 'trufflehog --no-update git file://. --since-commit HEAD --branch HEAD --only-verified --fail'
         # For running trufflehog in docker, use the following entry instead:
         # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system

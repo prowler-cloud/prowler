@@ -42,9 +42,13 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
 }));
 
 const providers: LighthouseV2SupportedProvider[] = [
-  { id: "openai", name: "OpenAI" },
-  { id: "bedrock", name: "Amazon Bedrock" },
-  { id: "openai-compatible", name: "OpenAI-compatible" },
+  { id: "openai", name: "OpenAI", credentialsOptional: false },
+  { id: "bedrock", name: "Amazon Bedrock", credentialsOptional: false },
+  {
+    id: "openai-compatible",
+    name: "OpenAI-compatible",
+    credentialsOptional: false,
+  },
 ];
 
 const configurations: LighthouseV2Configuration[] = [
@@ -140,7 +144,7 @@ describe("LighthouseV2ConfigPage", () => {
       name: /OpenAI-compatible/i,
     });
     expect(
-      within(compatibleProvider).getByText("Not tested"),
+      within(compatibleProvider).getByText("Not connected"),
     ).toBeInTheDocument();
   });
 
@@ -280,14 +284,14 @@ describe("LighthouseV2ConfigPage", () => {
       maskedKey,
     );
 
+    // But not for Bedrock: the API does not say whether access keys or an
+    // API key are stored, so masking either set could claim the wrong one
     await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
-    expect(screen.getByLabelText("AWS access key ID")).toHaveAttribute(
+    expect(screen.getByLabelText("AWS access key ID")).not.toHaveAttribute(
       "placeholder",
-      maskedKey,
     );
-    expect(screen.getByLabelText("AWS secret access key")).toHaveAttribute(
+    expect(screen.getByLabelText("AWS secret access key")).not.toHaveAttribute(
       "placeholder",
-      maskedKey,
     );
   });
 
@@ -326,6 +330,44 @@ describe("LighthouseV2ConfigPage", () => {
     expect(createConfigurationMock).not.toHaveBeenCalled();
   });
 
+  it("does not hint at a stored Bedrock API key it cannot know about", async () => {
+    // Given: Bedrock has a stored configuration of unknown credential type
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+
+    // When
+    await user.click(screen.getByRole("radio", { name: "Bedrock API key" }));
+
+    // Then
+    expect(screen.getByLabelText("API key")).not.toHaveAttribute("placeholder");
+  });
+
+  it("falls back to access keys after saving Bedrock without new credentials", async () => {
+    // Given
+    const user = userEvent.setup();
+    updateConfigurationMock.mockResolvedValue({ data: configurations[1] });
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+    await user.click(screen.getByRole("radio", { name: "Bedrock API key" }));
+
+    // When: saved with blank fields, so the stored credentials stay
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
+    );
+
+    // Then: the form no longer claims an API key that was never saved
+    await waitFor(() => expect(updateConfigurationMock).toHaveBeenCalled());
+    expect(updateConfigurationMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "credentials",
+    );
+    expect(
+      await screen.findByRole("radio", { name: "AWS access keys" }),
+    ).toBeChecked();
+  });
+
   it("shows Bedrock access key, secret key, and region fields", async () => {
     // Given
     const user = userEvent.setup();
@@ -338,6 +380,105 @@ describe("LighthouseV2ConfigPage", () => {
     expect(screen.getByLabelText("AWS access key ID")).toBeInTheDocument();
     expect(screen.getByLabelText("AWS secret access key")).toBeInTheDocument();
     expect(screen.getByLabelText("AWS region")).toBeInTheDocument();
+  });
+
+  it("saves Bedrock with an API key instead of access keys", async () => {
+    // Given
+    const user = userEvent.setup();
+    updateConfigurationMock.mockResolvedValue({ data: configurations[1] });
+    testConnectionMock.mockResolvedValue({ data: configurations[1] });
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+
+    // When: the API key method is chosen
+    await user.click(screen.getByRole("radio", { name: "Bedrock API key" }));
+
+    // Then: the access key fields give way to the API key field
+    expect(
+      screen.queryByLabelText("AWS access key ID"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("AWS secret access key"),
+    ).not.toBeInTheDocument();
+
+    // When
+    await user.type(screen.getByLabelText("API key"), "ABSKlongterm");
+    await user.type(screen.getByLabelText("AWS region"), "us-east-1");
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
+    );
+
+    // Then
+    await waitFor(() => expect(updateConfigurationMock).toHaveBeenCalled());
+    expect(updateConfigurationMock.mock.calls[0]?.[1].credentials).toEqual({
+      api_key: "ABSKlongterm",
+      aws_region_name: "us-east-1",
+    });
+  });
+
+  it("changes a Bedrock region without keys when the installation role is allowed", async () => {
+    // Given: the API reports Bedrock needs no credentials (Private Cloud)
+    const user = userEvent.setup();
+    updateConfigurationMock.mockResolvedValue({ data: configurations[1] });
+    testConnectionMock.mockResolvedValue({ data: configurations[1] });
+    renderPage({
+      providers: providers.map((provider) =>
+        provider.id === "bedrock"
+          ? { ...provider, credentialsOptional: true }
+          : provider,
+      ),
+    });
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+
+    // Then: blank fields keep the stored credentials, so the hint says so
+    expect(
+      screen.getByText(
+        "Leave blank to keep existing credentials, or enter only the region to use this installation's own AWS role.",
+      ),
+    ).toBeInTheDocument();
+
+    // When: only the region is entered
+    expect(
+      screen.getByLabelText("AWS access key ID (optional)"),
+    ).not.toHaveAttribute("placeholder");
+    await user.type(screen.getByLabelText("AWS region"), "eu-west-1");
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
+    );
+
+    // Then: the region alone is sent, without empty key strings
+    await waitFor(() => expect(updateConfigurationMock).toHaveBeenCalled());
+    expect(updateConfigurationMock.mock.calls[0]?.[1]).toMatchObject({
+      credentials: { aws_region_name: "eu-west-1" },
+    });
+    expect(
+      updateConfigurationMock.mock.calls[0]?.[1].credentials,
+    ).not.toHaveProperty("aws_access_key_id");
+  });
+
+  it("still requires Bedrock keys where the installation role is not allowed", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+
+    // When
+    await user.type(screen.getByLabelText("AWS region"), "eu-west-1");
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
+    );
+
+    // Then
+    expect(
+      await screen.findByText("AWS access key ID is required."),
+    ).toBeInTheDocument();
+    expect(updateConfigurationMock).not.toHaveBeenCalled();
   });
 
   it("tests the connection and reports the resulting status", async () => {

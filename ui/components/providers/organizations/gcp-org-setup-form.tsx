@@ -2,13 +2,17 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { GCPProviderBadge } from "@/components/icons/providers-badge";
 import { RadioCard } from "@/components/providers/radio-card";
+import {
+  ONBOARDING_METHOD,
+  OnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/connect/onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -22,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import {
@@ -103,6 +108,8 @@ interface GcpOrgSetupFormInitialValues {
 
 interface GcpOrgSetupFormProps {
   onBack: () => void;
+  /** Keeps the single/organization tabs on screen; absent when the flow was entered directly. */
+  onSelectSingleAccount?: () => void;
   onClose?: () => void;
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
@@ -114,6 +121,7 @@ interface GcpOrgSetupFormProps {
 
 export function GcpOrgSetupForm({
   onBack,
+  onSelectSingleAccount,
   onClose,
   onNext,
   onFooterChange,
@@ -127,6 +135,7 @@ export function GcpOrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "gcp-org-wizard-setup-form";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isReadOnlyOrgId = Boolean(initialValues?.gcpOrgId);
 
@@ -301,10 +310,8 @@ export function GcpOrgSetupForm({
 
   useEffect(() => {
     if (!apiError) return;
-    document
-      .getElementById(formId)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [apiError, formId]);
+    formRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [apiError]);
 
   return (
     <Form {...form}>
@@ -315,6 +322,7 @@ export function GcpOrgSetupForm({
       />
       <form
         id={formId}
+        ref={formRef}
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-5"
       >
@@ -326,6 +334,14 @@ export function GcpOrgSetupForm({
                 Google Cloud (GCP) / Organization Details
               </h3>
             </div>
+
+            {onSelectSingleAccount && (
+              <OnboardingMethodTabs
+                orgType={ORGANIZATION_TYPE.GCP}
+                value={ONBOARDING_METHOD.ORGANIZATION}
+                onSelectSingle={onSelectSingleAccount}
+              />
+            )}
 
             <p className="text-muted-foreground text-sm">
               Enter the Google Cloud organization ID for the projects you want
@@ -406,8 +422,7 @@ export function GcpOrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the organization name stored in
-              Google Cloud.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.GCP)}
             </p>
           </div>
         )}
@@ -470,7 +485,7 @@ export function GcpOrgSetupForm({
                   name="clientSecret"
                   label="Client Secret"
                   labelPlacement="outside"
-                  password
+                  type="password"
                   isRequired
                 />
                 <WizardInputField
@@ -478,7 +493,7 @@ export function GcpOrgSetupForm({
                   name="refreshToken"
                   label="Refresh Token"
                   labelPlacement="outside"
-                  password
+                  type="password"
                   isRequired
                 />
               </div>

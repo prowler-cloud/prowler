@@ -106,3 +106,19 @@ class TestAzureServiceSovereignClouds:
         service.__set_clients__(identity, session, logs_service, region_config)
 
         logs_service.assert_called_once_with(credential=session, endpoint=logs_endpoint)
+
+
+class TestAzureServiceRegionConfig:
+    def test_init_keeps_provider_region_config(self):
+        region_config = AzureRegionConfig(
+            name="AzureUSGovernment",
+            base_url="https://management.usgovcloudapi.net",
+            credential_scopes=["https://management.usgovcloudapi.net/.default"],
+        )
+        provider = MagicMock()
+        provider.region_config = region_config
+
+        with patch.object(AzureService, "__set_clients__", return_value={}):
+            service = AzureService(MagicMock(), provider)
+
+        assert service.region_config is region_config

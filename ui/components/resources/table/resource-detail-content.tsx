@@ -5,8 +5,8 @@ import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
-  updateFindingTriage,
 } from "@/actions/findings";
 import { FloatingSelectionActions } from "@/components/findings/floating-selection-actions";
 import { FindingDetailDrawer } from "@/components/findings/table";
@@ -32,17 +32,16 @@ import { DataTable } from "@/components/shadcn/table";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
+import { useFindingDetails } from "@/hooks/use-finding-details";
 import { getGroupLabel } from "@/lib/categories";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
-import {
-  getResourceFindingsColumns,
-  ResourceFinding,
-} from "./resource-findings-columns";
-import { useFindingDetails } from "./use-finding-details";
+import { getResourceFindingsColumns } from "./resource-findings-columns";
 import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 const renderValue = (value: string | null | undefined) => {
@@ -149,14 +148,15 @@ export const ResourceDetailContent = ({
   };
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
 
     if (shouldRefreshAfterTriageUpdate(input)) {
       setFindingsReloadNonce((value) => value + 1);
-      return;
+      return result;
     }
 
     patchTriageUpdate(input);
+    return result;
   };
 
   const failedFindings = findingsData;
@@ -182,6 +182,7 @@ export const ResourceDetailContent = ({
     handleMuteComplete,
     handleTriageUpdate,
     loadLatestFindingTriageNote,
+    loadFindingTriageDetail,
   );
 
   const findingTitle =

@@ -2,15 +2,12 @@ import { Card, CardContent, CardHeader, Skeleton } from "@/components/shadcn";
 
 export function RiskSeverityChartSkeleton() {
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col md:min-w-[380px]"
-    >
+    <Card variant="base" className="flex min-h-[372px] w-full min-w-0 flex-col">
       <CardHeader>
         <Skeleton className="h-7 w-[260px] rounded-xl" />
       </CardHeader>
 
-      <CardContent className="flex flex-1 items-center justify-start px-6">
+      <CardContent className="flex flex-1 items-center justify-start">
         <div className="flex w-full flex-col gap-6">
           {/* 5 horizontal bar skeletons */}
           {Array.from({ length: 5 }).map((_, index) => (

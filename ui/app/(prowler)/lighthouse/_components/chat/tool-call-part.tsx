@@ -37,12 +37,18 @@ export function ToolCalls({ parts }: { parts: LighthouseV2Part[] }) {
         {label}
       </ChainOfThoughtHeader>
       <ChainOfThoughtContent className="mt-2 space-y-1.5">
-        {parts.map((part, index) => (
-          <ToolCallPart key={part.id || `tool-${index}`} part={part} />
-        ))}
+        <ToolCallList parts={parts} />
       </ChainOfThoughtContent>
     </ChainOfThought>
   );
+}
+
+// Flat row list without the "Used N tools" disclosure, for hosts that already
+// provide their own collapse (e.g. the skill run receipt).
+export function ToolCallList({ parts }: { parts: LighthouseV2Part[] }) {
+  return parts.map((part, index) => (
+    <ToolCallPart key={part.id || `tool-${index}`} part={part} />
+  ));
 }
 
 function getToolCallsLabel(parts: LighthouseV2Part[]): string {

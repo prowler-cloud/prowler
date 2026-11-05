@@ -7,16 +7,19 @@
 import { vi } from "vitest";
 
 import { BrowserHarness } from "@/__tests__/browser-harness";
+import { isProwlerFindingNode } from "@/lib/attack-paths";
 
-import { isProwlerFindingNode } from "./_lib";
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
 export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
+  private static readonly FLOW_SEL = ".react-flow";
   private static readonly NODE_SEL = ".react-flow__node";
   private static readonly EDGE_SEL = ".react-flow__edge";
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
   private static readonly MINIMAP_SEL = ".react-flow__minimap";
   private static readonly BACKGROUND_SEL = ".react-flow__background";
+  // Matches the graph's auto-fit duration; a pause this long means no fit is mid-flight.
+  private static readonly FIT_ANIMATION_MS = 300;
 
   private static isFindingElement(el: Element): boolean {
     return (
@@ -200,13 +203,10 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   }
 
   get queryBuilderCard(): HTMLElement | null {
-    return (
-      this.container
-        .querySelector<HTMLElement>(
-          '[data-tour-id="attack-paths-query-selector"]',
-        )
-        ?.closest<HTMLElement>('[data-slot="card"]') ?? null
-    );
+    const executeButton = Array.from(
+      this.container.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((button) => /Execut(e|ing) Query/.test(button.textContent ?? ""));
+    return executeButton?.closest<HTMLElement>('[data-slot="card"]') ?? null;
   }
 
   /** Whether the query-parameters panel is shown. */
@@ -243,10 +243,9 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   }
 
   /**
-   * Inline `transform` of the React Flow viewport element. This is the
-   * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing
-   * it before vs. after a user action is enough to assert that the viewport
-   * actually moved (or stayed put).
+   * Inline `transform` of the React Flow viewport element. Compare transforms
+   * only when the scenario guarantees different final camera positions; an
+   * unchanged transform does not prove that a fit operation did not run.
    */
   get viewportTransform(): string {
     return this.viewport?.style.transform ?? "";
@@ -255,9 +254,53 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   /** Wait until the React Flow viewport transform changes from `previous`. */
   async waitForViewportChange(
     previous: string,
-    timeoutMs = 2000,
+    timeoutMs?: number,
   ): Promise<void> {
-    await this.waitFor(() => this.viewportTransform !== previous, timeoutMs);
+    await this.waitFor(
+      () => this.viewportTransform !== previous,
+      timeoutMs,
+      "the viewport transform to change",
+    );
+  }
+
+  /** Wait until the viewport stops moving and return its settled transform. */
+  async waitForViewportSettled(): Promise<string> {
+    return this.waitForStable(
+      () => this.viewportTransform,
+      AttackPathPageHarness.FIT_ANIMATION_MS,
+      undefined,
+      "the viewport to settle",
+    );
+  }
+
+  /** Wait until every requested node is fully contained in the graph canvas. */
+  async waitForNodesInViewport(
+    nodeIds: string[],
+    timeoutMs?: number,
+  ): Promise<void> {
+    const allInViewport = () => {
+      const canvas = this.q(AttackPathPageHarness.FLOW_SEL);
+      if (!canvas) return false;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      return nodeIds.every((nodeId) => {
+        const node = this.getNodeById(nodeId);
+        if (!node) return false;
+
+        const nodeRect = node.getBoundingClientRect();
+        return (
+          nodeRect.left >= canvasRect.left &&
+          nodeRect.right <= canvasRect.right &&
+          nodeRect.top >= canvasRect.top &&
+          nodeRect.bottom <= canvasRect.bottom
+        );
+      });
+    };
+    await this.waitFor(
+      allInViewport,
+      timeoutMs,
+      `nodes ${nodeIds.join(", ")} to be in the viewport`,
+    );
   }
 
   /** Wait until exactly `count` edges are highlighted. */
@@ -384,23 +427,49 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
           'button[role="combobox"]',
         ),
       10000,
+      "the query selector trigger",
     );
-    await this.user.click(trigger);
 
     const targetId = queryId ?? this.fixture.queryId;
     const targetName = this.fixture.queries.find((q) => q.id === targetId)
       ?.attributes.name;
 
-    const option = await this.waitFor<HTMLElement>(
-      () =>
-        document.querySelector<HTMLElement>(
-          `[role="option"][data-value="${targetId}"]`,
-        ) ??
-        Array.from(
-          document.querySelectorAll<HTMLElement>('[role="option"]'),
-        ).find((el) => targetName && el.textContent?.includes(targetName)),
-      10000,
+    // Id match is exact (`QuerySelector` emits `data-value`); the name fallback
+    // is loose, since `textContent` also covers the option's description.
+    const findOption = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>(
+        `[role="option"][data-value="${targetId}"]`,
+      ) ??
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      ).find((el) => targetName && el.textContent?.includes(targetName)) ??
+      null;
+
+    await this.user.click(trigger);
+
+    // A re-render landing mid-gesture makes Radix drop the open state, leaving
+    // the trigger focused and the listbox unmounted. Re-open from the keyboard,
+    // which acts on the focused trigger — but only when no option mounted at
+    // all, so a merely slow runner does not get a second gesture.
+    let option = await this.waitForOrNull(
+      findOption,
+      2000,
+      `option ${targetId}`,
     );
+    if (!option && document.querySelector('[role="option"]') === null) {
+      await this.user.keyboard("{Enter}");
+      option = await this.waitForOrNull(findOption, 8000, `option ${targetId}`);
+    }
+
+    if (!option) {
+      throw new Error(
+        `selectQuery: no option matching id "${targetId}"` +
+          (targetName
+            ? ` or name "${targetName}"`
+            : " (id not in the fixture)"),
+      );
+    }
+
     await this.user.click(option);
     await this.waitForTransition();
   }
@@ -516,7 +585,8 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   /**
    * Click every resource that the fixture's relationships connect to a finding.
    * Findings are hidden by default in the full graph view (Tier 1) — clicking
-   * their adjacent resources reveals them.
+   * their adjacent resources reveals them. Restore the full view after each
+   * expansion because its contextual fit can move the next resource off-screen.
    */
   async expandAllFindings(): Promise<void> {
     const findingIds = new Set(
@@ -532,8 +602,15 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
     for (const id of Array.from(resourceWithFindingIds)) {
       const el = this.getNodeById(id);
       if (el) {
+        const beforeExpansion = await this.waitForViewportSettled();
         await this.user.click(el);
-        await this.waitForTransition(50);
+        // Measuring new findings can delay the automatic fit. A quiet viewport
+        // alone does not prove that this fit has started or finished.
+        await this.waitForViewportChange(beforeExpansion);
+        await this.waitForViewportSettled();
+        await this.fit();
+        await this.waitForNodesInViewport(this.renderedNodeIds);
+        await this.waitForViewportSettled();
       }
     }
   }

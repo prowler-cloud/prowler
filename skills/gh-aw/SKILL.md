@@ -7,7 +7,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root]
   auto_invoke:
     - "Creating GitHub Agentic Workflows"
@@ -42,6 +42,17 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch
 ```
 
 See [references/](references/) for existing workflow and agent examples in this repo.
+
+### Prowler's Workflow (reference implementation)
+
+| Item | Value in `.github/workflows/issue-triage.md` |
+|------|----------------------------------------------|
+| Trigger | `issues: labeled` with `names: [ai-issue-review]`, gated by `status/needs-triage` |
+| Engine / strict | `engine: copilot`, `strict: false` (custom MCP domains) |
+| Agent | `imports: [../agents/issue-triage.md]` |
+| MCP servers | `prowler` (`https://mcp.prowler.com/mcp`, Hub + docs tools only), `context7` |
+| Writes | `safe-outputs.add-comment` only (label automation commented out) |
+| Compiled by | gh-aw v0.81.6 (header of `issue-triage.lock.yml`) |
 
 ---
 
@@ -89,11 +100,15 @@ imports:
 
 ### Sanitized Context (Security)
 
-NEVER pass raw `github.event.issue.body` to the agent:
+NEVER pass raw `github.event.issue.body` to the agent. Use the sanitized activation output, as `.github/workflows/issue-triage.md` does (compiler v0.81.6):
 
 ```markdown
-${{ needs.activation.outputs.text }}
+## Sanitized Issue Content
+
+${{ steps.sanitized.outputs.text }}
 ```
+
+Title and number (`${{ github.event.issue.title }}`, `#${{ github.event.issue.number }}`) are fine to pass as context.
 
 ### Read-Only Permissions + Safe Outputs
 
@@ -158,11 +173,12 @@ gh-aw provides substrate-level and plan-level security automatically. The workfl
 |-------|-----|-----|
 | **Read-only permissions** | Only `read` in `permissions:` | Agent never gets write access |
 | **Safe outputs** | Declare writes in `safe-outputs:` | Writes happen in separate jobs with scoped permissions |
-| **Sanitized context** | `${{ needs.activation.outputs.text }}` | Prevents prompt injection from raw issue/PR body |
+| **Sanitized context** | `${{ steps.sanitized.outputs.text }}` | Prevents prompt injection from raw issue/PR body |
 | **Explicit network** | List domains in `network.allowed:` | AWF firewall blocks all other egress |
 | **Tool allowlisting** | `allowed:` in each `mcp-servers:` entry | Restricts which MCP tools the agent can call |
 | **Concurrency** | `concurrency:` with `cancel-in-progress: true` | Prevents race conditions on same trigger |
-| **Rate limiting** | `rate-limit:` with `max` and `window` | Prevents abuse via rapid re-triggering |
+| **Rate limiting** | `user-rate-limit:` with `max-runs-per-window` and `window` | Prevents abuse via rapid re-triggering |
+| **Hardened runner** | `pre-steps:` with `step-security/harden-runner` | Same egress auditing as the repo's other workflows |
 | **Threat detection** | Custom `prompt` under `safe-outputs.threat-detection:` | AI scans agent output before writes execute |
 | **Lockdown mode** | `tools.github.lockdown: true/false` | For PUBLIC repos, explicitly declare — filters content to push-access users |
 

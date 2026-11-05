@@ -15,6 +15,10 @@ interface DetailSidePanelProps {
   title: string;
   description?: string;
   context?: LighthouseContextItem;
+  // false registers the Details tab without selecting it, so an opener that
+  // already selected another tab (e.g. a skill launch into the AI chat)
+  // keeps that tab in front.
+  selectTabOnOpen?: boolean;
   children: ReactNode;
 }
 
@@ -38,6 +42,7 @@ function DetailSidePanelActive({
   title,
   description,
   context,
+  selectTabOnOpen = true,
   children,
 }: Omit<DetailSidePanelProps, "open">) {
   // Owner token from registration: several detail views can be mounted at
@@ -45,12 +50,15 @@ function DetailSidePanelActive({
   const [token, setToken] = useState<number | null>(null);
 
   useMountEffect(() => {
-    const registered = useSidePanelStore.getState().registerContextTab({
-      label: "Details",
-      // Mount-scoped capture is safe: the component remounts per open cycle
-      // and every consumer's close path ends in stable setters.
-      onRequestClose: () => onOpenChange(false),
-    });
+    const registered = useSidePanelStore.getState().registerContextTab(
+      {
+        label: "Details",
+        // Mount-scoped capture is safe: the component remounts per open cycle
+        // and every consumer's close path ends in stable setters.
+        onRequestClose: () => onOpenChange(false),
+      },
+      { select: selectTabOnOpen },
+    );
     useLighthouseContextStore
       .getState()
       .setFocusedContext(registered, context ?? null);

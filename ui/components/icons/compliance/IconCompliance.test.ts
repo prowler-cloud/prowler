@@ -70,6 +70,20 @@ describe("getComplianceIcon", () => {
       expect(getComplianceIcon("asd_essential_eight_aws")).toBe(essentialLogo);
     });
 
+    it("resolves Cyber Essentials distinctly from ASD Essential Eight", () => {
+      // `essentials` (plural) must win over the `essential` keyword, otherwise
+      // NCSC Cyber Essentials would collapse to the ASD Essential Eight logo.
+      const cyberEssentialsLogo = getComplianceIcon("cyber_essentials_3.3");
+      const asdEssentialEightLogo = getComplianceIcon(
+        "asd_essential_eight_aws",
+      );
+      expect(cyberEssentialsLogo).toBeDefined();
+      expect(cyberEssentialsLogo).not.toBe(asdEssentialEightLogo);
+      expect(getComplianceIcon("NCSC Cyber Essentials")).toBe(
+        cyberEssentialsLogo,
+      );
+    });
+
     it("resolves NIS2 distinctly from NIST", () => {
       const nis2Logo = getComplianceIcon("NIS2");
       const nistLogo = getComplianceIcon("NIST-800-53");
@@ -78,6 +92,18 @@ describe("getComplianceIcon", () => {
       expect(nis2Logo).not.toBe(nistLogo);
       expect(getComplianceIcon("nis2_aws")).toBe(nis2Logo);
       expect(getComplianceIcon("nist_800_53_revision_5_aws")).toBe(nistLogo);
+    });
+
+    it("resolves NATO D32 by its id, its framework and its title", () => {
+      const natoLogo = getComplianceIcon("nato_cloud_directive_rev1");
+      expect(natoLogo).toBeDefined();
+      expect(getComplianceIcon("NATO-Cloud-Directive")).toBe(natoLogo);
+      expect(
+        getComplianceIcon(
+          "NATO D32 (AC/322-D(2021)0032-REV1) - NATO Restricted baseline",
+        ),
+      ).toBe(natoLogo);
+      expect(getComplianceIcon("nato_cloud_directive_rev1_aws")).toBe(natoLogo);
     });
 
     it("resolves PCI/HIPAA/GDPR/SOC2/ENS/FedRAMP/MITRE/RBI/KISA/SecNumCloud by their framework keyword", () => {

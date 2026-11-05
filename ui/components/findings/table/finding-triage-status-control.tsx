@@ -1,105 +1,43 @@
 "use client";
 
-import { type ComponentProps, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/shadcn/select/select";
-import { cn } from "@/lib/utils";
+import { useToast } from "@/components/shadcn/toast/use-toast";
+import { TriageStatusPicker } from "@/components/shared/triage/triage-status-picker";
+import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
+import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
+  FINDING_TRIAGE_MODAL_STATUS_VALUES,
   FINDING_TRIAGE_ORIGIN,
-  FINDING_TRIAGE_STATUS_LABELS,
+  FINDING_TRIAGE_STATUS,
   type FindingTriageManualStatus,
-  type FindingTriageStatus,
+  type FindingTriageModalStatus,
   type FindingTriageSummary,
+  type FindingTriageUpdateHandler,
   getFindingTriageMuteInfoCopy,
-  isManualStatus,
   isMutelistShortcutStatus,
   isTriageStatusLocked,
-  type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
-export type FindingTriageUpdateHandler = (
-  input: UpdateFindingTriageInput,
-) => void | Promise<void>;
-
-type TriageStatusPickerSize = NonNullable<
-  ComponentProps<typeof SelectTrigger>["size"]
->;
-
-export const TRIAGE_STATUS_TEXT_CLASS = {
-  open: "text-text-error-primary",
-  under_review: "text-text-warning-primary",
-  remediating: "text-bg-data-info",
-  resolved: "text-bg-pass",
-  risk_accepted: "text-bg-pass",
-  false_positive: "text-text-neutral-secondary",
-  reopened: "text-text-error-primary",
-} as const satisfies Record<FindingTriageStatus, string>;
-
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
-
-function TriageStatusPicker({
-  disabled,
-  size = "sm",
-  value,
-  onValueChange,
-}: {
-  disabled: boolean;
-  size?: TriageStatusPickerSize;
-  value: FindingTriageStatus;
-  onValueChange: (status: FindingTriageManualStatus) => void;
-}) {
-  return (
-    <Select
-      value={value}
-      disabled={disabled}
-      onValueChange={(nextStatus) => {
-        if (isManualStatus(nextStatus as FindingTriageStatus)) {
-          onValueChange(nextStatus as FindingTriageManualStatus);
-        }
-      }}
-    >
-      <SelectTrigger
-        aria-label="Triage status"
-        disabled={disabled}
-        size={size}
-        iconSize="sm"
-      >
-        <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[value])}>
-          {FINDING_TRIAGE_STATUS_LABELS[value]}
-        </span>
-      </SelectTrigger>
-      <SelectContent>
-        {FINDING_TRIAGE_MANUAL_STATUS_VALUES.map((status) => (
-          <SelectItem key={status} value={status}>
-            <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[status])}>
-              {FINDING_TRIAGE_STATUS_LABELS[status]}
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
 
 type TableStatusControlProps = {
   origin: typeof FINDING_TRIAGE_ORIGIN.TABLE;
   triage: FindingTriageSummary;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onManualPassRequest?: () => void;
 };
 
 type ModalStatusControlProps = {
   origin: typeof FINDING_TRIAGE_ORIGIN.MODAL;
   triage: FindingTriageSummary;
-  value: FindingTriageStatus;
-  onValueChange: (status: FindingTriageManualStatus) => void;
+  value: FindingTriageModalStatus;
+  includeManualPass: boolean;
+  onValueChange: (status: FindingTriageModalStatus) => void;
 };
 
 type FindingTriageStatusControlProps =
@@ -109,7 +47,7 @@ type FindingTriageStatusControlProps =
 export function FindingTriageStatusControl(
   props: FindingTriageStatusControlProps,
 ) {
-  const [tableUpdateError, setTableUpdateError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [isTableUpdating, setIsTableUpdating] = useState(false);
   const [pendingShortcutStatus, setPendingShortcutStatus] =
     useState<FindingTriageManualStatus | null>(null);
@@ -120,6 +58,11 @@ export function FindingTriageStatusControl(
       <TriageStatusPicker
         disabled={!triage.canEdit || isTriageStatusLocked(triage.status)}
         value={props.value}
+        statusValues={
+          props.includeManualPass
+            ? FINDING_TRIAGE_MODAL_STATUS_VALUES
+            : FINDING_TRIAGE_MANUAL_STATUS_VALUES
+        }
         onValueChange={props.onValueChange}
       />
     );
@@ -130,13 +73,16 @@ export function FindingTriageStatusControl(
     Boolean(props.onTriageUpdateAction) &&
     !isTableUpdating &&
     !isTriageStatusLocked(triage.status);
+  const isAuthoritativeManual =
+    triage.rawFindingStatus === FINDING_STATUS.MANUAL;
+  const includeManualPass =
+    isAuthoritativeManual && Boolean(props.onManualPassRequest);
 
   const applyTableStatus = async (status: FindingTriageManualStatus) => {
     if (!props.onTriageUpdateAction || status === triage.status) {
       return;
     }
 
-    setTableUpdateError(null);
     setIsTableUpdating(true);
 
     try {
@@ -149,8 +95,14 @@ export function FindingTriageStatusControl(
         previousStatus: triage.status,
         isMuted: triage.isMuted,
       });
-    } catch {
-      setTableUpdateError("Could not update triage status.");
+    } catch (error) {
+      const isUsageLimited = error instanceof UsageLimitError;
+      toast({
+        variant: "destructive",
+        title: "Could not update triage status.",
+        description: isUsageLimited ? USAGE_LIMIT_MESSAGE : "Please try again.",
+        ...(isUsageLimited && { action: usageLimitToastAction() }),
+      });
     } finally {
       setIsTableUpdating(false);
     }
@@ -161,8 +113,13 @@ export function FindingTriageStatusControl(
     isMutelistShortcutStatus(status) &&
     !isMutelistShortcutStatus(triage.status);
 
-  const handleTableValueChange = (status: FindingTriageManualStatus) => {
+  const handleTableValueChange = (status: FindingTriageModalStatus) => {
     if (!props.onTriageUpdateAction || status === triage.status) {
+      return;
+    }
+
+    if (status === FINDING_TRIAGE_STATUS.RESOLVED) {
+      props.onManualPassRequest?.();
       return;
     }
 
@@ -181,14 +138,15 @@ export function FindingTriageStatusControl(
           disabled={!canMutateFromTable}
           size="xs"
           value={triage.status}
+          statusValues={
+            includeManualPass
+              ? FINDING_TRIAGE_MODAL_STATUS_VALUES
+              : FINDING_TRIAGE_MANUAL_STATUS_VALUES
+          }
+          showManualPassTooltip={includeManualPass}
           onValueChange={handleTableValueChange}
         />
       </div>
-      {tableUpdateError && (
-        <span className="sr-only" role="alert">
-          {tableUpdateError}
-        </span>
-      )}
       <Modal
         open={pendingShortcutStatus !== null}
         onOpenChange={(open) => {

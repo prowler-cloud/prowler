@@ -35,6 +35,11 @@ export const EditRoleForm = ({
 
   const defaultValues: DefaultValues<RoleFormValues> = {
     ...roleData.data.attributes,
+    ...(isCloudEnvironment && {
+      manage_registry: roleData.data.attributes.manage_registry ?? false,
+      manage_prowler_realtime:
+        roleData.data.attributes.manage_prowler_realtime ?? false,
+    }),
     groups:
       roleData.data.relationships?.provider_groups?.data.map((g) => g.id) || [],
   };
@@ -60,6 +65,10 @@ export const EditRoleForm = ({
       if (isCloudEnvironment) {
         updatedFields.manage_billing = values.manage_billing;
         updatedFields.manage_alerts = values.manage_alerts;
+        updatedFields.manage_lighthouse_ai_configuration =
+          values.manage_lighthouse_ai_configuration;
+        updatedFields.manage_registry = values.manage_registry;
+        updatedFields.manage_prowler_realtime = values.manage_prowler_realtime;
       }
 
       if (

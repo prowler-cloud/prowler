@@ -22,7 +22,10 @@ from api.attack_paths.queries.aws import (
     AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST,
     AWS_STS_PRIVESC_WILDCARD_TRUST,
 )
-from api.attack_paths.queries.types import AttackPathsQueryDefinition
+from api.attack_paths.queries.types import (
+    AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
+)
 
 # The pathfinding.cloud privilege-escalation queries added for PROWLER-2278.
 NEW_PATHFINDING_QUERIES = [
@@ -236,6 +239,50 @@ class TestAllQueriesUniqueIds:
         ids = [q.id for q in AWS_QUERIES]
         duplicates = sorted({qid for qid in ids if ids.count(qid) > 1})
         assert not duplicates, f"Duplicate query IDs found: {duplicates}"
+
+
+class TestQueryOutcomes:
+    """Every query carries a valid outcome (the graph's terminal impact)."""
+
+    def test_every_query_has_an_outcome(self):
+        # Completeness guard: a new query must be given an outcome, so the UI can
+        # always render a terminal outcome node.
+        missing = [q.id for q in AWS_QUERIES if q.outcome is None]
+        assert not missing, f"Queries without an outcome: {missing}"
+
+    def test_every_outcome_is_a_valid_member(self):
+        for query in AWS_QUERIES:
+            assert isinstance(query.outcome, AttackPathsQueryOutcome)
+            assert query.outcome.value.kind
+            assert query.outcome.value.label
+
+    @pytest.mark.parametrize(
+        "query, expected",
+        [
+            (
+                AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST,
+                AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
+            ),
+            (
+                AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY,
+                AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
+            ),
+        ],
+        ids=lambda v: getattr(v, "id", getattr(v, "name", "")),
+    )
+    def test_representative_outcomes(self, query, expected):
+        assert query.outcome is expected
+
+    def test_inventory_outcome_is_partial(self):
+        assert AttackPathsQueryOutcome.RESOURCE_INVENTORY.value.partial is True
+
+    def test_realized_outcomes_are_not_partial(self):
+        for outcome in (
+            AttackPathsQueryOutcome.CODE_EXECUTION,
+            AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
+            AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
+        ):
+            assert outcome.value.partial is False
 
 
 def _strip_comment_lines(cypher: str) -> str:

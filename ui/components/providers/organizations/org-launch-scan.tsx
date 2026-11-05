@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
-import { launchOrganizationScans } from "@/actions/scans/scans";
+import {
+  launchOrganizationScans,
+  scheduleOrganizationDailyScans,
+} from "@/actions/scans/scans";
 import { updateSchedulesBulk } from "@/actions/schedules/schedules";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -23,13 +26,20 @@ import {
 } from "@/components/shadcn/select/select";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import {
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+} from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,
   describeSchedulesBulkFailures,
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   parseSchedulesBulkResult,
   scheduleFormSchema,
 } from "@/lib/schedules";
@@ -78,8 +88,17 @@ function formatCandidateCount(count: number, noun: OrgCandidateNoun): string {
   return `${count} ${count === 1 ? noun.singular : noun.plural}`;
 }
 
-function getScansHref(tab: (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB]) {
-  return `/scans?tab=${tab}`;
+// A running scan already stores findings; a schedule only lists on Scans.
+function launchedScansToastAction(launched: boolean) {
+  return launched ? (
+    <ToastAction altText="Go to findings" asChild>
+      <Link href="/findings">Go to findings</Link>
+    </ToastAction>
+  ) : (
+    <ToastAction altText="Go to scans" asChild>
+      <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
+    </ToastAction>
+  );
 }
 
 export function OrgLaunchScan({
@@ -93,6 +112,7 @@ export function OrgLaunchScan({
   const router = useRouter();
   const { toast } = useToast();
   const {
+    organizationId,
     organizationExternalId,
     organizationType,
     createdProviderIds,
@@ -117,7 +137,7 @@ export function OrgLaunchScan({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
   const launchInitialScan = useWatch({
     control: form.control,
@@ -169,6 +189,7 @@ export function OrgLaunchScan({
         variant: "destructive",
         title: "Unable to save scan schedules",
         description: getActionErrorMessage(result),
+        action: isUsageLimitError(result) ? usageLimitToastAction() : undefined,
       });
       return;
     }
@@ -198,14 +219,21 @@ export function OrgLaunchScan({
 
     let initialScanFailureCount = 0;
     let initialScanSuccessCount = 0;
+    let initialScanError: string | undefined;
+    let initialScanUsageLimited = false;
 
     if (values.launchInitialScan) {
-      const scanResult = await launchOrganizationScans(
-        updatedProviderIds,
-        SCAN_SCHEDULE.SINGLE,
-      );
-      initialScanFailureCount = scanResult.failureCount;
-      initialScanSuccessCount = scanResult.successCount;
+      const scanResult = organizationId
+        ? await launchOrganizationScans(organizationId)
+        : { error: "Organization ID is required" };
+
+      if ("error" in scanResult) {
+        initialScanFailureCount = updatedProviderIds.length;
+        initialScanError = getActionErrorMessage(scanResult);
+        initialScanUsageLimited = isUsageLimitError(scanResult);
+      } else {
+        initialScanSuccessCount = scanResult.data.length;
+      }
     }
 
     setIsLaunching(false);
@@ -216,10 +244,6 @@ export function OrgLaunchScan({
       failedCount > 0
         ? `The schedule was saved for ${formatCandidateCount(updatedCount, noun)}, but ${formatCandidateCount(failedCount, noun)} could not be updated${failureReasons ? `: ${failureReasons}.` : "."}`
         : `The scan schedule was saved for ${formatCandidateCount(updatedCount, noun)}.`;
-    const targetTab =
-      initialScanSuccessCount > 0
-        ? SCAN_JOBS_TAB.ACTIVE
-        : SCAN_JOBS_TAB.SCHEDULED;
 
     toast({
       title:
@@ -228,13 +252,14 @@ export function OrgLaunchScan({
           : "Scan schedules saved",
       description:
         initialScanFailureCount > 0
-          ? `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
+          ? initialScanError
+            ? `${description} The initial organization scan could not be launched: ${initialScanError}`
+            : `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
           : description,
-      action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={getScansHref(targetTab)}>Go to scans</Link>
-        </ToastAction>
-      ),
+      // Over the limit, the plans unblock the scans; the scans page would not.
+      action: initialScanUsageLimited
+        ? usageLimitToastAction()
+        : launchedScansToastAction(initialScanSuccessCount > 0),
     });
   });
 
@@ -245,15 +270,31 @@ export function OrgLaunchScan({
 
     setIsLaunching(true);
 
-    const result = await launchOrganizationScans(
-      createdProviderIds,
-      effectiveScheduleOption,
-    );
-    const successCount = result.successCount;
-    const targetTab =
-      effectiveScheduleOption === SCAN_SCHEDULE.SINGLE
-        ? SCAN_JOBS_TAB.ACTIVE
-        : SCAN_JOBS_TAB.SCHEDULED;
+    let successCount = 0;
+
+    if (effectiveScheduleOption === SCAN_SCHEDULE.SINGLE) {
+      const result = organizationId
+        ? await launchOrganizationScans(organizationId)
+        : { error: "Organization ID is required" };
+
+      if ("error" in result) {
+        setIsLaunching(false);
+        toast({
+          variant: "destructive",
+          title: "Unable to launch organization scan",
+          description: getActionErrorMessage(result),
+          action: isUsageLimitError(result)
+            ? usageLimitToastAction()
+            : undefined,
+        });
+        return;
+      }
+
+      successCount = result.data.length;
+    } else {
+      const result = await scheduleOrganizationDailyScans(createdProviderIds);
+      successCount = result.successCount;
+    }
 
     setIsLaunching(false);
     finishSuccess();
@@ -264,10 +305,8 @@ export function OrgLaunchScan({
         effectiveScheduleOption === SCAN_SCHEDULE.DAILY
           ? `Daily scan scheduled for ${formatCandidateCount(successCount, noun)}.`
           : `Single scan launched for ${formatCandidateCount(successCount, noun)}.`,
-      action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={getScansHref(targetTab)}>Go to scans</Link>
-        </ToastAction>
+      action: launchedScansToastAction(
+        effectiveScheduleOption === SCAN_SCHEDULE.SINGLE,
       ),
     });
   };

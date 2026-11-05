@@ -23,6 +23,7 @@ const roleDetail = {
     manage_integrations: false,
     manage_billing: false,
     manage_alerts: true,
+    manage_lighthouse_ai_configuration: true,
     unlimited_visibility: false,
   },
 } satisfies RoleDetail;
@@ -52,6 +53,28 @@ describe("RoleItem", () => {
 
     // Then
     expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
+  });
+
+  it("shows Manage Lighthouse AI in Prowler Cloud role details", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<RoleItem role={role} roleDetail={roleDetail} />);
+
+    // Then
+    expect(screen.getByText("Manage Lighthouse AI")).toBeInTheDocument();
+  });
+
+  it("hides Manage Lighthouse AI outside Prowler Cloud role details", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    render(<RoleItem role={role} roleDetail={roleDetail} />);
+
+    // Then
+    expect(screen.queryByText("Manage Lighthouse AI")).not.toBeInTheDocument();
   });
 
   it("displays the permission state as a badge", () => {
