@@ -69,9 +69,13 @@ describe("OverviewGrid top row", () => {
   ])(
     "lays out the Cloud cards as $columns at $width px with no gap on the right",
     async ({ width, columns }) => {
+      // Given - Arrange
       const container = await renderAt(width, true);
+
+      // When - Act
       const rows = groupIntoRows(CLOUD_CARDS.map(cardRect));
 
+      // Then - Assert
       expect(rows.map((row) => row.length)).toEqual(columns);
       expectRowsFillTheWidth(rows, container);
     },
@@ -85,26 +89,40 @@ describe("OverviewGrid top row", () => {
   ])(
     "lays out the OSS cards as $columns at $width px with no gap on the right",
     async ({ width, columns }) => {
+      // Given - Arrange
       const container = await renderAt(width, false);
+
+      // When - Act
       const rows = groupIntoRows(OSS_CARDS.map(cardRect));
 
+      // Then - Assert
       expect(rows.map((row) => row.length)).toEqual(columns);
       expectRowsFillTheWidth(rows, container);
     },
   );
 
   it("keeps the narrow cards at their 312px design width beside the wide ones", async () => {
+    // Given - Arrange
     await renderAt(1600, true);
 
-    expect(cardRect("Prowler ThreatScore").width).toBe(312);
-    expect(cardRect("Exploitability").width).toBe(312);
-    expect(cardRect("Check Findings").width).toBeGreaterThanOrEqual(420);
+    // When - Act
+    const threatScore = cardRect("Prowler ThreatScore");
+    const exploitability = cardRect("Exploitability");
+    const checkFindings = cardRect("Check Findings");
+
+    // Then - Assert
+    expect(threatScore.width).toBe(312);
+    expect(exploitability.width).toBe(312);
+    expect(checkFindings.width).toBeGreaterThanOrEqual(420);
   });
 
   it.each([375, 640, 1100, 1600])(
     "keeps the Risk Severity bars readable in a %i px layout",
     async (width) => {
+      // Given - Arrange
       await renderAt(width, true);
+
+      // When - Act
       const card = Array.from(
         document.querySelectorAll('[data-slot="card"]'),
       ).find(
@@ -117,6 +135,7 @@ describe("OverviewGrid top row", () => {
         (row) => row.children[1].getBoundingClientRect().width,
       );
 
+      // Then - Assert
       expect(tracks).toHaveLength(5);
       for (const track of tracks) expect(track).toBeGreaterThanOrEqual(80);
     },
@@ -131,11 +150,15 @@ describe("Attack Surface", () => {
   ])(
     "never leaves an item alone on a row at $width px",
     async ({ width, columns }) => {
+      // Given - Arrange
       await renderAt(width, true);
+
+      // When - Act
       const items = Array.from(
         document.querySelectorAll('[aria-label*="failed findings"]'),
       ).map((item) => item.getBoundingClientRect());
 
+      // Then - Assert
       expect(items).toHaveLength(ATTACK_SURFACE_ITEMS);
       expect(groupIntoRows(items).map((row) => row.length)).toEqual(columns);
     },
