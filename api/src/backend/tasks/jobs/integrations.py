@@ -2,6 +2,7 @@ import os
 import time
 from datetime import UTC, datetime
 from glob import glob
+from types import SimpleNamespace
 from urllib.parse import quote
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
@@ -299,6 +300,9 @@ def upload_security_hub_integration(
                 send_only_fails = integration.configuration.get(
                     "send_only_fails", False
                 )
+                archive_previous_findings = integration.configuration.get(
+                    "archive_previous_findings", False
+                )
                 total_findings_sent[integration.id] = 0
 
                 # Process findings in batches to avoid memory issues
@@ -318,6 +322,9 @@ def upload_security_hub_integration(
                     try:
                         batch_number = 0
                         has_findings = False
+                        current_findings_ids_by_region = {}
+                        security_hub_client = None
+                        total_findings_sent[integration.id] = 0
                         with rls_transaction(
                             tenant_id,
                             using=read_alias,
@@ -394,6 +401,18 @@ def upload_security_hub_integration(
                                             )
                                         )
 
+                                    if archive_previous_findings:
+                                        regional_findings = (
+                                            security_hub_client._findings_per_region
+                                        )
+                                        for (
+                                            region,
+                                            findings,
+                                        ) in regional_findings.items():
+                                            current_findings_ids_by_region.setdefault(
+                                                region, set()
+                                            ).update(finding.Id for finding in findings)
+
                                     # Send this batch to Security Hub
                                     try:
                                         findings_sent = security_hub_client.batch_send_to_security_hub()
@@ -444,16 +463,30 @@ def upload_security_hub_integration(
                         )
 
                     # Archive previous findings if configured to do so
-                    if integration.configuration.get(
-                        "archive_previous_findings", False
-                    ):
+                    if archive_previous_findings:
                         logger.info(
                             f"Archiving previous findings in Security Hub via integration {integration.id}"
                         )
                         try:
-                            findings_archived = (
-                                security_hub_client.archive_previous_findings()
+                            batch_findings_per_region = (
+                                security_hub_client._findings_per_region
                             )
+                            try:
+                                # The locked SDK archive selector only reads regional keys and finding.Id.
+                                security_hub_client._findings_per_region = {
+                                    region: (
+                                        SimpleNamespace(Id=identifier)
+                                        for identifier in identifiers
+                                    )
+                                    for region, identifiers in current_findings_ids_by_region.items()
+                                }
+                                findings_archived = (
+                                    security_hub_client.archive_previous_findings()
+                                )
+                            finally:
+                                security_hub_client._findings_per_region = (
+                                    batch_findings_per_region
+                                )
                             logger.info(
                                 f"Successfully archived {findings_archived} previous findings in Security Hub"
                             )
