@@ -103,7 +103,7 @@
       "matchFileNames": [
         "Dockerfile"
       ],
-      "allowedVersions": "<3.14"
+      "allowedVersions": "/^3\\.(?:[0-9]|1[0-3])\\./"
     },
     {
       "description": "API Docker base image - stay within the API requires-python range (<3.13)",
@@ -116,7 +116,7 @@
       "matchFileNames": [
         "api/Dockerfile"
       ],
-      "allowedVersions": "<3.13"
+      "allowedVersions": "/^3\\.(?:[0-9]|1[0-2])\\./"
     },
     {
       "description": "Docker images - single grouped PR, no changelog, scope=docker",
