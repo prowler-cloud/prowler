@@ -111,7 +111,8 @@ export function LighthouseSkillsMenuItems({
             className="bg-bg-neutral-tertiary"
             onSelect={() => onLaunch(RECOMMENDED_SKILL)}
           />
-          <DropdownMenuSeparator />
+          {/* Only between groups: a lone skill gets just the footer's divider. */}
+          {REST_SKILLS.length > 0 && <DropdownMenuSeparator />}
         </>
       )}
       {REST_SKILLS.map((skill) => (
