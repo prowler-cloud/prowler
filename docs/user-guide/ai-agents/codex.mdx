@@ -45,7 +45,7 @@ Each tab below is a complete setup — follow the one that matches the surface y
   <Tab title="Codex / ChatGPT desktop app">
     1. Open **Settings** and select **Plugins → MCPs**
     2. Click **Add server**
-    3. Enter `prowler` as the name and choose type **Streamable HTTP**
+    3. Enter `prowler` as the name and select type **Streamable HTTP**
     4. Enter the URL `https://mcp.prowler.com/mcp`
     5. Add two headers:
 
@@ -135,7 +135,7 @@ Ask Codex questions that use the Prowler tools:
 
 ## Troubleshooting
 
-### Startup Fails With HTTP 403 Forbidden
+### Startup Fails with HTTP 403 Forbidden
 
 Codex reports a handshake failure on startup, with an HTML error page rather than a JSON response:
 
@@ -147,7 +147,7 @@ Codex reports a handshake failure on startup, with an HTML error page rather tha
 
 The `User-Agent` header is missing. Codex's HTTP client does not send one, and requests without it are rejected before reaching the MCP server. Note this is a **403**, not a 401 — so it is not an API key problem. Add the header as shown in [Step 2](#step-2-add-the-prowler-mcp-server); the value itself does not matter, only that the header is present.
 
-### Authentication Fails With 401
+### Authentication Fails with 401
 
 - Run `codex mcp get prowler` and confirm the entry has the headers you expect. Values are masked, but a missing header shows as `-`.
 - If you used a literal header, confirm the value starts with `Bearer ` and contains the full key.

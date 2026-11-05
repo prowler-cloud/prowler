@@ -22,11 +22,11 @@ Prowler's Infrastructure as Code (IaC) provider enables you to scan local or rem
 PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
 ```
 
-The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback and the rest of the internal network remain protected. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control.
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted. Every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback and the rest of the internal network remain protected. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control.
 
 The scan runs in the worker, not the API, so the variable has to reach the worker:
 
-- **Docker Compose**: set it in the root `.env`; it reaches the worker through the shared environment file.
+- **Docker Compose**: set it in the root `.env`. It reaches the worker through the shared environment file.
 - **Helm**: add it under `api.djangoConfig`, which is rendered into the API ConfigMap that the worker inherits through `envFrom`.
 
 ```yaml
