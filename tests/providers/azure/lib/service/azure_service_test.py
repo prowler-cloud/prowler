@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from msgraph.graph_request_adapter import options as graph_client_options
 
 from prowler.providers.azure.lib.service.service import AzureService
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
@@ -74,7 +75,7 @@ class TestAzureServiceSovereignClouds:
 
         mock_auth_provider_cls.assert_called_once_with(session, scopes=[graph_scope])
         mock_factory.create_with_default_middleware.assert_called_once_with(
-            host=graph_host
+            host=graph_host, options=graph_client_options
         )
         mock_adapter_cls.assert_called_once_with(
             mock_auth_provider_cls.return_value,

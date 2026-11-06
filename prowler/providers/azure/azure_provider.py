@@ -24,6 +24,7 @@ from kiota_authentication_azure.azure_identity_authentication_provider import (
 )
 from msgraph import GraphServiceClient
 from msgraph.graph_request_adapter import GraphRequestAdapter
+from msgraph.graph_request_adapter import options as graph_client_options
 from msgraph_core import GraphClientFactory
 
 from prowler.config.config import (
@@ -458,7 +459,10 @@ class AzureProvider(Provider):
 
     @staticmethod
     def build_graph_request_adapter(
-        credentials, region_config: AzureRegionConfig
+        credentials: Union[
+            DefaultAzureCredential, ClientSecretCredential, InteractiveBrowserCredential
+        ],
+        region_config: AzureRegionConfig,
     ) -> GraphRequestAdapter:
         """
         Builds a Microsoft Graph request adapter bound to the region's Graph endpoint.
@@ -468,8 +472,12 @@ class AzureProvider(Provider):
         graph.microsoft.com. For sovereign clouds the HTTP transport must also
         point at the per-cloud host.
 
+        The Graph SDK only applies its default middleware options, including the
+        rewrite of client.me requests to /me, to the HTTP client it creates
+        itself, so they must be passed explicitly here.
+
         Args:
-            credentials: The Azure credentials used to request Graph tokens.
+            credentials (Union[DefaultAzureCredential, ClientSecretCredential, InteractiveBrowserCredential]): The Azure credentials used to request Graph tokens.
             region_config (AzureRegionConfig): The region configuration providing the Graph host and scope.
 
         Returns:
@@ -479,7 +487,7 @@ class AzureProvider(Provider):
             credentials, scopes=[region_config.graph_scope]
         )
         http_client = GraphClientFactory.create_with_default_middleware(
-            host=region_config.graph_host
+            host=region_config.graph_host, options=graph_client_options
         )
         return GraphRequestAdapter(auth_provider, client=http_client)
 

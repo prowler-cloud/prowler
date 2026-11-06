@@ -1164,7 +1164,7 @@ class TestAzureProviderSovereignCloudSupport:
                 requested_scopes.extend(scopes)
                 return AccessToken("fake-token", 9999999999)
 
-        async def fake_send(_client, request, **_kwargs):
+        async def fake_handle_async_request(_transport, request):
             graph_requests.append(request)
             if request.url.path.endswith("/domains"):
                 body = {"value": [{"id": "contoso.example", "isDefault": True}]}
@@ -1187,7 +1187,11 @@ class TestAzureProviderSovereignCloudSupport:
                 "prowler.providers.azure.azure_provider.SubscriptionClient",
                 MagicMock(return_value=subscription_client_instance),
             ),
-            patch.object(httpx.AsyncClient, "send", fake_send),
+            patch.object(
+                httpx.AsyncHTTPTransport,
+                "handle_async_request",
+                fake_handle_async_request,
+            ),
         ):
             azure_provider = AzureProvider()
             azure_provider._session = FakeCredential()
@@ -1205,6 +1209,7 @@ class TestAzureProviderSovereignCloudSupport:
         assert identity.tenant_domain == "contoso.example"
         assert identity.identity_id == "user@contoso.example"
         assert len(graph_requests) == 2
+        assert graph_requests[1].url.path.endswith("/me")
         for request in graph_requests:
             assert f"{request.url.scheme}://{request.url.host}" == graph_host
             assert request.headers["Authorization"] == "Bearer fake-token"
