@@ -4,6 +4,11 @@ from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
 class elbv2_insecure_ssl_ciphers(Check):
     def execute(self):
+        """Evaluate HTTPS listener policies against the secure-policy allowlist.
+
+        Returns:
+            Reports describing each load balancer's TLS policy security status.
+        """
         findings = []
         secure_ssl_policies = [
             "ELBSecurityPolicy-TLS-1-2-2017-01",
