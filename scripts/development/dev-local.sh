@@ -118,7 +118,7 @@ services_up() {
   # chown when _data exists and is not owned by the current user.
   if ! mkdir -p "$REPO_ROOT/_data/logs"; then
     if [ -e "$REPO_ROOT/_data" ] && [ ! -O "$REPO_ROOT/_data" ]; then
-      warn "_data is owned by root (created by Docker). Run: sudo chown \"${USER:-$(id -un)}\" _data"
+      warn "_data is owned by root (created by Docker). Run: sudo chown \"${USER:-$(id -un)}\" \"$REPO_ROOT/_data\""
     fi
     exit 1
   fi
