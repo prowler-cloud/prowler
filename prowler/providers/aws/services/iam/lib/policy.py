@@ -627,6 +627,74 @@ def is_policy_public(
     return is_public
 
 
+def condition_value_matches_any_account(
+    condition_operator: str, condition_key: str, condition_value
+) -> bool:
+    """
+    Check if a condition value uses wildcards that match requests from any AWS account.
+
+    Only StringLike, ArnLike and ArnEquals evaluate "*" and "?" as wildcards, so values
+    under other operators are always literal. A wildcard value matches any AWS account when:
+    - It is made only of wildcards, e.g. "*", whatever the condition key.
+    - The key holds an account, organization ID, VPC or VPC endpoint ID and the value has a
+      wildcard, e.g. "aws:SourceAccount": "1234*".
+    - The key holds an organization path whose organization ID is not literal,
+      e.g. "aws:PrincipalOrgPaths": "o-*/r-ab12/*".
+    - The key holds an ARN with a wildcard in its account field, e.g.
+      "arn:aws:iam::*:role/admin". ARNs without an account field, such as S3 buckets, match
+      any account when the resource name has a wildcard, e.g. "arn:aws:s3:::*".
+
+    Args:
+        condition_operator (str): The IAM condition operator, e.g. "StringLike"
+        condition_key (str): The lowercase condition key, e.g. "aws:sourceaccount"
+        condition_value: The condition value to check
+
+    Returns:
+        bool: True if the value matches requests from any AWS account, False otherwise
+    """
+    if condition_operator not in ("StringLike", "ArnLike", "ArnEquals"):
+        return False
+    if not isinstance(condition_value, str):
+        return False
+
+    def has_wildcard(value: str) -> bool:
+        return "*" in value or "?" in value
+
+    if not condition_value.strip("*?"):
+        return True
+
+    if condition_key in (
+        "aws:sourceaccount",
+        "aws:sourceowner",
+        "aws:principalaccount",
+        "aws:resourceaccount",
+        "kms:calleraccount",
+        "s3:resourceaccount",
+        "aws:principalorgid",
+        "aws:sourceorgid",
+        "aws:sourcevpc",
+        "aws:sourcevpce",
+    ):
+        return has_wildcard(condition_value)
+
+    if condition_key in ("aws:principalorgpaths", "aws:sourceorgpaths"):
+        # The organization ID must be literal; wildcards only make sense below it
+        return not re.match(r"o-[a-z0-9]{10,32}/", condition_value)
+
+    if condition_key in ("aws:sourcearn", "aws:principalarn"):
+        arn_parts = condition_value.split(":", 5)
+        if len(arn_parts) < 6:
+            # A wildcard before the account field can stand for the rest of the ARN
+            return has_wildcard(condition_value)
+        account, resource = arn_parts[4], arn_parts[5]
+        if account:
+            return has_wildcard(account)
+        # Without an account field the resource name, e.g. an S3 bucket, is what is restricted
+        return has_wildcard(resource.split("/", 1)[0])
+
+    return False
+
+
 def is_condition_block_restrictive(
     condition_statement: dict,
     source_account: str = "",
@@ -721,10 +789,19 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         list,
                     ):
-                        is_condition_key_restrictive = True
+                        # a wildcard that matches any AWS account does not restrict access
+                        is_condition_key_restrictive = not any(
+                            condition_value_matches_any_account(
+                                condition_operator, value, item
+                            )
+                            for item in condition_statement[condition_operator][value]
+                        )
                         # if cross account is not allowed check for each condition block looking for accounts
                         # different than default
-                        if not is_cross_account_allowed:
+                        if (
+                            is_condition_key_restrictive
+                            and not is_cross_account_allowed
+                        ):
                             # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
@@ -764,7 +841,14 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         str,
                     ):
-                        if "aws:sourcevpc" == value or "aws:sourcevpce" == value:
+                        if condition_value_matches_any_account(
+                            condition_operator,
+                            value,
+                            condition_statement[condition_operator][value],
+                        ):
+                            # a wildcard that matches any AWS account does not restrict access
+                            pass
+                        elif "aws:sourcevpc" == value or "aws:sourcevpce" == value:
                             is_condition_valid = True
                         else:
                             if is_cross_account_allowed:

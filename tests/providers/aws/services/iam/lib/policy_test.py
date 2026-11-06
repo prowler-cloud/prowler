@@ -4,6 +4,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
     _get_patterns_from_standard_value,
     check_admin_access,
     check_full_service_access,
+    condition_value_matches_any_account,
     get_effective_actions,
     has_codebuild_trusted_principal,
     has_public_principal,
@@ -3208,3 +3209,208 @@ class Test_iam_pattern_matches:
         start = time.perf_counter()
         assert iam_pattern_matches(pattern, "bedrock-agentcore.amazonaws.com") is False
         assert time.perf_counter() - start < 0.5
+
+
+class Test_condition_value_matches_any_account:
+    @pytest.mark.parametrize(
+        "condition_operator,condition_key,condition_value,expected",
+        [
+            # Values made only of wildcards match any account, whatever the key
+            ("StringLike", "aws:sourceaccount", "*", True),
+            ("StringLike", "aws:principalarn", "*", True),
+            ("ArnLike", "aws:sourcearn", "*", True),
+            ("StringLike", "aws:userid", "*", True),
+            ("StringLike", "kms:viaservice", "?*", True),
+            # Account, organization ID and network keys cannot hold a wildcard
+            ("StringLike", "aws:sourceaccount", "1234*", True),
+            ("StringLike", "aws:principalaccount", "12345678901?", True),
+            ("StringLike", "kms:calleraccount", "*12", True),
+            ("StringLike", "aws:principalorgid", "o-*", True),
+            ("StringLike", "aws:sourcevpce", "vpce-*", True),
+            ("StringLike", "aws:sourceaccount", TRUSTED_AWS_ACCOUNT_NUMBER, False),
+            ("StringLike", "aws:sourcevpce", "vpce-1234567890abcdef0", False),
+            # Organization paths need a literal organization ID
+            ("StringLike", "aws:principalorgpaths", "o-*/r-ab12/*", True),
+            ("StringLike", "aws:principalorgpaths", "o-a1b2c3d4e5/r-ab12/*", False),
+            # ARNs need a literal account field
+            ("StringLike", "aws:principalarn", "arn:aws:iam::*:root", True),
+            ("ArnLike", "aws:principalarn", "arn:aws:iam::*:role/admin", True),
+            ("ArnEquals", "aws:sourcearn", "arn:aws:sns:*:12345678901?:topic", True),
+            ("StringLike", "aws:sourcearn", "arn:aws:*", True),
+            (
+                "ArnLike",
+                "aws:sourcearn",
+                f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                False,
+            ),
+            (
+                "StringLike",
+                "aws:principalarn",
+                f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/*",
+                False,
+            ),
+            # ARNs without an account field are restricted by their resource name
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::*", True),
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::logs-*", True),
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::logs-bucket", False),
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::logs-bucket/*", False),
+            # Other keys only match any account with a value made of wildcards
+            ("StringLike", "aws:userid", "AROAEXAMPLEROLEID:*", False),
+            # Only the Like and ArnEquals operators treat "*" as a wildcard
+            ("StringEquals", "aws:sourceaccount", "*", False),
+            ("StringEquals", "aws:principalarn", "arn:aws:iam::*:root", False),
+            # Non-string values are left to the caller
+            ("StringLike", "aws:sourceaccount", 123456789012, False),
+        ],
+    )
+    def test_condition_value_matches_any_account(
+        self,
+        condition_operator: str,
+        condition_key: str,
+        condition_value,
+        expected: bool,
+    ):
+        assert (
+            condition_value_matches_any_account(
+                condition_operator, condition_key, condition_value
+            )
+            == expected
+        )
+
+
+class Test_is_condition_block_restrictive_wildcard_values:
+    @pytest.mark.parametrize(
+        "condition_statement",
+        [
+            {"StringLike": {"aws:SourceAccount": "*"}},
+            {"StringLike": {"aws:PrincipalAccount": "*"}},
+            {"StringLike": {"aws:SourceOwner": "1*"}},
+            {"StringLike": {"aws:ResourceAccount": "*"}},
+            {"StringLike": {"aws:PrincipalArn": "arn:aws:iam::*:root"}},
+            {"StringLike": {"aws:PrincipalArn": ["*"]}},
+            {"StringLike": {"aws:SourceArn": "*"}},
+            {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::*"}},
+            {"ArnLike": {"aws:PrincipalArn": "arn:aws:iam::*:role/admin"}},
+            {"ArnEquals": {"aws:PrincipalArn": "arn:aws:iam::*:role/admin"}},
+            {"StringLike": {"aws:PrincipalOrgID": "*"}},
+            {"StringLike": {"aws:SourceVpce": "vpce-*"}},
+            {"StringLike": {"aws:userid": "*"}},
+            {"StringLike": {"kms:CallerAccount": "*"}},
+            {
+                "StringLike": {
+                    "aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER, "*"],
+                }
+            },
+        ],
+    )
+    @pytest.mark.parametrize("is_cross_account_allowed", [True, False])
+    def test_wildcard_matching_any_account_is_not_restrictive(
+        self, condition_statement: dict, is_cross_account_allowed: bool
+    ):
+        assert not is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed,
+        )
+
+    @pytest.mark.parametrize(
+        "condition_statement",
+        [
+            {"StringLike": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}},
+            {"StringLike": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}},
+            {
+                "StringLike": {
+                    "aws:PrincipalArn": f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/*"
+                }
+            },
+            {
+                "ArnLike": {
+                    "aws:SourceArn": f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+                }
+            },
+            {"StringLike": {"aws:SourceVpce": "vpce-1234567890abcdef0"}},
+            # StringEquals compares "*" literally, so it only matches the value "*"
+            {"StringEquals": {"aws:SourceVpce": "*"}},
+        ],
+    )
+    @pytest.mark.parametrize("is_cross_account_allowed", [True, False])
+    def test_values_scoped_to_an_account_stay_restrictive(
+        self, condition_statement: dict, is_cross_account_allowed: bool
+    ):
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed,
+        )
+
+    def test_wildcard_value_does_not_hide_a_restrictive_key(self):
+        # Condition keys are ANDed, so one restrictive key still restricts the statement
+        condition_statement = {
+            "StringLike": {
+                "aws:PrincipalArn": "arn:aws:iam::*:root",
+                "aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+            }
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
+
+    def test_other_named_account_is_cross_account_not_public(self):
+        condition_statement = {
+            "StringLike": {
+                "aws:PrincipalArn": f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:root"
+            }
+        }
+        # Another named account is cross-account access, not public access
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, False
+        )
+
+
+class Test_is_policy_public_wildcard_conditions:
+    @pytest.mark.parametrize(
+        "condition",
+        [
+            {"StringLike": {"aws:PrincipalAccount": "*"}},
+            {"StringLike": {"aws:SourceArn": "*"}},
+            {"StringLike": {"aws:PrincipalArn": ["*"]}},
+            {"StringLike": {"aws:SourceAccount": "*"}},
+            {"ArnLike": {"aws:PrincipalArn": "arn:aws:iam::*:root"}},
+        ],
+    )
+    def test_public_principal_with_wildcard_condition_is_public(self, condition):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::example-bucket/*",
+                    "Condition": condition,
+                }
+            ],
+        }
+        assert is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_public_principal_with_account_condition_is_not_public(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::example-bucket/*",
+                    "Condition": {
+                        "StringLike": {
+                            "aws:PrincipalArn": f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:role/*"
+                        }
+                    },
+                }
+            ],
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
