@@ -37,12 +37,10 @@ class organizations_delegated_administrators(Check):
                 organizations_client.organization.delegated_administrators
             )
             if delegated_administrators is None:
-                # Not being able to list them is a lack of visibility, not a
-                # misconfiguration: the API is only available to the management or
-                # delegated administrator account.
-                report.status = "MANUAL"
-                report.status_extended = f"AWS Organization {organizations_client.organization.id} delegated administrators could not be determined; run this check from the organization management or delegated administrator account."
-            elif delegated_administrators:
+                # Unreadable (only the management or a delegated administrator account
+                # can list them): no finding rather than a verdict on unknown data.
+                return findings
+            if delegated_administrators:
                 # Sorted so the verdict and text do not depend on the API's list order
                 untrusted = sorted(
                     administrator.id

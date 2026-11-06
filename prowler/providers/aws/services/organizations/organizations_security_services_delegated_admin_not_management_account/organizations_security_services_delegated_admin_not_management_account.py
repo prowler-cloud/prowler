@@ -37,7 +37,8 @@ class organizations_security_services_delegated_admin_not_management_account(Che
 
         Returns:
             One report for the organization, or none if the account is not in an
-            active organization or no security service has trusted access enabled.
+            active organization, the delegations cannot be read, or no security
+            service has trusted access enabled.
         """
         findings = []
 
@@ -45,24 +46,17 @@ class organizations_security_services_delegated_admin_not_management_account(Che
         if not organization or organization.status != "ACTIVE":
             return findings
 
-        report = Check_Report_AWS(metadata=self.metadata(), resource=organization)
-        report.region = organizations_client.region
-
         enabled_service_principals = organization.enabled_service_principals
         delegated_service_principals = organization.delegated_service_principals
 
-        # Not being able to read the delegations is a lack of visibility, not a
-        # misconfiguration: these APIs are only available to the management or
-        # delegated administrator account.
+        # Unreadable (only the management or a delegated administrator account can
+        # read these): no finding rather than a verdict on unknown data.
         if (
             organization.delegated_administrators is None
             or enabled_service_principals is None
             or delegated_service_principals is None
             or None in delegated_service_principals.values()
         ):
-            report.status = "MANUAL"
-            report.status_extended = f"AWS Organization {organization.id} delegated administration of security services could not be determined; run this check from the organization management or delegated administrator account."
-            findings.append(report)
             return findings
 
         integrated_security_services = sorted(
@@ -70,6 +64,9 @@ class organizations_security_services_delegated_admin_not_management_account(Che
         )
         if not integrated_security_services:
             return findings
+
+        report = Check_Report_AWS(metadata=self.metadata(), resource=organization)
+        report.region = organizations_client.region
 
         delegated = {
             principal

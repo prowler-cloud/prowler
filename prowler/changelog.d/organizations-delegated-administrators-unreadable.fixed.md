@@ -1,1 +1,1 @@
-`organizations_delegated_administrators` reports MANUAL when delegated administrators cannot be listed, instead of PASS on throttling or service errors and no finding on access denied
+`organizations_delegated_administrators` no longer reports PASS when delegated administrators cannot be listed because of throttling or service errors

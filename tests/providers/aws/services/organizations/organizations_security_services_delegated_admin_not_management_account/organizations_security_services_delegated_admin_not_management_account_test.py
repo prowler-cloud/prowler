@@ -113,7 +113,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_delegated_administrators_unreadable(self):
-        """An unreadable administrator list is MANUAL, not a FAIL on an empty one.
+        """An unreadable administrator list reports nothing, not a FAIL on an empty one.
 
         Trusted access is on for GuardDuty, so an empty administrator list would read as
         administration from the management account. Only the sentinel distinguishes the
@@ -121,7 +121,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
         """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
+        conn.describe_organization()["Organization"]
         organizations = organizations_with(
             aws_provider,
             enabled_service_principals=["guardduty.amazonaws.com"],
@@ -144,28 +144,14 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 )
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert result[0].resource_id == organization["Id"]
-                assert result[0].resource_arn == organization["Arn"]
-                assert result[0].region == AWS_REGION_EU_WEST_1
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration of "
-                    f"security services could not be determined; run this check from the "
-                    f"organization management or delegated administrator account."
-                )
+                assert len(result) == 0
 
     @mock_aws
     def test_enabled_service_principals_unreadable(self):
-        """An unreadable trusted access list is MANUAL, not an empty scope.
-
-        Without it the check cannot tell which services are administered
-        organization-wide, so it must not fall through to the no-security-service exit
-        that reports nothing.
-        """
+        """An unreadable trusted access list reports nothing."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
+        conn.describe_organization()["Organization"]
         organizations = organizations_with(
             aws_provider,
             enabled_service_principals=None,
@@ -188,17 +174,11 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 )
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration of "
-                    f"security services could not be determined; run this check from the "
-                    f"organization management or delegated administrator account."
-                )
+                assert len(result) == 0
 
     @mock_aws
     def test_delegated_services_unreadable_for_one_administrator(self):
-        """One unreadable administrator makes the whole verdict undetermined.
+        """One unreadable administrator means no verdict, so nothing is reported.
 
         GuardDuty is readable and delegated here, so the fixture is a delegation map that
         would answer the in-scope service on its own. The guard is still on the map as a
@@ -208,7 +188,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
         """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
+        conn.describe_organization()["Organization"]
         organizations = organizations_with(
             aws_provider,
             enabled_service_principals=["guardduty.amazonaws.com"],
@@ -232,22 +212,11 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 )
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration of "
-                    f"security services could not be determined; run this check from the "
-                    f"organization management or delegated administrator account."
-                )
+                assert len(result) == 0
 
     @mock_aws
     def test_no_security_service_integrated(self):
-        """An empty scope reports nothing, the same as an account outside an organization.
-
-        Trusted access being off for every security service is a determined answer, not
-        an undetermined one, so it must not share the MANUAL status that the unreadable
-        cases above use.
-        """
+        """An empty scope reports nothing, the same as an account outside an organization."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         organizations = organizations_with(
             aws_provider,
@@ -417,7 +386,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_delegated_administrators_throttled(self):
-        """A throttled lookup reaches the MANUAL contract, not a FAIL.
+        """A throttled lookup reports nothing, not a FAIL.
 
         Trusted access is on for GuardDuty with no readable delegation, which is
         indistinguishable from "administered from the management account" unless the
@@ -425,7 +394,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
         """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
+        conn.describe_organization()["Organization"]
         conn.enable_aws_service_access(ServicePrincipal="guardduty.amazonaws.com")
 
         real_make_api_call = botocore.client.BaseClient._make_api_call
@@ -472,10 +441,4 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 )
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration of "
-                    f"security services could not be determined; run this check from the "
-                    f"organization management or delegated administrator account."
-                )
+                assert len(result) == 0

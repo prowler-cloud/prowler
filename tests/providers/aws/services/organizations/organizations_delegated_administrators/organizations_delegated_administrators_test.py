@@ -535,10 +535,10 @@ class Test_organizations_delegated_administrators:
 
     @mock_aws
     def test_organization_delegated_administrators_access_denied(self):
-        """Access denied reports MANUAL instead of no finding at all."""
+        """Access denied reports nothing rather than a verdict on unknown data."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        org_id = conn.describe_organization()["Organization"]["Id"]
+        conn.describe_organization()["Organization"]["Id"]
         aws_provider._audit_config = {
             "organizations_trusted_delegated_administrators": []
         }
@@ -562,19 +562,14 @@ class Test_organizations_delegated_administrators:
                 check = organizations_delegated_administrators()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert (
-                    result[0].status_extended
-                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management or delegated administrator account."
-                )
+                assert len(result) == 0
 
     @mock_aws
     def test_organization_delegated_administrators_throttled(self):
-        """A throttle reports MANUAL instead of PASS with no administrators."""
+        """A throttle reports nothing instead of PASS with no administrators."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        org_id = conn.describe_organization()["Organization"]["Id"]
+        conn.describe_organization()["Organization"]["Id"]
         aws_provider._audit_config = {
             "organizations_trusted_delegated_administrators": []
         }
@@ -598,19 +593,14 @@ class Test_organizations_delegated_administrators:
                 check = organizations_delegated_administrators()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert (
-                    result[0].status_extended
-                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management or delegated administrator account."
-                )
+                assert len(result) == 0
 
     @mock_aws
     def test_organization_delegated_administrators_transport_failure(self):
-        """A non-AWS error (e.g. a dropped connection) also reports MANUAL."""
+        """A non-AWS error (e.g. a dropped connection) also reports nothing."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        org_id = conn.describe_organization()["Organization"]["Id"]
+        conn.describe_organization()["Organization"]["Id"]
         aws_provider._audit_config = {
             "organizations_trusted_delegated_administrators": []
         }
@@ -634,9 +624,4 @@ class Test_organizations_delegated_administrators:
                 check = organizations_delegated_administrators()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert (
-                    result[0].status_extended
-                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management or delegated administrator account."
-                )
+                assert len(result) == 0
