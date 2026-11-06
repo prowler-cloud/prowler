@@ -1,5 +1,8 @@
-# Example: Provider Class Template (GitHub Provider)
+# Example: Provider Class Template (simplified from the GitHub provider)
 # Source: prowler/providers/github/github_provider.py
+# Built-in naming rule: Provider.get_class() imports
+#   prowler.providers.{name}.{name}_provider and expects the class f"{name.capitalize()}Provider"
+#   (github -> GithubProvider, stackit -> StackitProvider, alibabacloud -> AlibabacloudProvider).
 
 
 from prowler.config.config import (
@@ -26,6 +29,8 @@ class GithubProvider(Provider):
     """
 
     _type: str = "github"
+    # Expose in the app (API/UI). Defaults to True (CLI/SDK only) in the base Provider.
+    sdk_only: bool = False
     _auth_method: str = None
     _session: "GithubSession"
     _identity: "GithubIdentityInfo"
@@ -98,6 +103,11 @@ class GithubProvider(Provider):
     @property
     def audit_config(self) -> dict:
         return self._audit_config
+
+    @property
+    def fixer_config(self) -> dict:
+        # Read by the service base class (self.fixer_config = provider.fixer_config)
+        return self._fixer_config
 
     @property
     def mutelist(self) -> Mutelist:

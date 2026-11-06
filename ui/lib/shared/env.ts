@@ -2,7 +2,7 @@
  * Shared environment helpers.
  */
 import { readRuntimeConfigIsland } from "@/lib/runtime-config.shared";
-import { readBoolEnv } from "@/lib/runtime-env";
+import { readBoolEnv, readOptOutEnv } from "@/lib/runtime-env";
 
 /**
  * Whether the UI is running inside a Prowler Cloud deployment.
@@ -19,4 +19,34 @@ export function isCloud(): boolean {
   if (islandConfig) return islandConfig.cloudEnabled;
 
   return readBoolEnv("UI_CLOUD_ENABLED");
+}
+
+/**
+ * Whether this Cloud deployment offers Registry providers (`UI_REGISTRY_ENABLED`).
+ *
+ * Read from the island in the browser, then the env, like `isCloud()`. It only
+ * gates the deployment: per-user Registry access is still decided server-side.
+ */
+export function isRegistryEnabled(): boolean {
+  if (!isCloud()) return false;
+
+  const islandConfig = readRuntimeConfigIsland();
+  if (islandConfig) return islandConfig.registryEnabled;
+
+  return readBoolEnv("UI_REGISTRY_ENABLED");
+}
+
+/**
+ * Whether visitors can create an account without an invitation.
+ *
+ * Prowler Cloud only: always on elsewhere. In Cloud it follows
+ * `UI_SELF_REGISTRATION_ENABLED` (island, then env), on unless "false".
+ */
+export function isSelfRegistrationEnabled(): boolean {
+  if (!isCloud()) return true;
+
+  const islandConfig = readRuntimeConfigIsland();
+  if (islandConfig) return islandConfig.selfRegistrationEnabled;
+
+  return readOptOutEnv("UI_SELF_REGISTRATION_ENABLED");
 }

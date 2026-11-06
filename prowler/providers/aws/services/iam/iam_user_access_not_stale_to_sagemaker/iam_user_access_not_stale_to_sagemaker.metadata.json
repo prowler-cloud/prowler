@@ -32,7 +32,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [

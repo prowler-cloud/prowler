@@ -7,6 +7,8 @@ export interface CrossProviderCatalog {
   frameworks: CrossProviderFrameworkEntry[];
   /** Empty for lack of an answer, not for lack of frameworks. */
   unavailable: boolean;
+  /** Some catalog pages failed: `frameworks` may miss entries. */
+  incomplete: boolean;
 }
 
 /**
@@ -16,7 +18,8 @@ export interface CrossProviderCatalog {
  */
 export const loadCrossProviderFrameworks =
   async (): Promise<CrossProviderCatalog> => {
-    const { entries, unavailable } = await loadComplianceWatchlistContext();
+    const { entries, unavailable, incomplete } =
+      await loadComplianceWatchlistContext();
 
     const frameworks = entries
       .filter((entry) => entry.scope === WATCHLIST_SCOPE.UNIVERSAL)
@@ -31,5 +34,5 @@ export const loadCrossProviderFrameworks =
       .filter((entry) => entry.title.trim().length > 0)
       .sort((a, b) => a.title.localeCompare(b.title));
 
-    return { frameworks, unavailable };
+    return { frameworks, unavailable, incomplete };
   };

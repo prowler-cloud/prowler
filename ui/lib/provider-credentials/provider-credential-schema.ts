@@ -1,0 +1,336 @@
+const FIELD_KIND = {
+  TEXT: "text",
+  PASSWORD: "password",
+  SELECT: "select",
+  TEXTAREA: "textarea",
+  CHECKBOX: "checkbox",
+  INTEGER: "integer",
+  CONSTANT: "constant",
+} as const;
+
+export const REGISTRY_CREDENTIAL_SCHEMA_LIMITS = {
+  MAX_FIELDS: 12,
+  MAX_NAME_LENGTH: 50,
+  MAX_TEXT_LENGTH: 200,
+  MAX_ENUM_OPTIONS: 20,
+  MAX_VARIANTS: 8,
+} as const;
+
+type FieldKind = (typeof FIELD_KIND)[keyof typeof FIELD_KIND];
+export type RegistryCredentialValue = string | boolean | number;
+
+export interface RegistryCredentialField {
+  readonly name: string;
+  readonly label: string;
+  readonly description?: string;
+  readonly kind: FieldKind;
+  readonly options?: readonly string[];
+  readonly required: boolean;
+  readonly defaultValue?: RegistryCredentialValue;
+  readonly placeholder?: string;
+  readonly minimum?: number;
+  readonly maximum?: number;
+}
+
+export interface RegistryCredentialSchema {
+  readonly fields: readonly RegistryCredentialField[];
+}
+
+/** One alternative of a `oneOf`/`anyOf` schema, or the whole flat schema. */
+export interface RegistryCredentialVariant {
+  readonly label?: string;
+  readonly schema: RegistryCredentialSchema;
+}
+
+const ROOT = new Set(
+  "type title description properties required additionalProperties".split(" "),
+);
+const UNION_ROOT = new Set(
+  "title description oneOf anyOf discriminator".split(" "),
+);
+const FIELD = new Set(
+  "title description type format writeOnly enum default examples x-prowler-widget".split(
+    " ",
+  ),
+);
+const BOOLEAN_FIELD = new Set("title description type default".split(" "));
+const INTEGER_FIELD = new Set(
+  "title description type default minimum maximum".split(" "),
+);
+const CONSTANT_FIELD = new Set(
+  "title description type const default".split(" "),
+);
+const FORBIDDEN_NAMES = new Set(["__proto__", "prototype", "constructor"]);
+const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_-]*$/;
+
+// Some installed artifacts expose API keys as plain strings without secret metadata.
+function isApiKeyField(name: string): boolean {
+  const normalizedName = name
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/-/g, "_")
+    .toLowerCase();
+  return /(?:^|_)api_?key$/.test(normalizedName);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype
+  );
+}
+
+function isText(value: unknown, allowEmpty = false): value is string {
+  return (
+    typeof value === "string" &&
+    value.length <= REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_TEXT_LENGTH &&
+    (allowEmpty || value.length > 0)
+  );
+}
+
+function hasOnly(
+  record: Record<string, unknown>,
+  allowed: Set<string>,
+): boolean {
+  for (const key in record) {
+    if (Object.hasOwn(record, key) && !allowed.has(key)) return false;
+  }
+  return true;
+}
+
+export function parseRegistryCredentialSchema(
+  value: unknown,
+): RegistryCredentialSchema | null {
+  if (
+    !isRecord(value) ||
+    !hasOnly(value, ROOT) ||
+    value.type !== "object" ||
+    // Only a closed object: the form never sends undeclared keys anyway.
+    (value.additionalProperties !== undefined &&
+      value.additionalProperties !== false)
+  ) {
+    return null;
+  }
+  if (
+    (value.title !== undefined && !isText(value.title)) ||
+    (value.description !== undefined && typeof value.description !== "string")
+  ) {
+    return null;
+  }
+
+  const properties = value.properties;
+  if (!isRecord(properties)) return null;
+  const entries: [string, unknown][] = [];
+  for (const name in properties) {
+    if (!Object.hasOwn(properties, name)) continue;
+    if (entries.length === REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_FIELDS)
+      return null;
+    entries.push([name, properties[name]]);
+  }
+
+  const required = value.required ?? [];
+  if (
+    !Array.isArray(required) ||
+    required.length > entries.length ||
+    !required.every((name) => typeof name === "string")
+  ) {
+    return null;
+  }
+  const requiredNames = new Set(required);
+  if (
+    requiredNames.size !== required.length ||
+    required.some((name) => !Object.hasOwn(properties, name))
+  ) {
+    return null;
+  }
+
+  const fields: RegistryCredentialField[] = [];
+  for (const [name, property] of entries) {
+    if (
+      FORBIDDEN_NAMES.has(name) ||
+      !FIELD_NAME.test(name) ||
+      name.length > REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_NAME_LENGTH ||
+      !isRecord(property)
+    ) {
+      return null;
+    }
+
+    const label = property.title ?? name;
+    const description = property.description;
+    if (
+      !isText(label) ||
+      (description !== undefined && typeof description !== "string")
+    ) {
+      return null;
+    }
+    const baseField = {
+      name,
+      label,
+      ...(description ? { description } : {}),
+      required: requiredNames.has(name),
+    };
+    const defaultValue = property.default;
+    if (property.type === "boolean") {
+      if (
+        !hasOnly(property, BOOLEAN_FIELD) ||
+        (defaultValue !== undefined && typeof defaultValue !== "boolean")
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.CHECKBOX,
+        ...(typeof defaultValue === "boolean" ? { defaultValue } : {}),
+      });
+      continue;
+    }
+    if (property.type === "integer") {
+      const { minimum, maximum } = property;
+      if (
+        !hasOnly(property, INTEGER_FIELD) ||
+        (minimum !== undefined && !Number.isSafeInteger(minimum)) ||
+        (maximum !== undefined && !Number.isSafeInteger(maximum)) ||
+        (typeof minimum === "number" &&
+          typeof maximum === "number" &&
+          minimum > maximum) ||
+        (defaultValue !== undefined &&
+          (typeof defaultValue !== "number" ||
+            !Number.isSafeInteger(defaultValue) ||
+            (typeof minimum === "number" && defaultValue < minimum) ||
+            (typeof maximum === "number" && defaultValue > maximum)))
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.INTEGER,
+        ...(typeof minimum === "number" ? { minimum } : {}),
+        ...(typeof maximum === "number" ? { maximum } : {}),
+        ...(typeof defaultValue === "number" ? { defaultValue } : {}),
+      });
+      continue;
+    }
+    if (property.type === "string" && property.const !== undefined) {
+      // A union's discriminator: fixed by the variant, never typed by the user.
+      if (
+        !hasOnly(property, CONSTANT_FIELD) ||
+        !isText(property.const) ||
+        (defaultValue !== undefined && defaultValue !== property.const)
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.CONSTANT,
+        defaultValue: property.const,
+      });
+      continue;
+    }
+    if (property.type !== "string" || !hasOnly(property, FIELD)) return null;
+
+    const format = property.format;
+    const widget = property["x-prowler-widget"];
+    const options = property.enum;
+    const examples = property.examples;
+    const password = format === "password" && property.writeOnly === true;
+    if (
+      ((format !== undefined || property.writeOnly !== undefined) &&
+        !password) ||
+      (widget !== undefined && widget !== "textarea") ||
+      (defaultValue !== undefined && !isText(defaultValue, true)) ||
+      (examples !== undefined &&
+        (!Array.isArray(examples) ||
+          examples.length >
+            REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_ENUM_OPTIONS ||
+          !examples.every((example) => isText(example, true))))
+    ) {
+      return null;
+    }
+
+    if (options !== undefined) {
+      if (
+        format !== undefined ||
+        widget !== undefined ||
+        property.writeOnly !== undefined ||
+        !Array.isArray(options) ||
+        options.length === 0 ||
+        options.length > REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_ENUM_OPTIONS ||
+        !options.every((option) => isText(option)) ||
+        new Set(options).size !== options.length ||
+        (defaultValue !== undefined && !options.includes(defaultValue))
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.SELECT,
+        options,
+        ...(typeof defaultValue === "string" ? { defaultValue } : {}),
+      });
+      continue;
+    }
+
+    if (
+      widget !== undefined &&
+      (format !== undefined || property.writeOnly !== undefined)
+    ) {
+      return null;
+    }
+    fields.push({
+      ...baseField,
+      kind: password
+        ? FIELD_KIND.PASSWORD
+        : widget === "textarea"
+          ? FIELD_KIND.TEXTAREA
+          : isApiKeyField(name)
+            ? FIELD_KIND.PASSWORD
+            : FIELD_KIND.TEXT,
+      ...(Array.isArray(examples) && typeof examples[0] === "string"
+        ? { placeholder: examples[0] }
+        : {}),
+      ...(typeof defaultValue === "string" ? { defaultValue } : {}),
+    });
+  }
+  return { fields };
+}
+
+export function parseRegistryCredentialVariants(
+  value: unknown,
+): readonly RegistryCredentialVariant[] | null {
+  const isUnion =
+    isRecord(value) &&
+    (Object.hasOwn(value, "oneOf") || Object.hasOwn(value, "anyOf"));
+  if (!isUnion) {
+    const schema = parseRegistryCredentialSchema(value);
+    return schema ? [{ schema }] : null;
+  }
+  if (
+    !hasOnly(value, UNION_ROOT) ||
+    (Object.hasOwn(value, "oneOf") && Object.hasOwn(value, "anyOf")) ||
+    (value.title !== undefined && !isText(value.title)) ||
+    (value.description !== undefined &&
+      typeof value.description !== "string") ||
+    (value.discriminator !== undefined && !isRecord(value.discriminator))
+  ) {
+    return null;
+  }
+
+  const branches = value.oneOf ?? value.anyOf;
+  if (
+    !Array.isArray(branches) ||
+    branches.length === 0 ||
+    branches.length > REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_VARIANTS
+  ) {
+    return null;
+  }
+  const variants: RegistryCredentialVariant[] = [];
+  for (const branch of branches) {
+    const schema = parseRegistryCredentialSchema(branch);
+    if (!schema) return null;
+    const label = isRecord(branch) ? branch.title : undefined;
+    variants.push({ ...(isText(label) ? { label } : {}), schema });
+  }
+  return variants;
+}

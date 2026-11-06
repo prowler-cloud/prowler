@@ -104,7 +104,7 @@ export const CreateApiKeyModal = ({
             </CustomLink>
           </p>
 
-          <div className="flex w-full justify-center gap-6">
+          <div className="flex flex-col gap-2">
             <CustomInput
               control={form.control}
               name="name"

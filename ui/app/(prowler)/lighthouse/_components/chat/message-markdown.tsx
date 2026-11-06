@@ -44,6 +44,9 @@ export function MessageMarkdown({
   return (
     <div className="lighthouse-markdown max-w-full min-w-0 overflow-x-auto">
       <Streamdown
+        // Streaming mode mounts empty and fills in a transition; finished
+        // messages render static so swapping in the persisted reply never blinks.
+        mode={isStreaming ? "streaming" : "static"}
         parseIncompleteMarkdown
         components={STREAMDOWN_COMPONENTS}
         shikiTheme={["github-light", "github-dark"]}

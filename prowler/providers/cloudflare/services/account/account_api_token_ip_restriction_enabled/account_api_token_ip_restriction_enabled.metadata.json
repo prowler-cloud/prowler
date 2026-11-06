@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "account_api_token_ip_restriction_enabled",
+  "CheckTitle": "Cloudflare API token is restricted to an allow-list of client IP addresses",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "APIToken",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare API tokens** (user-owned and account-owned) are assessed for a **client IP address allow-list**, which restricts token use to requests from trusted networks. Tokens with only a deny-list, or with an allow-list containing `0.0.0.0/0` or `::/0`, are flagged. Only active tokens are evaluated.",
+  "Risk": "Without **IP address filtering**, a leaked token works from **any network location**.\n- **Confidentiality**: attackers can read account and zone configuration from anywhere\n- **Integrity**: tokens with write permissions can be abused from uncontrolled networks",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard\n2. For user tokens go to My Profile > API Tokens; for account-owned tokens go to Manage Account > Account API Tokens\n3. Edit the token\n4. Under Client IP Address Filtering, add the IP addresses or CIDR ranges allowed to use it\n5. Save the token",
+      "Terraform": "```hcl\nresource \"cloudflare_api_token\" \"example\" {\n  name     = \"example\"\n  policies = [/* ... */]\n\n  condition = {\n    request_ip = {\n      in = [\"192.0.2.0/24\"] # Critical: token only works from these networks\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Restrict API tokens to **known source networks**.\n- Allow-list CI/CD egress IPs and corporate ranges\n- Combine IP filtering with short token lifetimes and least-privilege permissions",
+      "Url": "https://hub.prowler.com/checks/cloudflare/account_api_token_ip_restriction_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "User tokens require the `API Tokens Read` user permission and account-owned tokens require `Account API Tokens Read`. Tokens that cannot be listed are not reported. A deny-list alone does not pass because the token remains usable from every other address."
+}

@@ -1951,3 +1951,292 @@ class Test_Entra_Service:
         assert [policy.id for policy in policies] == ["policy-1", "policy-2"]
         with_url_mock.assert_called_once_with("next-link")
         next_page_builder.get.assert_awaited_once()
+
+
+class TestGetOAuthApps:
+    @staticmethod
+    def _entra_with_hunting_response(response):
+        service = entra_service.Entra.__new__(entra_service.Entra)
+        post = AsyncMock(return_value=response)
+        service.client = MagicMock()
+        service.client.security.microsoft_graph_security_run_hunting_query.post = post
+        return service
+
+    def test_null_response_returns_none_not_empty(self):
+        """A null hunting response must propagate as None (MANUAL), not {} (PASS)."""
+        service = self._entra_with_hunting_response(None)
+        assert asyncio.run(service._get_oauth_apps()) is None
+
+    def test_empty_results_is_confirmed_empty(self):
+        response = MagicMock()
+        response.results = []
+        service = self._entra_with_hunting_response(response)
+        assert asyncio.run(service._get_oauth_apps()) == {}
+
+
+class TestGetUsersError:
+    def test_users_error_set_on_graph_failure(self):
+        """A failing /users request must set users_error and return no users."""
+        service = entra_service.Entra.__new__(entra_service.Entra)
+        service.users_error = None
+        # SimpleNamespace: check tests assign attributes on the MagicMock
+        # class, which would shadow instance child mocks here.
+        service.client = SimpleNamespace(
+            users=SimpleNamespace(get=AsyncMock(side_effect=Exception("boom")))
+        )
+
+        users = asyncio.run(service._get_users())
+
+        assert users == {}
+        assert service.users_error is not None
+        assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestAuthorizationPolicyMsolMapping:
+    """``blockMsolPowerShell`` from the Graph SDK model reaches ``AuthorizationPolicy``."""
+
+    @pytest.mark.parametrize("value", [True, False, None])
+    def test_block_msol_powershell_is_mapped(self, value):
+        from msgraph.generated.models.authorization_policy import (
+            AuthorizationPolicy as GraphAuthorizationPolicy,
+        )
+
+        graph_policy = GraphAuthorizationPolicy(
+            id="authorizationPolicy",
+            display_name="Authorization Policy",
+            description="Used to manage authorization related settings across the company.",
+            block_msol_power_shell=value,
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                authorization_policy=SimpleNamespace(
+                    get=AsyncMock(return_value=graph_policy)
+                )
+            )
+        )
+
+        policy = asyncio.run(service._get_authorization_policy())
+
+        assert policy.block_msol_powershell is value
+
+
+class TestAppRegistrationRedirectUris:
+    def test_redirect_uris_are_read_for_every_platform(self):
+        app = SimpleNamespace(
+            id="obj-1",
+            app_id="app-1",
+            display_name="Portal",
+            password_credentials=[],
+            key_credentials=[],
+            web=SimpleNamespace(redirect_uris=["https://portal.contoso.com/signin"]),
+            spa=SimpleNamespace(redirect_uris=["http://localhost:3000"]),
+            public_client=SimpleNamespace(redirect_uris=["msalapp-1://auth"]),
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            applications=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(value=[app], odata_next_link=None)
+                )
+            )
+        )
+
+        apps = asyncio.run(service._get_app_registrations())
+
+        assert apps["obj-1"].web_redirect_uris == ["https://portal.contoso.com/signin"]
+        assert apps["obj-1"].spa_redirect_uris == ["http://localhost:3000"]
+        assert apps["obj-1"].public_client_redirect_uris == ["msalapp-1://auth"]
+
+    def test_missing_platforms_give_empty_lists(self):
+        app = SimpleNamespace(
+            id="obj-2",
+            app_id="app-2",
+            display_name="Daemon",
+            password_credentials=[],
+            key_credentials=[],
+            web=None,
+            spa=None,
+            public_client=None,
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            applications=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(value=[app], odata_next_link=None)
+                )
+            )
+        )
+
+        apps = asyncio.run(service._get_app_registrations())
+
+        assert apps["obj-2"].web_redirect_uris == []
+        assert apps["obj-2"].spa_redirect_uris == []
+        assert apps["obj-2"].public_client_redirect_uris == []
+
+
+class TestGetGroups:
+    @staticmethod
+    def _graph_group(group_id, rule=None, processing_state=None):
+        return SimpleNamespace(
+            id=group_id,
+            display_name=f"Group {group_id}",
+            group_types=["DynamicMembership"] if rule else None,
+            membership_rule=rule,
+            membership_rule_processing_state=processing_state,
+            is_assignable_to_role=None,
+            is_management_restricted=None,
+        )
+
+    def test_maps_dynamic_rule_fields_across_pages(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.groups_error = None
+        page_one = SimpleNamespace(
+            value=[
+                self._graph_group(
+                    "g-1",
+                    rule="user.memberof -any (group.objectId -in ['x'])",
+                    processing_state="Paused",
+                )
+            ],
+            odata_next_link="next-link",
+        )
+        page_two = SimpleNamespace(
+            value=[self._graph_group("g-2")], odata_next_link=None
+        )
+        next_page_builder = SimpleNamespace(get=AsyncMock(return_value=page_two))
+        with_url_mock = MagicMock(return_value=next_page_builder)
+        entra_service.client = SimpleNamespace(
+            groups=SimpleNamespace(
+                get=AsyncMock(return_value=page_one), with_url=with_url_mock
+            )
+        )
+
+        groups = asyncio.run(entra_service._get_groups())
+
+        with_url_mock.assert_called_once_with("next-link")
+        assert entra_service.groups_error is None
+        assert [group.id for group in groups] == ["g-1", "g-2"]
+        assert groups[0].groupTypes == ["DynamicMembership"]
+        assert groups[0].membershipRule.startswith("user.memberof")
+        assert groups[0].membership_rule_processing_state == "Paused"
+        assert groups[1].groupTypes == []
+        assert groups[1].membershipRule is None
+        assert groups[1].membership_rule_processing_state is None
+        assert groups[1].is_assignable_to_role is False
+
+    def test_pagination_error_keeps_partial_groups_and_sets_error(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.groups_error = None
+        page_one = SimpleNamespace(
+            value=[self._graph_group("g-1")], odata_next_link="next-link"
+        )
+        failing_builder = SimpleNamespace(
+            get=AsyncMock(side_effect=RuntimeError("throttled"))
+        )
+        entra_service.client = SimpleNamespace(
+            groups=SimpleNamespace(
+                get=AsyncMock(return_value=page_one),
+                with_url=MagicMock(return_value=failing_builder),
+            )
+        )
+
+        groups = asyncio.run(entra_service._get_groups())
+
+        assert [group.id for group in groups] == ["g-1"]
+        assert "pagination error: RuntimeError" in entra_service.groups_error
+
+    def test_initial_error_returns_no_groups_and_sets_error(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.groups_error = None
+        entra_service.client = SimpleNamespace(
+            groups=SimpleNamespace(
+                get=AsyncMock(side_effect=PermissionError("forbidden"))
+            )
+        )
+
+        groups = asyncio.run(entra_service._get_groups())
+
+        assert groups == []
+        assert entra_service.groups_error == (
+            "Unable to retrieve groups from Microsoft Graph (PermissionError)"
+        )
+
+
+class TestCrossTenantAccessDefault:
+    """The Graph SDK default policy is mapped to ``CrossTenantAccessDefault``."""
+
+    def test_maps_outbound_settings_from_the_sdk_model(self):
+        from msgraph.generated.models.cross_tenant_access_policy_b2_b_setting import (
+            CrossTenantAccessPolicyB2BSetting,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_configuration_default import (
+            CrossTenantAccessPolicyConfigurationDefault,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target import (
+            CrossTenantAccessPolicyTarget,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target_configuration import (
+            CrossTenantAccessPolicyTargetConfiguration,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target_configuration_access_type import (
+            CrossTenantAccessPolicyTargetConfigurationAccessType as AccessType,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target_type import (
+            CrossTenantAccessPolicyTargetType as TargetType,
+        )
+
+        def config(access, target, target_type):
+            return CrossTenantAccessPolicyTargetConfiguration(
+                access_type=access,
+                targets=[
+                    CrossTenantAccessPolicyTarget(
+                        target=target, target_type=target_type
+                    )
+                ],
+            )
+
+        graph_policy = CrossTenantAccessPolicyConfigurationDefault(
+            b2b_collaboration_outbound=CrossTenantAccessPolicyB2BSetting(
+                users_and_groups=config(
+                    AccessType.Blocked, "group-1", TargetType.Group
+                ),
+                applications=config(
+                    AccessType.Allowed, "AllApplications", TargetType.Application
+                ),
+            ),
+            b2b_direct_connect_outbound=None,
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                cross_tenant_access_policy=SimpleNamespace(
+                    default=SimpleNamespace(get=AsyncMock(return_value=graph_policy))
+                )
+            )
+        )
+
+        policy = asyncio.run(service._get_cross_tenant_access_default())
+
+        users = policy.b2b_collaboration_outbound.users_and_groups
+        apps = policy.b2b_collaboration_outbound.applications
+        assert users.access_type == "blocked"
+        assert users.targets[0].target == "group-1"
+        assert users.targets[0].target_type == "group"
+        assert apps.access_type == "allowed"
+        assert apps.targets[0].target == "AllApplications"
+        assert policy.b2b_direct_connect_outbound is None
+
+    def test_read_error_returns_none(self):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                cross_tenant_access_policy=SimpleNamespace(
+                    default=SimpleNamespace(
+                        get=AsyncMock(side_effect=RuntimeError("403"))
+                    )
+                )
+            )
+        )
+
+        assert asyncio.run(service._get_cross_tenant_access_default()) is None

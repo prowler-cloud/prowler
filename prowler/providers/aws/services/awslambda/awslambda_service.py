@@ -3,7 +3,7 @@ import json
 import zipfile
 from concurrent.futures import as_completed
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 import requests
 from botocore.client import ClientError
@@ -404,6 +404,7 @@ class Function(BaseModel):
     security_groups: list
     last_modified: Optional[str] = None
     runtime: Optional[str] = None
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("environment",)
     environment: Optional[dict] = None
     region: str
     policy: dict = {}

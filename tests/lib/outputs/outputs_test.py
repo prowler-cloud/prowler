@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -11,8 +12,10 @@ from prowler.lib.outputs.outputs import (
     set_report_color,
 )
 from prowler.lib.outputs.utils import (
+    is_plain_json,
     parse_html_string,
     parse_json_tags,
+    sanitize_csv_value,
     unroll_dict,
     unroll_dict_to_list,
     unroll_list,
@@ -1313,3 +1316,69 @@ class TestReport:
         with mock.patch("builtins.print") as mocked_print:
             report([finding], provider, output_options)
             mocked_print.assert_called()
+
+
+class TestSanitizeCSVValue:
+    @pytest.mark.parametrize("initiator", ["=", "+", "-", "@", "\t", "\r"])
+    def test_leading_formula_initiator_is_prefixed(self, initiator):
+        assert sanitize_csv_value(f"{initiator}cmd") == f"'{initiator}cmd"
+
+    def test_value_containing_equals_is_untouched(self):
+        assert sanitize_csv_value("key=value") == "key=value"
+
+    @pytest.mark.parametrize("number", ["-1", "+1", "-1.5", "-1e3"])
+    def test_signed_number_is_untouched(self, number):
+        assert sanitize_csv_value(number) == number
+
+    @pytest.mark.parametrize("value", [None, True, -1, -1.5, ""])
+    def test_non_string_and_empty_values_are_untouched(self, value):
+        assert sanitize_csv_value(value) == value
+
+    @pytest.mark.parametrize(
+        "value", ["-nan", "+nan", "-inf", "+inf", "-infinity", "+Infinity"]
+    )
+    def test_non_finite_float_literal_is_prefixed(self, value):
+        assert sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize("value", ["-1 ", "+1\t", "-1\n"])
+    def test_padded_number_is_prefixed(self, value):
+        assert sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "=cmd|' /C calc'!A0",
+            "+cmd|' /C calc'!A0",
+            "-1+1|cmd|' /C calc'!A0",
+            "@SUM(1+1)*cmd|' /C calc'!A0",
+            "-0x1",
+        ],
+    )
+    def test_formula_payload_is_prefixed(self, payload):
+        assert sanitize_csv_value(payload) == f"'{payload}"
+
+    @pytest.mark.parametrize("value", [" =cmd", "\n=cmd", "  -1+1|cmd", " \n@SUM(1)"])
+    def test_whitespace_before_formula_initiator_is_prefixed(self, value):
+        assert sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize("value", [" ", "\n", "  text"])
+    def test_whitespace_without_initiator_is_untouched(self, value):
+        assert sanitize_csv_value(value) == value
+
+    def test_is_plain_json_accepts_json_types(self):
+        assert is_plain_json({"a": [1, 2.5, "x", True, None, {"b": {}}]})
+        assert is_plain_json(None)
+        assert is_plain_json([])
+
+    def test_is_plain_json_rejects_tuples(self):
+        assert not is_plain_json({"t": (1, 2)})
+
+    def test_is_plain_json_rejects_non_str_keys(self):
+        assert not is_plain_json({1: "a"})
+
+    def test_is_plain_json_rejects_objects(self):
+        class Opaque:
+            pass
+
+        assert not is_plain_json({"o": Opaque()})
+        assert not is_plain_json({"d": datetime(2024, 1, 1)})

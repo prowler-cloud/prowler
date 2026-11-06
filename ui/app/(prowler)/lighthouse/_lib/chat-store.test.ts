@@ -58,9 +58,13 @@ const modelsByProvider = {
 };
 
 const supportedProviders: LighthouseV2SupportedProvider[] = [
-  { id: "openai", name: "OpenAI" },
-  { id: "bedrock", name: "AWS Bedrock" },
-  { id: "openai-compatible", name: "OpenAI Compatible" },
+  { id: "openai", name: "OpenAI", credentialsOptional: false },
+  { id: "bedrock", name: "AWS Bedrock", credentialsOptional: false },
+  {
+    id: "openai-compatible",
+    name: "OpenAI Compatible",
+    credentialsOptional: false,
+  },
 ];
 
 const config = { configurations, modelsByProvider, supportedProviders };
@@ -349,6 +353,43 @@ describe("createLighthouseChatStore", () => {
     );
     expect(eventSources[0].close).toHaveBeenCalled();
     expect(store.getState().streamState.activeTaskId).toBeNull();
+  });
+
+  it("swaps the live reply for the persisted one in a single update", async () => {
+    // Given
+    const store = makeStore();
+    await store.getState().submitMessage("Summarize findings");
+    eventSources[0].emit("message.delta", { content: "Persisted answer" });
+    getMessagesMock.mockResolvedValue({
+      data: [message("message-1", "assistant", "Persisted answer")],
+    });
+    const visibleReplies: string[] = [];
+    store.subscribe((state) => {
+      const hasPersistedReply = state.messages.some(
+        (item) => item.role === "assistant",
+      );
+      const hasLiveReply = state.streamState.assistantText !== "";
+      visibleReplies.push(
+        hasPersistedReply && hasLiveReply
+          ? "both"
+          : hasPersistedReply
+            ? "persisted"
+            : hasLiveReply
+              ? "live"
+              : "none",
+      );
+    });
+
+    // When
+    eventSources[0].emit("message.end", { message_id: "message-1" });
+
+    // Then
+    await vi.waitFor(() => expect(visibleReplies.at(-1)).toBe("persisted"));
+    // Neither both replies nor an empty gap at any point of the swap.
+    const transitions = visibleReplies.filter(
+      (reply, index) => reply !== visibleReplies[index - 1],
+    );
+    expect(transitions).toEqual(["live", "persisted"]);
   });
 
   it("keeps the persisted user message ratable after a terminal error", async () => {

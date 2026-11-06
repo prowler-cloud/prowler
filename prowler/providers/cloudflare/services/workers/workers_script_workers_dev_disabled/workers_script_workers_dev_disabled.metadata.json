@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "workers_script_workers_dev_disabled",
+  "CheckTitle": "Cloudflare Worker is not publicly reachable on workers.dev",
+  "CheckType": [],
+  "ServiceName": "workers",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Worker",
+  "ResourceGroup": "serverless",
+  "Description": "**Cloudflare Workers scripts** are assessed for **workers.dev exposure** by checking whether the Worker is published on the account's public `*.workers.dev` subdomain in addition to (or instead of) custom domains and routes.",
+  "Risk": "A Worker reachable on **workers.dev** is served outside of the account's zones.\n- **Integrity**: zone-level WAF rules, rate limiting, Bot Management and Cloudflare Access protecting the production hostname are bypassed\n- **Confidentiality**: internal or staging Workers become publicly discoverable\n- **Availability**: attackers can hit the Worker directly, consuming request quota",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/workers/configuration/routing/workers-dev/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to Workers & Pages and select the Worker\n3. Open Settings > Domains & Routes\n4. Disable the workers.dev route\n5. Alternatively, set `workers_dev = false` in the Wrangler configuration and redeploy",
+      "Terraform": "```hcl\nresource \"cloudflare_workers_script_subdomain\" \"example\" {\n  account_id  = \"<ACCOUNT_ID>\"\n  script_name = \"example-worker\"\n  enabled     = false # Critical: removes the public workers.dev route\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Serve production Workers only through **custom domains or zone routes** protected by your security controls.\n- Disable the `workers.dev` route for every Worker that does not explicitly need it\n- Protect any Worker that must stay on `workers.dev` with **Cloudflare Access**\n- Review new deployments to ensure `workers_dev` defaults are not re-enabled",
+      "Url": "https://hub.prowler.com/checks/cloudflare/workers_script_workers_dev_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Scripts in accounts without a registered workers.dev subdomain are not reported."
+}

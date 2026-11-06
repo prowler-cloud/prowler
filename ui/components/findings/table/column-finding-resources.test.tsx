@@ -189,6 +189,14 @@ vi.mock("@/lib/shared/env", () => ({
   isCloud: isCloudMock,
 }));
 
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
+}));
+
 vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("./lighthouse-skills-launch")>();
@@ -208,6 +216,7 @@ vi.mock("./notification-indicator", () => ({
 }));
 
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import { usePartialScanStore } from "@/store/partial-scan/store";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -274,6 +283,74 @@ function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
   );
 }
 
+describe("sample resource actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isCloudMock.mockReturnValue(true);
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  const sampleResource = () =>
+    makeResource({
+      id: "sample-resource-s3_bucket-1",
+      findingId: "sample-finding-s3_bucket_public_access-1",
+      checkId: "s3_bucket_public_access",
+      providerUid: "123456789012",
+      providerAlias: "Sample AWS account",
+      resourceName: "acme-customer-exports",
+      resourceUid: "arn:aws:s3:::acme-customer-exports",
+      triage: makeTriageSummary({
+        findingId: "sample-finding-s3_bucket_public_access-1",
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.SAMPLE,
+      }),
+    });
+
+  it("does not send sample IDs to Lighthouse from a resource row", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Lighthouse Skills" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(launchSkillMock).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch sample findings to the real Jira workflow", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: /Send.*Jira/ });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
+  });
+
+  it("does not start the real re-check workflow for a sample resource", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Re-check resource" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toBeNull();
+  });
+});
+
 function renderResourceActionsCell({
   resource = makeResource(),
   onSkillLaunchOpenDrawer,
@@ -312,12 +389,79 @@ function renderResourceActionsCell({
   render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
 }
 
+function renderLastSeenCell(resource: FindingResourceRow = makeResource()) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+  });
+  const column = columns.find(
+    (col) => (col as { id?: string }).id === "lastSeen",
+  );
+  if (!column?.cell) {
+    throw new Error("lastSeen column not found");
+  }
+  const CellComponent = column.cell as (props: {
+    row: { original: FindingResourceRow; index: number };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
+}
+
 describe("column-finding-resources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     isCloudMock.mockReturnValue(false);
     isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
     useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("offers a Cloud re-check identified by provider uid and type", async () => {
+    // Given — drill-down rows carry no provider id, only its uid and type
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderResourceActionsCell();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerUid: "123456789",
+      providerType: "aws",
+      providerAlias: "production",
+      resourceUid: "arn:aws:s3:::my-bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("offers the re-check beside Last seen on Cloud rows", async () => {
+    // The quiet icon next to the timestamp opens the same confirmation as ⋮.
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderLastSeenCell();
+
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({ resourceUid: "arn:aws:s3:::my-bucket" }),
+    );
+  });
+
+  it("keeps Last seen plain outside Prowler Cloud", () => {
+    renderLastSeenCell();
+
+    expect(screen.getByText("2024-01-01T00:00:00Z")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("hides the re-check outside Prowler Cloud", () => {
+    renderResourceActionsCell();
+
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the finding drawer and launches a row skill with full context", async () => {

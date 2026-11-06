@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root]
   auto_invoke:
     - "After creating/modifying a skill"
@@ -17,19 +17,17 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 
 ## Purpose
 
-Keeps AGENTS.md Auto-invoke sections in sync with skill metadata. When you create or modify a skill, run the sync script to automatically update all affected AGENTS.md files.
+Keeps the Auto-invoke tables of the `AGENTS.md` files in sync with skill metadata. Run the sync script after creating a skill or changing its `metadata.scope` / `metadata.auto_invoke`.
 
 ## Required Skill Metadata
 
-Each skill that should appear in Auto-invoke sections needs these fields in `metadata`.
-
-`auto_invoke` can be either a single string **or** a list of actions:
+`auto_invoke` can be a single string **or** a list of actions:
 
 ```yaml
 metadata:
   author: prowler-cloud
   version: "1.0"
-  scope: [ui]                                    # Which AGENTS.md: ui, api, sdk, root
+  scope: [root, ui]                              # Which AGENTS.md files
 
   # Option A: single action
   auto_invoke: "Creating/modifying components"
@@ -40,7 +38,7 @@ metadata:
   #   - "Refactoring component folder placement"
 ```
 
-### Scope Values
+### Scope Values (only these are valid)
 
 | Scope | Updates |
 |-------|---------|
@@ -50,72 +48,52 @@ metadata:
 | `sdk` | `prowler/AGENTS.md` |
 | `mcp_server` | `mcp_server/AGENTS.md` |
 
-Skills can have multiple scopes: `scope: [ui, api]`
+- Use `sdk`, NOT `prowler`, for `prowler/AGENTS.md`. Any other value is skipped with `Warning: No AGENTS.md found for scope '<value>'`.
+- `docs/AGENTS.md` has no scope: it is the docs style guide, not a skills index.
+- Most skills list `root` too, so the root table is the full index of actions.
 
 ---
 
-## Usage
+## What the Script Does
 
-### After Creating/Modifying a Skill
+1. Reads every `skills/*/SKILL.md` (sorted)
+2. Extracts `name`, `metadata.scope` and `metadata.auto_invoke`
+3. Builds one table per scope, rows sorted by action then skill (`LC_ALL=C`)
+4. Replaces the existing `## Auto-invoke Skills` (component files) or `### Auto-invoke Skills` (root) section, keeping its heading level, up to the next `---` line or H2 heading
+5. If a file has no such section, inserts it after the Skills Reference blockquote (the `>` block that links `SKILL.md` files)
+6. Lists skills missing `scope` or `auto_invoke`
 
-```bash
-./skills/skill-sync/assets/sync.sh
-```
+The generated table is compact (`| Action | Skill |`). `ui/AGENTS.md` is re-aligned by the UI Prettier hook on commit, so a formatting-only diff there is expected.
 
-### What It Does
-
-1. Reads all `skills/*/SKILL.md` files
-2. Extracts `metadata.scope` and `metadata.auto_invoke`
-3. Generates Auto-invoke tables for each AGENTS.md
-4. Updates the `### Auto-invoke Skills` section in each file
-
----
-
-## Example
-
-Given this skill metadata:
-
-```yaml
-# skills/prowler-ui/SKILL.md
-metadata:
-  author: prowler-cloud
-  version: "1.0"
-  scope: [ui]
-  auto_invoke: "Creating/modifying React components"
-```
-
-The sync script generates in `ui/AGENTS.md`:
-
-```markdown
-### Auto-invoke Skills
-
-When performing these actions, ALWAYS invoke the corresponding skill FIRST:
-
-| Action | Skill |
-|--------|-------|
-| Creating/modifying React components | `prowler-ui` |
-```
+It does NOT update the "Available Skills" description tables in `AGENTS.md` or `skills/README.md`: edit those by hand.
 
 ---
 
 ## Commands
 
 ```bash
+# Preview (writes nothing; prints each generated table)
+./skills/skill-sync/assets/sync.sh --dry-run
+
 # Sync all AGENTS.md files
 ./skills/skill-sync/assets/sync.sh
 
-# Dry run (show what would change)
-./skills/skill-sync/assets/sync.sh --dry-run
-
-# Sync specific scope only
+# Sync one scope only
 ./skills/skill-sync/assets/sync.sh --scope ui
+
+# Run the script's unit tests (temp dirs only)
+bash ./skills/skill-sync/assets/sync_test.sh
+
+# Review the result
+git diff -- '*AGENTS.md'
 ```
 
 ---
 
 ## Checklist After Modifying Skills
 
-- [ ] Added `metadata.scope` to new/modified skill
-- [ ] Added `metadata.auto_invoke` with action description
-- [ ] Ran `./skills/skill-sync/assets/sync.sh`
-- [ ] Verified AGENTS.md files updated correctly
+- [ ] `metadata.scope` uses only `root`, `ui`, `api`, `sdk`, `mcp_server`
+- [ ] `metadata.auto_invoke` describes the user action ("Creating new checks"), not the skill
+- [ ] Ran `./skills/skill-sync/assets/sync.sh --dry-run` with no `Warning:` lines, then without `--dry-run`
+- [ ] Reviewed `git diff -- '*AGENTS.md'` (one Auto-invoke section per file, no unrelated changes)
+- [ ] Added or updated the skill row in the root `AGENTS.md` and `skills/README.md` tables

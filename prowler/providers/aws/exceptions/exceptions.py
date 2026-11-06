@@ -78,6 +78,14 @@ class AWSBaseException(ProwlerException):
             "message": "The provided AWS partition is invalid",
             "remediation": "Check the provided AWS partition and ensure it is valid.",
         },
+        (1918, "AWSInvalidBoto3TimeoutError"): {
+            "message": "The Boto3 timeout configured through the environment is invalid",
+            "remediation": "Set PROWLER_AWS_BOTO3_CONNECT_TIMEOUT and PROWLER_AWS_BOTO3_READ_TIMEOUT to a positive integer number of seconds.",
+        },
+        (1919, "AWSInvalidBoto3RetriesError"): {
+            "message": "The Boto3 retries configured through the environment are invalid",
+            "remediation": "Set PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS to a non-negative integer, 0 disables retries.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -230,4 +238,22 @@ class AWSInvalidPartitionError(AWSBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1917, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSInvalidBoto3TimeoutError(AWSBaseException):
+    """Boto3 timeout configured through the environment is not a positive integer."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1918, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSInvalidBoto3RetriesError(AWSBaseException):
+    """Boto3 retries configured through the environment are not a non-negative integer."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1919, file=file, original_exception=original_exception, message=message
         )

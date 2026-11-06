@@ -13,10 +13,14 @@ import { SEVERITY_FILTER_MAP } from "@/types/severities";
 import { CategorySelector } from "./category-selector";
 
 interface RiskRadarViewClientProps {
+  disableNavigation?: boolean;
   data: RadarDataPoint[];
 }
 
-export function RiskRadarViewClient({ data }: RiskRadarViewClientProps) {
+export function RiskRadarViewClient({
+  data,
+  disableNavigation = false,
+}: RiskRadarViewClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedPoint, setSelectedPoint] = useState<RadarDataPoint | null>(
@@ -99,7 +103,7 @@ export function RiskRadarViewClient({ data }: RiskRadarViewClientProps) {
               </div>
               <HorizontalBarChart
                 data={selectedPoint.severityData}
-                onBarClick={handleBarClick}
+                onBarClick={disableNavigation ? undefined : handleBarClick}
               />
             </div>
           ) : (

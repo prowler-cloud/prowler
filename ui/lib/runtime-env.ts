@@ -24,3 +24,9 @@ export function readEnv(
 export function readBoolEnv(key: keyof NodeJS.ProcessEnv): boolean {
   return (readEnv(key) ?? "").trim() === "true";
 }
+
+// Reads a runtime boolean flag that is on unless set to "false". Case-insensitive
+// because the same value is often shared with a Django setting written "False".
+export function readOptOutEnv(key: keyof NodeJS.ProcessEnv): boolean {
+  return (readEnv(key) ?? "").trim().toLowerCase() !== "false";
+}

@@ -79,7 +79,7 @@ function LocationDetails({
   onBarClick,
 }: {
   location: Pick<LocationPoint, "name" | "totalFindings" | "severityData">;
-  onBarClick: (dataPoint: BarDataPoint) => void;
+  onBarClick?: (dataPoint: BarDataPoint) => void;
 }) {
   return (
     <div className="flex w-full flex-col">
@@ -109,6 +109,7 @@ function LocationDetails({
 export function ThreatMap({
   data,
   height = MAP_CONFIG.defaultHeight,
+  disableNavigation = false,
 }: ThreatMapProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -489,26 +490,34 @@ export function ThreatMap({
           {selectedLocation ? (
             <LocationDetails
               location={selectedLocation}
-              onBarClick={(dp) => {
-                const status = STATUS_FILTER_MAP[dp.name];
-                if (status && selectedLocation.providerType) {
-                  navigateToFindings(
-                    status,
-                    selectedLocation.regionCode,
-                    selectedLocation.providerType,
-                  );
-                }
-              }}
+              onBarClick={
+                disableNavigation
+                  ? undefined
+                  : (dp) => {
+                      const status = STATUS_FILTER_MAP[dp.name];
+                      if (status && selectedLocation.providerType) {
+                        navigateToFindings(
+                          status,
+                          selectedLocation.regionCode,
+                          selectedLocation.providerType,
+                        );
+                      }
+                    }
+              }
             />
           ) : isGlobalSelected && globalAggregatedData ? (
             <LocationDetails
               location={globalAggregatedData}
-              onBarClick={(dp) => {
-                const status = STATUS_FILTER_MAP[dp.name];
-                if (status) {
-                  navigateToFindings(status, "global");
-                }
-              }}
+              onBarClick={
+                disableNavigation
+                  ? undefined
+                  : (dp) => {
+                      const status = STATUS_FILTER_MAP[dp.name];
+                      if (status) {
+                        navigateToFindings(status, "global");
+                      }
+                    }
+              }
             />
           ) : (
             <div className="flex h-full min-h-[400px] w-full items-center justify-center">

@@ -1,10 +1,13 @@
 import {
   Code,
   CreditCard,
+  Crosshair,
   FileText,
   GitBranch,
   LayoutGrid,
   MessageCircleQuestion,
+  Package,
+  Radar,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -32,6 +35,7 @@ interface NavigationConfigOptions {
   pathname: string;
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
+  registryEligible?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -63,7 +67,6 @@ function getCloudFeature({
     href,
     label,
     active,
-    highlight: true,
   };
 }
 
@@ -108,6 +111,7 @@ export function getNavigationConfig({
   pathname,
   apiDocsUrl = null,
   cloudBillingEnabled = false,
+  registryEligible = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -143,6 +147,31 @@ export function getNavigationConfig({
     {
       label: "SECURITY",
       items: [
+        // First: the exploitable issues are what to fix before anything else.
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Exploitability issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/realtime",
+                label: "Realtime",
+                icon: Radar,
+                active: isRouteActive(pathname, "/realtime"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/compliance",
@@ -180,6 +209,18 @@ export function getNavigationConfig({
           icon: Warehouse,
           active: isRouteActive(pathname, "/resources"),
         },
+        ...(registryEligible
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/registry",
+                label: "Registry",
+                icon: Package,
+                active: isRouteActive(pathname, "/registry"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
       ],
     },
     {

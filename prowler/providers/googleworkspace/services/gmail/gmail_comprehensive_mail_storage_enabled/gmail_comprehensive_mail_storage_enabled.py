@@ -26,7 +26,13 @@ class gmail_comprehensive_mail_storage_enabled(Check):
 
             storage_enabled = gmail_client.policies.comprehensive_mail_storage_enabled
 
-            if storage_enabled is True:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so there is no Gmail mail to store."
+                )
+            elif storage_enabled is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Comprehensive mail storage is enabled "
