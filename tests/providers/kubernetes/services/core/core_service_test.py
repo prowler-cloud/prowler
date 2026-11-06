@@ -1,3 +1,5 @@
+import pytest
+
 from kubernetes import client
 from prowler.providers.kubernetes.services.core.core_service import Core, Pod
 
@@ -62,3 +64,18 @@ def test_pod_model_preserves_core_service_container_groups():
     assert list(pod.ephemeral_containers) == ["debug"]
     assert "init" not in pod.containers
     assert "debug" not in pod.containers
+
+
+@pytest.mark.parametrize("host_port", [8080, 0, None])
+def test_build_containers_preserves_hostport(host_port):
+    containers = Core._build_containers(
+        [
+            client.V1Container(
+                name="app",
+                image="nginx:1.25",
+                ports=[client.V1ContainerPort(container_port=80, host_port=host_port)],
+            )
+        ]
+    )
+
+    assert containers["app"].ports == [{"containerPort": 80, "hostPort": host_port}]

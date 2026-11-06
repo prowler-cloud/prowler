@@ -71,7 +71,13 @@ class Core(KubernetesService):
                 image=container.image,
                 command=container.command if container.command else None,
                 ports=(
-                    [{"containerPort": port.container_port} for port in container.ports]
+                    [
+                        {
+                            "containerPort": port.container_port,
+                            "hostPort": port.host_port,
+                        }
+                        for port in container.ports
+                    ]
                     if container.ports
                     else None
                 ),
