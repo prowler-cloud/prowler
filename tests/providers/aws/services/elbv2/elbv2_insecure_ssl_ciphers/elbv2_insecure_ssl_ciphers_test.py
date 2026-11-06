@@ -55,6 +55,7 @@ class Test_elbv2_insecure_ssl_ciphers:
     )
     @mock_aws
     def test_elbv2_listener_with_secure_policy(self, ssl_policy):
+        """Accept an approved secure TLS policy on an HTTPS listener."""
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
