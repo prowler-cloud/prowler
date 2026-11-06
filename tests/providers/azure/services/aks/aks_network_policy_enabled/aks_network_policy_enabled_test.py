@@ -1,6 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
+import pytest
+
 from prowler.providers.azure.services.aks.aks_service import Cluster
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_DISPLAY,
@@ -148,3 +150,41 @@ class Test_aks_network_policy_enabled:
             assert result[0].resource_id == cluster_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].location == "westeurope"
+
+    @pytest.mark.parametrize("network_policy", ["none", "None", "NONE", "", None])
+    def test_aks_network_policy_none_value(self, network_policy):
+        aks_client = mock.MagicMock
+        aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        cluster_id = str(uuid4())
+        aks_client.clusters = {
+            AZURE_SUBSCRIPTION_ID: {
+                cluster_id: Cluster(
+                    id=cluster_id,
+                    name="cluster_name",
+                    public_fqdn="public_fqdn",
+                    private_fqdn=None,
+                    network_policy=network_policy,
+                    agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=False)],
+                    location="westeurope",
+                    rbac_enabled=True,
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_network_policy_enabled.aks_network_policy_enabled.aks_client",
+                new=aks_client,
+            ),
+        ):
+            from prowler.providers.azure.services.aks.aks_network_policy_enabled.aks_network_policy_enabled import (
+                aks_network_policy_enabled,
+            )
+
+            result = aks_network_policy_enabled().execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"

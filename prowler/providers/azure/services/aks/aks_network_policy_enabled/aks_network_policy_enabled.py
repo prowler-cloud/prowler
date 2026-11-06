@@ -16,7 +16,13 @@ class aks_network_policy_enabled(Check):
                 report.status = "PASS"
                 report.status_extended = f"Network policy is enabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'."
 
-                if not getattr(cluster, "network_policy", False):
+                # ARM API >= 2024-05-01 returns "none" instead of omitting the field
+                network_policy = str(
+                    getattr(
+                        cluster.network_policy, "value", cluster.network_policy or ""
+                    )
+                )
+                if network_policy.strip().lower() in ("", "none"):
                     report.status = "FAIL"
                     report.status_extended = f"Network policy is not enabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'."
 
