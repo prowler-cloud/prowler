@@ -2240,3 +2240,57 @@ class TestCrossTenantAccessDefault:
         )
 
         assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
+class TestPaginateGraphUrl:
+    def test_follows_next_link_after_an_empty_page(self):
+        pages = [
+            json.dumps({"value": [], "@odata.nextLink": "next"}).encode(),
+            json.dumps({"value": [{"id": "policy-1"}]}).encode(),
+        ]
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            identity_governance=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(side_effect=pages)
+            ),
+        )
+
+        result = asyncio.run(service._paginate_graph_url("https://graph/first"))
+
+        assert result == [{"id": "policy-1"}]
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "access_package_catalogs": ("_get_entitlement_management", []),
+            "assignment_policies": ("_get_assignment_policies", []),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute
