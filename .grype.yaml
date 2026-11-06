@@ -102,3 +102,13 @@ ignore:
     package:
       name: github.com/go-jose/go-jose/v4
       version: v4.1.5
+
+  # klauspost/compress 1.20.1 is compiled into the Trivy binary (usr/local/bin/trivy) of the
+  # SDK and API images. The fix is 1.20.2, but Trivy 0.76.2 (latest) and its main branch
+  # still pin 1.20.1. A crafted two-block frame panics the decoder: a crash of one Trivy
+  # run, no code execution. Trivy does not report its own binary, so .trivyignore.yaml has
+  # no entry. Pinned to v1.20.1 so it stops matching with the Trivy release that bumps it.
+  - vulnerability: CVE-2026-116591
+    package:
+      name: github.com/klauspost/compress
+      version: v1.20.1
