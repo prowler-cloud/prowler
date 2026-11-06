@@ -95,6 +95,24 @@ const LEG_GOOD_WHEN_YES: Record<LegName, boolean> = {
   verification: true,
 };
 
+export const LEG_POSTURE = {
+  OPEN: "open",
+  CLOSED: "closed",
+  PARTIAL: "partial",
+  UNKNOWN: "unknown",
+} as const;
+
+export type LegPosture = (typeof LEG_POSTURE)[keyof typeof LEG_POSTURE];
+
+/** Whether a leg favours the attacker, whichever way its question is asked. */
+export const legPosture = (leg: LegName, state: LegState): LegPosture => {
+  if (state === "unknown") return LEG_POSTURE.UNKNOWN;
+  if (state === "partial") return LEG_POSTURE.PARTIAL;
+  return (state === "yes") === LEG_GOOD_WHEN_YES[leg]
+    ? LEG_POSTURE.CLOSED
+    : LEG_POSTURE.OPEN;
+};
+
 export const legBadgeVariant = (
   leg: LegName,
   state: LegState,

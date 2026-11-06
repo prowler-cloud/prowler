@@ -1,18 +1,20 @@
 "use client";
 
 import { ArrowLeft, Box, Tag } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { FindingDetailDrawer } from "@/components/findings/table";
+import { LighthouseSkillsRail } from "@/components/findings/table/resource-detail-drawer/lighthouse-skills-rail";
 import { IssueAttackPath } from "@/components/issues/issue-attack-path";
 import { IssueCompliance } from "@/components/issues/issue-compliance";
 import { IssueFindings } from "@/components/issues/issue-findings";
 import { IssueResources } from "@/components/issues/issue-resources";
 import { IssueTriage } from "@/components/issues/issue-triage";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
+import { usePanelSkillLaunch } from "@/components/lighthouse/use-panel-skill-launch";
 import {
   BreadcrumbNavigation,
   Tabs,
@@ -33,16 +35,21 @@ import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
 import { useFindingDetails } from "@/hooks/use-finding-details";
+import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import {
   LEG_LABELS,
   LEG_QUESTIONS,
   LEG_STATE_LABELS,
   legBadgeVariant,
+  legPosture,
   VERDICTS,
 } from "@/lib/issues/verdicts";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { buildFocusedIssueContext } from "@/lib/lighthouse/context/contributions";
 import { isSampleId } from "@/lib/sample-preview/sample-guards";
+import { isCloud } from "@/lib/shared/env";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import {
   ATTACKER_START_LABEL,
@@ -50,6 +57,13 @@ import {
   IssueResource,
   LegName,
 } from "@/types/issues";
+import {
+  LIGHTHOUSE_CONTEXT_KIND,
+  LIGHTHOUSE_CONTEXT_LIMIT,
+  LIGHTHOUSE_CONTEXT_TRANSPORT,
+  type LighthouseContextEnvelope,
+} from "@/types/lighthouse-context";
+import { LIGHTHOUSE_SKILL_SURFACE } from "@/types/lighthouse-skills";
 
 import { useIssueEvidence } from "./use-issue-evidence";
 
@@ -73,6 +87,36 @@ const ISSUE_PANEL_TABS: { id: IssuePanelTab; label: string }[] = [
   { id: ISSUE_PANEL_TAB.TRIAGE, label: "Triage" },
 ];
 
+/** The issue as Lighthouse sees it: its path, legs and, once loaded, findings. */
+const buildIssueContext = (
+  issue: IssueResource,
+  pathname: string,
+  providerUid?: string,
+  findingIds?: string[],
+) =>
+  buildFocusedIssueContext({
+    pathname,
+    issueId: issue.id,
+    title: issue.attributes.title,
+    pattern: issue.attributes.pattern,
+    verdict: issue.attributes.verdict,
+    severity: issue.attributes.severity,
+    attackerStart: issue.attributes.attacker_start,
+    outcome: issue.attributes.outcome,
+    suggestedFix: issue.attributes.fix,
+    providerUid,
+    scanId: issue.relationships?.scan?.data?.id,
+    findingsCount: issue.attributes.findings_count,
+    // Posture, not the raw answer: "yes" to Controls is a closed leg.
+    legs: Object.fromEntries(
+      Object.entries(issue.attributes.legs ?? {}).map(([name, leg]) => [
+        name,
+        legPosture(name as LegName, leg.state),
+      ]),
+    ),
+    findingIds,
+  });
+
 interface IssuePanelProps {
   issue: IssueResource;
   /** The provider's account uid, which the issue itself does not carry. */
@@ -87,23 +131,36 @@ export const IssuePanel = ({
   providerUid,
   open,
   onOpenChange,
-}: IssuePanelProps) => (
-  <DetailSidePanel
-    open={open}
-    onOpenChange={onOpenChange}
-    title={issue.attributes.title}
-    description="The issue's verdict, attack path, evidence, fix and triage"
-  >
-    {/* Mounted only while open, so the evidence loads when someone looks. */}
-    <IssuePanelContent issue={issue} providerUid={providerUid} />
-  </DetailSidePanel>
-);
+}: IssuePanelProps) => {
+  const pathname = usePathname();
+  // Sample issues exist only in the UI, so Lighthouse has nothing to read.
+  const context = isSampleId(issue.id)
+    ? undefined
+    : buildIssueContext(issue, pathname, providerUid);
+
+  return (
+    <DetailSidePanel
+      open={open}
+      onOpenChange={onOpenChange}
+      title={issue.attributes.title}
+      description="The issue's verdict, attack path, evidence, fix and triage"
+      context={context}
+    >
+      {/* Mounted only while open, so the evidence loads when someone looks. */}
+      <IssuePanelContent issue={issue} providerUid={providerUid} />
+    </DetailSidePanel>
+  );
+};
 
 const IssuePanelContent = ({
   issue,
   providerUid,
 }: Pick<IssuePanelProps, "issue" | "providerUid">) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const lighthouseContext = useLighthouseCurrentContext();
+  const launchPanelSkill = usePanelSkillLaunch();
+  const openSidePanel = useSidePanelStore((state) => state.openPanel);
   const { attributes } = issue;
   const verdict = VERDICTS.find((item) => item.id === attributes.verdict);
   const scanId = issue.relationships?.scan?.data?.id;
@@ -139,6 +196,31 @@ const IssuePanelContent = ({
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
     description: `Send ${uniqueFindings.length} of ${attributes.findings_count} findings on this attack path.`,
   });
+
+  // The panel's own context plus the issue with the findings loaded so far, so
+  // the agent can read each finding of the path.
+  const buildLaunchContext = (): LighthouseContextEnvelope => ({
+    schemaVersion: 1,
+    transport: LIGHTHOUSE_CONTEXT_TRANSPORT.INLINE,
+    items: [
+      ...(lighthouseContext.context?.items ?? [])
+        .filter((item) => item.kind !== LIGHTHOUSE_CONTEXT_KIND.ISSUE)
+        .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ITEMS - 1),
+      buildIssueContext(
+        issue,
+        pathname,
+        providerUid,
+        uniqueFindings.map((item) => item.id),
+      ),
+    ],
+  });
+  const askLighthouse = (text: string) => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    const context = buildLaunchContext();
+    void import("@/app/(prowler)/lighthouse/_lib/panel-chat-store").then(
+      ({ requestPanelChatMessage }) => requestPanelChatMessage(text, context),
+    );
+  };
 
   const openFinding = (findingId: string) => {
     setOpenFindingId(findingId);
@@ -262,6 +344,16 @@ const IssuePanelContent = ({
               }
             />
           )
+        )}
+        {/* Same skills rail as the finding panel, offering the issue's skills. */}
+        {isCloud() && !isSampleId(issue.id) && (
+          <LighthouseSkillsRail
+            surface={LIGHTHOUSE_SKILL_SURFACE.ISSUE}
+            onLaunchSkill={(skill) =>
+              launchPanelSkill(skill, buildLaunchContext())
+            }
+            onSubmitPrompt={askLighthouse}
+          />
         )}
         {/* The finding panel's Provider / Service / Region row. */}
         <div

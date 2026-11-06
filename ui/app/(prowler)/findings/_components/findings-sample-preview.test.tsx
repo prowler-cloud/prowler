@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SAMPLE_FAILED_CHECKS } from "@/lib/sample-preview/sample-dataset";
 import { SAMPLE_PREVIEW_STAGE } from "@/lib/sample-preview/sample-preview-state";
@@ -8,17 +8,23 @@ import { SAMPLE_FINDINGS } from "@/lib/sample-preview/sample-records";
 
 import { FindingsSamplePreview } from "./findings-sample-preview";
 
-const { fetchMock, getScanMock, resolveFindingIdsMock, searchParams } =
-  vi.hoisted(() => ({
-    // One instance, like Next's hook: a new one per render loops the filter bar.
-    searchParams: new URLSearchParams(),
-    fetchMock: vi.fn(),
-    getScanMock: vi.fn(),
-    resolveFindingIdsMock: vi.fn(),
-  }));
+const {
+  fetchMock,
+  getScanMock,
+  refreshMock,
+  resolveFindingIdsMock,
+  searchParams,
+} = vi.hoisted(() => ({
+  // One instance, like Next's hook: a new one per render loops the filter bar.
+  searchParams: new URLSearchParams(),
+  fetchMock: vi.fn(),
+  getScanMock: vi.fn(),
+  refreshMock: vi.fn(),
+  resolveFindingIdsMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), refresh: refreshMock, replace: vi.fn() }),
   useSearchParams: () => searchParams,
   usePathname: () => "/findings",
 }));
@@ -39,6 +45,7 @@ const STATE = {
 
 describe("FindingsSamplePreview", () => {
   beforeEach(() => {
+    refreshMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
     // jsdom has no scrollIntoView; the filter bar's command lists call it.
     Element.prototype.scrollIntoView = vi.fn();
@@ -50,6 +57,42 @@ describe("FindingsSamplePreview", () => {
         disconnect() {}
       },
     );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("refreshes itself while the first scan runs, so early findings can take over", () => {
+    // Given
+    vi.useFakeTimers();
+    render(
+      <FindingsSamplePreview
+        state={{
+          active: true,
+          stage: SAMPLE_PREVIEW_STAGE.SCAN_RUNNING,
+          runningScan: { id: "scan-1", progress: 38 },
+        }}
+      />,
+    );
+
+    // When
+    vi.advanceTimersByTime(5_000);
+
+    // Then
+    expect(refreshMock).toHaveBeenCalled();
+  });
+
+  it("does not refresh itself when no scan is running", () => {
+    // Given
+    vi.useFakeTimers();
+    render(<FindingsSamplePreview state={STATE} />);
+
+    // When
+    vi.advanceTimersByTime(30_000);
+
+    // Then
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it("renders every failed sample check without fetching", () => {

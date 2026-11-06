@@ -1406,3 +1406,42 @@ class TestGetUniversalComplianceEntryPointDirs:
             mock_ep.return_value = [self._entry_point(file_path=module_file)]
 
             assert get_universal_compliance_entry_point_dirs() == [ep_dir]
+
+
+class TestGdprAzureFramework:
+    """Schema and content checks for the GDPR Azure legacy framework."""
+
+    @staticmethod
+    def _path():
+        base = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "prowler",
+            "compliance",
+            "azure",
+            "gdpr_azure.json",
+        )
+        return os.path.normpath(base)
+
+    def test_loads_and_supports_azure(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+        assert fw.framework == "GDPR"
+        assert fw.get_providers() == ["azure"]
+        assert fw.supports_provider("azure")
+
+    def test_covers_expected_articles(self):
+        fw = load_compliance_framework_universal(self._path())
+        ids = {req.id for req in fw.requirements}
+        assert ids == {"article_25", "article_30", "article_32"}
+
+    def test_requirements_have_azure_checks(self):
+        fw = load_compliance_framework_universal(self._path())
+        for req in fw.requirements:
+            assert req.checks.get("azure")
+
+    def test_appears_in_bulk_azure_frameworks(self):
+        bulk = get_bulk_compliance_frameworks_universal("azure")
+        assert "gdpr_azure" in bulk

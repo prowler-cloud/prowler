@@ -61,7 +61,7 @@ test.describe("Scans", () => {
         await scansPage.clickStartNowButton();
 
         // The new scan lands in the In Progress tab; /scans defaults to
-        // Completed, so follow the toast's "View scan" action to ?tab=active.
+        // Completed, so open ?tab=active once the launch toast shows.
         await scansPage.viewLaunchedScan();
 
         // Verify the scan was launched
