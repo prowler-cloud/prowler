@@ -31,6 +31,11 @@ aws:
   max_batch_job_definitions: null
   # aws.max_codeartifact_packages --> codeartifact_packages_* checks
   max_codeartifact_packages: null
+  # aws.max_sagemaker_training_jobs --> sagemaker_training_job_* checks.
+  # SageMaker has no DeleteTrainingJob API, so this history is permanent and
+  # can reach hundreds of thousands of jobs; unlimited scans of it can hang
+  # or OOM.
+  max_sagemaker_training_jobs: null
   # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
   # Also settable via the PROWLER_AWS_DISALLOWED_REGIONS environment variable or
   # the --excluded-region CLI flag. Precedence: CLI > env var > config file.
