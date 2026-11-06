@@ -150,14 +150,9 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert result[0].resource_arn == organization["Arn"]
                 assert result[0].region == AWS_REGION_EU_WEST_1
                 assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration "
-                    f"of the security services could not be determined; run this "
-                    f"check from the organization management account or a registered "
-                    f"delegated administrator allowed "
-                    f"organizations:ListDelegatedAdministrators, "
-                    f"organizations:ListAWSServiceAccessForOrganization and "
-                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
-                    f"failure was transient."
+                    f"AWS Organization {organization['Id']} delegated administration of "
+                    f"security services could not be determined; run this check from the "
+                    f"organization management or delegated administrator account."
                 )
 
     @mock_aws
@@ -196,14 +191,9 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
                 assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration "
-                    f"of the security services could not be determined; run this "
-                    f"check from the organization management account or a registered "
-                    f"delegated administrator allowed "
-                    f"organizations:ListDelegatedAdministrators, "
-                    f"organizations:ListAWSServiceAccessForOrganization and "
-                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
-                    f"failure was transient."
+                    f"AWS Organization {organization['Id']} delegated administration of "
+                    f"security services could not be determined; run this check from the "
+                    f"organization management or delegated administrator account."
                 )
 
     @mock_aws
@@ -245,14 +235,9 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
                 assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration "
-                    f"of the security services could not be determined; run this "
-                    f"check from the organization management account or a registered "
-                    f"delegated administrator allowed "
-                    f"organizations:ListDelegatedAdministrators, "
-                    f"organizations:ListAWSServiceAccessForOrganization and "
-                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
-                    f"failure was transient."
+                    f"AWS Organization {organization['Id']} delegated administration of "
+                    f"security services could not be determined; run this check from the "
+                    f"organization management or delegated administrator account."
                 )
 
     @mock_aws
@@ -332,55 +317,11 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 )
 
     @mock_aws
-    def test_management_account_is_the_delegated_administrator(self):
-        """Drives a state AWS cannot currently produce, by construction.
-
-        RegisterDelegatedAdministrator rejects the management account with
-        CANNOT_REGISTER_MASTER_AS_DELEGATED_ADMINISTRATOR, so ListDelegatedAdministrators
-        never returns it and this fixture is hand-built rather than reachable. This is
-        coverage of the guard against that constraint being relaxed, not of a
-        configuration an organization can be in today.
-        """
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
-        organizations = organizations_with(
-            aws_provider,
-            enabled_service_principals=["securityhub.amazonaws.com"],
-            delegated_service_principals={
-                organization["MasterAccountId"]: ["securityhub.amazonaws.com"]
-            },
-        )
-
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ):
-            with mock.patch(f"{CHECK_MODULE}.organizations_client", new=organizations):
-                from prowler.providers.aws.services.organizations.organizations_security_services_delegated_admin_not_management_account.organizations_security_services_delegated_admin_not_management_account import (
-                    organizations_security_services_delegated_admin_not_management_account,
-                )
-
-                check = (
-                    organizations_security_services_delegated_admin_not_management_account()
-                )
-                result = check.execute()
-
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} administers "
-                    f"securityhub.amazonaws.com from the management account "
-                    f"{organization['MasterAccountId']} instead of a delegated "
-                    f"administrator account."
-                )
-
-    @mock_aws
     def test_only_some_security_services_delegated(self):
         """Only the undelegated security services are named, and non-security ones never are.
 
-        GuardDuty is delegated and IAM Identity Center is out of scope, so neither appears
-        in the finding even though both have trusted access enabled.
+        GuardDuty is delegated, and IAM Identity Center and CloudTrail are out of scope,
+        so none appears in the finding even though all have trusted access enabled.
         """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
@@ -392,6 +333,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 "securityhub.amazonaws.com",
                 "macie.amazonaws.com",
                 "sso.amazonaws.com",
+                "cloudtrail.amazonaws.com",
             ],
             delegated_service_principals={
                 DELEGATED_ADMIN_ACCOUNT_ID: [
@@ -533,12 +475,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
                 assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} delegated administration "
-                    f"of the security services could not be determined; run this "
-                    f"check from the organization management account or a registered "
-                    f"delegated administrator allowed "
-                    f"organizations:ListDelegatedAdministrators, "
-                    f"organizations:ListAWSServiceAccessForOrganization and "
-                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
-                    f"failure was transient."
+                    f"AWS Organization {organization['Id']} delegated administration of "
+                    f"security services could not be determined; run this check from the "
+                    f"organization management or delegated administrator account."
                 )

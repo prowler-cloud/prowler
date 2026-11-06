@@ -12,8 +12,8 @@
   "Severity": "high",
   "ResourceType": "Other",
   "ResourceGroup": "governance",
-  "Description": "Every security service that has **trusted access** enabled in the **AWS Organization** is required to have a **delegated administrator** that is not the organization **management account**. Registering a delegated administrator is the only way to move organization-wide administration of a service out of the management account.",
-  "Risk": "Administering **GuardDuty**, **Security Hub**, **Macie**, **Config** or **CloudTrail** from the management account concentrates security monitoring in the one account that **service control policies cannot restrict**. Compromising it both removes the organization guardrails and blinds the detections that would surface the compromise.",
+  "Description": "Every security service with **trusted access** enabled in the **AWS Organization** has a **delegated administrator** member account, so it is not administered from the organization **management account**.",
+  "Risk": "Administering **GuardDuty**, **Security Hub**, **Macie** or **Config** from the management account concentrates security monitoring in the one account that **service control policies cannot restrict**. Compromising it both removes the organization guardrails and blinds the detections that would surface the compromise.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html",
@@ -22,13 +22,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws organizations register-delegated-administrator --account-id <SECURITY_TOOLING_ACCOUNT_ID> --service-principal guardduty.amazonaws.com",
+      "CLI": "aws guardduty enable-organization-admin-account --admin-account-id <SECURITY_TOOLING_ACCOUNT_ID>",
       "NativeIaC": "",
-      "Other": "1. Sign in to the AWS Organizations management account\n2. Open the AWS Organizations console\n3. In the left pane, select **Services**\n4. Select the security service reported by this check\n5. Choose **Register delegated administrator** and enter the security tooling account ID\n6. Repeat for every security service reported by this check",
-      "Terraform": "resource \"aws_organizations_delegated_administrator\" \"security_tooling\" {\n  account_id        = \"<SECURITY_TOOLING_ACCOUNT_ID>\"\n  service_principal = \"guardduty.amazonaws.com\"\n}"
+      "Other": "1. Sign in to the AWS Organizations management account\n2. For each security service reported by this check, open its console (for example GuardDuty, Security Hub, Macie, Detective or Inspector) and designate the security tooling account as the delegated administrator from the service's organization settings\n3. For services without their own designation flow (for example AWS Config or IAM Access Analyzer), open the AWS Organizations console, go to Services, select the service and choose Register delegated administrator",
+      "Terraform": "resource \"aws_guardduty_organization_admin_account\" \"security_tooling\" {\n  admin_account_id = \"<SECURITY_TOOLING_ACCOUNT_ID>\"\n}"
     },
     "Recommendation": {
-      "Text": "Register a dedicated **security tooling** member account as the **delegated administrator** for every security service integrated with the organization, and keep the **management account** for organization management only. Security operators then need credentials in the security tooling account rather than in the account that SCPs cannot restrict.",
+      "Text": "Designate a dedicated **security tooling** member account as the **delegated administrator** of every security service integrated with the organization, and keep the **management account** for organization management only. Use each service's own designation (console or `enable-organization-admin-account` API) where one exists, because registering through AWS Organizations alone is not picked up by services such as Security Hub.",
       "Url": "https://hub.prowler.com/check/organizations_security_services_delegated_admin_not_management_account"
     }
   },
