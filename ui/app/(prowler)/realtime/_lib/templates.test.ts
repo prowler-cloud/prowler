@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  COST_CLOUDFORMATION,
+  COST_TERRAFORM,
   FEED_CLOUDFORMATION,
   FEED_TERRAFORM,
   REMEDIATION_CLOUDFORMATION,
@@ -21,6 +23,15 @@ const repoFile = (path: string) =>
     )
     .join("\n");
 
+// Values of a policy field in CloudFormation (`Key: v`) or Terraform (`Key = ["v"]`).
+const policyField = (content: string, field: string) =>
+  Array.from(
+    content.matchAll(
+      new RegExp(`\\b${field}\\s*[:=]\\s*(\\[[^\\]]*\\]|\\S+)`, "g"),
+    ),
+    ([, value]) => value.replace(/[[\]"\s]/g, "").split(","),
+  ).flat();
+
 const terraformModule = (name: string) =>
   ["main", "variables", "outputs"]
     .map((file) => `terraform/${name}/${file}.tf`)
@@ -35,6 +46,8 @@ describe("embedded Prowler Realtime templates", () => {
     [REMEDIATION_TERRAFORM, terraformModule("realtime-remediation-role")],
     [FEED_CLOUDFORMATION, "cloudformation/prowler-realtime-feed.yml"],
     [FEED_TERRAFORM, terraformModule("realtime-feed")],
+    [COST_CLOUDFORMATION, "cloudformation/prowler-realtime-cost.yml"],
+    [COST_TERRAFORM, terraformModule("realtime-cost")],
   ])("%s matches the file in permissions/templates", (template, path) => {
     expect(template.content).toBe(repoFile(path));
   });
@@ -54,4 +67,20 @@ describe("embedded Prowler Realtime templates", () => {
       expect(template.content).toMatch(/sts:ExternalId/);
     }
   });
+
+  it.each([
+    [COST_CLOUDFORMATION, /RoleName: !Ref ProwlerScanRoleName\n/],
+    [COST_TERRAFORM, /role = var\.prowler_scan_role_name\n/],
+  ])(
+    "%s lets the scan role read Cost Explorer and nothing else",
+    (template, scanRole) => {
+      expect(policyField(template.content, "Effect")).toEqual(["Allow"]);
+      expect(policyField(template.content, "Action")).toEqual([
+        "ce:GetCostAndUsage",
+      ]);
+      expect(policyField(template.content, "Resource")).toEqual(["*"]);
+      expect(template.content).not.toMatch(/NotAction|NotResource/);
+      expect(template.content).toMatch(scanRole);
+    },
+  );
 });
