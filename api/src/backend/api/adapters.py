@@ -21,10 +21,22 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
     @staticmethod
     def _get_social_account_name(extra_data: dict, email: str) -> str:
         name_field = User._meta.get_field("name")
+        given_name = extra_data.get("givenName")
+        surname = extra_data.get("surname")
+        full_name = (
+            " ".join(part for part in (given_name, surname) if isinstance(part, str))
+            if (given_name or surname)
+            else None
+        )
         for value in (
             extra_data.get("name"),
+            # Microsoft Graph exposes the display name and name parts instead of
+            # the "name"/"login"/"username" fields used by Google and GitHub.
+            extra_data.get("displayName"),
+            full_name,
             extra_data.get("login"),
             extra_data.get("username"),
+            extra_data.get("mailNickname"),
             email,
         ):
             if not isinstance(value, str):

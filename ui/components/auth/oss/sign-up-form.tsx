@@ -45,15 +45,19 @@ export const SignUpForm = ({
   isCloudEnv,
   googleAuthUrl,
   githubAuthUrl,
+  microsoftAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isMicrosoftOAuthEnabled,
 }: {
   invitationToken?: string | null;
   isCloudEnv?: boolean;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
+  microsoftAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isMicrosoftOAuthEnabled?: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -283,9 +287,11 @@ export const SignUpForm = ({
             <SocialButtons
               googleAuthUrl={googleAuthUrl}
               githubAuthUrl={githubAuthUrl}
+              microsoftAuthUrl={microsoftAuthUrl}
               callbackUrl={callbackUrl}
               isGoogleOAuthEnabled={isGoogleOAuthEnabled}
               isGithubOAuthEnabled={isGithubOAuthEnabled}
+              isMicrosoftOAuthEnabled={isMicrosoftOAuthEnabled}
               isDisabled={isSocialAuthDisabled}
               disabledTooltipContent="Accept the Terms of Service to continue."
             />
