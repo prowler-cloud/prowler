@@ -3,6 +3,7 @@ import socket
 import pytest
 from api.validators import (
     resolve_lighthouse_openai_compatible_host,
+    validate_gcp_service_account_key,
     validate_lighthouse_openai_compatible_base_url,
 )
 from django.core.exceptions import ValidationError
@@ -244,3 +245,58 @@ def test_lighthouse_base_url_allowlisted_host_still_requires_https():
             "http://custom-openai.internal/v1",
             resolve_dns=False,
         )
+
+
+GCP_VALID_SERVICE_ACCOUNT_KEY = {
+    "type": "service_account",
+    "project_id": "project-id",
+    "private_key_id": "private-key-id",
+    "private_key": "private-key",
+    "client_email": "prowler@project-id.iam.gserviceaccount.com",
+    "client_id": "client-id",
+    "token_uri": "https://oauth2.googleapis.com/token",
+}
+
+
+@pytest.mark.parametrize(
+    "token_uri",
+    [
+        "https://oauth2.googleapis.com/token",
+        "https://accounts.google.com/o/oauth2/token",
+    ],
+)
+def test_gcp_service_account_key_accepts_google_token_uris(token_uri):
+    validate_gcp_service_account_key(
+        {**GCP_VALID_SERVICE_ACCOUNT_KEY, "token_uri": token_uri}
+    )
+
+
+@pytest.mark.parametrize(
+    "service_account_key",
+    [
+        {**GCP_VALID_SERVICE_ACCOUNT_KEY, "type": "external_account"},
+        {**GCP_VALID_SERVICE_ACCOUNT_KEY, "type": "impersonated_service_account"},
+        {k: v for k, v in GCP_VALID_SERVICE_ACCOUNT_KEY.items() if k != "type"},
+        {k: v for k, v in GCP_VALID_SERVICE_ACCOUNT_KEY.items() if k != "token_uri"},
+        {
+            **GCP_VALID_SERVICE_ACCOUNT_KEY,
+            "token_uri": "https://attacker.example.com/token",
+        },
+        {
+            **GCP_VALID_SERVICE_ACCOUNT_KEY,
+            "token_uri": "http://oauth2.googleapis.com/token",
+        },
+        {
+            **GCP_VALID_SERVICE_ACCOUNT_KEY,
+            "token_uri": ["https://oauth2.googleapis.com/token"],
+        },
+        {**GCP_VALID_SERVICE_ACCOUNT_KEY, "token_uri": {"url": "x"}},
+        {},
+        "not-a-dict",
+        ["not", "a", "dict"],
+    ],
+)
+def test_gcp_service_account_key_rejects_unsafe_keys(service_account_key):
+    with pytest.raises(ValidationError) as error:
+        validate_gcp_service_account_key(service_account_key)
+    assert error.value.code == "gcp-invalid-service-account-key"

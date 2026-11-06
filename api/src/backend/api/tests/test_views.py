@@ -3250,7 +3250,7 @@ class TestProviderSecretViewSet:
                         "client_email": "client-email",
                         "client_id": "client-id",
                         "auth_uri": "auth-uri",
-                        "token_uri": "token-uri",
+                        "token_uri": "https://oauth2.googleapis.com/token",
                         "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
                         "client_x509_cert_url": "client-x509-cert-url",
                         "universe_domain": "universe-domain",
@@ -3694,6 +3694,78 @@ current-context: test-context
             "/data/attributes/secret/okta_private_key"
         )
 
+    @pytest.mark.parametrize(
+        "service_account_key",
+        [
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"file": "/etc/passwd"},
+            },
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"url": "http://169.254.169.254/"},
+            },
+            {"type": "impersonated_service_account"},
+            {"type": "authorized_user"},
+            {"private_key": "missing-type"},
+            "not-a-dict",
+            {},
+            {
+                "type": "service_account",
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {"type": "service_account"},
+            {
+                "type": "service_account",
+                "token_uri": ["https://oauth2.googleapis.com/token"],
+            },
+            {"type": "service_account", "token_uri": {"url": "x"}},
+        ],
+    )
+    def test_provider_secrets_invalid_create_gcp_non_service_account_key(
+        self,
+        gcp_provider,
+        authenticated_client,
+        service_account_key,
+    ):
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "GCP Secret",
+                    "secret_type": ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                    "secret": {"service_account_key": service_account_key},
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(gcp_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/service_account_key"
+        )
+        assert not ProviderSecret.objects.filter(provider=gcp_provider).exists()
+
     def test_provider_secrets_partial_update(
         self, authenticated_client, provider_secret_fixture
     ):
@@ -3873,7 +3945,11 @@ current-context: test-context
                 "attributes": {
                     "name": "new_name",
                     "secret": {
-                        "service_account_key": {},
+                        "service_account_key": {
+                            "type": "service_account",
+                            "project_id": "project-id",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                        },
                     },
                     "secret_type": "service_account",
                 },
@@ -3895,7 +3971,13 @@ current-context: test-context
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
         assert provider_secret.name == "new_name"
-        assert provider_secret.secret == {"service_account_key": {}}
+        assert provider_secret.secret == {
+            "service_account_key": {
+                "type": "service_account",
+                "project_id": "project-id",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        }
 
     def test_provider_secrets_partial_update_with_invalid_secret_type(
         self, authenticated_client, provider_secret_fixture

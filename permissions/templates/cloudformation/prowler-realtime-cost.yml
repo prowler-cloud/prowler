@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  Optional. Lets Prowler Realtime Detection and Remediation read the daily cost per service and region from Cost Explorer,
+  to flag cost anomalies. It adds one read-only permission, ce:GetCostAndUsage, to the ProwlerScan role Prowler Cloud
+  already uses for this account. AWS bills each Cost Explorer request; Prowler reads it about every 6 hours.
+  Deploy it once per account, in any region. Delete the stack to revoke.
+
+Parameters:
+  ProwlerScanRoleName:
+    Description: Name of the ProwlerScan role Prowler Cloud already uses for this account. It receives read access to Cost Explorer only.
+    Type: String
+    Default: ProwlerScan
+    MinLength: 1
+
+Resources:
+  ReadCostPolicy:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      RoleName: !Ref ProwlerScanRoleName
+      PolicyName: ProwlerRealtimeCost
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # Cost Explorer has no resource-level permissions.
+          - Sid: ReadDailyCost
+            Effect: Allow
+            Action: ce:GetCostAndUsage
+            Resource: "*"

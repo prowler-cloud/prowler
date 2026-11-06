@@ -116,7 +116,11 @@ export function RealtimeShareStatus({
               </InfoField>
             </div>
             <InfoField label="SHA-256">
-              <CodeSnippet value={statement.sha256} />
+              <CodeSnippet
+                value={statement.sha256}
+                multiline
+                className="font-mono"
+              />
             </InfoField>
             <div className="flex flex-wrap justify-end gap-2">
               <CodeSnippet
