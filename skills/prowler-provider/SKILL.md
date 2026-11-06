@@ -22,6 +22,16 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 Choose the provider type first (`docs/developer-guide/provider.mdx`): **SDK** (official Python SDK, e.g. AWS, Azure, GCP, Kubernetes), **API** (direct REST calls, e.g. NHN, MongoDB Atlas), **Hybrid** (e.g. M365, GitHub), or **Tool/Wrapper** (delegates to an external tool: `iac`, `image`, `llm`).
 
+## Step 0: Classify Your Provider Scope
+
+Before following the layout below, decide how far the provider needs to reach:
+
+- **Built-in CLI/SDK provider** — ships in this repository, usable from the Prowler CLI.
+- **External entry-point provider** — a separate installable package, discovered via a `prowler.providers` entry point.
+- **Full-stack provider** — a built-in provider that also integrates with the Prowler API and UI (Prowler Cloud / Local Server).
+
+Each scope has its own required registrations, tests, and completion criteria. See [Provider Golden Paths](../../docs/developer-guide/provider-golden-paths.mdx) for the checklist per scope; the file tables below are the reference it points back to.
+
 ## Provider Layout
 
 ```text
