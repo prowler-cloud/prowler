@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_no_leaked_service_key",
+  "CheckTitle": "Supabase project service role key has not been detected in a public location",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase projects** are assessed for **service role keys detected in public locations** (public repositories, package registries, paste sites) by Supabase's secret scanning.",
+  "Risk": "The service role key **bypasses Row Level Security** on every table and grants full read and write access to the database, storage and auth users; a leaked key is an active breach until rotated.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/api/api-keys"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > API Keys and rotate the JWT secret or revoke the leaked secret key\n3. Remove the key from the public location and purge history\n4. Review database and storage logs for abuse",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Rotate immediately, move servers to revocable secret keys, and keep service keys out of client bundles and repositories.",
+      "Url": "https://hub.prowler.com/check/database_no_leaked_service_key"
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

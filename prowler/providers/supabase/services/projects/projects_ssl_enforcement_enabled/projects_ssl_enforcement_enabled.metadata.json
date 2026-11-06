@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "projects_ssl_enforcement_enabled",
+  "CheckTitle": "Supabase project enforces SSL on direct database connections",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase projects** are assessed for **SSL enforcement** on the Postgres endpoint. When enforcement is off, clients may open unencrypted connections to the database, including over the public internet.",
+  "Risk": "Without SSL enforcement, a misconfigured client or connection string without `sslmode=require` sends credentials and query results in **plaintext**, exposing them to **network interception** and credential theft that grants direct access to all data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/platform/ssl-enforcement"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "supabase ssl-enforcement update --project-ref <PROJECT_REF> --enable-db-ssl-enforcement --experimental",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > Database\n3. Under SSL Configuration, turn on Enforce SSL on incoming connections\n4. Update clients that fail to connect to use sslmode=require",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce SSL on every project and configure clients with `sslmode=require` or `verify-full` using the Supabase CA certificate.",
+      "Url": "https://hub.prowler.com/check/projects_ssl_enforcement_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

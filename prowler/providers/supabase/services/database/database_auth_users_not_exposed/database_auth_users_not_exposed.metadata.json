@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_auth_users_not_exposed",
+  "CheckTitle": "Supabase auth.users data is not exposed through views or tables in the Data API",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase projects** are assessed for views or tables in exposed schemas that **select from `auth.users`** and are readable by `anon` or `authenticated`, publishing every user's email, metadata and identities.",
+  "Risk": "Exposing `auth.users` leaks the **entire user directory** including emails, phone numbers and raw metadata to anyone with the anon key, enabling phishing, account enumeration and privacy violations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0002_auth_users_exposed"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "REVOKE SELECT ON public.<VIEW> FROM anon, authenticated;",
+      "NativeIaC": "",
+      "Other": "1. Identify the view or table from the finding\n2. Revoke access from `anon` and `authenticated`, or rebuild it with `security_invoker = on` exposing only the columns of the calling user\n3. Keep a `public.profiles` table synced by trigger for data that must be public",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Never expose `auth.users`; maintain a profiles table with explicit RLS for the data the application needs.",
+      "Url": "https://hub.prowler.com/check/database_auth_users_not_exposed"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

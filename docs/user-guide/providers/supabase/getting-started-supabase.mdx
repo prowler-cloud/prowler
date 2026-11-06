@@ -1,0 +1,56 @@
+---
+title: "Getting Started With Supabase on Prowler"
+---
+
+Prowler for Supabase scans hosted Supabase Cloud organizations and projects through the Management API. It covers organization membership, project platform settings, Supabase Auth configuration, Storage buckets and the Postgres security posture reported by the Supabase security advisor, without executing SQL against your databases.
+
+<Note>
+Supabase is supported in Prowler SDK and Prowler CLI. Self-hosted Supabase and direct PostgreSQL access are not covered.
+</Note>
+
+## Prerequisites
+
+1. A hosted Supabase Cloud account with access to at least one organization.
+2. A Supabase Personal Access Token (PAT) for an account that can read the organizations and projects you want to audit.
+3. A dedicated read-only organization member for Prowler where your Supabase plan and organization roles allow one.
+
+See [Supabase Authentication in Prowler](./authentication) for PAT setup and security guidance.
+
+## Run a Scan
+
+Set the PAT through the environment and run Prowler:
+
+```bash
+export SUPABASE_ACCESS_TOKEN="your-personal-access-token"
+prowler supabase
+```
+
+Limit the scan to specific projects by reference or name:
+
+```bash
+prowler supabase --project abcdefghijklmnopqrst storefront
+```
+
+Run a subset of checks:
+
+```bash
+prowler supabase --check projects_ssl_enforcement_enabled database_rls_enabled_on_public_tables
+```
+
+## Services and Checks
+
+| Service | What is audited | Management API endpoints |
+|---|---|---|
+| `organizations` | Member MFA | `/v1/organizations/{slug}/members` |
+| `projects` | SSL enforcement, network restrictions, Data API max rows, Point-in-Time Recovery, legacy API keys | `/v1/projects`, `/v1/projects/{ref}/ssl-enforcement`, `/v1/projects/{ref}/network-restrictions`, `/v1/projects/{ref}/postgrest`, `/v1/projects/{ref}/database/backups`, `/v1/projects/{ref}/api-keys/legacy` |
+| `auth` | Leaked password protection, password length, MFA enrollment, OTP expiry, refresh token rotation, CAPTCHA, email confirmation, anonymous sign-ins | `/v1/projects/{ref}/config/auth` |
+| `storage` | Public buckets | `/v1/projects/{ref}/storage/buckets` |
+| `database` | Row Level Security, SECURITY DEFINER views, mutable `search_path`, exposed `auth.users`, leaked service keys, extensions in `public`, policies on user metadata, vulnerable Postgres versions | `/v1/projects/{ref}/advisors/security` |
+
+Project findings carry the project reference as the account scope and the project region as the finding region; organization findings use the organization slug and the `global` region.
+
+Thresholds for the Data API row limit, the minimum password length and the OTP expiry are configurable; see the [configuration file](/user-guide/cli/tutorials/configuration_file#supabase).
+
+## Data Handling
+
+Prowler stores only the settings each check evaluates. Member email addresses, JWT secrets, provider client secrets, SMTP passwords and hook secrets returned by the Management API are discarded and never appear in findings or logs. Projects that are paused or whose advisor cannot run are skipped rather than reported as failures.

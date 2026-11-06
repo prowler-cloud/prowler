@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_postgres_version_not_vulnerable",
+  "CheckTitle": "Supabase project runs a Postgres version without known security vulnerabilities",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase projects** are assessed for **Postgres versions with published security vulnerabilities**, as reported by the Supabase security advisor.",
+  "Risk": "Known Postgres CVEs can allow **privilege escalation, denial of service or data disclosure** by any authenticated database user, including through SQL reachable from the Data API.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/platform/upgrading"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > Infrastructure\n3. Schedule the Postgres upgrade during a maintenance window and verify the application afterwards",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Upgrade to the latest Postgres version offered by Supabase and keep projects on a supported release.",
+      "Url": "https://hub.prowler.com/check/database_postgres_version_not_vulnerable"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}
