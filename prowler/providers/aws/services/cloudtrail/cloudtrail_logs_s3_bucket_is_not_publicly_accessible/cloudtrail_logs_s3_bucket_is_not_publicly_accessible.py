@@ -6,7 +6,20 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
 class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
-    def execute(self):
+    """Ensure the S3 bucket that stores CloudTrail logs is not publicly accessible.
+
+    - PASS: The trail bucket ACL grants no access to AllUsers.
+    - FAIL: The trail bucket ACL grants access to AllUsers.
+    - MANUAL: The trail bucket is outside the audited account, or its ACL could
+      not be retrieved (missing permissions).
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate the check.
+
+        Returns:
+            list[Check_Report_AWS]: One report per trail.
+        """
         findings = []
         if cloudtrail_client.trails is not None:
             for trail in cloudtrail_client.trails.values():
@@ -25,7 +38,10 @@ class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
                         # (for example due to a SCP) we are going to try access an attribute from a None type
                         if trail_bucket == bucket.name:
                             trail_bucket_is_in_account = True
-                            if bucket.acl_grantees:
+                            if not bucket.acl_retrieved:
+                                report.status = "MANUAL"
+                                report.status_extended = f"Cannot evaluate whether S3 Bucket {trail_bucket} from trail {trail.name} is publicly accessible: the bucket ACL could not be retrieved. Verify that the scanning credentials are allowed to call s3:GetBucketAcl."
+                            elif bucket.acl_grantees:
                                 for grant in bucket.acl_grantees:
                                     if (
                                         grant.URI
