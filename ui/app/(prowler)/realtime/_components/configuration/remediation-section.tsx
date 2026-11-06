@@ -268,7 +268,9 @@ function RemediationList({
                 {remediation.revertible ? "Can be undone" : "Cannot be undone"}
               </Badge>
               {!remediation.in_enforced_scope && (
-                <Badge variant="tag">Outside the enforced frameworks</Badge>
+                <Badge variant="tag">
+                  Outside the enforced compliance frameworks
+                </Badge>
               )}
             </div>
             <p className="text-text-neutral-secondary text-xs">
