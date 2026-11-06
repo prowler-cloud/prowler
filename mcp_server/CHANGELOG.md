@@ -4,6 +4,16 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.1] (Prowler v5.48.0)
+
+### 🔐 Security
+
+- Python base image from 3.13.16 to 3.13.18 in the MCP Server container image, patching CVE-2026-115557 [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- joserfc to 1.7.5, patching the JWE decryption denial of service advisory [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- fastmcp from 3.4.5 to 3.4.10, patching the skipped authorization check on direct calls to transformed components [(#13258)](https://github.com/prowler-cloud/prowler/pull/13258)
+
+---
+
 ## [0.13.0] (Prowler v5.47.0)
 
 ### 🚀 Added
