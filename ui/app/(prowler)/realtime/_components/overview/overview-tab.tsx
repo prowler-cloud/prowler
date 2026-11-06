@@ -94,11 +94,15 @@ export async function OverviewTab({ providerId, demo }: RealtimeTabProps) {
                 Posture over time
               </h3>
               <p className="text-text-neutral-tertiary text-sm">
-                Checks per scan, with each Realtime action marked.
+                Checks per scan, and what Prowler Realtime fixed or proposed in
+                between.
               </p>
             </div>
             {timeline.ok ? (
-              <PostureTimeline timeline={timeline.data} />
+              <PostureTimeline
+                providerId={providerId}
+                timeline={timeline.data}
+              />
             ) : (
               <RealtimePanelError failure={timeline} />
             )}
@@ -122,7 +126,7 @@ export function OverviewTabSkeleton() {
         <Skeleton className="h-[360px] rounded-xl lg:col-span-2" />
         <Skeleton className="h-[360px] rounded-xl" />
       </div>
-      <Skeleton className="h-[330px] rounded-xl" />
+      <Skeleton className="h-[630px] rounded-xl" />
     </div>
   );
 }
