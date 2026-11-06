@@ -280,6 +280,63 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             )
             assert result[0].resource_id == firewall.id
 
+    def test_disabled_rule_followed_by_enabled_rule(self):
+        from prowler.providers.gcp.services.compute.compute_service import Firewall
+
+        disabled_firewall = Firewall(
+            name="disabled",
+            id="1111111111",
+            source_ranges=["0.0.0.0/0"],
+            direction="INGRESS",
+            allowed_rules=[{"IPProtocol": "tcp", "ports": ["22"]}],
+            disabled=True,
+            project_id=GCP_PROJECT_ID,
+        )
+        enabled_firewall = Firewall(
+            name="enabled",
+            id="2222222222",
+            source_ranges=["0.0.0.0/0"],
+            direction="INGRESS",
+            allowed_rules=[{"IPProtocol": "tcp", "ports": ["22"]}],
+            project_id=GCP_PROJECT_ID,
+        )
+
+        compute_client = mock.MagicMock()
+        compute_client.project_ids = [GCP_PROJECT_ID]
+        compute_client.firewalls = [disabled_firewall, enabled_firewall]
+        compute_client.region = "global"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
+            )
+
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
+            result = check.execute()
+
+            assert len(result) == 2
+            assert result[0].resource_id == disabled_firewall.id
+            assert result[0].status == "PASS"
+            assert search(
+                f"Firewall {disabled_firewall.name} is disabled",
+                result[0].status_extended,
+            )
+            assert result[1].resource_id == enabled_firewall.id
+            assert result[1].status == "FAIL"
+            assert search(
+                f"Firewall {enabled_firewall.name} does exposes port 22",
+                result[1].status_extended,
+            )
+
     def test_one_non_compliant_rule_with_single_port(self):
         from prowler.providers.gcp.services.compute.compute_service import Firewall
 

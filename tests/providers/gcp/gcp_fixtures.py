@@ -998,6 +998,7 @@ def mock_api_firewall_calls(client: MagicMock):
                 "allowed": [{"IPProtocol": "UDP"}],
                 "sourceRanges": ["30.0.0.0/16"],
                 "direction": "INGRESS",
+                "disabled": False,
             },
             {
                 "name": "firewall2",

@@ -160,6 +160,7 @@ class TestComputeService:
             assert compute_client.firewalls[1].allowed_rules == [{"IPProtocol": "TCP"}]
             assert compute_client.firewalls[1].source_ranges == ["0.0.0.0/0"]
             assert compute_client.firewalls[1].direction == "EGRESS"
+            assert compute_client.firewalls[1].disabled is False
             assert compute_client.firewalls[1].project_id == GCP_PROJECT_ID
 
             assert compute_client.firewalls[2].name == "firewall3"
