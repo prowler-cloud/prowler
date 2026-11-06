@@ -1,5 +1,6 @@
 import pytest
 
+from prowler.providers.aws.services.ec2.ec2_service import ManagedPrefixList
 from prowler.providers.aws.services.ec2.lib.security_groups import (
     _is_cidr_public,
     check_security_group,
@@ -16,6 +17,31 @@ IP_V4_PRIVATE_CIDR = "10.1.0.0/16"
 IP_V6_ALL_CIDRS = "::/0"
 IP_V6_PUBLIC_CIDR = "cafe:cafe:cafe:cafe::/64"
 IP_V6_PRIVATE_CIDR = "fc00::/7"
+
+PREFIX_LIST_ID = "pl-0123456789abcdef0"
+
+
+def prefix_lists(entries: list[str]) -> dict:
+    return {
+        PREFIX_LIST_ID: ManagedPrefixList(
+            id=PREFIX_LIST_ID,
+            arn=f"arn:aws:ec2:eu-west-1:123456789012:prefix-list/{PREFIX_LIST_ID}",
+            name="test",
+            region="eu-west-1",
+            entries=entries,
+        )
+    }
+
+
+def prefix_list_rule(from_port: int, to_port: int, ip_protocol: str) -> dict:
+    return {
+        "FromPort": from_port,
+        "ToPort": to_port,
+        "IpProtocol": ip_protocol,
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [{"PrefixListId": PREFIX_LIST_ID}],
+    }
 
 
 class Test_is_cidr_public:
@@ -471,4 +497,136 @@ class Test_check_security_group:
         )
         before = repr(ingress_rule)
         check_security_group(ingress_rule, TRANSPORT_PROTOCOL_TCP, [22], True)
+        assert repr(ingress_rule) == before
+
+
+class Test_check_security_group_prefix_lists:
+    # TCP Protocol - prefix list with IP_V4_ALL_CIDRS - Ingress 22 to 22 - check 22 - Any Address - Open
+    def test_prefix_list_all_ipv4_open_22_tcp_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V4_ALL_CIDRS]),
+        )
+
+    # TCP Protocol - prefix list with IP_V6_ALL_CIDRS - Ingress 22 to 22 - check 22 - Any Address - Open
+    def test_prefix_list_all_ipv6_open_22_tcp_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V6_ALL_CIDRS]),
+        )
+
+    # TCP Protocol - prefix list with two halves of IPv4 - Ingress 22 to 22 - check 22 - Any Address - Open
+    def test_prefix_list_split_ipv4_halves_open_22_tcp_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists(["0.0.0.0/1", "128.0.0.0/1"]),
+        )
+
+    # TCP Protocol - one half of IPv4 in the rule and the other in its prefix list - Any Address - Open
+    def test_rule_and_prefix_list_halves_open_22_tcp_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        ingress_rule["IpRanges"] = [{"CidrIp": "0.0.0.0/1"}]
+        assert check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists(["128.0.0.0/1"]),
+        )
+
+    # ALL (-1) Protocol - prefix list with IP_V4_ALL_CIDRS - check 22 - Any Address - Open
+    def test_prefix_list_all_ipv4_any_protocol_any_address(self):
+        ingress_rule = prefix_list_rule(0, 0, TRANSPORT_PROTOCOL_ALL)
+        assert check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V4_ALL_CIDRS]),
+        )
+
+    # TCP Protocol - prefix list with a public CIDR - Ingress 22 to 22 - check 22 - Any Address - Closed
+    def test_prefix_list_public_cidr_open_22_tcp_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert not check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V4_PUBLIC_CIDR]),
+        )
+
+    # TCP Protocol - prefix list with a public CIDR - Ingress 22 to 22 - check 22 - Open
+    def test_prefix_list_public_cidr_open_22_tcp(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            prefix_lists=prefix_lists([IP_V4_PUBLIC_CIDR]),
+        )
+
+    # TCP Protocol - prefix list with a private CIDR - Ingress 22 to 22 - check 22 - Closed
+    def test_prefix_list_private_cidr_open_22_tcp(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert not check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            prefix_lists=prefix_lists([IP_V4_PRIVATE_CIDR, IP_V6_PRIVATE_CIDR]),
+        )
+
+    # TCP Protocol - prefix list with IP_V4_ALL_CIDRS - Ingress 80 to 80 - check 22 - Any Address - Closed
+    def test_prefix_list_all_ipv4_other_port_any_address(self):
+        ingress_rule = prefix_list_rule(80, 80, TRANSPORT_PROTOCOL_TCP)
+        assert not check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V4_ALL_CIDRS]),
+        )
+
+    # A prefix list that was not loaded, such as an AWS-managed one, adds no CIDRs
+    def test_unknown_prefix_list_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        ingress_rule["PrefixListIds"] = [{"PrefixListId": "pl-unknown"}]
+        assert not check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V4_ALL_CIDRS]),
+        )
+
+    # Without prefix lists the result is the same as before
+    def test_prefix_list_not_passed_any_address(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        assert not check_security_group(
+            ingress_rule, TRANSPORT_PROTOCOL_TCP, [22], True
+        )
+
+    # The rule passed in is not modified, since fixers send it back to AWS
+    def test_prefix_list_rule_unchanged(self):
+        ingress_rule = prefix_list_rule(22, 22, TRANSPORT_PROTOCOL_TCP)
+        before = repr(ingress_rule)
+        check_security_group(
+            ingress_rule,
+            TRANSPORT_PROTOCOL_TCP,
+            [22],
+            True,
+            prefix_lists=prefix_lists([IP_V4_ALL_CIDRS]),
+        )
         assert repr(ingress_rule) == before
