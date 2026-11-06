@@ -1,5 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.network.network_client import network_client
+from prowler.providers.azure.services.network.network_service import (
+    security_rule_allows_internet,
+)
 
 
 class network_udp_internet_access_restricted(Check):
@@ -19,11 +22,7 @@ class network_udp_internet_access_restricted(Check):
                 rule_fail_condition = any(
                     (
                         rule.protocol in ["UDP", "Udp"]
-                        and (
-                            rule.source_address_prefix
-                            and rule.source_address_prefix
-                            in ["Internet", "*", "0.0.0.0/0"]
-                        )
+                        and security_rule_allows_internet(rule)
                         and rule.access == "Allow"
                         and rule.direction == "Inbound"
                     )

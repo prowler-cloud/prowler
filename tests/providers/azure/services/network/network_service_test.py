@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from azure.core.exceptions import ResourceNotFoundError
@@ -18,6 +19,8 @@ from prowler.providers.azure.services.network.network_service import (
     SecurityGroup,
     VirtualNetwork,
     WafPolicy,
+    build_security_rule,
+    security_rule_allows_internet,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -282,6 +285,56 @@ class Test_Network_get_security_groups:
         mock_client.network_security_groups.list_all.assert_called_once()
         mock_client.network_security_groups.list.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_security_groups_keeps_plural_internet_source(self):
+        sdk_rule = SimpleNamespace(
+            id="rule-id",
+            name="plural-ssh",
+            destination_port_range="22",
+            protocol="Tcp",
+            source_address_prefix=None,
+            source_address_prefixes=["0.0.0.0/0"],
+            access="Allow",
+            direction="Inbound",
+        )
+        sdk_group = SimpleNamespace(
+            id="nsg-id",
+            name="nsg-src-plural",
+            location="eastus",
+            security_rules=[sdk_rule],
+        )
+        mock_client = MagicMock()
+        mock_client.network_security_groups.list_all.return_value = [sdk_group]
+
+        with (
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_security_groups",
+                new=mock_network_get_security_groups,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_bastion_hosts",
+                new=mock_network_get_bastion_hosts,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_network_watchers",
+                new=mock_network_get_network_watchers,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_public_ip_addresses",
+                new=mock_network_get_public_ip_addresses,
+            ),
+        ):
+            network = Network(set_mocked_azure_provider())
+
+        network.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        network.resource_groups = None
+
+        result = network._get_security_groups()
+        rule = result[AZURE_SUBSCRIPTION_ID][0].security_rules[0]
+
+        assert rule.source_address_prefix is None
+        assert rule.source_address_prefixes == ["0.0.0.0/0"]
+        assert security_rule_allows_internet(rule) is True
 
     def test_get_security_groups_with_resource_group(self):
         mock_client = MagicMock()
@@ -1597,3 +1650,48 @@ class Test_Network_get_application_gateways:
 
         assert result == {AZURE_SUBSCRIPTION_ID: {}}
         assert network.application_gateways_lookup_failed == set()
+
+
+def test_build_security_rule_plural_source():
+    open_rule = build_security_rule(
+        SimpleNamespace(
+            id="rule-id",
+            name="plural-open",
+            destination_port_range="22",
+            protocol="Tcp",
+            source_address_prefix=None,
+            source_address_prefixes=["0.0.0.0/0"],
+            access="Allow",
+            direction="Inbound",
+        )
+    )
+    private_rule = build_security_rule(
+        SimpleNamespace(
+            id="rule-id",
+            name="plural-private",
+            destination_port_range="22",
+            protocol="Tcp",
+            source_address_prefix="",
+            source_address_prefixes=["10.0.0.0/24"],
+            access="Allow",
+            direction="Inbound",
+        )
+    )
+    singular_rule = build_security_rule(
+        SimpleNamespace(
+            id="rule-id",
+            name="singular",
+            destination_port_range="22",
+            protocol="Tcp",
+            source_address_prefix="Internet",
+            source_address_prefixes=None,
+            access="Allow",
+            direction="Inbound",
+        )
+    )
+
+    assert open_rule.source_address_prefixes == ["0.0.0.0/0"]
+    assert security_rule_allows_internet(open_rule) is True
+    assert security_rule_allows_internet(private_rule) is False
+    assert singular_rule.source_address_prefixes == []
+    assert security_rule_allows_internet(singular_rule) is True

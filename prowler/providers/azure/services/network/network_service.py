@@ -58,19 +58,7 @@ class Network(AzureService):
                             name=security_group.name,
                             location=security_group.location,
                             security_rules=[
-                                SecurityRule(
-                                    id=rule.id,
-                                    name=rule.name,
-                                    destination_port_range=getattr(
-                                        rule, "destination_port_range", ""
-                                    ),
-                                    protocol=getattr(rule, "protocol", ""),
-                                    source_address_prefix=getattr(
-                                        rule, "source_address_prefix", ""
-                                    ),
-                                    access=getattr(rule, "access", "Allow"),
-                                    direction=getattr(rule, "direction", "Inbound"),
-                                )
+                                build_security_rule(rule)
                                 for rule in getattr(
                                     security_group, "security_rules", []
                                 )
@@ -414,6 +402,10 @@ class NetworkWatcher:
     flow_logs: List[FlowLog]
 
 
+# Source values Azure uses for traffic from the whole Internet.
+INTERNET_SOURCE_PREFIXES = {"Internet", "*", "0.0.0.0/0"}
+
+
 @dataclass
 class SecurityRule:
     id: str
@@ -423,6 +415,57 @@ class SecurityRule:
     source_address_prefix: Optional[str]
     access: Optional[str]
     direction: Optional[str]
+    source_address_prefixes: Optional[List[str]] = None
+
+
+def build_security_rule(rule: object) -> SecurityRule:
+    """Copy an Azure NSG security rule into the provider model.
+
+    A source of 0.0.0.0/0 can be stored only in source_address_prefixes, with
+    source_address_prefix left empty. Both fields are kept so the internet
+    access checks can see either form.
+
+    Args:
+        rule: Azure SDK security rule, or any object with the same attributes.
+
+    Returns:
+        The SecurityRule model.
+    """
+    raw_prefixes = getattr(rule, "source_address_prefixes", None)
+    if isinstance(raw_prefixes, (list, tuple)):
+        source_address_prefixes = [prefix for prefix in raw_prefixes if prefix]
+    else:
+        source_address_prefixes = []
+    return SecurityRule(
+        id=rule.id,
+        name=rule.name,
+        destination_port_range=getattr(rule, "destination_port_range", ""),
+        protocol=getattr(rule, "protocol", ""),
+        source_address_prefix=getattr(rule, "source_address_prefix", ""),
+        access=getattr(rule, "access", "Allow"),
+        direction=getattr(rule, "direction", "Inbound"),
+        source_address_prefixes=source_address_prefixes,
+    )
+
+
+def security_rule_allows_internet(rule: object) -> bool:
+    """Return whether an NSG rule source is open to the Internet.
+
+    Args:
+        rule: Security rule model or Azure SDK rule.
+
+    Returns:
+        True when the singular source or any plural source is Internet, *,
+        or 0.0.0.0/0.
+    """
+    prefixes = []
+    single = getattr(rule, "source_address_prefix", None)
+    if single:
+        prefixes.append(single)
+    many = getattr(rule, "source_address_prefixes", None)
+    if isinstance(many, (list, tuple)):
+        prefixes.extend(prefix for prefix in many if prefix)
+    return any(prefix in INTERNET_SOURCE_PREFIXES for prefix in prefixes)
 
 
 @dataclass
