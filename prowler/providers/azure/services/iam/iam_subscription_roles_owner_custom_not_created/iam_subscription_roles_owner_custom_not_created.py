@@ -7,10 +7,17 @@ from prowler.providers.azure.services.iam.iam_client import iam_client
 # Control-plane actions that make a custom role owner-equivalent. Azure
 # computes effective permissions as Actions minus NotActions, so a wildcard
 # action only counts as owner-equivalent when at least one of these
-# capabilities survives the role's NotActions.
+# capabilities survives the role's NotActions. Capabilities are listed as
+# concrete operations (not wildcards) because _is_owner_equivalent passes
+# the capability as the fnmatch string and the NotAction as the pattern:
+# a concrete NotAction such as Microsoft.Authorization/roleAssignments/write
+# can never match a wildcard capability, so wildcard capabilities would
+# wrongly survive concrete exclusions. Concrete capabilities match both
+# wildcard NotActions (e.g. Microsoft.Authorization/*/Write) and concrete
+# ones.
 ROLE_ASSIGNMENT_CAPABILITIES = [
-    "Microsoft.Authorization/*/Write",
-    "Microsoft.Authorization/*/Delete",
+    "Microsoft.Authorization/roleAssignments/write",
+    "Microsoft.Authorization/roleAssignments/delete",
     "Microsoft.Authorization/elevateAccess/Action",
 ]
 
