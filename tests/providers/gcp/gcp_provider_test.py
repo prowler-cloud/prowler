@@ -16,10 +16,21 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPGetOrganizationProjectsError,
     GCPInvalidProviderIdError,
     GCPNoAccesibleProjectsError,
+    GCPSetUpSessionError,
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPOrganization, GCPProject
+
+COMPLETE_SERVICE_ACCOUNT_KEY = {
+    "type": "service_account",
+    "project_id": "test-project",
+    "private_key_id": "private-key-id",
+    "private_key": "fake-private-key",
+    "client_email": "prowler@test-project.iam.gserviceaccount.com",
+    "client_id": "client-id",
+    "token_uri": "https://oauth2.googleapis.com/token",
+}
 
 
 class TestGCPProvider:
@@ -352,6 +363,113 @@ class TestGCPProvider:
         assert isinstance(session, TokenCredentials)
         assert session.token == access_token
         assert project_id == default_project_id
+
+    @pytest.mark.parametrize(
+        "service_account_key",
+        [
+            # Complete keys whose only problem is the type or token_uri, so the
+            # validator (not google-auth) is what has to reject them.
+            {**COMPLETE_SERVICE_ACCOUNT_KEY, "type": "external_account"},
+            {**COMPLETE_SERVICE_ACCOUNT_KEY, "type": "authorized_user"},
+            {**COMPLETE_SERVICE_ACCOUNT_KEY, "type": "impersonated_service_account"},
+            {k: v for k, v in COMPLETE_SERVICE_ACCOUNT_KEY.items() if k != "type"},
+            {k: v for k, v in COMPLETE_SERVICE_ACCOUNT_KEY.items() if k != "token_uri"},
+            {
+                **COMPLETE_SERVICE_ACCOUNT_KEY,
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                **COMPLETE_SERVICE_ACCOUNT_KEY,
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {
+                **COMPLETE_SERVICE_ACCOUNT_KEY,
+                "token_uri": "http://oauth2.googleapis.com/token",
+            },
+            {
+                **COMPLETE_SERVICE_ACCOUNT_KEY,
+                "token_uri": "https://oauth2.googleapis.com.attacker.example/token",
+            },
+            {
+                **COMPLETE_SERVICE_ACCOUNT_KEY,
+                "token_uri": ["https://oauth2.googleapis.com/token"],
+            },
+            {**COMPLETE_SERVICE_ACCOUNT_KEY, "token_uri": {"url": "x"}},
+            # external_account configs as an attacker would submit them.
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"file": "/etc/passwd"},
+            },
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"url": "http://169.254.169.254/"},
+            },
+            {},
+            "not-a-dict",
+        ],
+    )
+    def test_setup_session_rejects_non_service_account_key(self, service_account_key):
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.load_credentials_from_dict"
+            ) as mocked_loader,
+            patch(
+                "prowler.providers.gcp.gcp_provider.google_service_account.Credentials.from_service_account_info"
+            ) as mocked_from_info,
+        ):
+            with pytest.raises(GCPSetUpSessionError) as error:
+                GcpProvider.setup_session(
+                    credentials_file=None,
+                    service_account=None,
+                    service_account_key=service_account_key,
+                )
+        mocked_loader.assert_not_called()
+        mocked_from_info.assert_not_called()
+        assert "service_account" in error.value.args[0]
+
+    @pytest.mark.parametrize(
+        "token_uri",
+        [
+            "https://oauth2.googleapis.com/token",
+            "https://accounts.google.com/o/oauth2/token",
+        ],
+    )
+    def test_validate_service_account_key_accepts_google_token_uris(self, token_uri):
+        GcpProvider.validate_service_account_key(
+            {**COMPLETE_SERVICE_ACCOUNT_KEY, "token_uri": token_uri}
+        )
+
+    def test_setup_session_with_service_account_key(self):
+        service_account_key = {
+            "type": "service_account",
+            "project_id": "test-project",
+            "client_email": "prowler@test-project.iam.gserviceaccount.com",
+            "token_uri": "https://oauth2.googleapis.com/token",
+        }
+        mocked_credentials = MagicMock()
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.google_service_account.Credentials.from_service_account_info",
+            return_value=mocked_credentials,
+        ) as mocked_from_info:
+            credentials, project_id = GcpProvider.setup_session(
+                credentials_file=None,
+                service_account=None,
+                service_account_key=service_account_key,
+            )
+
+        mocked_from_info.assert_called_once_with(
+            service_account_key,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+        assert credentials is mocked_credentials
+        assert project_id == "test-project"
 
     def test_setup_session_with_organization_id(self):
         mocked_credentials = MagicMock()

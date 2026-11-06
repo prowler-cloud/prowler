@@ -337,7 +337,7 @@ constraint-dependencies = [
   "nest-asyncio==1.6.0",
   "nltk==3.9.4",
   "numpy==2.2.6",
-  "oauthlib==4.0.0",
+  "oauthlib==4.0.1",
   "oci==2.184.1",
   "openai==1.109.1",
   "openstacksdk==4.2.0",
