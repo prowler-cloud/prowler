@@ -400,9 +400,9 @@ export interface ActorParts {
 export const actorParts = (arn: string): ActorParts => {
   const [kind, ...path] = shortArn(arn).split("/");
   if (kind === "assumed-role" && path.length >= 2) {
-    return { name: path.slice(1).join("/"), via: path[0] };
+    return { name: path.slice(1).join("/") || "Unknown", via: path[0] };
   }
-  return { name: path.at(-1) ?? kind, via: null };
+  return { name: (path.length ? path.at(-1) : kind) || "Unknown", via: null };
 };
 
 /** `3.8x · +$184.00`. */

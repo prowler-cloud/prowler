@@ -138,7 +138,7 @@ function CostForm({
               cloudformation={COST_CLOUDFORMATION}
               terraform={COST_TERRAFORM}
               steps={[
-                "Deploy the template once in this AWS account. It lets the ProwlerScan role read Cost Explorer (ce:GetCostAndUsage) and nothing else.",
+                "Deploy the template once in this AWS account. It lets the ProwlerScan role read Cost Explorer (ce:GetCostAndUsage) and nothing else. If your scan role has another name, set ProwlerScanRoleName (prowler_scan_role_name in Terraform) to it.",
                 "Save below. Costs show up after Prowler's next Cost Explorer read.",
               ]}
             />

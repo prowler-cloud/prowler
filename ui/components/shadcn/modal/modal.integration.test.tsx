@@ -42,4 +42,28 @@ describe("Modal", () => {
       );
     }
   });
+
+  it("wraps a multiline hash so all of it shows inside the dialog", async () => {
+    // Given
+    const screen = await render(
+      <Modal open onOpenChange={vi.fn()} title="Status statement" size="sm">
+        <InfoField label="SHA-256">
+          <CodeSnippet value={SHA256} multiline />
+        </InfoField>
+      </Modal>,
+    );
+
+    // When
+    const dialog = screen.getByRole("dialog").element();
+    const hash = screen.getByText(SHA256).element();
+
+    // Then
+    const padding = parseFloat(getComputedStyle(dialog).paddingRight);
+    const contentRight = dialog.getBoundingClientRect().right - padding;
+    expect(hash.getBoundingClientRect().right).toBeLessThan(contentRight + 1);
+    expect(hash.scrollWidth).toBeLessThanOrEqual(hash.clientWidth);
+    expect(hash.getBoundingClientRect().height).toBeGreaterThan(
+      parseFloat(getComputedStyle(hash).lineHeight) * 1.5,
+    );
+  });
 });

@@ -160,6 +160,16 @@ describe("realtime display helpers", () => {
     expect(actorParts("")).toEqual({ name: "Unknown", via: null });
   });
 
+  it("never leaves the actor blank when the ARN ends in a slash", () => {
+    expect(actorParts("arn:aws:iam::123456789012:user/")).toEqual({
+      name: "Unknown",
+      via: null,
+    });
+    expect(
+      actorParts("arn:aws:sts::123456789012:assumed-role/ci-deployer/"),
+    ).toEqual({ name: "Unknown", via: "ci-deployer" });
+  });
+
   it("formats a cost change as ratio and dollars", () => {
     expect(formatChange(3.84, 184)).toBe("3.8x · +$184.00");
   });

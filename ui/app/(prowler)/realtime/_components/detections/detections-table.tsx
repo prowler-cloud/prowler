@@ -67,7 +67,11 @@ const columns: ColumnDef<RealtimeDetection>[] = [
             </Badge>
           )}
         </span>
-        <span title={row.original.resource}>
+        <span
+          title={[row.original.resource, row.original.region]
+            .filter(Boolean)
+            .join(" · ")}
+        >
           <FitText className="text-text-neutral-tertiary font-mono text-xs">
             {[
               row.original.resource && shortArn(row.original.resource),

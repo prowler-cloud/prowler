@@ -61,8 +61,13 @@ describe("embedded Prowler Realtime templates", () => {
 
   it("grants the scan role Cost Explorer reads and nothing else", () => {
     for (const template of [COST_CLOUDFORMATION, COST_TERRAFORM]) {
-      const actions = template.content.match(/\b[a-z0-9-]+:[A-Z*][A-Za-z*]*/g);
-      expect(new Set(actions)).toEqual(new Set(["ce:GetCostAndUsage"]));
+      // The policy's Action fields, not mentions in comments or descriptions.
+      const actions = Array.from(
+        template.content.matchAll(/\bAction\s*[:=]\s*(\[[^\]]*\]|\S+)/g),
+        ([, value]) => value.replace(/[[\]"\s]/g, "").split(","),
+      ).flat();
+      expect(actions).toEqual(["ce:GetCostAndUsage"]);
+      expect(template.content).not.toMatch(/NotAction/);
     }
   });
 });

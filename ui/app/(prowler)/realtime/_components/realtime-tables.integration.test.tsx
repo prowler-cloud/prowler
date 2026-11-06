@@ -61,6 +61,7 @@ const event = (overrides: Partial<RealtimeEvent>): RealtimeEvent => ({
 function InMain({ children }: { children: ReactNode }) {
   return (
     <div
+      data-frame
       data-responsive-container
       className="@container"
       style={{ width: 760 }}
@@ -70,10 +71,15 @@ function InMain({ children }: { children: ReactNode }) {
   );
 }
 
-const scrollOverflow = (container: Element) => {
-  const table = container.querySelector("table");
-  if (!table?.parentElement) throw new Error("No table rendered");
-  return table.parentElement.scrollWidth - table.parentElement.clientWidth;
+// The table neither scrolls inside its wrapper nor pushes the wrapper out.
+const expectToFitFrame = (container: Element) => {
+  const wrapper = container.querySelector("table")?.parentElement;
+  const frame = container.querySelector("[data-frame]");
+  if (!wrapper || !frame) throw new Error("No table rendered");
+  expect(wrapper.scrollWidth).toBeLessThanOrEqual(wrapper.clientWidth);
+  expect(wrapper.getBoundingClientRect().right).toBeLessThanOrEqual(
+    frame.getBoundingClientRect().right + 0.5,
+  );
 };
 
 describe("Realtime tables", () => {
@@ -95,9 +101,19 @@ describe("Realtime tables", () => {
     );
 
     await expect.element(screen.getByText(detection.title)).toBeVisible();
-    expect(scrollOverflow(screen.container)).toBeLessThanOrEqual(0);
+    expectToFitFrame(screen.container);
     const actor = screen.getByText("ana@example.com", { exact: true });
     await expect.element(actor).toBeVisible();
+    await expect
+      .element(
+        screen.getByText(
+          "AWSReservedSSO_AdministratorAccess_0123456789abcdef",
+          {
+            exact: true,
+          },
+        ),
+      )
+      .toBeVisible();
     expect(actor.element().closest("[title]")?.getAttribute("title")).toBe(
       SSO_ACTOR,
     );
@@ -120,15 +136,29 @@ describe("Realtime tables", () => {
               detection_status: null,
               rule_id: null,
             }),
+            event({
+              id: "event-3",
+              event_name: "DescribeTransitGatewayRouteTableAnnouncements",
+              event_source: "ec2.amazonaws.com",
+              error_code: "",
+            }),
           ]}
         />
       </InMain>,
     );
 
     await expect.element(screen.getByText("CreateLogStream")).toBeVisible();
-    expect(scrollOverflow(screen.container)).toBeLessThanOrEqual(0);
+    expectToFitFrame(screen.container);
     await expect
-      .element(screen.getByText("ana@example.com", { exact: true }))
+      .element(screen.getByText("ana@example.com").first())
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("CustomerNotEntitledException"))
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByText("DescribeTransitGatewayRouteTableAnnouncements"),
+      )
       .toBeVisible();
   });
 });

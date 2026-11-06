@@ -50,6 +50,28 @@ const GROUP_COLORS: Record<TimelineGroup, string> = {
   [TIMELINE_GROUP.OTHER]: "var(--color-bg-data-muted)",
 };
 
+const LINE_STYLE = {
+  SOLID: "solid",
+  DASHED: "dashed",
+  DOTTED: "dotted",
+} as const;
+type LineStyle = (typeof LINE_STYLE)[keyof typeof LINE_STYLE];
+
+// Dry run and Other share the muted color, so Other is dotted.
+const GROUP_LINE_STYLES: Record<TimelineGroup, LineStyle> = {
+  [TIMELINE_GROUP.FIXED]: LINE_STYLE.DASHED,
+  [TIMELINE_GROUP.CODE]: LINE_STYLE.DASHED,
+  [TIMELINE_GROUP.DRY_RUN]: LINE_STYLE.DASHED,
+  [TIMELINE_GROUP.FAILED]: LINE_STYLE.DASHED,
+  [TIMELINE_GROUP.OTHER]: LINE_STYLE.DOTTED,
+};
+
+const DASH_ARRAYS: Record<LineStyle, string | undefined> = {
+  [LINE_STYLE.SOLID]: undefined,
+  [LINE_STYLE.DASHED]: "4 4",
+  [LINE_STYLE.DOTTED]: "1 3",
+};
+
 const CHART_CONFIG: ChartConfig = {
   passed: { label: "Passing checks", color: CHART_COLORS.passed },
   failed: { label: "Failing checks", color: CHART_COLORS.failed },
@@ -67,16 +89,20 @@ const formatTick = (value: number) =>
 interface LegendItemProps {
   color: string;
   label: string;
-  dashed?: boolean;
+  lineStyle?: LineStyle;
 }
 
-function LegendItem({ color, label, dashed = false }: LegendItemProps) {
+function LegendItem({
+  color,
+  label,
+  lineStyle = LINE_STYLE.SOLID,
+}: LegendItemProps) {
   return (
     <li className="flex items-center gap-1.5">
       <span
         aria-hidden
         className="h-0 w-4 border-t-2"
-        style={{ borderColor: color, borderStyle: dashed ? "dashed" : "solid" }}
+        style={{ borderColor: color, borderStyle: lineStyle }}
       />
       {label}
     </li>
@@ -156,7 +182,9 @@ export function PostureTimeline({
               key={`${action.at}-${index}`}
               x={toTime(action.at)}
               stroke={GROUP_COLORS[timelineGroup(action.status)]}
-              strokeDasharray="4 4"
+              strokeDasharray={
+                DASH_ARRAYS[GROUP_LINE_STYLES[timelineGroup(action.status)]]
+              }
             />
           ))}
           <Line
@@ -187,7 +215,7 @@ export function PostureTimeline({
             key={group}
             color={GROUP_COLORS[group]}
             label={`${TIMELINE_GROUP_LABELS[group]} · ${count}`}
-            dashed
+            lineStyle={GROUP_LINE_STYLES[group]}
           />
         ))}
       </ul>

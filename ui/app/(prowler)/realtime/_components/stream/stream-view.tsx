@@ -62,13 +62,12 @@ const getColumns = (providerId: string): ColumnDef<RealtimeEvent>[] => [
           </span>
           <FitText className="text-text-neutral-tertiary text-xs">
             {source}
-            {error && (
-              <span className="text-text-error-primary">
-                {" · "}
-                {error}
-              </span>
-            )}
           </FitText>
+          {error && (
+            <FitText className="text-text-error-primary text-xs">
+              {error}
+            </FitText>
+          )}
         </div>
       );
     },
