@@ -33,7 +33,10 @@ class compute_firewall_rdp_access_from_the_internet_allowed(Check):
                                 opened_port = True
                                 break
             if (
-                "0.0.0.0/0" in firewall.source_ranges
+                (
+                    "0.0.0.0/0" in firewall.source_ranges
+                    or "::/0" in firewall.source_ranges
+                )
                 and firewall.direction == "INGRESS"
                 and opened_port
             ):
