@@ -654,7 +654,8 @@ def condition_value_matches_any_account(
     """
     if condition_operator not in ("StringLike", "ArnLike", "ArnEquals"):
         return False
-    if not isinstance(condition_value, str):
+    # An empty value matches nothing, so it never matches any account
+    if not isinstance(condition_value, str) or not condition_value:
         return False
 
     def has_wildcard(value: str) -> bool:
@@ -679,7 +680,9 @@ def condition_value_matches_any_account(
 
     if condition_key in ("aws:principalorgpaths", "aws:sourceorgpaths"):
         # The organization ID must be literal; wildcards only make sense below it
-        return not re.match(r"o-[a-z0-9]{10,32}/", condition_value)
+        return has_wildcard(condition_value) and not re.match(
+            r"o-[a-z0-9]{10,32}/", condition_value
+        )
 
     if condition_key in ("aws:sourcearn", "aws:principalarn"):
         arn_parts = condition_value.split(":", 5)
@@ -918,7 +921,7 @@ def is_condition_block_restrictive_organization(
         if key == "aws:principalorgpaths":
             # The organization ID must be literal; wildcards only make sense below it
             return bool(re.match(r"o-[a-z0-9]{10,32}/", value))
-        return "*" not in value
+        return "*" not in value and "?" not in value
 
     for condition_operator in valid_condition_operators:
         if condition_operator in condition_statement:

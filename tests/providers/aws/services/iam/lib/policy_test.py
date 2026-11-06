@@ -1752,6 +1752,8 @@ class Test_Policy:
                 False,
             ),
             ({"StringEquals": {"aws:PrincipalOrgID": ["o-a1b2c3d4e5", "o-*"]}}, False),
+            # "?" is a single-character wildcard, so it does not name one organization
+            ({"StringLike": {"aws:PrincipalOrgID": "o-??????????"}}, False),
         ],
     )
     def test_condition_parser_organization_paths_and_set_operators(
@@ -3232,6 +3234,8 @@ class Test_condition_value_matches_any_account:
             # Organization paths need a literal organization ID
             ("StringLike", "aws:principalorgpaths", "o-*/r-ab12/*", True),
             ("StringLike", "aws:principalorgpaths", "o-a1b2c3d4e5/r-ab12/*", False),
+            # A path without wildcards matches only itself, even if malformed
+            ("StringLike", "aws:principalorgpaths", "o-invalid/r-ab12/", False),
             # ARNs need a literal account field
             ("StringLike", "aws:principalarn", "arn:aws:iam::*:root", True),
             ("ArnLike", "aws:principalarn", "arn:aws:iam::*:role/admin", True),
@@ -3261,6 +3265,9 @@ class Test_condition_value_matches_any_account:
             ("StringEquals", "aws:principalarn", "arn:aws:iam::*:root", False),
             # Non-string values are left to the caller
             ("StringLike", "aws:sourceaccount", 123456789012, False),
+            # An empty value matches nothing
+            ("StringLike", "aws:sourcevpce", "", False),
+            ("ArnLike", "aws:sourcearn", "", False),
         ],
     )
     def test_condition_value_matches_any_account(
@@ -3379,6 +3386,7 @@ class Test_is_policy_public_wildcard_conditions:
             {"StringLike": {"aws:PrincipalArn": ["*"]}},
             {"StringLike": {"aws:SourceAccount": "*"}},
             {"ArnLike": {"aws:PrincipalArn": "arn:aws:iam::*:root"}},
+            {"StringLike": {"aws:PrincipalOrgID": "o-??????????"}},
         ],
     )
     def test_public_principal_with_wildcard_condition_is_public(self, condition):
