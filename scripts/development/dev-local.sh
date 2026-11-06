@@ -113,8 +113,13 @@ services_up() {
   # so this mkdir fails: say how to fix it instead of leaving the bare
   # "Permission denied". The chown is deliberately non-recursive, since
   # _data/postgres and _data/neo4j need to keep their container owners.
-  if ! mkdir -p "$REPO_ROOT/_data/logs" 2>/dev/null; then
-    warn "_data is owned by root (created by Docker). Run: sudo chown \"${USER:-$(id -un)}\" _data"
+  # Keep mkdir's own error visible: a full or read-only filesystem fails
+  # here too, and the chown hint would not fix that. Only suggest the
+  # chown when _data exists and is not owned by the current user.
+  if ! mkdir -p "$REPO_ROOT/_data/logs"; then
+    if [ -e "$REPO_ROOT/_data" ] && [ ! -O "$REPO_ROOT/_data" ]; then
+      warn "_data is owned by root (created by Docker). Run: sudo chown \"${USER:-$(id -un)}\" _data"
+    fi
     exit 1
   fi
   log "Starting postgres + valkey + neo4j via Docker (waits for healthchecks)..."
