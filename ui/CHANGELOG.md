@@ -4,6 +4,26 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.48.0] (Prowler v5.48.0)
+
+### 🚀 Added
+
+- Findings page shows the findings of a running first scan as they arrive, plus a "View Early Findings" action on executing scans [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔄 Changed
+
+- NATO D32 compliance icon now uses the official NATO/OTAN logo [(#13278)](https://github.com/prowler-cloud/prowler/pull/13278)
+
+### 🐞 Fixed
+
+- Cross-provider compliance view shows the per-provider breakdown for frameworks without a dedicated UI mapper instead of "No per-provider breakdown is available" [(#13261)](https://github.com/prowler-cloud/prowler/pull/13261)
+
+### 🔐 Security
+
+- `zod` to 4.6.6, `js-yaml` to 4.3.2 and `vitest` to 4.1.11, plus transitive `hono`, `vite`, `brace-expansion`, `fast-uri`, `ip-address`, `body-parser`, `qs` and `baseline-browser-mapping` to patched versions, resolving 33 npm audit advisories (9 high, 21 moderate, 3 low) [(#13249)](https://github.com/prowler-cloud/prowler/pull/13249)
+
+---
+
 ## [1.47.0] (Prowler v5.47.0)
 
 ### 🚀 Added
