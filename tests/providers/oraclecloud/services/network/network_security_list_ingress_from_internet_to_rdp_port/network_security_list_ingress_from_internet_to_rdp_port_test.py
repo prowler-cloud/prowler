@@ -1,229 +1,177 @@
+"""Tests for network_security_list_ingress_from_internet_to_rdp_port."""
+
+from datetime import datetime
 from unittest import mock
+
+import pytest
 
 from tests.providers.oraclecloud.oci_fixtures import (
     OCI_COMPARTMENT_ID,
     OCI_REGION,
-    OCI_TENANCY_ID,
     set_mocked_oraclecloud_provider,
 )
+
+CHECK_MODULE = (
+    "prowler.providers.oraclecloud.services.network."
+    "network_security_list_ingress_from_internet_to_rdp_port."
+    "network_security_list_ingress_from_internet_to_rdp_port"
+)
+RDP_PORT = 3389
+
+
+def build_security_list(ingress_rules):
+    """Build a SecurityList model with the given ingress rules."""
+    from prowler.providers.oraclecloud.services.network.network_service import (
+        SecurityList,
+    )
+
+    return SecurityList(
+        id="ocid1.securitylist.oc1.iad.example",
+        display_name="test-security-list",
+        compartment_id=OCI_COMPARTMENT_ID,
+        vcn_id="ocid1.vcn.oc1.iad.example",
+        ingress_security_rules=ingress_rules,
+        egress_security_rules=[],
+        lifecycle_state="AVAILABLE",
+        region=OCI_REGION,
+        time_created=datetime(2024, 1, 1),
+    )
+
+
+def tcp_rule(source, port_min=None, port_max=None, protocol="6"):
+    """Build an OCI ingress rule dict matching `oci.util.to_dict` output."""
+    rule = {"source": source, "protocol": protocol}
+    if port_min is not None or port_max is not None:
+        rule["tcp_options"] = {
+            "destination_port_range": {"min": port_min, "max": port_max}
+        }
+    return rule
+
+
+def run_check(security_lists):
+    """Execute the check against the given security lists."""
+    network_client = mock.MagicMock()
+    network_client.security_lists = security_lists
+
+    with (
+        mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_oraclecloud_provider(),
+        ),
+        mock.patch(f"{CHECK_MODULE}.network_client", new=network_client),
+    ):
+        from prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port import (
+            network_security_list_ingress_from_internet_to_rdp_port,
+        )
+
+        return network_security_list_ingress_from_internet_to_rdp_port().execute()
 
 
 class Test_network_security_list_ingress_from_internet_to_rdp_port:
     def test_no_resources(self):
         """network_security_list_ingress_from_internet_to_rdp_port: No resources to check"""
-        network_client = mock.MagicMock()
-        network_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
-        network_client.audited_tenancy = OCI_TENANCY_ID
+        assert run_check([]) == []
 
-        # Mock empty collections
-        network_client.rules = []
-        network_client.topics = []
-        network_client.subscriptions = []
-        network_client.users = []
-        network_client.groups = []
-        network_client.policies = []
-        network_client.compartments = []
-        network_client.instances = []
-        network_client.volumes = []
-        network_client.boot_volumes = []
-        network_client.buckets = []
-        network_client.keys = []
-        network_client.file_systems = []
-        network_client.databases = []
-        network_client.security_lists = []
-        network_client.security_groups = []
-        network_client.subnets = []
-        network_client.vcns = []
-        network_client.configuration = None
-        network_client.active_non_root_compartments = []
-        network_client.password_policy = None
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oraclecloud_provider(),
+    @pytest.mark.parametrize(
+        "ingress_rules",
+        [
+            pytest.param(
+                [tcp_rule("10.0.0.0/8", RDP_PORT, RDP_PORT)],
+                id="rdp-from-private-ipv4-range",
             ),
-            mock.patch(
-                "prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port.network_client",
-                new=network_client,
+            pytest.param(
+                [tcp_rule("0.0.0.0/0", 443, 443)],
+                id="ipv4-any-but-only-https",
             ),
-        ):
-            from prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port import (
-                network_security_list_ingress_from_internet_to_rdp_port,
-            )
-
-            check = network_security_list_ingress_from_internet_to_rdp_port()
-            result = check.execute()
-
-            # Verify result is a list (empty or with findings)
-            assert isinstance(result, list)
-
-    def test_resource_compliant(self):
-        """network_security_list_ingress_from_internet_to_rdp_port: Resource passes the check (PASS)"""
-        network_client = mock.MagicMock()
-        network_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
-        network_client.audited_tenancy = OCI_TENANCY_ID
-
-        # Mock a compliant resource
-        resource = mock.MagicMock()
-        resource.id = "ocid1.resource.oc1.iad.aaaaaaaexample"
-        resource.name = "compliant-resource"
-        resource.region = OCI_REGION
-        resource.compartment_id = OCI_COMPARTMENT_ID
-        resource.lifecycle_state = "ACTIVE"
-        resource.tags = {"Environment": "Production"}
-
-        # Set attributes that make the resource compliant
-        resource.versioning = "Enabled"
-        resource.is_auto_rotation_enabled = True
-        resource.rotation_interval_in_days = 90
-        resource.public_access_type = "NoPublicAccess"
-        resource.logging_enabled = True
-        resource.kms_key_id = "ocid1.key.oc1.iad.aaaaaaaexample"
-        resource.in_transit_encryption = "ENABLED"
-        resource.is_secure_boot_enabled = True
-        resource.legacy_endpoint_disabled = True
-        resource.is_legacy_imds_endpoint_disabled = True
-
-        # Mock client with compliant resource
-        network_client.buckets = [resource]
-        network_client.keys = [resource]
-        network_client.volumes = [resource]
-        network_client.boot_volumes = [resource]
-        network_client.instances = [resource]
-        network_client.file_systems = [resource]
-        network_client.databases = [resource]
-        network_client.security_lists = []
-        network_client.security_groups = []
-        network_client.rules = []
-        network_client.configuration = resource
-        network_client.users = []
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oraclecloud_provider(),
+            pytest.param(
+                [tcp_rule("::/0", 443, 443)],
+                id="ipv6-any-but-only-https",
             ),
-            mock.patch(
-                "prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port.network_client",
-                new=network_client,
+            pytest.param(
+                [
+                    {
+                        "source": "::/0",
+                        "protocol": "17",
+                        "udp_options": {
+                            "destination_port_range": {"min": RDP_PORT, "max": RDP_PORT}
+                        },
+                    }
+                ],
+                id="ipv6-any-udp-rdp",
             ),
-        ):
-            from prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port import (
-                network_security_list_ingress_from_internet_to_rdp_port,
-            )
-
-            check = network_security_list_ingress_from_internet_to_rdp_port()
-            result = check.execute()
-
-            assert isinstance(result, list)
-
-            # If results exist, verify PASS findings
-            if len(result) > 0:
-                # Find PASS results
-                pass_results = [r for r in result if r.status == "PASS"]
-
-                if pass_results:
-                    # Detailed assertions on first PASS result
-                    assert pass_results[0].status == "PASS"
-                    assert pass_results[0].status_extended is not None
-                    assert len(pass_results[0].status_extended) > 0
-
-                    # Verify resource identification
-                    assert pass_results[0].resource_id is not None
-                    assert pass_results[0].resource_name is not None
-                    assert pass_results[0].region is not None
-                    assert pass_results[0].compartment_id is not None
-
-                    # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
-                    assert (
-                        pass_results[0].check_metadata.CheckID
-                        == "network_security_list_ingress_from_internet_to_rdp_port"
-                    )
-                    assert pass_results[0].check_metadata.ServiceName == "network"
-
-    def test_resource_non_compliant(self):
-        """network_security_list_ingress_from_internet_to_rdp_port: Resource fails the check (FAIL)"""
-        network_client = mock.MagicMock()
-        network_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
-        network_client.audited_tenancy = OCI_TENANCY_ID
-
-        # Mock a non-compliant resource
-        resource = mock.MagicMock()
-        resource.id = "ocid1.resource.oc1.iad.bbbbbbbexample"
-        resource.name = "non-compliant-resource"
-        resource.region = OCI_REGION
-        resource.compartment_id = OCI_COMPARTMENT_ID
-        resource.lifecycle_state = "ACTIVE"
-        resource.tags = {"Environment": "Development"}
-
-        # Set attributes that make the resource non-compliant
-        resource.versioning = "Disabled"
-        resource.is_auto_rotation_enabled = False
-        resource.rotation_interval_in_days = None
-        resource.public_access_type = "ObjectRead"
-        resource.logging_enabled = False
-        resource.kms_key_id = None
-        resource.in_transit_encryption = "DISABLED"
-        resource.is_secure_boot_enabled = False
-        resource.legacy_endpoint_disabled = False
-        resource.is_legacy_imds_endpoint_disabled = False
-
-        # Mock client with non-compliant resource
-        network_client.buckets = [resource]
-        network_client.keys = [resource]
-        network_client.volumes = [resource]
-        network_client.boot_volumes = [resource]
-        network_client.instances = [resource]
-        network_client.file_systems = [resource]
-        network_client.databases = [resource]
-        network_client.security_lists = []
-        network_client.security_groups = []
-        network_client.rules = []
-        network_client.configuration = resource
-        network_client.users = []
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oraclecloud_provider(),
+            pytest.param(
+                [tcp_rule("0.0.0.0/0", 3380, 3388)],
+                id="ipv4-any-range-excluding-rdp",
             ),
-            mock.patch(
-                "prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port.network_client",
-                new=network_client,
+        ],
+    )
+    def test_resource_compliant(self, ingress_rules):
+        """network_security_list_ingress_from_internet_to_rdp_port: RDP is not publicly reachable"""
+        result = run_check([build_security_list(ingress_rules)])
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].resource_id == "ocid1.securitylist.oc1.iad.example"
+        assert result[0].resource_name == "test-security-list"
+        assert result[0].region == OCI_REGION
+        assert result[0].compartment_id == OCI_COMPARTMENT_ID
+        assert result[0].check_metadata.Provider == "oraclecloud"
+        assert (
+            result[0].check_metadata.CheckID
+            == "network_security_list_ingress_from_internet_to_rdp_port"
+        )
+        assert result[0].check_metadata.ServiceName == "network"
+
+    @pytest.mark.parametrize(
+        "ingress_rules,expected_source",
+        [
+            pytest.param(
+                [tcp_rule("0.0.0.0/0", RDP_PORT, RDP_PORT)],
+                "0.0.0.0/0",
+                id="ipv4-any-tcp-rdp",
             ),
-        ):
-            from prowler.providers.oraclecloud.services.network.network_security_list_ingress_from_internet_to_rdp_port.network_security_list_ingress_from_internet_to_rdp_port import (
-                network_security_list_ingress_from_internet_to_rdp_port,
-            )
+            pytest.param(
+                [tcp_rule("::/0", RDP_PORT, RDP_PORT)],
+                "::/0",
+                id="ipv6-any-tcp-rdp",
+            ),
+            pytest.param(
+                [tcp_rule("::/0", 3000, 4000)],
+                "::/0",
+                id="ipv6-any-tcp-range-covering-rdp",
+            ),
+            pytest.param(
+                [tcp_rule("::/0", None, None)],
+                "::/0",
+                id="ipv6-any-tcp-without-port-range",
+            ),
+            pytest.param(
+                [{"source": "::/0"}],
+                "::/0",
+                id="ipv6-any-without-protocol",
+            ),
+            pytest.param(
+                [{"source": "::/0", "protocol": "all"}],
+                "::/0",
+                id="ipv6-any-all-protocols",
+            ),
+            pytest.param(
+                [tcp_rule("::/0", 1, 65535)],
+                "::/0",
+                id="ipv6-any-tcp-every-port",
+            ),
+        ],
+    )
+    def test_resource_non_compliant(self, ingress_rules, expected_source):
+        """network_security_list_ingress_from_internet_to_rdp_port: RDP is reachable from the internet"""
+        result = run_check([build_security_list(ingress_rules)])
 
-            check = network_security_list_ingress_from_internet_to_rdp_port()
-            result = check.execute()
-
-            assert isinstance(result, list)
-
-            # Verify FAIL findings exist
-            if len(result) > 0:
-                # Find FAIL results
-                fail_results = [r for r in result if r.status == "FAIL"]
-
-                if fail_results:
-                    # Detailed assertions on first FAIL result
-                    assert fail_results[0].status == "FAIL"
-                    assert fail_results[0].status_extended is not None
-                    assert len(fail_results[0].status_extended) > 0
-
-                    # Verify resource identification
-                    assert fail_results[0].resource_id is not None
-                    assert fail_results[0].resource_name is not None
-                    assert fail_results[0].region is not None
-                    assert fail_results[0].compartment_id is not None
-
-                    # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
-                    assert (
-                        fail_results[0].check_metadata.CheckID
-                        == "network_security_list_ingress_from_internet_to_rdp_port"
-                    )
-                    assert fail_results[0].check_metadata.ServiceName == "network"
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            f"Security list test-security-list allows ingress from {expected_source} "
+            f"to port {RDP_PORT} (RDP)." == result[0].status_extended
+        )
+        assert result[0].resource_id == "ocid1.securitylist.oc1.iad.example"
+        assert result[0].check_metadata.Provider == "oraclecloud"
+        assert result[0].check_metadata.ServiceName == "network"
