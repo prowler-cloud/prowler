@@ -102,3 +102,13 @@ ignore:
     package:
       name: github.com/go-jose/go-jose/v4
       version: v4.1.5
+
+  # klauspost/compress 1.20.1 is compiled into the Trivy binary (usr/local/bin/trivy) of the
+  # SDK and API images. The zstd fix is 1.20.2, but no Trivy release ships it yet (0.76.2,
+  # the latest, and main still require 1.20.1). The impact is a panic on a crafted zstd
+  # frame, which at worst aborts the Trivy subprocess of that scan. Pinned to 1.20.1 so it
+  # stops matching with the next Trivy bump.
+  - vulnerability: CVE-2026-116591
+    package:
+      name: github.com/klauspost/compress
+      version: v1.20.1
