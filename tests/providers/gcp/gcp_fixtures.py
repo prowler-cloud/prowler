@@ -1012,6 +1012,7 @@ def mock_api_firewall_calls(client: MagicMock):
                 "allowed": [{"IPProtocol": "TCP"}],
                 "sourceRanges": ["10.0.15.0/24"],
                 "direction": "INGRESS",
+                "disabled": True,
             },
         ]
     }
