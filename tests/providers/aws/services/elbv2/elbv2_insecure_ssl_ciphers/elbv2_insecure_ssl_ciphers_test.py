@@ -45,8 +45,17 @@ class Test_elbv2_insecure_ssl_ciphers:
 
             assert len(result) == 0
 
+    @pytest.mark.parametrize(
+        "ssl_policy",
+        [
+            "ELBSecurityPolicy-TLS-1-2-2017-01",
+            "ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-3-FIPS-2023-04",
+        ],
+    )
     @mock_aws
-    def test_elbv2_listener_with_secure_policy(self):
+    def test_elbv2_listener_with_secure_policy(self, ssl_policy):
+        """Accept an approved secure TLS policy on an HTTPS listener."""
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -93,7 +102,7 @@ class Test_elbv2_insecure_ssl_ciphers:
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTPS",
             Port=443,
-            SslPolicy="ELBSecurityPolicy-TLS-1-2-2017-01",
+            SslPolicy=ssl_policy,
             DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
         )
 
