@@ -129,6 +129,63 @@ def _covers_all_addresses(ingress_rule: Any) -> bool:
     return False
 
 
+def get_any_address_ip_permission(ingress_rule: Any) -> dict:
+    """
+    Build an IpPermission that only contains the any-address sources of the given ingress rule.
+
+    The any-address sources are 0.0.0.0/0 and ::/0. While the other CIDRs of one IP
+    version still cover every address of that version together, such as 0.0.0.0/1 and
+    128.0.0.0/1, the widest of them (those not inside another one) are added too, so
+    the rule never stays open to every address. Narrower CIDRs not needed for that,
+    such as 10.0.0.0/8 next to 0.0.0.0/1 and 128.0.0.0/1, stay.
+
+    Revoking the original rule would also remove the other sources that share it
+    (private CIDRs, other IPv6 ranges, prefix lists and security group references).
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+
+    @return: IpPermission with the same protocol and ports and only the any-address ranges
+    """
+    ip_permission = {
+        key: ingress_rule[key]
+        for key in ("IpProtocol", "FromPort", "ToPort")
+        if key in ingress_rule
+    }
+    for key, cidr_key, any_cidr in (
+        ("IpRanges", "CidrIp", "0.0.0.0/0"),
+        ("Ipv6Ranges", "CidrIpv6", "::/0"),
+    ):
+        ip_ranges = ingress_rule.get(key, [])
+        revoked = {
+            index
+            for index, ip_range in enumerate(ip_ranges)
+            if ip_range.get(cidr_key) == any_cidr
+        }
+        remaining = [index for index in range(len(ip_ranges)) if index not in revoked]
+        while remaining and _covers_all_addresses(
+            {key: [ip_ranges[index] for index in remaining]}
+        ):
+            networks = {
+                index: ipaddress.ip_network(ip_ranges[index][cidr_key], strict=False)
+                for index in remaining
+            }
+            widest = [
+                index
+                for index in remaining
+                if not any(
+                    networks[index] != other and networks[index].subnet_of(other)
+                    for other in networks.values()
+                )
+            ]
+            revoked.update(widest)
+            remaining = [index for index in remaining if index not in revoked]
+        any_address_ranges = [
+            ip_range for index, ip_range in enumerate(ip_ranges) if index in revoked
+        ]
+        ip_permission[key] = any_address_ranges
+    return ip_permission
+
+
 def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
     """
     Check if an input CIDR is public
