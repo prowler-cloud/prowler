@@ -22,7 +22,10 @@ def _is_source_within_vcn(source: str | None, vcn_cidr_blocks: list[str]) -> boo
     except (TypeError, ValueError):
         return False
     for cidr in vcn_cidr_blocks:
-        vcn_network = ipaddress.ip_network(cidr, strict=False)
+        try:
+            vcn_network = ipaddress.ip_network(cidr, strict=False)
+        except (TypeError, ValueError):
+            continue
         if source_network.version == vcn_network.version and (
             source_network.subnet_of(vcn_network)
         ):

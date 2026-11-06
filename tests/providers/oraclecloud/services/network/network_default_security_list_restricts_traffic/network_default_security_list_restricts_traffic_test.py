@@ -249,6 +249,8 @@ class Test_network_default_security_list_restricts_traffic:
             (["10.0.0.0/16"], "10.0.1.7/24", "PASS"),
             (["10.0.0.0/16"], "all-iad-services-in-oracle-services-network", "FAIL"),
             (["10.0.0.0/16"], "2001:db8::/32", "FAIL"),
+            (["not-a-cidr", "10.0.0.0/16"], "10.0.1.0/24", "PASS"),
+            (["not-a-cidr"], "10.0.1.0/24", "FAIL"),
         ],
     )
     def test_ingress_source_vcn_containment(self, vcn_cidrs, source, expected_status):
