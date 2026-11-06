@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   actionStatusBadge,
+  actorParts,
   frameworkLabel,
   isDriftDetection,
   isLighthouseAction,
@@ -140,6 +141,23 @@ describe("realtime display helpers", () => {
     ).toBe("assumed-role/ci-deployer/gh");
     expect(shortArn("arn:aws:iam::123456789012:root")).toBe("root");
     expect(shortArn("")).toBe("Unknown");
+  });
+
+  it("names who acted first and the role they used second", () => {
+    expect(
+      actorParts(
+        "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_Admin_0123/ana@example.com",
+      ),
+    ).toEqual({ name: "ana@example.com", via: "AWSReservedSSO_Admin_0123" });
+    expect(actorParts("arn:aws:iam::123456789012:user/ops/bob")).toEqual({
+      name: "bob",
+      via: null,
+    });
+    expect(actorParts("arn:aws:iam::123456789012:root")).toEqual({
+      name: "root",
+      via: null,
+    });
+    expect(actorParts("")).toEqual({ name: "Unknown", via: null });
   });
 
   it("formats a cost change as ratio and dollars", () => {

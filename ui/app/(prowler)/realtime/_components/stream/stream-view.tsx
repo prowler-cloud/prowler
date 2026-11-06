@@ -5,13 +5,14 @@ import { ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { ActorCell } from "@/app/(prowler)/realtime/_components/shared/actor-cell";
+import { FitText } from "@/app/(prowler)/realtime/_components/shared/fit-text";
 import { RealtimeBadge } from "@/app/(prowler)/realtime/_components/shared/realtime-badge";
 import { RealtimeEmptyState } from "@/app/(prowler)/realtime/_components/shared/realtime-empty-state";
 import { useUrlParam } from "@/app/(prowler)/realtime/_components/shared/use-url-param";
 import {
   detectionStatusBadge,
   formatDateTime,
-  shortArn,
 } from "@/app/(prowler)/realtime/_lib/display";
 import {
   REALTIME_PARAM,
@@ -48,40 +49,40 @@ const getColumns = (providerId: string): ColumnDef<RealtimeEvent>[] => [
   {
     accessorKey: "event_name",
     header: "Event",
-    cell: ({ row }) => (
-      <div className="flex flex-col gap-0.5">
-        <span className="text-text-neutral-primary font-mono text-xs">
-          {row.original.event_name}
-        </span>
-        <span className="text-text-neutral-tertiary text-xs">
-          {row.original.event_source}
-          {row.original.error_code && (
-            <span className="text-text-error-primary">
-              {" · "}
-              {row.original.error_code}
-            </span>
-          )}
-        </span>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const { event_name: name, event_source: source } = row.original;
+      const error = row.original.error_code;
+      return (
+        <div
+          className="flex min-w-0 flex-col gap-0.5"
+          title={[name, source, error].filter(Boolean).join(" · ")}
+        >
+          <span className="text-text-neutral-primary font-mono text-xs wrap-anywhere">
+            {name}
+          </span>
+          <FitText className="text-text-neutral-tertiary text-xs">
+            {source}
+            {error && (
+              <span className="text-text-error-primary">
+                {" · "}
+                {error}
+              </span>
+            )}
+          </FitText>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "user_arn",
     header: "Actor",
-    cell: ({ row }) => (
-      <span
-        className="text-text-neutral-secondary font-mono text-xs"
-        title={row.original.user_arn}
-      >
-        {shortArn(row.original.user_arn)}
-      </span>
-    ),
+    cell: ({ row }) => <ActorCell arn={row.original.user_arn} />,
   },
   {
     accessorKey: "region",
     header: "Region",
     cell: ({ row }) => (
-      <span className="text-text-neutral-tertiary text-xs">
+      <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
         {row.original.region}
       </span>
     ),
@@ -90,8 +91,10 @@ const getColumns = (providerId: string): ColumnDef<RealtimeEvent>[] => [
     accessorKey: "source_ip",
     header: "Source IP",
     cell: ({ row }) => (
-      <span className="text-text-neutral-secondary font-mono text-xs">
-        {row.original.source_ip}
+      <span title={row.original.source_ip}>
+        <FitText className="text-text-neutral-secondary font-mono text-xs">
+          {row.original.source_ip}
+        </FitText>
       </span>
     ),
   },
@@ -108,11 +111,15 @@ const getColumns = (providerId: string): ColumnDef<RealtimeEvent>[] => [
           href={realtimeHref(providerId, REALTIME_TAB.DETECTIONS, {
             "filter[rule_id]": ruleId ?? undefined,
           })}
-          className="inline-flex"
+          className="flex min-w-0 flex-col items-start gap-0.5"
+          title={ruleId ?? undefined}
         >
-          <RealtimeBadge descriptor={detectionStatusBadge(status)}>
-            {ruleId ? <span className="font-mono">{ruleId} ·</span> : null}
-          </RealtimeBadge>
+          <RealtimeBadge descriptor={detectionStatusBadge(status)} />
+          {ruleId && (
+            <FitText className="text-text-neutral-tertiary font-mono text-xs">
+              {ruleId}
+            </FitText>
+          )}
         </Link>
       );
     },

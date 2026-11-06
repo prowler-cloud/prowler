@@ -391,6 +391,20 @@ export const shortArn = (arn: string): string => {
   return resource || arn;
 };
 
+export interface ActorParts {
+  name: string;
+  via: string | null;
+}
+
+/** Who acted and through what: `assumed-role/Admin/ana` is `ana` via `Admin`. */
+export const actorParts = (arn: string): ActorParts => {
+  const [kind, ...path] = shortArn(arn).split("/");
+  if (kind === "assumed-role" && path.length >= 2) {
+    return { name: path.slice(1).join("/"), via: path[0] };
+  }
+  return { name: path.at(-1) ?? kind, via: null };
+};
+
 /** `3.8x · +$184.00`. */
 export const formatChange = (ratio: number, delta: number): string =>
   `${ratio.toFixed(1)}x · +${formatMoney(delta)}`;

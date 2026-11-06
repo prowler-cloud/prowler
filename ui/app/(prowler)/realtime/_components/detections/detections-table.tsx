@@ -2,6 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { ActorCell } from "@/app/(prowler)/realtime/_components/shared/actor-cell";
+import { FitText } from "@/app/(prowler)/realtime/_components/shared/fit-text";
 import { RealtimeBadge } from "@/app/(prowler)/realtime/_components/shared/realtime-badge";
 import { RealtimeEmptyState } from "@/app/(prowler)/realtime/_components/shared/realtime-empty-state";
 import { RealtimeFilters } from "@/app/(prowler)/realtime/_components/shared/realtime-filters";
@@ -65,10 +67,15 @@ const columns: ColumnDef<RealtimeDetection>[] = [
             </Badge>
           )}
         </span>
-        <span className="text-text-neutral-tertiary truncate font-mono text-xs">
-          {[row.original.resource, row.original.region]
-            .filter(Boolean)
-            .join(" · ")}
+        <span title={row.original.resource}>
+          <FitText className="text-text-neutral-tertiary font-mono text-xs">
+            {[
+              row.original.resource && shortArn(row.original.resource),
+              row.original.region,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </FitText>
         </span>
       </div>
     ),
@@ -88,14 +95,7 @@ const columns: ColumnDef<RealtimeDetection>[] = [
   {
     accessorKey: "actor",
     header: "Actor",
-    cell: ({ row }) => (
-      <span
-        className="text-text-neutral-secondary font-mono text-xs"
-        title={row.original.actor}
-      >
-        {shortArn(row.original.actor)}
-      </span>
-    ),
+    cell: ({ row }) => <ActorCell arn={row.original.actor} />,
   },
   {
     accessorKey: "status",
