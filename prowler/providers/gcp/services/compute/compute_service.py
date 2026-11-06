@@ -327,6 +327,7 @@ class Compute(GCPService):
                                 source_ranges=firewall.get("sourceRanges", []),
                                 direction=firewall["direction"],
                                 allowed_rules=firewall.get("allowed", []),
+                                disabled=firewall.get("disabled", False),
                                 project_id=project_id,
                             )
                         )
@@ -742,6 +743,7 @@ class Firewall(BaseModel):
     source_ranges: list
     direction: str
     allowed_rules: list
+    disabled: bool = False
     project_id: str
 
 
