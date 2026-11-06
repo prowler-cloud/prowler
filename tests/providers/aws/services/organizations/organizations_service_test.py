@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 import botocore
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -18,6 +19,12 @@ MANAGEMENT_ACCOUNT_ID = "111111111111"
 DELEGATED_ADMIN_ACCOUNT_ID = "222222222222"
 SECOND_DELEGATED_ADMIN_ACCOUNT_ID = "333333333333"
 ORGANIZATION_ID = "o-abcde12345"
+# Access denied, any other AWS error, and a failure that never reached AWS
+COLLECTOR_ERRORS = [
+    "AccessDeniedException",
+    "TooManyRequestsException",
+    ConnectionResetError("Connection reset by peer"),
+]
 ORGANIZATION_ARN = (
     f"arn:aws:organizations::{MANAGEMENT_ACCOUNT_ID}:organization/{ORGANIZATION_ID}"
 )
@@ -66,7 +73,8 @@ def build_mock_make_api_call(
         delegated_services_pages: Pages of service principal strings keyed by the
             account ID passed to `ListDelegatedServicesForAccount`.
         describe_organization: Override for the `DescribeOrganization` organization.
-        errors: Error codes to raise, keyed by operation name.
+        errors: Error codes (raised as ClientError) or exceptions to raise, keyed by
+            operation name.
 
     Returns:
         A callable suitable for patching `botocore.client.BaseClient._make_api_call`.
@@ -103,6 +111,8 @@ def build_mock_make_api_call(
         with a key the service does not define fails here rather than in the collector.
         """
         if operation_name in errors:
+            if isinstance(errors[operation_name], Exception):
+                raise errors[operation_name]
             raise botocore.exceptions.ClientError(
                 {"Error": {"Code": errors[operation_name], "Message": "denied"}},
                 operation_name,
@@ -342,8 +352,9 @@ class Test_Organizations_Service:
             SECOND_DELEGATED_ADMIN_ACCOUNT_ID: ["macie.amazonaws.com"],
         }
 
-    def test_list_aws_service_access_for_organization_access_denied(self):
-        """A denied trusted access read is the sentinel, not the page the mock offered.
+    @pytest.mark.parametrize("error", COLLECTOR_ERRORS)
+    def test_list_aws_service_access_for_organization_error(self, error):
+        """A failed trusted access read is the sentinel, not the page the mock offered.
 
         The mock is given a service principal so that the empty list cannot be mistaken
         for the collector having simply read nothing.
@@ -355,15 +366,16 @@ class Test_Organizations_Service:
             "botocore.client.BaseClient._make_api_call",
             new=build_mock_make_api_call(
                 enabled_service_principals_pages=[["guardduty.amazonaws.com"]],
-                errors={"ListAWSServiceAccessForOrganization": "AccessDeniedException"},
+                errors={"ListAWSServiceAccessForOrganization": error},
             ),
         ):
             organizations = Organizations(aws_provider)
 
         assert organizations.organization.enabled_service_principals is None
 
-    def test_list_delegated_services_for_account_access_denied(self):
-        """A denied per-account read leaves that account keyed to the sentinel.
+    @pytest.mark.parametrize("error", COLLECTOR_ERRORS)
+    def test_list_delegated_services_for_account_error(self, error):
+        """A failed per-account read leaves that account keyed to the sentinel.
 
         The administrator stays in the map so a caller can tell an account whose
         delegations are unknown from an account that is not an administrator at all.
@@ -380,7 +392,7 @@ class Test_Organizations_Service:
                 delegated_services_pages={
                     DELEGATED_ADMIN_ACCOUNT_ID: [["guardduty.amazonaws.com"]]
                 },
-                errors={"ListDelegatedServicesForAccount": "AccessDeniedException"},
+                errors={"ListDelegatedServicesForAccount": error},
             ),
         ):
             organizations = Organizations(aws_provider)
