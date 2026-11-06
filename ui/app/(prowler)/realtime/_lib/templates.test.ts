@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  COST_CLOUDFORMATION,
+  COST_TERRAFORM,
   FEED_CLOUDFORMATION,
   FEED_TERRAFORM,
   REMEDIATION_CLOUDFORMATION,
@@ -35,6 +37,8 @@ describe("embedded Prowler Realtime templates", () => {
     [REMEDIATION_TERRAFORM, terraformModule("realtime-remediation-role")],
     [FEED_CLOUDFORMATION, "cloudformation/prowler-realtime-feed.yml"],
     [FEED_TERRAFORM, terraformModule("realtime-feed")],
+    [COST_CLOUDFORMATION, "cloudformation/prowler-realtime-cost.yml"],
+    [COST_TERRAFORM, terraformModule("realtime-cost")],
   ])("%s matches the file in permissions/templates", (template, path) => {
     expect(template.content).toBe(repoFile(path));
   });
@@ -52,6 +56,13 @@ describe("embedded Prowler Realtime templates", () => {
         /(?:Action:|actions\s*=)[^\n]*\b[a-z0-9-]+:\*/,
       );
       expect(template.content).toMatch(/sts:ExternalId/);
+    }
+  });
+
+  it("grants the scan role Cost Explorer reads and nothing else", () => {
+    for (const template of [COST_CLOUDFORMATION, COST_TERRAFORM]) {
+      const actions = template.content.match(/\b[a-z0-9-]+:[A-Z*][A-Za-z*]*/g);
+      expect(new Set(actions)).toEqual(new Set(["ce:GetCostAndUsage"]));
     }
   });
 });
