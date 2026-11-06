@@ -1,0 +1,20 @@
+{
+  "name": "prowler-plugins",
+  "description": "Prowler Cloud Security for Codex",
+  "owner": {
+    "name": "Prowler",
+    "email": "support@prowler.com"
+  },
+  "plugins": [
+    {
+      "name": "prowler",
+      "source": {
+        "source": "local",
+        "path": "./codex_plugins/prowler"
+      },
+      "description": "Prowler for Codex — cloud security and compliance skills powered by the Prowler MCP server.",
+      "category": "security",
+      "homepage": "https://prowler.com"
+    }
+  ]
+}
