@@ -29,6 +29,7 @@ from prowler.lib.check.compliance_models import (
     get_universal_compliance_entry_point_dirs,
     load_compliance_framework_universal,
 )
+from prowler.lib.check.models import CheckMetadata
 from tests.lib.outputs.compliance.fixtures import (
     CIS_1_4_AWS,
     ENS_RD2022_AWS,
@@ -908,13 +909,38 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_providers(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert fw.get_providers() == ["azure", "cloudflare"]
         assert fw.supports_provider("azure")
+        assert fw.supports_provider("cloudflare")
+
+    def test_every_requirement_declares_cloudflare(self):
+        # get_providers() unions provider keys across requirements, so it stays
+        # green even if a single requirement carries the cloudflare key. Assert
+        # per requirement instead, including the ones that map to no Cloudflare
+        # check: an explicit empty list records "reviewed, nothing applies",
+        # whereas a missing key is an unreviewed gap.
+        fw = load_compliance_framework_universal(self._path())
+        missing = [req.id for req in fw.requirements if "cloudflare" not in req.checks]
+        assert missing == []
+
+    def test_cloudflare_check_ids_are_valid(self):
+        fw = load_compliance_framework_universal(self._path())
+        referenced = {
+            check
+            for req in fw.requirements
+            for check in req.checks.get("cloudflare", [])
+        }
+        assert referenced, "expected at least one Cloudflare check mapping"
+
+        available = set(CheckMetadata.get_bulk(provider="cloudflare"))
+        assert (
+            referenced <= available
+        ), f"unknown Cloudflare CheckIDs: {sorted(referenced - available)}"
 
     def test_covers_all_five_themes(self):
         fw = load_compliance_framework_universal(self._path())
@@ -1380,3 +1406,42 @@ class TestGetUniversalComplianceEntryPointDirs:
             mock_ep.return_value = [self._entry_point(file_path=module_file)]
 
             assert get_universal_compliance_entry_point_dirs() == [ep_dir]
+
+
+class TestGdprAzureFramework:
+    """Schema and content checks for the GDPR Azure legacy framework."""
+
+    @staticmethod
+    def _path():
+        base = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "prowler",
+            "compliance",
+            "azure",
+            "gdpr_azure.json",
+        )
+        return os.path.normpath(base)
+
+    def test_loads_and_supports_azure(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+        assert fw.framework == "GDPR"
+        assert fw.get_providers() == ["azure"]
+        assert fw.supports_provider("azure")
+
+    def test_covers_expected_articles(self):
+        fw = load_compliance_framework_universal(self._path())
+        ids = {req.id for req in fw.requirements}
+        assert ids == {"article_25", "article_30", "article_32"}
+
+    def test_requirements_have_azure_checks(self):
+        fw = load_compliance_framework_universal(self._path())
+        for req in fw.requirements:
+            assert req.checks.get("azure")
+
+    def test_appears_in_bulk_azure_frameworks(self):
+        bulk = get_bulk_compliance_frameworks_universal("azure")
+        assert "gdpr_azure" in bulk

@@ -1,23 +1,28 @@
 "use client";
 
 import {
-  getProviderName,
   getProviderLogo,
+  getProviderName,
 } from "@/components/shadcn/entities/get-provider-logo";
-import { ProviderType } from "@/types";
+import {
+  getProviderDisplayName,
+  isKnownProviderType,
+  type ProviderType,
+} from "@/types/providers";
 
 export const ProviderTitleDocs = ({
   providerType,
 }: {
   providerType: ProviderType;
 }) => {
+  const isKnown = isKnownProviderType(providerType);
   return (
     <div className="flex gap-4">
-      {providerType && getProviderLogo(providerType as ProviderType)}
+      {isKnown && getProviderLogo(providerType)}
       <span className="text-lg font-semibold">
-        {providerType
-          ? getProviderName(providerType as ProviderType)
-          : "Unknown Provider"}
+        {isKnown
+          ? getProviderName(providerType)
+          : getProviderDisplayName(providerType)}
       </span>
     </div>
   );

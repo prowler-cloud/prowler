@@ -73,6 +73,7 @@ describe("lighthouse-v2.adapter", () => {
       expect(mapLighthouseV2Provider(provider)).toEqual({
         id: "openai-compatible",
         name: "OpenAI Compatible",
+        credentialsOptional: false,
       });
       expect(mapLighthouseV2Model(model)).toEqual({
         id: "gpt-5.5",
@@ -179,6 +180,28 @@ describe("lighthouse-v2.adapter", () => {
           attributes: { name: "Mystery" },
         }),
       ).toThrow(/Unsupported Lighthouse v2 provider/);
+    });
+  });
+
+  describe("when reading provider capabilities", () => {
+    it("should mark Bedrock credentials optional only when the API says so", () => {
+      // Given
+      const resource = (credentials_optional?: boolean) => ({
+        id: "bedrock",
+        type: "lighthouse-supported-providers",
+        attributes: { name: "AWS Bedrock", credentials_optional },
+      });
+
+      // When / Then
+      expect(mapLighthouseV2Provider(resource(true)).credentialsOptional).toBe(
+        true,
+      );
+      expect(mapLighthouseV2Provider(resource(false)).credentialsOptional).toBe(
+        false,
+      );
+      expect(
+        mapLighthouseV2Provider(resource(undefined)).credentialsOptional,
+      ).toBe(false);
     });
   });
 

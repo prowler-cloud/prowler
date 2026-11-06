@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SAMPLE_DATA_READ_ONLY_MESSAGE } from "@/lib/sample-preview/sample-guards";
+
 // ---------------------------------------------------------------------------
 // Hoist mocks to avoid deep dependency chains
 // ---------------------------------------------------------------------------
@@ -43,6 +45,32 @@ describe("FloatingSelectionActions — onBeforeOpen error handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  it.each([
+    { selectedFindingIds: ["sample-finding-1"] },
+    {
+      selectedFindingIds: ["s3_bucket_public_access"],
+      disabledReason: SAMPLE_DATA_READ_ONLY_MESSAGE,
+    },
+  ])(
+    "blocks sample selection actions before resolving IDs: %j",
+    async (props) => {
+      const onBeforeOpen = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <FloatingSelectionActions
+          selectedCount={1}
+          {...props}
+          onBeforeOpen={onBeforeOpen}
+        />,
+      );
+      const button = screen.getByRole("button");
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("title", SAMPLE_DATA_READ_ONLY_MESSAGE);
+      await user.click(button);
+      expect(onBeforeOpen).not.toHaveBeenCalled();
+    },
+  );
 
   it("should reset isResolving (re-enable button) when onBeforeOpen rejects", async () => {
     // Given — onBeforeOpen always throws

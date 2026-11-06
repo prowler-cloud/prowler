@@ -193,10 +193,10 @@ def initialize_sentry():
 
     sentry_sdk.init(
         dsn=sentry_dsn,
-        # Add data like request headers and IP for users,
-        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
         before_send=before_send,
-        send_default_pii=True,
+        # No user identity, IPs, cookies, headers or request bodies: bodies carry emails and provider details.
+        send_default_pii=False,
+        max_request_body_size="never",
         traces_sample_rate=env.float("DJANGO_SENTRY_TRACES_SAMPLE_RATE", default=0.02),
         _experiments={
             # Set continuous_profiling_auto_start to True

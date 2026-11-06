@@ -1,1 +1,0 @@
-Stop relaying upstream response bodies to agents: a failed request now reaches the caller as a sentence this server wrote, with the full body kept to the logs, so a gateway error page or a debug traceback can no longer be replayed into a model's context

@@ -1,1 +1,0 @@
-Failures shared by every tool - a rejected credential, a missing permission, a rate limit, an outage, an unreachable API, a bad argument - are now explained with a message that says what went wrong and what to do about it

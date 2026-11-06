@@ -232,3 +232,57 @@ class TestDockerHubEnumeration:
         for img in provider.images:
             assert not img.startswith("docker.io/"), f"Unexpected host prefix in {img}"
         assert len(provider.images) == 3
+
+
+class TestNonImageArtifactFiltering:
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_cosign_tags_skipped_without_manifest_fetch(self, mock_factory):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["app"]
+        adapter.list_tags.return_value = [
+            "latest",
+            "sha256-" + "a" * 64 + ".sig",
+            "sha256-" + "b" * 64 + ".att",
+            "sha256-" + "c" * 64 + ".sbom",
+        ]
+        adapter.is_container_image.return_value = True
+        mock_factory.return_value = adapter
+
+        provider = _build_provider()
+        assert provider.images == ["myregistry.io/app:latest"]
+        adapter.is_container_image.assert_called_once_with("app", "latest")
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_non_image_artifacts_skipped(self, mock_factory):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["app", "charts/app"]
+        adapter.list_tags.return_value = ["1.0"]
+        adapter.is_container_image.side_effect = lambda repo, _tag: repo == "app"
+        mock_factory.return_value = adapter
+
+        provider = _build_provider()
+        assert provider.images == ["myregistry.io/app:1.0"]
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_discovered_images_tracked_for_error_degradation(self, mock_factory):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["app"]
+        adapter.list_tags.return_value = ["latest"]
+        adapter.is_container_image.return_value = True
+        mock_factory.return_value = adapter
+
+        provider = _build_provider(images=["nginx:latest"])
+        assert "myregistry.io/app:latest" in provider._registry_discovered
+        assert "nginx:latest" not in provider._registry_discovered
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_explicit_image_also_discovered_keeps_hard_failure(self, mock_factory):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["myapp"]
+        adapter.list_tags.return_value = ["latest"]
+        adapter.is_container_image.return_value = True
+        mock_factory.return_value = adapter
+
+        provider = _build_provider(images=["myregistry.io/myapp:latest"])
+        # The user asked for it explicitly: no error degradation
+        assert "myregistry.io/myapp:latest" not in provider._registry_discovered

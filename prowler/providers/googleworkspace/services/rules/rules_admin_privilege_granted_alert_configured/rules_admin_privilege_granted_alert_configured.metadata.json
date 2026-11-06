@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "monitoring",
-  "Description": "The **User granted Admin privilege** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when a user is given elevated admin privileges.",
+  "Description": "The **User granted Admin privilege** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, recipients set to all super administrators, and severity set to Medium or higher. This ensures administrators are notified when a user is given elevated admin privileges.",
   "Risk": "Without this alert enabled, administrators will not be notified when users receive **elevated admin privileges**. Unauthorized privilege escalation could indicate account compromise or insider threats and requires immediate verification.",
   "RelatedUrl": "",
   "AdditionalURLs": [

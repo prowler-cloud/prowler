@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, sdk, api]
   auto_invoke: "Writing Python tests with pytest"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -46,11 +46,16 @@ def authenticated_client(client, user):
 
 # Fixture with teardown
 @pytest.fixture
-def temp_file():
-    path = Path("/tmp/test_file.txt")
+def connection():
+    conn = open_connection()
+    yield conn  # Test runs here
+    conn.close()  # Cleanup after test
+
+# Prefer the built-in tmp_path fixture over hardcoded /tmp paths
+def test_writes_file(tmp_path):
+    path = tmp_path / "test_file.txt"
     path.write_text("test content")
-    yield path  # Test runs here
-    path.unlink()  # Cleanup after test
+    assert path.read_text() == "test content"
 
 # Fixture scopes
 @pytest.fixture(scope="module")  # Once per module
@@ -163,26 +168,37 @@ def test_unix_specific():
 
 ## Async Tests
 
-```python
-import pytest
+Only `mcp_server/` has `pytest-asyncio`, configured with `asyncio_mode = "auto"` (no marker needed). The SDK and API test suites do not install it, so `@pytest.mark.asyncio` does nothing there.
 
-@pytest.mark.asyncio
+```python
+# mcp_server/tests
 async def test_async_function():
     result = await async_fetch_data()
     assert result is not None
 ```
 
+## Prowler Test Environment
+
+| Plugin / file | Effect |
+|---------------|--------|
+| `pytest-xdist` | `-n auto` runs tests in parallel (used by CI) |
+| `pytest-randomly` | Random test order every run: tests must not depend on each other. Use `-p no:randomly` to reproduce an ordering bug |
+| `pytest-env` (`[tool.pytest_env]` in root `pyproject.toml`) | Sets fake `AWS_*` credentials for moto/boto3 |
+| `tests/conftest.py` | Autouse fixture that removes attributes tests set on `mock.MagicMock` and friends at class level |
+| `api/src/backend/pytest.ini` | `DJANGO_SETTINGS_MODULE = config.django.testing` for the API |
+
 ## Commands
 
 ```bash
-pytest                          # Run all tests
-pytest -v                       # Verbose output
-pytest -x                       # Stop on first failure
-pytest -k "test_user"           # Filter by name
-pytest -m "not slow"            # Filter by marker
-pytest --cov=src                # With coverage
-pytest -n auto                  # Parallel (pytest-xdist)
-pytest --tb=short               # Short traceback
+uv run pytest                          # Run all tests (from the component root: repo root, api/ or mcp_server/)
+uv run pytest -v                       # Verbose output
+uv run pytest -x                       # Stop on first failure
+uv run pytest -k "test_user"           # Filter by name
+uv run pytest -m "not slow"            # Filter by marker
+uv run pytest --cov=./prowler          # With coverage
+uv run pytest -n auto                  # Parallel (pytest-xdist)
+uv run pytest --tb=short               # Short traceback
+uv run pytest -p no:randomly           # Disable random ordering
 ```
 
 ## References

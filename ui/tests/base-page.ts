@@ -38,6 +38,26 @@ export abstract class BasePage {
     await this.page.reload();
   }
 
+  /**
+   * An empty tenant redirects each fresh browser context to the add-provider
+   * wizard once. Suites expect a plain landing, so mark that first run as done
+   * with the browser-wide key (the per-tenant one is only written by the app).
+   * Written right away when the page is already on an app origin, and
+   * registered as an init script for every later document load, whatever the
+   * origin: localStorage is per origin and the Registry fixture profiles serve
+   * the app from several ports. sign-up.spec covers the redirect itself with a
+   * brand-new tenant.
+   */
+  async skipFirstRunRedirect(): Promise<void> {
+    const markHandled = () => {
+      window.localStorage.setItem("prowler.first-run", "true");
+    };
+    await this.page.addInitScript(markHandled);
+    if (/^https?:/.test(this.page.url())) {
+      await this.page.evaluate(markHandled);
+    }
+  }
+
   async goBack(): Promise<void> {
     await this.page.goBack();
   }

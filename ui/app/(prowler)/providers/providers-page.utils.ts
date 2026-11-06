@@ -5,6 +5,7 @@ import {
 } from "@/actions/organizations/organizations";
 import { getAllProviders, getProviders } from "@/actions/providers";
 import { PROVIDERS_FILTER_PARAM } from "@/actions/providers/providers-filters";
+import { getRegistryProviderLogos } from "@/actions/registry/registry";
 import { getSchedules } from "@/actions/schedules";
 import {
   extractFiltersAndQuery,
@@ -141,6 +142,14 @@ const getProviderLastScanAt = (
 
   return provider.attributes.connection.last_checked_at ?? null;
 };
+
+// Only a page that lists a registry provider pays for the registry round trip.
+const loadRegistryLogos = async (
+  providersResponse: ProvidersApiResponse | undefined,
+): Promise<Record<string, string>> =>
+  providersResponse?.data.some((provider) => provider.attributes.is_dynamic)
+    ? getRegistryProviderLogos().catch(() => ({}))
+    : {};
 
 const enrichProviders = (
   providersResponse: ProvidersApiResponse | undefined,
@@ -557,6 +566,16 @@ export async function loadProvidersAccountsViewData({
       data: [],
     };
 
+  const providersRequest = resolveActionResult(
+    getProviders({
+      filters: providerFilters,
+      page,
+      pageSize,
+      query,
+      sort: encodedSort,
+    }),
+  );
+
   const [
     providersResponse,
     allProvidersResponse,
@@ -565,15 +584,7 @@ export async function loadProvidersAccountsViewData({
     organizationsResponse,
     organizationNodesResponse,
   ] = await Promise.all([
-    resolveActionResult(
-      getProviders({
-        filters: providerFilters,
-        page,
-        pageSize,
-        query,
-        sort: encodedSort,
-      }),
-    ),
+    providersRequest,
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
     resolveActionResult(getAllProviders()),
@@ -619,6 +630,7 @@ export async function loadProvidersAccountsViewData({
     providerGroups: allProviderGroupsResponse?.data ?? [],
     rows,
     hierarchyStatus,
+    registryLogos: providersRequest.then(loadRegistryLogos),
   };
 }
 

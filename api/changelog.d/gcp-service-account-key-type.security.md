@@ -1,0 +1,1 @@
+GCP `service_account` provider secrets require a key with `"type": "service_account"` and a Google `token_uri`, rejecting `external_account` and other credential types or custom token endpoints that could read worker files or reach internal URLs
