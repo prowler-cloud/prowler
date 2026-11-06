@@ -230,6 +230,8 @@ Resources:
                   - "lightsail:GetRelationalDatabases"
                   - "macie2:GetMacieSession"
                   - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "oam:GetSinkPolicy"
+                  - "oam:ListTagsForResource"
                   - "rolesanywhere:ListProfiles"
                   - "rolesanywhere:ListTagsForResource"
                   - "rolesanywhere:ListTrustAnchors"
