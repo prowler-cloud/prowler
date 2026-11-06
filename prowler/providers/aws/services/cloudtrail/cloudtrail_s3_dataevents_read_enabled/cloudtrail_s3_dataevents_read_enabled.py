@@ -37,6 +37,15 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
                                     findings.append(report)
                     # advanced event selectors
                     elif data_event.is_advanced:
+                        # Skip selectors whose readOnly field excludes read events
+                        if any(
+                            field_selector["Field"] == "readOnly"
+                            and "true" not in field_selector.get("Equals", ["true"])
+                            for field_selector in data_event.event_selector[
+                                "FieldSelectors"
+                            ]
+                        ):
+                            continue
                         for field_selector in data_event.event_selector[
                             "FieldSelectors"
                         ]:
