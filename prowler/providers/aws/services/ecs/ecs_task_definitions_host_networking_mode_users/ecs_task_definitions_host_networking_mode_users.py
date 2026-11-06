@@ -17,8 +17,10 @@ class ecs_task_definitions_host_networking_mode_users(Check):
             failed_containers = []
             if task_definition.network_mode == "host":
                 for container in task_definition.container_definitions:
-                    if not container.privileged and (
-                        container.user == "root" or container.user == ""
+                    if not container.privileged and container.user.split(":", 1)[0] in (
+                        "",
+                        "root",
+                        "0",
                     ):
                         report.status = "FAIL"
                         failed_containers.append(container.name)
