@@ -1,5 +1,4 @@
 import json
-from enum import Enum
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -72,9 +71,7 @@ class OAM(AWSService):
     def _get_sink_policy(self, regional_client):
         """Retrieves the resource policy of every sink in the specified region.
 
-        A policy is stored on the sink only when it decodes to a populated JSON object,
-        so ``Sink.policy`` is a readable policy document or None and never a shape a
-        consumer cannot evaluate.
+        A sink without a policy raises ResourceNotFoundException and keeps policy None.
 
         Args:
             regional_client: AWS regional client for the OAM service.
@@ -91,29 +88,13 @@ class OAM(AWSService):
                 policy = regional_client.get_sink_policy(SinkIdentifier=sink.arn).get(
                     "Policy"
                 )
-                document = json.loads(policy) if policy else None
-                if isinstance(document, dict) and document:
-                    sink.policy = document
-                    sink.policy_state = SinkPolicyState.AVAILABLE
-                else:
-                    # GetSinkPolicy SUCCEEDED but returned nothing usable -- an absent
-                    # Policy member, an empty string, or a document that does not decode
-                    # to a populated JSON object. Absence of a policy is reported by
-                    # ResourceNotFoundException below, not by a successful empty response,
-                    # so this is a response we do not understand rather than a determined
-                    # ABSENT. Calling it ABSENT would PASS the sink as unlinkable.
-                    #
-                    # The isinstance guard is what keeps a non-object out of Sink.policy:
-                    # pydantic.v1 does not validate assignment, so a document decoding to
-                    # a string or a list would be stored despite the dict annotation, read
-                    # as truthy, marked AVAILABLE, and then abort the consuming check on
-                    # the first .get() -- discarding the findings for every other sink too.
-                    sink.policy_state = SinkPolicyState.UNKNOWN
+                if policy:
+                    sink.policy = json.loads(policy)
             except ClientError as error:
                 if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                    # No policy is attached to the sink, so no account can link to it.
-                    # This is a determined state, unlike an unreadable policy below.
-                    sink.policy_state = SinkPolicyState.ABSENT
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
                 else:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -147,19 +128,6 @@ class OAM(AWSService):
                 )
 
 
-class SinkPolicyState(Enum):
-    """Whether the sink's resource policy could be determined.
-
-    ABSENT and UNKNOWN are distinct: the first means the service answered that no policy is
-    attached, the second means the policy was never read. A check must not treat the second as
-    compliant.
-    """
-
-    AVAILABLE = "AVAILABLE"
-    ABSENT = "ABSENT"
-    UNKNOWN = "UNKNOWN"
-
-
 class Sink(BaseModel):
     """Model representing an AWS Observability Access Manager sink.
 
@@ -168,9 +136,7 @@ class Sink(BaseModel):
         id: The random ID string that AWS generated as part of the sink ARN.
         name: The name of the sink.
         region: The AWS region where the sink exists.
-        policy: The decoded sink resource policy, or None when policy_state is not
-            AVAILABLE.
-        policy_state: Whether the resource policy could be determined.
+        policy: The decoded sink resource policy, or None when it has none.
         tags: Optional list of sink tags.
     """
 
@@ -179,5 +145,4 @@ class Sink(BaseModel):
     name: str
     region: str
     policy: Optional[dict] = None
-    policy_state: SinkPolicyState = SinkPolicyState.UNKNOWN
     tags: Optional[list] = []

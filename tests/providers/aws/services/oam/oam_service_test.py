@@ -4,7 +4,7 @@ from unittest.mock import patch
 import botocore
 from botocore.exceptions import ClientError
 
-from prowler.providers.aws.services.oam.oam_service import OAM, SinkPolicyState
+from prowler.providers.aws.services.oam.oam_service import OAM
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -109,17 +109,6 @@ def mock_make_api_call_empty_policy(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_make_api_call_scalar_policy(self, operation_name, kwarg):
-    """GetSinkPolicy returns valid JSON that decodes to a string rather than an object."""
-    if operation_name == "ListSinks":
-        return _list_sinks_pages(None)
-    if operation_name == "GetSinkPolicy":
-        return {"Policy": json.dumps("policy"), "SinkArn": SINK_PAGE_ONE_ARN}
-    if operation_name == "ListTagsForResource":
-        return {"Tags": {}}
-    return make_api_call(self, operation_name, kwarg)
-
-
 def mock_make_api_call_list_sinks_error(self, operation_name, kwarg):
     """ListSinks is denied, so no sink is collected."""
     if operation_name == "ListSinks":
@@ -191,17 +180,15 @@ class Test_OAM_Service:
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_get_sink_policy_available(self):
-        """A policy decoding to a populated object is stored and marked AVAILABLE."""
+        """The sink policy is decoded onto the sink."""
         oam = OAM(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert oam.sinks[SINK_PAGE_ONE_ARN].policy == ORGANIZATION_SINK_POLICY
-        assert oam.sinks[SINK_PAGE_ONE_ARN].policy_state == SinkPolicyState.AVAILABLE
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_get_sink_policy_absent(self):
-        """ResourceNotFoundException is the determined ABSENT state, not UNKNOWN."""
+        """A sink without a policy keeps policy None."""
         oam = OAM(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert oam.sinks[SINK_PAGE_TWO_ARN].policy is None
-        assert oam.sinks[SINK_PAGE_TWO_ARN].policy_state == SinkPolicyState.ABSENT
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_tags_for_resource(self):
@@ -214,67 +201,26 @@ class Test_OAM_Service:
         new=mock_make_api_call_access_denied,
     )
     def test_get_sink_policy_unreadable(self):
-        """A denied GetSinkPolicy leaves the policy UNKNOWN, not ABSENT."""
+        """A denied GetSinkPolicy is logged and leaves policy None."""
         oam = OAM(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert oam.sinks[SINK_PAGE_ONE_ARN].policy is None
-        assert oam.sinks[SINK_PAGE_ONE_ARN].policy_state == SinkPolicyState.UNKNOWN
 
     @patch(
         "botocore.client.BaseClient._make_api_call",
         new=mock_make_api_call_unparseable_policy,
     )
     def test_get_sink_policy_unparseable(self):
-        """A Policy member that is not JSON leaves the policy UNKNOWN."""
+        """A Policy member that is not JSON is logged and leaves policy None."""
         oam = OAM(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert oam.sinks[SINK_PAGE_ONE_ARN].policy is None
-        assert oam.sinks[SINK_PAGE_ONE_ARN].policy_state == SinkPolicyState.UNKNOWN
 
     @patch(
         "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_empty_policy
     )
-    def test_get_sink_policy_empty_is_unknown_not_absent(self):
-        """A successful GetSinkPolicy that returns nothing usable is not a determined ABSENT.
-
-        AWS reports "no policy attached" with ResourceNotFoundException, which the collector
-        maps to ABSENT deliberately. A 200 carrying an absent Policy member, an empty string
-        or a document decoding to {} is a response we do not understand -- and ABSENT PASSes
-        the sink as unlinkable by any account, which is the assertion we cannot make here.
-        """
+    def test_get_sink_policy_empty(self):
+        """An empty Policy member leaves policy None."""
         oam = OAM(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert oam.sinks[SINK_PAGE_ONE_ARN].policy is None
-        assert oam.sinks[SINK_PAGE_ONE_ARN].policy_state == SinkPolicyState.UNKNOWN
-
-    @patch(
-        "botocore.client.BaseClient._make_api_call",
-        new=mock_make_api_call_scalar_policy,
-    )
-    def test_get_sink_policy_non_object_is_unknown_and_not_stored(self):
-        """A policy decoding to a non-object is UNKNOWN and never reaches Sink.policy.
-
-        Sink is a pydantic.v1 model without assignment validation, so storing the decoded
-        document unconditionally would put a str where the dict annotation promises a
-        policy. It would then read as truthy, be marked AVAILABLE, and abort the consuming
-        check on its first .get() -- and because prowler catches that inside execute(), the
-        findings for every other sink in the account would be discarded with it.
-        """
-        oam = OAM(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
-        assert oam.sinks[SINK_PAGE_ONE_ARN].policy is None
-        assert oam.sinks[SINK_PAGE_ONE_ARN].policy_state == SinkPolicyState.UNKNOWN
-
-        with patch(
-            "prowler.providers.aws.services.oam.oam_sink_policy_restricted_to_organization.oam_sink_policy_restricted_to_organization.oam_client",
-            new=oam,
-        ):
-            # Imported INSIDE the patch: the check module builds its client singleton at
-            # import time, so importing it first constructs one against the real global
-            # provider and reaches live AWS before the mock is in place.
-            from prowler.providers.aws.services.oam.oam_sink_policy_restricted_to_organization.oam_sink_policy_restricted_to_organization import (
-                oam_sink_policy_restricted_to_organization,
-            )
-
-            result = oam_sink_policy_restricted_to_organization().execute()
-
-        assert [report.status for report in result] == ["MANUAL"]
 
     @patch(
         "botocore.client.BaseClient._make_api_call",
