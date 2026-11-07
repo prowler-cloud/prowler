@@ -40,6 +40,7 @@ def collect_pod(containers, init_containers=None):
 
 
 def test_hostport_collected_from_api_fails_check():
+    """Fail when collection preserves a HostPort distinct from the container port."""
     core = collect_pod(
         [
             client.V1Container(
@@ -82,6 +83,7 @@ def test_hostport_collected_from_api_fails_check():
     ],
 )
 def test_hostport_collection_and_check(port_groups, expected_status, failing_container):
+    """Check collected Pods across port boundaries and multiple containers."""
     containers = [
         client.V1Container(
             name=f"app-{index}",
@@ -125,6 +127,7 @@ def test_hostport_collection_and_check(port_groups, expected_status, failing_con
     ],
 )
 def test_hostport_check_on_collected_model(ports, expected_status):
+    """Fail only for nonzero HostPorts in the collected model's port dictionaries."""
     container = make_container()
     container.ports = ports
     pod = make_pod(containers={"app": container})
@@ -137,6 +140,7 @@ def test_hostport_check_on_collected_model(ports, expected_status):
 
 
 def test_no_pods():
+    """Return no findings when no Pods were collected."""
     assert run_check(MODULE_PATH, CHECK_NAME, make_core_client({})) == []
 
 
@@ -148,6 +152,7 @@ def test_no_pods():
 def test_init_container_hostport_collected_from_api(
     host_port, expected_status, restart_policy
 ):
+    """Verify HostPort detection for init containers and restartable sidecars."""
     core = collect_pod(
         [client.V1Container(name="app", image="nginx:1.25")],
         init_containers=[

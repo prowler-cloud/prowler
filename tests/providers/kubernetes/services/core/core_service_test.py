@@ -68,6 +68,7 @@ def test_pod_model_preserves_core_service_container_groups():
 
 @pytest.mark.parametrize("host_port", [8080, 0, None])
 def test_build_containers_preserves_hostport(host_port):
+    """Preserve nonzero, zero, and omitted HostPorts during container collection."""
     containers = Core._build_containers(
         [
             client.V1Container(

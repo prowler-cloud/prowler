@@ -64,6 +64,7 @@ class Core(KubernetesService):
 
     @staticmethod
     def _build_containers(containers) -> dict:
+        """Build container models while preserving container and host port values."""
         pod_containers = {}
         for container in containers or []:
             pod_containers[container.name] = Container(

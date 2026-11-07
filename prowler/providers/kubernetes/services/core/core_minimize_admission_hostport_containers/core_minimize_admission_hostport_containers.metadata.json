@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Open your Kubernetes Dashboard and go to Workloads\n2. Select the affected Deployment/DaemonSet/StatefulSet (or Pod) and click Edit\n3. In the YAML, remove every `hostPort` field under `spec.template.spec.containers[].ports[]` (or `spec.containers[]` for a standalone Pod)\n4. Save the changes; allow the workload to restart\n5. Verify the new Pods have no `hostPort` defined",
+      "Other": "1. Open your Kubernetes Dashboard and go to Workloads\n2. Select the affected Deployment/DaemonSet/StatefulSet (or Pod) and click Edit\n3. In the YAML, remove every `hostPort` field under `spec.template.spec.containers[].ports[]` and `spec.template.spec.initContainers[].ports[]` (or `spec.containers[].ports[]` and `spec.initContainers[].ports[]` for a standalone Pod)\n4. Save the changes; allow the workload to restart\n5. Verify the new Pods have no `hostPort` defined",
       "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"nginx\"\n      # Critical: do NOT set host_port; omitting it ensures no host port is used\n      port { container_port = 80 }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
