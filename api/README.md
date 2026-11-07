@@ -35,7 +35,9 @@ also removes it from readiness coverage. Celery remote control must be enabled
 for workers to report their active queues.
 
 The consumer inspection has a three-second request budget and allows only
-one outstanding inspection per API process. Results share the existing
+one outstanding inspection per API process. A timed-out inspection keeps its
+slot until it finishes, but cannot delay process shutdown. Inspection publication
+does not retry or use the task producer pool. Results share the existing
 three-second readiness cache. Worker names, queue names and broker exception
 details are not included in the HTTP response. Keep liveness as the API's
 container startup dependency so workers can start before readiness passes.

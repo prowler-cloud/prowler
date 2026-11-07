@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -24,6 +24,7 @@ from config.version import API_VERSION, RELEASE_ID
 from django.conf import settings
 from django.db import connections
 from drf_spectacular.utils import extend_schema
+from kombu import Producer
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -48,9 +49,6 @@ VALKEY_PROBE_TIMEOUT_SECONDS = 2
 # per process, even when the underlying connection outlives the request budget.
 WORKER_REPLY_TIMEOUT_SECONDS = 2
 WORKER_PROBE_TIMEOUT_SECONDS = 3
-_worker_probe_executor = ThreadPoolExecutor(
-    max_workers=1, thread_name_prefix="health-worker-probe"
-)
 _worker_probe_slot = threading.BoundedSemaphore(1)
 
 
@@ -143,6 +141,26 @@ def _probe_valkey() -> None:
             client.close()
 
 
+class _WorkerProbeProducer(Producer):
+    """Publish a health inspection once, without Kombu's retry wrapper."""
+
+    def publish(self, *args, **kwargs):
+        """Override the mailbox's retry default for this producer only."""
+        kwargs["retry"] = False
+        return super().publish(*args, **kwargs)
+
+
+class _WorkerProbeProducerPool:
+    """Supply disposable producers using only the probe's connection."""
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def acquire(self):
+        """Provide the context manager expected by the control mailbox."""
+        return _WorkerProbeProducer(self.connection, auto_declare=False)
+
+
 def _check_worker_queues(required_queues: set[str]) -> None:
     """Require an active consumer for every queue used by this deployment."""
     from config.celery import celery_app
@@ -158,13 +176,19 @@ def _check_worker_queues(required_queues: set[str]) -> None:
         },
     ) as connection:
         connection.ensure_connection(max_retries=0)
-        replies = celery_app.control.inspect(
-            connection=connection, timeout=WORKER_REPLY_TIMEOUT_SECONDS
-        ).active_queues()
+        # Binding copies the mailbox. Replace only that copy's producer pool:
+        # the default pool would publish through a separate, retrying connection.
+        mailbox = celery_app.control.mailbox(connection)
+        mailbox.producer_pool = _WorkerProbeProducerPool(connection)
+        replies = mailbox.multi_call(
+            "active_queues", timeout=WORKER_REPLY_TIMEOUT_SECONDS
+        )
 
     consumed_queues = {
         queue.get("name")
-        for queues in (replies or {}).values()
+        for reply in replies or []
+        if isinstance(reply, dict)
+        for queues in reply.values()
         if isinstance(queues, list)
         for queue in queues
         if isinstance(queue, dict) and isinstance(queue.get("name"), str)
@@ -184,19 +208,31 @@ def _probe_workers() -> None:
     if not _worker_probe_slot.acquire(blocking=False):
         raise RuntimeError("A previous worker readiness probe is still running")
 
+    future: Future[None] = Future()
+
+    def inspect_queues():
+        """Deliver the probe result and release its slot on every exit path."""
+        try:
+            future.set_result(_check_worker_queues(required_queues))
+        except BaseException as exc:
+            future.set_exception(exc)
+        finally:
+            _worker_probe_slot.release()
+
+    # A running DNS lookup cannot be cancelled by Future.cancel(). A daemon
+    # thread preserves the request budget without holding process shutdown open.
+    thread = threading.Thread(
+        target=inspect_queues, name="health-worker-probe", daemon=True
+    )
     try:
-        future = _worker_probe_executor.submit(_check_worker_queues, required_queues)
+        thread.start()
     except Exception:
         _worker_probe_slot.release()
         raise
-    future.add_done_callback(lambda _future: _worker_probe_slot.release())
-    try:
-        future.result(timeout=WORKER_PROBE_TIMEOUT_SECONDS)
-    except FuturesTimeoutError as exc:
-        future.cancel()
-        raise TimeoutError(
-            f"worker probe exceeded {WORKER_PROBE_TIMEOUT_SECONDS}s"
-        ) from exc
+    thread.join(timeout=WORKER_PROBE_TIMEOUT_SECONDS)
+    if thread.is_alive():
+        raise TimeoutError(f"worker probe exceeded {WORKER_PROBE_TIMEOUT_SECONDS}s")
+    future.result()
 
 
 def _graph_db_component_id() -> str:
