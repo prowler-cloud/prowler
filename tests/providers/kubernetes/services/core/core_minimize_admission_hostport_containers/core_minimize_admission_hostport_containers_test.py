@@ -15,7 +15,7 @@ CHECK_NAME = "core_minimize_admission_hostport_containers"
 MODULE_PATH = f"prowler.providers.kubernetes.services.core.{CHECK_NAME}.{CHECK_NAME}"
 
 
-def collect_pod(containers):
+def collect_pod(containers, init_containers=None):
     """Collect a mocked SDK Pod through the real service and data models."""
     core = Core.__new__(Core)
     core.namespaces = ["default"]
@@ -27,7 +27,9 @@ def collect_pod(containers):
                 metadata=client.V1ObjectMeta(
                     name="test-pod", uid="test-pod-uid", namespace="default"
                 ),
-                spec=client.V1PodSpec(containers=containers),
+                spec=client.V1PodSpec(
+                    containers=containers, init_containers=init_containers
+                ),
                 status=client.V1PodStatus(phase="Running"),
             )
         ]
@@ -136,3 +138,40 @@ def test_hostport_check_on_collected_model(ports, expected_status):
 
 def test_no_pods():
     assert run_check(MODULE_PATH, CHECK_NAME, make_core_client({})) == []
+
+
+@pytest.mark.parametrize("restart_policy", [None, "Always"])
+@pytest.mark.parametrize(
+    "host_port, expected_status",
+    [(8080, "FAIL"), (0, "PASS"), (None, "PASS")],
+)
+def test_init_container_hostport_collected_from_api(
+    host_port, expected_status, restart_policy
+):
+    core = collect_pod(
+        [client.V1Container(name="app", image="nginx:1.25")],
+        init_containers=[
+            client.V1Container(
+                name="init",
+                image="busybox:1.36",
+                restart_policy=restart_policy,
+                ports=[client.V1ContainerPort(container_port=80, host_port=host_port)],
+            )
+        ],
+    )
+    assert core.pods["test-pod-uid"].init_containers["init"].ports == [
+        {"containerPort": 80, "hostPort": host_port}
+    ]
+
+    findings = run_check(MODULE_PATH, CHECK_NAME, core)
+
+    assert len(findings) == 1
+    assert findings[0].status == expected_status
+    assert findings[0].status_extended == (
+        "Pod test-pod uses HostPorts in container init."
+        if expected_status == "FAIL"
+        else "Pod test-pod does not use HostPorts."
+    )
+    assert findings[0].resource_id == "test-pod-uid"
+    assert findings[0].resource_name == "test-pod"
+    assert findings[0].namespace == "default"
