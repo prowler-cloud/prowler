@@ -226,6 +226,7 @@ class TestReadinessEndpoint:
             "postgres:responseTime",
             "valkey:responseTime",
             "graphdb:responseTime",
+            "celery:responseTime",
         ):
             entry = body["checks"][key][0]
             assert entry["status"] == "fail"
@@ -553,20 +554,23 @@ class TestWorkerReadiness:
         assert response.json()["checks"]["celery:responseTime"][0]["status"] == "fail"
 
     @pytest.mark.parametrize(
-        "queues",
+        "replies",
         [
-            {"worker": [{"name": "celery"}, {"name": "scans"}]},
-            {"general": [{"name": "celery"}], "scanner": [{"name": "scans"}]},
-            {"replacement": [{"name": "celery"}, {"name": "scans"}], "extra": []},
+            [{"worker": [{"name": "celery"}, {"name": "scans"}]}],
+            [{"general": [{"name": "celery"}]}, {"scanner": [{"name": "scans"}]}],
+            [
+                {"replacement": [{"name": "celery"}, {"name": "scans"}]},
+                {"extra": []},
+            ],
         ],
     )
     def test_consumers_can_be_split_across_workers(
-        self, api_client, settings, worker_inspector, queues
+        self, api_client, settings, worker_inspector, replies
     ):
         """Require collective coverage without requiring every worker to answer."""
         settings.HEALTHCHECK_WORKER_QUEUES = ["celery", "scans"]
         inspector, _ = worker_inspector
-        inspector.multi_call.return_value = [queues]
+        inspector.multi_call.return_value = replies
 
         response = api_client.get(reverse("health-ready"))
 
@@ -705,10 +709,13 @@ class TestWorkerReadiness:
 
     def test_inspection_publish_failure_is_not_retried(self):
         """Exercise real Celery/Kombu publication and fail on any retry wrapper."""
-        from celery import Celery
+        from celery import Celery, current_app
         from kombu import Connection, Producer
 
-        app = Celery("health-publication-test", broker="memory://")
+        previous_app = current_app._get_current_object()
+        app = Celery(
+            "health-publication-test", broker="memory://", set_as_current=False
+        )
         try:
             with (
                 patch("config.celery.celery_app", app),
@@ -728,8 +735,10 @@ class TestWorkerReadiness:
             assert publish.call_args.args[-2] is False
         finally:
             app.close()
+        assert current_app._get_current_object() is previous_app
 
-    def test_stalled_dns_probe_does_not_delay_process_exit(self):
+    @pytest.mark.parametrize("startup_delay", [0, 0.2])
+    def test_stalled_dns_probe_does_not_delay_process_exit(self, startup_delay):
         """A timed-out DNS lookup must not hold the interpreter open at shutdown."""
         import subprocess
         import sys
@@ -738,7 +747,9 @@ class TestWorkerReadiness:
         code = textwrap.dedent(
             """
             import socket
+            import sys
             import threading
+            import time
             from unittest.mock import patch
 
             import django
@@ -749,6 +760,11 @@ class TestWorkerReadiness:
             settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
             stalled = threading.Event()
             started = threading.Event()
+            original_inspection = health._check_worker_queues
+
+            def delayed_inspection(queues):
+                time.sleep(float(sys.argv[1]))
+                return original_inspection(queues)
 
             def blocked_dns(*args, **kwargs):
                 started.set()
@@ -756,19 +772,20 @@ class TestWorkerReadiness:
 
             with (
                 patch.object(socket, "getaddrinfo", blocked_dns),
+                patch.object(health, "_check_worker_queues", delayed_inspection),
                 patch.object(health, "WORKER_PROBE_TIMEOUT_SECONDS", 0.1),
             ):
                 try:
                     health._probe_workers()
                 except TimeoutError:
-                    assert started.is_set()
+                    assert started.wait(timeout=5)
                     print("PROBE_TIMED_OUT", flush=True)
                 else:
                     raise AssertionError("Expected the DNS probe to time out")
             """
         )
         result = subprocess.run(
-            [sys.executable, "-c", code],
+            [sys.executable, "-c", code, str(startup_delay)],
             capture_output=True,
             text=True,
             timeout=15,
@@ -778,10 +795,11 @@ class TestWorkerReadiness:
 
     def test_inspection_does_not_use_or_modify_task_producer_pool(self):
         """Publish through the probe connection without touching task producers."""
-        from celery import Celery
+        from celery import Celery, current_app
         from kombu.pidbox import Mailbox
 
-        app = Celery("health-producer-test", broker="memory://")
+        previous_app = current_app._get_current_object()
+        app = Celery("health-producer-test", broker="memory://", set_as_current=False)
         original_pool = app.control.mailbox.producer_pool
         original_retry = app.conf.task_publish_retry
         try:
@@ -802,3 +820,4 @@ class TestWorkerReadiness:
             assert app.conf.task_publish_retry == original_retry
         finally:
             app.close()
+        assert current_app._get_current_object() is previous_app
