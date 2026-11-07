@@ -1682,6 +1682,64 @@ class Test_Entra_Service:
             in app.federated_identity_credentials_error
         )
 
+    def test__get_app_registrations_cancellation_skips_credential_reads(self):
+        """Cancelling during pagination does not wait for one read per application.
+
+        asyncio.CancelledError derives from BaseException, so the broad
+        ``except Exception`` does not catch it. The credential reads must
+        therefore be skipped on cancellation rather than awaited, or cancelling
+        a scan would block for as long as the application inventory is large.
+        """
+        applications = [
+            SimpleNamespace(
+                id=f"app-object-{index}",
+                app_id=f"app-client-{index}",
+                display_name=f"App {index}",
+                password_credentials=[],
+            )
+            for index in range(5)
+        ]
+        first_page = SimpleNamespace(
+            value=applications,
+            odata_next_link="https://graph.microsoft.com/v1.0/applications?$skiptoken=x",
+        )
+
+        second_page_started = asyncio.Event()
+
+        async def never_returns():
+            second_page_started.set()
+            await asyncio.Event().wait()  # pending until cancelled
+
+        by_application_id = MagicMock()
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=first_page),
+            with_url=MagicMock(
+                return_value=SimpleNamespace(get=never_returns),
+            ),
+            by_application_id=by_application_id,
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        async def run_and_cancel():
+            task = asyncio.ensure_future(
+                entra_service_instance._get_app_registrations()
+            )
+            await second_page_started.wait()
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+
+        asyncio.run(run_and_cancel())
+
+        # No credential read was issued, so cancellation did not have to wait
+        # for one request per application.
+        by_application_id.assert_not_called()
+
     def test__get_exchange_mailbox_permission_service_principals(self):
         """Service principals with Exchange Graph application roles are returned."""
         graph_sp_id = "graph-sp-id"

@@ -2290,14 +2290,17 @@ OAuthAppInfo
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            # Deliberately in ``finally``: when a later page request fails, the
-            # applications already read are still returned, and they must carry
-            # either their credentials or their own retrieval error. Leaving them
-            # with an empty collection and no error would be indistinguishable
-            # from "this application has no federated credentials", which is the
-            # silent pass this check exists to avoid.
-            await self._attach_federated_identity_credentials(app_registrations)
+        # After the try/except rather than inside it, and deliberately not in a
+        # ``finally``. The ``except Exception`` above does not re-raise, so this
+        # still runs when pagination failed part-way: the applications already
+        # read keep either their credentials or their own retrieval error, instead
+        # of an empty collection with no error, which is indistinguishable from
+        # "this application has no federated credentials" and is the silent pass
+        # this check exists to avoid. A ``finally`` would additionally run during
+        # cancellation -- ``asyncio.CancelledError`` derives from BaseException,
+        # so it is not caught above -- and would make cancellation wait for one
+        # request per application before propagating.
+        await self._attach_federated_identity_credentials(app_registrations)
 
         return app_registrations
 
