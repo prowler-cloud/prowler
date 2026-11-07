@@ -81,7 +81,7 @@ constraint-dependencies = [
   "dnspython==2.9.0",
   "joserfc==1.7.5",
   "mcp==1.28.1",
-  "pyjwt==2.14.0",
+  "pyjwt==2.15.0",
   "python-multipart==0.0.30"
 ]
 package = true
