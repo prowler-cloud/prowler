@@ -15,6 +15,7 @@ ENTRYPOINT = Path(__file__).resolve().parents[4] / "docker-entrypoint.sh"
 
 @pytest.fixture
 def entrypoint_env(tmp_path):
+    "Provide isolated command stubs and a private worker identity directory."
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     uv = bin_dir / "uv"
@@ -36,6 +37,7 @@ def entrypoint_env(tmp_path):
 
 
 def run_entrypoint(mode, env):
+    "Run the entrypoint with bounded execution and captured diagnostics."
     return subprocess.run(
         ["sh", str(ENTRYPOINT), mode],
         env=env,
@@ -46,10 +48,12 @@ def run_entrypoint(mode, env):
 
 
 def uv_arguments(env):
+    "Read the last command delegated to the uv stub."
     return json.loads(Path(env["UV_CALLS"]).read_text())
 
 
 def test_healthcheck_targets_the_worker_started_in_this_container(entrypoint_env):
+    "Probe the exact generated node without synchronizing dependencies."
     assert run_entrypoint("worker", entrypoint_env).returncode == 0
     worker_args = uv_arguments(entrypoint_env)
     node = worker_args[worker_args.index("-n") + 1]
@@ -66,6 +70,7 @@ def test_healthcheck_targets_the_worker_started_in_this_container(entrypoint_env
 
 
 def test_restart_replaces_the_previous_worker_identity(entrypoint_env):
+    "A restart must redirect probes to the newly generated worker name."
     assert run_entrypoint("worker", entrypoint_env).returncode == 0
     first = uv_arguments(entrypoint_env)
     assert run_entrypoint("worker", entrypoint_env).returncode == 0
@@ -82,6 +87,7 @@ def test_restart_replaces_the_previous_worker_identity(entrypoint_env):
     ['{"TaskARN": "arn:aws:ecs:region:account:task/cluster/task-id"}', "unavailable"],
 )
 def test_healthcheck_uses_resolved_ecs_name_or_uuid_fallback(entrypoint_env, metadata):
+    "Reuse the startup identity whether ECS metadata succeeds or fails."
     wget = Path(entrypoint_env["TMPDIR"]) / "bin" / "wget"
     wget.write_text("#!/bin/sh\nprintf '%s' \"" + metadata.replace('"', '\\"') + '"\n')
     wget.chmod(0o755)
@@ -103,6 +109,7 @@ def test_healthcheck_uses_resolved_ecs_name_or_uuid_fallback(entrypoint_env, met
 def test_healthcheck_fails_before_worker_identity_is_available(
     entrypoint_env, contents
 ):
+    "Missing or empty identity must fail without broadcasting a ping."
     if contents is not None:
         (Path(entrypoint_env["TMPDIR"]) / "prowler-worker-nodename").write_text(
             contents
@@ -114,6 +121,7 @@ def test_healthcheck_fails_before_worker_identity_is_available(
 
 @pytest.mark.parametrize("exit_code", [1, 69])
 def test_healthcheck_propagates_celery_failure(entrypoint_env, exit_code):
+    "Preserve Celery failure statuses for the container health check."
     assert run_entrypoint("worker", entrypoint_env).returncode == 0
     entrypoint_env["UV_EXIT"] = str(exit_code)
 
@@ -121,6 +129,7 @@ def test_healthcheck_propagates_celery_failure(entrypoint_env, exit_code):
 
 
 def test_worker_does_not_start_when_identity_cannot_be_saved(entrypoint_env):
+    "Do not launch a worker that subsequent probes cannot identify."
     (Path(entrypoint_env["TMPDIR"]) / "prowler-worker-nodename").mkdir()
 
     assert run_entrypoint("worker", entrypoint_env).returncode != 0
@@ -128,6 +137,7 @@ def test_worker_does_not_start_when_identity_cannot_be_saved(entrypoint_env):
 
 
 def test_compose_probes_worker_without_changing_api_liveness():
+    "Wire the worker probe while retaining dependency-free API liveness."
     compose = yaml.safe_load(
         (ENTRYPOINT.parent.parent / "docker-compose.yml").read_text()
     )
@@ -143,6 +153,7 @@ def test_compose_probes_worker_without_changing_api_liveness():
 def test_worker_replaces_identity_symlink_without_overwriting_its_target(
     entrypoint_env,
 ):
+    "Replace an identity symlink atomically without modifying its target."
     directory = Path(entrypoint_env["TMPDIR"])
     target = directory / "unrelated"
     target.write_text("keep this content")
