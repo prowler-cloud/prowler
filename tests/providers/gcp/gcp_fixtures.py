@@ -1090,6 +1090,7 @@ def mock_api_managedZones_calls(client: MagicMock):
                 "name": "managed_zone2",
                 "id": managed_zone2_id,
                 "dnssecConfig": {"state": "off", "defaultKeySpecs": []},
+                "visibility": "private",
             },
         ]
     }

@@ -139,3 +139,38 @@ class Test_dns_dnssec_disabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == managed_zone.id
+
+    def test_private_managed_zone_not_evaluated(self):
+        from prowler.providers.gcp.services.dns.dns_service import ManagedZone
+
+        managed_zone = ManagedZone(
+            name="private",
+            id="1234567890",
+            dnssec=False,
+            key_specs=[],
+            visibility="private",
+            project_id=GCP_PROJECT_ID,
+        )
+
+        dns_client = mock.MagicMock()
+        dns_client.project_ids = [GCP_PROJECT_ID]
+        dns_client.managed_zones = [managed_zone]
+        dns_client.region = GCP_EU1_LOCATION
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled.dns_client",
+                new=dns_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.dns.dns_dnssec_disabled.dns_dnssec_disabled import (
+                dns_dnssec_disabled,
+            )
+
+            check = dns_dnssec_disabled()
+            result = check.execute()
+            assert len(result) == 0
