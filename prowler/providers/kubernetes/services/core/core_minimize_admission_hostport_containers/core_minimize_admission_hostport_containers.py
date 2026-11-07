@@ -10,7 +10,10 @@ class core_minimize_admission_hostport_containers(Check):
             report.status = "PASS"
             report.status_extended = f"Pod {pod.name} does not use HostPorts."
 
-            for container in pod.containers.values():
+            for container in (
+                *pod.containers.values(),
+                *(pod.init_containers or {}).values(),
+            ):
                 if any(
                     port.get("hostPort") not in (None, 0)
                     for port in container.ports or []
