@@ -54,6 +54,9 @@ class AIServices(AzureService):
                     account.rai_policies = self._get_rai_policies(
                         subscription, client, account
                     )
+                    account.connections = self._get_connections(
+                        subscription, client, account
+                    )
                     accounts[subscription][account.id] = account
                 except Exception as error:
                     logger.error(
@@ -234,6 +237,78 @@ class AIServices(AzureService):
         return statuses
 
     @staticmethod
+    def _to_connection(sdk_connection, project_name: Optional[str]) -> "Connection":
+        """Map an SDK connection to the Prowler model.
+
+        `auth_type` is kept as the string the service returned. The SDK enum
+        does not list every value the service accepts, so mapping it onto the
+        enum would drop the ones it does not know about.
+        """
+        properties = getattr(sdk_connection, "properties", None)
+        auth_type = getattr(properties, "auth_type", None)
+        category = getattr(properties, "category", None)
+        return Connection(
+            id=sdk_connection.id,
+            name=sdk_connection.name,
+            auth_type=str(getattr(auth_type, "value", auth_type) or ""),
+            category=str(getattr(category, "value", category) or ""),
+            target=str(getattr(properties, "target", "") or ""),
+            project_name=project_name,
+        )
+
+    @staticmethod
+    def _get_connections(
+        subscription: str, client, account: "Account"
+    ) -> Optional[list["Connection"]]:
+        """Get the connections of one account and of each of its projects.
+
+        Returns:
+            The connections, or `None` when none of the list calls could be
+            made, so a check can report MANUAL rather than treating an unread
+            account as having no connections.
+        """
+        resource_group = _resource_group(account.id)
+        connections: list[Connection] = []
+        reachable = False
+
+        try:
+            for sdk_connection in client.account_connections.list(
+                resource_group, account.name
+            ):
+                connections.append(AIServices._to_connection(sdk_connection, None))
+            reachable = True
+        except Exception as error:
+            logger.warning(
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        projects = []
+        try:
+            projects = list(client.projects.list(resource_group, account.name))
+            reachable = True
+        except Exception as error:
+            # Projects exist on AI Foundry accounts. On other account kinds the
+            # call is expected to fail and that is not a finding.
+            logger.warning(
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        for project in projects:
+            try:
+                for sdk_connection in client.project_connections.list(
+                    resource_group, account.name, project.name
+                ):
+                    connections.append(
+                        AIServices._to_connection(sdk_connection, project.name)
+                    )
+            except Exception as error:
+                logger.warning(
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        return connections if reachable else None
+
+    @staticmethod
     def _get_diagnostic_settings(subscription: str, account_id: str) -> Optional[list]:
         """Get the Azure Monitor diagnostic settings of one account.
 
@@ -298,6 +373,20 @@ class Deployment(BaseModel):
     capabilities: dict[str, str] = {}
 
 
+class Connection(BaseModel):
+    """A connection declared on an AI services account or on one of its projects.
+
+    `project_name` is `None` for a connection held by the account itself.
+    """
+
+    id: str
+    name: str
+    auth_type: str
+    category: str = ""
+    target: str = ""
+    project_name: Optional[str] = None
+
+
 class Account(BaseModel):
     """Azure AI services account."""
 
@@ -316,6 +405,7 @@ class Account(BaseModel):
     # None when the list call fails, so checks can report MANUAL.
     deployments: Optional[list[Deployment]] = None
     rai_policies: Optional[dict[str, RaiPolicy]] = None
+    connections: Optional[list[Connection]] = None
     # Monitor DiagnosticSetting dataclasses. Left untyped: Pydantic would
     # re-validate them and reject log entries whose category is None.
     monitor_diagnostic_settings: Optional[list] = None
