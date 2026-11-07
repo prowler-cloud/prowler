@@ -27,8 +27,16 @@ class defender_antispam_outbound_policy_configured(Check):
         if defender_client.outbound_spam_policies:
             # Only Default Defender Outbound Spam Policy
             if not defender_client.outbound_spam_rules:
-                # Get the only policy in the dictionary
-                policy = next(iter(defender_client.outbound_spam_policies.values()))
+                policy = next(
+                    (
+                        policy
+                        for policy in defender_client.outbound_spam_policies.values()
+                        if policy.default
+                    ),
+                    None,
+                )
+                if not policy:
+                    return findings
 
                 report = CheckReportM365(
                     metadata=self.metadata(),
@@ -55,6 +63,12 @@ class defender_antispam_outbound_policy_configured(Check):
                     policy_name,
                     policy,
                 ) in defender_client.outbound_spam_policies.items():
+                    # Preset security policies are scoped by protection policy rules, not filter rules
+                    if (
+                        not policy.default
+                        and policy.name not in defender_client.outbound_spam_rules
+                    ):
+                        continue
                     report = CheckReportM365(
                         metadata=self.metadata(),
                         resource=policy,
