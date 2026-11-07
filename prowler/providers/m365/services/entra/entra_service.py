@@ -21,6 +21,11 @@ run_hunting_query_body = importlib.import_module(
     "msgraph.generated.security.microsoft_graph_security_run_hunting_query."
     "run_hunting_query_post_request_body"
 )
+# Maximum number of in-flight ``federatedIdentityCredentials`` reads. The
+# collection is a navigation property, so it needs one request per application;
+# the pool keeps a large inventory from being a serial walk without turning it
+# into a burst that Microsoft Graph throttles request by request.
+FEDERATED_CREDENTIAL_FETCH_CONCURRENCY = 10
 # Sentinel identifiers used in Conditional Access ``conditions.users``
 # collections that do not correspond to real directory objects and must not be
 # resolved against Graph. Shared by the resolver below and the check that reads
@@ -2212,13 +2217,14 @@ OAuthAppInfo
         by the related check.
 
         The ``federatedIdentityCredentials`` collection is a navigation property
-        on the application object, so it is fetched per application through the
-        dedicated endpoint (mirroring how owners are resolved elsewhere in this
-        service). A failure to read one application's collection is logged and
-        recorded on that application's ``federated_identity_credentials_error``
-        (rather than aborting the whole inventory), so checks can tell a
-        retrieval error apart from a genuinely empty collection instead of
-        treating the failure as "no credentials".
+        on the application object, so it needs one request per application
+        through the dedicated endpoint. Those reads are issued after pagination
+        completes, through a bounded pool, by
+        ``_attach_federated_identity_credentials``. A failure to read one
+        application's collection is logged and recorded on that application's
+        ``federated_identity_credentials_error`` (rather than aborting the whole
+        inventory), so checks can tell a retrieval error apart from a genuinely
+        empty collection instead of treating the failure as "no credentials".
 
         Returns:
             Dict[str, AppRegistration]: Application registrations keyed by the
@@ -2265,30 +2271,6 @@ OAuthAppInfo
                         if public_client_obj
                         else []
                     )
-                    federated_identity_credentials = []
-                    federated_identity_credentials_error = None
-                    try:
-                        fic_response = await self.client.applications.by_application_id(
-                            object_id
-                        ).federated_identity_credentials.get()
-                        for fic in getattr(fic_response, "value", []) or []:
-                            federated_identity_credentials.append(
-                                FederatedIdentityCredential(
-                                    name=getattr(fic, "name", "") or "",
-                                    issuer=getattr(fic, "issuer", "") or "",
-                                    subject=getattr(fic, "subject", "") or "",
-                                    audiences=list(getattr(fic, "audiences", []) or []),
-                                )
-                            )
-                    except Exception as error:
-                        federated_identity_credentials_error = (
-                            "Unable to retrieve federated identity credentials from "
-                            f"Microsoft Graph ({error.__class__.__name__})"
-                        )
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-
                     app_registrations[object_id] = AppRegistration(
                         id=object_id,
                         app_id=app_id,
@@ -2297,8 +2279,6 @@ OAuthAppInfo
                         web_redirect_uris=web_redirect_uris,
                         spa_redirect_uris=spa_redirect_uris,
                         public_client_redirect_uris=public_client_redirect_uris,
-                        federated_identity_credentials=federated_identity_credentials,
-                        federated_identity_credentials_error=federated_identity_credentials_error,
                     )
 
                 next_link = getattr(app_response, "odata_next_link", None)
@@ -2306,11 +2286,72 @@ OAuthAppInfo
                     break
                 app_response = await self.client.applications.with_url(next_link).get()
 
+            await self._attach_federated_identity_credentials(app_registrations)
+
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return app_registrations
+
+    async def _attach_federated_identity_credentials(
+        self, app_registrations: Dict[str, "AppRegistration"]
+    ) -> None:
+        """Read every application's federated identity credentials concurrently.
+
+        ``federatedIdentityCredentials`` is a navigation property, and the
+        documented query options on
+        ``GET /applications/{id}/federatedIdentityCredentials`` are only
+        ``$filter`` and ``$select``, so one request per application is
+        unavoidable. What is avoidable is paying the round trip serially: this
+        issues the reads through a bounded pool, mirroring the ``asyncio.gather``
+        fan-out already used for directory role members in ``_get_users``.
+
+        The pool is bounded rather than unbounded because Microsoft Graph
+        evaluates each request against its throttling limits individually, so
+        firing thousands of reads at once trades latency for HTTP 429s.
+
+        Each application keeps its own error state: a failure reading one
+        collection is logged and recorded on that application's
+        ``federated_identity_credentials_error`` without affecting the others.
+
+        Args:
+            app_registrations: Application registrations keyed by object ID,
+                mutated in place.
+        """
+        if not app_registrations:
+            return
+
+        semaphore = asyncio.Semaphore(FEDERATED_CREDENTIAL_FETCH_CONCURRENCY)
+
+        async def fetch(object_id: str) -> None:
+            app_registration = app_registrations[object_id]
+            async with semaphore:
+                try:
+                    fic_response = await self.client.applications.by_application_id(
+                        object_id
+                    ).federated_identity_credentials.get()
+                except Exception as error:
+                    app_registration.federated_identity_credentials_error = (
+                        "Unable to retrieve federated identity credentials from "
+                        f"Microsoft Graph ({error.__class__.__name__})"
+                    )
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    return
+
+            app_registration.federated_identity_credentials = [
+                FederatedIdentityCredential(
+                    name=getattr(fic, "name", "") or "",
+                    issuer=getattr(fic, "issuer", "") or "",
+                    subject=getattr(fic, "subject", "") or "",
+                    audiences=list(getattr(fic, "audiences", []) or []),
+                )
+                for fic in getattr(fic_response, "value", []) or []
+            ]
+
+        await gather(*(fetch(object_id) for object_id in list(app_registrations)))
 
     async def _resolve_directory_object_references(
         self,
