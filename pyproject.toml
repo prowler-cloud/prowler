@@ -355,7 +355,7 @@ constraint-dependencies = [
   "pydash==8.0.6",
   "pyflakes==4.0.3",
   "pygments==2.20.0",
-  "pyjwt==2.14.0",
+  "pyjwt==2.15.0",
   "pylint==4.0.9",
   "pynacl==1.6.2",
   "pyopenssl==26.4.0",
