@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
   "ResourceGroup": "network",
-  "Description": "**Azure NSG inbound rules** are evaluated for **public RDP exposure**. The finding flags rules that `Allow` `TCP` traffic to `port 3389` from broad sources like `0.0.0.0/0`, `Internet`, or `*`, including ranges that cover `3389`.",
+  "Description": "**Azure NSG inbound rules** are evaluated for **public RDP exposure**. The finding flags rules that `Allow` `TCP` traffic to `port 3389` from broad sources like `0.0.0.0/0`, `Internet`, or `*`, including a port range, `destination_port_ranges`, or `*` that covers `3389`.",
   "Risk": "Exposed **RDP** enables Internet-wide **brute force** and **credential stuffing**, risking unauthorized console access.\n\nCompromise can cause data theft (**confidentiality**), tampering or malware deployment (**integrity**), VM lockout or disruption (**availability**), and **lateral movement** within the VNet.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
   "ResourceGroup": "network",
-  "Description": "**Azure NSG** inbound rules that allow **SSH** on `TCP 22` from `0.0.0.0/0`, `Internet`, or `*` are identified, including rules where port ranges include `22` and protocol is `TCP` or `*`.\n\nIndicates NSGs exposing SSH to the Internet.",
+  "Description": "**Azure NSG** inbound rules that allow **SSH** on `TCP 22` from `0.0.0.0/0`, `Internet`, or `*` are identified, including rules where a port range, `destination_port_ranges`, or `*` includes `22`, and protocol is `TCP` or `*`.\n\nIndicates NSGs exposing SSH to the Internet.",
   "Risk": "Public **SSH** access weakens **confidentiality** and **integrity**. Open `22` invites brute force and key theft, enabling remote shell control, persistence, and **lateral movement**. Attackers can pivot into VNets, exfiltrate data, deploy crypto-miners, and impact **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

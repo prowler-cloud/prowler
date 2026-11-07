@@ -283,6 +283,63 @@ class Test_Network_get_security_groups:
         mock_client.network_security_groups.list.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
 
+    def test_get_security_groups_keeps_plural_destination_ports(self):
+        from types import SimpleNamespace
+
+        from prowler.providers.azure.services.network.network_service import (
+            security_rule_exposes_port,
+        )
+
+        rule = SimpleNamespace(
+            id="rule-id",
+            name="plural-ports",
+            destination_port_range=None,
+            destination_port_ranges=["22", "80"],
+            protocol="Tcp",
+            source_address_prefix="Internet",
+            access="Allow",
+            direction="Inbound",
+        )
+        security_group = SimpleNamespace(
+            id="nsg-id",
+            name="nsg",
+            location="westeurope",
+            security_rules=[rule],
+        )
+        mock_client = MagicMock()
+        mock_client.network_security_groups.list_all.return_value = [security_group]
+
+        with (
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_security_groups",
+                new=mock_network_get_security_groups,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_bastion_hosts",
+                new=mock_network_get_bastion_hosts,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_network_watchers",
+                new=mock_network_get_network_watchers,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_public_ip_addresses",
+                new=mock_network_get_public_ip_addresses,
+            ),
+        ):
+            network = Network(set_mocked_azure_provider())
+
+        network.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        network.resource_groups = None
+
+        result = network._get_security_groups()
+        stored = result[AZURE_SUBSCRIPTION_ID][0].security_rules[0]
+
+        assert stored.destination_port_ranges == ["22", "80"]
+        assert security_rule_exposes_port(stored, 22)
+        assert security_rule_exposes_port(stored, 80)
+        assert not security_rule_exposes_port(stored, 443)
+
     def test_get_security_groups_with_resource_group(self):
         mock_client = MagicMock()
         mock_client.network_security_groups.list.return_value = []
@@ -1597,3 +1654,45 @@ class Test_Network_get_application_gateways:
 
         assert result == {AZURE_SUBSCRIPTION_ID: {}}
         assert network.application_gateways_lookup_failed == set()
+
+
+def test_security_rule_exposes_port_reads_plural_ranges_and_wildcard():
+    from types import SimpleNamespace
+
+    from prowler.providers.azure.services.network.network_service import (
+        security_rule_exposes_port,
+    )
+
+    assert security_rule_exposes_port(
+        SimpleNamespace(destination_port_range="22", destination_port_ranges=None), 22
+    )
+    assert security_rule_exposes_port(
+        SimpleNamespace(destination_port_range="20-25", destination_port_ranges=None),
+        22,
+    )
+    assert security_rule_exposes_port(
+        SimpleNamespace(destination_port_range="*", destination_port_ranges=None), 443
+    )
+    assert security_rule_exposes_port(
+        SimpleNamespace(destination_port_range=None, destination_port_ranges=["3389"]),
+        3389,
+    )
+    assert security_rule_exposes_port(
+        SimpleNamespace(
+            destination_port_range="", destination_port_ranges=["80-90", "443"]
+        ),
+        80,
+    )
+    assert not security_rule_exposes_port(
+        SimpleNamespace(destination_port_range=None, destination_port_ranges=["443"]),
+        22,
+    )
+    assert not security_rule_exposes_port(
+        SimpleNamespace(
+            destination_port_range="not-a-port", destination_port_ranges=None
+        ),
+        22,
+    )
+    assert not security_rule_exposes_port(
+        SimpleNamespace(destination_port_range=None, destination_port_ranges=None), 22
+    )
