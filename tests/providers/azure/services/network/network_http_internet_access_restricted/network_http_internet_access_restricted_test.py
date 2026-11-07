@@ -265,6 +265,7 @@ class Test_network_http_internet_access_restricted:
             assert result[0].location == "location"
 
     def test_network_security_groups_plural_internet_source(self):
+        """Fail when HTTP is allowed from 0.0.0.0/0 in source_address_prefixes."""
         network_client = mock.MagicMock
         network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"

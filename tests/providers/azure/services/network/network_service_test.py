@@ -287,6 +287,7 @@ class Test_Network_get_security_groups:
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_security_groups_keeps_plural_internet_source(self):
+        """Keep a 0.0.0.0/0 source that Azure stored only in the plural field."""
         sdk_rule = SimpleNamespace(
             id="rule-id",
             name="plural-ssh",
@@ -1653,6 +1654,7 @@ class Test_Network_get_application_gateways:
 
 
 def test_build_security_rule_plural_source():
+    """Copy plural sources and treat only Internet, *, and 0.0.0.0/0 as open."""
     open_rule = build_security_rule(
         SimpleNamespace(
             id="rule-id",

@@ -7,6 +7,13 @@ from prowler.providers.azure.services.network.network_service import (
 
 class network_http_internet_access_restricted(Check):
     def execute(self) -> Check_Report_Azure:
+        """Check whether each security group allows HTTP from the Internet.
+
+        Returns:
+            One finding per security group. The finding fails when an inbound
+            allow rule opens port 80 from Internet, *, or 0.0.0.0/0, including
+            a source stored only in source_address_prefixes.
+        """
         findings = []
         for subscription, security_groups in network_client.security_groups.items():
             subscription_name = network_client.subscriptions.get(

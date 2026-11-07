@@ -408,6 +408,16 @@ INTERNET_SOURCE_PREFIXES = {"Internet", "*", "0.0.0.0/0"}
 
 @dataclass
 class SecurityRule:
+    """NSG security rule used by the network checks.
+
+    source_address_prefixes is the plural Azure field. A one-item list of
+    0.0.0.0/0 is stored there while source_address_prefix is left empty.
+
+    Attributes:
+        source_address_prefix: Singular source, when Azure stored one.
+        source_address_prefixes: Every source from the plural field.
+    """
+
     id: str
     name: str
     destination_port_range: Optional[str]

@@ -313,6 +313,7 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].location == "location"
 
     def test_network_security_groups_plural_internet_source(self):
+        """Fail when SSH is allowed from 0.0.0.0/0 in source_address_prefixes."""
         network_client = mock.MagicMock
         network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
@@ -366,6 +367,7 @@ class Test_network_ssh_internet_access_restricted:
             )
 
     def test_network_security_groups_plural_private_source(self):
+        """Pass when the only plural source is a private prefix."""
         network_client = mock.MagicMock
         network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
