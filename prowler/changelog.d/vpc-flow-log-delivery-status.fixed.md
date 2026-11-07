@@ -1,0 +1,1 @@
+`vpc_flow_logs_enabled` no longer passes when every flow log has failed delivery; missing or unrecognized delivery status and incomplete API lookups return MANUAL unless a flow log reports SUCCESS, and all flow-log pages are evaluated
