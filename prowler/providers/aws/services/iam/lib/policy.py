@@ -915,13 +915,16 @@ def is_condition_block_restrictive_organization(
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
     valid_condition_keys = ("aws:principalorgid", "aws:principalorgpaths")
 
-    def names_one_organization(key: str, value) -> bool:
+    def names_one_organization(key: str, value, condition_operator: str) -> bool:
         if not isinstance(value, str):
             return False
         if key == "aws:principalorgpaths":
             # The organization ID must be literal; wildcards only make sense below it
             return bool(re.match(r"o-[a-z0-9]{10,32}/", value))
-        return "*" not in value and "?" not in value
+        if "*" in value:
+            return False
+        # "?" is a wildcard only for StringLike; StringEquals compares it literally
+        return not (condition_operator.endswith("StringLike") and "?" in value)
 
     for condition_operator in valid_condition_operators:
         if condition_operator in condition_statement:
@@ -934,7 +937,8 @@ def is_condition_block_restrictive_organization(
                     values = condition_statement[condition_operator][key]
                     values = values if isinstance(values, list) else [values]
                     if values and all(
-                        names_one_organization(key, value) for value in values
+                        names_one_organization(key, value, condition_operator)
+                        for value in values
                     ):
                         is_condition_valid = True
 

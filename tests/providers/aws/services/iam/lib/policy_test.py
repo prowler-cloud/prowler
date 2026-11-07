@@ -1754,6 +1754,16 @@ class Test_Policy:
             ({"StringEquals": {"aws:PrincipalOrgID": ["o-a1b2c3d4e5", "o-*"]}}, False),
             # "?" is a single-character wildcard, so it does not name one organization
             ({"StringLike": {"aws:PrincipalOrgID": "o-??????????"}}, False),
+            (
+                {"ForAnyValue:StringLike": {"aws:PrincipalOrgID": "o-??????????"}},
+                False,
+            ),
+            # StringEquals compares "?" literally, so the value names one (nonexistent) org
+            ({"StringEquals": {"aws:PrincipalOrgID": "o-??????????"}}, True),
+            (
+                {"ForAnyValue:StringEquals": {"aws:PrincipalOrgID": "o-??????????"}},
+                True,
+            ),
         ],
     )
     def test_condition_parser_organization_paths_and_set_operators(
