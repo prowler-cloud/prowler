@@ -1,4 +1,5 @@
 import json
+from unittest.mock import MagicMock
 
 from boto3 import client
 from moto import mock_aws
@@ -70,3 +71,53 @@ class Test_Organizations_Service:
             response["Policy"]["PolicySummary"]["Id"]
         )
         assert policy == json.loads(response["Policy"]["Content"])
+
+    @mock_aws
+    def test_describe_policy_failure_marks_inventory_unavailable(self):
+        # A DescribePolicy failure must mark the inventory unavailable so the
+        # downstream checks report MANUAL instead of a confident PASS/FAIL from
+        # the partial ({}) content.
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        organizations = Organizations(aws_provider)
+        organizations.policies_unavailable = False
+        organizations.client = MagicMock()
+        organizations.client.describe_policy.side_effect = Exception("boom")
+        result = organizations._describe_policy("p-1234567890")
+        assert result == {}
+        assert organizations.policies_unavailable is True
+
+    @mock_aws
+    def test_list_targets_for_policy_failure_marks_inventory_unavailable(self):
+        # A ListTargetsForPolicy failure returns [] but must mark the inventory
+        # unavailable; otherwise an empty target list is indistinguishable from
+        # a genuinely unattached policy and the tag-policy check reports FAIL.
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        organizations = Organizations(aws_provider)
+        organizations.policies_unavailable = False
+        organizations.client = MagicMock()
+        organizations.client.list_targets_for_policy.side_effect = Exception("boom")
+        result = organizations._list_targets_for_policy("p-1234567890")
+        assert result == []
+        assert organizations.policies_unavailable is True
+
+    @mock_aws
+    def test_list_policies_discards_partial_inventory_on_helper_failure(self):
+        # When a per-policy helper fails mid-listing, the whole inventory must
+        # be discarded (None) rather than exposing Policy records built from
+        # empty content/targets through Organization.policies.
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        conn.create_policy(
+            Content=scp_restrict_regions_with_deny(),
+            Description="Test",
+            Name="Test",
+            Type="SERVICE_CONTROL_POLICY",
+        )
+        organizations = Organizations(aws_provider)
+        organizations.policies_unavailable = False
+        organizations.client.list_targets_for_policy = MagicMock(
+            side_effect=Exception("boom")
+        )
+        result = organizations._list_policies()
+        assert result is None
+        assert organizations.policies_unavailable is True
