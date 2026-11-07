@@ -1,11 +1,21 @@
+from datetime import datetime, timezone
 from unittest import mock
 
+import pytest
+
+from prowler.providers.oraclecloud.services.network.network_service import (
+    VCN,
+    SecurityList,
+)
 from tests.providers.oraclecloud.oci_fixtures import (
     OCI_COMPARTMENT_ID,
     OCI_REGION,
     OCI_TENANCY_ID,
     set_mocked_oraclecloud_provider,
 )
+
+VCN_ID = "ocid1.vcn.oc1.iad.aaaaaaaexample"
+SECURITY_LIST_ID = "ocid1.securitylist.oc1.iad.aaaaaaaexample"
 
 
 class Test_network_default_security_list_restricts_traffic:
@@ -227,3 +237,74 @@ class Test_network_default_security_list_restricts_traffic:
                         == "network_default_security_list_restricts_traffic"
                     )
                     assert fail_results[0].check_metadata.ServiceName == "network"
+
+    @pytest.mark.parametrize(
+        "vcn_cidrs, source, expected_status",
+        [
+            (["10.0.0.0/16"], "10.0.0.0/8", "FAIL"),
+            (["172.16.0.0/16", "10.0.0.0/16"], "10.0.0.0/8", "FAIL"),
+            (["10.0.0.0/16"], "10.0.1.0/24", "PASS"),
+            (["10.0.0.0/16"], "10.0.0.0/16", "PASS"),
+            (["172.16.0.0/16", "10.0.0.0/16"], "10.0.1.0/24", "PASS"),
+            (["10.0.0.0/16"], "10.0.1.7/24", "PASS"),
+            (["10.0.0.0/16"], "all-iad-services-in-oracle-services-network", "FAIL"),
+            (["10.0.0.0/16"], "2001:db8::/32", "FAIL"),
+            (["not-a-cidr", "10.0.0.0/16"], "10.0.1.0/24", "PASS"),
+            (["not-a-cidr"], "10.0.1.0/24", "FAIL"),
+        ],
+    )
+    def test_ingress_source_vcn_containment(self, vcn_cidrs, source, expected_status):
+        network_client = mock.MagicMock()
+        network_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
+        network_client.audited_tenancy = OCI_TENANCY_ID
+        network_client.vcns = [
+            VCN(
+                id=VCN_ID,
+                display_name="test-vcn",
+                compartment_id=OCI_COMPARTMENT_ID,
+                cidr_blocks=vcn_cidrs,
+                lifecycle_state="AVAILABLE",
+                default_security_list_id=SECURITY_LIST_ID,
+                region=OCI_REGION,
+                time_created=datetime.now(timezone.utc),
+            )
+        ]
+        network_client.security_lists = [
+            SecurityList(
+                id=SECURITY_LIST_ID,
+                display_name="Default Security List for test-vcn",
+                compartment_id=OCI_COMPARTMENT_ID,
+                vcn_id=VCN_ID,
+                ingress_security_rules=[{"source": source, "protocol": "6"}],
+                egress_security_rules=[],
+                lifecycle_state="AVAILABLE",
+                is_default=True,
+                region=OCI_REGION,
+                time_created=datetime.now(timezone.utc),
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.network.network_default_security_list_restricts_traffic.network_default_security_list_restricts_traffic.network_client",
+                new=network_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.network.network_default_security_list_restricts_traffic.network_default_security_list_restricts_traffic import (
+                network_default_security_list_restricts_traffic,
+            )
+
+            result = network_default_security_list_restricts_traffic().execute()
+
+            assert len(result) == 1
+            assert result[0].status == expected_status
+            assert result[0].resource_id == SECURITY_LIST_ID
+            if expected_status == "FAIL":
+                assert (
+                    result[0].status_extended
+                    == f"Default security list Default Security List for test-vcn has permissive rules: ingress from {source} with protocol 6."
+                )

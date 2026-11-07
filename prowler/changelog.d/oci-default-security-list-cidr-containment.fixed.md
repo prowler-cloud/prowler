@@ -1,0 +1,1 @@
+`network_default_security_list_restricts_traffic` now tests ingress sources against the VCN CIDR blocks by network containment instead of string prefix, so broader ranges such as `10.0.0.0/8` fail and subnets inside the VCN pass
