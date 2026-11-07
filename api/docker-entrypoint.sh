@@ -79,7 +79,7 @@ check_worker_health() {
   if [ -z "$WORKER_NODENAME" ]; then
     exit 1
   fi
-  exec uv run python -m celery -A config.celery inspect ping \
+  exec uv run --no-sync python -m celery -A config.celery inspect ping \
     --destination "$WORKER_NODENAME" --timeout 5
 }
 

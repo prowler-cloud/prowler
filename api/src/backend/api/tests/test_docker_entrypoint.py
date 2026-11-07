@@ -59,6 +59,7 @@ def test_healthcheck_targets_the_worker_started_in_this_container(entrypoint_env
 
     assert result.returncode == 0, result.stderr + result.stdout
     probe_args = uv_arguments(entrypoint_env)
+    assert "--no-sync" in probe_args
     assert "inspect" in probe_args and "ping" in probe_args
     assert probe_args[probe_args.index("--destination") + 1] == node
     assert float(probe_args[probe_args.index("--timeout") + 1]) > 0
