@@ -738,11 +738,16 @@ class TestWorkerReadiness:
         assert current_app._get_current_object() is previous_app
 
     @pytest.mark.parametrize("startup_delay", [0, 0.2])
-    def test_stalled_dns_probe_does_not_delay_process_exit(self, startup_delay):
+    def test_stalled_dns_probe_does_not_delay_process_exit(
+        self, startup_delay, monkeypatch
+    ):
         """A timed-out DNS lookup must not hold the interpreter open at shutdown."""
+        import os
         import subprocess
         import sys
         import textwrap
+
+        monkeypatch.setenv("CELERY_BROKER_READ_URL", "memory://")
 
         code = textwrap.dedent(
             """
@@ -786,6 +791,7 @@ class TestWorkerReadiness:
         )
         result = subprocess.run(
             [sys.executable, "-c", code, str(startup_delay)],
+            env={**os.environ, "CELERY_BROKER_READ_URL": "redis://localhost:6379/0"},
             capture_output=True,
             text=True,
             timeout=15,
