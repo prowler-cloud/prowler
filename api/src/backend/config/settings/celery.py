@@ -58,3 +58,20 @@ CELERY_DEADLOCK_ATTEMPTS = env.int("DJANGO_CELERY_DEADLOCK_ATTEMPTS", default=5)
 # to its default (os.cpu_count()).
 if "DJANGO_CELERY_WORKER_CONCURRENCY" in env.ENVIRON:
     CELERY_WORKER_CONCURRENCY = env.int("DJANGO_CELERY_WORKER_CONCURRENCY")
+
+# Match the queues consumed by the standard worker entrypoint. Deployments
+# with different task routing can explicitly declare their required queues.
+HEALTHCHECK_WORKER_QUEUES = env.list(
+    "DJANGO_HEALTHCHECK_WORKER_QUEUES",
+    default=[
+        "celery",
+        "scans",
+        "scan-reports",
+        "deletion",
+        "backfill",
+        "overview",
+        "integrations",
+        "compliance",
+        "attack-paths-scans",
+    ],
+)

@@ -4,7 +4,8 @@ Format (draft-inadarei-api-health-check-06).
 Liveness reports only process status. Readiness verifies that PostgreSQL,
 Valkey and the attack-paths graph store (Neo4j or Neptune, per
 ``ATTACK_PATHS_SINK_DATABASE``) are reachable and returns per-dependency
-detail when any of them is unreachable.
+detail when any of them is unreachable. It also verifies active consumers
+for the deployment's required Celery queues.
 """
 
 from __future__ import annotations
@@ -41,6 +42,17 @@ STATUS_WARN = "warn"
 
 # Short socket timeout so a stuck Valkey cannot stall the probe.
 VALKEY_PROBE_TIMEOUT_SECONDS = 2
+
+# The reply timeout does not bound broker connection setup or DNS resolution.
+# Bound the entire operation separately, with only one outstanding inspection
+# per process, even when the underlying connection outlives the request budget.
+WORKER_REPLY_TIMEOUT_SECONDS = 2
+WORKER_PROBE_TIMEOUT_SECONDS = 3
+_worker_probe_executor = ThreadPoolExecutor(
+    max_workers=1, thread_name_prefix="health-worker-probe"
+)
+_worker_probe_slot = threading.BoundedSemaphore(1)
+
 
 # Probe-scoped budget for the graph database.
 # ``Driver.verify_connectivity()`` takes no timeout; its only bound is the
@@ -131,6 +143,62 @@ def _probe_valkey() -> None:
             client.close()
 
 
+def _check_worker_queues(required_queues: set[str]) -> None:
+    """Require an active consumer for every queue used by this deployment."""
+    from config.celery import celery_app
+
+    # Use a dedicated, short-lived connection without changing task-publishing
+    # retries, timeouts, TLS configuration or the application's connection pool.
+    with celery_app.connection_for_read(
+        connect_timeout=WORKER_REPLY_TIMEOUT_SECONDS,
+        transport_options={
+            "socket_connect_timeout": WORKER_REPLY_TIMEOUT_SECONDS,
+            "socket_timeout": WORKER_REPLY_TIMEOUT_SECONDS,
+            "max_retries": 0,
+        },
+    ) as connection:
+        connection.ensure_connection(max_retries=0)
+        replies = celery_app.control.inspect(
+            connection=connection, timeout=WORKER_REPLY_TIMEOUT_SECONDS
+        ).active_queues()
+
+    consumed_queues = {
+        queue.get("name")
+        for queues in (replies or {}).values()
+        if isinstance(queues, list)
+        for queue in queues
+        if isinstance(queue, dict) and isinstance(queue.get("name"), str)
+    }
+    missing = required_queues - consumed_queues
+    if missing:
+        raise RuntimeError(
+            f"No active consumer for queues: {', '.join(sorted(missing))}"
+        )
+
+
+def _probe_workers() -> None:
+    """Bound consumer inspection and prevent timed-out checks from piling up."""
+    required_queues = set(settings.HEALTHCHECK_WORKER_QUEUES)
+    if not required_queues:
+        raise RuntimeError("No worker queues configured for readiness")
+    if not _worker_probe_slot.acquire(blocking=False):
+        raise RuntimeError("A previous worker readiness probe is still running")
+
+    try:
+        future = _worker_probe_executor.submit(_check_worker_queues, required_queues)
+    except Exception:
+        _worker_probe_slot.release()
+        raise
+    future.add_done_callback(lambda _future: _worker_probe_slot.release())
+    try:
+        future.result(timeout=WORKER_PROBE_TIMEOUT_SECONDS)
+    except FuturesTimeoutError as exc:
+        future.cancel()
+        raise TimeoutError(
+            f"worker probe exceeded {WORKER_PROBE_TIMEOUT_SECONDS}s"
+        ) from exc
+
+
 def _graph_db_component_id() -> str:
     """Return the active graph database name for the ``componentId`` field."""
     return settings.ATTACK_PATHS_SINK_DATABASE.strip().lower()
@@ -190,6 +258,7 @@ def _base_payload(overall_status: str) -> dict[str, Any]:
 
 
 def _readiness_payload() -> tuple[dict[str, Any], int]:
+    """Cache dependency status, including coverage by active task consumers."""
     global _readiness_cache
 
     # Lock-free fast path: a stale snapshot still satisfies the freshness
@@ -217,6 +286,7 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
         valkey_result, valkey_ms = _measure("valkey", _probe_valkey)
         graph_db_result, graph_db_ms = _measure(graph_db_component_id, _probe_graph_db)
 
+        workers_result, workers_ms = _measure("celery", _probe_workers)
         entries = [
             _build_check_entry("postgres", "datastore", postgres_result, postgres_ms),
             _build_check_entry("valkey", "datastore", valkey_result, valkey_ms),
@@ -224,6 +294,9 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
                 graph_db_component_id, "datastore", graph_db_result, graph_db_ms
             ),
         ]
+        entries.append(
+            _build_check_entry("celery", "component", workers_result, workers_ms)
+        )
         overall = _aggregate_status(entries)
 
         payload = _base_payload(overall)
@@ -231,6 +304,7 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
             "postgres:responseTime": [entries[0]],
             "valkey:responseTime": [entries[1]],
             "graphdb:responseTime": [entries[2]],
+            "celery:responseTime": [entries[3]],
         }
 
         http_status = (

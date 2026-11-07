@@ -16,6 +16,30 @@ The Prowler API is composed of the following components:
 
 Valkey exposes a Redis 7.2 compliant API. Any service that exposes the Redis API can be used with Prowler API.
 
+## Health checks
+
+Use `GET /health/live` for API liveness. It does not check dependencies or
+workers, so a worker or broker outage does not trigger API restart loops.
+
+Use `GET /health/ready` to check PostgreSQL, Valkey, the graph database and
+Celery consumers. Readiness returns 503 if any required queue has no
+responding consumer. Queue coverage is combined across workers, so dedicated
+workers can consume different queues. Beat schedules tasks; it does not count
+as a consumer. A responding consumer is not a guarantee of task progress.
+
+By default, readiness requires the queues used by the standard worker:
+`celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans`.
+If you change task routing, set `DJANGO_HEALTHCHECK_WORKER_QUEUES` to a nonempty,
+comma-separated list of every queue your deployment needs. Omitting a queue
+also removes it from readiness coverage. Celery remote control must be enabled
+for workers to report their active queues.
+
+The consumer inspection has a three-second request budget and allows only
+one outstanding inspection per API process. Results share the existing
+three-second readiness cache. Worker names, queue names and broker exception
+details are not included in the HTTP response. Keep liveness as the API's
+container startup dependency so workers can start before readiness passes.
+
 ## Modify environment variables
 
 Under the root path of the project, you can find a file called `.env`. This file shows all the environment variables that the project uses. You should review it and set the values for the variables you want to change.
