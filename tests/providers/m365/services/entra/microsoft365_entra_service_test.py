@@ -1581,6 +1581,107 @@ class Test_Entra_Service:
             assert len(app.federated_identity_credentials) == 1
             assert app.federated_identity_credentials[0].name == f"cred-{object_id}"
 
+    def test__get_app_registrations_reads_credentials_when_pagination_fails(self):
+        """Applications from the pages already read still get their credentials.
+
+        A later page failing must not leave the earlier applications with an
+        empty collection and no error, which a check cannot tell apart from an
+        application that genuinely has no federated identity credentials.
+        """
+        first_page_app = SimpleNamespace(
+            id="app-object-0",
+            app_id="app-client-0",
+            display_name="App 0",
+            password_credentials=[],
+        )
+        first_page = SimpleNamespace(
+            value=[first_page_app],
+            odata_next_link="https://graph.microsoft.com/v1.0/applications?$skiptoken=x",
+        )
+
+        fic_builder = SimpleNamespace(
+            get=AsyncMock(
+                return_value=SimpleNamespace(
+                    value=[
+                        SimpleNamespace(
+                            name="github-actions",
+                            issuer="https://token.actions.githubusercontent.com",
+                            subject="repo:acme/deploy:ref:refs/heads/main",
+                            audiences=["api://AzureADTokenExchange"],
+                        )
+                    ]
+                )
+            )
+        )
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=first_page),
+            # The second page request fails.
+            with_url=MagicMock(
+                return_value=SimpleNamespace(
+                    get=AsyncMock(side_effect=Exception("Graph error"))
+                )
+            ),
+            by_application_id=MagicMock(
+                return_value=SimpleNamespace(federated_identity_credentials=fic_builder)
+            ),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        app = result["app-object-0"]
+        assert len(app.federated_identity_credentials) == 1
+        assert app.federated_identity_credentials[0].name == "github-actions"
+        assert app.federated_identity_credentials_error is None
+
+    def test__get_app_registrations_records_error_when_pagination_and_read_fail(self):
+        """A partial inventory whose credential reads also fail records the error."""
+        first_page_app = SimpleNamespace(
+            id="app-object-0",
+            app_id="app-client-0",
+            display_name="App 0",
+            password_credentials=[],
+        )
+        first_page = SimpleNamespace(
+            value=[first_page_app],
+            odata_next_link="https://graph.microsoft.com/v1.0/applications?$skiptoken=x",
+        )
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=first_page),
+            with_url=MagicMock(
+                return_value=SimpleNamespace(
+                    get=AsyncMock(side_effect=Exception("Graph error"))
+                )
+            ),
+            by_application_id=MagicMock(
+                return_value=SimpleNamespace(
+                    federated_identity_credentials=SimpleNamespace(
+                        get=AsyncMock(side_effect=Exception("Graph error"))
+                    )
+                )
+            ),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        app = result["app-object-0"]
+        assert app.federated_identity_credentials == []
+        assert (
+            "Unable to retrieve federated identity credentials"
+            in app.federated_identity_credentials_error
+        )
+
     def test__get_exchange_mailbox_permission_service_principals(self):
         """Service principals with Exchange Graph application roles are returned."""
         graph_sp_id = "graph-sp-id"

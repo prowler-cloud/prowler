@@ -2286,12 +2286,19 @@ OAuthAppInfo
                     break
                 app_response = await self.client.applications.with_url(next_link).get()
 
-            await self._attach_federated_identity_credentials(app_registrations)
-
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        finally:
+            # Deliberately in ``finally``: when a later page request fails, the
+            # applications already read are still returned, and they must carry
+            # either their credentials or their own retrieval error. Leaving them
+            # with an empty collection and no error would be indistinguishable
+            # from "this application has no federated credentials", which is the
+            # silent pass this check exists to avoid.
+            await self._attach_federated_identity_credentials(app_registrations)
+
         return app_registrations
 
     async def _attach_federated_identity_credentials(
