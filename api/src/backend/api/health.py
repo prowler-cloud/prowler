@@ -347,9 +347,9 @@ class ReadinessView(APIView):
     """Readiness probe.
 
     Returns 200 when PostgreSQL, Valkey and the attack-paths graph store
-    all respond, or 503 with per-dependency detail when any of them is
-    unreachable. Per-IP throttle plus the short in-process result cache cap
-    the real dependency hits regardless of inbound traffic shape.
+    respond and all required queues have active consumers. Otherwise returns
+    503 with per-dependency status. Per-IP throttle plus the short in-process
+    result cache cap the real dependency hits regardless of inbound traffic shape.
     """
 
     authentication_classes: list = []
