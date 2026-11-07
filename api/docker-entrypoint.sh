@@ -1,5 +1,6 @@
 #!/bin/sh
 
+WORKER_NODENAME_FILE="${TMPDIR:-/tmp}/prowler-worker-nodename"
 
 apply_migrations() {
   echo "Applying database migrations..."
@@ -53,11 +54,33 @@ resolve_worker_hostname() {
 
 start_worker() {
   echo "Starting the worker..."
+  WORKER_NODENAME=$(resolve_worker_hostname)
+  # Health checks run in a separate process and must use this exact identity.
+  # Publish atomically so a probe cannot read a partially written name.
+  NODENAME_TMP=$(mktemp "${WORKER_NODENAME_FILE}.XXXXXX") || exit 1
+  if ! printf '%s\n' "$WORKER_NODENAME" > "$NODENAME_TMP" ||
+     ! mv -fT "$NODENAME_TMP" "$WORKER_NODENAME_FILE"; then
+    rm -f "$NODENAME_TMP"
+    exit 1
+  fi
   exec uv run python -m celery -A config.celery worker \
-    -n "$(resolve_worker_hostname)" \
+    -n "$WORKER_NODENAME" \
     -l "${DJANGO_LOGGING_LEVEL:-info}" \
     -Q celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans \
     -E --max-tasks-per-child 1
+}
+
+check_worker_health() {
+  if [ ! -s "$WORKER_NODENAME_FILE" ]; then
+    echo "Worker identity is not available yet." >&2
+    exit 1
+  fi
+  WORKER_NODENAME=$(cat "$WORKER_NODENAME_FILE")
+  if [ -z "$WORKER_NODENAME" ]; then
+    exit 1
+  fi
+  exec uv run python -m celery -A config.celery inspect ping \
+    --destination "$WORKER_NODENAME" --timeout 5
 }
 
 start_worker_beat() {
@@ -98,11 +121,14 @@ case "$1" in
   worker)
     start_worker
     ;;
+  worker-healthcheck)
+    check_worker_health
+    ;;
   beat)
     start_worker_beat
     ;;
   *)
-    echo "Usage: $0 {dev|prod|worker|beat}"
+    echo "Usage: $0 {dev|prod|worker|worker-healthcheck|beat}"
     exit 1
     ;;
 esac
