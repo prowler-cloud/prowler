@@ -598,6 +598,12 @@ class Repository(GithubService):
             conversation_resolution = False
             dismiss_stale_reviews = False
             dismiss_stale_reviews_source = None
+            # Whether the branch endpoint reported the branch as protected.
+            # GitHub answers 404 from the protection endpoint both when the
+            # branch is unprotected and when the caller lacks Administration:
+            # read, so a 404 only means "not protected" when the branch
+            # endpoint did not report it as protected.
+            branch_is_protected = False
             protected_source = None
             require_pull_request_source = None
             approval_count_source = None
@@ -611,7 +617,8 @@ class Repository(GithubService):
             conversation_resolution_source = None
             try:
                 branch = repo.get_branch(default_branch)
-                if branch.protected:
+                branch_is_protected = branch.protected
+                if branch_is_protected:
                     protection = branch.get_protection()
                     if protection:
                         require_pr = (
@@ -645,13 +652,18 @@ class Repository(GithubService):
                             dismiss_stale_reviews_source = "classic"
                         require_signed_commits = branch.get_required_signatures()
             except Exception as error:
-                # If the branch is not found, it is not protected
-                if "404" in str(error):
-                    logger.warning(
-                        f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                # Any other error, we cannot know if the branch is protected or not
-                else:
+                # GitHub answers 404 from the protection endpoint both when
+                # the branch is unprotected and when the caller lacks
+                # Administration: read, so a 404 only means "not protected"
+                # when the branch endpoint did not report it as protected.
+                # When the branch is protected but its settings cannot be
+                # read, the protection state is unknown: fall through with
+                # the insecure defaults would make every branch-protection
+                # check FAIL for a non-admin token.
+                protection_unknown = "404" not in str(error) or (
+                    branch_is_protected and "Branch not protected" not in str(error)
+                )
+                if protection_unknown:
                     require_pr = None
                     approval_cnt = None
                     branch_protection = None
@@ -665,6 +677,12 @@ class Repository(GithubService):
                     conversation_resolution = None
                     dismiss_stale_reviews = None
                     dismiss_stale_reviews_source = None
+                if "404" in str(error):
+                    logger.warning(
+                        f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                # Any other error, we cannot know if the branch is protected or not
+                else:
                     logger.error(
                         f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
