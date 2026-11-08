@@ -661,8 +661,8 @@ class Test_Repository_BranchProtectionRulesets:
     def test_process_repository_signature_lookup_404_on_protected_branch_is_unknown(
         self,
     ):
-        """A 404 from the required-signatures endpoint after readable protection is unknown, not unprotected."""
-        repo = self._build_repo(branch_protected=True)
+        """A 404 from the required-signatures endpoint only makes the signature state unknown."""
+        repo = self._build_repo(branch_protected=True, dismiss_stale_reviews=True)
         branch = repo.get_branch.return_value
         branch.get_required_signatures.side_effect = GithubException(
             404, {"message": "Not Found", "status": "404"}, None
@@ -673,7 +673,38 @@ class Test_Repository_BranchProtectionRulesets:
 
         default_branch = repos[1].default_branch
         assert default_branch.require_signed_commits is None
-        assert default_branch.protected is not False
+        assert default_branch.require_signed_commits_source is None
+        # The classic protection settings that were already read are preserved.
+        assert default_branch.protected is True
+        assert default_branch.require_pull_request is True
+        assert default_branch.approval_count == 1
+        assert default_branch.dismiss_stale_reviews is True
+        assert default_branch.dismiss_stale_reviews_source == "classic"
+
+    def test_process_repository_signature_lookup_404_merges_active_ruleset(self):
+        """An active required-signatures ruleset still resolves the control when the lookup fails."""
+        repo = self._build_repo(
+            branch_protected=True,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "required_signatures"}],
+                )
+            ],
+        )
+        branch = repo.get_branch.return_value
+        branch.get_required_signatures.side_effect = GithubException(
+            404, {"message": "Not Found", "status": "404"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.require_signed_commits is True
+        assert default_branch.require_signed_commits_source == "ruleset"
+        assert default_branch.protected is True
 
     def _build_unreadable_protection_repo(
         self, *, enforcement: str, approval_count: int = 2
@@ -796,6 +827,13 @@ class Test_Repository_BranchProtectionRulesets:
         assert merge(None, "ruleset", good=False) == (False, "ruleset")
         assert merge(None, "ruleset_not_active") == (None, None)
         assert merge(None, None) == (None, None)
+
+    def test_merge_ruleset_bool_unknown_ruleset_coverage(self):
+        """A ruleset whose coverage cannot be confirmed only lets a passing classic value stand."""
+        merge = Repository._merge_ruleset_bool
+        assert merge(True, "ruleset_unknown") == (True, "classic")
+        assert merge(False, "ruleset_unknown") == (None, None)
+        assert merge(None, "ruleset_unknown") == (None, None)
 
     def test_process_repository_branch_not_protected_404_keeps_defaults(self):
         repo = self._build_repo(branch_protected=True)
@@ -1190,6 +1228,28 @@ class Test_Repository_BranchProtectionRulesets:
 
         assert repos[1].default_branch.enforce_admins is True
         assert repos[1].default_branch.enforce_admins_source == "ruleset"
+
+    def test_active_ruleset_without_bypass_actors_key_keeps_admin_enforcement_unknown(
+        self,
+    ):
+        """GitHub omits bypass_actors when the token cannot read them, so admin coverage is unknown."""
+        ruleset = self._build_ruleset(
+            enforcement="active",
+            include=["~DEFAULT_BRANCH"],
+            rules=[{"type": "non_fast_forward"}],
+        )
+        ruleset.pop("bypass_actors")
+        repo = self._build_repo(branch_protected=False, ruleset_details=[ruleset])
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is None
+        assert default_branch.enforce_admins_source is None
+        # The ruleset itself is still honoured for the controls it enforces.
+        assert default_branch.allow_force_pushes is False
+        assert default_branch.allow_force_pushes_source == "ruleset"
 
     def test_active_ruleset_with_bypass_actors_does_not_apply_to_admins(self):
         repo = self._build_repo(
