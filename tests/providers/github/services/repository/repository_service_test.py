@@ -675,6 +675,128 @@ class Test_Repository_BranchProtectionRulesets:
         assert default_branch.require_signed_commits is None
         assert default_branch.protected is not False
 
+    def _build_unreadable_protection_repo(
+        self, *, enforcement: str, approval_count: int = 2
+    ):
+        """Build a protected branch with unreadable classic protection and a ruleset."""
+        repo = self._build_repo(
+            branch_protected=True,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement=enforcement,
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {"type": "deletion"},
+                        {"type": "non_fast_forward"},
+                        {"type": "required_linear_history"},
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {
+                                "required_status_checks": [{"context": "ci"}]
+                            },
+                        },
+                        {
+                            "type": "pull_request",
+                            "parameters": {
+                                "required_approving_review_count": approval_count,
+                                "require_code_owner_review": False,
+                                "required_review_thread_resolution": False,
+                                "dismiss_stale_reviews_on_push": False,
+                            },
+                        },
+                    ],
+                    bypass_actors=[{"actor_id": 1, "actor_type": "Team"}],
+                )
+            ],
+        )
+        repo.get_branch.return_value.get_protection.side_effect = GithubException(
+            404, {"message": "Not Found", "status": "404"}, None
+        )
+        return repo
+
+    def test_process_repository_unreadable_protection_merges_active_ruleset(self):
+        """An active ruleset still resolves the controls it enforces when classic protection is unreadable."""
+        repo = self._build_unreadable_protection_repo(enforcement="active")
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.protected is True
+        assert default_branch.protected_source == "ruleset"
+        assert default_branch.branch_deletion is False
+        assert default_branch.branch_deletion_source == "ruleset"
+        assert default_branch.allow_force_pushes is False
+        assert default_branch.allow_force_pushes_source == "ruleset"
+        assert default_branch.required_linear_history is True
+        assert default_branch.required_linear_history_source == "ruleset"
+        assert default_branch.status_checks is True
+        assert default_branch.status_checks_source == "ruleset"
+        assert default_branch.require_pull_request is True
+        assert default_branch.require_pull_request_source == "ruleset"
+        assert default_branch.approval_count == 2
+        assert default_branch.approval_count_source == "ruleset"
+        # Controls the ruleset does not enforce stay unknown: classic protection may
+        # still cover them and the token cannot tell.
+        for attribute in (
+            "require_signed_commits",
+            "enforce_admins",
+            "require_code_owner_reviews",
+            "conversation_resolution",
+            "dismiss_stale_reviews",
+        ):
+            assert getattr(default_branch, attribute) is None, attribute
+            assert getattr(default_branch, f"{attribute}_source") is None, attribute
+
+    def test_process_repository_unreadable_protection_low_ruleset_approvals_stay_unknown(
+        self,
+    ):
+        """A ruleset approval count below the control is only a lower bound when classic protection is unknown."""
+        repo = self._build_unreadable_protection_repo(
+            enforcement="active", approval_count=1
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.approval_count is None
+        assert default_branch.approval_count_source is None
+        assert default_branch.require_pull_request is True
+
+    def test_process_repository_unreadable_protection_ignores_inactive_ruleset(self):
+        """An inactive ruleset cannot turn unknown classic protection into a FAIL signal."""
+        repo = self._build_unreadable_protection_repo(enforcement="disabled")
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        for attribute in (
+            "protected",
+            "require_pull_request",
+            "approval_count",
+            "required_linear_history",
+            "allow_force_pushes",
+            "branch_deletion",
+            "status_checks",
+            "enforce_admins",
+            "require_code_owner_reviews",
+            "require_signed_commits",
+            "conversation_resolution",
+            "dismiss_stale_reviews",
+        ):
+            assert getattr(default_branch, attribute) is None, attribute
+            assert getattr(default_branch, f"{attribute}_source") is None, attribute
+
+    def test_merge_ruleset_bool_unknown_classic_value(self):
+        """Only an active ruleset resolves an unknown classic value; anything else stays unknown."""
+        merge = Repository._merge_ruleset_bool
+        assert merge(None, "ruleset") == (True, "ruleset")
+        assert merge(None, "ruleset", good=False) == (False, "ruleset")
+        assert merge(None, "ruleset_not_active") == (None, None)
+        assert merge(None, None) == (None, None)
+
     def test_process_repository_branch_not_protected_404_keeps_defaults(self):
         repo = self._build_repo(branch_protected=True)
         branch = repo.get_branch.return_value
