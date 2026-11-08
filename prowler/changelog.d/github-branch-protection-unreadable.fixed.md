@@ -1,1 +1,1 @@
-GitHub `repository_default_branch_*` checks no longer report FAIL when the token cannot read branch protection (GitHub answers 404 without Administration: read); the protection state is now treated as unknown and the checks skip the repository
+GitHub `repository_default_branch_*` checks no longer report FAIL when the token cannot read classic branch protection (GitHub answers 404 without Administration: read): controls enforced by an active ruleset are still reported and the rest are skipped as unknown

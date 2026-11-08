@@ -415,8 +415,11 @@ class Repository(GithubService):
             A ``(value, source)`` tuple. Classic protection wins when it already satisfies
             the control; otherwise an active ruleset enforces the compliant value, and an
             inactive ruleset surfaces the non-compliant value with a ``"ruleset_not_active"``
-            source so checks can explain the gap.
+            source so checks can explain the gap. An unknown classic value (``None``) is
+            only resolved by an active ruleset; otherwise it stays unknown.
         """
+        if classic_value is None and ruleset_source != "ruleset":
+            return None, None
         classic_pass = classic_value == good
         if ruleset_source == "ruleset":
             return good, "ruleset"
@@ -673,101 +676,109 @@ class Repository(GithubService):
                     conversation_resolution = None
                     dismiss_stale_reviews = None
                     dismiss_stale_reviews_source = None
-                    logger.error(
-                        f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                    if "404" in error_message:
+                        logger.warning(
+                            f"{repo.full_name}: branch '{default_branch}' is reported as protected but its protection settings cannot be read (404); the token likely lacks Administration: read, so the classic protection state is unknown"
+                        )
+                    else:
+                        logger.error(
+                            f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
             # Branch protection enforced through rulesets is equivalent to classic branch
             # protection, so merge any ruleset coverage before reporting findings to avoid
-            # false positives for repositories that have migrated to rulesets.
-            if branch_protection is not None:
-                ruleset_eval = self._evaluate_default_branch_rulesets(
-                    repo, default_branch
-                )
+            # false positives for repositories that have migrated to rulesets. Rulesets are
+            # evaluated even when classic protection is unknown: an active ruleset is a fact
+            # about the branch regardless of what the token can read about classic protection.
+            ruleset_eval = self._evaluate_default_branch_rulesets(repo, default_branch)
 
-                branch_protection, protected_source = self._merge_ruleset_bool(
-                    branch_protection, ruleset_eval.get("protected", (None, None))[1]
-                )
-                require_pr, require_pull_request_source = self._merge_ruleset_bool(
-                    require_pr,
-                    ruleset_eval.get("require_pull_request", (None, None))[1],
-                )
-                (
-                    required_linear_history,
-                    required_linear_history_source,
-                ) = self._merge_ruleset_bool(
-                    required_linear_history,
-                    ruleset_eval.get("required_linear_history", (None, None))[1],
-                )
-                (
-                    require_signed_commits,
-                    require_signed_commits_source,
-                ) = self._merge_ruleset_bool(
-                    require_signed_commits,
-                    ruleset_eval.get("require_signed_commits", (None, None))[1],
-                )
-                status_checks, status_checks_source = self._merge_ruleset_bool(
-                    status_checks, ruleset_eval.get("status_checks", (None, None))[1]
-                )
-                (
-                    require_code_owner_reviews,
-                    require_code_owner_reviews_source,
-                ) = self._merge_ruleset_bool(
-                    require_code_owner_reviews,
-                    ruleset_eval.get("require_code_owner_reviews", (None, None))[1],
-                )
-                (
-                    conversation_resolution,
-                    conversation_resolution_source,
-                ) = self._merge_ruleset_bool(
-                    conversation_resolution,
-                    ruleset_eval.get("conversation_resolution", (None, None))[1],
-                )
-                enforce_admins, enforce_admins_source = self._merge_ruleset_bool(
-                    enforce_admins,
-                    ruleset_eval.get("enforce_admins", (None, None))[1],
-                )
-                allow_force_pushes, allow_force_pushes_source = (
-                    self._merge_ruleset_bool(
-                        allow_force_pushes,
-                        ruleset_eval.get("allow_force_pushes", (None, None))[1],
-                        good=False,
-                    )
-                )
-                branch_deletion, branch_deletion_source = self._merge_ruleset_bool(
-                    branch_deletion,
-                    ruleset_eval.get("branch_deletion", (None, None))[1],
-                    good=False,
-                )
+            branch_protection, protected_source = self._merge_ruleset_bool(
+                branch_protection, ruleset_eval.get("protected", (None, None))[1]
+            )
+            require_pr, require_pull_request_source = self._merge_ruleset_bool(
+                require_pr,
+                ruleset_eval.get("require_pull_request", (None, None))[1],
+            )
+            (
+                required_linear_history,
+                required_linear_history_source,
+            ) = self._merge_ruleset_bool(
+                required_linear_history,
+                ruleset_eval.get("required_linear_history", (None, None))[1],
+            )
+            (
+                require_signed_commits,
+                require_signed_commits_source,
+            ) = self._merge_ruleset_bool(
+                require_signed_commits,
+                ruleset_eval.get("require_signed_commits", (None, None))[1],
+            )
+            status_checks, status_checks_source = self._merge_ruleset_bool(
+                status_checks, ruleset_eval.get("status_checks", (None, None))[1]
+            )
+            (
+                require_code_owner_reviews,
+                require_code_owner_reviews_source,
+            ) = self._merge_ruleset_bool(
+                require_code_owner_reviews,
+                ruleset_eval.get("require_code_owner_reviews", (None, None))[1],
+            )
+            (
+                conversation_resolution,
+                conversation_resolution_source,
+            ) = self._merge_ruleset_bool(
+                conversation_resolution,
+                ruleset_eval.get("conversation_resolution", (None, None))[1],
+            )
+            enforce_admins, enforce_admins_source = self._merge_ruleset_bool(
+                enforce_admins,
+                ruleset_eval.get("enforce_admins", (None, None))[1],
+            )
+            allow_force_pushes, allow_force_pushes_source = self._merge_ruleset_bool(
+                allow_force_pushes,
+                ruleset_eval.get("allow_force_pushes", (None, None))[1],
+                good=False,
+            )
+            branch_deletion, branch_deletion_source = self._merge_ruleset_bool(
+                branch_deletion,
+                ruleset_eval.get("branch_deletion", (None, None))[1],
+                good=False,
+            )
 
-                # Dismiss stale reviews keeps its dedicated handling so the classic source
-                # set above (when enabled) is preserved.
-                _, dismiss_source = ruleset_eval.get(
-                    "dismiss_stale_reviews", (None, None)
-                )
-                if dismiss_source == "ruleset":
-                    dismiss_stale_reviews = True
-                    dismiss_stale_reviews_source = "ruleset"
-                elif (
-                    dismiss_source == "ruleset_not_active" and not dismiss_stale_reviews
-                ):
-                    dismiss_stale_reviews = False
-                    dismiss_stale_reviews_source = "ruleset_not_active"
+            # Dismiss stale reviews keeps its dedicated handling so the classic source
+            # set above (when enabled) is preserved.
+            _, dismiss_source = ruleset_eval.get("dismiss_stale_reviews", (None, None))
+            if dismiss_source == "ruleset":
+                dismiss_stale_reviews = True
+                dismiss_stale_reviews_source = "ruleset"
+            elif (
+                dismiss_source == "ruleset_not_active"
+                and dismiss_stale_reviews is False
+            ):
+                dismiss_stale_reviews_source = "ruleset_not_active"
 
-                # Approval count takes the strongest requirement between classic and rulesets.
-                approval_value, approval_source = ruleset_eval.get(
-                    "approval_count", (None, None)
-                )
-                if approval_source == "ruleset" and approval_value is not None:
+            # Approval count takes the strongest requirement between classic and rulesets.
+            approval_value, approval_source = ruleset_eval.get(
+                "approval_count", (None, None)
+            )
+            if approval_source == "ruleset" and approval_value is not None:
+                if approval_cnt is None:
+                    # Classic protection is unknown, so the ruleset count is only a lower
+                    # bound: adopt it only when it already satisfies the control.
+                    if approval_value >= 2:
+                        approval_cnt = approval_value
+                        approval_count_source = "ruleset"
+                else:
                     if approval_value > approval_cnt:
                         approval_cnt = approval_value
                     approval_count_source = "ruleset"
-                elif (
-                    approval_source == "ruleset_not_active"
-                    and (approval_value or 0) >= 2
-                    and approval_cnt < 2
-                ):
-                    approval_count_source = "ruleset_not_active"
+            elif (
+                approval_source == "ruleset_not_active"
+                and (approval_value or 0) >= 2
+                and approval_cnt is not None
+                and approval_cnt < 2
+            ):
+                approval_count_source = "ruleset_not_active"
 
             secret_scanning_enabled = False
             # GitHub omits security_and_analysis when the token cannot read it

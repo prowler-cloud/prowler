@@ -52,7 +52,7 @@ Required for scanning repository security settings:
 </Note>
 
 <Note>
-**Administration: Read is required for branch protection results.** Without it, GitHub returns `404` for the branch protection endpoints, so the `repository_default_branch_*` checks treat the protection state as unknown and skip the repository instead of reporting `FAIL`.
+**Administration: Read is required for classic branch protection results.** Without it, GitHub returns `404` for the branch protection endpoints, so the `repository_default_branch_*` checks treat the classic protection state as unknown. Controls enforced by an active ruleset are still reported, because the rulesets endpoints only need Metadata: Read; controls not covered by an active ruleset are skipped instead of reporting `FAIL`.
 </Note>
 
 #### Organization Permissions
