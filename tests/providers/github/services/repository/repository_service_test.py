@@ -657,6 +657,89 @@ class Test_Repository_BranchProtectionRulesets:
         ):
             assert getattr(default_branch, attribute) is None, attribute
 
+    def test_process_repository_branch_not_protected_404_keeps_defaults(self):
+        repo = self._build_repo(branch_protected=True)
+        branch = repo.get_branch.return_value
+        branch.get_protection.side_effect = GithubException(
+            404, {"message": "Branch not protected"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.protected is False
+        assert default_branch.require_pull_request is False
+        assert default_branch.allow_force_pushes is True
+        assert default_branch.branch_deletion is True
+        assert default_branch.require_signed_commits is False
+
+    def test_process_repository_branch_not_protected_404_merges_active_ruleset(self):
+        repo = self._build_repo(
+            branch_protected=True,
+            ruleset_details=[
+                self._build_pull_request_ruleset(
+                    enforcement="active", include=["~DEFAULT_BRANCH"]
+                )
+            ],
+        )
+        branch = repo.get_branch.return_value
+        branch.get_protection.side_effect = GithubException(
+            404, {"message": "Branch not protected"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.protected is True
+        assert default_branch.protected_source == "ruleset"
+        assert default_branch.dismiss_stale_reviews is True
+        assert default_branch.dismiss_stale_reviews_source == "ruleset"
+        assert default_branch.allow_force_pushes is True
+
+    def test_process_repository_branch_not_found_404_keeps_defaults(self):
+        repo = self._build_repo(branch_protected=True)
+        repo.get_branch.side_effect = GithubException(
+            404, {"message": "Branch not found"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.protected is False
+        assert default_branch.allow_force_pushes is True
+        assert default_branch.branch_deletion is True
+        assert default_branch.require_signed_commits is False
+
+    def test_process_repository_non_404_protection_error_is_unknown(self):
+        repo = self._build_repo(branch_protected=True)
+        branch = repo.get_branch.return_value
+        branch.get_protection.side_effect = GithubException(
+            403, {"message": "Forbidden"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        for attribute in (
+            "protected",
+            "require_pull_request",
+            "approval_count",
+            "required_linear_history",
+            "allow_force_pushes",
+            "branch_deletion",
+            "status_checks",
+            "enforce_admins",
+            "require_code_owner_reviews",
+            "require_signed_commits",
+            "conversation_resolution",
+            "dismiss_stale_reviews",
+        ):
+            assert getattr(default_branch, attribute) is None, attribute
+
     def test_process_repository_uses_active_ruleset_for_default_branch(self):
         repo = self._build_repo(
             branch_protected=False,

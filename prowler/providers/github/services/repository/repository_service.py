@@ -609,9 +609,11 @@ class Repository(GithubService):
             status_checks_source = None
             enforce_admins_source = None
             conversation_resolution_source = None
+            branch_is_protected = False
             try:
                 branch = repo.get_branch(default_branch)
-                if branch.protected:
+                branch_is_protected = bool(branch.protected)
+                if branch_is_protected:
                     protection = branch.get_protection()
                     if protection:
                         require_pr = (
@@ -645,12 +647,18 @@ class Repository(GithubService):
                             dismiss_stale_reviews_source = "classic"
                         require_signed_commits = branch.get_required_signatures()
             except Exception as error:
-                # If the branch is not found, it is not protected
-                if "404" in str(error):
+                error_message = str(error)
+                # A 404 means there is no classic protection only when the branch itself is
+                # missing (empty repository) or GitHub explicitly answers "Branch not protected".
+                # GitHub also answers 404 to the protection endpoints when the token lacks
+                # Administration: read on a branch it reports as protected; that state is unknown.
+                if "404" in error_message and (
+                    not branch_is_protected or "Branch not protected" in error_message
+                ):
                     logger.warning(
                         f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                # Any other error, we cannot know if the branch is protected or not
+                # Any other error (including unreadable protection), we cannot know the state
                 else:
                     require_pr = None
                     approval_cnt = None

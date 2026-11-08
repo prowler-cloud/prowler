@@ -51,6 +51,10 @@ Required for scanning repository security settings:
 **Pull requests permission is optional.** It's only needed if you want to audit PR-specific settings beyond what branch protection provides.
 </Note>
 
+<Note>
+**Administration: Read is required for branch protection results.** Without it, GitHub returns `404` for the branch protection endpoints, so the `repository_default_branch_*` checks treat the protection state as unknown and skip the repository instead of reporting `FAIL`.
+</Note>
+
 #### Organization Permissions
 
 Required for scanning organization-level security settings:
