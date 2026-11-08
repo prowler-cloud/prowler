@@ -626,6 +626,7 @@ class Test_Repository_BranchProtectionRulesets:
     def test_process_repository_unreadable_protection_on_protected_branch_is_unknown(
         self,
     ):
+        """A 404 from the protection endpoint on a protected branch leaves every attribute unknown."""
         # GitHub reports ``protected: true`` to any token with Contents: read, but answers
         # 404 to GET /branches/{branch}/protection when the token lacks Administration: read.
         repo = self._build_repo(branch_protected=True)
@@ -656,6 +657,23 @@ class Test_Repository_BranchProtectionRulesets:
             "dismiss_stale_reviews",
         ):
             assert getattr(default_branch, attribute) is None, attribute
+
+    def test_process_repository_signature_lookup_404_on_protected_branch_is_unknown(
+        self,
+    ):
+        """A 404 from the required-signatures endpoint after readable protection is unknown, not unprotected."""
+        repo = self._build_repo(branch_protected=True)
+        branch = repo.get_branch.return_value
+        branch.get_required_signatures.side_effect = GithubException(
+            404, {"message": "Not Found", "status": "404"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.require_signed_commits is None
+        assert default_branch.protected is not False
 
     def test_process_repository_branch_not_protected_404_keeps_defaults(self):
         repo = self._build_repo(branch_protected=True)
@@ -714,6 +732,7 @@ class Test_Repository_BranchProtectionRulesets:
         assert default_branch.require_signed_commits is False
 
     def test_process_repository_non_404_protection_error_is_unknown(self):
+        """A non-404 error from the protection endpoint leaves every attribute unknown."""
         repo = self._build_repo(branch_protected=True)
         branch = repo.get_branch.return_value
         branch.get_protection.side_effect = GithubException(
