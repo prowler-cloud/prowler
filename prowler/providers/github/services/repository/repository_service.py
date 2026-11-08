@@ -299,8 +299,11 @@ class Repository(GithubService):
         # A ruleset with no bypass actors applies to everyone, including administrators
         # (the rulesets equivalent of "enforce admins"). A ruleset that has bypass actors
         # would not apply to admins even if activated, so it must not drive the
-        # enforce-admins finding in either the active or the inactive case.
+        # enforce-admins finding in either the active or the inactive case. GitHub omits
+        # ``bypass_actors`` when the token cannot read them, so only an explicit empty
+        # list confirms admin coverage; a missing key leaves it unknown.
         admins_enforced_active = False
+        admins_bypass_unknown_active = False
         admins_configured_inactive = False
 
         for ruleset in rulesets:
@@ -316,11 +319,14 @@ class Repository(GithubService):
             if not (is_active or is_inactive):
                 continue
 
-            has_no_bypass_actors = not (ruleset.get("bypass_actors") or [])
+            bypass_actors = ruleset.get("bypass_actors")
+            has_no_bypass_actors = bypass_actors == []
             if is_active:
                 any_active_ruleset = True
                 if has_no_bypass_actors:
                     admins_enforced_active = True
+                elif not isinstance(bypass_actors, list):
+                    admins_bypass_unknown_active = True
             else:
                 any_inactive_ruleset = True
                 if has_no_bypass_actors:
@@ -394,6 +400,8 @@ class Repository(GithubService):
 
         if admins_enforced_active:
             result["enforce_admins"] = (None, "ruleset")
+        elif admins_bypass_unknown_active:
+            result["enforce_admins"] = (None, "ruleset_unknown")
         elif admins_configured_inactive:
             result["enforce_admins"] = (None, "ruleset_not_active")
 
@@ -407,7 +415,8 @@ class Repository(GithubService):
 
         Args:
             classic_value: The value resolved from classic branch protection.
-            ruleset_source: ``"ruleset"``, ``"ruleset_not_active"`` or ``None``.
+            ruleset_source: ``"ruleset"``, ``"ruleset_not_active"``, ``"ruleset_unknown"``
+                or ``None``.
             good: The compliant value for the attribute (``True`` for positive attributes,
                 ``False`` for inverted ones such as ``allow_force_pushes``).
 
@@ -415,8 +424,10 @@ class Repository(GithubService):
             A ``(value, source)`` tuple. Classic protection wins when it already satisfies
             the control; otherwise an active ruleset enforces the compliant value, and an
             inactive ruleset surfaces the non-compliant value with a ``"ruleset_not_active"``
-            source so checks can explain the gap. An unknown classic value (``None``) is
-            only resolved by an active ruleset; otherwise it stays unknown.
+            source so checks can explain the gap. An active ruleset whose coverage cannot
+            be confirmed (``"ruleset_unknown"``) leaves a non-passing value unknown. An
+            unknown classic value (``None``) is only resolved by an active ruleset;
+            otherwise it stays unknown.
         """
         if classic_value is None and ruleset_source != "ruleset":
             return None, None
@@ -425,6 +436,8 @@ class Repository(GithubService):
             return good, "ruleset"
         if ruleset_source == "ruleset_not_active" and not classic_pass:
             return (not good), "ruleset_not_active"
+        if ruleset_source == "ruleset_unknown" and not classic_pass:
+            return None, None
         return classic_value, ("classic" if classic_pass else None)
 
     def _list_repositories(self):
@@ -648,7 +661,6 @@ class Repository(GithubService):
                         )
                         if dismiss_stale_reviews:
                             dismiss_stale_reviews_source = "classic"
-                        require_signed_commits = branch.get_required_signatures()
             except Exception as error:
                 error_message = str(error)
                 # A 404 means there is no classic protection only when the branch itself is
@@ -684,6 +696,18 @@ class Repository(GithubService):
                         logger.error(
                             f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+
+            # Required signatures live behind a separate endpoint, so a failure there only
+            # makes the signature state unknown and must not discard the classic settings
+            # that were already read.
+            if branch_protection:
+                try:
+                    require_signed_commits = branch.get_required_signatures()
+                except Exception as error:
+                    require_signed_commits = None
+                    logger.warning(
+                        f"{repo.full_name}: required signatures for branch '{default_branch}' cannot be read, so the signed commits state is unknown: {error}"
+                    )
 
             # Branch protection enforced through rulesets is equivalent to classic branch
             # protection, so merge any ruleset coverage before reporting findings to avoid
