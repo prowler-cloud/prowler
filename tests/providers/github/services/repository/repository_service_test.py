@@ -623,6 +623,40 @@ class Test_Repository_BranchProtectionRulesets:
         assert repos[1].default_branch.dismiss_stale_reviews is True
         assert repos[1].default_branch.dismiss_stale_reviews_source == "classic"
 
+    def test_process_repository_unreadable_protection_on_protected_branch_is_unknown(
+        self,
+    ):
+        # GitHub reports ``protected: true`` to any token with Contents: read, but answers
+        # 404 to GET /branches/{branch}/protection when the token lacks Administration: read.
+        repo = self._build_repo(branch_protected=True)
+        branch = repo.get_branch.return_value
+        branch.get_protection.side_effect = GithubException(
+            404, {"message": "Not Found", "status": "404"}, None
+        )
+        branch.get_required_signatures.side_effect = GithubException(
+            404, {"message": "Not Found", "status": "404"}, None
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        for attribute in (
+            "protected",
+            "require_pull_request",
+            "approval_count",
+            "required_linear_history",
+            "allow_force_pushes",
+            "branch_deletion",
+            "status_checks",
+            "enforce_admins",
+            "require_code_owner_reviews",
+            "require_signed_commits",
+            "conversation_resolution",
+            "dismiss_stale_reviews",
+        ):
+            assert getattr(default_branch, attribute) is None, attribute
+
     def test_process_repository_uses_active_ruleset_for_default_branch(self):
         repo = self._build_repo(
             branch_protected=False,
