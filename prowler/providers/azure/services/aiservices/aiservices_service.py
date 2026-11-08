@@ -54,9 +54,10 @@ class AIServices(AzureService):
                     account.rai_policies = self._get_rai_policies(
                         subscription, client, account
                     )
-                    account.connections = self._get_connections(
-                        subscription, client, account
-                    )
+                    (
+                        account.connections,
+                        account.unlisted_connection_scopes,
+                    ) = self._get_connections(subscription, client, account)
                     accounts[subscription][account.id] = account
                 except Exception as error:
                     logger.error(
@@ -259,16 +260,23 @@ class AIServices(AzureService):
     @staticmethod
     def _get_connections(
         subscription: str, client, account: "Account"
-    ) -> Optional[list["Connection"]]:
+    ) -> tuple[Optional[list["Connection"]], list[str]]:
         """Get the connections of one account and of each of its projects.
 
+        A scope whose connections could not be listed is named in the second
+        value instead of being left out, so a check reports it as MANUAL
+        rather than reporting nothing about it at all.
+
         Returns:
-            The connections, or `None` when none of the list calls could be
-            made, so a check can report MANUAL rather than treating an unread
-            account as having no connections.
+            The connections, and the scopes whose connections could not be
+            listed: `""` for the account's own connections and the project
+            name for a project. The connections are `None` when no list call
+            could be made at all, so a check can report MANUAL rather than
+            treating an unread account as having no connections.
         """
         resource_group = _resource_group(account.id)
         connections: list[Connection] = []
+        unlisted: list[str] = []
         reachable = False
 
         try:
@@ -278,6 +286,7 @@ class AIServices(AzureService):
                 connections.append(AIServices._to_connection(sdk_connection, None))
             reachable = True
         except Exception as error:
+            unlisted.append("")
             logger.warning(
                 f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -302,11 +311,12 @@ class AIServices(AzureService):
                         AIServices._to_connection(sdk_connection, project.name)
                     )
             except Exception as error:
+                unlisted.append(project.name)
                 logger.warning(
                     f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-        return connections if reachable else None
+        return (connections if reachable else None), unlisted
 
     @staticmethod
     def _get_diagnostic_settings(subscription: str, account_id: str) -> Optional[list]:
@@ -406,6 +416,11 @@ class Account(BaseModel):
     deployments: Optional[list[Deployment]] = None
     rai_policies: Optional[dict[str, RaiPolicy]] = None
     connections: Optional[list[Connection]] = None
+    # Scopes whose connections could not be listed: "" for the account's own
+    # connections, the project name for a project. A check reports these as
+    # MANUAL, so a scope that could not be read is not mistaken for a scope
+    # with no connections.
+    unlisted_connection_scopes: list[str] = []
     # Monitor DiagnosticSetting dataclasses. Left untyped: Pydantic would
     # re-validate them and reject log entries whose category is None.
     monitor_diagnostic_settings: Optional[list] = None

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.aiservices.aiservices_client import (
     aiservices_client,
@@ -34,6 +36,22 @@ NO_AUTH_TYPES = {"none", ""}
 class aiservices_connection_identity_based_auth(Check):
     """AI services connections authenticate with an identity, not a stored key."""
 
+    @staticmethod
+    def _scope(account_name: str, project_name: Optional[str] = None) -> str:
+        """Name the place a connection is held, as a finding reads it.
+
+        Args:
+            account_name: The AI services account.
+            project_name: The project holding the connection, or `None` and
+                `""` for a connection held by the account itself.
+
+        Returns:
+            The scope, ready to put in a finding's text.
+        """
+        if project_name:
+            return f"project {project_name} of AI services account {account_name}"
+        return f"AI services account {account_name}"
+
     def execute(self) -> list[Check_Report_Azure]:
         """Evaluate the authentication type of every connection.
 
@@ -43,8 +61,8 @@ class aiservices_connection_identity_based_auth(Check):
         an unrecognised one as safe or unsafe would be made up.
 
         Returns:
-            One finding per connection, plus one per account whose connections
-            could not be listed.
+            One finding per connection, plus one per scope whose connections
+            could not be listed: a whole account, or a single project of one.
         """
         findings = []
         for subscription_id, accounts in aiservices_client.accounts.items():
@@ -57,6 +75,7 @@ class aiservices_connection_identity_based_auth(Check):
                         metadata=self.metadata(), resource=account
                     )
                     report.subscription = subscription_id
+                    report.location = account.location
                     report.status = "MANUAL"
                     report.status_extended = (
                         f"Connections of AI services account {account.name} from "
@@ -67,17 +86,31 @@ class aiservices_connection_identity_based_auth(Check):
                     findings.append(report)
                     continue
 
+                # A scope that could not be read is reported, so its
+                # connections are not mistaken for connections that are absent.
+                for project_name in account.unlisted_connection_scopes:
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=account
+                    )
+                    report.subscription = subscription_id
+                    report.location = account.location
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Connections of "
+                        f"{self._scope(account.name, project_name)} from "
+                        f"subscription {subscription_name} ({subscription_id}) "
+                        f"could not be listed, so their authentication type is "
+                        f"unknown."
+                    )
+                    findings.append(report)
+
                 for connection in account.connections:
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=connection
                     )
                     report.subscription = subscription_id
-                    scope = (
-                        f"project {connection.project_name} of AI services account "
-                        f"{account.name}"
-                        if connection.project_name
-                        else f"AI services account {account.name}"
-                    )
+                    report.location = account.location
+                    scope = self._scope(account.name, connection.project_name)
                     prefix = (
                         f"Connection {connection.name} in {scope} from subscription "
                         f"{subscription_name} ({subscription_id})"
