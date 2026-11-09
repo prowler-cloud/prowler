@@ -1,0 +1,114 @@
+---
+title: "Exploitability Issues"
+sidebarTitle: "Exploitability Issues"
+description: "Group failed findings into attack paths with an exploitability verdict in Prowler Cloud, then triage issues, send them to Jira, or ask Lighthouse AI for a fix."
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+<VersionBadge version="5.46.0" />
+
+A scan returns a list of failed checks, and many of them describe one problem seen from several angles. **Exploitability issues** fold the failed findings of each account into attack paths and give each path a verdict, so you can fix what an attacker can actually use before anything else.
+
+<SubscriptionBanner />
+
+## What Is an Issue?
+
+An issue is a group of failed findings that together form one attack path on one account. Each issue states:
+
+- **Starts from:** Where the attacker has to start, for example **The internet**, **Any signed-in identity**, **A leaked credential**, **A foothold on a host**, or **An outside user**.
+- **Leads to:** What walking the path gives the attacker: **Data exposure**, **Privilege escalation**, or **Code execution**.
+- **Verdict:** How exploitable the path is, drawn from five legs of evidence.
+- **Fix:** The suggested remediation for the path.
+
+Some issues group related findings that are not one modelled path. These issues have no starting point or outcome.
+
+### Verdicts
+
+| Verdict | Meaning |
+| --- | --- |
+| **Exploitable** | The evidence shows an attacker can walk the path. |
+| **Likely** | The evidence points to an exploitable path. |
+| **Conditional** | The path is exploitable only under some conditions. |
+| **Not exploitable** | The evidence shows the path is closed. |
+| **Unknown** | Prowler could not determine the verdict, for example because a check did not run. A check that did not run never reads as safe. |
+
+A protective control in force moves a verdict one rung down, and the issue names the control that did it.
+
+### Evidence Legs
+
+Each verdict is drawn from five legs. Every leg answers one question, names the checks and resources it was read from, and has a state of **Yes**, **No**, **Partly**, or **Unknown**:
+
+| Leg | Question |
+| --- | --- |
+| **Reachability** | Can an attacker reach it? |
+| **Access** | Can an attacker authenticate or bypass authentication? |
+| **Target** | Is there a target worth reaching? |
+| **Controls** | Are protective controls in place? |
+| **Verification** | Would the activity be detected? |
+
+Because each leg lists its evidence, you can review and disagree with a verdict instead of having to trust it.
+
+## Browsing Issues
+
+To open the list, click **Exploitability issues** in the **Security** section of the sidebar.
+
+- **Summary line:** The line under the title shows how many issues were folded from how many failed findings, and how many findings are already covered by a control.
+- **Verdict tabs:** Filter the list by verdict. Each tab shows its count, and **All** shows every issue.
+- **Scope selectors:** Narrow every tab to specific provider groups or accounts.
+- **Table columns:** Each row shows the **Verdict**, the **Issue** title with its attack path, the **Why** column with the state of each of the five legs, **Severity**, **Account**, the number of **Findings**, and the **Triage** status. Hover a leg in the **Why** column to read its state and explanation.
+
+## Reviewing an Issue in the Side Panel
+
+Click a row to open the issue in the side panel, next to Lighthouse AI. The header shows the verdict, severity, title, and the compliance frameworks its findings put at risk. The panel has the following tabs:
+
+| Tab | Content |
+| --- | --- |
+| **Exploitability** | Where the path starts, what it leads to, and each leg with its state, explanation, and evidence. |
+| **Attack path** | The issue graph of the affected resources. |
+| **Findings** | The failed findings folded into the issue. Click a finding to open its details inside the panel, then use the breadcrumb to return to the issue. |
+| **Resources** | The resources the issue affects. |
+| **Remediation** | The suggested fix for the path. |
+| **Triage** | The issue's triage status and notes. |
+
+The actions menu in the panel header includes **Open this scan's failed findings**, which opens the **Findings** page filtered to the failed findings of the issue's scan, and the [Send to Jira](#sending-an-issue-to-jira) action.
+
+## Triaging an Issue
+
+Use the **Triage** tab to record the decision on an attack path and why it was made:
+
+1. Select a status: **Open**, **Under Review**, **Remediating**, **Risk Accepted**, or **False Positive**.
+2. Optionally, write a triage note explaining the decision.
+3. Click **Save triage**.
+
+Notes are listed newest first, with their author and date. You can add a note without changing the status.
+
+The triage decision belongs to the account and the attack path, not to a single scan, so it still applies after the next scan. Prowler marks the issue **Resolved** when a later scan no longer finds the path and **Reopened** when the path comes back. Triage on an issue does not change its verdict: accepting a risk does not make a path unexploitable.
+
+For the triage of individual findings, see [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage).
+
+## Sending an Issue to Jira
+
+With the [Jira integration](/user-guide/tutorials/prowler-app-jira-integration) configured, you can send the findings of an issue to Jira in one action:
+
+1. Open the issue in the side panel.
+2. Open the actions menu in the panel header and click **Send Findings to Jira**. The action appears once the issue's findings have loaded.
+3. Select the Jira project, issue type, and grouped or separate issue creation mode. A grouped issue keeps the whole attack path in one Jira ticket.
+4. Click **Send to Jira**.
+
+The ticket includes the findings loaded in the panel, up to 50 per issue. The dialog states how many of the issue's findings are sent.
+
+## Getting a Fix with Lighthouse AI
+
+The issue panel offers the **Contextual Fix** Lighthouse AI skill. Contextual Fix reads the issue's attack path, legs, and findings, then answers with:
+
+- The single change that closes the attack path fastest, and which leg it closes.
+- The per-resource fixes, grouped by check, with the real resource identifiers.
+- What to verify after applying the changes, and which findings should pass on the next scan.
+
+You can also type your own question about the issue in the panel. Lighthouse AI receives the issue as context. For Lighthouse AI setup, see [Lighthouse AI](/getting-started/products/prowler-cloud-lighthouse).
+
+## Sample Data Before the First Scan
+
+Until the first scan completes, the **Exploitability issues** page shows labelled sample issues from a demo AWS account, with a banner that follows the real scan. Sample issues are read-only: triage and other actions are disabled until a scan of your own account completes.
