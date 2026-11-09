@@ -10,16 +10,16 @@
   "ResourceType": "compute.googleapis.com/Instance",
   "ResourceGroup": "compute",
   "Description": "**Compute Engine VM instances** are matched against **threat signatures**: emerging vulnerabilities described by the images that carry them (image project, name and version range), using the source image of the boot disk.\n\nSignatures are supplied per scan under `threat_signatures`; Prowler Cloud supplies a maintained catalog to every scan.",
-  "Risk": "An instance booted from an affected image carries the vulnerability until it is patched or replaced. When a firewall rule admits the internet to the vulnerable service, a threat actor can exploit it remotely; for an authentication bypass, that means a shell, often as root, with no credential.",
+  "Risk": "An instance booted from an affected image carries the vulnerability until it is patched or replaced. When the vulnerable service is reachable from the internet, a threat actor can exploit it remotely; for an authentication bypass, that means a shell, often as root, with no credential.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/user-guide/tutorials/prowler-app-issues"
+    "https://docs.prowler.com/developer-guide/threat-signatures"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Read the threat named in the finding and its remediation\n2. Restrict the exposed port in the VPC firewall rules that apply to the instance\n3. Patch the package on the instance, or recreate it from a fixed image\n4. Update instance templates that still reference the affected image",
+      "Other": "1. Read the threat named in the finding and its remediation\n2. Restrict the exposed port in the VPC firewall rules that apply to the instance\n3. Patch the package on the instance and mute this finding once the fix is verified (the instance keeps its boot image), or recreate it from a fixed image\n4. Update instance templates that still reference the affected image",
       "Terraform": ""
     },
     "Recommendation": {
@@ -34,5 +34,5 @@
   "RelatedTo": [
     "compute_firewall_ssh_access_from_the_internet_allowed"
   ],
-  "Notes": "Imported images are matched on their names, which is weaker evidence than an image project a signature lists. An instance patched in place keeps its boot image, so mute its finding with a reason once the fix is verified."
+  "Notes": "Imported images are matched on their names, which is weaker evidence than an image project a signature lists. When the boot disk cannot be listed, the finding is MANUAL. An instance patched in place keeps its boot image, so mute its finding with a reason once the fix is verified."
 }

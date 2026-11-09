@@ -29,6 +29,16 @@ class compute_instance_emerging_threat_image(Check):
                 resource=instance,
                 location=instance.zone,
             )
+            if instance.boot_image_lookup_failed:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot evaluate VM Instance {instance.name} against known emerging "
+                    "threats: its boot disk could not be retrieved. Verify that "
+                    "compute.disks.list and compute.regionDisks.list are granted to "
+                    "the scanning identity."
+                )
+                findings.append(report)
+                continue
             if not instance.boot_image:
                 report.status = "PASS"
                 report.status_extended = (
@@ -71,7 +81,9 @@ class compute_instance_emerging_threat_image(Check):
             }
             report.status_extended = (
                 f"VM Instance {instance.name} boots from image {instance.boot_image}, "
-                f"affected by {describe_matches(matches)}."
+                f"which ships a build affected by {describe_matches(matches)}. "
+                "Prowler sees the image the boot disk was created from, not packages "
+                "updated since: mute this finding if the host was patched in place."
             )
             findings.append(report)
         return findings

@@ -24,7 +24,8 @@ class Compute(GCPService):
         self.instance_groups = []
         self.images = []
         self.snapshots = []
-        # {(project, zone): {disk name: sourceImage}}, filled per zone.
+        # {(project, "zones"|"regions", location): {disk name: sourceImage}},
+        # or None when that listing failed.
         self._disk_images_cache = {}
         self._get_regions()
         self._get_projects()
@@ -124,7 +125,11 @@ class Compute(GCPService):
                     for instance in response.get("items", []):
                         public_ip = False
                         network_interfaces_raw = instance.get("networkInterfaces", [])
-                        boot_image, boot_image_project = self._boot_image(
+                        (
+                            boot_image,
+                            boot_image_project,
+                            boot_image_lookup_failed,
+                        ) = self._boot_image(
                             project_id, zone, instance.get("disks", [])
                         )
 
@@ -215,6 +220,7 @@ class Compute(GCPService):
                                 ),
                                 boot_image=boot_image,
                                 boot_image_project=boot_image_project,
+                                boot_image_lookup_failed=boot_image_lookup_failed,
                             )
                         )
 
@@ -584,35 +590,55 @@ class Compute(GCPService):
                 mig.load_balanced = True
 
     def _boot_image(self, project_id: str, zone: str, attached_disks: list) -> tuple:
-        """``(image name, image project)`` the instance's boot disk was created from.
+        """``(image name, image project, lookup failed)`` of the instance's boot disk.
 
         The instance only links its disks; the source image lives on the disk
-        resource, so a zone's disks are listed once and reused for every
-        instance in it.
+        resource, so a zone's (or, for a regional disk, a region's) disks are
+        listed once and reused for every instance there. ``lookup failed`` is
+        true when that listing failed, which is not the same as a disk that was
+        not created from an image.
         """
         boot = next((d for d in attached_disks if d.get("boot")), None)
         if not boot or not boot.get("source"):
-            return "", ""
-        source_image = self._zone_disk_images(project_id, zone).get(
-            boot["source"].rsplit("/", 1)[-1], ""
-        )
+            return "", "", False
+        source = boot["source"]
+        images = self._disk_images(project_id, *self._disk_scope(source, zone))
+        if images is None:
+            return "", "", True
+        source_image = images.get(source.rsplit("/", 1)[-1], "")
         if not source_image:
-            return "", ""
+            return "", "", False
         parts = source_image.split("/")
         image_project = (
             parts[parts.index("projects") + 1] if "projects" in parts else ""
         )
-        return parts[-1], image_project
+        return parts[-1], image_project, False
 
-    def _zone_disk_images(self, project_id: str, zone: str) -> dict:
-        """``{disk name: sourceImage URL}`` for one project and zone, cached."""
+    @staticmethod
+    def _disk_scope(source: str, zone: str) -> tuple:
+        """``("regions", region)`` for a regional disk URL, else ``("zones", zone)``."""
+        parts = source.split("/")
+        if "regions" in parts and parts.index("regions") + 1 < len(parts):
+            return "regions", parts[parts.index("regions") + 1]
+        return "zones", zone
+
+    def _disk_images(self, project_id: str, scope: str, location: str):
+        """``{disk name: sourceImage URL}`` for one project and zone or region, cached.
+
+        ``None`` when the listing failed, even part-way: a partial map would
+        let an instance pass without its image being matched.
+        """
         cache = self._disk_images_cache
-        key = (project_id, zone)
+        key = (project_id, scope, location)
         if key in cache:
             return cache[key]
+        if scope == "regions":
+            disks, where = self.client.regionDisks(), {"region": location}
+        else:
+            disks, where = self.client.disks(), {"zone": location}
         images = {}
         try:
-            request = self.client.disks().list(project=project_id, zone=zone)
+            request = disks.list(project=project_id, **where)
             while request is not None:
                 response = request.execute(
                     http=self.__get_AuthorizedHttp_client__(),
@@ -621,13 +647,14 @@ class Compute(GCPService):
                 for disk in response.get("items", []):
                     if disk.get("sourceImage"):
                         images[disk["name"]] = disk["sourceImage"]
-                request = self.client.disks().list_next(
+                request = disks.list_next(
                     previous_request=request, previous_response=response
                 )
         except Exception as error:
             logger.error(
-                f"{project_id}/{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{project_id}/{location} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            images = None
         cache[key] = images
         return images
 
@@ -767,6 +794,8 @@ class Instance(BaseModel):
     #: Name and project of the image the boot disk was created from.
     boot_image: str = ""
     boot_image_project: str = ""
+    #: The boot disk could not be listed, so the image is unknown, not absent.
+    boot_image_lookup_failed: bool = False
 
 
 class Network(BaseModel):
