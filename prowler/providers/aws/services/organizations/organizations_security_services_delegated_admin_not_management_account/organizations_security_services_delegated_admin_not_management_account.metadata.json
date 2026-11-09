@@ -1,0 +1,46 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_security_services_delegated_admin_not_management_account",
+  "CheckTitle": "AWS Organization security services are administered from a delegated administrator account and not from the management account",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "governance",
+  "Description": "Every security service with **trusted access** enabled in the **AWS Organization** has a **delegated administrator** member account, so it is not administered from the organization **management account**.",
+  "Risk": "Administering **GuardDuty**, **Security Hub**, **Macie** or **Config** from the management account concentrates security monitoring in the one account that **service control policies cannot restrict**. Compromising it both removes the organization guardrails and blinds the detections that would surface the compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_delegated_admin.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty enable-organization-admin-account --admin-account-id <SECURITY_TOOLING_ACCOUNT_ID>",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the AWS Organizations management account\n2. For each security service reported by this check, open its console (for example GuardDuty, Security Hub, Macie, Detective or Inspector) and designate the security tooling account as the delegated administrator from the service's organization settings\n3. For services without their own designation flow (for example AWS Config or IAM Access Analyzer), open the AWS Organizations console, go to Services, select the service and choose Register delegated administrator",
+      "Terraform": "resource \"aws_guardduty_organization_admin_account\" \"security_tooling\" {\n  admin_account_id = \"<SECURITY_TOOLING_ACCOUNT_ID>\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Designate a dedicated **security tooling** member account as the **delegated administrator** of every security service integrated with the organization, and keep the **management account** for organization management only. Use each service's own designation (console or `enable-organization-admin-account` API) where one exists, because registering through AWS Organizations alone is not picked up by services such as Security Hub.",
+      "Url": "https://hub.prowler.com/check/organizations_security_services_delegated_admin_not_management_account"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_delegated_administrators",
+    "guardduty_delegated_admin_enabled_all_regions",
+    "securityhub_delegated_admin_enabled_all_regions",
+    "config_delegated_admin_and_org_aggregator_all_regions"
+  ],
+  "Notes": "This check requires execution from the organization management account or a delegated administrator account to read the organization trusted access and delegation configuration."
+}
