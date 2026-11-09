@@ -39,6 +39,7 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
   }
 };
 
+/** Creates an integration; Amazon S3 is refused for tenants without a paid plan. */
 export const createIntegration = async (
   formData: FormData,
 ): Promise<{ success: string; integrationId?: string } | { error: string }> => {
