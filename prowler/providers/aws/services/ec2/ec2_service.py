@@ -42,6 +42,11 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
         self.images_by_id = {}
+        # Third-party AMIs that instances run (marketplace, community, vendor
+        # accounts such as a Linux distribution's). Kept apart from ``images``, which only
+        # holds this account's and Amazon's, so checks on owned AMIs never
+        # judge somebody else's.
+        self.instance_images_by_id = {}
         self.__threading_call__(self._describe_images)
         self.volumes = []
         self.__threading_call__(self._describe_volumes)
@@ -411,6 +416,8 @@ class EC2(AWSService):
                 for image in self._describe_images_by_id(regional_client, image_batch):
                     if self._is_amazon_image(image):
                         self._add_image(image, regional_client.region, "amazon")
+                    else:
+                        self._add_instance_image(image, regional_client.region)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -430,9 +437,33 @@ class EC2(AWSService):
                 tags=image.get("Tags"),
                 deprecation_time=image.get("DeprecationTime"),
                 owner=owner,
+                owner_id=image.get("OwnerId", ""),
+                description=image.get("Description", ""),
             )
             self.images.append(ec2_image)
             self.images_by_id[ec2_image.id] = ec2_image
+
+    def _add_instance_image(self, image, region):
+        """Record a third-party AMI an instance runs, for provenance only."""
+        owner_id = image.get("OwnerId", "")
+        self.instance_images_by_id[image["ImageId"]] = Image(
+            id=image["ImageId"],
+            arn=f"arn:{self.audited_partition}:ec2:{region}:{owner_id}:image/{image['ImageId']}",
+            name=image.get("Name", ""),
+            public=image.get("Public", False),
+            region=region,
+            tags=image.get("Tags"),
+            deprecation_time=image.get("DeprecationTime"),
+            owner="third_party",
+            owner_id=owner_id,
+            description=image.get("Description", ""),
+        )
+
+    def image_for_instance(self, instance) -> Optional["Image"]:
+        """The AMI an instance was launched from, whoever published it."""
+        return self.images_by_id.get(
+            instance.image_id
+        ) or self.instance_images_by_id.get(instance.image_id)
 
     def _describe_images_by_id(self, regional_client, image_ids):
         try:
@@ -873,6 +904,10 @@ class Image(BaseModel):
     owner: str
     region: str
     tags: Optional[list] = []
+    #: The publishing account id; ``owner`` is a label ("self", "amazon",
+    #: "third_party") for which of this service's lists the image sits in.
+    owner_id: str = ""
+    description: str = ""
 
 
 class EbsEncryptionByDefault(BaseModel):

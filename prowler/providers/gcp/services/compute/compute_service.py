@@ -24,6 +24,8 @@ class Compute(GCPService):
         self.instance_groups = []
         self.images = []
         self.snapshots = []
+        # {(project, zone): {disk name: sourceImage}}, filled per zone.
+        self._disk_images_cache = {}
         self._get_regions()
         self._get_projects()
         self._get_url_maps()
@@ -122,6 +124,9 @@ class Compute(GCPService):
                     for instance in response.get("items", []):
                         public_ip = False
                         network_interfaces_raw = instance.get("networkInterfaces", [])
+                        boot_image, boot_image_project = self._boot_image(
+                            project_id, zone, instance.get("disks", [])
+                        )
 
                         network_interfaces = []
                         for interface in network_interfaces_raw:
@@ -208,6 +213,8 @@ class Compute(GCPService):
                                 on_host_maintenance=instance.get("scheduling", {}).get(
                                     "onHostMaintenance", "MIGRATE"
                                 ),
+                                boot_image=boot_image,
+                                boot_image_project=boot_image_project,
                             )
                         )
 
@@ -576,6 +583,54 @@ class Compute(GCPService):
             if (mig.project_id, mig.name) in load_balanced_groups:
                 mig.load_balanced = True
 
+    def _boot_image(self, project_id: str, zone: str, attached_disks: list) -> tuple:
+        """``(image name, image project)`` the instance's boot disk was created from.
+
+        The instance only links its disks; the source image lives on the disk
+        resource, so a zone's disks are listed once and reused for every
+        instance in it.
+        """
+        boot = next((d for d in attached_disks if d.get("boot")), None)
+        if not boot or not boot.get("source"):
+            return "", ""
+        source_image = self._zone_disk_images(project_id, zone).get(
+            boot["source"].rsplit("/", 1)[-1], ""
+        )
+        if not source_image:
+            return "", ""
+        parts = source_image.split("/")
+        image_project = (
+            parts[parts.index("projects") + 1] if "projects" in parts else ""
+        )
+        return parts[-1], image_project
+
+    def _zone_disk_images(self, project_id: str, zone: str) -> dict:
+        """``{disk name: sourceImage URL}`` for one project and zone, cached."""
+        cache = self._disk_images_cache
+        key = (project_id, zone)
+        if key in cache:
+            return cache[key]
+        images = {}
+        try:
+            request = self.client.disks().list(project=project_id, zone=zone)
+            while request is not None:
+                response = request.execute(
+                    http=self.__get_AuthorizedHttp_client__(),
+                    num_retries=DEFAULT_RETRY_ATTEMPTS,
+                )
+                for disk in response.get("items", []):
+                    if disk.get("sourceImage"):
+                        images[disk["name"]] = disk["sourceImage"]
+                request = self.client.disks().list_next(
+                    previous_request=request, previous_response=response
+                )
+        except Exception as error:
+            logger.error(
+                f"{project_id}/{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        cache[key] = images
+        return images
+
     def _get_images(self) -> None:
         for project_id in self.project_ids:
             try:
@@ -709,6 +764,9 @@ class Instance(BaseModel):
     network_interfaces: list[NetworkInterface] = []
     status: str = "RUNNING"
     on_host_maintenance: str = "MIGRATE"
+    #: Name and project of the image the boot disk was created from.
+    boot_image: str = ""
+    boot_image_project: str = ""
 
 
 class Network(BaseModel):

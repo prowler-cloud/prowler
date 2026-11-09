@@ -61,6 +61,10 @@ aws:
   # aws.ec2_elastic_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
@@ -566,6 +570,10 @@ azure:
   # azure.network_public_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
 
   # Configurable minimal risk level for attack path notifications
   # azure.defender_attack_path_notifications_properly_configured
@@ -657,6 +665,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2

@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_emerging_threat_image",
+  "CheckTitle": "EC2 instance does not run an AMI affected by a known emerging threat",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/Patch Management",
+    "TTPs/Initial Access/External Remote Services"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "**EC2 instances** are matched against **threat signatures**: emerging vulnerabilities described by the AMIs that carry them (publisher account, name and version range) and the network exposure that makes them reachable.\n\nSignatures are supplied per scan under `threat_signatures`; Prowler Cloud supplies a maintained catalog to every scan.",
+  "Risk": "An instance launched from an affected AMI carries the vulnerability until it is patched or replaced. When the vulnerable service is reachable from the internet, a threat actor can exploit it remotely; for an authentication bypass, that means a shell, often as root, with no credential.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-issues"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Read the threat named in the finding and its remediation\n2. Restrict the exposed port in the instance's security groups to trusted addresses\n3. Patch the package on the host, or replace the instance from a fixed AMI\n4. Update launch templates and IaC that still reference the affected AMI",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Contain first by restricting the exposed port, then **patch or replace** hosts built from affected AMIs. Keep launch templates on current images, reach instances through **SSM Session Manager** rather than open management ports, and treat a host as compromised when unauthorized access cannot be ruled out.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_emerging_threat_image"
+    }
+  },
+  "Categories": [
+    "vulnerabilities",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "ec2_instance_port_ssh_exposed_to_internet"
+  ],
+  "Notes": "Instances whose AMI is deregistered or not shared cannot be matched and pass with an explanation. A host patched in place keeps its AMI, so mute its finding with a reason once the fix is verified."
+}

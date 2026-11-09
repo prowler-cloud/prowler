@@ -1,0 +1,36 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_emerging_threat_image",
+  "CheckTitle": "Virtual machine is not created from an image affected by a known emerging threat",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "microsoft.compute/virtualmachines",
+  "ResourceGroup": "compute",
+  "Description": "**Azure virtual machines** are matched against **threat signatures**: emerging vulnerabilities described by the images that carry them (gallery or custom image name, marketplace publisher, offer and SKU, version range).\n\nSignatures are supplied per scan under `threat_signatures`; Prowler Cloud supplies a maintained catalog to every scan.",
+  "Risk": "A VM created from an affected image carries the vulnerability until it is patched or replaced. When the vulnerable service is reachable through a network security group, a threat actor can exploit it remotely; for an authentication bypass, that means a shell, often as root, with no credential.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-issues"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Read the threat named in the finding and its remediation\n2. Restrict the exposed port in the network security groups of the VM's network interfaces\n3. Patch the package on the VM, or recreate the VM from a fixed image\n4. Update gallery image versions and templates that still reference the affected image",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Contain first by restricting the exposed port, then **patch or replace** VMs built from affected images. Keep galleries and templates on current images, reach VMs through **Azure Bastion** or JIT access rather than open management ports, and treat a VM as compromised when unauthorized access cannot be ruled out.",
+      "Url": "https://hub.prowler.com/check/vm_emerging_threat_image"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Gallery and custom images are matched on their names, which is weaker evidence than a marketplace publisher. A VM patched in place keeps its image, so mute its finding with a reason once the fix is verified."
+}
