@@ -268,6 +268,29 @@ class Repository(GithubService):
 
         return None
 
+    @staticmethod
+    def _rule_enforces_on_existing_branch(rule: dict) -> bool:
+        """Check whether a ruleset rule can enforce anything on an existing branch.
+
+        A creation rule only restricts creating the branch, and a rule configured with
+        an empty list of requirements (status checks, deployments, workflows, ...)
+        requires nothing.
+        """
+        rule_type = rule.get("type")
+        if rule_type == "creation":
+            return False
+        list_parameter = {
+            "required_status_checks": "required_status_checks",
+            "required_deployments": "required_deployment_environments",
+            "workflows": "workflows",
+            "code_scanning": "code_scanning_tools",
+            "file_path_restriction": "restricted_file_paths",
+            "file_extension_restriction": "restricted_file_extensions",
+        }.get(rule_type)
+        if list_parameter is None:
+            return True
+        return bool((rule.get("parameters") or {}).get(list_parameter))
+
     def _evaluate_default_branch_rulesets(
         self, repo, default_branch: str
     ) -> dict[str, tuple[Optional[int], str]]:
@@ -300,13 +323,14 @@ class Repository(GithubService):
         any_inactive_ruleset = False
         # A ruleset only counts as coverage when GitHub returned evidence that it enforces
         # something on the existing default branch; missing details mean unknown, never
-        # pass or fail. A ruleset whose rules are empty, or only restrict branch creation
-        # (which cannot apply to a branch that already exists), enforces nothing and is
-        # ignored. A ruleset with no bypass actors applies to everyone, including
-        # administrators (the rulesets equivalent of "enforce admins"); one with bypass
-        # actors would not apply to admins even if activated. Only an explicit empty
-        # ``bypass_actors`` list together with returned rule details confirms admin
-        # coverage, because GitHub omits fields the token cannot read.
+        # pass or fail. Rules that enforce nothing there (branch creation restrictions and
+        # rules with an empty list of requirements) are dropped, and a ruleset left
+        # without rules is ignored. An active ruleset whose rules GitHub omits leaves every control it
+        # could enforce unknown. A ruleset applies to administrators (the rulesets
+        # equivalent of "enforce admins") unless a bypass actor could be an administrator;
+        # integrations and deploy keys cannot. Only an explicit ``bypass_actors`` list
+        # together with returned rule details confirms admin coverage, because GitHub
+        # omits fields the token cannot read.
         admins_enforced_active = False
         admins_coverage_unknown_active = False
         admins_configured_inactive = False
@@ -326,13 +350,20 @@ class Repository(GithubService):
 
             rules = ruleset.get("rules")
             if isinstance(rules, list):
-                rules = [rule for rule in rules if rule.get("type") != "creation"]
+                rules = [
+                    rule
+                    for rule in rules
+                    if self._rule_enforces_on_existing_branch(rule)
+                ]
                 if not rules:
                     continue
 
             bypass_actors = ruleset.get("bypass_actors")
             bypass_known = isinstance(bypass_actors, list)
-            admins_can_bypass = bypass_known and bool(bypass_actors)
+            admins_can_bypass = bypass_known and any(
+                actor.get("actor_type") not in {"Integration", "DeployKey"}
+                for actor in bypass_actors
+            )
             if is_active:
                 if rules is None:
                     any_active_ruleset_unknown = True
@@ -359,10 +390,7 @@ class Repository(GithubService):
                 elif rule_type == "required_signatures":
                     bucket.add("require_signed_commits")
                 elif rule_type == "required_status_checks":
-                    # Only enforced when at least one status check is configured;
-                    # an empty list (or just strict policy) requires nothing.
-                    if params.get("required_status_checks"):
-                        bucket.add("status_checks")
+                    bucket.add("status_checks")
                 elif rule_type == "non_fast_forward":
                     # Presence of the rule disallows force pushes.
                     bucket.add("allow_force_pushes")
@@ -401,10 +429,15 @@ class Repository(GithubService):
         ):
             if concept in active:
                 result[concept] = (None, "ruleset")
+            elif any_active_ruleset_unknown:
+                result[concept] = (None, "ruleset_unknown")
             elif concept in inactive:
                 result[concept] = (None, "ruleset_not_active")
 
-        if active_approval_count is not None:
+        if any_active_ruleset_unknown:
+            # The value is only the count confirmed by other active rulesets.
+            result["approval_count"] = (active_approval_count, "ruleset_unknown")
+        elif active_approval_count is not None:
             result["approval_count"] = (active_approval_count, "ruleset")
         elif inactive_approval_count is not None:
             result["approval_count"] = (inactive_approval_count, "ruleset_not_active")
@@ -798,6 +831,8 @@ class Repository(GithubService):
                 and dismiss_stale_reviews is False
             ):
                 dismiss_stale_reviews_source = "ruleset_not_active"
+            elif dismiss_source == "ruleset_unknown" and dismiss_stale_reviews is False:
+                dismiss_stale_reviews = None
 
             # Approval count takes the strongest requirement between classic and rulesets.
             approval_value, approval_source = ruleset_eval.get(
@@ -821,6 +856,16 @@ class Repository(GithubService):
                 and approval_cnt < 2
             ):
                 approval_count_source = "ruleset_not_active"
+            elif approval_source == "ruleset_unknown":
+                # An active ruleset's rules are unknown, so only a count that already
+                # satisfies the control is known.
+                if (approval_value or 0) >= 2 and (
+                    approval_cnt is None or approval_value > approval_cnt
+                ):
+                    approval_cnt = approval_value
+                    approval_count_source = "ruleset"
+                elif approval_cnt is None or approval_cnt < 2:
+                    approval_cnt = None
 
             secret_scanning_enabled = False
             # GitHub omits security_and_analysis when the token cannot read it
