@@ -32,6 +32,7 @@ VAULT_ARN = f"arn:aws:bedrock-agentcore:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMB
 
 
 def _vault_response(key_type):
+    """Build a validated token-vault response for a supported key type."""
     configuration = {"keyType": key_type}
     if key_type == "CustomerManagedKey":
         configuration["kmsKeyArn"] = (
@@ -52,6 +53,7 @@ def _vault_response(key_type):
 def _collect_token_vault(
     responses, *, audit_resources=None, partition="aws", account=AWS_ACCOUNT_NUMBER
 ):
+    """Collect service state from mocked regional token-vault responses."""
     empty_list_responses = {
         "ListMemories": {"memories": []},
         "ListGateways": {"items": []},
@@ -61,6 +63,7 @@ def _collect_token_vault(
     }
 
     def mock_make_api_call(client, operation_name, api_params):
+        """Supply AgentCore responses and delegate unrelated API calls."""
         if client.meta.service_model.service_name == SERVICE_NAME:
             if operation_name == "GetTokenVault":
                 response = responses[client.meta.region_name]
@@ -92,6 +95,7 @@ def _collect_token_vault(
 
 
 def _execute_check(service):
+    """Execute the check with the collected service bound to its client."""
     with (
         mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -110,6 +114,7 @@ def _execute_check(service):
 class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     @mock_aws
     def test_collected_customer_managed_key_passes(self):
+        """Report PASS with the collected vault identity for a customer-managed key."""
         with _collect_token_vault(
             {AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey")}
         ) as service:
@@ -129,6 +134,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_absent_vault_has_no_finding(self):
+        """Preserve the collector's existing ResourceNotFoundException suppression."""
         error = ClientError(
             {"Error": {"Code": "ResourceNotFoundException", "Message": "absent"}},
             "GetTokenVault",
@@ -145,6 +151,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     )
     @mock_aws
     def test_recorded_client_error_is_regional_manual(self, error_code):
+        """Report read failures as regional MANUAL findings with error codes."""
         error = ClientError(
             {"Error": {"Code": error_code, "Message": "read failed"}},
             "GetTokenVault",
@@ -174,6 +181,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     @pytest.mark.parametrize("key_type", [None, "CustomerManagedKey"])
     @mock_aws
     def test_unretrieved_detail_is_manual_even_with_stale_key_type(self, key_type):
+        """Keep unavailable detail MANUAL even when cached key data suggests PASS."""
         with _collect_token_vault(
             {AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey")}
         ) as service:
@@ -195,6 +203,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_documented_omitted_configuration_uses_aws_owned_key(self):
+        """Report the documented omitted configuration as AWS-owned encryption."""
         response = _vault_response("ServiceManagedKey")
         del response["kmsConfiguration"]
         # The devguide documents omission for AWS-owned keys; the pinned model requires it.
@@ -219,6 +228,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_collected_aws_owned_key_fails_without_key_arn(self):
+        """Report FAIL for an AWS-owned key whose response has no KMS key ARN."""
         response = _vault_response("ServiceManagedKey")
         assert "kmsKeyArn" not in response["kmsConfiguration"]
         with _collect_token_vault({AWS_REGION_US_EAST_1: response}) as service:
@@ -236,6 +246,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_present_configuration_without_key_type_is_manual(self):
+        """Keep an empty configuration MANUAL instead of assuming a key type."""
         response = _vault_response("ServiceManagedKey")
         response["kmsConfiguration"] = {}
         # Deliberate malformed-response coverage, distinct from documented parent omission.
@@ -260,6 +271,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     @pytest.mark.parametrize("key_type", ["UnexpectedFutureKey", ""])
     @mock_aws
     def test_unrecognized_key_type_is_manual(self, key_type):
+        """Treat empty or future key-type values as MANUAL compatibility cases."""
         model = botocore.session.get_session().get_service_model(SERVICE_NAME)
         output_shape = model.operation_model("GetTokenVault").output_shape
         supported_key_types = (
@@ -287,6 +299,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     @pytest.mark.parametrize("error_type", [RuntimeError, ConnectionResetError])
     @mock_aws
     def test_unexpected_exception_is_regional_manual(self, error_type):
+        """Preserve unexpected read exceptions as regional MANUAL findings."""
         with _collect_token_vault(
             {AWS_REGION_US_EAST_1: error_type("read failed")}
         ) as service:
@@ -312,6 +325,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_inherited_validation_exception_suppression_has_no_finding(self):
+        """Preserve the collector's existing ValidationException suppression."""
         error = ClientError(
             {
                 "Error": {
@@ -331,6 +345,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     @pytest.mark.parametrize("configuration", [None, "invalid", []])
     @mock_aws
     def test_malformed_configuration_is_regional_manual(self, configuration):
+        """Report malformed configuration types as regional collection failures."""
         response = _vault_response("ServiceManagedKey")
         response["kmsConfiguration"] = configuration
         # Deliberately malformed parent values must not use the documented omission fallback.
@@ -360,6 +375,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_multiple_regions_preserve_each_vault_and_error_identity(self):
+        """Keep PASS, FAIL, and MANUAL findings tied to their respective regions."""
         owned_region = "us-west-2"
         error_region = "eu-west-1"
         error_code = "AccessDeniedException"
@@ -425,6 +441,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     )
     @mock_aws
     def test_successful_resource_filter_is_exact(self, audit_resources, expected_count):
+        """Apply exact ARN filtering while an empty filter includes the vault."""
         with _collect_token_vault(
             {AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey")},
             audit_resources=audit_resources,
@@ -446,6 +463,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
 
     @mock_aws
     def test_concrete_resource_filter_preserves_regional_read_error(self):
+        """Retain a regional read error when a concrete vault ARN is filtered."""
         error_code = "AccessDeniedException"
         error = ClientError(
             {"Error": {"Code": error_code, "Message": "read failed"}},
@@ -478,6 +496,7 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
     @pytest.mark.parametrize("read_fails", [False, True])
     @mock_aws
     def test_audited_partition_and_account_define_resource_identity(self, read_fails):
+        """Use the audited partition and account for real and unknown vault ARNs."""
         partition = "aws-cn"
         region = "cn-north-1"
         account = "210987654321"

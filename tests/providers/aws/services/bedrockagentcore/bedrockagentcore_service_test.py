@@ -31,6 +31,7 @@ KMS_KEY_ARN = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/test
 
 
 def _token_vault_response(key_type="ServiceManagedKey"):
+    """Build a validated GetTokenVault response for the selected key type."""
     configuration = {"keyType": key_type}
     if key_type == "CustomerManagedKey":
         configuration["kmsKeyArn"] = (
@@ -330,6 +331,7 @@ def _build_service_inventory():
 class Test_AgentCore_Token_Vault_Encryption:
     @mock_aws
     def test_documented_omitted_configuration_uses_aws_owned_key(self):
+        """Treat documented configuration omission as the default AWS-owned key."""
         response = _token_vault_response()
         del response["kmsConfiguration"]
         # Compatibility for documented parent omission, rejected by the pinned SDK.
@@ -337,6 +339,7 @@ class Test_AgentCore_Token_Vault_Encryption:
             mocked_api_response("bedrock-agentcore-control", "GetTokenVault", response)
 
         def _call(client, operation_name, api_params):
+            """Return the omitted configuration only for the token-vault request."""
             if (
                 client.meta.service_model.service_name == "bedrock-agentcore-control"
                 and operation_name == "GetTokenVault"
