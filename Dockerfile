@@ -37,8 +37,9 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 # published python:3.12-slim-trixie carries the same vulnerable versions. The three
 # openssl packages are flagged separately, so all are named.
 # Drop each one once the base image ships its fixed version.
+# --error-on=any: a transient fetch failure would otherwise skip these upgrades silently.
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update --error-on=any && apt-get install -y --no-install-recommends \
     wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && apt-get install -y --no-install-recommends --only-upgrade \
@@ -109,8 +110,8 @@ RUN ARCH=$(uname -m) && \
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
 
-# Numeric IDs (1000 = prowler): hosts and runAsNonRoot can resolve them without /etc/passwd.
-USER 1000:1000
+# Numeric UID (1000 = prowler) so runAsNonRoot can verify it; no :GID, so groups still come from /etc/group.
+USER 1000
 
 WORKDIR /home/prowler
 
@@ -136,7 +137,7 @@ RUN uv sync --locked --compile-bytecode && \
 RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py && \
     rm -rf "${HOME}"/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
-USER 0:0
+USER 0
 
 # Remove build-only packages from the final image after Python dependencies are installed.
 RUN apt-get purge -y --auto-remove \
@@ -149,13 +150,13 @@ RUN apt-get purge -y --auto-remove \
     apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
-USER 1000:1000
+USER 1000
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
-USER 0:0
+USER 0
 
 # pip is build-only; the entrypoint runs the venv directly.
 RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
@@ -165,5 +166,5 @@ RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
     /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
     /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
-USER 1000:1000
+USER 1000
 ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]

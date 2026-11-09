@@ -13,7 +13,7 @@ RUN corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm
 # Targeted exception: zlib 1.4-r0 fixes critical CVE-2026-4738, but even the newest
 # node:24.22.1-alpine still ships 1.3.2-r1. Drop once the base image ships it.
 #hadolint ignore=DL3018
-RUN apk add --no-cache --upgrade zlib
+RUN apk add --no-cache --upgrade 'zlib>=1.4-r0'
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -77,7 +77,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Numeric ID (1001 = nextjs): hosts and runAsNonRoot can resolve it without /etc/passwd.
+# Numeric UID (1001 = nextjs) so runAsNonRoot can verify it; no :GID, so groups still come from /etc/group.
 USER 1001
 
 EXPOSE 3000
