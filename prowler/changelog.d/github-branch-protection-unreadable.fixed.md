@@ -1,1 +1,1 @@
-GitHub default branch protection checks skip repositories when a protected default branch's settings cannot be read, instead of reporting a false FAIL
+GitHub default branch protection checks skip repositories when a protected default branch's settings cannot be read, instead of reporting a false FAIL; a missing branch or a protection-settings response saying the branch is not protected keeps the current defaults
