@@ -1251,6 +1251,44 @@ class Test_Repository_BranchProtectionRulesets:
         assert default_branch.allow_force_pushes is False
         assert default_branch.allow_force_pushes_source == "ruleset"
 
+    def test_empty_active_ruleset_without_bypass_actors_key_keeps_known_admin_failure(
+        self,
+    ):
+        """A ruleset with no rules enforces nothing, so it cannot hide a known admin-enforcement failure."""
+        ruleset = self._build_ruleset(
+            enforcement="active", include=["~DEFAULT_BRANCH"], rules=[]
+        )
+        ruleset.pop("bypass_actors")
+        repo = self._build_repo(branch_protected=False, ruleset_details=[ruleset])
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+
+    def test_empty_active_ruleset_without_bypass_actors_does_not_apply_to_admins(
+        self,
+    ):
+        """A ruleset with no rules enforces nothing, even when nobody can bypass it."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+
     def test_active_ruleset_with_bypass_actors_does_not_apply_to_admins(self):
         repo = self._build_repo(
             branch_protected=False,
