@@ -280,8 +280,9 @@ class Repository(GithubService):
         Returns:
             dict mapping a ``Branch`` attribute name to a ``(value, source)`` tuple where
             ``source`` is ``"ruleset"`` (enforced by an active ruleset), ``"ruleset_not_active"``
-            (configured by a ruleset that is not active) or absent when no ruleset addresses
-            the attribute. ``value`` is only meaningful for ``approval_count`` (the enforced
+            (configured by a ruleset that is not active), ``"ruleset_unknown"`` (an active
+            ruleset whose coverage GitHub did not disclose) or absent when no ruleset
+            addresses the attribute. ``value`` is only meaningful for ``approval_count`` (the enforced
             review count); for boolean attributes it is ``None`` and the caller derives the
             value from ``source`` and the attribute polarity.
         """
@@ -295,16 +296,19 @@ class Repository(GithubService):
         active_approval_count: Optional[int] = None
         inactive_approval_count: Optional[int] = None
         any_active_ruleset = False
+        any_active_ruleset_unknown = False
         any_inactive_ruleset = False
-        # A ruleset with no bypass actors applies to everyone, including administrators
-        # (the rulesets equivalent of "enforce admins"). A ruleset that has bypass actors
-        # would not apply to admins even if activated, so it must not drive the
-        # enforce-admins finding in either the active or the inactive case. GitHub omits
-        # ``bypass_actors`` when the token cannot read them, so only an explicit empty
-        # list confirms admin coverage; a missing key leaves it unknown. A ruleset with
-        # no rules enforces nothing on anyone, so it says nothing about admin coverage.
+        # A ruleset only counts as coverage when GitHub returned evidence that it enforces
+        # something on the existing default branch; missing details mean unknown, never
+        # pass or fail. A ruleset whose rules are empty, or only restrict branch creation
+        # (which cannot apply to a branch that already exists), enforces nothing and is
+        # ignored. A ruleset with no bypass actors applies to everyone, including
+        # administrators (the rulesets equivalent of "enforce admins"); one with bypass
+        # actors would not apply to admins even if activated. Only an explicit empty
+        # ``bypass_actors`` list together with returned rule details confirms admin
+        # coverage, because GitHub omits fields the token cannot read.
         admins_enforced_active = False
-        admins_bypass_unknown_active = False
+        admins_coverage_unknown_active = False
         admins_configured_inactive = False
 
         for ruleset in rulesets:
@@ -320,24 +324,33 @@ class Repository(GithubService):
             if not (is_active or is_inactive):
                 continue
 
+            rules = ruleset.get("rules")
+            if isinstance(rules, list):
+                rules = [rule for rule in rules if rule.get("type") != "creation"]
+                if not rules:
+                    continue
+
             bypass_actors = ruleset.get("bypass_actors")
-            has_no_bypass_actors = bypass_actors == []
+            bypass_known = isinstance(bypass_actors, list)
+            admins_can_bypass = bypass_known and bool(bypass_actors)
             if is_active:
-                any_active_ruleset = True
-                # A ruleset with no rules enforces nothing on anyone.
-                if ruleset.get("rules") != []:
-                    if has_no_bypass_actors:
+                if rules is None:
+                    any_active_ruleset_unknown = True
+                else:
+                    any_active_ruleset = True
+                if not admins_can_bypass:
+                    if bypass_known and rules is not None:
                         admins_enforced_active = True
-                    elif not isinstance(bypass_actors, list):
-                        admins_bypass_unknown_active = True
-            else:
+                    else:
+                        admins_coverage_unknown_active = True
+            elif rules is not None:
                 any_inactive_ruleset = True
-                if has_no_bypass_actors:
+                if bypass_known and not admins_can_bypass:
                     admins_configured_inactive = True
 
             bucket = active if is_active else inactive
 
-            for rule in ruleset.get("rules") or []:
+            for rule in rules or []:
                 rule_type = rule.get("type")
                 params = rule.get("parameters") or {}
 
@@ -398,12 +411,14 @@ class Repository(GithubService):
 
         if any_active_ruleset:
             result["protected"] = (None, "ruleset")
+        elif any_active_ruleset_unknown:
+            result["protected"] = (None, "ruleset_unknown")
         elif any_inactive_ruleset:
             result["protected"] = (None, "ruleset_not_active")
 
         if admins_enforced_active:
             result["enforce_admins"] = (None, "ruleset")
-        elif admins_bypass_unknown_active:
+        elif admins_coverage_unknown_active:
             result["enforce_admins"] = (None, "ruleset_unknown")
         elif admins_configured_inactive:
             result["enforce_admins"] = (None, "ruleset_not_active")
