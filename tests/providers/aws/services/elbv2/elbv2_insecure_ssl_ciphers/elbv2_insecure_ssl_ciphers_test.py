@@ -51,6 +51,17 @@ class Test_elbv2_insecure_ssl_ciphers:
             "ELBSecurityPolicy-TLS-1-2-2017-01",
             "ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04",
             "ELBSecurityPolicy-TLS13-1-3-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-2-Ext2-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-3-RFC9151-FIPS-2023-07",
+            "ELBSecurityPolicy-TLS13-1-2-RFC9151-FIPS-2023-07",
+            "ELBSecurityPolicy-TLS13-1-2-Ext0-RFC9151-FIPS-2023-07",
+            "ELBSecurityPolicy-TLS13-1-2-RFC9151-INTEROP1-FIPS-2023-07",
+            "ELBSecurityPolicy-TLS13-1-2-RFC9151-INTEROP2-FIPS-2023-07",
+            "ELBSecurityPolicy-TLS13-1-2-RFC9151-INTEROP3-FIPS-2023-07",
+            "ELBSecurityPolicy-TLS13-1-2-RFC9151-INTEROP4-FIPS-2023-07",
         ],
     )
     @mock_aws
