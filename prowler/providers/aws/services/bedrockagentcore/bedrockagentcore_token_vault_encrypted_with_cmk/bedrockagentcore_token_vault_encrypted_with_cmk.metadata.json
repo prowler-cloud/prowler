@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_token_vault_encrypted_with_cmk",
+  "CheckTitle": "Amazon Bedrock AgentCore token vault is encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Data Encryption"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "security",
+  "Description": "**Amazon Bedrock AgentCore token vaults** are evaluated for encryption with a **customer-managed KMS key**. This optional hardening setting applies to the default vault in each collected Region. Token vaults using the default AWS-owned key are already encrypted at rest.",
+  "Risk": "Using an **AWS-owned key** leaves the organization without control over that key's policy or lifecycle. Where customer-controlled keys are required, this can weaken governance of credential **confidentiality**. The vault remains encrypted at rest; this setting alone does not show unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/console-configuration-encryption.md",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/api-configuration-encryption.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_GetTokenVault.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_KmsConfiguration.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the AgentCore Identity console\n2. In KMS key (Token vault), choose Edit\n3. Select the checkbox for Customer managed key and provide the KMS key ARN\n4. Choose Save changes\n5. Confirm the encryption type in the KMS key (Token vault) details",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use a **customer-managed KMS key** for token-vault encryption when organizational requirements call for control over the encryption key's policy and lifecycle. Keep the key and required permissions available for credential operations.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_token_vault_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "secrets",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Low-severity optional customer-key hardening for the default token vault in each collected Region. FAIL does not mean unencrypted credentials. Recorded retrieval errors and unknown key types return MANUAL. Existing collector suppression of ValidationException and ResourceNotFoundException is preserved."
+}

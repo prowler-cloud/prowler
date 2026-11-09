@@ -458,7 +458,11 @@ class BedrockAgentCore(AWSService):
                     id=vault_id,
                     arn=vault_arn,
                     region=regional_client.region,
-                    kms_key_type=vault_info.get("kmsConfiguration", {}).get("keyType"),
+                    kms_key_type=(
+                        vault_info["kmsConfiguration"].get("keyType")
+                        if "kmsConfiguration" in vault_info
+                        else "ServiceManagedKey"
+                    ),
                     detail_retrieved=True,
                 )
         except ClientError as error:
@@ -664,9 +668,8 @@ class AgentCoreTokenVault(BaseModel):
     arn: str
     region: str
     kms_key_type: Optional[str] = None
-    # False when GetTokenVault failed. keyType is a required member of its
-    # response, so an absent value can only mean the call did not answer, never
-    # that the vault uses a service-managed key.
+    # True only after GetTokenVault succeeds. An omitted kmsConfiguration uses
+    # ServiceManagedKey; a missing keyType in a returned configuration stays unknown.
     detail_retrieved: bool = False
 
 
