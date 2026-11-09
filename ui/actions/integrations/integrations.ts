@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import {
+  isS3IntegrationLocked,
+  S3_INTEGRATION_LOCKED_ERROR,
+} from "@/lib/s3-integration-access";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type {
   IntegrationConnectionTestResponse,
@@ -43,6 +47,10 @@ export const createIntegration = async (
 
   try {
     const integration_type = formData.get("integration_type") as string;
+    if (integration_type === "amazon_s3" && (await isS3IntegrationLocked())) {
+      return { error: S3_INTEGRATION_LOCKED_ERROR };
+    }
+
     const configuration = JSON.parse(
       formData.get("configuration") as string,
     ) as Record<string, unknown>;
