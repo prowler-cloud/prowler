@@ -45,3 +45,24 @@ def test_duplicate_ids_are_rejected():
 
 def test_schema_documents_the_key_for_the_ui_editor():
     assert "threat_signatures" in json.dumps(SCAN_CONFIG_SCHEMA)
+
+
+def test_scan_time_loading_drops_only_the_invalid_signature(caplog):
+    # Scans (the CLI config file, and Prowler Cloud with its catalog merged in)
+    # load leniently: one bad entry must not take the others with it.
+    from prowler.config.schema.aws import AWSProviderConfig
+    from prowler.config.schema.validator import validate_provider_config
+
+    raw = {
+        "max_security_group_rules": 40,
+        "threat_signatures": [
+            tenant_signature(id="Not A Slug"),
+            tenant_signature(id="kept-threat"),
+        ],
+    }
+
+    config = validate_provider_config("aws", raw, AWSProviderConfig)
+
+    assert config["max_security_group_rules"] == 40
+    assert [s["id"] for s in config["threat_signatures"]] == ["kept-threat"]
+    assert "threat_signatures" in caplog.text
