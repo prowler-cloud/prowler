@@ -24,7 +24,7 @@ To detect a threat with Prowler CLI:
 
 1. Copy `prowler/lib/threats/signatures/TEMPLATE.yaml.example`. The template explains each field, and `prowler/lib/threats/models.py` is the schema.
 2. Add the signature as an item of the `threat_signatures` list under the provider in the configuration file.
-3. Add `examples` to every image rule: real image names the rule must match and must miss, including the first fixed version of each release branch. A signature whose examples disagree with its rule is rejected.
+3. Add `examples` to every image rule: real image names the rule must match and must miss, including the first fixed version of each release branch. A signature whose examples disagree with its rule is rejected: the scan logs a warning, skips that signature and still loads the others.
 4. Run the scan with the configuration file:
 
    ```console
@@ -43,17 +43,25 @@ Each signature lists one or more rules per cloud. An instance is affected when a
 
 Rules follow these principles:
 
-- **Prefer publisher-verified matches.** List the official publisher. A match from a listed publisher proves the image; a name-only match is weaker evidence. Set `require_publisher: true` when the name alone is too generic to trust.
+- **Prefer publisher-verified matches.** List the official publisher. A match from a listed publisher proves the image; a name-only match is weaker evidence. When several rules of one signature match an image, the publisher-verified match is the one reported. Set `require_publisher: true` when the name alone is too generic to trust.
 - **Capture the version.** A `(?P<version>...)` group in `name_regex` is compared against `versions`, a list of inclusive ranges. Write one range per release branch when fixes ship per branch, so patched point releases are not flagged. Dashes are read as dots, because Google Cloud image names cannot hold dots.
 - **Exclude unaffected variants in the pattern.** For example, when only an image's minimal variant ships the vulnerable default, match that variant's name only.
+- **Keep the pattern fast.** `name_regex` runs on every image of every scanned account, through the [`regex`](https://pypi.org/project/regex/) engine with a limit of 0.1 seconds per image name. A rule that exceeds the limit on its own examples is rejected when the signature loads. A rule that exceeds it during a scan is skipped for that image and logged with the signature ID. Avoid nested or overlapping repetition such as `(a|aa)+`.
 
 ## Describing Exposure and Impact
 
-- **`exposure`** lists the protocol and every port the vulnerable service listens on. On AWS, the check reads the instance's own security groups and subnet. Omit `exposure` for a threat that is not reached over the network.
+- **`exposure`** lists the protocol and every port the vulnerable service listens on. Omit `exposure` for a threat that is not reached over the network. How each check reads it:
+  - **AWS:** the check reads the instance's own security groups and subnet. When the scan does not load those security groups, for example a scan limited to the instance with `--resource-arn`, exposure is reported as unknown rather than closed.
+  - **Google Cloud:** the check records whether the instance has a public IP address. Firewall rules are evaluated by their own checks.
+  - **Azure:** the check does not evaluate network security groups.
 - **`credential_required`** is `false` for an authentication bypass or a pre-authentication remote code execution.
-- **`mitigations`** lists the controls Prowler can observe that break the cyberattack chain: `password_authentication_disabled` and `port_not_exposed`.
+- **`mitigations`** lists the controls that break the cyberattack chain. Each is observed on one cloud only, and only when the signature lists it:
+  - `port_not_exposed`: AWS, when no security group of the instance admits the internet to the threat's ports.
+  - `password_authentication_disabled`: Azure, from the Linux configuration of the virtual machine.
 - **`impact`** and **`remediation`** appear in the finding. State what a threat actor gains in one sentence, then how to contain the threat now and fix it.
 
 ## Limits
 
 Signatures match the image an instance was created from. A host patched in place keeps its original image, so its finding stays failed until the host is replaced or the finding is muted with a reason. Threats in managed services, container images, or packages installed after launch are outside what image signatures can detect.
+
+When the image of an instance cannot be looked up, for example because the scanning identity lacks `ec2:DescribeImages`, `compute.disks.list` or `compute.regionDisks.list`, the finding is MANUAL. When the image no longer exists or the instance does not report one, the finding passes and says so.

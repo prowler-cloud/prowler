@@ -1,7 +1,7 @@
-# Template for a new emerging threat. Copy it to <id>.yaml in this folder (the
-# file name must equal the id), fill it in, and run:
-#
-#   pytest tests/lib/threats
+# Template for a new emerging threat. Fill it in and add it as an item of
+# `threat_signatures` under the provider in a configuration file (see
+# docs/developer-guide/threat-signatures.mdx). Prowler ships no signatures of
+# its own.
 #
 # Every field is checked by prowler/lib/threats/models.py. This file ends in
 # .example, so it is never loaded as a real signature.
@@ -41,8 +41,9 @@ images:
     versions:
       - {min: "7.0.0", max: "7.0.14"}
       - {min: "7.2.0", max: "7.2.9"}
-    # Required for built-in signatures: real names the rule must match and
-    # must miss. Loading fails when they disagree with the rule.
+    # Real names the rule must match and must miss. Optional in the schema,
+    # but the only proof that the regex and ranges do what you mean; a
+    # signature whose examples disagree with its rule is rejected.
     examples:
       matches:
         - example-vpn-7.0.14-x86_64-hvm
