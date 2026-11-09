@@ -160,6 +160,13 @@ class TestLoadAndMatch:
         hits = match_image(demo, "aws", ["demo-1.3"], "111122223333")
         assert [h[0].id for h in hits] == ["strong-one", "weak-one"]
 
+    def test_publisher_rule_wins_over_an_earlier_name_only_rule(self):
+        name_only = signature()["images"][0] | {"publishers": []}
+        verified = signature()["images"][0]
+        demo = [ThreatSignature.model_validate(signature(images=[name_only, verified]))]
+        hits = match_image(demo, "aws", ["demo-1.3"], "111122223333")
+        assert [(h[0].id, h[2]) for h in hits] == [("demo-threat", "publisher")]
+
     def test_match_payload_and_description(self):
         demo = ThreatSignature.model_validate(
             signature(exposure={"protocol": "tcp", "port": 22})
@@ -201,8 +208,9 @@ class TestEveryBuiltinSignature:
     def test_file_named_after_another_id_is_skipped(self, tmp_path, monkeypatch):
         from prowler.lib.threats import catalog
 
-        bad = signature(examples=None)
-        (tmp_path / "other-name.yaml").write_text(yaml.safe_dump(bad))
+        # A valid signature, so the file name is the only reason to skip it.
+        ThreatSignature.model_validate(signature())
+        (tmp_path / "other-name.yaml").write_text(yaml.safe_dump(signature()))
         monkeypatch.setattr(catalog, "BUILTIN_DIR", tmp_path)
         catalog.builtin_signatures.cache_clear()
         try:
@@ -318,3 +326,37 @@ class TestExposurePorts:
         cves = [f"CVE-2026-{1000 + i}" for i in range(26)]
         with pytest.raises(ValidationError):
             ThreatSignature.model_validate(signature(cves=cves))
+
+
+class TestRegexCost:
+    """A signature's regex runs on every image of every scanned account."""
+
+    @staticmethod
+    def _rule_signature(name_regex, examples=None):
+        rule = {"cloud": "aws", "name_regex": name_regex}
+        if examples:
+            rule["examples"] = examples
+        return signature(images=[rule])
+
+    def test_backtracking_pattern_matches_quickly(self):
+        import time
+
+        demo = [ThreatSignature.model_validate(self._rule_signature(r"^(\w+\s?)*$"))]
+        start = time.monotonic()
+        hits = match_image(demo, "aws", ["a" * 25 + "!"])
+        assert hits == []
+        assert time.monotonic() - start < 0.5
+
+    def test_pattern_over_the_time_limit_is_skipped_not_raised(self, caplog):
+        demo = [
+            ThreatSignature.model_validate(
+                self._rule_signature(r"^(a|aa)+$") | {"id": "slow-threat"}
+            )
+        ]
+        assert match_image(demo, "aws", ["a" * 60 + "b"]) == []
+        assert "slow-threat" in caplog.text
+
+    def test_pattern_over_the_time_limit_on_its_examples_is_rejected(self):
+        slow = self._rule_signature(r"^(a|aa)+$", examples={"misses": ["a" * 60 + "b"]})
+        with pytest.raises(ValidationError, match="too long"):
+            ThreatSignature.model_validate(slow)

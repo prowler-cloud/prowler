@@ -14,6 +14,7 @@ import re
 from datetime import date
 from typing import Annotated, Literal, Optional
 
+import regex
 from packaging.version import InvalidVersion, Version
 from pydantic import (
     AfterValidator,
@@ -40,6 +41,12 @@ SEVERITY_ORDER = ("critical", "high", "medium", "low")
 #: longer is cut before matching so a tenant-supplied pattern cannot be fed a
 #: pathological input.
 MAX_IMAGE_NAME = 1024
+
+#: Seconds one ``name_regex`` may spend on one image name. Signatures come from
+#: catalogs and tenants, and run on every image of every scanned account, so
+#: they use the ``regex`` engine (which defuses most backtracking patterns) and
+#: a pattern that is still slow raises ``TimeoutError`` instead of stalling.
+REGEX_TIMEOUT = 0.1
 
 
 def parse_version(value: str) -> Version:
@@ -136,10 +143,10 @@ class ImageRule(BaseModel):
 
     @field_validator("name_regex")
     @classmethod
-    def _compiles(_cls, value: str) -> str:
+    def _compiles(cls, value: str) -> str:  # noqa: F841
         try:
-            re.compile(value)
-        except re.error as error:
+            regex.compile(value)
+        except regex.error as error:
             raise ValueError(f"name_regex does not compile: {error}") from error
         return value
 
@@ -154,8 +161,14 @@ class ImageRule(BaseModel):
         return [*self.versions, *shorthand]
 
     def matches_name(self, name: str) -> bool:
-        """Whether an image name carries this rule, publisher aside."""
-        found = re.compile(self.name_regex).search(name[:MAX_IMAGE_NAME])
+        """Whether an image name carries this rule, publisher aside.
+
+        Raises:
+            TimeoutError: the regex took longer than ``REGEX_TIMEOUT``.
+        """
+        found = regex.compile(self.name_regex).search(
+            name[:MAX_IMAGE_NAME], timeout=REGEX_TIMEOUT
+        )
         if not found:
             return False
         ranges = self.ranges
@@ -172,15 +185,22 @@ class ImageRule(BaseModel):
 
     @model_validator(mode="after")
     def _consistent(self) -> "ImageRule":
-        if self.ranges and "version" not in re.compile(self.name_regex).groupindex:
+        if self.ranges and "version" not in regex.compile(self.name_regex).groupindex:
             raise ValueError(
                 "version ranges need a (?P<version>...) group in name_regex"
             )
         if self.require_publisher and not self.publishers:
             raise ValueError("require_publisher needs at least one publisher")
         if self.examples:
-            wrong = [n for n in self.examples.matches if not self.matches_name(n)]
-            wrong += [n for n in self.examples.misses if self.matches_name(n)]
+            try:
+                wrong = [n for n in self.examples.matches if not self.matches_name(n)]
+                wrong += [n for n in self.examples.misses if self.matches_name(n)]
+            except TimeoutError as error:
+                # Pydantic only reports ValueError as a validation error.
+                raise ValueError(
+                    f"the {self.cloud} rule's name_regex takes too long to match "
+                    f"its examples (over {REGEX_TIMEOUT}s); simplify the pattern"
+                ) from error
             if wrong:
                 raise ValueError(
                     f"the {self.cloud} rule disagrees with its examples: {wrong}"
@@ -204,7 +224,7 @@ class Exposure(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _port_shorthand(_cls, data):
+    def _port_shorthand(cls, data):  # noqa: F841
         if isinstance(data, dict) and "port" in data:
             data = dict(data)
             port = data.pop("port")
@@ -247,7 +267,7 @@ class ThreatSignature(BaseModel):
 
     @field_validator("cves")
     @classmethod
-    def _cve_format(_cls, values: list[str]) -> list[str]:
+    def _cve_format(cls, values: list[str]) -> list[str]:  # noqa: F841
         for value in values:
             if not re.fullmatch(r"CVE-\d{4}-\d{4,}", value):
                 raise ValueError(f"not a CVE id: {value!r}")

@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from prowler.lib.logger import logger
 from prowler.lib.threats.models import (
+    REGEX_TIMEOUT,
     SEVERITY_ORDER,
     ImageRule,
     ThreatMatch,
@@ -76,13 +77,37 @@ def match_rule(
         publisher: who published the image (AMI owner id, marketplace
             publisher, image project), when the cloud says.
     """
-    verified = bool(publisher) and publisher in rule.publishers
+    # Azure echoes publishers in whatever case the VM was created with.
+    verified = bool(publisher) and publisher.casefold() in {
+        listed.casefold() for listed in rule.publishers
+    }
     if rule.require_publisher and not verified:
         return None
     for name in names:
         if name and rule.matches_name(name):
             return name, "publisher" if verified else "name"
     return None
+
+
+def _match_rule_in_time(
+    signature: ThreatSignature,
+    rule: ImageRule,
+    names: list[str],
+    publisher: Optional[str],
+) -> Optional[tuple[str, str]]:
+    """``match_rule``, treating a regex over the time limit as no match.
+
+    One slow pattern must not stop the check for every other instance; it is
+    logged with its signature so the catalog or the tenant can fix it.
+    """
+    try:
+        return match_rule(rule, names, publisher)
+    except TimeoutError:
+        logger.error(
+            f"Threat signature {signature.id}: its {rule.cloud} name_regex took "
+            f"longer than {REGEX_TIMEOUT}s on an image name and was skipped"
+        )
+        return None
 
 
 def match_image(
@@ -100,11 +125,15 @@ def match_image(
     names = [name for name in names if name]
     found = []
     for signature in signatures:
-        for rule in signature.rules_for(cloud):
-            hit = match_rule(rule, names, publisher)
-            if hit:
-                found.append((signature, *hit))
-                break
+        hits = [
+            hit
+            for rule in signature.rules_for(cloud)
+            if (hit := _match_rule_in_time(signature, rule, names, publisher))
+        ]
+        if hits:
+            # A publisher-verified rule is stronger evidence than a name-only
+            # one, wherever it sits in the signature.
+            found.append((signature, *min(hits, key=lambda hit: hit[1] != "publisher")))
     found.sort(
         key=lambda m: (
             m[2] != "publisher",
