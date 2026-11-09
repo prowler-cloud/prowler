@@ -1286,8 +1286,124 @@ class Test_Repository_BranchProtectionRulesets:
 
         self.repository_service._process_repository(repo, repos)
 
-        assert repos[1].default_branch.enforce_admins is False
-        assert repos[1].default_branch.enforce_admins_source is None
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is False
+        assert default_branch.enforce_admins_source is None
+        # An empty ruleset is not branch protection either.
+        assert default_branch.protected is False
+        assert default_branch.protected_source is None
+
+    def test_empty_inactive_ruleset_is_not_a_fail_signal(self):
+        """Activating a ruleset with no rules would enforce nothing, so it is no fail signal."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is False
+        assert default_branch.enforce_admins_source is None
+        assert default_branch.protected is False
+        assert default_branch.protected_source is None
+
+    def test_creation_only_ruleset_does_not_protect_existing_branch(self):
+        """A creation rule cannot apply to a branch that already exists."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "creation"}],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is False
+        assert default_branch.enforce_admins_source is None
+        assert default_branch.protected is False
+        assert default_branch.protected_source is None
+
+    def test_active_ruleset_without_rules_key_keeps_admin_enforcement_unknown(self):
+        """Missing rule details are no evidence that any rule applies to administrators."""
+        ruleset = self._build_ruleset(
+            enforcement="active",
+            include=["~DEFAULT_BRANCH"],
+            rules=[{"type": "non_fast_forward"}],
+            bypass_actors=[],
+        )
+        ruleset.pop("rules")
+        repo = self._build_repo(branch_protected=False, ruleset_details=[ruleset])
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is None
+        assert default_branch.enforce_admins_source is None
+        # Without rule details the ruleset is no evidence of branch protection either.
+        assert default_branch.protected is None
+        assert default_branch.protected_source is None
+
+    def test_inactive_ruleset_without_rules_key_is_not_a_fail_signal(self):
+        """Missing rule details are no evidence of what activating the ruleset would enforce."""
+        ruleset = self._build_ruleset(
+            enforcement="disabled",
+            include=["~DEFAULT_BRANCH"],
+            rules=[{"type": "non_fast_forward"}],
+            bypass_actors=[],
+        )
+        ruleset.pop("rules")
+        repo = self._build_repo(branch_protected=False, ruleset_details=[ruleset])
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is False
+        assert default_branch.enforce_admins_source is None
+        assert default_branch.protected is False
+        assert default_branch.protected_source is None
+
+    def test_creation_rule_does_not_hide_other_ruleset_rules(self):
+        """Ignoring creation rules keeps the coverage of the remaining rules."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "creation"}, {"type": "non_fast_forward"}],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.enforce_admins is True
+        assert default_branch.enforce_admins_source == "ruleset"
+        assert default_branch.allow_force_pushes is False
+        assert default_branch.allow_force_pushes_source == "ruleset"
+        assert default_branch.protected is True
+        assert default_branch.protected_source == "ruleset"
 
     def test_active_ruleset_with_bypass_actors_does_not_apply_to_admins(self):
         repo = self._build_repo(
