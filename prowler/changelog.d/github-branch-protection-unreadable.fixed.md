@@ -1,1 +1,1 @@
-GitHub branch protection checks no longer report FAIL for repositories whose branch protection settings the token cannot read; the protection state is reported as unknown instead
+GitHub branch protection checks skip repositories when a protected branch's settings cannot be read, instead of reporting a false FAIL
