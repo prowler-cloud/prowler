@@ -301,7 +301,8 @@ class Repository(GithubService):
         # would not apply to admins even if activated, so it must not drive the
         # enforce-admins finding in either the active or the inactive case. GitHub omits
         # ``bypass_actors`` when the token cannot read them, so only an explicit empty
-        # list confirms admin coverage; a missing key leaves it unknown.
+        # list confirms admin coverage; a missing key leaves it unknown. A ruleset with
+        # no rules enforces nothing on anyone, so it says nothing about admin coverage.
         admins_enforced_active = False
         admins_bypass_unknown_active = False
         admins_configured_inactive = False
@@ -323,10 +324,12 @@ class Repository(GithubService):
             has_no_bypass_actors = bypass_actors == []
             if is_active:
                 any_active_ruleset = True
-                if has_no_bypass_actors:
-                    admins_enforced_active = True
-                elif not isinstance(bypass_actors, list):
-                    admins_bypass_unknown_active = True
+                # A ruleset with no rules enforces nothing on anyone.
+                if ruleset.get("rules") != []:
+                    if has_no_bypass_actors:
+                        admins_enforced_active = True
+                    elif not isinstance(bypass_actors, list):
+                        admins_bypass_unknown_active = True
             else:
                 any_inactive_ruleset = True
                 if has_no_bypass_actors:
