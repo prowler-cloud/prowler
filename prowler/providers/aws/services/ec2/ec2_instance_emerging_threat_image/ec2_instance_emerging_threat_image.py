@@ -32,6 +32,16 @@ class ec2_instance_emerging_threat_image(Check):
             if instance.state == "terminated":
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
+            if instance.image_id in ec2_client.image_lookup_failures:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot evaluate EC2 Instance {instance.id} against known emerging "
+                    f"threats: the metadata of AMI {instance.image_id} could not be "
+                    "retrieved. Verify that ec2:DescribeImages is granted to the "
+                    "scanning identity."
+                )
+                findings.append(report)
+                continue
             image = ec2_client.image_for_instance(instance)
             if image is None:
                 report.status = "PASS"
@@ -55,16 +65,25 @@ class ec2_instance_emerging_threat_image(Check):
                 findings.append(report)
                 continue
 
+            # Routing is a fact about the host, whichever ports are open.
+            public_route = self._public_route(instance)
+            # A scan filtered to the instance does not load its security
+            # groups; then exposure is unknown, not closed.
+            groups_known = self._security_groups_loaded(instance)
             matches = []
             for signature, matched_name, provenance in hits:
                 observed = {}
                 if signature.exposure:
-                    open_port = self._open_port(instance, signature.exposure)
-                    exposed = open_port is not None
-                    observed["exposed_to_internet"] = exposed
-                    observed["public_route"] = exposed and self._public_route(instance)
-                    if exposed:
-                        observed["exposure_port"] = open_port
+                    observed["public_route"] = public_route
+                    if not groups_known:
+                        observed["exposed_to_internet"] = None
+                    else:
+                        open_port = self._open_port(instance, signature.exposure)
+                        observed["exposed_to_internet"] = open_port is not None
+                        if open_port is not None:
+                            observed["exposure_port"] = open_port
+                        elif "port_not_exposed" in signature.mitigations:
+                            observed["mitigations_observed"] = ["port_not_exposed"]
                 matches.append(
                     to_match(
                         signature,
@@ -80,11 +99,22 @@ class ec2_instance_emerging_threat_image(Check):
                 "threats": [match.model_dump(mode="json") for match in matches]
             }
             report.status_extended = (
-                f"EC2 Instance {instance.id} runs AMI {image.id} ({image.name}), "
-                f"affected by {describe_matches(matches)}."
+                f"EC2 Instance {instance.id} was launched from AMI {image.id} "
+                f"({image.name}), which ships a build affected by "
+                f"{describe_matches(matches)}. Prowler sees the launch image, not "
+                "packages updated since: mute this finding if the host was patched "
+                "in place."
             )
             findings.append(report)
         return findings
+
+    @staticmethod
+    def _security_groups_loaded(instance) -> bool:
+        """Whether every security group of the instance was described in this scan."""
+        loaded = {group.id for group in ec2_client.security_groups.values()}
+        return (
+            bool(instance.security_groups) and set(instance.security_groups) <= loaded
+        )
 
     @staticmethod
     def _open_port(instance, exposure) -> Optional[int]:

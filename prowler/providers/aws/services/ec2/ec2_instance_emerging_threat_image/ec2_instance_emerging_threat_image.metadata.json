@@ -17,13 +17,13 @@
   "Risk": "An instance launched from an affected AMI carries the vulnerability until it is patched or replaced. When the vulnerable service is reachable from the internet, a threat actor can exploit it remotely; for an authentication bypass, that means a shell, often as root, with no credential.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/user-guide/tutorials/prowler-app-issues"
+    "https://docs.prowler.com/developer-guide/threat-signatures"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Read the threat named in the finding and its remediation\n2. Restrict the exposed port in the instance's security groups to trusted addresses\n3. Patch the package on the host, or replace the instance from a fixed AMI\n4. Update launch templates and IaC that still reference the affected AMI",
+      "Other": "1. Read the threat named in the finding and its remediation\n2. Restrict the exposed port in the instance's security groups to trusted addresses\n3. Patch the package on the host and mute this finding once the fix is verified (the instance keeps its AMI), or replace the instance from a fixed AMI\n4. Update launch templates and IaC that still reference the affected AMI",
       "Terraform": ""
     },
     "Recommendation": {
@@ -39,5 +39,5 @@
   "RelatedTo": [
     "ec2_instance_port_ssh_exposed_to_internet"
   ],
-  "Notes": "Instances whose AMI is deregistered or not shared cannot be matched and pass with an explanation. A host patched in place keeps its AMI, so mute its finding with a reason once the fix is verified."
+  "Notes": "Instances whose AMI is deregistered or not shared cannot be matched and pass with an explanation; when the AMI lookup itself fails, the finding is MANUAL. A host patched in place keeps its AMI, so mute its finding with a reason once the fix is verified."
 }
