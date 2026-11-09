@@ -109,7 +109,8 @@ RUN ARCH=$(uname -m) && \
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
 
-USER prowler
+# Numeric IDs (1000 = prowler): hosts and runAsNonRoot can resolve them without /etc/passwd.
+USER 1000:1000
 
 WORKDIR /home/prowler
 
@@ -135,7 +136,7 @@ RUN uv sync --locked --compile-bytecode && \
 RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py && \
     rm -rf "${HOME}"/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
-USER root
+USER 0:0
 
 # Remove build-only packages from the final image after Python dependencies are installed.
 RUN apt-get purge -y --auto-remove \
@@ -148,13 +149,13 @@ RUN apt-get purge -y --auto-remove \
     apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
-USER prowler
+USER 1000:1000
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
-USER root
+USER 0:0
 
 # pip is build-only; the entrypoint runs the venv directly.
 RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
@@ -164,5 +165,5 @@ RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
     /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
     /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
-USER prowler
+USER 1000:1000
 ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]
