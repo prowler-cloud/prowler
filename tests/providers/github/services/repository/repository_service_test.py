@@ -1460,6 +1460,216 @@ class Test_Repository_BranchProtectionRulesets:
         # The branch is still reported as protected-but-inactive regardless of bypass.
         assert repos[1].default_branch.protected_source == "ruleset_not_active"
 
+    def test_ruleset_with_only_empty_status_checks_rule_is_not_coverage(self):
+        """A status-checks rule that requires no checks enforces nothing."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {"required_status_checks": []},
+                        }
+                    ],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.protected is False
+        assert default_branch.protected_source is None
+        assert default_branch.enforce_admins is False
+        assert default_branch.enforce_admins_source is None
+
+    @pytest.mark.parametrize(
+        "rule_type, list_parameter",
+        [
+            ("required_deployments", "required_deployment_environments"),
+            ("workflows", "workflows"),
+            ("code_scanning", "code_scanning_tools"),
+            ("file_path_restriction", "restricted_file_paths"),
+            ("file_extension_restriction", "restricted_file_extensions"),
+        ],
+    )
+    def test_ruleset_with_only_empty_list_rule_is_not_coverage(
+        self, rule_type, list_parameter
+    ):
+        """A rule configured with an empty list of requirements enforces nothing."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": rule_type, "parameters": {list_parameter: []}}],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        assert default_branch.protected is False
+        assert default_branch.protected_source is None
+        assert default_branch.enforce_admins is False
+        assert default_branch.enforce_admins_source is None
+
+    def test_ruleset_with_configured_list_rule_is_coverage(self):
+        """A rule with configured requirements protects the branch and its admins."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_deployments",
+                            "parameters": {
+                                "required_deployment_environments": ["production"]
+                            },
+                        }
+                    ],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.protected is True
+        assert repos[1].default_branch.protected_source == "ruleset"
+        assert repos[1].default_branch.enforce_admins is True
+        assert repos[1].default_branch.enforce_admins_source == "ruleset"
+
+    @pytest.mark.parametrize("actor_type", ["Integration", "DeployKey"])
+    def test_non_admin_bypass_actor_keeps_ruleset_applying_to_admins(self, actor_type):
+        """Integrations and deploy keys that can bypass a ruleset are not administrators."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {
+                            "actor_id": 7,
+                            "actor_type": actor_type,
+                            "bypass_mode": "always",
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is True
+        assert repos[1].default_branch.enforce_admins_source == "ruleset"
+
+    def test_admin_bypass_actor_next_to_integration_exempts_admins(self):
+        """An administrator bypass actor exempts admins even next to an integration."""
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {"actor_id": 7, "actor_type": "Integration"},
+                        {"actor_id": None, "actor_type": "OrganizationAdmin"},
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+
+    def test_active_ruleset_without_rules_key_keeps_failing_controls_unknown(self):
+        """Missing rule details leave every non-passing control unknown, not FAIL."""
+        ruleset = self._build_ruleset(
+            enforcement="active",
+            include=["~DEFAULT_BRANCH"],
+            rules=[{"type": "non_fast_forward"}],
+            bypass_actors=[],
+        )
+        ruleset.pop("rules")
+        repo = self._build_repo(branch_protected=True, ruleset_details=[ruleset])
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        default_branch = repos[1].default_branch
+        # Classic protection already fails these, but the ruleset may enforce them.
+        assert default_branch.approval_count is None
+        assert default_branch.approval_count_source is None
+        assert default_branch.dismiss_stale_reviews is None
+        assert default_branch.dismiss_stale_reviews_source is None
+        assert default_branch.required_linear_history is None
+        assert default_branch.require_signed_commits is None
+        assert default_branch.status_checks is None
+        assert default_branch.require_code_owner_reviews is None
+        assert default_branch.conversation_resolution is None
+        assert default_branch.enforce_admins is None
+        # Controls classic protection already satisfies keep passing.
+        assert default_branch.protected is True
+        assert default_branch.protected_source == "classic"
+        assert default_branch.require_pull_request is True
+        assert default_branch.allow_force_pushes is False
+        assert default_branch.allow_force_pushes_source == "classic"
+        assert default_branch.branch_deletion is False
+
+    def test_ruleset_without_rules_key_keeps_confirmed_ruleset_approvals(self):
+        """A confirmed passing approval count survives another ruleset's missing rules."""
+        unknown_ruleset = self._build_ruleset(
+            enforcement="active",
+            include=["~DEFAULT_BRANCH"],
+            rules=[{"type": "non_fast_forward"}],
+            bypass_actors=[],
+            ruleset_id=202,
+        )
+        unknown_ruleset.pop("rules")
+        repo = self._build_repo(
+            branch_protected=True,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "pull_request",
+                            "parameters": {"required_approving_review_count": 2},
+                        }
+                    ],
+                    bypass_actors=[],
+                ),
+                unknown_ruleset,
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.approval_count == 2
+        assert repos[1].default_branch.approval_count_source == "ruleset"
+
 
 class Test_Repository_Default_Workflow_Permissions:
     def setup_method(self):
