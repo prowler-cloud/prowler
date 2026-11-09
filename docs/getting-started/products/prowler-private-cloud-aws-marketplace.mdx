@@ -63,7 +63,7 @@ These figures are estimates based on AWS public list prices. AWS bills the infra
 </Note>
 
 <AccordionGroup>
-  <Accordion title="Infrastructure cost breakdown">
+  <Accordion title="Infrastructure Cost Breakdown">
     About 360 USD a month for the default size in us-east-1, at AWS list prices, before scans:
 
     | Resource | About, per month |
@@ -94,7 +94,7 @@ The installation runs in the customer's AWS account, in the chosen Region. Users
     Open the plan's listing on AWS Marketplace (links in [Choose a Plan](#choose-a-plan)), click **View purchase options**, and subscribe. Then continue to the configuration and to launch. The launch page has a link that opens the AWS CloudFormation console with the Prowler template already loaded.
   </Step>
 
-  <Step title="Choose a Supported Region">
+  <Step title="Select a Supported Region">
     Before creating the stack, switch the console to a supported Region at the top right. The template refuses the others.
 
     <Accordion title="Supported Regions">
@@ -163,7 +163,7 @@ New Prowler releases install automatically every night. Settings chosen at launc
     1. Choose a subdomain that starts with `prowler`, such as `prowler.example.com`.
     2. Request an AWS Certificate Manager certificate for `cloud.prowler.example.com`, `api.cloud.prowler.example.com` and `mcp.prowler.example.com` in us-east-1. Request a second one in the installation's Region, unless the domain is an Amazon Route 53 hosted zone in the same account.
     3. Open the AWS CloudFormation console in the installation's Region, go to **Stacks**, select the Prowler stack, and click **Update**, then **Make a direct update**.
-    4. Choose **Use existing template** and click **Next**.
+    4. Select **Use existing template** and click **Next**.
     5. Fill in the **Your own domain** fields with the domain and the certificates, and leave every other parameter as it is. Click **Next** until the review page.
     6. Acknowledge the IAM capabilities and click **Submit**.
   </Accordion>
@@ -171,7 +171,7 @@ New Prowler releases install automatically every night. Settings chosen at launc
     To turn Lighthouse AI on:
 
     1. Open the AWS CloudFormation console in the installation's Region, go to **Stacks**, select the Prowler stack, and click **Update**, then **Make a direct update**.
-    2. Choose **Use existing template** and click **Next**.
+    2. Select **Use existing template** and click **Next**.
     3. Set **Lighthouse AI** to **Enabled**, and leave every other parameter as it is. Click **Next** until the review page.
     4. Acknowledge the IAM capabilities and click **Submit**. Lighthouse AI is ready within minutes and needs no keys.
 
