@@ -4,6 +4,30 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.49.0] (Prowler v5.48.0)
+
+### 🔄 Changed
+
+- `jsonschema` 4.26.0 for SDK schema validation, picked up through the SDK dependency [(#13274)](https://github.com/prowler-cloud/prowler/pull/13274)
+
+### 🐞 Fixed
+
+- Findings partitions now tile exactly instead of leaving a sub-millisecond gap at each window boundary, where findings landed in the default partition and were never aged out [(#12766)](https://github.com/prowler-cloud/prowler/pull/12766)
+- Finding groups show the check title instead of the check ID while a tenant's first scan is running [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔐 Security
+
+- Python base image from 3.12.15 to 3.12.16 in the API container image, patching CVE-2026-115557 [(#13215)](https://github.com/prowler-cloud/prowler/pull/13215)
+- pyasn1 to 0.6.5, patching the ASN.1 decoding denial of service advisories [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- PowerShell from 7.5.12 to 7.5.13 in the API container image, bundling .NET runtime 9.0.22 [(#13253)](https://github.com/prowler-cloud/prowler/pull/13253)
+- h2 from 4.3.0 to 4.4.1 and werkzeug from 3.1.7 to 3.1.9, patching the duplicate Host header request smuggling and the Windows device name bypass in safe_join, plus pylint 4.0.9 and filelock 4.2.1 in the development dependencies [(#13257)](https://github.com/prowler-cloud/prowler/pull/13257)
+- `POST /api/v1/tokens/github` and `POST /api/v1/tokens/google` only accept an OAuth authorization code, rejecting caller-supplied `access_token` and `id_token` values issued to other OAuth clients [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- oauthlib from 4.0.0 to 4.0.1 in the API container image, patching the OAuth device flow bearer token disclosure [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- GCP `service_account` provider secrets require a key with `"type": "service_account"` and a Google `token_uri`, rejecting `external_account` and other credential types or custom token endpoints that could read worker files or reach internal URLs [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- apt and libapt-pkg7.0 3.0.4 in the API container image [(#13268)](https://github.com/prowler-cloud/prowler/pull/13268)
+
+---
+
 ## [1.48.0] (Prowler v5.47.0)
 
 ### 🔐 Security

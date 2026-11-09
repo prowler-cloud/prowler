@@ -1,1 +1,0 @@
-GCP provider only loads `service_account_key` credentials of type `service_account` with a Google `token_uri`, blocking `external_account` configurations and custom token endpoints that could read local files or fetch arbitrary URLs

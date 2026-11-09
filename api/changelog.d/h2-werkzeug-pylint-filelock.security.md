@@ -1,1 +1,0 @@
-h2 from 4.3.0 to 4.4.1 and werkzeug from 3.1.7 to 3.1.9, patching the duplicate Host header request smuggling and the Windows device name bypass in safe_join, plus pylint 4.0.9 and filelock 4.2.1 in the development dependencies

@@ -4,6 +4,103 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.48.0" description="November 6, 2026">
+  ### ⚡ Prowler Realtime — Detection and Remediation for AWS
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A scan tells you what was wrong at the time it ran. **Prowler Realtime** watches an AWS account's CloudTrail as events happen, checks each risky call with a targeted Prowler check on the resource it touched, and responds the way the account's policy says, minutes after the change instead of at the next scan.
+
+  - Events arrive from an EventBridge to SQS feed, deployed with the CloudFormation or Terraform templates, or from a CloudTrail `LookupEvents` fallback.
+  - Each account has a policy mode: `monitor` alerts, `pr` proposes the change as a Terraform pull request behind a security gate, and `auto` fixes the resource through an optional remediation-only role, with every action recorded and reversible. Auto-fix can run as a dry run first.
+  - The `/realtime` dashboard has an overview with posture, open violations and verified fixes, plus Detections, Remediation with revert, a live Event stream, Prioritized findings and opt-in Cost anomalies. Details open in the side panel next to Lighthouse AI, and one Configuration page covers the event feed, enforced frameworks, remediation access, alerts and activation.
+  - Accounts show labelled demo data until Realtime is set up, and the status can be shared as a redacted statement to copy or download.
+  - A new **Manage Realtime** role permission controls who can change the policy; reading stays open to roles that can see the provider. Lighthouse AI and the MCP Server get Realtime tools to manage the policy and feed, read detections and actions, and revert them.
+
+  ### 🎯 Issues — Everything From the Side Panel
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - The issue side panel now holds everything the full issue page had, and the page is gone: **Findings** and **Resources** tabs, the evidence lines of each leg, the compliance frameworks under the title and **Send to Jira** in the header menu. A finding clicked in the attack path or the Findings tab opens inside the panel, with a breadcrumb back.
+  - A **Contextual Fix** Lighthouse AI skill on the issue panel reads the open legs and the findings of the path, leads with the single change that closes it fastest and then lists per-resource fixes grouped by check.
+  - Issues with dozens of findings load their attack path, findings and resources again; the panel used to send every finding UID from the browser and larger issues were rejected.
+
+  ### 🚀 First Scan — Findings and Sample Data While You Wait
+
+  - Scans run checks from the highest to the lowest severity, so critical and high findings are stored first. While a tenant's first scan is running, the Findings page shows its findings as they arrive with a progress banner, and executing scans get a **View Early Findings** action.
+  - Finding groups show the check title instead of the check ID during a tenant's first scan.
+  - **Prowler Cloud:** until the first scan completes, Overview, Findings, Resources, Compliance, Issues and Attack Paths show labelled sample data from a demo AWS account, with a banner that follows the real scan and swaps the sample out when it finishes.
+
+  ### 🤖 AWS — Bedrock AgentCore Coverage
+
+  A new `bedrockagentcore` service collects AgentCore gateways, gateway targets, agent runtimes, memories, browsers, code interpreters and token vaults, with three new checks in the service and one in CloudTrail:
+
+  - `bedrockagentcore_full_access_policy_attached` flags IAM roles with the AgentCore full access managed policies, and `bedrockagentcore_payments_process_payment_role_separation` flags roles allowed both `CreatePaymentSession` and `ProcessPayment`. Contributed by @tamg-aws. Thank you!
+  - `cloudtrail_agentcore_data_events_enabled` verifies that actively logging trails record AgentCore data events for every AgentCore resource type in use. Contributed by @tamg-aws. Thank you!
+  - `bedrockagentcore_runtime_vpc_configured` verifies that AgentCore runtimes use VPC network mode. Contributed by @Nithin078. Thank you!
+
+  ### ☁️ Cloudflare, GitHub and Vercel Checks
+
+  - **Cloudflare:** new `account` service with `account_two_factor_enforced`, `account_member_two_factor_enabled`, `account_super_admins_limited`, `account_api_token_expiration_set`, `account_api_token_ip_restriction_enabled` and `account_api_token_recently_used`; new `r2` service with `r2_bucket_public_dev_url_disabled`, `r2_bucket_cors_no_wildcard_origin` and `r2_bucket_custom_domain_min_tls_secure`; new `workers` service with `workers_script_observability_enabled`, `workers_script_workers_dev_disabled`, `workers_script_preview_urls_disabled` and `workers_script_no_secrets_in_plain_text_bindings`; and `zone_firewall_no_skip_all_traffic_rules`, which flags enabled skip rules that match all traffic and bypass the managed WAF or rate limiting.
+  - **GitHub:** `repository_secret_scanning_push_protection_enabled` flags repositories that accept pushes containing secrets.
+  - **Vercel:** `project_environment_no_secrets_with_public_prefix` flags secret-like environment variables that frontend frameworks inline into the browser bundle through prefixes such as `NEXT_PUBLIC_` or `VITE_`, and `project_linked_to_git_repository` flags projects that can only receive unreviewed CLI deployments.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 📋 Compliance
+
+  - GDPR for Azure, mapping Articles 25, 30 and 32 to existing Azure checks. Contributed by @m-khan-97. Thank you!
+  - Cloudflare mappings for NCSC Cyber Essentials 3.3. Contributed by @ethanhawkes-gif. Thank you!
+  - The NATO D32 compliance icon uses the official NATO/OTAN logo.
+
+  ### 🏢 Prowler Private Cloud on AWS Marketplace
+
+  Prowler Private Cloud is listed on AWS Marketplace as Pay as You Go and 10 and 25 account bundles, installed in the customer's own AWS account and billed on the AWS bill. Marketplace installations report scanned accounts hourly, send a monthly usage statement and show a sidebar notice when the subscription is ending or paused; Lighthouse AI uses OpenAI gpt-oss-120b on Amazon Bedrock with the installation's own role. See [Prowler Private Cloud](/getting-started/products/prowler-private-cloud-aws-marketplace) for plans and installation.
+
+  ### 🛠️ Improvements and Fixes
+
+  - The OSS CLI HTML report, `prowler dashboard` and its terminal output show a short note on bringing findings to Prowler Cloud. Nothing is uploaded, and `PROWLER_NO_PROMOTIONS=1` turns the dashboard note off; Prowler Cloud and Private Cloud reports never include it.
+  - WAFv2 `ListWebACLs` is paginated, so accounts with more than one page of Web ACLs are fully scanned, and CloudFront Web ACL rules, logging and tags are read even when the scan excludes `us-east-1`. Contributed by @tamg-aws. Thank you!
+  - CloudTrail trail status and event selectors are read per trail, so one unreadable trail no longer leaves the others unread.
+  - `vpc_endpoint_connections_trust_boundaries` skips VPC endpoints whose service does not support endpoint policies, such as Amazon SES SMTP, instead of failing them. Contributed by @jvgiorgi12. Thank you!
+  - `guardduty_ai_protection_enabled` and `iam_user_access_not_stale_to_sagemaker` join the `gen-ai` category.
+  - `zone_challenge_passage_configured` reports Cloudflare zones without a challenge passage TTL as non-compliant.
+  - MongoDB Atlas connection errors include the HTTP status, error code and detail Atlas returns instead of a generic HTTP error.
+  - Findings partitions tile exactly, so findings no longer land in the default partition at each window boundary and miss the age-out. Contributed by @AlexeyShalaev. Thank you!
+  - The cross-provider compliance view shows the per-provider breakdown for frameworks without a dedicated UI mapper.
+  - The Overview cards fit every screen width and no longer stack into a single column on narrower screens.
+  - **Prowler Cloud:** Lighthouse AI settings accept a Bedrock API key as an alternative to AWS access keys.
+
+  ### 🔐 Security Updates
+
+  - `POST /api/v1/tokens/github` and `POST /api/v1/tokens/google` only accept an OAuth authorization code and reject caller-supplied `access_token` and `id_token` values, which could have been issued to another OAuth client. Reported by @Mrcyberwarri0r. Thank you!
+  - GCP `service_account` credentials must be of type `service_account` with a Google `token_uri`, in the SDK and in provider secrets, rejecting `external_account` configurations and custom token endpoints that could read local files or reach internal URLs. Reported by @Mrcyberwarri0r.
+  - Python base image upgraded to 3.12.16 in the SDK and API images and 3.13.18 in the MCP Server image, patching CVE-2026-115557.
+  - PowerShell upgraded to 7.5.13 in the SDK and API images, bundling .NET runtime 9.0.22, and `apt` to 3.0.4.
+  - `oauthlib` upgraded to 4.0.1 in the SDK and API images, patching the OAuth device flow bearer token disclosure.
+  - `pyasn1` upgraded to 0.6.5 in the SDK and the API and `joserfc` to 1.7.5 in the SDK and the MCP Server, patching the ASN.1 decoding and JWE decryption denial of service advisories.
+  - `h2` upgraded to 4.4.1 and `werkzeug` to 3.1.9 in the SDK and the API, patching the duplicate Host header request smuggling and the Windows device name bypass in `safe_join`.
+  - `fastmcp` upgraded to 3.4.10 in the MCP Server, patching the skipped authorization check on direct calls to transformed components.
+  - `zod`, `js-yaml`, `vitest` and transitive UI dependencies upgraded to patched versions, resolving 33 npm audit advisories.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @tamg-aws: AWS Bedrock AgentCore inventory, IAM role separation and CloudTrail data event checks, and the WAFv2 pagination and CloudFront fixes ([#12557](https://github.com/prowler-cloud/prowler/pull/12557), [#12558](https://github.com/prowler-cloud/prowler/pull/12558), [#12563](https://github.com/prowler-cloud/prowler/pull/12563), [#12658](https://github.com/prowler-cloud/prowler/pull/12658))
+  - @Nithin078: AWS `bedrockagentcore_runtime_vpc_configured` check ([#12800](https://github.com/prowler-cloud/prowler/pull/12800))
+  - @m-khan-97: GDPR compliance framework for Azure ([#11590](https://github.com/prowler-cloud/prowler/pull/11590))
+  - @ethanhawkes-gif: Cyber Essentials 3.3 mappings for Cloudflare ([#12641](https://github.com/prowler-cloud/prowler/pull/12641))
+  - @jvgiorgi12: VPC endpoint policy support fix ([#13169](https://github.com/prowler-cloud/prowler/pull/13169))
+  - @AlexeyShalaev: findings partition bounds fix ([#12766](https://github.com/prowler-cloud/prowler/pull/12766))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.48.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.47.0" description="October 29, 2026">
   ### 🧭 Add Provider — One Step to Connect Any Provider
 

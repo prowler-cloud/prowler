@@ -1,1 +1,0 @@
-`prowler dashboard` startup output now shows the Local Dashboard logo, the CSV directory, a brief Prowler Cloud hand-off block that `PROWLER_NO_PROMOTIONS=1` disables, and the local URL once the server is listening

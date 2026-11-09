@@ -1,1 +1,0 @@
-`workers` service for Cloudflare provider with `workers_script_observability_enabled`, `workers_script_workers_dev_disabled`, `workers_script_preview_urls_disabled` and `workers_script_no_secrets_in_plain_text_bindings` checks for Workers scripts
