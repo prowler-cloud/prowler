@@ -40,23 +40,28 @@ A month with 4 AWS accounts and 6 Google Cloud projects scanned:
 
 ### Infrastructure Cost
 
-AWS bills the infrastructure the installation runs on separately, at AWS prices. With the default size in us-east-1, it costs about 360 USD a month before scans.
+AWS bills the infrastructure the installation runs on to your account, at AWS prices. With the default size in us-east-1:
 
-Scans add to that: each scan runs as its own task at about 0.12 USD for every hour it runs, and the database grows while scans run. A scan of one AWS account usually takes:
+* **Base:** about 400 USD a month, for the installation running around the clock.
+* **Scans:** about 0.50 USD for each hour a scan runs.
 
-* **Up to 2,000 resources:** about 10 minutes.
-* **2,000 to 10,000 resources:** about 25 minutes.
-* **Over 10,000 resources:** about an hour.
+| Account size | Time per scan | Per account scanned daily, per month |
+| --- | --- | --- |
+| Up to 2,000 resources | About 10 minutes | About 2.50 USD |
+| 2,000 to 10,000 resources | About 25 minutes | About 7 USD |
+| Over 10,000 resources | About 1 hour | About 15 USD |
 
-For example, 10 AWS accounts scanned once a day, at about 20 minutes each:
+Examples, with every account scanned daily:
 
-| Item | Value |
+| Setup | About, per month |
 | --- | --- |
-| Scans per month | 10 accounts × 30 days = 300 scans |
-| Scan time per month | 300 scans × 1/3 hour = 100 hours |
-| **Scan cost per month** | **100 hours × 0.12 USD = about 12 USD** |
+| 3 small accounts | 400 + 3 × 2.50 = 410 USD |
+| 10 accounts: 6 small, 3 medium, 1 large | 400 + 15 + 21 + 15 = 450 USD |
+| 25 accounts: 15 small, 8 medium, 2 large | 400 + 38 + 56 + 30 = 525 USD |
 
-Other Regions cost more than us-east-1. Amazon Bedrock is billed per use, only when Lighthouse AI is on.
+To see the exact cost, turn on `prowler:installation` as a cost allocation tag in the AWS Billing console. Every resource the installation creates carries that tag, so AWS Cost Explorer shows what the installation costs.
+
+Other Regions cost more than us-east-1. Amazon Bedrock is billed per use, only when Lighthouse AI is on. If AWS Security Hub, AWS Config or Amazon Inspector is on in your account, it also bills for the resources the installation adds.
 
 <Note>
 These figures are estimates based on AWS public list prices. AWS bills the infrastructure directly to your account, and the final amount depends on your Region, usage and any discounts you have with AWS. Prowler does not set or charge these costs.
@@ -64,17 +69,17 @@ These figures are estimates based on AWS public list prices. AWS bills the infra
 
 <AccordionGroup>
   <Accordion title="Infrastructure cost breakdown">
-    About 360 USD a month for the default size in us-east-1, at AWS list prices, before scans:
+    About 400 USD a month for the default size in us-east-1, at AWS list prices, before scans:
 
     | Resource | About, per month |
     | --- | --- |
-    | Amazon Elastic Container Service (ECS) on AWS Fargate (Prowler services) | 177 USD |
-    | Amazon Aurora PostgreSQL | 47 USD |
+    | Amazon Elastic Container Service (ECS) on AWS Fargate (Prowler services) | 180 USD |
+    | Amazon CloudWatch, including Container Insights | 68 USD |
+    | Amazon Aurora PostgreSQL | 49 USD |
     | Amazon ElastiCache | 37 USD |
     | Network address translation (NAT) gateway | 37 USD |
-    | Application Load Balancer and AWS Web Application Firewall (WAF) | 28 USD |
-    | Amazon CloudWatch | 22 USD |
-    | Other AWS services | 10 USD |
+    | Application Load Balancer | 16 USD |
+    | Other AWS services | 13 USD |
   </Accordion>
 </AccordionGroup>
 
