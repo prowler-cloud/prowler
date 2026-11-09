@@ -12,6 +12,7 @@ export const CLOUD_UPGRADE_FEATURE = {
   JIRA_DISPATCH: "jira_dispatch",
   LIGHTHOUSE_AI: "lighthouse_ai",
   GENERAL: "general",
+  REALTIME: "realtime",
   SCAN_CONFIGURATION: "scan_configuration",
   SAML_DOMAINS: "saml_domains",
 } as const;

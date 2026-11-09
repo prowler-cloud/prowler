@@ -39,6 +39,7 @@ describe("cloud upgrade content", () => {
       "Send Findings to Jira at Scale",
       "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
+      "Catch Risky AWS Changes as They Happen",
       "Configure Every Scan Once",
       "Use One SAML Configuration Across Domains",
     ]);
