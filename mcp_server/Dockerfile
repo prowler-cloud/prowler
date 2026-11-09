@@ -29,6 +29,11 @@ FROM python:3.13.18-alpine3.23@sha256:e4aeaca9081549f19bd5bc8605ed5ab257ba34f97e
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
+# Targeted exception: zlib 1.4-r0 fixes critical CVE-2026-4738, but even the newest
+# python:3.13.18-alpine3.23 still ships 1.3.2-r1. Drop once the base image ships it.
+#hadolint ignore=DL3018
+RUN apk add --no-cache --upgrade zlib
+
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
 RUN addgroup -g 1001 prowler && \
@@ -40,7 +45,8 @@ RUN rm -rf /usr/local/lib/python3.13/site-packages/pip \
     /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.13
 
 WORKDIR /app
-USER prowler
+# Numeric IDs (1001 = prowler): hosts and runAsNonRoot can resolve them without /etc/passwd.
+USER 1001:1001
 
 # Copy only the necessary files from builder stage to minimize image size:
 # 1. Virtual environment with all dependencies and the installed package
