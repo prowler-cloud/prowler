@@ -387,7 +387,11 @@ class VirtualMachineImage(BaseModel):
 
     @property
     def names(self) -> list[str]:
-        """Every name worth matching: path segments of the ids, then offer/SKU."""
+        """Every name worth matching: the image name in each id, then offer/SKU.
+
+        Only the image segment of an id is a name. The whole id would let a
+        pattern match the subscription, resource group or gallery instead.
+        """
         names = []
         for image_id in (
             self.id,
@@ -403,7 +407,6 @@ class VirtualMachineImage(BaseModel):
                 ]
                 if keys:
                     names.append(parts[keys[-1] + 1])
-                names.append(image_id)
         if self.offer or self.sku:
             names.append("-".join(p for p in (self.offer, self.sku, self.version) if p))
         return names

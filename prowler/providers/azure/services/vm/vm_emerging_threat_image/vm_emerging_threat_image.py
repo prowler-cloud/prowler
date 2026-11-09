@@ -77,8 +77,10 @@ class vm_emerging_threat_image(Check):
                     "threats": [match.model_dump(mode="json") for match in matches]
                 }
                 report.status_extended = (
-                    f"VM {vm.resource_name} {where} was created from an image affected "
-                    f"by {describe_matches(matches)}."
+                    f"VM {vm.resource_name} {where} was created from an image that "
+                    f"ships a build affected by {describe_matches(matches)}. Prowler "
+                    "sees the image the VM was created from, not packages updated "
+                    "since: mute this finding if the host was patched in place."
                 )
                 findings.append(report)
         return findings
