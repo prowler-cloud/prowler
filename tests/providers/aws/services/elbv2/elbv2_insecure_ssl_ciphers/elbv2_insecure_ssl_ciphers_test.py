@@ -152,8 +152,18 @@ class Test_elbv2_insecure_ssl_ciphers:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
 
+    @pytest.mark.parametrize(
+        "ssl_policy",
+        [
+            "ELBSecurityPolicy-TLS-1-1-2017-01",
+            # Legacy FIPS variants still allow TLS 1.1/1.0 and must stay FAIL.
+            "ELBSecurityPolicy-TLS13-1-1-FIPS-2023-04",
+            "ELBSecurityPolicy-TLS13-1-0-FIPS-2023-04",
+        ],
+    )
     @mock_aws
-    def test_elbv2_with_HTTPS_listener(self):
+    def test_elbv2_with_HTTPS_listener(self, ssl_policy):
+        """Reject TLS policies that still allow TLS 1.1 or TLS 1.0."""
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
@@ -199,7 +209,7 @@ class Test_elbv2_insecure_ssl_ciphers:
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTPS",
             Port=443,
-            SslPolicy="ELBSecurityPolicy-TLS-1-1-2017-01",
+            SslPolicy=ssl_policy,
             DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
         )
 
@@ -233,7 +243,7 @@ class Test_elbv2_insecure_ssl_ciphers:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "ELBv2 my-lb has listeners with insecure SSL protocols or ciphers (ELBSecurityPolicy-TLS-1-1-2017-01)."
+                == f"ELBv2 my-lb has listeners with insecure SSL protocols or ciphers ({ssl_policy})."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
