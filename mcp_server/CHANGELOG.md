@@ -4,6 +4,36 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.1] (Prowler v5.48.0)
+
+### 🔐 Security
+
+- Python base image from 3.13.16 to 3.13.18 in the MCP Server container image, patching CVE-2026-115557 [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- joserfc to 1.7.5, patching the JWE decryption denial of service advisory [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- fastmcp from 3.4.5 to 3.4.10, patching the skipped authorization check on direct calls to transformed components [(#13258)](https://github.com/prowler-cloud/prowler/pull/13258)
+
+---
+
+## [0.13.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- `readOnlyHint` and `destructiveHint` annotations on every MCP tool, with mute rule and mutelist writes marked destructive [(#13196)](https://github.com/prowler-cloud/prowler/pull/13196)
+
+### 🔐 Security
+
+- Authlib from 1.7.2 to 1.9.1 and dnspython from 2.8.0 to 2.9.0 in the MCP Server container image, patching CVE-2026-96760 (critical), CVE-2026-114615, CVE-2026-114616 and CVE-2026-114605 [(#13186)](https://github.com/prowler-cloud/prowler/pull/13186)
+
+---
+
+## [0.12.4] (Prowler v5.46.0)
+
+### 🔐 Security
+
+- certifi from 2026.4.22 to 2026.10.19 in the MCP Server container image, dropping the emSign root CAs whose intermediate keys were compromised [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+
+---
+
 ## [0.12.3] (Prowler v5.45.0)
 
 ### 🔐 Security

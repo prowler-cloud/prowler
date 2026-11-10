@@ -1,6 +1,6 @@
 import datetime
 from concurrent.futures import as_completed
-from typing import List, Optional
+from typing import ClassVar, List, Optional
 
 from pydantic.v1 import BaseModel
 
@@ -286,6 +286,7 @@ class Source(BaseModel):
 
 class EnvironmentVariable(BaseModel):
     name: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("value",)
     value: str
     type: str
 

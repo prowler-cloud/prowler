@@ -74,6 +74,12 @@ vi.mock("@/lib", () => ({
       description: "Allows managing tenant Registry credentials and artifacts",
     },
     {
+      field: "manage_prowler_realtime",
+      label: "Manage Realtime",
+      description:
+        "Allows setting up Prowler Realtime Detection and Remediation, including its policies, alerts and fixes",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",
@@ -127,6 +133,35 @@ describe("AddRoleForm", () => {
     routerMocks.push.mockClear();
     vi.mocked(addRole).mockClear();
     vi.unstubAllEnvs();
+  });
+
+  it("shows Manage Realtime in Prowler Cloud only", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const { unmount } = render(<AddRoleForm groups={[]} />);
+
+    // Then
+    expect(screen.queryByText("Manage Realtime")).not.toBeInTheDocument();
+    unmount();
+
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    render(<AddRoleForm groups={[]} />);
+    expect(screen.getByText("Manage Realtime")).toBeInTheDocument();
+  });
+
+  it("submits manage_prowler_realtime when granted in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.type(screen.getByPlaceholderText("Enter role name"), "New role");
+    await user.click(screen.getByRole("checkbox", { name: "Manage Realtime" }));
+    await user.click(screen.getByRole("button", { name: "Add Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_prowler_realtime")).toBe("true");
   });
 
   it("shows Manage Alerts in Prowler Cloud", () => {

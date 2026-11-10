@@ -4,6 +4,10 @@ import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { IN_WATCHLIST_FILTER_KEY } from "@/lib/compliance/watchlist";
+import {
+  isSampleId,
+  sampleComplianceFrameworks,
+} from "@/lib/sample-preview/sample-records";
 import { isCloud } from "@/lib/shared/env";
 import type { FindingComplianceFrameworksResult } from "@/types/compliance-watchlist";
 
@@ -32,6 +36,9 @@ export const getFindingComplianceFrameworks = async (
   }
 
   const { inWatchlist = false } = parsedOptions.data;
+  if (isSampleId(parsedFindingId.data)) {
+    return sampleComplianceFrameworks(parsedFindingId.data);
+  }
   if (!isCloud()) return { frameworks: [], unavailable: true };
 
   try {

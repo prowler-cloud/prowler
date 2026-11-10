@@ -1148,7 +1148,9 @@
     {
       "Id": "5.27",
       "Description": "Ensure there are between 2 and 3 subscription owners",
-      "Checks": [],
+      "Checks": [
+        "iam_subscription_owners_between_2_and_3"
+      ],
       "Attributes": [
         {
           "Section": "5 Identity Services",
@@ -1954,7 +1956,9 @@
     {
       "Id": "7.10",
       "Description": "Ensure Azure Web Application Firewall (WAF) is enabled on Azure Application Gateway",
-      "Checks": [],
+      "Checks": [
+        "network_application_gateway_waf_enabled"
+      ],
       "Attributes": [
         {
           "Section": "7 Networking Services",
@@ -2016,7 +2020,9 @@
     {
       "Id": "7.13",
       "Description": "Ensure 'HTTP2' is set to 'Enabled' on Azure Application Gateway",
-      "Checks": [],
+      "Checks": [
+        "network_application_gateway_http2_enabled"
+      ],
       "Attributes": [
         {
           "Section": "7 Networking Services",

@@ -31,6 +31,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
     InvitationRoleRelationship,
@@ -98,6 +99,11 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_resource_scan_summaries,
+)
 
 
 class TestViewSet:
@@ -3244,7 +3250,7 @@ class TestProviderSecretViewSet:
                         "client_email": "client-email",
                         "client_id": "client-id",
                         "auth_uri": "auth-uri",
-                        "token_uri": "token-uri",
+                        "token_uri": "https://oauth2.googleapis.com/token",
                         "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
                         "client_x509_cert_url": "client-x509-cert-url",
                         "universe_domain": "universe-domain",
@@ -3688,6 +3694,78 @@ current-context: test-context
             "/data/attributes/secret/okta_private_key"
         )
 
+    @pytest.mark.parametrize(
+        "service_account_key",
+        [
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"file": "/etc/passwd"},
+            },
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"url": "http://169.254.169.254/"},
+            },
+            {"type": "impersonated_service_account"},
+            {"type": "authorized_user"},
+            {"private_key": "missing-type"},
+            "not-a-dict",
+            {},
+            {
+                "type": "service_account",
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {"type": "service_account"},
+            {
+                "type": "service_account",
+                "token_uri": ["https://oauth2.googleapis.com/token"],
+            },
+            {"type": "service_account", "token_uri": {"url": "x"}},
+        ],
+    )
+    def test_provider_secrets_invalid_create_gcp_non_service_account_key(
+        self,
+        gcp_provider,
+        authenticated_client,
+        service_account_key,
+    ):
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "GCP Secret",
+                    "secret_type": ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                    "secret": {"service_account_key": service_account_key},
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(gcp_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/service_account_key"
+        )
+        assert not ProviderSecret.objects.filter(provider=gcp_provider).exists()
+
     def test_provider_secrets_partial_update(
         self, authenticated_client, provider_secret_fixture
     ):
@@ -3867,7 +3945,11 @@ current-context: test-context
                 "attributes": {
                     "name": "new_name",
                     "secret": {
-                        "service_account_key": {},
+                        "service_account_key": {
+                            "type": "service_account",
+                            "project_id": "project-id",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                        },
                     },
                     "secret_type": "service_account",
                 },
@@ -3889,7 +3971,13 @@ current-context: test-context
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
         assert provider_secret.name == "new_name"
-        assert provider_secret.secret == {"service_account_key": {}}
+        assert provider_secret.secret == {
+            "service_account_key": {
+                "type": "service_account",
+                "project_id": "project-id",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        }
 
     def test_provider_secrets_partial_update_with_invalid_secret_type(
         self, authenticated_client, provider_secret_fixture
@@ -7089,6 +7177,99 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+def _client_restricted_to_provider(tenant, provider, factory):
+    """Authenticated client for a fresh member whose role only sees `provider`."""
+    user = User.objects.create_user(
+        name=f"restricted-{uuid4()}",
+        email=f"restricted-{uuid4()}@prowler.com",
+        password=TEST_PASSWORD,
+    )
+    Membership.objects.create(
+        user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+    )
+    role = Role.objects.create(
+        name=f"restricted-{uuid4()}",
+        tenant_id=tenant.id,
+        manage_users=False,
+        manage_account=False,
+        manage_billing=False,
+        manage_providers=False,
+        manage_integrations=False,
+        manage_scans=False,
+        unlimited_visibility=False,
+    )
+    UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    provider_group = ProviderGroup.objects.create(
+        name=f"restricted-{uuid4()}", tenant_id=tenant.id
+    )
+    ProviderGroupMembership.objects.create(
+        tenant_id=tenant.id, provider_group=provider_group, provider=provider
+    )
+    RoleProviderGroupRelationship.objects.create(
+        tenant_id=tenant.id, role=role, provider_group=provider_group
+    )
+    return factory(user, tenant)
+
+
+def _completed_scan_with_summaries(
+    tenant, provider, resources, *, categories, resource_group
+):
+    """Completed scan for `provider` with one finding over `resources`, summary tables filled."""
+    tenant_id = str(tenant.id)
+    scan = Scan.objects.create(
+        name=f"scan-{uuid4()}",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid=f"finding-{uuid4()}",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="scoped_check",
+        check_metadata={"CheckId": "scoped_check"},
+        categories=categories,
+        resource_groups=resource_group,
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources(resources)
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    aggregate_scan_category_summaries(tenant_id, str(scan.id))
+    aggregate_scan_resource_group_summaries(tenant_id, str(scan.id))
+    return scan
+
+
+@pytest.fixture
+def scans_per_provider_fixture(tenants_fixture, aws_provider_pair, resources_fixture):
+    """One completed scan per provider; provider 2 only owns the `test` typed resource."""
+    tenant = tenants_fixture[0]
+    provider1, provider2 = aws_provider_pair
+    resource1, resource2, resource3 = resources_fixture
+    _completed_scan_with_summaries(
+        tenant,
+        provider1,
+        [resource1, resource2],
+        categories=["iam"],
+        resource_group="identity",
+    )
+    _completed_scan_with_summaries(
+        tenant,
+        provider2,
+        [resource3],
+        categories=["data-protection"],
+        resource_group="data",
+    )
+    return tenant, provider2
+
+
 @pytest.mark.django_db
 class TestResourceViewSet:
     def test_resources_list_none(self, authenticated_client):
@@ -7459,6 +7640,42 @@ class TestResourceViewSet:
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
+
+    def test_resources_metadata_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("resource-metadata"), {"filter[updated_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
+
+    def test_resources_metadata_latest_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("resource-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
 
     def test_resources_latest_filter_by_provider_id(
         self, authenticated_client, latest_scan_resource
@@ -9091,6 +9308,53 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert "groups" in attributes
         assert "ai_ml" in attributes["groups"]
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_latest_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+        assert set(attributes["groups"]) == {"data"}
 
     def test_findings_filter_by_category(
         self, authenticated_client, findings_with_categories
@@ -19639,6 +19903,30 @@ class TestFindingGroupViewSet:
         assert (
             attrs["check_description"] == "EC2 instances should use private IPs only."
         )
+
+    def test_finding_groups_check_title_from_sdk_without_summaries(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """A first scan writes no summaries until it completes; titles come from the SDK."""
+        FindingGroupDailySummary.objects.all().delete()
+        Scan.objects.filter(
+            id__in=Finding.objects.filter(check_id="ec2_instance_public_ip").values(
+                "scan_id"
+            )
+        ).update(state=StateChoices.EXECUTING, completed_at=None)
+
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert attrs["check_title"] == "EC2 instance does not have a public IP address"
+        assert attrs["check_description"].startswith("**EC2 instances**")
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture

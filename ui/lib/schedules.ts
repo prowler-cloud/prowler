@@ -107,6 +107,13 @@ export function getScheduleFormDefaults(now = new Date()): ScheduleFormValues {
   };
 }
 
+/** Post-setup launch steps tick "launch an initial scan now" by default. */
+export function getSetupScheduleFormDefaults(
+  now = new Date(),
+): ScheduleFormValues {
+  return { ...getScheduleFormDefaults(now), launchInitialScan: true };
+}
+
 export function getScheduleFormValues(
   schedule?: ScheduleAttributes | null,
   now = new Date(),

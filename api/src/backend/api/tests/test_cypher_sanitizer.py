@@ -222,6 +222,12 @@ class TestProtection:
         result = _inject(cypher)
         assert result.count(LABEL) == 1
 
+    def test_block_comment_with_node_pattern(self):
+        cypher = "MATCH (n:AWSRole) /* (m:Fake)\n(k) */ RETURN n"
+        result = _inject(cypher)
+        assert "/* (m:Fake)\n(k) */" in result
+        assert result.count(LABEL) == 1
+
 
 # ---------------------------------------------------------------------------
 # Clause splitting
@@ -442,12 +448,43 @@ class TestValidation:
     @pytest.mark.parametrize(
         "cypher",
         [
+            "LOAD /* c */ CSV FROM 'http://169.254.169.254/' AS x RETURN x",
+            "LOAD/**/CSV FROM 'http://evil.com' AS x RETURN x",
+            "LOAD /* a */ /* b */ CSV FROM 'http://evil.com' AS x RETURN x",
+            "LOAD /* multi\nline */ CSV FROM 'http://evil.com' AS x RETURN x",
+            "CALL apoc./**/load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc . load.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.load . json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc\n.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
+        ],
+        ids=[
+            "LOAD_CSV_block_comment",
+            "LOAD_CSV_empty_block_comment",
+            "LOAD_CSV_two_block_comments",
+            "LOAD_CSV_multiline_block_comment",
+            "apoc.load_block_comment",
+            "apoc.load_spaces_around_dot",
+            "apoc.load_spaces_before_procedure",
+            "apoc.cypher_newline_before_dot",
+        ],
+    )
+    def test_rejects_blocked_patterns_split_by_comments_or_whitespace(self, cypher):
+        with pytest.raises(ValidationError) as exc:
+            validate_custom_query(cypher)
+
+        assert "blocked operation" in str(exc.value.detail)
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
             "MATCH (n:AWSAccount) RETURN n LIMIT 10",
             "MATCH (a)-[r]->(b) RETURN a, r, b",
             "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
             "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
             "MATCH (n) WHERE n.name = 'apoc.load.json' RETURN n",
             'MATCH (n) WHERE n.description = "LOAD CSV is cool" RETURN n',
+            "MATCH (n) /* LOAD CSV is documented here */ RETURN n",
+            "MATCH (n) WHERE n.note = '/* LOAD CSV */' RETURN n",
         ],
         ids=[
             "simple_match",
@@ -456,6 +493,8 @@ class TestValidation:
             "apoc_virtual_node",
             "apoc_load_inside_single_quotes",
             "load_csv_inside_double_quotes",
+            "load_csv_inside_block_comment",
+            "block_comment_inside_string",
         ],
     )
     def test_allows_clean_queries(self, cypher):

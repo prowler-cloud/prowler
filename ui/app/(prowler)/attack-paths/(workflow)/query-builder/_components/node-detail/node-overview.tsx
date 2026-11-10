@@ -3,9 +3,8 @@
 import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
+import { formatNodeLabels, isProwlerFindingNode } from "@/lib/attack-paths";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
-
-import { formatNodeLabels, isProwlerFindingNode } from "../../_lib";
 
 interface NodeOverviewProps {
   node: GraphNode;

@@ -38,6 +38,18 @@ class Organizations(AWSService):
                 organization_delegated_administrator = (
                     self._list_delegated_administrators()
                 )
+                organization_enabled_service_principals = (
+                    self._list_aws_service_access_for_organization()
+                )
+                organization_delegated_service_principals = {}
+                for delegated_administrator in (
+                    organization_delegated_administrator or []
+                ):
+                    organization_delegated_service_principals[
+                        delegated_administrator.id
+                    ] = self._list_delegated_services_for_account(
+                        delegated_administrator.id
+                    )
             except ClientError as error:
                 if (
                     error.response["Error"]["Code"]
@@ -64,6 +76,8 @@ class Organizations(AWSService):
                         master_id=organization_master_id,
                         policies=organization_policies,
                         delegated_administrators=organization_delegated_administrator,
+                        enabled_service_principals=organization_enabled_service_principals,
+                        delegated_service_principals=organization_delegated_service_principals,
                     )
                 else:
                     self.organization = Organization(
@@ -182,15 +196,96 @@ class Organizations(AWSService):
                     )
 
         except ClientError as error:
+            # None (unknown) for any error: an empty list would read as "no administrators"
+            self.delegated_administrators = None
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                self.delegated_administrators = None
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         except Exception as error:
+            self.delegated_administrators = None
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return self.delegated_administrators
+
+    def _list_aws_service_access_for_organization(self):
+        """Return the service principals with trusted access enabled, or None if unreadable."""
+        logger.info("Organizations - List AWS Service Access For Organization...")
+
+        enabled_service_principals = []
+        try:
+            list_aws_service_access_paginator = self.client.get_paginator(
+                "list_aws_service_access_for_organization"
+            )
+            for page in list_aws_service_access_paginator.paginate():
+                for enabled_service_principal in page["EnabledServicePrincipals"]:
+                    enabled_service_principals.append(
+                        enabled_service_principal["ServicePrincipal"]
+                    )
+
+        except ClientError as error:
+            enabled_service_principals = None
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        except Exception as error:
+            enabled_service_principals = None
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return enabled_service_principals
+
+    def _list_delegated_services_for_account(self, account_id):
+        """Return the service principals delegated to an account, or None if unreadable."""
+        logger.info(
+            "Organizations - List Delegated Services For Account: %s ...", account_id
+        )
+
+        delegated_service_principals = []
+        try:
+            list_delegated_services_paginator = self.client.get_paginator(
+                "list_delegated_services_for_account"
+            )
+            for page in list_delegated_services_paginator.paginate(
+                AccountId=account_id
+            ):
+                for delegated_service in page["DelegatedServices"]:
+                    delegated_service_principals.append(
+                        delegated_service["ServicePrincipal"]
+                    )
+
+        except ClientError as error:
+            delegated_service_principals = None
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        except Exception as error:
+            delegated_service_principals = None
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return delegated_service_principals
 
 
 class Policy(BaseModel):
@@ -218,3 +313,5 @@ class Organization(BaseModel):
     master_id: str
     policies: Optional[dict[str, list[Policy]]] = {}
     delegated_administrators: list[DelegatedAdministrator] = None
+    enabled_service_principals: Optional[list[str]] = None
+    delegated_service_principals: Optional[dict[str, Optional[list[str]]]] = None

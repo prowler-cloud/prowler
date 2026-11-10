@@ -136,6 +136,60 @@ class TestMongodbatlasProvider:
         with pytest.raises(MongoDBAtlasIdentityError):
             MongodbatlasProvider.setup_identity(session)
 
+    @patch("requests.get")
+    def test_setup_identity_forbidden_keeps_atlas_error_detail(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+        mock_response.ok = False
+        mock_response.json.return_value = {
+            "detail": "IP address 203.0.113.10 is not allowed to access this resource.",
+            "error": 403,
+            "errorCode": "IP_ADDRESS_NOT_ON_ACCESS_LIST",
+            "reason": "Forbidden",
+        }
+        mock_get.return_value = mock_response
+
+        session = MongoDBAtlasSession(
+            public_key=ATLAS_PUBLIC_KEY,
+            private_key=ATLAS_PRIVATE_KEY,
+        )
+
+        with pytest.raises(MongoDBAtlasIdentityError) as exc_info:
+            MongodbatlasProvider.setup_identity(session)
+
+        assert str(exc_info.value) == (
+            "MongoDBAtlasIdentityError[8003]: MongoDB Atlas identity setup failed"
+            " - HTTP 403 IP_ADDRESS_NOT_ON_ACCESS_LIST: IP address 203.0.113.10"
+            " is not allowed to access this resource."
+        )
+
+    @patch("requests.get")
+    def test_setup_identity_error_without_json_body_reports_status(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 502
+        mock_response.ok = False
+        mock_response.json.side_effect = ValueError("No JSON")
+        mock_get.return_value = mock_response
+
+        session = MongoDBAtlasSession(
+            public_key=ATLAS_PUBLIC_KEY,
+            private_key=ATLAS_PRIVATE_KEY,
+        )
+
+        with pytest.raises(MongoDBAtlasIdentityError) as exc_info:
+            MongodbatlasProvider.setup_identity(session)
+
+        assert exc_info.value.message == (
+            "MongoDB Atlas identity setup failed - HTTP 502"
+        )
+
+    def test_custom_message_does_not_leak_into_later_exceptions(self):
+        MongoDBAtlasIdentityError(message="custom detail")
+
+        assert (
+            MongoDBAtlasIdentityError().message == "MongoDB Atlas identity setup failed"
+        )
+
     def test_test_connection_success(self):
         """Test successful connection test"""
         with (

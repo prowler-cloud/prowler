@@ -2,7 +2,7 @@
 # Unit tests for setup.sh
 # Run: ./skills/setup_test.sh
 #
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 # Reason: Test functions are discovered and called dynamically via declare -F
 
 set -e
@@ -190,14 +190,16 @@ test_symlink_gemini_created() {
 
 test_symlink_codex_created() {
     run_setup --codex > /dev/null
-    assert_symlink_exists "$TEST_DIR/.codex/skills" "Codex skills symlink should exist"
+    assert_symlink_exists "$TEST_DIR/.codex/skills" "Codex skills symlink should exist" && \
+    assert_symlink_exists "$TEST_DIR/.agents/skills" "Codex .agents/skills symlink should exist"
 }
 
 test_symlink_not_created_without_flag() {
     run_setup --copilot > /dev/null
     assert_symlink_not_exists "$TEST_DIR/.claude/skills" "Claude symlink should not exist" && \
     assert_symlink_not_exists "$TEST_DIR/.gemini/skills" "Gemini symlink should not exist" && \
-    assert_symlink_not_exists "$TEST_DIR/.codex/skills" "Codex symlink should not exist"
+    assert_symlink_not_exists "$TEST_DIR/.codex/skills" "Codex symlink should not exist" && \
+    assert_symlink_not_exists "$TEST_DIR/.agents/skills" "Codex .agents symlink should not exist"
 }
 
 # =============================================================================

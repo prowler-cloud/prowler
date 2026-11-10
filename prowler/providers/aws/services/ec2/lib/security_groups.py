@@ -35,7 +35,7 @@ def check_security_group(
 
     @param ports: List of ports to check. If not provided all ports will be checked unless all_ports is False. (Default: None)
 
-    @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
+    @param any_address: If True, only 0.0.0.0/0 or "::/0", or CIDRs in the same ingress rule that together cover every address of one IP version, will be public and do not search for public addresses. (Default: False)
 
     @param all_ports: If True, empty ports list will be treated as all ports. (Default: False)
 
@@ -44,8 +44,14 @@ def check_security_group(
     if ports is None:
         ports = []
 
+    # With any_address, CIDRs that together cover every address in one rule, such as
+    # 0.0.0.0/1 and 128.0.0.0/1, are as open as 0.0.0.0/0.
+    rule_covers_all_addresses = any_address and _covers_all_addresses(ingress_rule)
+
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
+        if rule_covers_all_addresses:
+            return True
         for ip_ingress_rule in ingress_rule["IpRanges"]:
             if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 return True
@@ -79,7 +85,7 @@ def check_security_group(
 
         for ip_ingress_rule in all_ingress_rules:
             # We only check public CIDRs
-            if _is_cidr_public(
+            if rule_covers_all_addresses or _is_cidr_public(
                 ip_ingress_rule.get("CidrIp", ip_ingress_rule.get("CidrIpv6")),
                 any_address,
             ):
@@ -99,6 +105,27 @@ def check_security_group(
 
                 return all_ports_open or empty_ports_same_as_all_ports_open
 
+    return False
+
+
+def _covers_all_addresses(ingress_rule: Any) -> bool:
+    """
+    Check if the CIDRs of one IP version in the ingress rule together cover the whole address space
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+    """
+    for key, cidr_key in (("IpRanges", "CidrIp"), ("Ipv6Ranges", "CidrIpv6")):
+        try:
+            networks = [
+                ipaddress.ip_network(ip_range[cidr_key], strict=False)
+                for ip_range in ingress_rule.get(key, [])
+            ]
+        except ValueError:
+            continue
+        if any(
+            network.prefixlen == 0 for network in ipaddress.collapse_addresses(networks)
+        ):
+            return True
     return False
 
 

@@ -4,6 +4,66 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.48.0] (Prowler v5.48.0)
+
+### 🚀 Added
+
+- Findings page shows the findings of a running first scan as they arrive, plus a "View Early Findings" action on executing scans [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔄 Changed
+
+- NATO D32 compliance icon now uses the official NATO/OTAN logo [(#13278)](https://github.com/prowler-cloud/prowler/pull/13278)
+
+### 🐞 Fixed
+
+- Cross-provider compliance view shows the per-provider breakdown for frameworks without a dedicated UI mapper instead of "No per-provider breakdown is available" [(#13261)](https://github.com/prowler-cloud/prowler/pull/13261)
+
+### 🔐 Security
+
+- `zod` to 4.6.6, `js-yaml` to 4.3.2 and `vitest` to 4.1.11, plus transitive `hono`, `vite`, `brace-expansion`, `fast-uri`, `ip-address`, `body-parser`, `qs` and `baseline-browser-mapping` to patched versions, resolving 33 npm audit advisories (9 high, 21 moderate, 3 low) [(#13249)](https://github.com/prowler-cloud/prowler/pull/13249)
+
+---
+
+## [1.47.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- Icon for the NATO D32 compliance framework on the compliance cards [(#13174)](https://github.com/prowler-cloud/prowler/pull/13174)
+
+### 🔄 Changed
+
+- Invitations page uses `Status` instead of `State` in the filter, table column and invitation details, and the Invitations and Roles filters show capitalized options [(#13175)](https://github.com/prowler-cloud/prowler/pull/13175)
+- Product tours and the guided onboarding sequence are no longer shown; new tenants still land on the add-provider wizard [(#13176)](https://github.com/prowler-cloud/prowler/pull/13176)
+- Add provider wizard connects every provider in one step, saving the account and credentials and testing the connection together, with teammate invitations for every provider and Lighthouse AI help beside the steps [(#13181)](https://github.com/prowler-cloud/prowler/pull/13181)
+
+### 🐞 Fixed
+
+- User avatar requesting the current page as an image on every load, which rendered each page twice [(#13177)](https://github.com/prowler-cloud/prowler/pull/13177)
+- Lighthouse AI reply blanking out for a frame when the response finishes streaming, which made the whole text blink and reappear [(#13180)](https://github.com/prowler-cloud/prowler/pull/13180)
+- Compliance cross-provider tab no longer blanks out when a single catalog page or framework fails to load; it shows the frameworks that loaded with a warning instead [(#13183)](https://github.com/prowler-cloud/prowler/pull/13183)
+
+---
+
+## [1.46.0] (Prowler v5.46.0)
+
+### 🚀 Added
+
+- Issues page and overview cards for Cloud deployments, with verdict filters, accessible issue details, and scoped finding evidence [(#13068)](https://github.com/prowler-cloud/prowler/pull/13068)
+- Outlined error badge variant with a visible border on error-colored surfaces [(#13111)](https://github.com/prowler-cloud/prowler/pull/13111)
+
+### 🔄 Changed
+
+- "Launch an initial scan now" is ticked by default on the provider and organization setup launch steps, so saving a schedule also runs a first scan unless the box is unticked [(#13104)](https://github.com/prowler-cloud/prowler/pull/13104)
+- SAML SSO integration card on the profile page is shown to roles with the Manage Account permission, matching the API requirement [(#13121)](https://github.com/prowler-cloud/prowler/pull/13121)
+- Default `php_latest_version` in the scan configuration template raised from `8.2` to `8.5` [(#13128)](https://github.com/prowler-cloud/prowler/pull/13128)
+
+### 🔐 Security
+
+- Node.js from 24.18.1 to 24.22.1 LTS in the UI container image and `.nvmrc`, patching the eight CVEs of the October 2026 security release that affect the 24.x line, including the Brotli decoder remote code execution (CVE-2026-111497); the base image moves to Alpine 3.24, so the targeted `libcrypto3` / `libssl3` upgrade is no longer needed [(#13126)](https://github.com/prowler-cloud/prowler/pull/13126)
+- Next.js from 16.3.8 to 16.4.1, `@sentry/nextjs` from 10.65.0 to 10.75.2 and the transitive DOMPurify pin to 3.4.17, closing four critical advisories: two unauthenticated remote code executions in Next.js (Image Optimization with SVG files, GHSA-2464-fhr4-w9xw; `use cache` functions returning typed arrays, GHSA-673q-mjm6-r5xr), the Sentry middleware bypass through the tunnel route (GHSA-mchm-gjx6-7h55) and the DOMPurify `SAFE_FOR_TEMPLATES` bypass (GHSA-cg2g-xh64-v4q7) [(#13135)](https://github.com/prowler-cloud/prowler/pull/13135)
+
+---
+
 ## [1.45.0] (Prowler v5.45.0)
 
 ### 🚀 Added
