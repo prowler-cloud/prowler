@@ -1,3 +1,4 @@
+from collections import deque
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -662,8 +663,9 @@ class BedrockAgent(AWSService):
                 return
             nodes = []
             # Loop nodes carry their own nested definition, so walk those too.
-            pending_nodes = list(definition.get("nodes", []))
-            for node in pending_nodes:
+            pending_nodes = deque(definition.get("nodes", []))
+            while pending_nodes:
+                node = pending_nodes.popleft()
                 if node.get("type") == "Loop":
                     loop = (node.get("configuration") or {}).get("loop") or {}
                     loop_definition = loop.get("definition") or {}
