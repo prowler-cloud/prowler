@@ -1,3 +1,4 @@
+import { Radar } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -51,6 +52,7 @@ describe("getNavigationConfig", () => {
       "Lighthouse AI",
     ]);
     expect(sections[1]?.items.map((item) => item.label)).toEqual([
+      "Realtime",
       "Compliance",
       "Findings",
       "Attack Paths",
@@ -122,19 +124,29 @@ describe("getNavigationConfig", () => {
     expect(labels).not.toContain("Exploitability issues");
   });
 
-  it("shows Realtime to every Cloud user and never in Local Server", () => {
+  it("links Realtime in Cloud and offers it as a Cloud upgrade in Local Server", () => {
     // Given
-    const labels = () =>
+    const realtime = () =>
       getNavigationConfig({ pathname: "/realtime" })
         .flatMap((section) => section.items)
-        .map((item) => item.label);
+        .find((item) => item.label === "Realtime");
 
     // When / Then
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    expect(labels()).toContain("Realtime");
+    expect(realtime()).toEqual(
+      expect.objectContaining({
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/realtime",
+      }),
+    );
 
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    expect(labels()).not.toContain("Realtime");
+    expect(realtime()).toEqual({
+      kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+      label: "Realtime",
+      icon: Radar,
+      cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REALTIME,
+    });
   });
 
   it("has one Realtime entry, active on the dashboard and its configuration", () => {

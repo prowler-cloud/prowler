@@ -52,6 +52,10 @@ export interface NavigationCloudUpgrade extends NavigationLabel {
   cloudUpgradeFeature: CloudUpgradeFeature;
 }
 
+export interface NavigationTopLevelCloudUpgrade extends NavigationCloudUpgrade {
+  icon: IconComponent;
+}
+
 export type NavigationChild = NavigationChildLink | NavigationCloudUpgrade;
 
 export interface NavigationCollapsible extends NavigationLabel {
@@ -61,7 +65,10 @@ export interface NavigationCollapsible extends NavigationLabel {
   defaultOpen: boolean;
 }
 
-export type NavigationItem = NavigationLink | NavigationCollapsible;
+export type NavigationItem =
+  | NavigationLink
+  | NavigationCollapsible
+  | NavigationTopLevelCloudUpgrade;
 
 export interface NavigationSection {
   label?: string;
