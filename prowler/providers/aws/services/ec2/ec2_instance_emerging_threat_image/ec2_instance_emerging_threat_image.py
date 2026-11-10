@@ -10,16 +10,28 @@ from prowler.lib.threats import (
 )
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
+from prowler.providers.aws.services.inspector2.inspector2_client import (
+    inspector2_client,
+)
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
+
+#: Inspector coverage status of an instance it is actively scanning.
+INSPECTOR_SCANNING = "ACTIVE"
 
 
 class ec2_instance_emerging_threat_image(Check):
     """EC2 instances do not run an image that a known emerging threat affects.
 
-    Threats are threat signatures (``prowler/lib/threats``): the built-in ones
-    plus any the scan configuration supplies under ``threat_signatures``. The
-    matched threats travel in the finding's raw payload so Prowler Cloud can
-    turn them into Exploitability issues without reading prose.
+    Threats are threat signatures (``prowler/lib/threats``) the scan
+    configuration supplies under ``threat_signatures``. The matched threats
+    travel in the finding's raw payload so Prowler Cloud can turn them into
+    Exploitability issues without reading prose.
+
+    The image proves where a host started, not what it runs now. Where Amazon
+    Inspector reads the installed packages, its findings decide: an active
+    finding for the threat's CVE on the instance confirms the match, and an
+    instance Inspector actively scans with no such finding is reported as not
+    affected, so a host patched in place clears.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -27,6 +39,7 @@ class ec2_instance_emerging_threat_image(Check):
         signatures = load_signatures(ec2_client.audit_config)
         if not signatures:
             return findings
+        reported, scanned = self._inspector_evidence()
 
         for instance in ec2_client.instances:
             if instance.state == "terminated":
@@ -70,9 +83,17 @@ class ec2_instance_emerging_threat_image(Check):
             # A scan filtered to the instance does not load its security
             # groups; then exposure is unknown, not closed.
             groups_known = self._security_groups_loaded(instance)
-            matches = []
+            matches, cleared = [], []
+            on_host = reported.get(instance.id, set())
             for signature, matched_name, provenance in hits:
+                confirmed = sorted(set(signature.cves) & on_host)
+                if not confirmed and signature.cves and instance.id in scanned:
+                    cleared.append(signature)
+                    continue
                 observed = {}
+                if confirmed:
+                    observed["confirmed_by"] = "inspector2"
+                    observed["confirmed_cves"] = confirmed
                 if signature.exposure:
                     observed["public_route"] = public_route
                     if not groups_known:
@@ -93,17 +114,34 @@ class ec2_instance_emerging_threat_image(Check):
                     )
                 )
 
+            if not matches:
+                ids = ", ".join(c for s in cleared for c in s.cves)
+                report.status = "PASS"
+                report.status_extended = (
+                    f"EC2 Instance {instance.id} was launched from AMI {image.id} "
+                    f"({image.name}), which carries {', '.join(s.title for s in cleared)}, "
+                    f"but Amazon Inspector actively scans it and reports no {ids}: "
+                    "the installed packages are not affected."
+                )
+                findings.append(report)
+                continue
+
             report.status = "FAIL"
             report.check_metadata.Severity = Severity(worst_severity(matches))
             report.raw = {
                 "threats": [match.model_dump(mode="json") for match in matches]
             }
+            confirmed = sorted({c for m in matches for c in m.confirmed_cves})
+            evidence = (
+                f"Amazon Inspector reports {', '.join(confirmed)} on the instance."
+                if confirmed and all(m.confirmed_by for m in matches)
+                else "Prowler sees the launch image, not packages updated since: "
+                "mute this finding if the host was patched in place."
+            )
             report.status_extended = (
                 f"EC2 Instance {instance.id} was launched from AMI {image.id} "
                 f"({image.name}), which ships a build affected by "
-                f"{describe_matches(matches)}. Prowler sees the launch image, not "
-                "packages updated since: mute this finding if the host was patched "
-                "in place."
+                f"{describe_matches(matches)}. {evidence}"
             )
             findings.append(report)
         return findings
@@ -115,6 +153,30 @@ class ec2_instance_emerging_threat_image(Check):
         return (
             bool(instance.security_groups) and set(instance.security_groups) <= loaded
         )
+
+    @staticmethod
+    def _inspector_evidence() -> tuple[dict, set]:
+        """What Amazon Inspector knows about the instances' installed packages.
+
+        Returns:
+            ``({instance id: CVE ids with an active finding}, {ids of instances
+            Inspector actively scans})``, both empty when Inspector is off.
+        """
+        reported, scanned = {}, set()
+        for inspector in inspector2_client.inspectors:
+            for finding in inspector.findings or []:
+                if finding.vulnerability_id:
+                    for resource_id in finding.resource_ids:
+                        reported.setdefault(resource_id, set()).add(
+                            finding.vulnerability_id
+                        )
+            for covered in inspector.coverage or []:
+                if (
+                    covered.resource_type == "AWS_EC2_INSTANCE"
+                    and covered.scan_status_code == INSPECTOR_SCANNING
+                ):
+                    scanned.add(covered.id)
+        return reported, scanned
 
     @staticmethod
     def _open_port(instance, exposure) -> Optional[int]:

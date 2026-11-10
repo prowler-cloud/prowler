@@ -62,6 +62,11 @@ Rules follow these principles:
 
 ## Limits
 
-Signatures match the image an instance was created from. A host patched in place keeps its original image, so its finding stays failed until the host is replaced or the finding is muted with a reason. Threats in managed services, container images, or packages installed after launch are outside what image signatures can detect.
+Signatures match the image an instance was created from, which proves where the host started, not what it runs now:
+
+- **AWS:** where Amazon Inspector actively scans the instance, its findings decide. An active Inspector finding for the threat's CVE confirms the match, and an instance Inspector scans with no such finding passes, so a host patched in place clears.
+- **Elsewhere** (Azure, Google Cloud, and operating systems Inspector does not scan): a host patched in place keeps its original image, so its finding stays failed until the host is replaced or the finding is muted with a reason.
+
+Threats in managed services, container images, or packages installed after launch are outside what image signatures can detect.
 
 When the image of an instance cannot be looked up, for example because the scanning identity lacks `ec2:DescribeImages`, `compute.disks.list` or `compute.regionDisks.list`, the finding is MANUAL. When the image no longer exists or the instance does not report one, the finding passes and says so.

@@ -27,7 +27,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Contain first by restricting the exposed port, then **patch or replace** hosts built from affected AMIs. Keep launch templates on current images, reach instances through **SSM Session Manager** rather than open management ports, and treat a host as compromised when unauthorized access cannot be ruled out.",
+      "Text": "Contain first by restricting the exposed port, then **replace** hosts built from affected AMIs, or patch in place where **Amazon Inspector** scans the host: its findings confirm or clear the match. Elsewhere, mute the finding with a reason after patching. Keep launch templates on current images, reach instances through **SSM Session Manager** rather than open management ports, and treat a host as compromised when unauthorized access cannot be ruled out.",
       "Url": "https://hub.prowler.com/check/ec2_instance_emerging_threat_image"
     }
   },

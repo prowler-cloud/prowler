@@ -1,6 +1,8 @@
+from types import SimpleNamespace
 from unittest import mock
 
 import botocore
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -77,6 +79,41 @@ DEMO_SIGNATURE = {
 }
 
 
+NO_INSPECTOR = SimpleNamespace(inspectors=[])
+
+
+def inspector_with(cves=(), scanned=False, status="ACTIVE"):
+    """An Inspector client stand-in: active findings for ``cves`` on the
+    instance, and coverage of the instance with ``status`` when ``scanned``."""
+
+    def build(instance_id):
+        return SimpleNamespace(
+            inspectors=[
+                SimpleNamespace(
+                    findings=[
+                        SimpleNamespace(
+                            vulnerability_id=cve, resource_ids=[instance_id]
+                        )
+                        for cve in cves
+                    ],
+                    coverage=(
+                        [
+                            SimpleNamespace(
+                                id=instance_id,
+                                resource_type="AWS_EC2_INSTANCE",
+                                scan_status_code=status,
+                            )
+                        ]
+                        if scanned
+                        else []
+                    ),
+                )
+            ]
+        )
+
+    return build
+
+
 def _public_subnet(ec2) -> tuple:
     """``(vpc id, subnet id)`` of a subnet whose default route is an internet gateway."""
     vpc_id = ec2.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
@@ -101,11 +138,13 @@ def _run(
     public=False,
     only_instance=False,
     terminate=False,
+    inspector=None,
 ):
     """Create one instance with moto and run the check against it.
 
     ``public`` puts it on a public IP in a public subnet; ``only_instance``
-    filters the scan to the instance's ARN, as ``--resource-arn`` does.
+    filters the scan to the instance's ARN, as ``--resource-arn`` does;
+    ``inspector`` builds the Amazon Inspector stand-in for the instance.
     """
     ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
     vpc_id, subnet_id = _public_subnet(ec2) if public else (None, None)
@@ -151,6 +190,10 @@ def _run(
         ),
         mock.patch(f"{CHECK}.ec2_client", new=EC2(aws_provider)),
         mock.patch(f"{CHECK}.vpc_client", new=VPC(aws_provider)),
+        mock.patch(
+            f"{CHECK}.inspector2_client",
+            new=inspector(instance_id) if inspector else NO_INSPECTOR,
+        ),
     ):
         from prowler.providers.aws.services.ec2.ec2_instance_emerging_threat_image.ec2_instance_emerging_threat_image import (
             ec2_instance_emerging_threat_image,
@@ -173,6 +216,7 @@ class Test_ec2_instance_emerging_threat_image:
             ),
             mock.patch(f"{CHECK}.ec2_client", new=EC2(aws_provider)),
             mock.patch(f"{CHECK}.vpc_client", new=VPC(aws_provider)),
+            mock.patch(f"{CHECK}.inspector2_client", new=NO_INSPECTOR),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_emerging_threat_image.ec2_instance_emerging_threat_image import (
                 ec2_instance_emerging_threat_image,
@@ -195,6 +239,7 @@ class Test_ec2_instance_emerging_threat_image:
             ),
             mock.patch(f"{CHECK}.ec2_client", new=EC2(aws_provider)),
             mock.patch(f"{CHECK}.vpc_client", new=VPC(aws_provider)),
+            mock.patch(f"{CHECK}.inspector2_client", new=NO_INSPECTOR),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_emerging_threat_image.ec2_instance_emerging_threat_image import (
                 ec2_instance_emerging_threat_image,
@@ -414,3 +459,50 @@ class Test_ec2_instance_emerging_threat_image:
 
         assert result[0].check_metadata.Severity is Severity.critical
         assert result[0].check_metadata.Severity.value == "critical"
+
+    @mock_aws
+    def test_inspector_reporting_the_cve_confirms_the_match(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=_describe_images_returning(DEMOOS_TINY),
+        ):
+            _, result = _run(
+                open_ssh=True, inspector=inspector_with(["CVE-2026-0101"], scanned=True)
+            )
+
+        assert result[0].status == "FAIL"
+        [threat] = result[0].raw["threats"]
+        assert threat["confirmed_by"] == "inspector2"
+        assert threat["confirmed_cves"] == ["CVE-2026-0101"]
+
+    @mock_aws
+    def test_a_host_patched_in_place_clears_when_inspector_scans_it(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=_describe_images_returning(DEMOOS_TINY),
+        ):
+            _, result = _run(
+                open_ssh=True, inspector=inspector_with(["CVE-2026-9999"], scanned=True)
+            )
+
+        assert result[0].status == "PASS"
+        assert "Amazon Inspector actively scans it" in result[0].status_extended
+        assert "CVE-2026-0101" in result[0].status_extended
+        assert result[0].raw == {}
+
+    @pytest.mark.parametrize("status", ["INACTIVE"])
+    @mock_aws
+    def test_an_instance_inspector_cannot_scan_stays_unconfirmed(self, status):
+        # Inspector reports an unsupported OS (Alpine on EC2, appliances) as
+        # INACTIVE coverage: no evidence either way, so the image match stands.
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=_describe_images_returning(DEMOOS_TINY),
+        ):
+            _, result = _run(
+                open_ssh=True, inspector=inspector_with(scanned=True, status=status)
+            )
+
+        assert result[0].status == "FAIL"
+        [threat] = result[0].raw["threats"]
+        assert threat["confirmed_by"] is None

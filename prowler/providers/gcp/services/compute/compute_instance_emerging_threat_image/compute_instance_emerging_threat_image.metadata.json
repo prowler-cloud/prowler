@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Contain first by restricting the exposed port, then **patch or replace** instances booted from affected images. Keep instance templates on current images, reach instances through **IAP TCP forwarding** or OS Login rather than open management ports, and treat an instance as compromised when unauthorized access cannot be ruled out.",
+      "Text": "Contain first by restricting the exposed port, then **replace** instances booted from affected images. The check reads the boot image, so after patching in place, mute the finding with a reason. Keep instance templates on current images, reach instances through **IAP TCP forwarding** or OS Login rather than open management ports, and treat an instance as compromised when unauthorized access cannot be ruled out.",
       "Url": "https://hub.prowler.com/check/compute_instance_emerging_threat_image"
     }
   },

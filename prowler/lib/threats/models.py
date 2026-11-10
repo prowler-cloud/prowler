@@ -298,6 +298,11 @@ class ThreatMatch(BaseModel):
     exposed_to_internet: Optional[bool] = None
     public_route: Optional[bool] = None
     mitigations_observed: list[str] = Field(default_factory=list)
+    #: The vulnerability scanner that reports the threat's CVEs on this very
+    #: host (for example ``inspector2``), and which of them it reports. An image
+    #: match alone proves the image, not the installed build; this proves both.
+    confirmed_by: Optional[str] = None
+    confirmed_cves: list[str] = Field(default_factory=list)
 
 
 def worst_severity(matches: list[ThreatMatch]) -> str:

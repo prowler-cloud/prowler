@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Contain first by restricting the exposed port, then **patch or replace** VMs built from affected images. Keep galleries and templates on current images, reach VMs through **Azure Bastion** or JIT access rather than open management ports, and treat a VM as compromised when unauthorized access cannot be ruled out.",
+      "Text": "Contain first by restricting the exposed port, then **replace** VMs built from affected images. The check reads the launch image, so after patching in place, mute the finding with a reason. Keep galleries and templates on current images, reach VMs through **Azure Bastion** or JIT access rather than open management ports, and treat a VM as compromised when unauthorized access cannot be ruled out.",
       "Url": "https://hub.prowler.com/check/vm_emerging_threat_image"
     }
   },
