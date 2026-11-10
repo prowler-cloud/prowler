@@ -148,6 +148,12 @@ New roles have no provider visibility by default. Assign at least one Provider G
 
 Integrations follow the visibility of the providers attached to them: a role can see an integration when it can access at least one of its providers, and only the providers visible to that role are listed on the integration. Editing or deleting an integration attached to providers outside the visibility of the role is not allowed. Integrations that are not attached to any provider, such as Jira, are tenant-wide and remain available to every role with the **Manage Integrations** permission.
 
+#### Task Visibility and Revocation
+
+<VersionBadge version="5.44.0" />
+
+Background tasks, such as provider deletions, connection checks and scans, follow the visibility of the provider they belong to: a role can see a task when it can access its provider. Tasks that carry no provider reference are treated as tenant-wide and are visible to every role. Revoking a pending task requires the same permission as the operation that queued it, for example **Manage Scans** for a scan. Provider deletions cannot be revoked.
+
 #### Creating a Provider Group
 
 Follow these steps to create a provider group in your account:
@@ -243,7 +249,7 @@ Assign administrative permissions by selecting from the following options:
 | Permission | Scope | Description |
 |------------|-------|-------------|
 | Invite and Manage Users | All | Invite new users and manage existing ones. |
-| Manage Account | All | Adjust account settings, delete users and read/manage users permissions. |
+| Manage Account | All | Adjust account settings, delete users, read/manage users permissions and configure SAML SSO. |
 | Manage Scans | All | Run and review scans, and manage [Scan Configuration](/user-guide/tutorials/prowler-app-scan-configuration) settings. |
 | Manage Providers | All | Add or modify connected providers, and attach or detach providers from a [Scan Configuration](/user-guide/tutorials/prowler-app-scan-configuration) (in addition to Manage Scans). |
 | Manage Integrations | All | Add or modify the Prowler Integrations. |
@@ -261,7 +267,7 @@ To grant all administrative permissions, select the **Grant all admin permission
 
 The following permissions are available exclusively in **Prowler Cloud**:
 
-**Manage Ingestions:** Submit and manage findings ingestion jobs via the API. Required to upload OCSF scan results using the `--push-to-cloud` CLI flag or the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-import-findings) for details.
+**Manage Ingestions:** Submit and manage findings ingestion jobs. Required to upload OCSF scan results from the Scans page, with the `--push-to-cloud` CLI flag or through the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-import-findings) for details.
 
 **Manage Billing:** Access and manage billing settings, subscription plans, and payment methods.
 

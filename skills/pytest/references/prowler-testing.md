@@ -13,4 +13,4 @@ The Prowler documentation covers patterns NOT in the generic pytest skill:
 - `@mock_aws` decorator usage with moto
 - `mock_make_api_call` pattern
 - Service dependency table for CI optimization
-- Provider-specific mocking (AWS uses moto, Azure/GCP use MagicMock)
+- Provider-specific mocking (AWS: moto, plus botocore `_make_api_call` patching or MagicMock when moto lacks the API; other providers: MagicMock)

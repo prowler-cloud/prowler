@@ -36,6 +36,7 @@ interface ConfigurationAttributes {
 
 interface SupportedProviderAttributes {
   name: string;
+  credentials_optional?: boolean;
 }
 
 interface SupportedModelAttributes {
@@ -136,6 +137,7 @@ export function mapLighthouseV2Provider(
   return {
     id: normalizeLighthouseV2ProviderType(resource.id),
     name: resource.attributes.name,
+    credentialsOptional: resource.attributes.credentials_optional === true,
   };
 }
 

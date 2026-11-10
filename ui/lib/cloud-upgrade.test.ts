@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  PAID_PLAN_UPGRADE_FEATURE,
+} from "@/types/cloud-upgrade";
 
 import {
   CLOUD_UPGRADE_CONTENT,
   CLOUD_UPGRADE_FOOTER_NOTE,
   getCloudUpgradeCompareUrl,
   getCloudUpgradePrimaryUrl,
+  getPaidPlanUpgradeBillingHref,
+  getPaidPlanUpgradeCompareUrl,
+  isCloudUpgradeFeature,
+  isPaidPlanUpgradeFeature,
+  PAID_PLAN_UPGRADE_CONTENT,
 } from "./cloud-upgrade";
 
 describe("cloud upgrade content", () => {
@@ -20,6 +28,8 @@ describe("cloud upgrade content", () => {
     expect(titles).toEqual([
       "Keep Every Provider Checked Automatically",
       "Turn Findings into Alerts",
+      "Export Findings to Amazon S3",
+      "Automate Prowler with API Keys",
       "Add Your Entire AWS Organization",
       "Add Your Entire Azure Management Group",
       "Add Your Entire GCP Organization",
@@ -68,6 +78,8 @@ describe("cloud upgrade URLs", () => {
   it.each([
     [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
     [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
+    [CLOUD_UPGRADE_FEATURE.AMAZON_S3, "amazon-s3"],
+    [CLOUD_UPGRADE_FEATURE.API_KEYS, "api-keys"],
     [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
     [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS, "azure-organization"],
     [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, "cli-import"],
@@ -88,5 +100,38 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url.searchParams.get("utm_content")).toBe(contentSlug);
+  });
+});
+
+describe("paid plan upgrade content", () => {
+  it("sends the findings preview upgrade to billing with its feature", () => {
+    // Given / When / Then
+    expect(
+      isPaidPlanUpgradeFeature(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW),
+    ).toBe(true);
+    expect(
+      getPaidPlanUpgradeBillingHref(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW),
+    ).toBe("/billing?feature=findings_preview");
+    expect(
+      PAID_PLAN_UPGRADE_CONTENT[PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]
+        .title,
+    ).toBe("See Every Finding in Your Account");
+  });
+
+  it("sends the Amazon S3 upgrade to billing with its own feature", () => {
+    // Given
+    const feature = PAID_PLAN_UPGRADE_FEATURE.S3_INTEGRATION;
+
+    // When / Then
+    expect(isPaidPlanUpgradeFeature(feature)).toBe(true);
+    expect(isCloudUpgradeFeature(feature)).toBe(false);
+    expect(getPaidPlanUpgradeBillingHref(feature)).toBe(
+      "/billing?feature=s3_integration",
+    );
+    expect(
+      new URL(getPaidPlanUpgradeCompareUrl(feature)).searchParams.get(
+        "utm_content",
+      ),
+    ).toBe("s3-integration");
   });
 });

@@ -126,20 +126,20 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/user-guide/compliance/tutorials/compliance) | [Categories](https://docs.prowler.com/user-guide/cli/tutorials/misc#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 639 | 86 | 47 | 19 | Official | UI, API, CLI |
-| Azure | 191 | 22 | 21 | 16 | Official | UI, API, CLI |
-| GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
-| Kubernetes | 92 | 7 | 8 | 11 | Official | UI, API, CLI |
+| AWS | 662 | 86 | 50 | 19 | Official | UI, API, CLI |
+| Azure | 191 | 22 | 25 | 16 | Official | UI, API, CLI |
+| GCP | 110 | 20 | 22 | 12 | Official | UI, API, CLI |
+| Kubernetes | 92 | 7 | 11 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
-| M365 | 143 | 10 | 6 | 10 | Official | UI, API, CLI |
+| M365 | 144 | 10 | 9 | 10 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
+| Cloudflare | 43 | 5 | 3 | 9 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
 | MongoDB Atlas | 10 | 3 | 1 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | Image | N/A | N/A | N/A | N/A | Official | UI, API, CLI |
-| Google Workspace | 65 | 11 | 3 | 6 | Official | UI, API, CLI |
+| Google Workspace | 65 | 11 | 4 | 6 | Official | UI, API, CLI |
 | OpenStack | 34 | 5 | 1 | 9 | Official | UI, API, CLI |
 | Vercel | 26 | 6 | 1 | 8 | Official | UI, API, CLI |
 | Okta | 29 | 8 | 2 | 2 | Official | UI, API, CLI |
@@ -285,7 +285,7 @@ Some pre-commit hooks require tools installed on your system:
 
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.14:
 
 ```console
 pip install prowler
@@ -317,7 +317,7 @@ The container images are available here:
 
 ### From GitHub
 
-Python >=3.10, <3.13 is required with [uv](https://docs.astral.sh/uv/):
+Python >=3.10, <3.14 is required with [uv](https://docs.astral.sh/uv/):
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler

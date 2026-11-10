@@ -1,23 +1,18 @@
 import {
-  ORG_SETUP_PHASE,
-  ORG_WIZARD_STEP,
-  OrgSetupPhase,
-  OrgWizardStep,
-} from "@/types/organizations";
-import {
   PROVIDER_WIZARD_MODE,
   ProviderWizardMode,
 } from "@/types/provider-wizard";
 
-export function getOrganizationsStepperOffset(
-  currentStep: OrgWizardStep,
-  setupPhase: OrgSetupPhase,
-) {
-  if (currentStep === ORG_WIZARD_STEP.SETUP) {
-    return setupPhase === ORG_SETUP_PHASE.ACCESS ? 1 : 0;
-  }
+import {
+  PROVIDER_WIZARD_STEPS,
+  UPDATE_PROVIDER_WIZARD_STEPS,
+} from "./wizard-stepper";
 
-  return 1;
+/** Stepper rows for the provider flow: updating credentials is a single step. */
+export function getProviderWizardSteps(mode: ProviderWizardMode) {
+  return mode === PROVIDER_WIZARD_MODE.UPDATE
+    ? UPDATE_PROVIDER_WIZARD_STEPS
+    : PROVIDER_WIZARD_STEPS;
 }
 
 export function getProviderWizardModalTitle(mode: ProviderWizardMode) {

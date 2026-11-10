@@ -11,6 +11,7 @@ from prowler.lib.check.compliance_config_eval import (
 )
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
+from prowler.lib.outputs.utils import sanitize_csv_value
 from prowler.lib.utils.utils import open_file
 
 if TYPE_CHECKING:
@@ -318,7 +319,12 @@ class UniversalComplianceOutput:
                 if self._file_descriptor.tell() == 0:
                     csv_writer.writeheader()
                 for row in self._data:
-                    csv_writer.writerow({k.upper(): v for k, v in row.dict().items()})
+                    csv_writer.writerow(
+                        {
+                            k.upper(): sanitize_csv_value(v)
+                            for k, v in row.dict().items()
+                        }
+                    )
                 if self.close_file or self._from_cli:
                     self._file_descriptor.close()
         except Exception as error:

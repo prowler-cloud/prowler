@@ -36,7 +36,7 @@ class AzureProviderConfig(ProviderConfigBase):
     # --- App Service ----------------------------------------------------
     php_latest_version: Annotated[
         Optional[str], AfterValidator(_validate_dotted_version)
-    ] = Field(default=None, description='PHP minimum acceptable version, e.g. "8.2".')
+    ] = Field(default=None, description='PHP minimum acceptable version, e.g. "8.5".')
     python_latest_version: Annotated[
         Optional[str], AfterValidator(_validate_dotted_version)
     ] = Field(

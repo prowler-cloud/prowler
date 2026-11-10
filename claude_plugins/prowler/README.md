@@ -1,8 +1,16 @@
-# Prowler for Claude Code
+# Prowler Cloud
 
-End-to-end cloud security and compliance from inside [Claude Code](https://www.claude.com/product/claude-code), powered by the [Prowler MCP server](https://docs.prowler.com/projects/prowler-mcp/). The plugin lets Claude walk a Prowler Cloud-connected account through a compliance assessment and remediate findings until the chosen security or industry framework is compliant.
+Cloud security and compliance in Claude, powered by the [Prowler MCP server](https://docs.prowler.com/projects/prowler-mcp/). Claude reads your Prowler Cloud providers, scans, findings and compliance results, returns Prowler's remediation guidance for each failed check, and manages triage and mute state. The connector never changes your cloud resources: any fix is applied with your own tools (Terraform, a cloud CLI or the console), and only after you approve it.
 
 > **Preview**: this plugin is under active development. Report issues at <https://github.com/prowler-cloud/prowler/issues> or join the [Slack community](https://goto.prowler.com/slack).
+
+## What it does
+
+Prowler Cloud connects Claude to your cloud security posture. The bundled `framework-compliance-triage` skill checks that a provider account is connected to Prowler Cloud, reads the latest scan and compliance report for the framework you pick (CIS, PCI-DSS, NIST, Prowler ThreatScore and more), and then walks you through fixing each failed requirement. Every change is proposed first and applied only after you approve it.
+
+## Supported providers
+
+Any provider Prowler Cloud supports, including AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, Google Workspace, Cloudflare, Oracle Cloud, Alibaba Cloud, Huawei Cloud, OpenStack, Linode, Scaleway, STACKIT, E2E Networks, NHN Cloud, MongoDB Atlas, Okta, Vercel, VCF, Infrastructure as Code, container images and LLMs. The full, growing list lives in the [Prowler Registry](https://registry.prowler.com/providers). Prowler also supports custom providers, so you can add your own and use them with this plugin.
 
 ## Requirements
 
@@ -11,6 +19,8 @@ End-to-end cloud security and compliance from inside [Claude Code](https://www.c
 - A Prowler API key — create one at <https://cloud.prowler.com/profile>.
 
 ## Installation
+
+From the Claude directory, open **Customize > Plugins > Discover**, search for **Prowler Cloud** and select **Add**. In Claude Code you can also install it from the command line:
 
 Inside a Claude Code session:
 
@@ -58,6 +68,10 @@ You pick a **primary tool** (Terraform, gh / az / aws CLI, web console, or mixed
 
 Claude tracks progress in a markdown report under `.prowler/` at your project root — one file per framework × account. Open it any time to see exactly where the flow is. When all findings are addressed, Claude proposes a fresh Prowler scan to verify everything end-to-end.
 
+## Data and privacy
+
+The plugin stores nothing itself. It connects to the Prowler MCP server at `https://mcp.prowler.com/mcp`, authenticating with the API key you provide (kept in your system keychain and sent only as a bearer token to that server). Through it, Claude reads your Prowler Cloud providers, scans, findings, compliance results and resource metadata. It can also write to Prowler Cloud: trigger scans, set finding triage, create mute rules, replace the mutelist, and add or remove providers and integrations. Mutes and deletions are marked as destructive, so your client can ask before running them. It also queries the public Prowler Hub and Prowler documentation. The remediation report is written locally under `.prowler/` in your project. Nothing is sent to any other service. See the [Prowler privacy policy](https://prowler.com/privacy-policy) for how Prowler Cloud handles account data.
+
 ## Uninstalling
 
 ```text
@@ -77,4 +91,4 @@ The stored API key is removed automatically.
 
 ## License
 
-Apache 2.0 — see [LICENSE](../../LICENSE).
+Apache 2.0 — see [LICENSE](LICENSE).

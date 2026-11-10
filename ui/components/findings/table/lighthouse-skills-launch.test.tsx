@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
+import { LIGHTHOUSE_SKILL_SURFACE } from "@/types/lighthouse-skills";
 
 import {
+  LighthouseSkillsMenuItems,
   LighthouseSkillsRowButton,
   LighthouseSkillsSubmenu,
 } from "./lighthouse-skills-launch";
@@ -58,6 +60,24 @@ vi.mock("@/components/shadcn/dropdown", () => ({
 }));
 
 describe("Lighthouse skills launch controls", () => {
+  it("does not offer skills or prompts for a sample resource", () => {
+    render(
+      <LighthouseSkillsRowButton
+        findingItem={{
+          kind: "finding",
+          id: "sample-finding-1",
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Sample finding",
+          findingId: "sample-finding-1",
+        }}
+      />,
+    );
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(requestPanelSkillLaunchMock).not.toHaveBeenCalled();
+    expect(requestPanelChatMessageMock).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useSidePanelStore.setState({
@@ -184,5 +204,20 @@ describe("Lighthouse skills launch controls", () => {
     expect(
       screen.getByRole("textbox", { name: "Ask Lighthouse anything" }),
     ).toBeInTheDocument();
+  });
+
+  it("should divide a single-skill catalog from the prompt row only once", () => {
+    // Given / When: the issue catalog has just its Contextual Fix
+    render(
+      <LighthouseSkillsMenuItems
+        surface={LIGHTHOUSE_SKILL_SURFACE.ISSUE}
+        onLaunch={vi.fn()}
+        onSubmitPrompt={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Contextual Fix")).toBeInTheDocument();
+    expect(screen.getAllByRole("separator")).toHaveLength(1);
   });
 });

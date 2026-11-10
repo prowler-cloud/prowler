@@ -1498,9 +1498,7 @@
     {
       "Id": "4.1.4.1",
       "Description": "Ensure login challenges are enforced",
-      "Checks": [
-        "security_login_challenges_configured"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "4 Security",

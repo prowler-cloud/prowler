@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "r2_bucket_cors_no_wildcard_origin",
+  "CheckTitle": "Cloudflare R2 bucket CORS policy does not allow any origin",
+  "CheckType": [],
+  "ServiceName": "r2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "R2Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Cloudflare R2 bucket CORS policies** are assessed for rules that allow **any origin (`*`)**, which lets scripts on every website make cross-origin requests to the bucket.",
+  "Risk": "A **wildcard CORS origin** lets any website's JavaScript interact with the bucket from a victim's browser.\n- **Confidentiality**: responses to presigned or authenticated requests can be read by malicious sites\n- **Integrity**: rules allowing `PUT`, `POST` or `DELETE` let malicious pages modify objects using a victim's presigned URLs",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/r2/buckets/cors/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to R2 Object Storage and select the bucket\n3. Open Settings > CORS Policy and click Edit\n4. Replace `*` in AllowedOrigins with the exact origins that need access\n5. Save the policy",
+      "Terraform": "```hcl\nresource \"cloudflare_r2_bucket_cors\" \"example\" {\n  account_id  = \"<ACCOUNT_ID>\"\n  bucket_name = \"example-bucket\"\n  rules = [{\n    allowed = {\n      methods = [\"GET\"]\n      origins = [\"https://app.example.com\"] # Critical: explicit origins instead of *\n    }\n  }]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Allow **only trusted origins** in CORS policies.\n- List exact origins instead of `*`\n- Allow only the HTTP methods each origin needs\n- Never combine wildcard origins with write methods",
+      "Url": "https://hub.prowler.com/checks/cloudflare/r2_bucket_cors_no_wildcard_origin"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Buckets without a CORS policy pass. Buckets whose CORS configuration could not be retrieved are not reported."
+}

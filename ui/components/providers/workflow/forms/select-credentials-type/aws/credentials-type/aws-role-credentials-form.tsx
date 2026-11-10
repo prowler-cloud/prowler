@@ -3,20 +3,15 @@ import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
-import { Badge } from "@/components/shadcn/badge/badge";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn/select/select";
 import { Separator } from "@/components/shadcn/separator/separator";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { isCloud } from "@/lib/shared/env";
 import { AWSCredentialsRole } from "@/types";
 import { IntegrationType } from "@/types/integrations";
+
+import { AwsRoleCredentialsSource } from "./aws-role-credentials-source";
+import { AwsRoleOptionalFields } from "./aws-role-optional-fields";
 
 export const AWSRoleCredentialsForm = ({
   control,
@@ -80,81 +75,12 @@ export const AWSRoleCredentialsForm = ({
         )}
       </div>
 
-      <span className="text-text-neutral-tertiary text-xs font-bold">
-        Specify which AWS credentials to use
-      </span>
-
-      <div className="mb-4 flex flex-col gap-1.5">
-        <Select
-          value={credentialsType || defaultCredentialsType}
-          onValueChange={(value) => {
-            setValue(
-              ProviderCredentialFields.CREDENTIALS_TYPE,
-              value as "aws-sdk-default" | "access-secret-key",
-            );
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select credentials type" />
-          </SelectTrigger>
-          <SelectContent className="z-[60]">
-            <SelectItem value="aws-sdk-default">
-              <div className="flex w-full items-center justify-between">
-                <span>
-                  {isCloudEnv
-                    ? "Prowler Cloud will assume your IAM role"
-                    : "AWS SDK Default"}
-                </span>
-                {isCloudEnv && (
-                  <Badge variant="tag" className="ml-2">
-                    Recommended
-                  </Badge>
-                )}
-              </div>
-            </SelectItem>
-            <SelectItem value="access-secret-key">
-              <div className="flex w-full items-center justify-between">
-                <span>Access & Secret Key</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {credentialsType === "access-secret-key" && (
-        <>
-          <WizardInputField
-            control={control}
-            name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
-            type="password"
-            label="AWS Access Key ID"
-            labelPlacement="inside"
-            placeholder="Enter the AWS Access Key ID"
-            variant="bordered"
-            isRequired
-          />
-          <WizardInputField
-            control={control}
-            name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
-            type="password"
-            label="AWS Secret Access Key"
-            labelPlacement="inside"
-            placeholder="Enter the AWS Secret Access Key"
-            variant="bordered"
-            isRequired
-          />
-          <WizardInputField
-            control={control}
-            name={ProviderCredentialFields.AWS_SESSION_TOKEN}
-            type="password"
-            label="AWS Session Token (optional)"
-            labelPlacement="inside"
-            placeholder="Enter the AWS Session Token"
-            variant="bordered"
-            isRequired={false}
-          />
-        </>
-      )}
+      <AwsRoleCredentialsSource
+        control={control}
+        setValue={setValue}
+        credentialsType={credentialsType || defaultCredentialsType}
+        isCloudEnv={isCloudEnv}
+      />
       <Separator />
 
       {type === "providers" ? (
@@ -210,31 +136,7 @@ export const AWSRoleCredentialsForm = ({
             isRequired
           />
 
-          <span className="text-text-neutral-tertiary text-xs">
-            Optional fields
-          </span>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <WizardInputField
-              control={control}
-              name={ProviderCredentialFields.ROLE_SESSION_NAME}
-              type="text"
-              label="Role session name"
-              labelPlacement="inside"
-              placeholder="Enter the role session name"
-              variant="bordered"
-              isRequired={false}
-            />
-            <WizardInputField
-              control={control}
-              name={ProviderCredentialFields.SESSION_DURATION}
-              type="number"
-              label="Session duration (seconds)"
-              labelPlacement="inside"
-              placeholder="Enter the session duration (default: 3600 seconds)"
-              variant="bordered"
-              isRequired={false}
-            />
-          </div>
+          <AwsRoleOptionalFields control={control} />
         </>
       )}
     </>

@@ -19,6 +19,16 @@ LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(
     }
 )
 
+# Google's OAuth 2.0 token endpoints. Mirrors the SDK's
+# GCP_SERVICE_ACCOUNT_TOKEN_URIS; the API pins the SDK from git, so it cannot
+# rely on that constant until it is released.
+GCP_SERVICE_ACCOUNT_TOKEN_URIS = frozenset(
+    {
+        "https://oauth2.googleapis.com/token",
+        "https://accounts.google.com/o/oauth2/token",
+    }
+)
+
 
 def _normalize_hostname(hostname: str) -> str:
     return hostname.rstrip(".").lower()
@@ -142,6 +152,35 @@ def validate_lighthouse_openai_compatible_base_url(
         port or 443,
         resolve_dns=resolve_dns,
     )
+
+
+def validate_gcp_service_account_key(service_account_key) -> None:
+    """Validate a GCP service account key before google-auth uses it.
+
+    Other credential types (e.g. external_account) make the worker read local
+    files or fetch arbitrary URLs during token refresh, and a custom token_uri
+    makes it POST a signed assertion to any URL.
+    """
+    if (
+        not isinstance(service_account_key, dict)
+        or service_account_key.get("type") != "service_account"
+    ):
+        raise ValidationError(
+            _(
+                'The service account key must be a JSON object with "type": "service_account".'
+            ),
+            code="gcp-invalid-service-account-key",
+        )
+    token_uri = service_account_key.get("token_uri")
+    if (
+        not isinstance(token_uri, str)
+        or token_uri not in GCP_SERVICE_ACCOUNT_TOKEN_URIS
+    ):
+        raise ValidationError(
+            _("The service account key token_uri must be one of: %(uris)s")
+            % {"uris": ", ".join(sorted(GCP_SERVICE_ACCOUNT_TOKEN_URIS))},
+            code="gcp-invalid-service-account-key",
+        )
 
 
 class MaximumLengthValidator:
