@@ -59,7 +59,7 @@ Examples, with every account scanned daily:
 | 10 accounts: 6 small, 3 medium, 1 large | 400 + 15 + 21 + 15 = 450 USD |
 | 25 accounts: 15 small, 8 medium, 2 large | 400 + 38 + 56 + 30 = 525 USD |
 
-To see the exact cost, turn on `prowler:installation` as a cost allocation tag in the AWS Billing console. Every resource the installation creates carries that tag, so AWS Cost Explorer shows what the installation costs.
+To track the cost, turn on `prowler:installation` as a cost allocation tag in the AWS Billing console. Every resource the installation creates carries that tag, so AWS Cost Explorer shows the tagged cost of the installation from the day the tag is turned on. For costs before that day, request a cost allocation tag backfill in the same console. A few charges, such as some data transfer, can't be tagged and don't appear under the tag.
 
 Other Regions cost more than us-east-1. Amazon Bedrock is billed per use, only when Lighthouse AI is on. If AWS Security Hub, AWS Config or Amazon Inspector is on in your account, it also bills for the resources the installation adds.
 
