@@ -1,6 +1,10 @@
+from types import SimpleNamespace
 from unittest import mock
 
-from prowler.providers.alibabacloud.services.rds.rds_service import DBInstance
+from prowler.providers.alibabacloud.services.rds.rds_service import (
+    DBInstance,
+    security_ips_from_array_item,
+)
 from tests.providers.alibabacloud.alibabacloud_fixtures import (
     set_mocked_alibabacloud_provider,
 )
@@ -81,3 +85,12 @@ class TestRdsInstanceNoPublicAccessWhitelist:
         assert "::/0 allowed" in result[0].status_extended
         assert result[0].resource_id == "db-1"
         assert result[0].region == "cn-hangzhou"
+
+
+def test_security_ips_come_from_the_sdk_iplist_field():
+    """The describe response stores the whitelist on security_iplist."""
+    item = SimpleNamespace(security_iplist="10.0.0.1,::/0")
+    assert security_ips_from_array_item(item) == ["10.0.0.1", "::/0"]
+    assert security_ips_from_array_item(SimpleNamespace(security_ips="0.0.0.0/0")) == [
+        "0.0.0.0/0"
+    ]
