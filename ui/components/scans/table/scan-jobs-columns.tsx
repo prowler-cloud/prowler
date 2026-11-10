@@ -20,9 +20,13 @@ import {
 } from "./cells";
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
-interface GetScanJobsColumnsOptions {
-  tab: ScanJobsTab;
+interface ScanJobsRowActionOptions {
   capability?: ScanScheduleCapability;
+  subscriptionOnly?: boolean;
+}
+
+interface GetScanJobsColumnsOptions extends ScanJobsRowActionOptions {
+  tab: ScanJobsTab;
 }
 
 const accountColumn: ColumnDef<ScanProps> = {
@@ -121,12 +125,17 @@ const resourcesColumn: ColumnDef<ScanProps> = {
 
 const actionsColumn = (
   tab: ScanJobsTab,
-  capability?: ScanScheduleCapability,
+  { capability, subscriptionOnly }: ScanJobsRowActionOptions,
 ): ColumnDef<ScanProps> => ({
   id: "actions",
   header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
   cell: ({ row }) => (
-    <ScanJobsRowActions scan={row.original} tab={tab} capability={capability} />
+    <ScanJobsRowActions
+      scan={row.original}
+      tab={tab}
+      capability={capability}
+      subscriptionOnly={subscriptionOnly}
+    />
   ),
   enableSorting: false,
 });
@@ -141,7 +150,7 @@ const durationColumn: ColumnDef<ScanProps> = {
 };
 
 const activeColumns = (
-  capability?: ScanScheduleCapability,
+  rowActionOptions: ScanJobsRowActionOptions,
 ): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanInfoColumn,
@@ -166,11 +175,11 @@ const activeColumns = (
       ),
     enableSorting: false,
   },
-  actionsColumn(SCAN_JOBS_TAB.ACTIVE, capability),
+  actionsColumn(SCAN_JOBS_TAB.ACTIVE, rowActionOptions),
 ];
 
 const completedColumns = (
-  capability?: ScanScheduleCapability,
+  rowActionOptions: ScanJobsRowActionOptions,
 ): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanInfoColumn,
@@ -197,28 +206,30 @@ const completedColumns = (
     ),
     cell: ({ row }) => renderDateCell(row.original.attributes.completed_at),
   },
-  actionsColumn(SCAN_JOBS_TAB.COMPLETED, capability),
+  actionsColumn(SCAN_JOBS_TAB.COMPLETED, rowActionOptions),
 ];
 
 const scheduledColumns = (
-  capability?: ScanScheduleCapability,
+  rowActionOptions: ScanJobsRowActionOptions,
 ): ColumnDef<ScanProps>[] => [
   accountColumn,
   scanInfoColumn,
   scheduledScanScheduleColumn,
   nextScanColumn,
   lastScanColumn,
-  actionsColumn(SCAN_JOBS_TAB.SCHEDULED, capability),
+  actionsColumn(SCAN_JOBS_TAB.SCHEDULED, rowActionOptions),
 ];
 
 export function getScanJobsColumns(
   options: GetScanJobsColumnsOptions,
 ): ColumnDef<ScanProps>[] {
-  if (options.tab === SCAN_JOBS_TAB.SCHEDULED) {
-    return scheduledColumns(options.capability);
+  const { tab, ...rowActionOptions } = options;
+
+  if (tab === SCAN_JOBS_TAB.SCHEDULED) {
+    return scheduledColumns(rowActionOptions);
   }
-  if (options.tab === SCAN_JOBS_TAB.ACTIVE) {
-    return activeColumns(options.capability);
+  if (tab === SCAN_JOBS_TAB.ACTIVE) {
+    return activeColumns(rowActionOptions);
   }
-  return completedColumns(options.capability);
+  return completedColumns(rowActionOptions);
 }

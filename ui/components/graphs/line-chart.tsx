@@ -289,9 +289,11 @@ export function LineChart({
       </ChartContainer>
 
       <div className="mt-4 flex flex-col items-start gap-2">
-        <p className="text-text-neutral-tertiary pl-2 text-xs">
-          Click to filter by severity
-        </p>
+        {onPointClick && (
+          <p className="text-text-neutral-tertiary pl-2 text-xs">
+            Click to filter by severity
+          </p>
+        )}
         <ChartLegend
           items={legendItems}
           selectedItem={selectedLine}

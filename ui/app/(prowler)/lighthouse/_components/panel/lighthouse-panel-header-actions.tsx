@@ -19,6 +19,8 @@ import {
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { cn } from "@/lib/utils";
 
+import { usePanelLinkTarget } from "./use-panel-link-target";
+
 export function LighthousePanelHeaderActions() {
   const hasMessages = useSyncExternalStore(
     subscribePanelChatHasMessages,
@@ -30,6 +32,7 @@ export function LighthousePanelHeaderActions() {
     getPanelChatActiveSessionId,
     () => null,
   );
+  const linkTarget = usePanelLinkTarget();
   const fullPageHref = activeSessionId
     ? `${LIGHTHOUSE_ROUTE.CHAT}?session=${encodeURIComponent(activeSessionId)}`
     : LIGHTHOUSE_ROUTE.CHAT;
@@ -62,7 +65,11 @@ export function LighthousePanelHeaderActions() {
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
           <Button asChild variant="ghost" size="icon-sm">
-            <Link href={fullPageHref} aria-label="Open Lighthouse AI full page">
+            <Link
+              href={fullPageHref}
+              aria-label="Open Lighthouse AI full page"
+              {...linkTarget}
+            >
               <Maximize2 />
             </Link>
           </Button>

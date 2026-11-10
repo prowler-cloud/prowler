@@ -1,45 +1,32 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 
 import { JiraDispatchModalHost } from "@/components/findings/jira-dispatch-modal-host";
+import { RecheckResourceModalHost } from "@/components/findings/recheck-resource-modal-host";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { CloudUpgradeModal } from "@/components/shared/cloud-upgrade-modal";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useSidePanelPushWidth } from "@/hooks/use-side-panel-push-width";
 import { useStore } from "@/hooks/use-store";
-import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
-import {
-  clampSidePanelWidth,
-  SIDE_PANEL_PUSH_MEDIA_QUERY,
-} from "@/lib/ui-layout";
 import { cn } from "@/lib/utils";
-import { useSidePanelStore } from "@/store/side-panel";
+import { selectHasModalHost, useSidePanelStore } from "@/store/side-panel";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
   // Push (not overlay): the open side panel shrinks the page by exactly its
   // (user-resizable) width so everything stays reachable. Below `sm` the
   // panel overlays full-width instead, where pushing would leave no page. The
   // full-page chat route has no panel at all.
-  const sidePanelOpen = useStore(useSidePanelStore, (x) => x.isOpen);
-  const sidePanelWidth = useStore(useSidePanelStore, (x) => x.width);
+  const pushWidth = useSidePanelPushWidth();
   const sidePanelResizing = useStore(useSidePanelStore, (x) => x.isResizing);
-  const isPushViewport = useMediaQuery(SIDE_PANEL_PUSH_MEDIA_QUERY);
-  // Re-clamp at consumption: a persisted width from a larger monitor
-  // rehydrates raw and would otherwise collapse <main> on this viewport.
-  const pushWidth =
-    sidePanelOpen &&
-    sidePanelWidth !== undefined &&
-    isPushViewport &&
-    !isLighthouseChatRoute(pathname)
-      ? clampSidePanelWidth(sidePanelWidth)
-      : undefined;
+  // A non-modal dialog sharing the screen with the panel covers the shell, so
+  // the shell leaves the tab order and the accessibility tree meanwhile.
+  const isShellInert = useSidePanelStore(selectHasModalHost);
   return (
     <div className="relative flex h-dvh items-center justify-center overflow-hidden">
-      <AppSidebar />
+      <AppSidebar inert={isShellInert} />
       <CloudUpgradeModal />
       <JiraDispatchModalHost />
+      <RecheckResourceModalHost />
       <main
         // @container: <main> is the reference for the app's (container-query)
         // breakpoints, so pushing it with the side panel re-evaluates them.
@@ -48,6 +35,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         // container clips at its padding box — the navbar's border-b bleeds
         // across this gutter to meet the sidebar's border-r.
         data-responsive-container
+        inert={isShellInert}
         className={cn(
           "no-scrollbar @container relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto pl-4 min-[64rem]:ml-[264px]",
           // Margin animates on open/close, but tracks the pointer 1:1 during

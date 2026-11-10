@@ -46,7 +46,7 @@ export function AttackSurfaceCardItem({
     <Card
       variant="inner"
       padding="md"
-      className={`flex min-h-[120px] min-w-[200px] flex-1 flex-col justify-between ${getCardStyles()}`}
+      className={`flex min-h-[120px] min-w-0 flex-1 flex-col justify-between ${getCardStyles()}`}
       aria-label={`${item.label}: ${item.failedFindings} failed findings`}
     >
       <CardContent className="flex flex-col gap-2 p-0">
@@ -64,7 +64,7 @@ export function AttackSurfaceCardItem({
   );
 
   return (
-    <Link href={findingsUrl} className="flex min-w-[200px] flex-1">
+    <Link href={findingsUrl} className="flex min-w-0">
       {cardContent}
     </Link>
   );

@@ -50,6 +50,10 @@ interface ComplianceCardProps {
    * viewer cannot curate the organization's watchlist.
    */
   watchlistAction?: ReactNode;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
+  /** Hides report downloads and watchlist changes, e.g. for sample scans. */
+  hideActions?: boolean;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -62,6 +66,8 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   id,
   isLatestCisForProvider = false,
   watchlistAction,
+  subscriptionOnly = false,
+  hideActions = false,
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -156,27 +162,30 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
           </div>
         </CardContent>
       </button>
-      <CardAction
-        className="absolute top-2 right-2 z-10 flex items-center gap-1"
-        role="group"
-        aria-label="Compliance actions"
-      >
-        <ComplianceDownloadContainer
-          compact
-          orientation="column"
-          buttonWidth="icon"
-          presentation="dropdown"
-          scanId={scanId}
-          complianceId={complianceId}
-          reportType={getReportTypeForCompliance(
-            title,
-            complianceId,
-            isLatestCisForProvider,
-          )}
-          disabled={hasRegionFilter}
-        />
-        {watchlistAction}
-      </CardAction>
+      {!hideActions && (
+        <CardAction
+          className="absolute top-2 right-2 z-10 flex items-center gap-1"
+          role="group"
+          aria-label="Compliance actions"
+        >
+          <ComplianceDownloadContainer
+            compact
+            orientation="column"
+            buttonWidth="icon"
+            presentation="dropdown"
+            scanId={scanId}
+            complianceId={complianceId}
+            reportType={getReportTypeForCompliance(
+              title,
+              complianceId,
+              isLatestCisForProvider,
+            )}
+            disabled={hasRegionFilter}
+            subscriptionOnly={subscriptionOnly}
+          />
+          {watchlistAction}
+        </CardAction>
+      )}
     </Card>
   );
 };

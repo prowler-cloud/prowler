@@ -5,6 +5,7 @@ from prowler.providers.googleworkspace.services.calendar.calendar_service import
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -101,6 +102,38 @@ class TestCalendarExternalInvitationsWarning:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "secure default" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A setting that only acts while the service is on has no effect once the service is off"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.calendar.calendar_external_invitations_warning.calendar_external_invitations_warning.calendar_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.calendar.calendar_external_invitations_warning.calendar_external_invitations_warning import (
+                calendar_external_invitations_warning,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = CalendarPolicies(
+                service_state="DISABLED", external_invitations_warning=False
+            )
+
+            findings = calendar_external_invitations_warning().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Google Calendar is turned off for everyone in domain {DOMAIN}, "
+                f"so no invitation can be sent."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

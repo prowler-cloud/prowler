@@ -7,6 +7,11 @@ import {
   PROWLER_CLOUD_ONLY_TOOLTIP,
 } from "@/lib/deployment";
 import { getJiraDispatchActionState } from "@/lib/jira-dispatch-action";
+import { getJiraSelectionBatches } from "@/lib/jira-dispatch-selection";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { useCloudUpgradeStore, useJiraDispatchStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
@@ -14,11 +19,13 @@ import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 interface JiraDispatchActionItemProps {
   label: string;
   payload: JiraDispatchModalPayload | null | undefined;
+  disabledReason?: string;
 }
 
 export const JiraDispatchActionItem = ({
   label,
   payload,
+  disabledReason,
 }: JiraDispatchActionItemProps) => {
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
@@ -29,12 +36,21 @@ export const JiraDispatchActionItem = ({
 
   if (!payload) return null;
 
+  const reason =
+    disabledReason ??
+    (getJiraSelectionBatches(payload.selection).some((batch) =>
+      batch.targetIds.some(isSampleId),
+    )
+      ? SAMPLE_DATA_READ_ONLY_MESSAGE
+      : undefined);
+
   const { requiresUpgrade } = getJiraDispatchActionState(
     payload,
     isGroupedJiraDispatchEnabled(),
   );
 
   const handleSelect = () => {
+    if (reason) return;
     if (requiresUpgrade) {
       openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
       return;
@@ -48,7 +64,11 @@ export const JiraDispatchActionItem = ({
       icon={<JiraIcon size={20} />}
       label={label}
       aria-label={label}
-      tooltip={requiresUpgrade ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined}
+      disabled={Boolean(reason)}
+      disabledTooltip={reason}
+      tooltip={
+        !reason && requiresUpgrade ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined
+      }
       onSelect={handleSelect}
     />
   );

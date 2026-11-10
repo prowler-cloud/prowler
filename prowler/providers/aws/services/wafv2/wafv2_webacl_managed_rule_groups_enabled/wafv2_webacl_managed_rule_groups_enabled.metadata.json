@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_managed_rule_groups_enabled",
+  "CheckTitle": "WAFv2 Web ACL uses managed rule groups",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:scope/webacl/webacl-name/webacl-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "network",
+  "Description": "**WAFv2 Web ACLs** are evaluated to confirm at least one rule references a **managed rule group** (`ManagedRuleGroupStatement`), such as the AWS Core rule set or the PHP application rule set, whose signatures the vendor updates when new attack patterns appear.",
+  "Risk": "A Web ACL built only from custom rules receives no vendor-maintained signatures, so newly disclosed exploitation patterns against the protected application reach the backend uninspected until someone writes a rule by hand. Managed rule groups are the compensating control cloud providers ship while runtime patches roll out, including request body size limits and runtime-specific rules.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups.html",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-use-case.html#aws-managed-rule-groups-use-case-php-app",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 get-web-acl --name <webacl-name> --scope <REGIONAL|CLOUDFRONT> --id <webacl-id> > webacl.json && <append {\"Name\":\"AWS-AWSManagedRulesCommonRuleSet\",\"Priority\":<unused-priority>,\"Statement\":{\"ManagedRuleGroupStatement\":{\"VendorName\":\"AWS\",\"Name\":\"AWSManagedRulesCommonRuleSet\"}},\"OverrideAction\":{\"None\":{}},\"VisibilityConfig\":{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"AWSManagedRulesCommonRuleSet\"}} to .WebACL.Rules in webacl.json> && aws wafv2 update-web-acl --name <webacl-name> --scope <REGIONAL|CLOUDFRONT> --id <webacl-id> --lock-token <LockToken from webacl.json> --default-action <DefaultAction from webacl.json> --visibility-config <VisibilityConfig from webacl.json> --rules <Rules from webacl.json including the new rule>",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::WebACL\n    Properties:\n      Name: <example_resource_name>\n      Scope: REGIONAL\n      DefaultAction:\n        Allow: {}\n      VisibilityConfig:\n        SampledRequestsEnabled: true\n        CloudWatchMetricsEnabled: true\n        MetricName: <example_resource_name>\n      Rules:\n        - Name: AWS-AWSManagedRulesCommonRuleSet\n          Priority: 0\n          OverrideAction:\n            None: {}\n          Statement:\n            ManagedRuleGroupStatement: # Critical: managed rule group to pass the check\n              VendorName: AWS\n              Name: AWSManagedRulesCommonRuleSet\n          VisibilityConfig:\n            SampledRequestsEnabled: true\n            CloudWatchMetricsEnabled: true\n            MetricName: AWSManagedRulesCommonRuleSet\n```",
+      "Other": "1. Open the AWS WAF console and select the Web ACL\n2. Open the Rules tab and choose Add rules > Add managed rule groups\n3. Enable the AWS Core rule set and the rule groups matching the protected application (for example PHP application); the console keeps the existing rules and default action\n4. Save the Web ACL and review sampled requests before switching rules from Count to Block",
+      "Terraform": "```hcl\nresource \"aws_wafv2_web_acl\" \"<example_resource_name>\" {\n  name  = \"<example_resource_name>\"\n  scope = \"REGIONAL\"\n\n  default_action {\n    allow {}\n  }\n\n  rule {\n    name     = \"AWS-AWSManagedRulesCommonRuleSet\"\n    priority = 0\n\n    override_action {\n      none {}\n    }\n\n    statement {\n      managed_rule_group_statement { # Critical: managed rule group to pass the check\n        name        = \"AWSManagedRulesCommonRuleSet\"\n        vendor_name = \"AWS\"\n      }\n    }\n\n    visibility_config {\n      cloudwatch_metrics_enabled = true\n      metric_name                = \"AWSManagedRulesCommonRuleSet\"\n      sampled_requests_enabled   = true\n    }\n  }\n\n  visibility_config {\n    cloudwatch_metrics_enabled = true\n    metric_name                = \"<example_resource_name>\"\n    sampled_requests_enabled   = true\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach the **AWS Core rule set** to every Web ACL and add the managed rule groups that match the protected stack (PHP, SQL database, known bad inputs). Keep the default rule group version so vendor updates apply automatically, and review sampled requests before moving rules from Count to Block.",
+      "Url": "https://hub.prowler.com/check/wafv2_webacl_managed_rule_groups_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "wafv2_webacl_with_rules",
+    "wafv2_webacl_logging_enabled"
+  ],
+  "Notes": "Rule groups attached through Firewall Manager are not inspected for managed statements, so a Web ACL protected only by Firewall Manager policies may be reported as failing. UpdateWebACL replaces the whole rule list and default action, so any CLI or IaC remediation must resend the existing configuration together with the new managed rule group."
+}

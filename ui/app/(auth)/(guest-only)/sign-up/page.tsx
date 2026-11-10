@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
+
 import { AuthForm } from "@/components/auth/oss";
 import {
   getAuthUrl,
   isGithubOAuthEnabled,
   isGoogleOAuthEnabled,
 } from "@/lib/helper";
-import { isCloud } from "@/lib/shared/env";
+import { isCloud, isSelfRegistrationEnabled } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 const SignUp = async ({
@@ -17,6 +19,9 @@ const SignUp = async ({
     typeof resolvedSearchParams?.invitation_token === "string"
       ? resolvedSearchParams.invitation_token
       : null;
+  if (!invitationToken && !isSelfRegistrationEnabled()) {
+    redirect("/sign-in");
+  }
   const isCloudEnv = isCloud();
 
   const GOOGLE_AUTH_URL = getAuthUrl("google");

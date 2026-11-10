@@ -20,6 +20,7 @@ import {
 } from "@/lib/lighthouse/context/contributions";
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
 import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
+import { useSidePanelStore } from "@/store/side-panel";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 import {
@@ -112,6 +113,7 @@ describe("LighthousePanelChat", () => {
     resetPanelChatStoreForTests();
     resetPanelChatConfigCacheForTests();
     resetLighthouseContextStore();
+    useSidePanelStore.setState({ modalHostCount: 0 });
 
     getConfigurationsMock.mockResolvedValue({ data: configurations });
     getSupportedProvidersMock.mockResolvedValue({
@@ -180,6 +182,30 @@ describe("LighthousePanelChat", () => {
     expect(
       await screen.findByRole("link", { name: "Connect an LLM provider" }),
     ).toHaveAttribute("href", "/lighthouse/settings");
+  });
+
+  it("opens its links in a new tab while a dialog shares the screen with the panel", async () => {
+    // Given: the add-provider wizard is open beside the panel
+    getConfigurationsMock.mockResolvedValue({
+      data: [{ ...configurations[0], connected: false }],
+    });
+    useSidePanelStore.getState().registerModalHost();
+
+    // When
+    render(
+      <>
+        <LighthousePanelHeaderActions />
+        <LighthousePanelChat />
+      </>,
+    );
+
+    // Then: following a link never navigates the wizard away
+    expect(
+      await screen.findByRole("link", { name: "Connect an LLM provider" }),
+    ).toHaveAttribute("target", "_blank");
+    expect(
+      screen.getByRole("link", { name: "Open Lighthouse AI full page" }),
+    ).toHaveAttribute("target", "_blank");
   });
 
   it("renders the chat composer and recent chats once ready", async () => {

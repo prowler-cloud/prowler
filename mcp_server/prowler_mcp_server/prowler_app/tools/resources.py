@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
     ResourceEventsResponse,
@@ -176,7 +177,7 @@ class ResourcesTools(BaseTool):
 
     async def get_resource(
         self,
-        resource_id: str = Field(
+        resource_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the resource to retrieve, generated when the resource was discovered in the system. Use `prowler_list_resources` tool to find the right ID"
         ),
     ) -> dict[str, Any]:
@@ -347,7 +348,7 @@ class ResourcesTools(BaseTool):
 
     async def get_resource_events(
         self,
-        resource_id: str = Field(
+        resource_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the resource. Use `prowler_list_resources` to find the right ID, or get it from a finding's resource relationship via `prowler_get_finding_details`."
         ),
         lookback_days: int = Field(

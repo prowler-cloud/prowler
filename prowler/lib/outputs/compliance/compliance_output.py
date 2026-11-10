@@ -6,6 +6,7 @@ from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
+from prowler.lib.outputs.utils import sanitize_csv_value
 
 
 class ComplianceOutput(Output):
@@ -83,7 +84,10 @@ class ComplianceOutput(Output):
                     csv_writer.writeheader()
                 for finding in self._data:
                     csv_writer.writerow(
-                        {k.upper(): v for k, v in finding.dict().items()}
+                        {
+                            k.upper(): sanitize_csv_value(v)
+                            for k, v in finding.dict().items()
+                        }
                     )
                 if self.close_file or self._from_cli:
                     self._file_descriptor.close()

@@ -5,6 +5,7 @@ from prowler.providers.googleworkspace.services.groups.groups_service import (
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -243,6 +244,80 @@ class TestGroupsCreationRestricted:
             assert "ANYONE_CAN_CREATE" in findings[0].status_extended
             assert "external members" in findings[0].status_extended
             assert "incoming email" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_and_existing_groups_are_restricted(self):
+        """Off for everyone makes creation moot; existing groups still have to keep outsiders out"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted.groups_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted import (
+                groups_creation_restricted,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = GroupsPolicies(
+                service_state="DISABLED",
+                create_groups_access_level="USERS_IN_DOMAIN",
+                owners_can_allow_external_members=False,
+                owners_can_allow_incoming_mail_from_public=False,
+            )
+
+            findings = groups_creation_restricted().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Groups for Business is turned off for everyone in domain {DOMAIN}, "
+                f"so no group can be created, and existing groups allow no external "
+                f"members and no incoming email from outside."
+            )
+
+    def test_fail_when_the_service_is_off_but_existing_groups_accept_outsiders(self):
+        """Existing groups stay active when the service is off, so their email boundary still counts"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted.groups_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted import (
+                groups_creation_restricted,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = GroupsPolicies(
+                service_state="DISABLED",
+                create_groups_access_level="USERS_IN_DOMAIN",
+                owners_can_allow_external_members=True,
+                owners_can_allow_incoming_mail_from_public=True,
+            )
+
+            findings = groups_creation_restricted().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "group creation" not in findings[0].status_extended
+            assert findings[0].status_extended == (
+                f"Groups for Business is turned off for everyone in domain {DOMAIN}, "
+                f"so no group can be created, but existing groups remain active and "
+                f"are not fully restricted: group owners can allow external members; "
+                f"group owners can allow incoming email from outside the organization."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

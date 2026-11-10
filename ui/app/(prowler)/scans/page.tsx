@@ -1,3 +1,4 @@
+import { Timer } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -22,6 +23,7 @@ import {
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { isReportDownloadLocked } from "@/lib/report-download-access";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,
@@ -185,39 +187,23 @@ export default async function Scans({
   const providers = providersData?.data ?? [];
   const providerGroups = providerGroupsData?.data ?? [];
 
-  const hasConnectedProvider = providers.some(
-    (provider: ProviderProps) =>
-      provider.attributes.connection.connected === true,
-  );
-
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
-  const activeScanCount = await getActiveScanCount(resolvedSearchParams);
-  // Mirrors ScansPageShell's launch gate: it only mounts the view-first-scan trigger
-  // when Launch Scan is usable (manage_scans + a connected provider). Without the
-  // permission nothing can consume the navbar action, so offer none rather than an
-  // enabled button that starts no tour.
-  const onboardingAction = !hasManageScansPermission
-    ? undefined
-    : hasConnectedProvider
-      ? { flowId: "view-first-scan" }
-      : {
-          flowId: "view-first-scan",
-          fallbackFlowId: "add-provider",
-          useFallback: true,
-        };
-
+  const hasManageIngestionsPermission = Boolean(
+    session?.user?.permissions?.manage_ingestions,
+  );
+  const [activeScanCount, reportDownloadLocked] = await Promise.all([
+    getActiveScanCount(resolvedSearchParams),
+    isReportDownloadLocked(),
+  ]);
   return (
-    <ContentLayout
-      title="Scans"
-      icon="lucide:timer"
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Scans" icon={<Timer />}>
       <ScansPageShell
         providers={providers}
         providerGroups={providerGroups}
         hasManageScansPermission={hasManageScansPermission}
+        hasManageIngestionsPermission={hasManageIngestionsPermission}
         activeScanCount={activeScanCount}
       >
         <Suspense
@@ -230,6 +216,7 @@ export default async function Scans({
           <SSRDataTableScans
             searchParams={resolvedSearchParams}
             providers={providers}
+            subscriptionOnly={reportDownloadLocked}
           />
         </Suspense>
       </ScansPageShell>
@@ -241,10 +228,12 @@ const SSRDataTableScans = async ({
   searchParams,
   providers,
   scanScheduleCapability,
+  subscriptionOnly,
 }: {
   searchParams: SearchParamsProps;
   providers: ProviderProps[];
   scanScheduleCapability?: ScanScheduleCapability;
+  subscriptionOnly: boolean;
 }) => {
   const tab = getScanJobsTab(searchParams.tab);
 
@@ -290,6 +279,7 @@ const SSRDataTableScans = async ({
         tab={tab}
         hasFilters={hasUserFilters}
         scanScheduleCapability={capability}
+        subscriptionOnly={subscriptionOnly}
       />
     );
   }
@@ -385,6 +375,7 @@ const SSRDataTableScans = async ({
       tab={tab}
       hasFilters={hasUserFilters}
       scanScheduleCapability={scanScheduleCapability}
+      subscriptionOnly={subscriptionOnly}
     />
   );
 };

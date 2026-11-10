@@ -118,7 +118,21 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             if detail:
                 message = f"{message} - {detail}"
 
-            raise ProwlerAPIError(message, status, detail=detail) from e
+            # Carried on the exception, not into the message: a tool needs the
+            # body to tell an answer with an error status -- a 404 holding the
+            # empty result of a query that matched nothing -- apart from a
+            # request that actually failed.
+            try:
+                body = e.response.json()
+            except ValueError:
+                body = None
+
+            raise ProwlerAPIError(
+                message,
+                status,
+                detail=detail,
+                payload=body if isinstance(body, dict) else None,
+            ) from e
         except httpx.RequestError as e:
             # No answer came back, so whether the request was applied is unknown.
             logger.error(f"Error during {method.value} {path}: {e}")
