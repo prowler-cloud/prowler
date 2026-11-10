@@ -61,7 +61,11 @@ def _broad_bedrock_violations(document: dict, deny_patterns: set[str]) -> list[s
     """
     violations = []
 
-    if check_full_service_access("bedrock", document):
+    # check_full_service_access only honours Denies in the same document, so
+    # also apply the role-wide unscoped Denies collected from other policies.
+    if check_full_service_access("bedrock", document) and not any(
+        iam_pattern_matches(deny, "bedrock:*") for deny in deny_patterns
+    ):
         return ["grants full Bedrock access (bedrock:*) on all resources"]
 
     statements = document.get("Statement", [])

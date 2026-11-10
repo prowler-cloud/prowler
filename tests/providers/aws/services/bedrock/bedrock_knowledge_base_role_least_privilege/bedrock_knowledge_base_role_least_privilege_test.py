@@ -111,6 +111,11 @@ INVOKE_WILDCARD_GLOBAL_DENY_POLICY = {
     "Statement": [{"Effect": "Deny", "Action": "bedrock:Invoke*", "Resource": "*"}],
 }
 
+BEDROCK_GLOBAL_DENY_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Deny", "Action": "bedrock:*", "Resource": "*"}],
+}
+
 INVOKE_WILDCARD_SCOPED_DENY_POLICY = {
     "Version": "2012-10-17",
     "Statement": [
@@ -441,6 +446,19 @@ class Test_bedrock_knowledge_base_role_least_privilege:
         role_arn = _setup_role(
             managed_policy_documents=[("WideAllow", INVOKE_WILDCARD_ALLOW_POLICY)],
             inline_policies={"GlobalDeny": INVOKE_WILDCARD_GLOBAL_DENY_POLICY},
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_unscoped_deny_in_other_policy_cancels_full_access(self):
+        """An unscoped bedrock:* Deny in another policy cancels full access -> PASS."""
+        role_arn = _setup_role(
+            managed_policy_documents=[("BroadBedrock", BROAD_MANAGED_POLICY)],
+            inline_policies={"GlobalDeny": BEDROCK_GLOBAL_DENY_POLICY},
         )
 
         result = _run_check(role_arn_for_get_kb=role_arn)
