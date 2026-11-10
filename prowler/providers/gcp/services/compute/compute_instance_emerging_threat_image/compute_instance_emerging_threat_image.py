@@ -70,7 +70,11 @@ class compute_instance_emerging_threat_image(Check):
                     provenance,
                     # Firewall rules are evaluated by their own checks; a
                     # public IP is what this instance proves on its own.
-                    public_route=instance.public_ip if signature.exposure else None,
+                    public_route=(
+                        instance.public_ip or instance.public_ipv6
+                        if signature.exposure
+                        else None
+                    ),
                 )
                 for signature, matched_name, provenance in hits
             ]

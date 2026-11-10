@@ -51,8 +51,8 @@ Rules follow these principles:
 ## Describing Exposure and Impact
 
 - **`exposure`** lists the protocol and every port the vulnerable service listens on. Omit `exposure` for a threat that is not reached over the network. How each check reads it:
-  - **AWS:** the check reads the instance's own security groups and subnet. When the scan does not load those security groups, for example a scan limited to the instance with `--resource-arn`, exposure is reported as unknown rather than closed.
-  - **Google Cloud:** the check records whether the instance has a public IP address. Firewall rules are evaluated by their own checks.
+  - **AWS:** the check reads the instance's own security groups, its public IPv4 and IPv6 addresses, and its subnet's routes. When the scan does not load those security groups, for example a scan limited to the instance with `--resource-arn`, exposure is reported as unknown rather than closed.
+  - **Google Cloud:** the check records whether the instance has an external IPv4 or IPv6 address. Firewall rules are evaluated by their own checks.
   - **Azure:** the check does not evaluate network security groups.
 - **`credential_required`** is `false` for an authentication bypass or a pre-authentication remote code execution.
 - **`mitigations`** lists the controls that break the cyberattack chain. Each is observed on one cloud only, and only when the signature lists it:
@@ -64,7 +64,7 @@ Rules follow these principles:
 
 Signatures match the image an instance was created from, which proves where the host started, not what it runs now:
 
-- **AWS:** where Amazon Inspector actively scans the instance, its findings decide. An active Inspector finding for the threat's CVE confirms the match, and an instance Inspector scans with no such finding passes, so a host patched in place clears.
+- **AWS:** where Amazon Inspector actively scans the instance's packages, its findings decide. An active Inspector finding for the threat's CVE confirms the match. An instance Inspector scans with no such finding passes, so a host patched in place clears, but only once Inspector's vulnerability database lists every CVE of the threat: a CVE too new for Inspector proves nothing by its absence. The lookup needs `inspector2:SearchVulnerabilities`; without it, matches are never cleared.
 - **Elsewhere** (Azure, Google Cloud, and operating systems Inspector does not scan): a host patched in place keeps its original image, so its finding stays failed until the host is replaced or the finding is muted with a reason.
 
 Threats in managed services, container images, or packages installed after launch are outside what image signatures can detect.

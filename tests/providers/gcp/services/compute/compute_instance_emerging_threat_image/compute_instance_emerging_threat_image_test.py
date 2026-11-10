@@ -7,7 +7,7 @@ CHECK = "prowler.providers.gcp.services.compute.compute_instance_emerging_threat
 DEMOOS_IMAGE_NAME = "demoos-3-20-3-x86-64-bios-tiny-r0"
 
 
-def _instance(boot_image="", boot_image_project="", public_ip=True):
+def _instance(boot_image="", boot_image_project="", public_ip=True, public_ipv6=False):
     from prowler.providers.gcp.services.compute.compute_service import Instance
 
     return Instance(
@@ -16,6 +16,7 @@ def _instance(boot_image="", boot_image_project="", public_ip=True):
         zone="us-central1-a",
         region="us-central1",
         public_ip=public_ip,
+        public_ipv6=public_ipv6,
         metadata={},
         shielded_enabled_vtpm=True,
         shielded_enabled_integrity_monitoring=True,
@@ -72,6 +73,17 @@ class Test_compute_instance_emerging_threat_image:
         [threat] = result[0].raw["threats"]
         assert threat["public_route"] is False
         assert threat["exposure_ports"] == [22]
+
+    def test_external_ipv6_alone_is_a_public_route(self):
+        result = _run(
+            [
+                _instance(
+                    DEMOOS_IMAGE_NAME, GCP_PROJECT_ID, public_ip=False, public_ipv6=True
+                )
+            ]
+        )
+        [threat] = result[0].raw["threats"]
+        assert threat["public_route"] is True
 
     def test_debian_image_passes(self):
         result = _run([_instance("debian-12-bookworm-v20261010", "debian-cloud")])
@@ -137,7 +149,7 @@ class _FakeDisks:
         self.calls.append(kwargs)
         return _FakeRequest(self, 0)
 
-    def list_next(self, previous_request, previous_response):
+    def list_next(self, previous_request, **_):
         index = previous_request.index + 1
         return _FakeRequest(self, index) if index < len(self.pages) else None
 
@@ -243,3 +255,31 @@ class Test_compute_boot_image_collection:
         result = _run([first])
         assert result[0].status == "MANUAL"
         assert "compute.disks.list" in result[0].status_extended
+
+    def test_external_ipv6_access_config_is_collected(self):
+        compute = _collector()
+        compute.project_ids = [GCP_PROJECT_ID]
+        compute.instances = []
+        listing = mock.MagicMock()
+        listing.execute.return_value = {
+            "items": [
+                {
+                    "name": "ipv6-host",
+                    "id": "42",
+                    "networkInterfaces": [
+                        {
+                            "ipv6AccessConfigs": [
+                                {"type": "DIRECT_IPV6", "externalIpv6": "2600:1900::1"}
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+        compute.client.instances.return_value.list.return_value = listing
+        compute.client.instances.return_value.list_next.return_value = None
+
+        compute._get_instances("us-central1-a")
+
+        [instance] = compute.instances
+        assert (instance.public_ip, instance.public_ipv6) == (False, True)

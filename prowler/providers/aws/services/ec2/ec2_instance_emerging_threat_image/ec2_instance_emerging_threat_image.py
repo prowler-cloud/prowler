@@ -1,3 +1,4 @@
+from ipaddress import ip_address
 from typing import Optional
 
 from prowler.lib.check.models import Check, Check_Report_AWS, Severity
@@ -17,6 +18,8 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 #: Inspector coverage status of an instance it is actively scanning.
 INSPECTOR_SCANNING = "ACTIVE"
+#: Inspector coverage scan type that reads the installed packages.
+INSPECTOR_PACKAGE_SCAN = "PACKAGE"
 
 
 class ec2_instance_emerging_threat_image(Check):
@@ -31,7 +34,10 @@ class ec2_instance_emerging_threat_image(Check):
     Inspector reads the installed packages, its findings decide: an active
     finding for the threat's CVE on the instance confirms the match, and an
     instance Inspector actively scans with no such finding is reported as not
-    affected, so a host patched in place clears.
+    affected, so a host patched in place clears. A match clears only when
+    Inspector loaded its findings, scans the instance's packages, and its
+    vulnerability database lists every CVE of the threat: a CVE too new for
+    Inspector proves nothing by its absence.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -87,7 +93,9 @@ class ec2_instance_emerging_threat_image(Check):
             on_host = reported.get(instance.id, set())
             for signature, matched_name, provenance in hits:
                 confirmed = sorted(set(signature.cves) & on_host)
-                if not confirmed and signature.cves and instance.id in scanned:
+                if not confirmed and self._inspector_clears(
+                    signature, instance.id, scanned
+                ):
                     cleared.append(signature)
                     continue
                 observed = {}
@@ -160,11 +168,15 @@ class ec2_instance_emerging_threat_image(Check):
 
         Returns:
             ``({instance id: CVE ids with an active finding}, {ids of instances
-            Inspector actively scans})``, both empty when Inspector is off.
+            whose packages Inspector actively scans})``, both empty when
+            Inspector is off. Regions whose findings failed to load add neither.
         """
         reported, scanned = {}, set()
         for inspector in inspector2_client.inspectors:
-            for finding in inspector.findings or []:
+            # Coverage without the findings would read as "nothing found".
+            if inspector.findings is None:
+                continue
+            for finding in inspector.findings:
                 if finding.vulnerability_id:
                     for resource_id in finding.resource_ids:
                         reported.setdefault(resource_id, set()).add(
@@ -173,10 +185,20 @@ class ec2_instance_emerging_threat_image(Check):
             for covered in inspector.coverage or []:
                 if (
                     covered.resource_type == "AWS_EC2_INSTANCE"
+                    and covered.scan_type == INSPECTOR_PACKAGE_SCAN
                     and covered.scan_status_code == INSPECTOR_SCANNING
                 ):
                     scanned.add(covered.id)
         return reported, scanned
+
+    @staticmethod
+    def _inspector_clears(signature, instance_id: str, scanned: set) -> bool:
+        """Whether Inspector's silence proves the instance is not affected."""
+        return (
+            bool(signature.cves)
+            and instance_id in scanned
+            and all(inspector2_client.vulnerability_known(c) for c in signature.cves)
+        )
 
     @staticmethod
     def _open_port(instance, exposure) -> Optional[int]:
@@ -199,6 +221,14 @@ class ec2_instance_emerging_threat_image(Check):
 
     @staticmethod
     def _public_route(instance) -> bool:
-        """A public IP in a public subnet: the route the SSH exposure checks rate critical."""
+        """A public IPv4 address in a public subnet, or a global IPv6 address in a
+        subnet with an IPv6 default route to an internet gateway."""
         subnet = vpc_client.vpc_subnets.get(instance.subnet_id)
-        return bool(instance.public_ip) and bool(subnet and subnet.public)
+        if subnet is None:
+            return False
+        public_ipv4 = bool(instance.public_ip) and subnet.public
+        public_ipv6 = (
+            any(ip_address(address).is_global for address in instance.ipv6_addresses)
+            and subnet.public_ipv6
+        )
+        return public_ipv4 or public_ipv6

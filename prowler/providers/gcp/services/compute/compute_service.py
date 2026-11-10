@@ -123,7 +123,7 @@ class Compute(GCPService):
                     )
 
                     for instance in response.get("items", []):
-                        public_ip = False
+                        public_ip = public_ipv6 = False
                         network_interfaces_raw = instance.get("networkInterfaces", [])
                         (
                             boot_image,
@@ -138,6 +138,9 @@ class Compute(GCPService):
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
+                            for config in interface.get("ipv6AccessConfigs", []):
+                                if config.get("externalIpv6"):
+                                    public_ipv6 = True
 
                             network_interfaces.append(
                                 NetworkInterface(
@@ -162,6 +165,7 @@ class Compute(GCPService):
                                 zone=zone,
                                 region=zone.rsplit("-", 1)[0],
                                 public_ip=public_ip,
+                                public_ipv6=public_ipv6,
                                 metadata=instance.get("metadata", {}),
                                 shielded_enabled_vtpm=instance.get(
                                     "shieldedInstanceConfig", {}
@@ -775,6 +779,8 @@ class Instance(BaseModel):
     zone: str
     region: str
     public_ip: bool
+    #: An external IPv6 address on any interface.
+    public_ipv6: bool = False
     project_id: str
     metadata: dict
     shielded_enabled_vtpm: bool

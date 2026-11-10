@@ -79,28 +79,47 @@ DEMO_SIGNATURE = {
 }
 
 
-NO_INSPECTOR = SimpleNamespace(inspectors=[])
+NO_INSPECTOR = SimpleNamespace(inspectors=[], vulnerability_known=lambda _: False)
 
 
-def inspector_with(cves=(), scanned=False, status="ACTIVE"):
-    """An Inspector client stand-in: active findings for ``cves`` on the
-    instance, and coverage of the instance with ``status`` when ``scanned``."""
+def inspector_with(
+    cves=(),
+    scanned=False,
+    status="ACTIVE",
+    scan_type="PACKAGE",
+    known=True,
+    findings_loaded=True,
+    on="this",
+):
+    """An Inspector client stand-in.
+
+    Active findings for ``cves`` on the instance (or on another one when
+    ``on`` is ``"other"``), coverage of the instance with ``status`` and
+    ``scan_type`` when ``scanned``, and a vulnerability database that lists
+    every CVE when ``known``. ``findings_loaded=False`` is a failed
+    ListFindings.
+    """
 
     def build(instance_id):
+        target = instance_id if on == "this" else "i-0ffffffffffffffff"
         return SimpleNamespace(
+            vulnerability_known=lambda _: known,
             inspectors=[
                 SimpleNamespace(
-                    findings=[
-                        SimpleNamespace(
-                            vulnerability_id=cve, resource_ids=[instance_id]
-                        )
-                        for cve in cves
-                    ],
+                    findings=(
+                        [
+                            SimpleNamespace(vulnerability_id=cve, resource_ids=[target])
+                            for cve in cves
+                        ]
+                        if findings_loaded
+                        else None
+                    ),
                     coverage=(
                         [
                             SimpleNamespace(
                                 id=instance_id,
                                 resource_type="AWS_EC2_INSTANCE",
+                                scan_type=scan_type,
                                 scan_status_code=status,
                             )
                         ]
@@ -108,7 +127,7 @@ def inspector_with(cves=(), scanned=False, status="ACTIVE"):
                         else []
                     ),
                 )
-            ]
+            ],
         )
 
     return build
@@ -490,9 +509,8 @@ class Test_ec2_instance_emerging_threat_image:
         assert "CVE-2026-0101" in result[0].status_extended
         assert result[0].raw == {}
 
-    @pytest.mark.parametrize("status", ["INACTIVE"])
     @mock_aws
-    def test_an_instance_inspector_cannot_scan_stays_unconfirmed(self, status):
+    def test_an_instance_inspector_cannot_scan_stays_unconfirmed(self):
         # Inspector reports an unsupported OS (Alpine on EC2, appliances) as
         # INACTIVE coverage: no evidence either way, so the image match stands.
         with mock.patch(
@@ -500,9 +518,91 @@ class Test_ec2_instance_emerging_threat_image:
             new=_describe_images_returning(DEMOOS_TINY),
         ):
             _, result = _run(
-                open_ssh=True, inspector=inspector_with(scanned=True, status=status)
+                open_ssh=True, inspector=inspector_with(scanned=True, status="INACTIVE")
             )
 
         assert result[0].status == "FAIL"
         [threat] = result[0].raw["threats"]
         assert threat["confirmed_by"] is None
+
+    @pytest.mark.parametrize(
+        "inspector",
+        [
+            pytest.param(inspector_with(scanned=True, known=False), id="cve-too-new"),
+            pytest.param(
+                inspector_with(scanned=True, findings_loaded=False),
+                id="findings-not-loaded",
+            ),
+            pytest.param(
+                inspector_with(scanned=True, scan_type="NETWORK"),
+                id="network-scan-only",
+            ),
+        ],
+    )
+    @mock_aws
+    def test_inspector_silence_without_proof_keeps_the_match(self, inspector):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=_describe_images_returning(DEMOOS_TINY),
+        ):
+            _, result = _run(open_ssh=True, inspector=inspector)
+
+        assert result[0].status == "FAIL"
+        [threat] = result[0].raw["threats"]
+        assert threat["confirmed_by"] is None
+
+    @mock_aws
+    def test_a_finding_on_another_instance_does_not_confirm_this_one(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=_describe_images_returning(DEMOOS_TINY),
+        ):
+            _, result = _run(
+                open_ssh=True,
+                inspector=inspector_with(["CVE-2026-0101"], scanned=True, on="other"),
+            )
+
+        # Inspector scans this instance and reports the CVE elsewhere only.
+        assert result[0].status == "PASS"
+        assert result[0].raw == {}
+
+    @pytest.mark.parametrize(
+        "public_ip, ipv6, subnet_public, subnet_public_ipv6, expected",
+        [
+            pytest.param("54.0.0.1", [], True, False, True, id="public-ipv4"),
+            pytest.param(None, ["2600:1f18::1"], False, True, True, id="global-ipv6"),
+            pytest.param(
+                None, ["2600:1f18::1"], True, False, False, id="no-ipv6-route"
+            ),
+            pytest.param(None, ["fd00::1"], False, True, False, id="private-ipv6"),
+            pytest.param("54.0.0.1", [], False, True, False, id="private-subnet"),
+        ],
+    )
+    @mock_aws
+    def test_public_route_covers_ipv6(
+        self, public_ip, ipv6, subnet_public, subnet_public_ipv6, expected
+    ):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        subnet = SimpleNamespace(public=subnet_public, public_ipv6=subnet_public_ipv6)
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK}.ec2_client", new=SimpleNamespace()),
+            mock.patch(
+                f"{CHECK}.vpc_client",
+                new=SimpleNamespace(vpc_subnets={"subnet-1": subnet}),
+            ),
+            mock.patch(f"{CHECK}.inspector2_client", new=NO_INSPECTOR),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_emerging_threat_image.ec2_instance_emerging_threat_image import (
+                ec2_instance_emerging_threat_image,
+            )
+
+            instance = SimpleNamespace(
+                public_ip=public_ip, ipv6_addresses=ipv6, subnet_id="subnet-1"
+            )
+            assert (
+                ec2_instance_emerging_threat_image._public_route(instance) is expected
+            )

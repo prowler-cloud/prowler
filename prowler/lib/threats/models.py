@@ -12,6 +12,7 @@ A new threat therefore ships as a signature, not as code: a YAML file in
 
 import re
 from datetime import date
+from functools import lru_cache
 from typing import Annotated, Literal, Optional
 
 import regex
@@ -47,6 +48,12 @@ MAX_IMAGE_NAME = 1024
 #: they use the ``regex`` engine (which defuses most backtracking patterns) and
 #: a pattern that is still slow raises ``TimeoutError`` instead of stalling.
 REGEX_TIMEOUT = 0.1
+
+
+@lru_cache(maxsize=1024)
+def _compiled(pattern: str):
+    """A rule's ``name_regex``, compiled once per scan for every image it is tried on."""
+    return regex.compile(pattern)
 
 
 def parse_version(value: str) -> Version:
@@ -145,7 +152,7 @@ class ImageRule(BaseModel):
     @classmethod
     def _compiles(cls, value: str) -> str:  # noqa: F841
         try:
-            regex.compile(value)
+            _compiled(value)
         except regex.error as error:
             raise ValueError(f"name_regex does not compile: {error}") from error
         return value
@@ -166,7 +173,7 @@ class ImageRule(BaseModel):
         Raises:
             TimeoutError: the regex took longer than ``REGEX_TIMEOUT``.
         """
-        found = regex.compile(self.name_regex).search(
+        found = _compiled(self.name_regex).search(
             name[:MAX_IMAGE_NAME], timeout=REGEX_TIMEOUT
         )
         if not found:
@@ -185,7 +192,7 @@ class ImageRule(BaseModel):
 
     @model_validator(mode="after")
     def _consistent(self) -> "ImageRule":
-        if self.ranges and "version" not in regex.compile(self.name_regex).groupindex:
+        if self.ranges and "version" not in _compiled(self.name_regex).groupindex:
             raise ValueError(
                 "version ranges need a (?P<version>...) group in name_regex"
             )

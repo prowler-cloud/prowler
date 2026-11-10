@@ -97,11 +97,14 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
-                            enis = []
+                            enis, ipv6_addresses = [], []
                             for eni in instance.get("NetworkInterfaces", []):
                                 network_interface_id = eni.get("NetworkInterfaceId")
                                 if network_interface_id:
                                     enis.append(network_interface_id)
+                                for ipv6 in eni.get("Ipv6Addresses", []):
+                                    if ipv6.get("Ipv6Address"):
+                                        ipv6_addresses.append(ipv6["Ipv6Address"])
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -135,6 +138,7 @@ class EC2(AWSService):
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
                                     network_interfaces=enis,
+                                    ipv6_addresses=ipv6_addresses,
                                     virtualization_type=instance.get(
                                         "VirtualizationType"
                                     ),
@@ -835,6 +839,7 @@ class Instance(BaseModel):
     subnet_id: str
     instance_profile: Optional[dict]
     network_interfaces: Optional[list]
+    ipv6_addresses: list[str] = []
     virtualization_type: Optional[str]
     enclaves_enabled: Optional[bool] = False
     hibernation_enabled: Optional[bool] = False
