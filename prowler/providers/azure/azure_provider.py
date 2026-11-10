@@ -19,7 +19,12 @@ from azure.identity import (
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
+from kiota_authentication_azure.azure_identity_authentication_provider import (
+    AzureIdentityAuthenticationProvider,
+)
 from msgraph import GraphServiceClient
+from msgraph.graph_request_adapter import GraphRequestAdapter
+from msgraph_core import GraphClientFactory
 
 from prowler.config.config import (
     default_config_file_path,
@@ -890,6 +895,35 @@ class AzureProvider(Provider):
                     message=f"Missing environment variable {env_var} required to authenticate.",
                 )
 
+    @staticmethod
+    def build_graph_client(
+        credentials, region_config: AzureRegionConfig
+    ) -> GraphServiceClient:
+        """
+        Builds a Microsoft Graph client for the cloud in the region configuration.
+
+        GraphServiceClient(credentials) alone always targets graph.microsoft.com,
+        so the identity lookups would leave a sovereign cloud. Both the token scope
+        and the HTTP transport's host must point at the cloud's own Graph endpoint,
+        as the service clients do in lib/service/service.py.
+
+        Args:
+            credentials: The Azure credential used to request Graph tokens.
+            region_config (AzureRegionConfig): The selected cloud's configuration.
+
+        Returns:
+            GraphServiceClient: A Graph client bound to region_config.graph_host.
+        """
+        auth_provider = AzureIdentityAuthenticationProvider(
+            credentials, scopes=[region_config.graph_scope]
+        )
+        http_client = GraphClientFactory.create_with_default_middleware(
+            host=region_config.graph_host
+        )
+        return GraphServiceClient(
+            request_adapter=GraphRequestAdapter(auth_provider, client=http_client)
+        )
+
     def setup_identity(
         self,
         az_cli_auth,
@@ -928,7 +962,7 @@ class AzureProvider(Provider):
                     logger.info(
                         "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                     )
-                    client = GraphServiceClient(credentials=credentials)
+                    client = self.build_graph_client(credentials, self.region_config)
 
                     domain_result = await client.domains.get()
                     for domain in getattr(domain_result, "value", []):
@@ -970,7 +1004,7 @@ class AzureProvider(Provider):
                         logger.info(
                             "Trying to retrieve user information from AAD to populate identity structure ..."
                         )
-                        client = GraphServiceClient(credentials=credentials)
+                        client = self.build_graph_client(credentials, self.region_config)
 
                         me = await client.me.get()
                         if me:
