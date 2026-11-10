@@ -1015,3 +1015,68 @@ class TestBedrockFlowCollection:
         assert list(bedrock_agent_service.flows) == [
             "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001"
         ]
+
+    def test_get_flow_collects_nodes_nested_in_loop(self):
+        """Prompt nodes inside a Loop definition must be collected too."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import Flow
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        regional_client.get_flow.return_value = {
+            "id": self.FLOW_ID,
+            "name": "loop-flow",
+            "arn": self.FLOW_ARN,
+            "definition": {
+                "nodes": [
+                    {
+                        "name": "prompt-node",
+                        "type": "Prompt",
+                        "configuration": {
+                            "prompt": {
+                                "guardrailConfiguration": {
+                                    "guardrailIdentifier": "gr-prompt",
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "name": "loop-node",
+                        "type": "Loop",
+                        "configuration": {
+                            "loop": {
+                                "definition": {
+                                    "nodes": [
+                                        {
+                                            "name": "loop-input",
+                                            "type": "LoopInput",
+                                            "configuration": {"loopInput": {}},
+                                        },
+                                        {
+                                            "name": "inner-prompt",
+                                            "type": "Prompt",
+                                            "configuration": {"prompt": {}},
+                                        },
+                                    ]
+                                }
+                            }
+                        },
+                    },
+                ]
+            },
+        }
+
+        flow = Flow(
+            id=self.FLOW_ID,
+            name="loop-flow",
+            arn=self.FLOW_ARN,
+            region="us-east-1",
+        )
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_agent_service._get_flow(flow)
+
+        assert flow.definition_available is True
+        by_name = {node.name: node for node in flow.nodes}
+        assert set(by_name) == {"prompt-node", "inner-prompt"}
+        assert by_name["prompt-node"].guardrail_id == "gr-prompt"
+        assert by_name["inner-prompt"].guardrail_id is None

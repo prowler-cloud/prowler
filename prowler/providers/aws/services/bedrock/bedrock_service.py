@@ -661,7 +661,13 @@ class BedrockAgent(AWSService):
             if definition is None:
                 return
             nodes = []
-            for node in definition.get("nodes", []):
+            # Loop nodes carry their own nested definition, so walk those too.
+            pending_nodes = list(definition.get("nodes", []))
+            for node in pending_nodes:
+                if node.get("type") == "Loop":
+                    loop = (node.get("configuration") or {}).get("loop") or {}
+                    loop_definition = loop.get("definition") or {}
+                    pending_nodes.extend(loop_definition.get("nodes", []))
                 parsed = self._flow_node_from_definition(node)
                 if parsed:
                     nodes.append(parsed)
