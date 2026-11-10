@@ -400,7 +400,7 @@ constraint-dependencies = [
   "pyyaml==6.0.3",
   "redis==7.1.0",
   "referencing==0.37.0",
-  "regex==2026.1.15",
+  "regex==2026.5.9",
   "reportlab==4.4.10",
   "requests==2.33.1",
   "requests-file==3.0.1",
