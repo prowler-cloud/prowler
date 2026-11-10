@@ -1671,6 +1671,10 @@ def test_security_rule_exposes_port_reads_plural_ranges_and_wildcard():
         22,
     )
     assert security_rule_exposes_port(
+        SimpleNamespace(destination_port_range="20-22", destination_port_ranges=None),
+        22,
+    )
+    assert security_rule_exposes_port(
         SimpleNamespace(destination_port_range="*", destination_port_ranges=None), 443
     )
     assert security_rule_exposes_port(

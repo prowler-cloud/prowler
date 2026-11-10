@@ -55,7 +55,7 @@ class Test_network_udp_internet_access_restricted:
                     security_rules=[
                         SecurityRule(
                             destination_port_range=None,
-                            protocol="TCP",
+                            protocol="UDP",
                             source_address_prefix=None,
                             access="Allow",
                             direction="Inbound",
