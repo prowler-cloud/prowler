@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import {
+  isReportDownloadLocked,
+  REPORT_DOWNLOAD_LOCKED_ERROR,
+} from "@/lib/report-download-access";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -63,6 +67,14 @@ export async function GET(
   { params }: ScanReportRouteContext,
 ) {
   const { scanId } = await params;
+
+  if (await isReportDownloadLocked()) {
+    return new Response(REPORT_DOWNLOAD_LOCKED_ERROR, {
+      status: 403,
+      headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
+    });
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const upstreamUrl = `${apiBaseUrl}/scans/${encodeURIComponent(scanId)}/report`;
   const isPreflight =

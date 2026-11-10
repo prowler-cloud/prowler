@@ -28,7 +28,13 @@ class calendar_external_sharing_primary_calendar(Check):
 
             sharing = calendar_client.policies.primary_calendar_external_sharing
 
-            if sharing == "EXTERNAL_FREE_BUSY_ONLY":
+            if calendar_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Calendar is turned off for everyone in domain "
+                    f"{calendar_client.provider.identity.domain}, so no calendar can be shared outside the organization."
+                )
+            elif sharing == "EXTERNAL_FREE_BUSY_ONLY":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Primary calendar external sharing in domain "

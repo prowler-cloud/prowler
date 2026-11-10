@@ -1,0 +1,37 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "workers_script_observability_enabled",
+  "CheckTitle": "Cloudflare Worker has Workers Logs enabled",
+  "CheckType": [],
+  "ServiceName": "workers",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Worker",
+  "ResourceGroup": "serverless",
+  "Description": "**Cloudflare Workers scripts** are assessed for **Workers Logs** (observability) by checking that observability and Workers Logs are enabled, invocation logs are recorded, and the log sampling rate is above zero, so that requests, `console` output and exceptions are persisted.",
+  "Risk": "Without **Workers Logs**, Worker executions leave no persistent trail.\n- **Detection**: abuse, injection attempts or data exfiltration through the Worker go unnoticed\n- **Forensics**: incident responders cannot reconstruct what the Worker processed or returned\n- **Availability**: runtime errors are harder to diagnose, prolonging outages",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/workers/observability/logs/workers-logs/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to Workers & Pages and select the Worker\n3. Open Settings > Observability\n4. Enable Workers Logs and save\n5. Alternatively, set `[observability] enabled = true` in the Wrangler configuration and redeploy",
+      "Terraform": "```hcl\nresource \"cloudflare_workers_script\" \"example\" {\n  account_id  = \"<ACCOUNT_ID>\"\n  script_name = \"example-worker\"\n  content     = file(\"worker.js\")\n\n  observability = {\n    enabled = true # Critical: persists invocation logs for detection and forensics\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Workers Logs** on every production Worker.\n- Keep invocation logs enabled and tune `head_sampling_rate` only where volume requires it\n- Forward logs to a SIEM with **Logpush** for long-term retention\n- Avoid logging secrets or personal data from the Worker code",
+      "Url": "https://hub.prowler.com/checks/cloudflare/workers_script_observability_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Omitted settings use the API defaults: logs follow the observability setting, invocation logs default to enabled and sampling rates default to 1. Accounts whose Worker settings could not be retrieved get one MANUAL finding."
+}

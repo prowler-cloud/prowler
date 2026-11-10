@@ -72,6 +72,24 @@ describe("useLighthouseContextStore", () => {
     expect(useLighthouseContextStore.getState().focused).toBeNull();
   });
 
+  it("should never hand Lighthouse a focused sample record", () => {
+    // Given
+    const { setFocusedContext } = useLighthouseContextStore.getState();
+
+    // When: the resource drawer opens on a sample finding.
+    setFocusedContext(1, {
+      kind: "finding",
+      id: "sample-finding-s3_bucket_public_access-1",
+      source: "focused",
+      scopeKey: "findings:/findings",
+      label: "Focused finding",
+      findingId: "sample-finding-s3_bucket_public_access-1",
+    });
+
+    // Then
+    expect(useLighthouseContextStore.getState().focused).toBeNull();
+  });
+
   it("should reject focus updates from an older detail panel", () => {
     // Given
     const { clearFocusedContext, setFocusedContext } =

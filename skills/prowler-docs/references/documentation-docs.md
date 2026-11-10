@@ -2,14 +2,8 @@
 
 ## Local Documentation
 
-For documentation writing standards, see:
-
-- `docs/developer-guide/documentation.mdx` - Mintlify-based documentation and local development setup
-
-## Contents
-
-The documentation covers:
-- Mintlify documentation system
-- Local documentation development
-- Style guide and conventions
-- MDX file structure
+- `docs/AGENTS.md` - Full writing style guide (brand voice, naming, capitalization, Version Badge, AppliesTo, cloud marker)
+- `docs/developer-guide/documentation.mdx` - Mintlify documentation structure and local development
+- `docs/README.md` - Mintlify CLI version and local preview
+- `docs/docs.json` - Navigation (tabs, groups, pages) and redirects
+- `docs/snippets/` - Reusable MDX components

@@ -198,6 +198,9 @@ export class SignInPage extends BasePage {
    */
   async loginAndVerify(credentials: SignInCredentials): Promise<void> {
     await this.goto();
+    // Like the auth setups: the E2E tenant owns no providers, so a fresh
+    // context would otherwise land on the add-provider wizard, not Overview.
+    await this.skipFirstRunRedirect();
     await this.login(credentials);
     await this.verifySuccessfulLogin();
   }
@@ -395,7 +398,10 @@ export class SignInPage extends BasePage {
       );
     }
 
-    await this.loginAndVerify(credentials);
+    await this.goto();
+    await this.skipFirstRunRedirect();
+    await this.login(credentials);
+    await this.verifySuccessfulLogin();
     await this.page.context().storageState({ path: storagePath });
   }
 }

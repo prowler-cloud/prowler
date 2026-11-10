@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "account_member_two_factor_enabled",
+  "CheckTitle": "Cloudflare account member has two-factor authentication enabled",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AccountMember",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare account members** are assessed for **two-factor authentication (2FA)** by checking whether each accepted member's user has a second factor configured.",
+  "Risk": "Members without **2FA** can be taken over with a single stolen password.\n- **Confidentiality**: access to DNS, certificates, logs and API tokens\n- **Integrity**: unauthorized changes to zones, firewall rules and Workers\n- **Privilege escalation**: administrators can create new tokens or invite attacker-controlled members",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/user-profiles/2fa/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Ask the member to log in to the Cloudflare dashboard\n2. Go to My Profile > Authentication\n3. Configure a security key or a TOTP authenticator app\n4. Save the backup codes in a secure location\n5. Alternatively, enable account-wide 2FA enforcement under Manage Account > Members",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require **two-factor authentication** for every member.\n- Enable account-wide 2FA enforcement so new members cannot opt out\n- Prefer phishing-resistant **security keys**\n- Remove members who no longer need access",
+      "Url": "https://hub.prowler.com/checks/cloudflare/account_member_two_factor_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Pending invitations and members whose 2FA status is not returned by the API are not reported."
+}

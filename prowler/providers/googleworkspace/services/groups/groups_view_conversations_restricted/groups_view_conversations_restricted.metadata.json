@@ -36,5 +36,5 @@
     "groups_external_access_restricted",
     "groups_creation_restricted"
   ],
-  "Notes": ""
+  "Notes": "When Groups for Business is turned off for everyone, the check passes: the setting only governs who can read conversations in the Google Groups app, which is off. Existing groups keep delivering mail to their members."
 }

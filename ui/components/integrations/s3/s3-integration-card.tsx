@@ -5,9 +5,14 @@ import Link from "next/link";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { isCloud } from "@/lib/shared/env";
 
 export const S3IntegrationCard = () => {
+  // Adding S3 integrations needs Prowler Cloud; existing ones stay manageable.
+  const isCloudOnly = !isCloud();
+
   return (
     <Card variant="base" padding="lg">
       <CardHeader>
@@ -15,9 +20,16 @@ export const S3IntegrationCard = () => {
           <div className="flex items-center gap-3">
             <AmazonS3Icon size={40} />
             <div className="flex flex-col gap-1">
-              <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                Amazon S3
-              </h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  Amazon S3
+                </h4>
+                {isCloudOnly && (
+                  <Badge variant="cloud" size="sm">
+                    Cloud
+                  </Badge>
+                )}
+              </div>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                 <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Export security findings to Amazon S3 buckets.

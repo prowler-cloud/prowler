@@ -111,6 +111,23 @@ function toApiContextItem(
         new_failed: item.newFailed,
         severity_counts: item.severityCounts,
       });
+    case LIGHTHOUSE_CONTEXT_KIND.ISSUE:
+      return compact({
+        ...base,
+        issue_id: item.issueId,
+        title: item.title,
+        pattern: item.pattern,
+        verdict: item.verdict,
+        severity: item.severity,
+        attacker_start: item.attackerStart,
+        outcome: item.outcome,
+        suggested_fix: item.suggestedFix,
+        provider_uid: item.providerUid,
+        scan_id: item.scanId,
+        findings_count: item.findingsCount,
+        legs: item.legs,
+        finding_ids: item.findingIds,
+      });
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return compact({
         ...base,
@@ -172,6 +189,10 @@ function toApiContextItem(
         provider_uid: item.providerUid,
         provider_type: item.providerType,
         total: item.total,
+        wizard_step: item.wizardStep,
+        wizard_mode: item.wizardMode,
+        connection_method: item.connectionMethod,
+        docs_url: item.docsUrl,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ALERT:
       return compact({
@@ -219,6 +240,23 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         newPassed: value.new_passed,
         newFailed: value.new_failed,
         severityCounts: value.severity_counts,
+      });
+    case LIGHTHOUSE_CONTEXT_KIND.ISSUE:
+      return compact({
+        ...base,
+        issueId: value.issue_id,
+        title: value.title,
+        pattern: value.pattern,
+        verdict: value.verdict,
+        severity: value.severity,
+        attackerStart: value.attacker_start,
+        outcome: value.outcome,
+        suggestedFix: value.suggested_fix,
+        providerUid: value.provider_uid,
+        scanId: value.scan_id,
+        findingsCount: value.findings_count,
+        legs: value.legs,
+        findingIds: value.finding_ids,
       });
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return compact({
@@ -281,6 +319,10 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         providerUid: value.provider_uid,
         providerType: value.provider_type,
         total: value.total,
+        wizardStep: value.wizard_step,
+        wizardMode: value.wizard_mode,
+        connectionMethod: value.connection_method,
+        docsUrl: value.docs_url,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ALERT:
       return compact({

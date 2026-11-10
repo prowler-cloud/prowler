@@ -1,5 +1,5 @@
 import base64
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -594,6 +594,7 @@ class NotebookInstance(BaseModel):
     lifecycle_config_name: str = None
     # Decoded lifecycle scripts keyed by "<hook>[<index>]" (e.g. "OnStart[0]"),
     # populated by _describe_notebook_instance_lifecycle_config.
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("lifecycle_scripts",)
     lifecycle_scripts: dict = {}
     # True if the lifecycle configuration could not be fully described/decoded,
     # so the secrets check reports MANUAL instead of a false PASS.

@@ -1,5 +1,5 @@
-# Example: GCP Cloud Storage Bucket Versioning Check
-# Source: prowler/providers/gcp/services/cloudstorage/cloudstorage_bucket_versioning_enabled/
+# Example: GCP Cloud Storage bucket versioning check
+# Source: prowler/providers/gcp/services/cloudstorage/cloudstorage_bucket_versioning_enabled/cloudstorage_bucket_versioning_enabled.py
 
 from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.cloudstorage.cloudstorage_client import (
@@ -8,7 +8,11 @@ from prowler.providers.gcp.services.cloudstorage.cloudstorage_client import (
 
 
 class cloudstorage_bucket_versioning_enabled(Check):
-    """Ensure Cloud Storage buckets have Object Versioning enabled."""
+    """
+    Ensure Cloud Storage buckets have Object Versioning enabled.
+
+    Reports PASS if a bucket has versioning enabled, otherwise FAIL.
+    """
 
     def execute(self) -> list[Check_Report_GCP]:
         findings = []

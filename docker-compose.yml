@@ -15,6 +15,7 @@ services:
   api:
     hostname: "prowler-api"
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: unless-stopped
     env_file:
       - path: .env
         required: false
@@ -44,6 +45,7 @@ services:
 
   ui:
     image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
+    restart: unless-stopped
     env_file:
       - path: .env
         required: false
@@ -61,6 +63,7 @@ services:
 
   postgres:
     image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    restart: unless-stopped
     hostname: "postgres-db"
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
@@ -81,6 +84,7 @@ services:
 
   valkey:
     image: valkey/valkey:8-alpine@sha256:a038175878d66b9d274fbf8be73c0305e93798b83917647f167e18cef3c71eec
+    restart: unless-stopped
     hostname: "valkey"
     volumes:
       - ./_data/valkey:/data
@@ -97,6 +101,7 @@ services:
 
   neo4j:
     image: graphstack/dozerdb:5.26.27.0@sha256:9b54d6b3a98a76c00bd23e8e78d8c82081ff168162aebd47b25c234e092cb0a0
+    restart: unless-stopped
     hostname: "neo4j"
     volumes:
       - ./_data/neo4j:/data
@@ -129,6 +134,7 @@ services:
 
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: unless-stopped
     # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
     stop_grace_period: 120s
     env_file:
@@ -149,6 +155,7 @@ services:
 
   worker-beat:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: unless-stopped
     env_file:
       - path: ./.env
         required: false
@@ -165,6 +172,7 @@ services:
 
   mcp-server:
     image: prowlercloud/prowler-mcp:${PROWLER_MCP_VERSION:-stable}
+    restart: unless-stopped
     environment:
       - PROWLER_MCP_TRANSPORT_MODE=http
     env_file:
