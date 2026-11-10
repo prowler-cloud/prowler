@@ -7,7 +7,6 @@ import { useState } from "react";
 import {
   loadFindingTriageDetail,
   loadLatestFindingTriageNote,
-  updateFindingTriage,
 } from "@/actions/findings";
 import { FloatingSelectionActions } from "@/components/findings/floating-selection-actions";
 import { FindingDetailDrawer } from "@/components/findings/table";
@@ -36,6 +35,7 @@ import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-pan
 import { useFindingDetails } from "@/hooks/use-finding-details";
 import { getGroupLabel } from "@/lib/categories";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
@@ -148,7 +148,7 @@ export const ResourceDetailContent = ({
   };
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    const result = await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
 
     if (shouldRefreshAfterTriageUpdate(input)) {
       setFindingsReloadNonce((value) => value + 1);

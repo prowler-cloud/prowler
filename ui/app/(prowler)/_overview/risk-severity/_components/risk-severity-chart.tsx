@@ -77,15 +77,12 @@ export const RiskSeverityChart = ({
   ];
 
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[372px] w-full min-w-0 flex-1 flex-col lg:w-auto lg:min-w-[485px]"
-    >
+    <Card variant="base" className="flex min-h-[372px] w-full min-w-0 flex-col">
       <CardHeader>
         <CardTitle>Risk Severity</CardTitle>
       </CardHeader>
 
-      <CardContent className="flex flex-1 items-center justify-start px-6">
+      <CardContent className="flex flex-1 items-center justify-start">
         <HorizontalBarChart data={chartData} onBarClick={handleBarClick} />
       </CardContent>
     </Card>

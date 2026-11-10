@@ -1,0 +1,266 @@
+import { act, render, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  FIRST_RUN_MAX_ATTEMPTS,
+  isFirstRunHandled,
+} from "@/lib/provider-funnel/first-run-marker";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_STEP,
+  WIZARD_OPEN_SOURCE,
+} from "@/lib/provider-funnel/provider-funnel-events";
+
+import { FirstRunRedirect } from "./first-run-redirect";
+
+const replaceMock = vi.fn();
+const pathnameMock = vi.fn();
+const permissionsMock = vi.fn();
+
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({ permissions: permissionsMock() }),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
+  usePathname: () => pathnameMock(),
+}));
+
+const TENANT_A = "11111111-1111-4111-8111-111111111111";
+const TENANT_B = "22222222-2222-4222-8222-222222222222";
+
+const FIRST_RUN_HREF =
+  "/providers?addProvider=true&addProviderSource=first_run";
+
+const openWizard = () =>
+  act(() => {
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.WIZARD_OPENED,
+      source: WIZARD_OPEN_SOURCE.FIRST_RUN,
+    });
+  });
+
+describe("FirstRunRedirect", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    replaceMock.mockClear();
+    pathnameMock.mockReturnValue("/");
+    permissionsMock.mockReturnValue({ manage_providers: true });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  describe("when the tenant has no providers and never went through the first run", () => {
+    it.each(["true", "false"])(
+      "opens the add-provider wizard (UI_CLOUD_ENABLED=%s)",
+      async (cloudEnabled) => {
+        // Given
+        vi.stubEnv("UI_CLOUD_ENABLED", cloudEnabled);
+
+        // When
+        render(<FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />);
+
+        // Then
+        await waitFor(() =>
+          expect(replaceMock).toHaveBeenCalledExactlyOnceWith(FIRST_RUN_HREF),
+        );
+      },
+    );
+
+    it("tries again on the next load when the wizard never opened (the navigation was cut short)", async () => {
+      // Given
+      const { unmount } = render(
+        <FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />,
+      );
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />);
+
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(FIRST_RUN_HREF),
+      );
+      expect(isFirstRunHandled(TENANT_A)).toBe(false);
+    });
+
+    it("is resolved once the add-provider wizard opens, so later loads leave the user alone", async () => {
+      // Given
+      const { unmount } = render(
+        <FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />,
+      );
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      openWizard();
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />);
+
+      // Then
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it("gives up after a few attempts that never reached the wizard, so no browser is trapped", async () => {
+      // Given: three loads whose navigation never completed.
+      for (let attempt = 0; attempt < FIRST_RUN_MAX_ATTEMPTS; attempt++) {
+        const { unmount } = render(
+          <FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />,
+        );
+        await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+        unmount();
+        replaceMock.mockClear();
+      }
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />);
+
+      // Then
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it.each(["true", "1legacy", "-1"])(
+      "honours a browser-wide marker holding %s",
+      (value) => {
+        // Given: e2e storage state sets the bare key.
+        window.localStorage.setItem("prowler.first-run", value);
+
+        // When
+        render(<FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />);
+
+        // Then
+        expect(replaceMock).not.toHaveBeenCalled();
+        expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      },
+    );
+
+    it("still runs for a different empty tenant on the same browser", async () => {
+      // Given: tenant A went through its first run on this browser.
+      const { unmount } = render(
+        <FirstRunRedirect hasProviders={false} tenantId={TENANT_A} />,
+      );
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      openWizard();
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} tenantId={TENANT_B} />);
+
+      // Then
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      expect(isFirstRunHandled(TENANT_B)).toBe(false);
+    });
+
+    it("tries again on the next load with no tenant id available", async () => {
+      // Given
+      const { unmount } = render(<FirstRunRedirect hasProviders={false} />);
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} />);
+
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(FIRST_RUN_HREF),
+      );
+      expect(isFirstRunHandled()).toBe(false);
+    });
+  });
+
+  describe("on billing routes", () => {
+    it.each(["/billing", "/billing/", "/billing/checkout"])(
+      "defers the first run on %s without resolving it",
+      (pathname) => {
+        // Given
+        pathnameMock.mockReturnValue(pathname);
+
+        // When
+        render(<FirstRunRedirect hasProviders={false} />);
+
+        // Then
+        expect(replaceMock).not.toHaveBeenCalled();
+        expect(isFirstRunHandled()).toBe(false);
+      },
+    );
+
+    it("sends the user to add a provider after leaving billing, without remounting", async () => {
+      // Given
+      pathnameMock.mockReturnValue("/billing");
+      const { rerender } = render(<FirstRunRedirect hasProviders={false} />);
+
+      // When
+      pathnameMock.mockReturnValue("/");
+      rerender(<FirstRunRedirect hasProviders={false} />);
+
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(FIRST_RUN_HREF),
+      );
+    });
+
+    it("does not defer on a route that only shares the billing prefix", async () => {
+      // Given
+      pathnameMock.mockReturnValue("/billing-history");
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} />);
+
+      // Then
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+    });
+  });
+
+  describe("when the user cannot add providers", () => {
+    it("leaves the user where they are, since an empty list may just be limited visibility", () => {
+      // Given
+      permissionsMock.mockReturnValue({ manage_providers: false });
+
+      // When
+      render(<FirstRunRedirect hasProviders={false} />);
+
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(isFirstRunHandled()).toBe(false);
+    });
+  });
+
+  describe("when the tenant already has providers", () => {
+    it("leaves the user where they are", () => {
+      // Given / When
+      render(<FirstRunRedirect hasProviders />);
+
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(isFirstRunHandled()).toBe(false);
+    });
+  });
+
+  describe("when the provider count is unknown (fail-open)", () => {
+    it("leaves the user where they are when the fetch failed", () => {
+      // Given / When
+      render(<FirstRunRedirect hasProviders={undefined} />);
+
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it("can be mounted with the prop omitted entirely", () => {
+      // Given / When
+      render(<FirstRunRedirect />);
+
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+    });
+  });
+});

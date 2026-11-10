@@ -25,6 +25,7 @@ from api.compliance import (
     COMPLIANCE_WARMING_STARTED,
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_prowler_check_title,
     get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
@@ -161,6 +162,7 @@ from api.v1.serializers import (
     AttackPathsQuerySerializer,
     AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
+    AuthorizationCodeSocialLoginSerializer,
     CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -609,6 +611,7 @@ class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = CustomOAuth2Client
     callback_url = GOOGLE_OAUTH_CALLBACK_URL
+    serializer_class = AuthorizationCodeSocialLoginSerializer
 
     def get_response(self):
         original_response = super().get_response()
@@ -638,6 +641,7 @@ class GithubSocialLoginView(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
     client_class = CustomOAuth2Client
     callback_url = GITHUB_OAUTH_CALLBACK_URL
+    serializer_class = AuthorizationCodeSocialLoginSerializer
 
     def get_response(self):
         original_response = super().get_response()
@@ -808,7 +812,9 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
     """
 
     serializer_class = SAMLConfigurationSerializer
-    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    # The IdP behind this configuration decides who signs in and which role
+    # they get, so writing it is account administration, not an integration.
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
     queryset = SAMLConfiguration.objects.all()
 
     def get_queryset(self):
@@ -8021,7 +8027,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
                 .values("check_id", "check_title", "check_description")
             }
             for row in rows:
-                metadata = metadata_by_check.get(row["check_id"], {})
+                # A tenant's first scan writes no summaries until it completes.
+                metadata = metadata_by_check.get(
+                    row["check_id"]
+                ) or get_prowler_check_title(
+                    row["check_id"],
+                    (row.get("impacted_providers_str") or "").split(","),
+                )
                 row["check_title"] = metadata.get("check_title")
                 row["check_description"] = metadata.get("check_description")
 

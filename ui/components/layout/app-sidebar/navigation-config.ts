@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   MessageCircleQuestion,
   Package,
+  Radar,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -35,8 +36,6 @@ interface NavigationConfigOptions {
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
   registryEligible?: boolean;
-  // PostHog FEATURE_FLAG.ISSUES, resolved by the caller; Cloud only.
-  issuesEnabled?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -113,7 +112,6 @@ export function getNavigationConfig({
   apiDocsUrl = null,
   cloudBillingEnabled = false,
   registryEligible = false,
-  issuesEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -149,6 +147,31 @@ export function getNavigationConfig({
     {
       label: "SECURITY",
       items: [
+        // First: the exploitable issues are what to fix before anything else.
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Exploitability issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/realtime",
+                label: "Realtime",
+                icon: Radar,
+                active: isRouteActive(pathname, "/realtime"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/compliance",
@@ -163,18 +186,6 @@ export function getNavigationConfig({
           icon: Tag,
           active: isRouteActive(pathname, "/findings"),
         },
-        ...(isCloudEnvironment && issuesEnabled
-          ? [
-              {
-                kind: NAVIGATION_ITEM_KIND.LINK,
-                href: "/issues",
-                label: "Issues",
-                icon: Crosshair,
-                active: isRouteActive(pathname, "/issues"),
-                highlight: true,
-              } as const,
-            ]
-          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/attack-paths",

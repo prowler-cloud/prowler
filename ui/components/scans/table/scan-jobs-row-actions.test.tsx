@@ -338,6 +338,33 @@ describe("ScanJobsRowActions", () => {
     );
   });
 
+  it("links executing scans to the findings stored so far", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "executing",
+          started_at: "2026-01-01T09:50:00Z",
+        })}
+        tab="active"
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: /view early findings/i }),
+    );
+
+    // Then
+    expect(pushMock).toHaveBeenCalledWith(
+      "/findings?filter[scan__in]=scan-1&filter[status__in]=FAIL",
+    );
+  });
+
   it("disables View Findings when the completed scan has no completion timestamp", async () => {
     // Given
     const user = userEvent.setup();

@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getAllProviders, getAllProviderGroups, notFound } = vi.hoisted(() => ({
+const {
+  getAllProviders,
+  getAllProviderGroups,
+  getSamplePreviewState,
+  notFound,
+} = vi.hoisted(() => ({
   getAllProviders: vi.fn(),
   getAllProviderGroups: vi.fn(),
+  getSamplePreviewState: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NOT_FOUND");
   }),
@@ -22,6 +28,12 @@ vi.mock("@/components/shadcn/content-layout", () => ({
   ContentLayout: () => null,
 }));
 vi.mock("./_components/issues-list", () => ({ IssuesList: () => null }));
+vi.mock("@/components/shared/sample-preview/sample-preview-banner", () => ({
+  SamplePreviewBanner: () => null,
+}));
+vi.mock("@/lib/sample-preview/get-sample-preview-state", () => ({
+  getSamplePreviewState,
+}));
 
 import Issues from "./page";
 
@@ -29,6 +41,7 @@ describe("Issues deployment availability", () => {
   beforeEach(() => {
     getAllProviders.mockResolvedValue({ data: [] });
     getAllProviderGroups.mockResolvedValue({ data: [] });
+    getSamplePreviewState.mockResolvedValue({ active: false });
   });
   it("returns not found before loading data in Local Server", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
@@ -44,5 +57,16 @@ describe("Issues deployment availability", () => {
     expect(notFound).not.toHaveBeenCalled();
     expect(getAllProviders).toHaveBeenCalledOnce();
     expect(getAllProviderGroups).toHaveBeenCalledOnce();
+  });
+  it("skips the scope controls' data while the sample is shown", async () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    getSamplePreviewState.mockResolvedValue({
+      active: true,
+      stage: "no_provider",
+      runningScan: null,
+    });
+    await Issues({ searchParams: Promise.resolve({}) });
+    expect(getAllProviders).not.toHaveBeenCalled();
+    expect(getAllProviderGroups).not.toHaveBeenCalled();
   });
 });

@@ -4,14 +4,14 @@ import { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
-import { filterInvitations } from "@/components/filters/data-filters";
+import { InvitationsFilters } from "@/app/(prowler)/invitations/_components/invitations-filters";
 import {
   ColumnsInvitation,
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
 import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/shadcn/content-layout";
-import { DataTable, DataTableFilterCustom } from "@/components/shadcn/table";
+import { DataTable } from "@/components/shadcn/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
 
 export default async function Invitations({
@@ -26,10 +26,7 @@ export default async function Invitations({
     <ContentLayout title="Invitations" icon={<Mail />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-between">
-          <DataTableFilterCustom
-            filters={filterInvitations || []}
-            gridClassName="w-fit grid-cols-[14rem_auto] items-center gap-4 sm:grid-cols-[14rem_auto] lg:grid-cols-[14rem_auto] xl:grid-cols-[14rem_auto] 2xl:grid-cols-[14rem_auto]"
-          />
+          <InvitationsFilters />
 
           <Button asChild>
             <Link href="/invitations/new">Send Invitation</Link>

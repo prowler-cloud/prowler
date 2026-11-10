@@ -30,7 +30,10 @@ export function useFindingDetails(): UseFindingDetailsReturn {
     if (findingFetchRef.current) {
       findingFetchRef.current.abort();
     }
-    findingFetchRef.current = new AbortController();
+    // Each lookup checks its own controller: the ref already points at a
+    // newer lookup by the time a slow one answers.
+    const controller = new AbortController();
+    findingFetchRef.current = controller;
     setFindingDetailLoading(true);
 
     try {
@@ -39,7 +42,7 @@ export function useFindingDetails(): UseFindingDetailsReturn {
         "resources,scan.provider",
       );
 
-      if (findingFetchRef.current?.signal.aborted) {
+      if (controller.signal.aborted) {
         return;
       }
 
@@ -52,13 +55,14 @@ export function useFindingDetails(): UseFindingDetailsReturn {
       }
       console.error("Error fetching finding:", error);
     } finally {
-      if (!findingFetchRef.current?.signal.aborted) {
+      if (!controller.signal.aborted) {
         setFindingDetailLoading(false);
       }
     }
   };
 
   const resetFindingDetails = () => {
+    findingFetchRef.current?.abort();
     setFindingDetails(null);
     setFindingDetailLoading(false);
   };
