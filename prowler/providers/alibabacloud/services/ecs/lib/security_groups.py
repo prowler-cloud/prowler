@@ -3,6 +3,18 @@ def is_public_cidr(cidr: str) -> bool:
     return cidr in ("0.0.0.0/0", "::/0")
 
 
+def rule_source_is_public(rule: dict) -> bool:
+    """Return whether an ingress rule allows every IPv4 or IPv6 address.
+
+    Alibaba stores those sources on different attributes. A rule open only
+    through ipv6_source_cidr_ip is still public.
+    """
+    for field in ("source_cidr_ip", "ipv6_source_cidr_ip"):
+        if is_public_cidr(str(rule.get(field) or "")):
+            return True
+    return False
+
+
 def port_in_range(port_range: str, target_port: int) -> bool:
     """
     Check if target_port is within the provided port range.

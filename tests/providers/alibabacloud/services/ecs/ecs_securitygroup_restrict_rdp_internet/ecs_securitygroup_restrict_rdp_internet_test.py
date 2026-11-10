@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from tests.providers.alibabacloud.alibabacloud_fixtures import (
     set_mocked_alibabacloud_provider,
 )
@@ -92,7 +94,15 @@ class TestEcsSecurityGroupRestrictRdpInternet:
             assert len(result) == 1
             assert result[0].status == "PASS"
 
-    def test_all_port_range_open_to_internet_fails(self):
+    @pytest.mark.parametrize(
+        "source",
+        [
+            {"source_cidr_ip": "0.0.0.0/0"},
+            {"source_cidr_ip": "::/0"},
+            {"ipv6_source_cidr_ip": "::/0"},
+        ],
+    )
+    def test_all_port_range_open_to_internet_fails(self, source):
         ecs_client = mock.MagicMock()
         ecs_client.security_groups = {}
 
@@ -121,9 +131,9 @@ class TestEcsSecurityGroupRestrictRdpInternet:
                 ingress_rules=[
                     {
                         "ip_protocol": "tcp",
-                        "source_cidr_ip": "::/0",
                         "port_range": "-1/-1",
                         "policy": "Accept",
+                        **source,
                     }
                 ],
             )

@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from tests.providers.alibabacloud.alibabacloud_fixtures import (
     set_mocked_alibabacloud_provider,
 )
@@ -94,7 +96,15 @@ class TestEcsSecurityGroupRestrictSSHInternet:
             assert result[0].status == "PASS"
             assert "does not have SSH port 22 open" in result[0].status_extended
 
-    def test_all_port_range_open_to_internet_fails(self):
+    @pytest.mark.parametrize(
+        "source",
+        [
+            {"source_cidr_ip": "0.0.0.0/0"},
+            {"source_cidr_ip": "::/0"},
+            {"ipv6_source_cidr_ip": "::/0"},
+        ],
+    )
+    def test_all_port_range_open_to_internet_fails(self, source):
         ecs_client = mock.MagicMock()
         ecs_client.security_groups = {}
 
@@ -123,9 +133,9 @@ class TestEcsSecurityGroupRestrictSSHInternet:
                 ingress_rules=[
                     {
                         "ip_protocol": "tcp",
-                        "source_cidr_ip": "0.0.0.0/0",
                         "port_range": "-1/-1",
                         "policy": "Accept",
+                        **source,
                     }
                 ],
             )
