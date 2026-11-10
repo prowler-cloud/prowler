@@ -316,7 +316,7 @@ constraints = [
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "redis", specifier = "==7.1.0" },
     { name = "referencing", specifier = "==0.37.0" },
-    { name = "regex", specifier = "==2026.1.15" },
+    { name = "regex", specifier = "==2026.5.9" },
     { name = "reportlab", specifier = "==4.4.10" },
     { name = "requests", specifier = "==2.33.1" },
     { name = "requests-file", specifier = "==3.0.1" },
