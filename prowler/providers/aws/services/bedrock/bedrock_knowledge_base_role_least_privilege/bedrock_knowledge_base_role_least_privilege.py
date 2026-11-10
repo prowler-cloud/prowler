@@ -1,3 +1,5 @@
+from py_iam_expand.actions import InvalidActionHandling, expand_actions
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.bedrock.bedrock_agent_client import (
     bedrock_agent_client,
@@ -8,6 +10,37 @@ from prowler.providers.aws.services.iam.lib.policy import (
     check_full_service_access,
     iam_pattern_matches,
 )
+
+
+def _expand_bedrock_actions(pattern: str) -> set[str]:
+    """Expand an action pattern to the concrete Bedrock actions it grants.
+
+    A bare ``*`` is narrowed to ``bedrock:*``: this check only evaluates the
+    Bedrock part of what a statement grants.
+    """
+    target = "bedrock:*" if pattern.strip() == "*" else pattern
+    return set(expand_actions(target, InvalidActionHandling.REMOVE))
+
+
+def _is_denied(pattern: str, deny_patterns: set[str]) -> bool:
+    """Whether the unscoped Denies cover every Bedrock action ``pattern`` grants.
+
+    Coverage is proven on the expanded actions, not by matching the two
+    wildcard patterns against each other. When the pattern cannot be expanded,
+    coverage cannot be proven and the finding is kept, unless it is a concrete
+    action name that a Deny matches directly.
+    """
+    if not deny_patterns:
+        return False
+    actions = _expand_bedrock_actions(pattern)
+    if not actions:
+        if "*" in pattern or "?" in pattern:
+            return False
+        actions = {pattern}
+    return all(
+        any(iam_pattern_matches(deny, action) for deny in deny_patterns)
+        for action in actions
+    )
 
 
 def _unscoped_deny_patterns(document: dict) -> set[str]:
@@ -63,8 +96,8 @@ def _broad_bedrock_violations(document: dict, deny_patterns: set[str]) -> list[s
 
     # check_full_service_access only honours Denies in the same document, so
     # also apply the role-wide unscoped Denies collected from other policies.
-    if check_full_service_access("bedrock", document) and not any(
-        iam_pattern_matches(deny, "bedrock:*") for deny in deny_patterns
+    if check_full_service_access("bedrock", document) and not _is_denied(
+        "bedrock:*", deny_patterns
     ):
         return ["grants full Bedrock access (bedrock:*) on all resources"]
 
@@ -74,6 +107,7 @@ def _broad_bedrock_violations(document: dict, deny_patterns: set[str]) -> list[s
 
     wildcard_actions = set()
     broad_resource_actions = set()
+    not_action_grant = False
     for statement in statements:
         if not isinstance(statement, dict):
             continue
@@ -82,6 +116,15 @@ def _broad_bedrock_violations(document: dict, deny_patterns: set[str]) -> list[s
             continue
         patterns = _get_patterns_from_standard_value(statement.get("Action"))
         if not patterns:
+            # An Allow with NotAction grants every action it does not list,
+            # so it is an implicit action wildcard for any Bedrock action left.
+            excluded = _get_patterns_from_standard_value(statement.get("NotAction"))
+            if excluded and not not_action_grant:
+                not_action_grant = any(
+                    not any(iam_pattern_matches(p, action) for p in excluded)
+                    and not any(iam_pattern_matches(d, action) for d in deny_patterns)
+                    for action in _expand_bedrock_actions("bedrock:*")
+                )
             continue
         resources = _get_patterns_from_standard_value(statement.get("Resource"))
         for pattern in patterns:
@@ -97,13 +140,15 @@ def _broad_bedrock_violations(document: dict, deny_patterns: set[str]) -> list[s
             elif any(resource.strip() == "*" for resource in resources):
                 broad_resource_actions.add(pattern)
 
+    if not_action_grant:
+        violations.append("grants Bedrock actions through a NotAction wildcard")
     for pattern in sorted(wildcard_actions):
-        # An unscoped explicit Deny for the same or a broader action pattern
-        # cancels the violation: the permission cannot be exercised.
-        if not any(iam_pattern_matches(deny, pattern) for deny in deny_patterns):
+        # Unscoped explicit Denies that cover every Bedrock action the pattern
+        # grants cancel the violation: the permission cannot be exercised.
+        if not _is_denied(pattern, deny_patterns):
             violations.append(f"grants '{pattern}' action wildcard")
     for pattern in sorted(broad_resource_actions):
-        if not any(iam_pattern_matches(deny, pattern) for deny in deny_patterns):
+        if not _is_denied(pattern, deny_patterns):
             violations.append(f"grants '{pattern}' on all resources (*)")
 
     return violations
@@ -115,7 +160,8 @@ class bedrock_knowledge_base_role_least_privilege(Check):
     A Bedrock Knowledge Base's service role is evaluated against the effective
     statements of its attached managed and inline IAM policies:
     - No policy may grant ``bedrock:*`` (full Bedrock access) or any other
-      Bedrock action wildcard.
+      Bedrock action wildcard, including an ``Allow`` with ``NotAction`` that
+      leaves Bedrock actions granted.
     - Bedrock actions must be scoped to the knowledge base / data source
       resources they need, not granted on ``Resource: "*"``.
     - Explicit ``Deny`` statements are honoured across the role: an unscoped

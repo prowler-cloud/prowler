@@ -127,6 +127,25 @@ INVOKE_WILDCARD_SCOPED_DENY_POLICY = {
     ],
 }
 
+ALL_ACTIONS_ALLOW_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}],
+}
+
+# "bedrock:Invoke?" matches the literal "bedrock:Invoke*" pattern but denies no
+# real Invoke action, so it must not cancel the wildcard Allow.
+INVOKE_PATTERN_PARTIAL_DENY_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Deny", "Action": "bedrock:Invoke?", "Resource": "*"}],
+}
+
+NOT_ACTION_ALLOW_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {"Effect": "Allow", "NotAction": "bedrock:InvokeModel", "Resource": "*"}
+    ],
+}
+
 
 # Mock ListKnowledgeBases and GetKnowledgeBase at the botocore level. We control
 # the responses directly and keep IAM calls going to moto.
@@ -479,3 +498,56 @@ class Test_bedrock_knowledge_base_role_least_privilege:
         assert len(result) == 1
         assert result[0].status == "FAIL"
         assert "managed policy WideAllow" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_bedrock_deny_cancels_all_actions_allow(self):
+        """A bedrock:* Deny cancels the Bedrock part of an Action:* Allow -> PASS."""
+        role_arn = _setup_role(
+            managed_policy_documents=[("AllActions", ALL_ACTIONS_ALLOW_POLICY)],
+            inline_policies={"GlobalDeny": BEDROCK_GLOBAL_DENY_POLICY},
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_partial_deny_does_not_cancel_wildcard(self):
+        """A Deny that only covers part of a wildcard Allow -> FAIL."""
+        role_arn = _setup_role(
+            managed_policy_documents=[("WideAllow", INVOKE_WILDCARD_ALLOW_POLICY)],
+            inline_policies={"PartialDeny": INVOKE_PATTERN_PARTIAL_DENY_POLICY},
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "bedrock:Invoke*" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_not_action_allow_fails(self):
+        """An Allow with NotAction still grants other Bedrock actions -> FAIL."""
+        role_arn = _setup_role(inline_policies={"NotAction": NOT_ACTION_ALLOW_POLICY})
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "NotAction" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_not_action_allow_cancelled_by_bedrock_deny(self):
+        """A bedrock:* Deny cancels the Bedrock part of a NotAction Allow -> PASS."""
+        role_arn = _setup_role(
+            inline_policies={
+                "NotAction": NOT_ACTION_ALLOW_POLICY,
+                "GlobalDeny": BEDROCK_GLOBAL_DENY_POLICY,
+            }
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
