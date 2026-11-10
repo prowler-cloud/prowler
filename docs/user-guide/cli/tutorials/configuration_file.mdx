@@ -66,6 +66,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `drs_job_exist`                                                        | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
 | `dynamodb_table_cross_account_access`                                  | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
 | `ec2_elastic_ip_shodan`                                                | `shodan_api_key`                                  | String          | `null`                                                                                                                               |
+| `ec2_instance_emerging_threat_image` | `threat_signatures` | List of threat signatures | `[]` |
 | `ec2_instance_older_than_specific_days`                                | `max_ec2_instance_age_in_days`                    | Integer         | `180`                                                                                                                                |
 | `ec2_instance_stopped_older_than_specific_days`                        | `max_ec2_instance_stopped_days`                   | Integer         | `30`                                                                                                                                 |
 | `ec2_instance_secrets_user_data`                                       | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
@@ -221,6 +222,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_python_version_is_latest`                    | `python_latest_version`                         | String          | `"3.12"`                                                   |
 | `defender_attack_path_notifications_properly_configured` | `defender_attack_path_minimal_risk_level`       | String          | `"High"`                                                   |
 | `network_public_ip_shodan`                               | `shodan_api_key`                                | String          | `null`                                                     |
+| `vm_emerging_threat_image` | `threat_signatures` | List of threat signatures | `[]` |
 | `sqlserver_recommended_minimal_tls_version`              | `recommended_minimal_tls_versions`              | List of Strings | `["1.2", "1.3"]`                                           |
 | `storage_smb_channel_encryption_with_secure_algorithm`   | `recommended_smb_channel_encryption_algorithms` | List of Strings | `["AES-256-GCM"]`                                          |
 | `vm_desired_sku_size`                                    | `desired_vm_sku_sizes`                          | List of Strings | `["Standard_A8_v2", "Standard_DS3_v2", "Standard_D4s_v3"]` |
@@ -238,6 +240,7 @@ The following list includes all the GCP checks with configurable variables that 
 | `cloudstorage_bucket_sufficient_retention_period` | `storage_min_retention_days`      | Integer | `90`    |
 | `compute_instance_group_multiple_zones`           | `mig_min_zones`                   | Integer | `2`     |
 | `compute_public_address_shodan`                   | `shodan_api_key`                  | String  | `null`  |
+| `compute_instance_emerging_threat_image` | `threat_signatures` | List of threat signatures | `[]` |
 | `compute_snapshot_not_outdated`                   | `max_snapshot_age_days`           | Integer | `90`    |
 | `iam_sa_user_managed_key_unused`                  | `max_unused_account_days`         | Integer | `180`   |
 | `iam_service_account_unused`                      | `max_unused_account_days`         | Integer | `180`   |

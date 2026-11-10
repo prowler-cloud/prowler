@@ -1,0 +1,71 @@
+# Template for a new emerging threat. Fill it in and add it as an item of
+# `threat_signatures` under the provider in a configuration file (see
+# docs/developer-guide/threat-signatures.mdx). Prowler ships no signatures of
+# its own.
+#
+# Every field is checked by prowler/lib/threats/models.py. This file ends in
+# .example, so it is never loaded as a real signature.
+
+# Short slug, lowercase letters, digits and dashes, 3 to 40 characters.
+# Usually <nickname or product>-<year>.
+id: example-threat
+# Shown as the Exploitability issue title, followed by the CVE ids.
+title: Remote code execution in Example VPN appliance
+cves:
+  - CVE-2026-0000
+# critical | high | medium | low. Becomes the finding's severity.
+severity: critical
+published: 2026-01-01
+summary: >-
+  What is vulnerable, under which conditions, and which versions fix it.
+references:
+  - https://vendor.example.com/advisories/0000
+
+# One or more rules per cloud. A host is affected when ANY rule of its cloud
+# matches the image it was launched from.
+images:
+  - cloud: aws
+    # Who publishes the official image: AMI owner account ids on AWS,
+    # marketplace publishers on Azure, image projects on GCP. A match from a
+    # listed publisher is proof of the image; a name-only match is weaker
+    # evidence and makes the issue at most Likely.
+    publishers: ["123456789012"]
+    # Set to true to ignore images that only borrow the name.
+    require_publisher: false
+    # Searched in the image name (AMI name, Azure gallery definition or
+    # offer-sku-version, GCP boot disk source image). The named group
+    # `version` is what the ranges below compare.
+    name_regex: '^example-vpn-(?P<version>\d+\.\d+\.\d+)-x86_64'
+    # Affected versions, both bounds inclusive. One range per release branch
+    # when fixes ship per branch; an open bound is unbounded.
+    versions:
+      - {min: "7.0.0", max: "7.0.14"}
+      - {min: "7.2.0", max: "7.2.9"}
+    # Real names the rule must match and must miss. Optional in the schema,
+    # but the only proof that the regex and ranges do what you mean; a
+    # signature whose examples disagree with its rule is rejected.
+    examples:
+      matches:
+        - example-vpn-7.0.14-x86_64-hvm
+        - example-vpn-7.2.0-x86_64-hvm
+      misses:
+        - example-vpn-7.0.15-x86_64-hvm
+        - example-vpn-7.4.1-x86_64-hvm
+
+# The ports the vulnerable service listens on. Omit when the threat is not
+# reached over the network (a local privilege escalation, for example).
+exposure:
+  protocol: tcp
+  ports: [443, 8443]
+
+# false for an authentication bypass or a pre-auth RCE.
+credential_required: false
+impact: >-
+  Unauthenticated code execution as root on the appliance.
+# Controls Prowler can observe that break the chain. Today:
+# password_authentication_disabled, port_not_exposed.
+mitigations:
+  - port_not_exposed
+remediation: >-
+  Restrict the management ports to trusted addresses now, then upgrade to a
+  fixed release or replace the appliance from a fixed image.
