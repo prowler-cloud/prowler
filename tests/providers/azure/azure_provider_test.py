@@ -1155,16 +1155,24 @@ class TestAzureProviderSovereignCloudSupport:
         _logs_endpoint,
         _login_endpoint,
     ):
+        """setup_identity must send both Graph lookups (domains, then me) to
+        the region's Graph host with a token for the region's Graph scope,
+        and the me lookup must reach the /me route on the wire."""
         graph_host = graph_scope.removesuffix("/.default")
         requested_scopes = []
         graph_requests = []
 
         class FakeCredential:
+            """Credential stub that records the requested token scopes."""
+
             def get_token(self, *scopes, **_kwargs):
+                """Record the scopes and return a static access token."""
                 requested_scopes.extend(scopes)
                 return AccessToken("fake-token", 9999999999)
 
         async def fake_handle_async_request(_transport, request):
+            """Capture the request after the Graph middleware has run and
+            return a canned domains or user response."""
             graph_requests.append(request)
             if request.url.path.endswith("/domains"):
                 body = {"value": [{"id": "contoso.example", "isDefault": True}]}
