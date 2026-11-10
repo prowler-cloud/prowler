@@ -113,6 +113,40 @@ def _mock_unsupported_region(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def _mock_validation_error_on_later_page(self, operation_name, kwarg):
+    """Return one page of imported models, then fail the next page."""
+    if operation_name in (
+        "GetModelInvocationLoggingConfiguration",
+        "ListGuardrails",
+        "GetGuardrail",
+        "ListTagsForResource",
+        "ListCustomModels",
+    ):
+        return {}
+    if operation_name == "ListImportedModels":
+        if kwarg.get("nextToken"):
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": "Invalid pagination token.",
+                    }
+                },
+                operation_name,
+            )
+        return {
+            "modelSummaries": [{"modelArn": MODEL_ARN, "modelName": MODEL_NAME}],
+            "nextToken": "page-2",
+        }
+    if operation_name == "GetImportedModel":
+        return {
+            "modelArn": MODEL_ARN,
+            "modelName": MODEL_NAME,
+            "modelKmsKeyArn": KMS_KEY_ARN,
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
 def _mock_two_models(self, operation_name, kwarg):
     """Return two imported models with different encryption states."""
     second_name = "model-without-cmk"
@@ -182,6 +216,21 @@ class Test_bedrock_imported_model_encrypted_with_cmk:
     def test_region_not_supported(self):
         """An unsupported region produces no false finding."""
         assert self._run() == []
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_mock_validation_error_on_later_page,
+    )
+    @mock_aws
+    def test_validation_error_on_later_page_is_manual(self):
+        """A ValidationException after the first page leaves inventory incomplete."""
+        result = self._run()
+
+        assert len(result) == 2
+        assert {report.resource_id: report.status for report in result} == {
+            "imported-model/unknown": "MANUAL",
+            MODEL_NAME: "PASS",
+        }
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_with_cmk)
     @mock_aws

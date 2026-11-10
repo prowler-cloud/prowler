@@ -262,9 +262,11 @@ class Bedrock(AWSService):
     def _list_imported_models(self, regional_client):
         """List models imported into the audited account."""
         logger.info("Bedrock - Listing Imported Models...")
+        page_received = False
         try:
             paginator = regional_client.get_paginator("list_imported_models")
             for page in paginator.paginate():
+                page_received = True
                 for model in page.get("modelSummaries", []):
                     model_arn = model.get("modelArn", "")
                     if model_arn and (
@@ -278,7 +280,10 @@ class Bedrock(AWSService):
                         )
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
-            if code != "ValidationException":
+            # A ValidationException on the first call means Bedrock is unavailable
+            # in the region. On a later page the inventory is incomplete, so it
+            # must still surface as a MANUAL finding.
+            if code != "ValidationException" or page_received:
                 self.imported_models_scan_errors[regional_client.region] = code
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
