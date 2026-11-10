@@ -49,9 +49,9 @@ def init_parser(self):
     azure_regions_subparser.add_argument(
         "--azure-region",
         nargs="?",
-        default="AzureCloud",
+        default=None,
         type=validate_azure_region,
-        help="Azure region from `az cloud list --output table`, by default AzureCloud",
+        help="Azure region from `az cloud list --output table`, by default the PROWLER_AZURE_REGION environment variable or AzureCloud",
     )
     # Resource Groups
     azure_rg_subparser = azure_parser.add_argument_group("Resource Groups")

@@ -56,7 +56,10 @@ from prowler.providers.azure.exceptions.exceptions import (
 )
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
-from prowler.providers.azure.lib.regions.regions import get_regions_config
+from prowler.providers.azure.lib.regions.regions import (
+    get_azure_region,
+    get_regions_config,
+)
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
@@ -116,7 +119,7 @@ class AzureProvider(Provider):
         browser_auth: bool = False,
         managed_identity_auth: bool = False,
         tenant_id: str = None,
-        region: str = "AzureCloud",
+        region: str = None,
         subscription_ids: list = [],
         config_path: str = None,
         config_content: dict = None,
@@ -201,7 +204,7 @@ class AzureProvider(Provider):
                     ...     browser_auth=False,
                     ...     managed_identity_auth=True,
                     ... )
-            - Non default azure region: Microsoft provides clouds for compliance with regional laws, which are available for your use. By default, Prowler uses AzureCloud cloud which is the comercial one.
+            - Non default azure region: Microsoft provides clouds for compliance with regional laws, which are available for your use. By default, Prowler uses the cloud set in the PROWLER_AZURE_REGION environment variable or, if unset, AzureCloud, the commercial one.
               If you want to use a different one, you can specify it using the region parameter.
                 >>> AzureProvider(
                 ...     az_cli_auth=False,
@@ -245,7 +248,7 @@ class AzureProvider(Provider):
         )
 
         logger.info("Checking if region is different than default one")
-        self._region_config = self.setup_region_config(region)
+        self._region_config = self.setup_region_config(get_azure_region(region))
 
         # Get the dict from the static credentials
         azure_credentials = None
@@ -628,7 +631,7 @@ class AzureProvider(Provider):
         browser_auth=False,
         managed_identity_auth=False,
         tenant_id=None,
-        region="AzureCloud",
+        region=None,
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
@@ -644,7 +647,7 @@ class AzureProvider(Provider):
             browser_auth (bool): Flag indicating if browser authentication is used.
             managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
             tenant_id (str): The Azure Active Directory tenant ID.
-            region (str): The Azure region.
+            region (str): The Azure cloud. Defaults to PROWLER_AZURE_REGION, or AzureCloud if unset.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
@@ -681,7 +684,7 @@ class AzureProvider(Provider):
                 client_id,
                 client_secret,
             )
-            region_config = AzureProvider.setup_region_config(region)
+            region_config = AzureProvider.setup_region_config(get_azure_region(region))
 
             # Get the dict from the static credentials
             azure_credentials = None
@@ -1235,7 +1238,7 @@ class AzureProvider(Provider):
             )
 
         if region_config is None:
-            region_config = AzureProvider.setup_region_config("AzureCloud")
+            region_config = AzureProvider.setup_region_config(get_azure_region())
 
         try:
             AzureProvider.verify_client(
@@ -1295,7 +1298,7 @@ class AzureProvider(Provider):
             None
         """
         if region_config is None:
-            region_config = AzureProvider.setup_region_config("AzureCloud")
+            region_config = AzureProvider.setup_region_config(get_azure_region())
         # `authority` is None for the public cloud and a bare host (e.g.
         # `login.chinacloudapi.cn`) for sovereign clouds, mirroring the
         # `AzureAuthorityHosts` constants used by azure-identity.

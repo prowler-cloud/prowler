@@ -9,10 +9,13 @@ from prowler.providers.azure.lib.regions.regions import (
     AZURE_GENERIC_GRAPH_HOST,
     AZURE_GENERIC_GRAPH_SCOPE,
     AZURE_GENERIC_LOGS_ENDPOINT,
+    AZURE_REGION_ENV_VAR,
     AZURE_US_GOV_CLOUD,
     AZURE_US_GOV_GRAPH_HOST,
     AZURE_US_GOV_GRAPH_SCOPE,
     AZURE_US_GOV_LOGS_ENDPOINT,
+    DEFAULT_AZURE_REGION,
+    get_azure_region,
     get_regions_config,
 )
 
@@ -54,3 +57,29 @@ class Test_azure_regions:
         for region in allowed_regions:
             region_config = get_regions_config(region)
             assert region_config == expected_output[region]
+
+
+class Test_get_azure_region:
+    def test_explicit_region_wins_over_environment(self, monkeypatch):
+        monkeypatch.setenv(AZURE_REGION_ENV_VAR, "AzureUSGovernment")
+        assert get_azure_region("AzureChinaCloud") == "AzureChinaCloud"
+
+    def test_environment_used_when_region_not_given(self, monkeypatch):
+        monkeypatch.setenv(AZURE_REGION_ENV_VAR, "AzureUSGovernment")
+        assert get_azure_region() == "AzureUSGovernment"
+        assert get_azure_region(None) == "AzureUSGovernment"
+
+    def test_environment_value_is_trimmed(self, monkeypatch):
+        monkeypatch.setenv(AZURE_REGION_ENV_VAR, "  AzureUSGovernment\n")
+        assert get_azure_region() == "AzureUSGovernment"
+
+    def test_defaults_to_commercial_cloud_when_unset(self, monkeypatch):
+        monkeypatch.delenv(AZURE_REGION_ENV_VAR, raising=False)
+        assert get_azure_region() == DEFAULT_AZURE_REGION == "AzureCloud"
+
+    def test_defaults_to_commercial_cloud_when_empty(self, monkeypatch):
+        monkeypatch.setenv(AZURE_REGION_ENV_VAR, "  ")
+        assert get_azure_region() == "AzureCloud"
+
+    def test_environment_variable_name(self):
+        assert AZURE_REGION_ENV_VAR == "PROWLER_AZURE_REGION"

@@ -15,3 +15,16 @@ To change the default cloud, include the flag `--azure-region`. For example:
 ```console
 prowler azure --az-cli-auth --azure-region AzureChinaCloud
 ```
+
+## Setting the Cloud With an Environment Variable
+
+Set `PROWLER_AZURE_REGION` to `AzureCloud`, `AzureChinaCloud` or `AzureUSGovernment` to choose the cloud without passing `--azure-region`:
+
+```bash
+export PROWLER_AZURE_REGION="AzureUSGovernment"
+prowler azure --sp-env-auth
+```
+
+Unlike AWS, where the partition comes from the credentials themselves, Azure credentials do not say which cloud they belong to. The variable lets a deployment that lives inside one cloud, such as an air-gapped Azure Government environment, sign in to that cloud by default. In Prowler App, set it on the API and worker services to apply it to every Azure provider.
+
+`--azure-region` (or a `region` passed to the provider) always takes precedence. With neither set, Prowler uses `AzureCloud`. An unsupported value fails the connection instead of falling back to `AzureCloud`.

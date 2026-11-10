@@ -15,6 +15,7 @@ from prowler.config.config import (
 )
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.exceptions.exceptions import (
+    AzureArgumentTypeValidationError,
     AzureBrowserAuthNoTenantIDError,
     AzureHTTPResponseError,
     AzureInvalidProviderIdError,
@@ -1224,3 +1225,79 @@ class TestAzureProviderSetupIdentityEventLoop:
         assert isinstance(identity, AzureIdentityInfo)
         assert identity.subscriptions == {sub_id: "Sub"}
         graph_client.domains.get.assert_awaited_once()
+
+
+class TestAzureProviderRegionFromEnvironment:
+    """`PROWLER_AZURE_REGION` sets the cloud when no region is passed, so a
+    deployment inside a sovereign cloud (an air-gapped Azure Government
+    enclave, for example) signs in to the right cloud without a per-provider
+    setting. An explicit region always wins."""
+
+    def _test_connection(self, **kwargs):
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_region_config",
+                wraps=AzureProvider.setup_region_config,
+            ) as mock_setup_region_config,
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_subscription_client,
+        ):
+            mock_setup_session.return_value = MagicMock()
+            mock_subscription_client.return_value.subscriptions.list.return_value = []
+            AzureProvider.test_connection(
+                az_cli_auth=True, raise_on_exception=False, **kwargs
+            )
+            return mock_setup_region_config.call_args.args[0]
+
+    def test_test_connection_uses_environment_region(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AZURE_REGION", "AzureUSGovernment")
+        assert self._test_connection() == "AzureUSGovernment"
+
+    def test_test_connection_explicit_region_wins(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AZURE_REGION", "AzureUSGovernment")
+        assert self._test_connection(region="AzureCloud") == "AzureCloud"
+
+    def test_test_connection_defaults_to_commercial(self, monkeypatch):
+        monkeypatch.delenv("PROWLER_AZURE_REGION", raising=False)
+        assert self._test_connection() == "AzureCloud"
+
+    def test_test_connection_invalid_environment_region_fails(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AZURE_REGION", "AzureGermanCloud")
+        connection = AzureProvider.test_connection(
+            az_cli_auth=True, raise_on_exception=False
+        )
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AzureArgumentTypeValidationError)
+
+    def test_validate_static_credentials_uses_environment_region(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AZURE_REGION", "AzureUSGovernment")
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.verify_client"
+        ) as mock_verify_client:
+            AzureProvider.validate_static_credentials(
+                tenant_id=str(uuid4()),
+                client_id=str(uuid4()),
+                client_secret="secret",
+            )
+            region_config = mock_verify_client.call_args.args[3]
+            assert region_config.name == "AzureUSGovernment"
+
+    def test_init_uses_environment_region(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AZURE_REGION", "AzureUSGovernment")
+        with (
+            patch("prowler.providers.azure.azure_provider.AzureProvider.setup_session"),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
+                return_value=AzureIdentityInfo(subscriptions={}),
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
+                return_value={},
+            ),
+        ):
+            azure_provider = AzureProvider(az_cli_auth=True)
+            assert azure_provider.region_config.name == "AzureUSGovernment"

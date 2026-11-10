@@ -1,4 +1,14 @@
+import os
+from typing import Optional
+
 from azure.identity import AzureAuthorityHosts
+
+# Environment variable that declares the Azure cloud a deployment works in.
+# Credentials do not say which cloud they belong to (unlike AWS, where the
+# partition comes from the caller ARN), so a deployment inside a sovereign
+# cloud, such as an air-gapped Azure Government enclave, declares it here.
+AZURE_REGION_ENV_VAR = "PROWLER_AZURE_REGION"
+DEFAULT_AZURE_REGION = "AzureCloud"
 
 AZURE_CHINA_CLOUD = "https://management.chinacloudapi.cn"
 AZURE_US_GOV_CLOUD = "https://management.usgovcloudapi.net"
@@ -45,3 +55,21 @@ def get_regions_config(region):
         },
     }
     return allowed_regions[region]
+
+
+def get_azure_region(region: Optional[str] = None) -> str:
+    """Return the Azure cloud to use.
+
+    An explicit region always wins. Without one, the value of the
+    `PROWLER_AZURE_REGION` environment variable is used, and without that the
+    commercial `AzureCloud`. The value is validated where it is used.
+
+    Args:
+        region: The region passed by the caller, if any.
+
+    Returns:
+        str: The Azure cloud name, e.g. `AzureCloud` or `AzureUSGovernment`.
+    """
+    if region:
+        return region
+    return os.environ.get(AZURE_REGION_ENV_VAR, "").strip() or DEFAULT_AZURE_REGION
