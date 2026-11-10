@@ -660,11 +660,14 @@ class BedrockAgent(AWSService):
             definition = flow_info.get("definition")
             if definition is None:
                 return
-            flow.definition_available = True
+            nodes = []
             for node in definition.get("nodes", []):
                 parsed = self._flow_node_from_definition(node)
                 if parsed:
-                    flow.nodes.append(parsed)
+                    nodes.append(parsed)
+            # Commit only after every node parsed, so a partial read stays MANUAL.
+            flow.nodes = nodes
+            flow.definition_available = True
         except Exception as error:
             logger.error(
                 f"{flow.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

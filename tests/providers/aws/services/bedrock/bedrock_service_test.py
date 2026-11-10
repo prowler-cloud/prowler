@@ -875,6 +875,7 @@ class TestBedrockFlowCollection:
         bedrock_agent_service._get_flow(flow)
 
         assert flow.definition_available is True
+        assert len(flow.nodes) == 2
         applicable = [node for node in flow.nodes if node.applicable]
         assert {node.name for node in applicable} == {"prompt-node", "kb-generate"}
         by_name = {node.name: node for node in applicable}
@@ -906,3 +907,111 @@ class TestBedrockFlowCollection:
 
         assert flow.definition_available is False
         assert flow.nodes == []
+
+    def test_get_flow_without_definition_leaves_definition_unavailable(self):
+        """A GetFlow response with no definition must stay unknown."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import Flow
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        regional_client.get_flow.return_value = {
+            "id": self.FLOW_ID,
+            "name": "no-definition-flow",
+            "arn": self.FLOW_ARN,
+        }
+
+        flow = Flow(
+            id=self.FLOW_ID,
+            name="no-definition-flow",
+            arn=self.FLOW_ARN,
+            region="us-east-1",
+        )
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._get_flow(flow)
+
+        assert flow.definition_available is False
+        assert flow.nodes == []
+
+    def test_get_flow_partial_parse_failure_leaves_definition_unavailable(self):
+        """A malformed node after a valid one must not leave a partial definition."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import Flow
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        regional_client.get_flow.return_value = {
+            "id": self.FLOW_ID,
+            "name": "malformed-flow",
+            "arn": self.FLOW_ARN,
+            "definition": {
+                "nodes": [
+                    {
+                        "name": "prompt-node",
+                        "type": "Prompt",
+                        "configuration": {
+                            "prompt": {
+                                "guardrailConfiguration": {
+                                    "guardrailIdentifier": "gr-prompt",
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "name": "broken-node",
+                        "type": "Prompt",
+                        "configuration": "not-a-dict",
+                    },
+                ]
+            },
+        }
+
+        flow = Flow(
+            id=self.FLOW_ID,
+            name="malformed-flow",
+            arn=self.FLOW_ARN,
+            region="us-east-1",
+        )
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._get_flow(flow)
+
+        assert flow.definition_available is False
+        assert flow.nodes == []
+
+    def test_list_flows_generic_exception_records_scan_error(self):
+        """A non-ClientError failure on ListFlows must be recorded as a scan error."""
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        paginator = MagicMock()
+        paginator.paginate.side_effect = RuntimeError("boom")
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._list_flows(regional_client)
+
+        assert bedrock_agent_service.flows == {}
+        assert bedrock_agent_service.flows_scan_errors["us-east-1"] == "RuntimeError"
+
+    def test_list_flows_skips_summary_without_id(self):
+        """Flow summaries without an id must be skipped."""
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        paginator = MagicMock()
+        paginator.paginate.return_value = [
+            {
+                "flowSummaries": [
+                    {"name": "no-id-flow"},
+                    {
+                        "id": "flowid0001",
+                        "name": "flow-1",
+                        "arn": "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001",
+                    },
+                ]
+            }
+        ]
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._list_flows(regional_client)
+
+        assert list(bedrock_agent_service.flows) == [
+            "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001"
+        ]
