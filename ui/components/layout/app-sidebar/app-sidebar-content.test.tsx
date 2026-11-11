@@ -113,6 +113,45 @@ describe("AppSidebarContent", () => {
     );
   });
 
+  it("shows Issues navigation in Cloud", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.getByRole("link", { name: /Exploitability issues/ }),
+    ).toHaveAttribute("href", "/issues");
+  });
+
+  it("shows Realtime navigation to every Cloud user", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen
+        .getAllByRole("link", { name: /Realtime/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/realtime"]);
+  });
+
+  it("hides Issues navigation in Local Server", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Exploitability issues/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("hides Registry navigation without a server eligibility decision", () => {
     // Given / When
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

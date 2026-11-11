@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Calendar(GoogleWorkspaceService):
@@ -30,66 +31,21 @@ class Calendar(GoogleWorkspaceService):
                 logger.error("Failed to build Cloud Identity service")
                 return
 
-            request = service.policies().list(
-                pageSize=100,
-                filter='setting.type.matches("calendar.*")',
+            policies, fetch_succeeded = self._list_policies(
+                service,
+                'setting.type.matches("calendar.*")',
+                "fetching calendar policies",
             )
-            fetch_succeeded = True
 
-            while request is not None:
-                try:
-                    response = request.execute()
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "calendar.service_status")
 
-                    for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
-                            continue
-                        setting = policy.get("setting", {})
-                        setting_type = setting.get("type", "").removeprefix("settings/")
-                        value = setting.get("value", {})
-
-                        if (
-                            setting_type
-                            == "calendar.primary_calendar_max_allowed_external_sharing"
-                        ):
-                            self.policies.primary_calendar_external_sharing = value.get(
-                                "maxAllowedExternalSharing"
-                            )
-                            logger.debug(
-                                "Primary calendar external sharing: "
-                                f"{self.policies.primary_calendar_external_sharing}"
-                            )
-
-                        elif (
-                            setting_type
-                            == "calendar.secondary_calendar_max_allowed_external_sharing"
-                        ):
-                            self.policies.secondary_calendar_external_sharing = (
-                                value.get("maxAllowedExternalSharing")
-                            )
-                            logger.debug(
-                                "Secondary calendar external sharing: "
-                                f"{self.policies.secondary_calendar_external_sharing}"
-                            )
-
-                        elif setting_type == "calendar.external_invitations":
-                            self.policies.external_invitations_warning = value.get(
-                                "warnOnInvite"
-                            )
-                            logger.debug(
-                                "External invitations warning: "
-                                f"{self.policies.external_invitations_warning}"
-                            )
-
-                    request = service.policies().list_next(request, response)
-
-                except Exception as error:
-                    self._handle_api_error(
-                        error,
-                        "fetching calendar policies",
-                        self.provider.identity.customer_id,
-                    )
-                    fetch_succeeded = False
-                    break
+            for policy in self._effective_policies(policies):
+                setting = policy.get("setting", {})
+                setting_type = setting.get("type", "").removeprefix("settings/")
+                self._process_setting(setting_type, setting.get("value", {}))
 
             self.policies_fetched = fetch_succeeded
 
@@ -108,8 +64,35 @@ class Calendar(GoogleWorkspaceService):
             )
             self.policies_fetched = False
 
+    def _process_setting(self, setting_type: str, value: dict):
+        """Populate the model from a single policy setting."""
+        if setting_type == "calendar.primary_calendar_max_allowed_external_sharing":
+            self.policies.primary_calendar_external_sharing = value.get(
+                "maxAllowedExternalSharing"
+            )
+            logger.debug(
+                "Primary calendar external sharing: "
+                f"{self.policies.primary_calendar_external_sharing}"
+            )
 
-class CalendarPolicies(BaseModel):
+        elif setting_type == "calendar.secondary_calendar_max_allowed_external_sharing":
+            self.policies.secondary_calendar_external_sharing = value.get(
+                "maxAllowedExternalSharing"
+            )
+            logger.debug(
+                "Secondary calendar external sharing: "
+                f"{self.policies.secondary_calendar_external_sharing}"
+            )
+
+        elif setting_type == "calendar.external_invitations":
+            self.policies.external_invitations_warning = value.get("warnOnInvite")
+            logger.debug(
+                "External invitations warning: "
+                f"{self.policies.external_invitations_warning}"
+            )
+
+
+class CalendarPolicies(ServicePolicies):
     """Model for domain-level Calendar policy settings."""
 
     primary_calendar_external_sharing: Optional[str] = None

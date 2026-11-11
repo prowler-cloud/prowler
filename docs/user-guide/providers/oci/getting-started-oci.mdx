@@ -2,11 +2,13 @@
 title: 'Getting Started with Oracle Cloud Infrastructure (OCI)'
 ---
 
+import { AppliesTo } from "/snippets/applies-to.mdx"
+
 Prowler supports security scanning of Oracle Cloud Infrastructure (OCI) environments. This guide will help you get started with using Prowler to audit your OCI tenancy.
 
 ## Prowler Cloud
 
-The following steps apply to Prowler Cloud and Prowler Local Server.
+<AppliesTo />
 
 ### Step 1: Collect OCI Identifiers
 1. Sign in to the [OCI Console](https://cloud.oracle.com/) and open **Tenancy Details** to copy the Tenancy OCID.
@@ -15,7 +17,7 @@ The following steps apply to Prowler Cloud and Prowler Local Server.
 4. In **Tenancy Details**, note the **Home Region** identifier (for example, `me-abudhabi-1`). Any other region the tenancy is subscribed to also works.
 
 ### Step 2: Access Prowler Cloud
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app).
+1. Sign in to [Prowler Cloud](https://cloud.prowler.com/sign-in) or [create an account](https://cloud.prowler.com/sign-up).
 2. Go to **Configuration** → **Providers** and click **Add Provider**.
 ![Add OCI Provider](./images/oci-add-cloud-provider.png)
 3. Select **Oracle Cloud** and enter the **Tenancy OCID** and an optional alias, then choose **Next**.
@@ -342,7 +344,7 @@ prowler oci \
 
 **Error: "OCI credential validation failed" with `401 NotAuthenticated` on `get_tenancy`**
 - The tenancy is not subscribed to the region used for validation (by default `us-ashburn-1`)
-- In Prowler Cloud or Prowler Local Server, update the provider credentials and select the tenancy home region
+- In Prowler Cloud, update the provider credentials and select the tenancy home region
 - In Prowler CLI, set `region` in `~/.oci/config` to the home region. All subscribed regions are still scanned; `--region` also works but limits the scan to that region
 
 **Error: "Invalid region"**

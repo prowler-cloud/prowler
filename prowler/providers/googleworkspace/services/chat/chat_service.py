@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Chat(GoogleWorkspaceService):
@@ -30,68 +31,21 @@ class Chat(GoogleWorkspaceService):
                 logger.error("Failed to build Cloud Identity service")
                 return
 
-            request = service.policies().list(
-                pageSize=100,
-                filter='setting.type.matches("chat.*")',
+            policies, fetch_succeeded = self._list_policies(
+                service,
+                'setting.type.matches("chat.*")',
+                "fetching Chat policies",
             )
-            fetch_succeeded = True
 
-            while request is not None:
-                try:
-                    response = request.execute()
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "chat.service_status")
 
-                    for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
-                            continue
-
-                        setting = policy.get("setting", {})
-                        setting_type = setting.get("type", "").removeprefix("settings/")
-                        logger.debug(f"Processing setting type: {setting_type}")
-
-                        value = setting.get("value", {})
-
-                        if setting_type == "chat.chat_file_sharing":
-                            self.policies.external_file_sharing = value.get(
-                                "externalFileSharing"
-                            )
-                            self.policies.internal_file_sharing = value.get(
-                                "internalFileSharing"
-                            )
-                            logger.debug("Chat file sharing settings fetched.")
-
-                        elif setting_type == "chat.external_chat_restriction":
-                            self.policies.allow_external_chat = value.get(
-                                "allowExternalChat"
-                            )
-                            self.policies.external_chat_restriction = value.get(
-                                "externalChatRestriction"
-                            )
-                            logger.debug(
-                                "Chat external chat restriction settings fetched."
-                            )
-
-                        elif setting_type == "chat.chat_external_spaces":
-                            self.policies.external_spaces_enabled = value.get("enabled")
-                            self.policies.external_spaces_domain_allowlist_mode = (
-                                value.get("domainAllowlistMode")
-                            )
-                            logger.debug("Chat external spaces settings fetched.")
-
-                        elif setting_type == "chat.chat_apps_access":
-                            self.policies.enable_apps = value.get("enableApps")
-                            self.policies.enable_webhooks = value.get("enableWebhooks")
-                            logger.debug("Chat apps access settings fetched.")
-
-                    request = service.policies().list_next(request, response)
-
-                except Exception as error:
-                    self._handle_api_error(
-                        error,
-                        "fetching Chat policies",
-                        self.provider.identity.customer_id,
-                    )
-                    fetch_succeeded = False
-                    break
+            for policy in self._effective_policies(policies):
+                setting = policy.get("setting", {})
+                setting_type = setting.get("type", "").removeprefix("settings/")
+                self._process_setting(setting_type, setting.get("value", {}))
 
             self.policies_fetched = fetch_succeeded
             logger.info("Chat policies fetched successfully.")
@@ -104,8 +58,36 @@ class Chat(GoogleWorkspaceService):
             )
             self.policies_fetched = False
 
+    def _process_setting(self, setting_type: str, value: dict):
+        """Populate the model from a single policy setting."""
+        logger.debug(f"Processing setting type: {setting_type}")
 
-class ChatPolicies(BaseModel):
+        if setting_type == "chat.chat_file_sharing":
+            self.policies.external_file_sharing = value.get("externalFileSharing")
+            self.policies.internal_file_sharing = value.get("internalFileSharing")
+            logger.debug("Chat file sharing settings fetched.")
+
+        elif setting_type == "chat.external_chat_restriction":
+            self.policies.allow_external_chat = value.get("allowExternalChat")
+            self.policies.external_chat_restriction = value.get(
+                "externalChatRestriction"
+            )
+            logger.debug("Chat external chat restriction settings fetched.")
+
+        elif setting_type == "chat.chat_external_spaces":
+            self.policies.external_spaces_enabled = value.get("enabled")
+            self.policies.external_spaces_domain_allowlist_mode = value.get(
+                "domainAllowlistMode"
+            )
+            logger.debug("Chat external spaces settings fetched.")
+
+        elif setting_type == "chat.chat_apps_access":
+            self.policies.enable_apps = value.get("enableApps")
+            self.policies.enable_webhooks = value.get("enableWebhooks")
+            logger.debug("Chat apps access settings fetched.")
+
+
+class ChatPolicies(ServicePolicies):
     """Model for domain-level Chat policy settings."""
 
     # chat.chat_file_sharing

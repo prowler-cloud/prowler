@@ -94,6 +94,18 @@ describe("getComplianceIcon", () => {
       expect(getComplianceIcon("nist_800_53_revision_5_aws")).toBe(nistLogo);
     });
 
+    it("resolves NATO D32 by its id, its framework and its title", () => {
+      const natoLogo = getComplianceIcon("nato_cloud_directive_rev1");
+      expect(natoLogo).toBeDefined();
+      expect(getComplianceIcon("NATO-Cloud-Directive")).toBe(natoLogo);
+      expect(
+        getComplianceIcon(
+          "NATO D32 (AC/322-D(2021)0032-REV1) - NATO Restricted baseline",
+        ),
+      ).toBe(natoLogo);
+      expect(getComplianceIcon("nato_cloud_directive_rev1_aws")).toBe(natoLogo);
+    });
+
     it("resolves PCI/HIPAA/GDPR/SOC2/ENS/FedRAMP/MITRE/RBI/KISA/SecNumCloud by their framework keyword", () => {
       // Spot-check the rest of the framework keywords against AWS-suffixed ids.
       // Each must resolve to a distinct logo from `aws` so the watchlist

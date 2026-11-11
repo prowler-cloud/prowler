@@ -9,6 +9,17 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 # Workbench metadata key that controls sudo access for the notebook user.
 ROOT_ACCESS_DISABLED_METADATA_KEY = "notebook-disable-root"
+# Workbench metadata key that removes the JupyterLab terminal.
+TERMINAL_ACCESS_DISABLED_METADATA_KEY = "notebook-disable-terminal"
+# Workbench metadata key that blocks file downloads from the JupyterLab UI.
+FILE_DOWNLOAD_DISABLED_METADATA_KEY = "notebook-disable-downloads"
+# Workbench metadata key holding the Unix-cron schedule for automatic upgrades.
+UPGRADE_SCHEDULE_METADATA_KEY = "notebook-upgrade-schedule"
+
+
+def _metadata_flag_enabled(metadata: dict, key: str) -> bool:
+    """Return True when a boolean Workbench metadata key is set to `true`."""
+    return str(metadata.get(key, "")).lower() == "true"
 
 
 class VertexAI(GCPService):
@@ -49,10 +60,21 @@ class VertexAI(GCPService):
                                 public_ip_disabled=gce_setup.get(
                                     "disablePublicIp", False
                                 ),
-                                root_access_disabled=str(
-                                    metadata.get(ROOT_ACCESS_DISABLED_METADATA_KEY, "")
-                                ).lower()
-                                == "true",
+                                root_access_disabled=_metadata_flag_enabled(
+                                    metadata, ROOT_ACCESS_DISABLED_METADATA_KEY
+                                ),
+                                terminal_access_disabled=_metadata_flag_enabled(
+                                    metadata, TERMINAL_ACCESS_DISABLED_METADATA_KEY
+                                ),
+                                file_download_disabled=_metadata_flag_enabled(
+                                    metadata, FILE_DOWNLOAD_DISABLED_METADATA_KEY
+                                ),
+                                upgrade_schedule=(
+                                    str(
+                                        metadata.get(UPGRADE_SCHEDULE_METADATA_KEY, "")
+                                    ).strip()
+                                    or None
+                                ),
                                 network=(
                                     network_interfaces[0].get("network")
                                     if network_interfaces
@@ -86,4 +108,7 @@ class WorkbenchInstance(BaseModel):
     state: str
     public_ip_disabled: bool = False
     root_access_disabled: bool = False
+    terminal_access_disabled: bool = False
+    file_download_disabled: bool = False
+    upgrade_schedule: Optional[str] = None
     network: Optional[str] = None

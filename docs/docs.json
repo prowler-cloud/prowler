@@ -55,6 +55,7 @@
                   "getting-started/goto/prowler-api-reference"
                 ]
               },
+              "getting-started/products/prowler-private-cloud-aws-marketplace",
               {
                 "group": "Prowler Lighthouse AI",
                 "pages": [
@@ -506,6 +507,7 @@
               "developer-guide/services",
               "developer-guide/checks",
               "developer-guide/secret-scanning-checks",
+              "developer-guide/threat-signatures",
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",

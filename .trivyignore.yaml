@@ -197,6 +197,25 @@ vulnerabilities:
     purls:
       - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
     expired_at: 2027-01-31
+  # Two more SDK declarations and follow-redirects 1.16.0 from the same manifest. The SDK
+  # entries stay pinned to 1.27.1 for the reason above. No lock in this repo lists
+  # follow-redirects, so its pin only keeps a future real dependency from being hidden.
+  - id: CVE-2026-111767
+    purls:
+      - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
+    expired_at: 2027-01-31
+  - id: CVE-2026-111768
+    purls:
+      - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
+    expired_at: 2027-01-31
+  - id: CVE-2026-111755
+    purls:
+      - "pkg:npm/follow-redirects@1.16.0"
+    expired_at: 2027-01-31
+  - id: CVE-2026-111756
+    purls:
+      - "pkg:npm/follow-redirects@1.16.0"
+    expired_at: 2027-01-31
 
   # Unlike the manifest entries above, this DLL ships in the image:
   # ExchangeOnlineManagement/3.10.1/netCore/System.Security.Cryptography.Pkcs.dll. It is a

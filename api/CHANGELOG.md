@@ -4,6 +4,57 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.49.0] (Prowler v5.48.0)
+
+### 🔄 Changed
+
+- `jsonschema` 4.26.0 for SDK schema validation, picked up through the SDK dependency [(#13274)](https://github.com/prowler-cloud/prowler/pull/13274)
+
+### 🐞 Fixed
+
+- Findings partitions now tile exactly instead of leaving a sub-millisecond gap at each window boundary, where findings landed in the default partition and were never aged out [(#12766)](https://github.com/prowler-cloud/prowler/pull/12766)
+- Finding groups show the check title instead of the check ID while a tenant's first scan is running [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔐 Security
+
+- Python base image from 3.12.15 to 3.12.16 in the API container image, patching CVE-2026-115557 [(#13215)](https://github.com/prowler-cloud/prowler/pull/13215)
+- pyasn1 to 0.6.5, patching the ASN.1 decoding denial of service advisories [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- PowerShell from 7.5.12 to 7.5.13 in the API container image, bundling .NET runtime 9.0.22 [(#13253)](https://github.com/prowler-cloud/prowler/pull/13253)
+- h2 from 4.3.0 to 4.4.1 and werkzeug from 3.1.7 to 3.1.9, patching the duplicate Host header request smuggling and the Windows device name bypass in safe_join, plus pylint 4.0.9 and filelock 4.2.1 in the development dependencies [(#13257)](https://github.com/prowler-cloud/prowler/pull/13257)
+- `POST /api/v1/tokens/github` and `POST /api/v1/tokens/google` only accept an OAuth authorization code, rejecting caller-supplied `access_token` and `id_token` values issued to other OAuth clients [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- oauthlib from 4.0.0 to 4.0.1 in the API container image, patching the OAuth device flow bearer token disclosure [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- GCP `service_account` provider secrets require a key with `"type": "service_account"` and a Google `token_uri`, rejecting `external_account` and other credential types or custom token endpoints that could read worker files or reach internal URLs [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- apt and libapt-pkg7.0 3.0.4 in the API container image [(#13268)](https://github.com/prowler-cloud/prowler/pull/13268)
+
+---
+
+## [1.48.0] (Prowler v5.47.0)
+
+### 🔐 Security
+
+- pymongo to 4.18.3, dnspython to 2.9.0 and oauthlib to 4.0.0 in the API container image, with django-allauth from 65.15.0 to 65.19.7 because earlier releases cap oauthlib below 4, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure [(#13185)](https://github.com/prowler-cloud/prowler/pull/13185)
+
+---
+
+## [1.47.0] (Prowler v5.46.0)
+
+### 🐞 Fixed
+
+- Compliance report PDF cover table wraps every value, so long account IDs such as OCI tenancy OCIDs no longer overflow their cell [(#13063)](https://github.com/prowler-cloud/prowler/pull/13063)
+- Scan ingestion compares the serialized resource metadata with the stored value and serializes sets in a stable order, so unchanged resources no longer get their metadata, details and updated_at rewritten on every scan [(#13148)](https://github.com/prowler-cloud/prowler/pull/13148)
+- Report generation shares the parsed resource metadata between the findings of a batch and releases each batch before building the next one [(#13149)](https://github.com/prowler-cloud/prowler/pull/13149)
+
+### 🔐 Security
+
+- `GET /resources/metadata`, `GET /resources/metadata/latest`, `GET /findings/metadata` and `GET /findings/metadata/latest` now honour the provider groups of the caller role instead of aggregating every provider in the tenant [(#12964)](https://github.com/prowler-cloud/prowler/pull/12964)
+- Trivy from 0.75.0 to 0.76.0 in the API container image, built with Go 1.27.2 and x/net 0.60.0, patching the HTTP/2 and TLS CVEs bundled in Trivy 0.75.0 [(#13064)](https://github.com/prowler-cloud/prowler/pull/13064)
+- Pillow from 12.3.0 to 13.0.0, certifi to 2026.10.19, aiohttp to 3.14.5 with yarl 1.25.1, uv to 0.13.4 and Trivy to 0.76.1 in the API container image, patching the Pillow JPEG decoder heap overflow, the compromised emSign root CAs bundled in certifi and uv, the aiohttp resource exhaustion advisories and the Go 1.27.2 stdlib CVE in the Trivy binary [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+- Attack Paths custom queries strip block comments before the blocked-operation check and drop APOC virtual nodes and relationships from results, so `LOAD CSV` can no longer be split with a comment nor its response returned under a forged provider label [(#13120)](https://github.com/prowler-cloud/prowler/pull/13120)
+- SAML SSO configuration endpoints require the `manage_account` permission instead of `manage_integrations`, since the configured IdP controls who signs in and which role they receive [(#13121)](https://github.com/prowler-cloud/prowler/pull/13121)
+- djangorestframework from 3.15.2 to 3.18.3 in the API, patching the JSON parser charset and Accept header denial of service and the TokenProxy revocation bypass, and the API container image no longer ships the MicrosoftTeams build SBOM that Trivy read as installed zod and body-parser [(#13157)](https://github.com/prowler-cloud/prowler/pull/13157)
+
+---
+
 ## [1.46.0] (Prowler v5.45.0)
 
 ### 🐞 Fixed

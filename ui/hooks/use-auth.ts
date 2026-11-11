@@ -17,6 +17,7 @@ export function useAuth() {
     manage_alerts: false,
     manage_lighthouse_ai_configuration: false,
     manage_registry: false,
+    manage_prowler_realtime: false,
     unlimited_visibility: false,
   };
 

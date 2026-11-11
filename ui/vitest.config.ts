@@ -96,7 +96,9 @@ export default defineConfig(() => {
               // vertically and ends up overlapping the graph, so Playwright
               // can't click nodes. Use a standard desktop viewport.
               viewport: { width: 1280, height: 800 },
-              provider: playwright(),
+              // Playwright waits forever for an actionable element by default;
+              // fail inside the test budget so the log names the blocker.
+              provider: playwright({ actionTimeout: 10_000 }),
               headless: true,
               instances: [{ browser: "chromium" }],
             },
@@ -177,6 +179,11 @@ export default defineConfig(() => {
         "@xyflow/react",
         "@dagrejs/dagre",
 
+        // Charts (the Overview sample's graph tabs)
+        "recharts",
+        "d3",
+        "topojson-client",
+
         // Forms / state
         "react-hook-form",
         "@hookform/resolvers/zod",
@@ -197,7 +204,6 @@ export default defineConfig(() => {
         "@react-aria/visually-hidden",
         "framer-motion",
         "cmdk",
-        "driver.js",
         "react-markdown",
         "streamdown",
         "jwt-decode",

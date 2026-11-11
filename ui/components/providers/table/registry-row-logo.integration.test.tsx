@@ -6,7 +6,8 @@ import { render } from "@/__tests__/render-browser";
 
 import { RegistryLogosContext, RegistryRowLogo } from "./registry-row-logo";
 
-const LOGO_URL = "https://media.registry.example.com/providers/vcf/logo.png";
+// Keep even speculative browser requests on loopback; MSW serves the image.
+const LOGO_URL = "https://127.0.0.1/providers/vcf/logo.png";
 
 describe("registry row logo", () => {
   it("shows the generic glyph until the streamed logos arrive, then the registry logo", async () => {
@@ -32,5 +33,6 @@ describe("registry row logo", () => {
 
     // Then
     await expect.poll(() => logoImage()?.getAttribute("src")).toBe(LOGO_URL);
+    await expect.poll(() => logoImage()?.naturalWidth).toBe(1);
   });
 });

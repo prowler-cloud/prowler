@@ -4,7 +4,7 @@
   "CheckTitle": "Vertex AI Workbench instance does not have a public IP address",
   "CheckType": [],
   "ServiceName": "vertexai",
-  "SubServiceName": "workbench",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "notebooks.googleapis.com/Instance",

@@ -39,6 +39,9 @@ The following list includes all the AWS checks with configurable variables that 
 | `awslambda_function_no_secrets_in_variables`                           | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `awslambda_function_using_supported_runtimes`                          | `obsolete_lambda_runtimes`                        | List of Strings | See `config.yaml`                                                                                                                    |
 | `awslambda_function_vpc_multi_az`                                      | `lambda_min_azs`                                  | Integer         | `2`                                                                                                                                  |
+| `elasticbeanstalk_environment_php_platform_updated`                    | `elasticbeanstalk_php_min_branch`                 | String          | `"8.2"`                                                                                                                              |
+| `elasticbeanstalk_environment_php_platform_updated`                    | `elasticbeanstalk_php_min_platform_version`       | String          | `"4.13.13"`                                                                                                                          |
+| `lightsail_instance_php_blueprint_updated`                             | `lightsail_php_blueprints`                        | List of Strings | See `config.yaml`                                                                                                                    |
 | `cloudformation_stack_cdktoolkit_bootstrap_version`                    | `recommended_cdk_bootstrap_version`               | Integer         | `21`                                                                                                                                 |
 | `cloudformation_stack_outputs_find_secrets`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `cloudfront_distributions_pqc_tls_enabled`                             | `cloudfront_pqc_min_protocol_versions`            | List of Strings | `["TLSv1.3_2025"]`                                                                                                                   |
@@ -63,6 +66,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `drs_job_exist`                                                        | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
 | `dynamodb_table_cross_account_access`                                  | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
 | `ec2_elastic_ip_shodan`                                                | `shodan_api_key`                                  | String          | `null`                                                                                                                               |
+| `ec2_instance_emerging_threat_image` | `threat_signatures` | List of threat signatures | `[]` |
 | `ec2_instance_older_than_specific_days`                                | `max_ec2_instance_age_in_days`                    | Integer         | `180`                                                                                                                                |
 | `ec2_instance_stopped_older_than_specific_days`                        | `max_ec2_instance_stopped_days`                   | Integer         | `30`                                                                                                                                 |
 | `ec2_instance_secrets_user_data`                                       | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
@@ -214,10 +218,11 @@ The following list includes all the Azure checks with configurable variables tha
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_minutes`     | Integer         | `1440`                                                     |
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_threshold`   | Float           | `0.1`                                                      |
 | `app_ensure_java_version_is_latest`                      | `java_latest_version`                           | String          | `"17"`                                                     |
-| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.2"`                                                    |
+| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.5"`                                                    |
 | `app_ensure_python_version_is_latest`                    | `python_latest_version`                         | String          | `"3.12"`                                                   |
 | `defender_attack_path_notifications_properly_configured` | `defender_attack_path_minimal_risk_level`       | String          | `"High"`                                                   |
 | `network_public_ip_shodan`                               | `shodan_api_key`                                | String          | `null`                                                     |
+| `vm_emerging_threat_image` | `threat_signatures` | List of threat signatures | `[]` |
 | `sqlserver_recommended_minimal_tls_version`              | `recommended_minimal_tls_versions`              | List of Strings | `["1.2", "1.3"]`                                           |
 | `storage_smb_channel_encryption_with_secure_algorithm`   | `recommended_smb_channel_encryption_algorithms` | List of Strings | `["AES-256-GCM"]`                                          |
 | `vm_desired_sku_size`                                    | `desired_vm_sku_sizes`                          | List of Strings | `["Standard_A8_v2", "Standard_DS3_v2", "Standard_D4s_v3"]` |
@@ -231,9 +236,11 @@ The following list includes all the GCP checks with configurable variables that 
 
 | Check Name                                        | Value                             | Type    | Default |
 |---------------------------------------------------|-----------------------------------|---------|---------|
+| `appengine_version_php_runtime_supported`         | `appengine_php_min_version`       | String  | `"8.2"` |
 | `cloudstorage_bucket_sufficient_retention_period` | `storage_min_retention_days`      | Integer | `90`    |
 | `compute_instance_group_multiple_zones`           | `mig_min_zones`                   | Integer | `2`     |
 | `compute_public_address_shodan`                   | `shodan_api_key`                  | String  | `null`  |
+| `compute_instance_emerging_threat_image` | `threat_signatures` | List of threat signatures | `[]` |
 | `compute_snapshot_not_outdated`                   | `max_snapshot_age_days`           | Integer | `90`    |
 | `iam_sa_user_managed_key_unused`                  | `max_unused_account_days`         | Integer | `180`   |
 | `iam_service_account_unused`                      | `max_unused_account_days`         | Integer | `180`   |
@@ -288,6 +295,8 @@ The following list includes all the Vercel checks with configurable variables th
 | `deployment_production_uses_stable_target`     | `stable_branches`                 | List of Strings | `["main", "master"]`                                                     |
 | `domain_ssl_certificate_valid`                 | `days_to_expire_threshold`        | Integer         | `7`                                                                      |
 | `project_environment_no_secrets_in_plain_type` | `secret_suffixes`                 | List of Strings | `["_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_API_KEY", "_PRIVATE_KEY"]` |
+| `project_environment_no_secrets_with_public_prefix` | `secret_suffixes`            | List of Strings | `["_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_API_KEY", "_PRIVATE_KEY"]` |
+| `project_environment_no_secrets_with_public_prefix` | `public_env_prefixes`        | List of Strings | `["NEXT_PUBLIC_", "NUXT_PUBLIC_", "VITE_", "REACT_APP_", "VUE_APP_", "GATSBY_", "EXPO_PUBLIC_", "PUBLIC_"]` |
 | `team_member_role_least_privilege`             | `max_owner_percentage`            | Integer         | `20`                                                                     |
 | `team_member_role_least_privilege`             | `max_owners`                      | Integer         | `3`                                                                      |
 | `team_no_stale_invitations`                    | `stale_invitation_threshold_days` | Integer         | `30`                                                                     |
@@ -448,6 +457,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -718,8 +749,9 @@ azure:
   shodan_api_key: null
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
@@ -878,7 +910,7 @@ vercel:
   # vercel.team_member_role_least_privilege
   max_owner_percentage: 20
   max_owners: 3
-  # vercel.project_environment_no_secrets_in_plain_type
+  # vercel.project_environment_no_secrets_in_plain_type & vercel.project_environment_no_secrets_with_public_prefix
   secret_suffixes:
     - "_KEY"
     - "_SECRET"
@@ -886,6 +918,16 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+  # vercel.project_environment_no_secrets_with_public_prefix
+  public_env_prefixes:
+    - "NEXT_PUBLIC_"
+    - "NUXT_PUBLIC_"
+    - "VITE_"
+    - "REACT_APP_"
+    - "VUE_APP_"
+    - "GATSBY_"
+    - "EXPO_PUBLIC_"
+    - "PUBLIC_"
 
 
 ```
