@@ -312,6 +312,32 @@ class TestVersionRangesAndExamples:
         }
         ThreatSignature.model_validate(signature(images=[rule]))
 
+    def test_azure_miss_in_another_case_is_rejected_with_the_reason(self):
+        # Azure matches in any case, so a miss that only changes the case is
+        # an image the check flags: the error says why, since load_signatures
+        # logs it when it skips a supplied signature.
+        rule = {
+            "cloud": "azure",
+            "name_regex": r"^UbuntuServer-18\.04-",
+            "examples": {
+                "matches": ["UbuntuServer-18.04-LTS-latest"],
+                "misses": ["ubuntuserver-18.04-lts-latest"],
+            },
+        }
+        with pytest.raises(ValidationError, match="Azure names match in any case"):
+            ThreatSignature.model_validate(signature(images=[rule]))
+
+    def test_aws_miss_in_another_case_still_passes(self):
+        rule = {
+            "cloud": "aws",
+            "name_regex": r"^UbuntuServer-18\.04-",
+            "examples": {
+                "matches": ["UbuntuServer-18.04-LTS-latest"],
+                "misses": ["ubuntuserver-18.04-lts-latest"],
+            },
+        }
+        ThreatSignature.model_validate(signature(images=[rule]))
+
     def test_overlong_names_are_cut_before_matching(self):
         rule = {"cloud": "aws", "name_regex": "z$"}
         demo = [ThreatSignature.model_validate(signature(images=[rule]))]

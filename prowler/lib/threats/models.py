@@ -206,16 +206,26 @@ class ImageRule(BaseModel):
         if self.examples:
             try:
                 wrong = [n for n in self.examples.matches if not self.matches_name(n)]
-                wrong += [n for n in self.examples.misses if self.matches_name(n)]
+                matched_misses = [
+                    n for n in self.examples.misses if self.matches_name(n)
+                ]
             except TimeoutError as error:
                 # Pydantic only reports ValueError as a validation error.
                 raise ValueError(
                     f"the {self.cloud} rule's name_regex takes too long to match "
                     f"its examples (over {REGEX_TIMEOUT}s); simplify the pattern"
                 ) from error
+            wrong += matched_misses
             if wrong:
+                # A supplied signature that fails here is logged and skipped,
+                # so the message has to say why a miss now matches.
+                hint = (
+                    " (Azure names match in any case)"
+                    if matched_misses and self.cloud == "azure"
+                    else ""
+                )
                 raise ValueError(
-                    f"the {self.cloud} rule disagrees with its examples: {wrong}"
+                    f"the {self.cloud} rule disagrees with its examples: {wrong}{hint}"
                 )
         return self
 
