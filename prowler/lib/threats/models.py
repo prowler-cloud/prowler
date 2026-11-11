@@ -51,9 +51,9 @@ REGEX_TIMEOUT = 0.1
 
 
 @lru_cache(maxsize=1024)
-def _compiled(pattern: str):
+def _compiled(pattern: str, ignore_case: bool = False):
     """A rule's ``name_regex``, compiled once per scan for every image it is tried on."""
-    return regex.compile(pattern)
+    return regex.compile(pattern, regex.IGNORECASE if ignore_case else 0)
 
 
 def parse_version(value: str) -> Version:
@@ -120,7 +120,8 @@ class ImageRule(BaseModel):
 
     ``name_regex`` runs against the image name the cloud reports: the AMI name
     on AWS, the gallery image definition, custom image or marketplace offer/SKU
-    on Azure, and the boot disk's source image on GCP. A named group
+    on Azure, and the boot disk's source image on GCP; Azure names match in
+    any case (see ``matches_name``). A named group
     ``version`` is compared against ``versions`` (or the ``version_min`` /
     ``version_max`` shorthand for a single range); the image is affected when
     the version falls in any range. Several ranges express per-branch fixes,
@@ -170,10 +171,14 @@ class ImageRule(BaseModel):
     def matches_name(self, name: str) -> bool:
         """Whether an image name carries this rule, publisher aside.
 
+        Azure names ignore case: Azure treats resource names, offers and SKUs
+        case-insensitively and reports them in whatever case the VM was
+        created with. AMI and GCP image names are case-sensitive.
+
         Raises:
             TimeoutError: the regex took longer than ``REGEX_TIMEOUT``.
         """
-        found = _compiled(self.name_regex).search(
+        found = _compiled(self.name_regex, self.cloud == "azure").search(
             name[:MAX_IMAGE_NAME], timeout=REGEX_TIMEOUT
         )
         if not found:
