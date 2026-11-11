@@ -11,7 +11,10 @@ class cloudstorage_bucket_public_access(Check):
             report = Check_Report_GCP(metadata=self.metadata(), resource=bucket)
             report.status = "PASS"
             report.status_extended = f"Bucket {bucket.name} is not publicly accessible."
-            if bucket.public:
+            if bucket.public is None:
+                report.status = "MANUAL"
+                report.status_extended = f"Bucket {bucket.name} IAM policy could not be read, so its public access is unknown."
+            elif bucket.public:
                 report.status = "FAIL"
                 report.status_extended = f"Bucket {bucket.name} is publicly accessible."
             findings.append(report)
