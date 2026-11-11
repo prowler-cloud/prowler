@@ -23,9 +23,7 @@ class CloudStorage(GCPService):
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for bucket in response.get("items", []):
-                        # A denied read of one bucket's IAM policy leaves that bucket's
-                        # public access unknown; the rest of its metadata, and every other
-                        # bucket, came from buckets.list and are still evaluated.
+                        # None means the IAM policy could not be read
                         public = None
                         try:
                             bucket_iam = (
@@ -133,7 +131,7 @@ class Bucket(BaseModel):
     id: str
     region: str
     uniform_bucket_level_access: bool
-    public: Optional[bool]
+    public: Optional[bool] = None
     project_id: str
     retention_policy: Optional[RetentionPolicy] = None
     lifecycle_rules: Optional[list[dict]] = None
