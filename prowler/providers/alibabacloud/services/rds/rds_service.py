@@ -6,6 +6,27 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.alibabacloud.lib.service.service import AlibabaCloudService
 
 
+def security_ips_from_array_item(item: object) -> list[str]:
+    """Return whitelist entries from one DescribeDBInstanceIPArrayList item.
+
+    The RDS API field is SecurityIPList, which the Python SDK exposes as
+    security_iplist. security_ips is accepted for objects that already use
+    that name.
+
+    Args:
+        item: One DBInstanceIPArray from the describe response.
+
+    Returns:
+        Individual whitelist entries, with blanks removed.
+    """
+    raw = getattr(item, "security_iplist", None)
+    if raw is None:
+        raw = getattr(item, "security_ips", "")
+    if not raw:
+        return []
+    return [entry.strip() for entry in str(raw).split(",") if entry.strip()]
+
+
 class RDS(AlibabaCloudService):
     """
     RDS (Relational Database Service) class for Alibaba Cloud.
@@ -219,9 +240,7 @@ class RDS(AlibabaCloudService):
             ips = []
             if response and response.body and response.body.items:
                 for item in response.body.items.dbinstance_iparray:
-                    security_ips = getattr(item, "security_ips", "")
-                    if security_ips:
-                        ips.extend(security_ips.split(","))
+                    ips.extend(security_ips_from_array_item(item))
             return ips
         except Exception as error:
             logger.error(
