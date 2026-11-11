@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "opensearchserverless_collection_not_publicly_accessible",
+  "CheckTitle": "Amazon OpenSearch Serverless collection is not publicly accessible",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access"
+  ],
+  "ServiceName": "opensearchserverless",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "**Amazon OpenSearch Serverless collections** are assessed for **public network access** through the network policies that cover their API and OpenSearch Dashboards endpoints. A collection is reported as exposed when any applicable network rule sets `AllowFromPublic` to `true`.",
+  "Risk": "A collection reachable from the internet exposes its endpoints to anyone holding valid credentials or abusing over-permissive data access policies, impacting **confidentiality** (index and vector data disclosure, including RAG knowledge bases) and **integrity** (unauthorized writes). It also removes the network layer of **defense in depth**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-network.html",
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vpc.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws opensearchserverless update-security-policy --type network --name <POLICY_NAME> --policy-version <POLICY_VERSION> --policy '[{\"Rules\":[{\"ResourceType\":\"collection\",\"Resource\":[\"collection/<COLLECTION_NAME>\"]},{\"ResourceType\":\"dashboard\",\"Resource\":[\"collection/<COLLECTION_NAME>\"]}],\"AllowFromPublic\":false,\"SourceVPCEs\":[\"<VPC_ENDPOINT_ID>\"]}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: network policy that only allows access from a VPC endpoint\nResources:\n  <example_resource_name>:\n    Type: AWS::OpenSearchServerless::SecurityPolicy\n    Properties:\n      Name: <example_resource_name>\n      Type: network\n      Policy: >-\n        [{\"Rules\":[{\"ResourceType\":\"collection\",\"Resource\":[\"collection/<COLLECTION_NAME>\"]},{\"ResourceType\":\"dashboard\",\"Resource\":[\"collection/<COLLECTION_NAME>\"]}],\"AllowFromPublic\":false,\"SourceVPCEs\":[\"<VPC_ENDPOINT_ID>\"]}]  # critical: AllowFromPublic false removes internet access\n```",
+      "Other": "1. In the AWS console, open Amazon OpenSearch Service > Serverless > Network policies\n2. Select each policy that covers the collection and choose Edit\n3. For both the OpenSearch endpoint and the OpenSearch Dashboards endpoint, change the access type from Public to VPC and select the approved VPC endpoints\n4. Save the policy and confirm that no other network policy grants public access to the collection",
+      "Terraform": "```hcl\n# Network policy that only allows access from a VPC endpoint\nresource \"aws_opensearchserverless_security_policy\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  type = \"network\"\n  policy = jsonencode([{\n    Rules = [\n      { ResourceType = \"collection\", Resource = [\"collection/<COLLECTION_NAME>\"] },\n      { ResourceType = \"dashboard\", Resource = [\"collection/<COLLECTION_NAME>\"] }\n    ]\n    AllowFromPublic = false  # critical: removes internet access\n    SourceVPCEs     = [\"<VPC_ENDPOINT_ID>\"]\n  }])\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Restrict network access to **private** sources:\n- Set `AllowFromPublic` to `false` in every network policy that covers the collection, for both the API and Dashboards endpoints\n- Allow only approved **VPC endpoints** or AWS services\n- Remember that a public rule overrides private ones for the collections it covers\n- Combine with least-privilege data access policies",
+      "Url": "https://hub.prowler.com/check/opensearchserverless_collection_not_publicly_accessible"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "AWS only accepts network policy resource patterns that are an exact collection name or a prefix followed by a trailing wildcard. Any other pattern is treated as undetermined and reported as MANUAL as a safeguard instead of being guessed."
+}

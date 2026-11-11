@@ -178,6 +178,10 @@ Resources:
                   - "account:Get*"
                   - "amplify:ListApps"
                   - "amplify:ListBranches"
+                  - "aoss:GetSecurityPolicy"
+                  - "aoss:ListCollections"
+                  - "aoss:ListSecurityPolicies"
+                  - "aoss:ListTagsForResource"
                   - "appstream:Describe*"
                   - "appstream:List*"
                   - "backup:List*"
@@ -451,6 +455,10 @@ Resources:
                         Effect: Allow
                         Action:
                           - "account:Get*"
+                          - "aoss:GetSecurityPolicy"
+                          - "aoss:ListCollections"
+                          - "aoss:ListSecurityPolicies"
+                          - "aoss:ListTagsForResource"
                           - "appstream:Describe*"
                           - "appstream:List*"
                           - "backup:List*"
