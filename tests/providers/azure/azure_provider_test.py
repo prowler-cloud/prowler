@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
+import httpx
 import pytest
 from azure.core.credentials import AccessToken
 from azure.core.exceptions import HttpResponseError
@@ -1242,9 +1243,7 @@ class TestAzureProviderIdentityGraphCloud:
             ("AzureChinaCloud", "https://microsoftgraph.chinacloudapi.cn"),
         ],
     )
-    def test_build_graph_client_targets_the_cloud_graph_host(
-        self, region, graph_host
-    ):
+    def test_build_graph_client_targets_the_cloud_graph_host(self, region, graph_host):
         region_config = AzureProvider.setup_region_config(region)
         assert region_config.graph_host == graph_host
 
@@ -1257,6 +1256,42 @@ class TestAzureProviderIdentityGraphCloud:
         assert client.request_adapter.base_url == f"{graph_host}/v1.0/"
         _, kwargs = auth_provider.call_args
         assert kwargs["scopes"] == [f"{graph_host}/.default"]
+
+    @pytest.mark.parametrize(
+        "region, graph_host",
+        [
+            ("AzureCloud", "https://graph.microsoft.com"),
+            ("AzureUSGovernment", "https://graph.microsoft.us"),
+            ("AzureChinaCloud", "https://microsoftgraph.chinacloudapi.cn"),
+        ],
+    )
+    def test_signed_in_user_lookup_reaches_the_me_route_of_the_cloud_graph_host(
+        self, region, graph_host
+    ):
+        sent_requests = []
+
+        async def capture_request(_transport, request):
+            sent_requests.append(request)
+            return httpx.Response(
+                200, json={"userPrincipalName": "user@contoso.example"}, request=request
+            )
+
+        credentials = MagicMock()
+        credentials.get_token.return_value = AccessToken("fake-token", 9999999999)
+        client = AzureProvider.build_graph_client(
+            credentials, AzureProvider.setup_region_config(region)
+        )
+
+        with patch.object(
+            httpx.AsyncHTTPTransport, "handle_async_request", capture_request
+        ):
+            me = asyncio.run(client.me.get())
+
+        assert me.user_principal_name == "user@contoso.example"
+        assert len(sent_requests) == 1
+        url = sent_requests[0].url
+        assert f"{url.scheme}://{url.host}" == graph_host
+        assert url.path.endswith("/me")
 
     def test_setup_identity_looks_up_the_tenant_domain_in_the_selected_cloud(self):
         with patch.object(AzureProvider, "__init__", return_value=None):

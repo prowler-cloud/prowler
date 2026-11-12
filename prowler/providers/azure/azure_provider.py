@@ -24,6 +24,7 @@ from kiota_authentication_azure.azure_identity_authentication_provider import (
 )
 from msgraph import GraphServiceClient
 from msgraph.graph_request_adapter import GraphRequestAdapter
+from msgraph.graph_request_adapter import options as graph_request_options
 from msgraph_core import GraphClientFactory
 
 from prowler.config.config import (
@@ -896,32 +897,28 @@ class AzureProvider(Provider):
                 )
 
     @staticmethod
-    def build_graph_client(
+    def build_graph_request_adapter(
         credentials, region_config: AzureRegionConfig
-    ) -> GraphServiceClient:
-        """
-        Builds a Microsoft Graph client for the cloud in the region configuration.
-
-        GraphServiceClient(credentials) alone always targets graph.microsoft.com,
-        so the identity lookups would leave a sovereign cloud. Both the token scope
-        and the HTTP transport's host must point at the cloud's own Graph endpoint,
-        as the service clients do in lib/service/service.py.
-
-        Args:
-            credentials: The Azure credential used to request Graph tokens.
-            region_config (AzureRegionConfig): The selected cloud's configuration.
-
-        Returns:
-            GraphServiceClient: A Graph client bound to region_config.graph_host.
-        """
+    ) -> GraphRequestAdapter:
+        """Build a Graph request adapter bound to the selected cloud's Graph host and scope."""
         auth_provider = AzureIdentityAuthenticationProvider(
             credentials, scopes=[region_config.graph_scope]
         )
+        # Without the msgraph options the /me route goes out as /users/me-token-to-replace.
         http_client = GraphClientFactory.create_with_default_middleware(
-            host=region_config.graph_host
+            host=region_config.graph_host, options=graph_request_options
         )
+        return GraphRequestAdapter(auth_provider, client=http_client)
+
+    @staticmethod
+    def build_graph_client(
+        credentials, region_config: AzureRegionConfig
+    ) -> GraphServiceClient:
+        """Build a Microsoft Graph client for the selected cloud instead of graph.microsoft.com."""
         return GraphServiceClient(
-            request_adapter=GraphRequestAdapter(auth_provider, client=http_client)
+            request_adapter=AzureProvider.build_graph_request_adapter(
+                credentials, region_config
+            )
         )
 
     def setup_identity(
@@ -1004,7 +1001,9 @@ class AzureProvider(Provider):
                         logger.info(
                             "Trying to retrieve user information from AAD to populate identity structure ..."
                         )
-                        client = self.build_graph_client(credentials, self.region_config)
+                        client = self.build_graph_client(
+                            credentials, self.region_config
+                        )
 
                         me = await client.me.get()
                         if me:
