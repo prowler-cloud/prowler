@@ -1,0 +1,110 @@
+---
+title: 'Prowler Realtime Detection and Remediation'
+sidebarTitle: 'Realtime'
+description: 'Watch AWS CloudTrail activity in Prowler Cloud, check each risky change as it happens, and alert, propose a code fix, or fix the account automatically.'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.48.0" />
+
+A scan reports what was wrong when it ran. Prowler Realtime Detection and Remediation watches the CloudTrail activity of an AWS account, runs a targeted Prowler check on the resource each risky call touched, and responds the way the account's policy says. Use Realtime to catch a change that breaks a check minutes after it happens, instead of at the next scheduled scan.
+
+<Note>
+Prowler Realtime is available in Prowler Cloud for AWS providers.
+</Note>
+
+## Prerequisites
+
+* An AWS provider connected to Prowler Cloud. Without one, the Realtime page shows **Connect an AWS account first** with an **Add AWS account** button.
+* The **Manage Realtime** permission to set up Realtime or change its policy, credentials, alerts and fixes. See [RBAC Administrative Permissions](/user-guide/tutorials/prowler-app-rbac#rbac-administrative-permissions). Without it, write controls stay disabled and show "Your role needs the Manage Realtime permission."
+
+## Open Realtime
+
+Select **Realtime** in the **Security** section of the sidebar. Choose the AWS account to watch with the account picker at the top of the page.
+
+The account header summarizes the **Status**, the **Response** mode, the **Event feed**, the **Scope** and the enforced **Compliance frameworks**. From the header:
+
+* **Configure** opens the Realtime configuration page for the account.
+* **Share status** opens a status statement with checks passing and failing, the mode, the scope and the fixes verified in the last 30 days. The statement contains no account IDs, resources or people, and is stamped with a SHA-256 hash of its content. Copy it or select **Download JSON**.
+
+### Demo data
+
+Until an account has a Realtime policy, the dashboard shows demo data from a made-up AWS account under the **You are exploring demo data** banner. Write controls are disabled on demo data. Select **Set up Realtime** to open the configuration page, or **Set up with Lighthouse AI** to set it up from a Lighthouse AI chat.
+
+A paused account keeps showing its own history, not demo data.
+
+## Dashboard tabs
+
+| Tab | What it shows |
+|-----|---------------|
+| **Overview** | Posture score, open violations, fixed and verified changes, events in the last hour, **Needs attention**, **If the policy ran today** (what the policy would do with the open failures) and **Posture over time**. |
+| **Detections** | Changes that broke a check. Select a row to open its details in the side panel, next to Lighthouse AI. |
+| **Remediation** | Responses to detections: fixes applied and verified, pull requests opened and fixes recorded in dry run. Select **Revert** on a fix that can be undone, then confirm, to roll it back. |
+| **Event stream** | The CloudTrail events Prowler received, with the feed status. Select **Check now** to check the feed. Turn off **Changes only** to see read-only calls too. |
+| **Prioritized findings** | Open failing findings from the latest scan, ranked by severity and by recent activity on the same service. |
+| **Cost** | Cost anomalies and daily cost by service, when cost anomalies are turned on. |
+
+## Configure Realtime
+
+Select **Configure** in the account header to open the configuration page. It has one section per setup step, in order, and a progress rail that shows which required steps are done. Each section saves on its own.
+
+<Steps>
+  <Step title="Event feed">
+    Choose where Prowler reads the account's CloudTrail activity from:
+
+    * **Real time via SQS** (recommended): EventBridge forwards risky calls to an SQS queue within seconds. Deploy the CloudFormation or Terraform template shown in the section in one region of the AWS account, copy the `QueueUrl` output of the stack, paste it into **SQS queue URL** and save. IAM and S3 account events arrive in `us-east-1`.
+    * **CloudTrail lookup**: no setup. Prowler reads CloudTrail `LookupEvents`, a few minutes behind.
+
+    If no feed is saved, Prowler creates a CloudTrail lookup feed when you activate Realtime.
+  </Step>
+  <Step title="What to enforce">
+    Choose how Prowler responds when a change breaks a check:
+
+    * **Monitor only**: Prowler records risky changes and checks them against your compliance requirements. It never changes the account or your code.
+    * **Propose a change**: Prowler prepares a fix in your infrastructure code for review. Nothing in the AWS account changes until you merge and deploy it.
+    * **Fix automatically**: Prowler fixes supported issues in the AWS account with the remediation role and records how to undo each change. Findings it cannot fix safely fall back to a pull request. **Dry run** records what would be fixed without changing the account; turn it off once the log looks right.
+
+    Then set the **Enforced compliance frameworks** (every check when none is selected), the **Minimum severity**, and the **Resource scope** tags. With tags, only resources that have every tag are checked, and account-level controls such as root MFA are skipped. Under **Exclusions**, list checks to never fix automatically and limit fixes to specific regions.
+
+    For **Changes in code**, set the **GitHub repository** (`owner/repository`) and the **Terraform directory**, and choose whether to **Open pull requests** and **Let Lighthouse AI write the change**.
+
+    Saving this section creates the policy, still inactive.
+  </Step>
+  <Step title="Remediation access">
+    Optional. Add a remediation-only IAM role so Prowler can fix the account, and a GitHub token so Prowler can open pull requests:
+
+    1. Choose an external ID of at least 8 characters.
+    2. Deploy the template shown in the section in the AWS account with that external ID.
+    3. Paste the `RoleArn` output into **Remediation role ARN**, enter the **External id** and, to open pull requests, a **GitHub token** with write access to the repository.
+    4. Select **Save credentials**.
+
+    The role is separate from the read-only ProwlerScan role. Without it, Prowler can alert and propose code changes, but cannot fix the account. Select **Remove credentials** to stop fixes and pull requests; alerts and proposals keep working.
+  </Step>
+  <Step title="Alerts">
+    Choose where a confirmed violation, and the result of its fix, is sent: **Send alerts to Slack**, **Send alerts by email**, or both, with a minimum severity. Slack channels come from the [Slack Integration](/user-guide/tutorials/prowler-app-slack-integration). Only email recipients who confirmed their address receive alerts.
+  </Step>
+  <Step title="Cost anomalies">
+    Optional. Turn on **Detect cost anomalies for this account** to flag a service whose daily spend jumps well above its usual level. Deploy the template shown in the section once in the AWS account; it lets the ProwlerScan role read Cost Explorer (`ce:GetCostAndUsage`) and nothing else. Prowler reads Cost Explorer about every 6 hours, and AWS bills each request.
+  </Step>
+  <Step title="Activate">
+    Review the checks listed before activation, such as **Fix automatically** without a remediation role or pull requests without a GitHub token, then select **Activate**. With **Fix automatically** and dry run off, Prowler asks you to confirm that it may change the AWS account.
+
+    Once Realtime is active, the same card switches Realtime between active and paused. Pausing stops new detections and responses; the account's history stays available.
+  </Step>
+</Steps>
+
+The templates are also available in the Prowler repository: [CloudFormation](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/cloudformation) and [Terraform](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform).
+
+## What automatic fixes can change
+
+The remediation role allows only these fixes, on the resource named in the CloudTrail event:
+
+* Close internet-open ports (22, 3389, all) on a security group, revoking only `0.0.0.0/0` and `::/0` rules.
+* Turn on the four public access block settings of an S3 bucket.
+* Turn on the account-wide S3 public access block. This can affect buckets that are public on purpose.
+* Start CloudTrail logging again on a stopped trail. This fix cannot be undone.
+* Enable EBS encryption by default in the region. Existing volumes are not changed.
+* Set `PubliclyAccessible` to `false` on an RDS database.
+
+Every fix except restarting CloudTrail logging records how to undo it, so you can revert it from the **Remediation** tab.
