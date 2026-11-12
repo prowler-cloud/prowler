@@ -33,13 +33,14 @@
 ### Expected Result
 
 - Sign-up succeeds and redirects to Login.
-- User can log in successfully using the created credentials and reach the home page.
+- User can log in successfully using the created credentials.
+- Because the new tenant has no providers, the first run lands on `/providers` with the add-provider wizard already open (instead of the home page).
 
 ### Key verification points
 
 - After submitting sign-up, the URL changes to `/sign-in`.
 - The newly created credentials can be used to sign in successfully.
-- After login, the user lands on the home (`/`) and main content is visible.
+- After login, the user lands on `/providers` and the "Adding A Provider" wizard is visible.
 
 ### Notes
 

@@ -771,6 +771,11 @@ class TestOCSF:
             "metadata": {"key": "value"},
         }
 
+    def test_sanitize_resource_data_plain_json_is_not_copied(self):
+        metadata = {"key": ["value", {"nested": 1}]}
+        result = OCSF._sanitize_resource_data("details", metadata)
+        assert result["metadata"] is metadata
+
     def test_sanitize_resource_data_empty_dict(self):
         result = OCSF._sanitize_resource_data("details", {})
         assert result == {

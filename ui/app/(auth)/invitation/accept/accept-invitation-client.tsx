@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import { Mail, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -12,6 +12,7 @@ import {
 } from "@/app/(auth)/invitation/_lib/invitation-errors";
 import { AuthBrand } from "@/components/auth/oss/auth-brand";
 import { Button } from "@/components/shadcn";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 
 type AcceptState =
   | { kind: "no-token" }
@@ -74,10 +75,9 @@ export function AcceptInvitationClient({
         {/* No token */}
         {state.kind === "no-token" && (
           <div className="flex flex-col items-center gap-4">
-            <Icon
-              icon="solar:danger-triangle-bold"
-              className="text-text-warning-primary"
-              width={48}
+            <TriangleAlert
+              aria-hidden="true"
+              className="text-text-warning-primary size-12"
             />
             <h1 className="text-xl font-semibold">Invalid Invitation Link</h1>
             <p className="text-text-neutral-tertiary">
@@ -93,11 +93,7 @@ export function AcceptInvitationClient({
         {/* Accepting */}
         {state.kind === "accepting" && (
           <div className="flex flex-col items-center gap-4">
-            <Icon
-              icon="eos-icons:loading"
-              className="text-text-neutral-tertiary"
-              width={48}
-            />
+            <Spinner className="size-12" />
             <h1 className="text-xl font-semibold">Accepting Invitation...</h1>
             <p className="text-text-neutral-tertiary">
               Please wait while we process your invitation.
@@ -108,10 +104,9 @@ export function AcceptInvitationClient({
         {/* Error */}
         {state.kind === "error" && (
           <div className="flex flex-col items-center gap-4">
-            <Icon
-              icon="solar:danger-triangle-bold"
-              className="text-text-error-primary"
-              width={48}
+            <TriangleAlert
+              aria-hidden="true"
+              className="text-text-error-primary size-12"
             />
             <h1 className="text-xl font-semibold">
               Could Not Accept Invitation
@@ -129,11 +124,7 @@ export function AcceptInvitationClient({
         {/* Choice page for unauthenticated users */}
         {state.kind === "choose" && (
           <div className="flex flex-col items-center gap-6">
-            <Icon
-              icon="solar:letter-bold"
-              className="text-button-primary"
-              width={48}
-            />
+            <Mail aria-hidden="true" className="text-button-primary size-12" />
             <div>
               <h1 className="text-xl font-semibold">
                 You&apos;ve Been Invited

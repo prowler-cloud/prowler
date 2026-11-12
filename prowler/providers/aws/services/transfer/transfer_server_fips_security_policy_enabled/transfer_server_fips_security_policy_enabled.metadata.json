@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "transfer_server_fips_security_policy_enabled",
+  "CheckTitle": "AWS Transfer Family server uses a FIPS security policy",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "transfer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsTransferServer",
+  "ResourceGroup": "network",
+  "Description": "**AWS Transfer Family servers** (SFTP, FTPS, AS2) are assessed for use of a **FIPS** security policy (`TransferSecurityPolicy-FIPS-*`, flagged `Fips: true` by AWS), which limits file-transfer sessions to the FIPS-enabled set of SSH and TLS algorithms.",
+  "Risk": "Servers without a FIPS security policy can negotiate algorithms outside the FIPS-enabled set, which does not meet requirements to protect federal or regulated files and credentials with **NIST CMVP validated cryptography**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/transfer/latest/userguide/security-policies.html",
+    "https://aws.amazon.com/compliance/fips/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws transfer update-server --server-id <server_id> --security-policy-name TransferSecurityPolicy-FIPS-2025-03",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::Transfer::Server\n    Properties:\n      Protocols:\n        - SFTP\n      SecurityPolicyName: TransferSecurityPolicy-FIPS-2025-03  # FIX: FIPS security policy\n```",
+      "Other": "1. In the AWS Console, go to AWS Transfer Family > Servers\n2. Select the server and choose Edit on the Additional details panel\n3. Set Cryptographic algorithm options (Security policy) to a FIPS policy such as TransferSecurityPolicy-FIPS-2025-03\n4. Save the changes",
+      "Terraform": "```hcl\nresource \"aws_transfer_server\" \"<example_resource_name>\" {\n  protocols            = [\"SFTP\"]\n  security_policy_name = \"TransferSecurityPolicy-FIPS-2025-03\" # FIX: FIPS security policy\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use a **FIPS** security policy, such as `TransferSecurityPolicy-FIPS-2025-03`, on every Transfer Family server that exchanges federal or regulated data.",
+      "Url": "https://hub.prowler.com/check/transfer_server_fips_security_policy_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "transfer_server_in_transit_encryption_enabled",
+    "transfer_server_pqc_ssh_kex_enabled"
+  ],
+  "Notes": ""
+}

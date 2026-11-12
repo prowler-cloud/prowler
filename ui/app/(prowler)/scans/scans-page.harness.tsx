@@ -164,6 +164,14 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     await this.waitForText(message);
   }
 
+  plansLink(): HTMLAnchorElement | null {
+    return (
+      Array.from(document.querySelectorAll<HTMLAnchorElement>("a")).find(
+        (link) => link.textContent?.trim() === "View plans",
+      ) ?? null
+    );
+  }
+
   async waitForUploadInProgress(): Promise<void> {
     await this.waitFor(
       () => this.buttonByText(/Importing/i),
@@ -283,6 +291,11 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
       5000,
       "the first status poll",
     );
+  }
+
+  /** A previous test's status poll still in flight when this test's handlers take over. */
+  async receiveLeftoverStatusPoll(): Promise<void> {
+    await fetch(`/api/ingestions/${this.fixture.id}`);
   }
 
   /** Outlast an uncancelled poll: its response lands, then the modal's 5s interval passes and the next would fire. */

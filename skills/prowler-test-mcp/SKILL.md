@@ -7,7 +7,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0.0"
+  version: "1.1.0"
   scope: [root, mcp_server]
   auto_invoke:
     - "Writing Prowler MCP server tests"
@@ -42,6 +42,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - `__init__.py` IS required in every `tests/` subdirectory here (unlike the SDK's
   repo-root `tests/`), or same-named modules collide under pytest's import mode.
 - Async tests need no marker (`asyncio_mode = "auto"`). Do not use `@pytest.mark.anyio`.
+- Warnings are errors (`filterwarnings = ["error", ...]` in `pyproject.toml`): a new
+  deprecation warning fails the suite. Fix the cause; do not add a blanket filter.
 - Use only obviously-fake credentials from `tests.helpers.tokens` (TruffleHog).
 - One behaviour per test; keep tests self-contained and order-independent.
 
@@ -155,8 +157,10 @@ uv run pytest --cov=./prowler_mcp_server   # with coverage
 From the repository root:
 
 ```bash
-make test-mcp   # runs the MCP suite exactly as CI does
+make test-mcp   # cd mcp_server && uv run pytest --cov=./prowler_mcp_server --cov-report=term-missing tests
 ```
+
+CI (`.github/workflows/mcp-tests.yml`) runs the same suite with `--cov-report=xml`.
 
 ---
 

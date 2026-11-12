@@ -45,6 +45,7 @@ import {
 } from "../chat/lighthouse-v2-chat-view";
 
 import { LighthousePanelChatSkeleton } from "./lighthouse-panel-chat-skeleton";
+import { usePanelLinkTarget } from "./use-panel-link-target";
 
 const PANEL_CHAT_STATUS = {
   LOADING: "loading",
@@ -301,6 +302,7 @@ function PanelChatError({ message, onRetry }: PanelChatErrorProps) {
 }
 
 function PanelChatConnectCta() {
+  const linkTarget = usePanelLinkTarget();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
       <LighthouseIconWithAura className="size-16" />
@@ -314,7 +316,9 @@ function PanelChatConnectCta() {
         </p>
       </div>
       <Button asChild>
-        <Link href={LIGHTHOUSE_ROUTE.SETTINGS}>Connect an LLM provider</Link>
+        <Link href={LIGHTHOUSE_ROUTE.SETTINGS} {...linkTarget}>
+          Connect an LLM provider
+        </Link>
       </Button>
     </div>
   );

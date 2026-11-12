@@ -4,12 +4,11 @@ import { ComplianceAccordionTitle } from "@/components/compliance/compliance-acc
 import { ComplianceBadgeVariant } from "@/components/compliance/compliance-custom-details/shared-components";
 import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
-import {
+import type {
   AttributesData,
   CSAAttributesMetadata,
   Framework,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -20,6 +19,7 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
 
 export interface CSAMappingSection {
@@ -35,12 +35,6 @@ export const CSA_MAPPING_SECTIONS: CSAMappingSection[] = [
     variant: "info",
   },
 ];
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 export const mapComplianceData = (
   attributesData: AttributesData,
