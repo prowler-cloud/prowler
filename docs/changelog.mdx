@@ -9,13 +9,23 @@ rss: true
 
   When a new vulnerability lands in an operating system image or a vendor appliance, the first question is which instances run an affected image. Answering it used to take a new check per vulnerability. A vulnerability is now described as data, a **threat signature**, and three new checks match every compute instance against the signatures in force for the scan:
 
-  - `ec2_instance_emerging_threat_image` matches the AMI by owner account and name, `vm_emerging_threat_image` matches Azure gallery, custom and marketplace images, and `compute_instance_emerging_threat_image` matches the boot disk source image of Google Cloud instances.
-  - A signature lists the affected image publishers, a name pattern and one version range per release branch, so the fixed point release of a branch is not flagged, plus the exposed ports, the impact and the remediation. The examples each signature carries are checked when it loads, so a wrong pattern is rejected before it reaches a scan.
+  - `ec2_instance_emerging_threat_image` matches the AMI by name and, when the signature requires a verified publisher, by owner account, `vm_emerging_threat_image` matches Azure gallery, custom and marketplace images, and `compute_instance_emerging_threat_image` matches the boot disk source image of Google Cloud instances.
+  - A signature lists the affected image publishers, a name pattern and one version range per release branch, so the fixed point release of a branch is not flagged, plus the exposed ports, the impact and the remediation. A signature can carry examples of image names its pattern must match and must miss; they are checked when it loads, so a pattern that disagrees with its examples is rejected before it reaches a scan.
   - Prowler ships the engine and the checks with no signatures of its own. Signatures are supplied per scan under the new `threat_signatures` configuration key for AWS, Azure and Google Cloud.
-  - On AWS, Amazon Inspector decides wherever it scans the instance's packages: an active finding for the CVE of the threat confirms the match, and an instance Inspector scans with no such finding passes, so a host patched in place clears. The lookup needs the new `inspector2:SearchVulnerabilities` permission, included in the Prowler additions policy and the CloudFormation scan role; without it, matches are never cleared.
+  - On AWS, Amazon Inspector decides wherever it scans the instance's packages: an active finding for the CVE of the threat confirms the match, and an instance Inspector scans with no such finding passes, as long as Inspector knows every CVE of the threat, so a host patched in place clears. The lookup needs the new `inspector2:SearchVulnerabilities` permission, included in the Prowler additions policy and the CloudFormation scan role; without it, matches are never cleared.
   - To support the match, the EC2 service keeps the owner and name of third-party AMIs, Azure VMs keep their full image reference and Google Cloud instances keep their boot disk source image. Each failed finding stores the matched threats in its raw result through the new `Check_Report.raw` payload.
 
   See [Emerging Threat Signatures](/developer-guide/threat-signatures) to write a signature from the template.
+
+  <Note>
+  The threat catalog and the threat issues below are available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - **Prowler Cloud** maintains a threat catalog and adds it to every AWS, Azure and Google Cloud scan. A new threat reaches scans as soon as it is published, without waiting for a release, and a signature in a scan configuration with the same `id` replaces the catalog one.
+  - Each threat becomes one **Exploitability issue** per account, listing its affected hosts. An image match alone is at most `likely`; the issue is `exploitable` only when a vulnerability scanner reports the CVE on the host and the threat needs no credential.
+  - `GET /api/v1/issues` and `GET /api/v1/issues/overview` accept `filter[threat]` to list one threat and `filter[search]` to match threat names and CVE IDs.
+
+  See [Exploitability Issues](/user-guide/tutorials/prowler-app-issues#emerging-threats) for how a threat is judged and cleared.
 
   ### 🏛️ AWS — Organizations and CloudWatch Observability Access Manager Checks
 
