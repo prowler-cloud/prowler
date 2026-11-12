@@ -1,0 +1,1 @@
+mcp from 1.28.1 to 1.30.0 plus joserfc, opentelemetry-api, pydantic-settings and python-multipart in the MCP Server container image, patching CVE-2026-59951, CVE-2026-116684, CVE-2026-116685, CVE-2026-116686, CVE-2026-119284, CVE-2026-114603, CVE-2026-53540 and GHSA-4xgf-cpjx-pc3j

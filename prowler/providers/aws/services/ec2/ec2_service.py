@@ -42,6 +42,17 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
         self.images_by_id = {}
+        # Provenance of the AMIs instances run that ``Owners=["self"]`` did
+        # not return, looked up by id: Amazon's, marketplace, community and
+        # vendor accounts (such as a Linux distribution's), and own AMIs the
+        # resource filter left out. Only for matching an instance to its
+        # image; ``images`` keeps holding just this account's and Amazon's
+        # AMIs that the filter keeps, so checks on owned AMIs never judge
+        # somebody else's.
+        self.instance_images_by_id = {}
+        # AMI ids whose lookup failed (permissions, throttling), as opposed to
+        # AMIs that no longer exist: a check must not pass what it never saw.
+        self.image_lookup_failures = set()
         self.__threading_call__(self._describe_images)
         self.volumes = []
         self.__threading_call__(self._describe_volumes)
@@ -86,11 +97,14 @@ class EC2(AWSService):
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
-                            enis = []
+                            enis, ipv6_addresses = [], []
                             for eni in instance.get("NetworkInterfaces", []):
                                 network_interface_id = eni.get("NetworkInterfaceId")
                                 if network_interface_id:
                                     enis.append(network_interface_id)
+                                for ipv6 in eni.get("Ipv6Addresses", []):
+                                    if ipv6.get("Ipv6Address"):
+                                        ipv6_addresses.append(ipv6["Ipv6Address"])
                             self.instances.append(
                                 Instance(
                                     id=instance["InstanceId"],
@@ -124,6 +138,7 @@ class EC2(AWSService):
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
                                     network_interfaces=enis,
+                                    ipv6_addresses=ipv6_addresses,
                                     virtualization_type=instance.get(
                                         "VirtualizationType"
                                     ),
@@ -410,7 +425,18 @@ class EC2(AWSService):
             for image_batch in self._get_image_id_batches(amazon_image_ids):
                 for image in self._describe_images_by_id(regional_client, image_batch):
                     if self._is_amazon_image(image):
-                        self._add_image(image, regional_client.region, "amazon")
+                        owner = "amazon"
+                    elif image.get("OwnerId") == self.audited_account:
+                        # An own AMI the resource filter or a failed
+                        # ``Owners=["self"]`` call left for this lookup.
+                        owner = "self"
+                    else:
+                        owner = "third_party"
+                    if owner == "amazon":
+                        self._add_image(image, regional_client.region, owner)
+                    # Provenance survives a resource filter that leaves the
+                    # AMI itself out of ``images``.
+                    self._add_instance_image(image, regional_client.region, owner)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -430,9 +456,33 @@ class EC2(AWSService):
                 tags=image.get("Tags"),
                 deprecation_time=image.get("DeprecationTime"),
                 owner=owner,
+                owner_id=image.get("OwnerId", ""),
+                description=image.get("Description", ""),
             )
             self.images.append(ec2_image)
             self.images_by_id[ec2_image.id] = ec2_image
+
+    def _add_instance_image(self, image, region, owner="third_party"):
+        """Record an AMI an instance runs, for provenance only."""
+        owner_id = image.get("OwnerId", "")
+        self.instance_images_by_id[image["ImageId"]] = Image(
+            id=image["ImageId"],
+            arn=f"arn:{self.audited_partition}:ec2:{region}:{owner_id}:image/{image['ImageId']}",
+            name=image.get("Name", ""),
+            public=image.get("Public", False),
+            region=region,
+            tags=image.get("Tags"),
+            deprecation_time=image.get("DeprecationTime"),
+            owner=owner,
+            owner_id=owner_id,
+            description=image.get("Description", ""),
+        )
+
+    def image_for_instance(self, instance) -> Optional["Image"]:
+        """The AMI an instance was launched from, whoever published it."""
+        return self.images_by_id.get(
+            instance.image_id
+        ) or self.instance_images_by_id.get(instance.image_id)
 
     def _describe_images_by_id(self, regional_client, image_ids):
         try:
@@ -440,7 +490,9 @@ class EC2(AWSService):
                 ImageIds=image_ids, IncludeDeprecated=True
             )["Images"]
         except ClientError as error:
-            if error.response["Error"]["Code"] == "InvalidAMIID.NotFound":
+            # NotFound, Unavailable (deregistered) and Malformed name one bad
+            # id: split the batch so the other AMIs are still described.
+            if error.response["Error"]["Code"].startswith("InvalidAMIID."):
                 if len(image_ids) == 1:
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -455,8 +507,10 @@ class EC2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            self.image_lookup_failures.update(image_ids)
             return []
         except Exception as error:
+            self.image_lookup_failures.update(image_ids)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -785,6 +839,7 @@ class Instance(BaseModel):
     subnet_id: str
     instance_profile: Optional[dict]
     network_interfaces: Optional[list]
+    ipv6_addresses: list[str] = []
     virtualization_type: Optional[str]
     enclaves_enabled: Optional[bool] = False
     hibernation_enabled: Optional[bool] = False
@@ -873,6 +928,10 @@ class Image(BaseModel):
     owner: str
     region: str
     tags: Optional[list] = []
+    #: The publishing account id; ``owner`` is a label ("self", "amazon",
+    #: "third_party") for which of this service's lists the image sits in.
+    owner_id: str = ""
+    description: str = ""
 
 
 class EbsEncryptionByDefault(BaseModel):

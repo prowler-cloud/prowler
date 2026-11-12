@@ -11,6 +11,8 @@ import {
   getCloudUpgradeCompareUrl,
   getCloudUpgradePrimaryUrl,
   getPaidPlanUpgradeBillingHref,
+  getPaidPlanUpgradeCompareUrl,
+  isCloudUpgradeFeature,
   isPaidPlanUpgradeFeature,
   PAID_PLAN_UPGRADE_CONTENT,
 } from "./cloud-upgrade";
@@ -26,6 +28,7 @@ describe("cloud upgrade content", () => {
     expect(titles).toEqual([
       "Keep Every Provider Checked Automatically",
       "Turn Findings into Alerts",
+      "Export Findings to Amazon S3",
       "Automate Prowler with API Keys",
       "Add Your Entire AWS Organization",
       "Add Your Entire Azure Management Group",
@@ -36,6 +39,7 @@ describe("cloud upgrade content", () => {
       "Send Findings to Jira at Scale",
       "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
+      "Catch Risky AWS Changes as They Happen",
       "Configure Every Scan Once",
       "Use One SAML Configuration Across Domains",
     ]);
@@ -75,6 +79,7 @@ describe("cloud upgrade URLs", () => {
   it.each([
     [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
     [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
+    [CLOUD_UPGRADE_FEATURE.AMAZON_S3, "amazon-s3"],
     [CLOUD_UPGRADE_FEATURE.API_KEYS, "api-keys"],
     [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
     [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS, "azure-organization"],
@@ -88,6 +93,7 @@ describe("cloud upgrade URLs", () => {
     [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH, "jira-dispatch"],
     [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI, "lighthouse-ai"],
     [CLOUD_UPGRADE_FEATURE.GENERAL, "general"],
+    [CLOUD_UPGRADE_FEATURE.REALTIME, "realtime"],
     [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, "scan-configuration"],
     [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS, "saml-domains"],
   ])("should use the canonical content slug for %s", (feature, contentSlug) => {
@@ -112,5 +118,22 @@ describe("paid plan upgrade content", () => {
       PAID_PLAN_UPGRADE_CONTENT[PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]
         .title,
     ).toBe("See Every Finding in Your Account");
+  });
+
+  it("sends the Amazon S3 upgrade to billing with its own feature", () => {
+    // Given
+    const feature = PAID_PLAN_UPGRADE_FEATURE.S3_INTEGRATION;
+
+    // When / Then
+    expect(isPaidPlanUpgradeFeature(feature)).toBe(true);
+    expect(isCloudUpgradeFeature(feature)).toBe(false);
+    expect(getPaidPlanUpgradeBillingHref(feature)).toBe(
+      "/billing?feature=s3_integration",
+    );
+    expect(
+      new URL(getPaidPlanUpgradeCompareUrl(feature)).searchParams.get(
+        "utm_content",
+      ),
+    ).toBe("s3-integration");
   });
 });

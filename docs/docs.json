@@ -508,6 +508,7 @@
               "developer-guide/services",
               "developer-guide/checks",
               "developer-guide/secret-scanning-checks",
+              "developer-guide/threat-signatures",
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",

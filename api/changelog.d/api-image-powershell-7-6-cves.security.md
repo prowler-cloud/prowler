@@ -1,0 +1,1 @@
+PowerShell from 7.5.13 to 7.6.10 (.NET runtime 10.0.15), uv from 0.13.4 to 0.13.7 and multidict, opentelemetry and setuptools in the API container image, patching CVE-2026-109475, CVE-2026-104874, CVE-2026-114603, CVE-2026-59890 and the rustls advisories in uv

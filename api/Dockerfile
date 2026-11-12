@@ -2,22 +2,22 @@ FROM python:3.12.16-slim-trixie@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
-ARG POWERSHELL_VERSION=7.5.13
+ARG POWERSHELL_VERSION=7.6.10
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.76.1
+ARG TRIVY_VERSION=0.76.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
-ARG TRIVY_SHA256_AMD64=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
-ARG TRIVY_SHA256_ARM64=e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f
-ARG POWERSHELL_SHA256_AMD64=e9256bfc6ac98fcbec97270e8a986577a7346a587837cc80d30595eef3c2546b
-ARG POWERSHELL_SHA256_ARM64=6a556353ccfb0a414b80322334eac29a540a398537d3cf8dcc3ecec9cd8abd66
+ARG TRIVY_SHA256_AMD64=bc0fc726e017b8927a62b2d3531d7a84ee01769daf5c99ed866dced54089fdbf
+ARG TRIVY_SHA256_ARM64=ab9d51f86e6a5fb936f605faff6b593ac51bc378fff4d3e8b9d58358b9c367c3
+ARG POWERSHELL_SHA256_AMD64=e261cabc91c78a9afe8d1e5f24731ab0d38204735ab2ec94b0af55102652e10d
+ARG POWERSHELL_SHA256_ARM64=439432cdecf4418413b9a8f547e3ab4d9b40e8e4258913ec3d15fc92c67a9235
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
@@ -30,12 +30,14 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 #   libssh2-1t64 1.11.1-1+deb13u2  CVE-2026-58050
 #   libpcre2-8-0 10.46-1~deb13u2  CVE-2026-86145, -89161
 #   apt/libapt-pkg7.0 3.0.4  CVE-2026-109518
+#   zlib1g 1:1.3.dfsg+really1.3.1-1+deb13u1  CVE-2026-76844, -85091
 # Taken as a targeted --only-upgrade rather than by moving the digest: the newest
 # published python:3.12-slim-trixie carries the same vulnerable versions. The three
 # openssl packages are flagged separately, so all are named.
 # Drop each one once the base image ships its fixed version.
+# --error-on=any: a transient fetch failure would otherwise skip these upgrades silently.
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update --error-on=any && apt-get install -y --no-install-recommends \
     wget \
     git \
     libicu76 \
@@ -52,7 +54,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y --no-install-recommends --only-upgrade \
        util-linux libssl3t64 openssl openssl-provider-legacy \
        libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 \
-       apt libapt-pkg7.0 \
+       apt libapt-pkg7.0 zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -117,7 +119,8 @@ RUN ARCH=$(uname -m) && \
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
 
-USER prowler
+# Numeric UID (1000 = prowler) so runAsNonRoot can verify it; no :GID, so groups still come from /etc/group.
+USER 1000
 
 WORKDIR /home/prowler
 
@@ -127,7 +130,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.13.4
+    pip install --no-cache-dir uv==0.13.7
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
@@ -141,7 +144,7 @@ RUN uv sync --locked --no-install-project && \
 RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell && \
     rm -rf /home/prowler/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
-USER root
+USER 0
 
 # Remove build-only packages from the final image after Python dependencies are installed.
 # git is only needed by uv sync for the `prowler @ git+...` dependency; purging it drops perl too.
@@ -172,7 +175,7 @@ RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
     /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
     /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
-USER prowler
+USER 1000
 
 COPY --chown=prowler:prowler src/backend/ ./backend/
 COPY --chown=prowler:prowler docker-entrypoint.sh ./docker-entrypoint.sh
