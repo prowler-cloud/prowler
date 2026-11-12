@@ -201,3 +201,40 @@ class Test_vm_emerging_threat_image:
 
         assert result[0].status == "FAIL"
         assert result[0].raw["threats"][0]["provenance"] == "publisher"
+
+    def test_offer_and_sku_are_compared_without_case(self):
+        # The rule is written against the marketplace's own names; the VM was
+        # created with them in lower case, which Azure accepts and echoes back.
+        signature = {
+            "id": "demo-marketplace-flaw",
+            "title": "Demo marketplace image flaw",
+            "cves": ["CVE-2026-0005"],
+            "severity": "high",
+            "summary": "Demo.",
+            "images": [
+                {
+                    "cloud": "azure",
+                    "publishers": ["Canonical"],
+                    "require_publisher": True,
+                    "name_regex": r"^UbuntuServer-18\.04-LTS-",
+                }
+            ],
+            "credential_required": True,
+            "impact": "Local privilege escalation.",
+            "remediation": "Upgrade.",
+        }
+        image = VirtualMachineImage(
+            publisher="canonical",
+            offer="ubuntuserver",
+            sku="18.04-lts",
+            version="latest",
+        )
+        vm = _vm(image)
+
+        result = _run(
+            {vm.resource_id: vm}, audit_config={"threat_signatures": [signature]}
+        )
+
+        assert result[0].status == "FAIL"
+        assert result[0].raw["threats"][0]["image"] == "ubuntuserver-18.04-lts-latest"
+        assert result[0].raw["threats"][0]["provenance"] == "publisher"

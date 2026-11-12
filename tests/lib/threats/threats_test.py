@@ -73,6 +73,32 @@ class TestMatching:
         hits = match_image(DEMO, "azure", ["demoos-3.21.2-x86_64-uefi-tiny"], None)
         assert [(h[0].id, h[2]) for h in hits] == [("demo-ssh-bypass", "name")]
 
+    @pytest.mark.parametrize(
+        "name",
+        [
+            # A gallery image definition: Azure resource names ignore case.
+            "DemoOS-3.21.2-x86_64-UEFI-Tiny",
+            # Marketplace offer-sku-version, in the case the VM was created with.
+            "DEMOOS-3.21.2-X86_64-UEFI-TINY",
+        ],
+    )
+    def test_azure_names_are_matched_in_any_case(self, name):
+        hits = match_image(DEMO, "azure", [name], None)
+        assert [(h[0].id, h[1]) for h in hits] == [("demo-ssh-bypass", name)]
+
+    @pytest.mark.parametrize(
+        "cloud,name",
+        [
+            # AMI and GCP image names are case-sensitive: another case is
+            # another image, possibly anybody's.
+            ("aws", "DemoOS-3.22.2-x86_64-uefi-tiny-r0"),
+            ("gcp", "DemoOS-3-20-3-x86-64-bios-tiny-r0"),
+        ],
+    )
+    def test_aws_and_gcp_names_are_matched_in_their_exact_case(self, cloud, name):
+        assert match_image(DEMO, cloud, [name], DEMO_PUBLISHER) == []
+        assert match_image(DEMO, cloud, [name.lower()], DEMO_PUBLISHER)
+
 
 class TestSchema:
     def test_valid(self):
@@ -283,6 +309,32 @@ class TestVersionRangesAndExamples:
     def test_examples_that_agree_pass(self):
         rule = signature()["images"][0] | {
             "examples": {"matches": ["demo-1.3"], "misses": ["demo-1.9", "x-1.3"]}
+        }
+        ThreatSignature.model_validate(signature(images=[rule]))
+
+    def test_azure_miss_in_another_case_is_rejected_with_the_reason(self):
+        # Azure matches in any case, so a miss that only changes the case is
+        # an image the check flags: the error says why, since load_signatures
+        # logs it when it skips a supplied signature.
+        rule = {
+            "cloud": "azure",
+            "name_regex": r"^UbuntuServer-18\.04-",
+            "examples": {
+                "matches": ["UbuntuServer-18.04-LTS-latest"],
+                "misses": ["ubuntuserver-18.04-lts-latest"],
+            },
+        }
+        with pytest.raises(ValidationError, match="Azure names match in any case"):
+            ThreatSignature.model_validate(signature(images=[rule]))
+
+    def test_aws_miss_in_another_case_still_passes(self):
+        rule = {
+            "cloud": "aws",
+            "name_regex": r"^UbuntuServer-18\.04-",
+            "examples": {
+                "matches": ["UbuntuServer-18.04-LTS-latest"],
+                "misses": ["ubuntuserver-18.04-lts-latest"],
+            },
         }
         ThreatSignature.model_validate(signature(images=[rule]))
 

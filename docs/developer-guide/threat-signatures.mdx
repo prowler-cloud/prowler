@@ -45,6 +45,7 @@ Rules follow these principles:
 
 - **Prefer publisher-verified matches.** List the official publisher. A match from a listed publisher proves the image; a name-only match is weaker evidence. When several rules of one signature match an image, the publisher-verified match is the one reported. Set `require_publisher: true` when the name alone is too generic to trust.
 - **Capture the version.** A `(?P<version>...)` group in `name_regex` is compared against `versions`, a list of inclusive ranges. Write one range per release branch when fixes ship per branch, so patched point releases are not flagged. Dashes are read as dots, because Google Cloud image names cannot hold dots.
+- **Write names as the cloud lists them.** AWS and Google Cloud image names are matched in their exact case. Azure names are matched in any case, because Azure compares resource names, offers and SKUs without case and reports them in the case the VM was created with.
 - **Exclude unaffected variants in the pattern.** For example, when only an image's minimal variant ships the vulnerable default, match that variant's name only.
 - **Keep the pattern fast.** `name_regex` runs on every image of every scanned account, through the [`regex`](https://pypi.org/project/regex/) engine with a limit of 0.1 seconds per image name. A rule that exceeds the limit on its own examples is rejected when the signature loads. A rule that exceeds it during a scan is skipped for that image and logged with the signature ID. Avoid nested or overlapping repetition such as `(a|aa)+`.
 
