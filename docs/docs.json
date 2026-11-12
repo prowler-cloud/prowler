@@ -174,7 +174,7 @@
                 "group": "Findings",
                 "pages": [
                   "user-guide/tutorials/prowler-alerts",
-                  "user-guide/tutorials/prowler-cloud-issues",
+                  "user-guide/tutorials/prowler-app-issues",
                   "user-guide/tutorials/prowler-app-finding-groups",
                   "user-guide/tutorials/prowler-app-findings-triage"
                 ]
