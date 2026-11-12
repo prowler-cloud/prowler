@@ -1,0 +1,1 @@
+`aiservices_connection_identity_based_auth` check for Azure provider, reporting AI Foundry account and project connections whose `authType` presents a credential stored in the connection instead of a directory identity

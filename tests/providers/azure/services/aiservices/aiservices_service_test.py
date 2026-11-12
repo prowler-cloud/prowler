@@ -505,3 +505,126 @@ class Test_AIServices_get_accounts:
         account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
 
         assert account.monitor_diagnostic_settings is None
+
+
+def build_sdk_connection(name="conn1", auth_type="ApiKey", project_name=None):
+    """Build one SDK connection as the service receives it.
+
+    Args:
+        name: The connection's name.
+        auth_type: The value the service returns for `authType`.
+        project_name: The project holding it, or `None` for the account.
+
+    Returns:
+        A mock of the SDK's connection object.
+    """
+    suffix = f"/projects/{project_name}" if project_name else ""
+    connection = MagicMock()
+    connection.id = f"{ACCOUNT_ID}{suffix}/connections/{name}"
+    connection.name = name
+    connection.properties.auth_type = auth_type
+    connection.properties.category = "AzureOpenAI"
+    connection.properties.target = "https://example.openai.azure.com/"
+    return connection
+
+
+def build_sdk_project(name="proj1"):
+    """Build one SDK project of an AI services account.
+
+    Args:
+        name: The project's name.
+
+    Returns:
+        A mock of the SDK's project object.
+    """
+    project = MagicMock()
+    project.name = name
+    return project
+
+
+class Test_AIServices_get_connections:
+    """Connections are read from the account and from each of its projects."""
+
+    def test_connections_from_the_account_and_its_projects(self):
+        """Both levels are collected, and a project connection names it."""
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.account_connections.list.return_value = [
+            build_sdk_connection(name="a")
+        ]
+        mock_client.projects.list.return_value = [build_sdk_project()]
+        mock_client.project_connections.list.return_value = [
+            build_sdk_connection(name="b", auth_type="AAD", project_name="proj1")
+        ]
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert [(c.name, c.auth_type, c.project_name) for c in account.connections] == [
+            ("a", "ApiKey", None),
+            ("b", "AAD", "proj1"),
+        ]
+        assert account.unlisted_connection_scopes == []
+
+    def test_project_connections_failure_names_the_project(self):
+        """A project that could not be read is named, not dropped.
+
+        The account's own connections are still returned, so one unreadable
+        project does not cost the rest of the account's findings.
+        """
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.account_connections.list.return_value = [
+            build_sdk_connection(name="a")
+        ]
+        mock_client.projects.list.return_value = [build_sdk_project()]
+        mock_client.project_connections.list.side_effect = Exception("boom")
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert [c.name for c in account.connections] == ["a"]
+        assert account.unlisted_connection_scopes == ["proj1"]
+
+    def test_account_connections_failure_names_the_account_scope(self):
+        """The account's own scope is named when only its list call fails."""
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.account_connections.list.side_effect = Exception("boom")
+        mock_client.projects.list.return_value = [build_sdk_project()]
+        mock_client.project_connections.list.return_value = [
+            build_sdk_connection(name="b", project_name="proj1")
+        ]
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert [c.name for c in account.connections] == ["b"]
+        assert account.unlisted_connection_scopes == [""]
+
+    def test_connections_none_when_nothing_could_be_listed(self):
+        """Nothing readable at all leaves connections as None."""
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.account_connections.list.side_effect = Exception("boom")
+        mock_client.projects.list.side_effect = Exception("boom")
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert account.connections is None
+
+    def test_projects_not_supported_is_not_a_finding(self):
+        """An account kind without projects still returns its connections."""
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.account_connections.list.return_value = [
+            build_sdk_connection(name="a")
+        ]
+        mock_client.projects.list.side_effect = Exception("not supported")
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert [c.name for c in account.connections] == ["a"]
+        assert account.unlisted_connection_scopes == []
