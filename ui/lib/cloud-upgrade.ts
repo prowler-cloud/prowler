@@ -39,6 +39,7 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
+  [CLOUD_UPGRADE_FEATURE.REALTIME]: "realtime",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
   [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: "saml-domains",
 } as const satisfies Record<CloudUpgradeFeature, string>;
@@ -188,6 +189,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Use managed infrastructure, support, and backups",
     ],
     primaryCta: "Start a Prowler Cloud Trial",
+  },
+  [CLOUD_UPGRADE_FEATURE.REALTIME]: {
+    title: "Catch Risky AWS Changes as They Happen",
+    description:
+      "Prowler Realtime watches CloudTrail and responds minutes after a change, not at the next scan.",
+    benefits: [
+      "Check each risky event against the resource it touched",
+      "Alert, propose a Terraform pull request, or fix it automatically",
+      "Review and revert every automatic fix",
+    ],
+    primaryCta: "Set Up Realtime in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: {
     title: "Configure Every Scan Once",

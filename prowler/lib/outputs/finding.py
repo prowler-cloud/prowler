@@ -591,6 +591,12 @@ class Finding(BaseModel):
                     f"Check {check_output.check_metadata.CheckID} has no resource_name."
                 )
 
+            # A check's structured payload (Check_Report.raw) rides along with
+            # whatever the provider branch already put there.
+            check_raw = getattr(check_output, "raw", None)
+            if isinstance(check_raw, dict) and check_raw:
+                output_data["raw"] = {**output_data.get("raw", {}), **check_raw}
+
             return cls(**output_data)
         except ValidationError as validation_error:
             logger.error(

@@ -100,6 +100,10 @@ def mock_make_api_call(self, operation_name, kwargs):
                 }
             ]
         }
+    if operation_name == "SearchVulnerabilities":
+        [cve] = kwargs["filterCriteria"]["vulnerabilityIds"]
+        known = cve == VULNERABILITY_ID
+        return {"vulnerabilities": [{"id": cve}] if known else []}
     if operation_name == "BatchGetFindingDetails":
         return {
             "findingDetails": [
@@ -146,6 +150,15 @@ def mock_finding_details_error(error_code):
 
 def mock_make_api_call_list_denied(self, operation_name, kwargs):
     if operation_name in ("ListFindings", "ListCoverage"):
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    return mock_make_api_call(self, operation_name, kwargs)
+
+
+def mock_search_vulnerabilities_denied(self, operation_name, kwargs):
+    if operation_name == "SearchVulnerabilities":
         raise ClientError(
             {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
             operation_name,
@@ -332,3 +345,37 @@ class Test_Inspector2_Service:
         assert sorted(cve for _, findings in batches for _, cve in findings) == sorted(
             vulnerability_ids
         )
+
+    def test_vulnerability_known_reads_the_vulnerability_database(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
+        assert inspector2.vulnerability_known(VULNERABILITY_ID) is True
+        assert inspector2.vulnerability_known("CVE-2026-99999") is False
+
+    def test_vulnerability_known_is_looked_up_once(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
+        client = inspector2.regional_clients[AWS_REGION_EU_WEST_1]
+        with patch.object(
+            client,
+            "search_vulnerabilities",
+            wraps=client.search_vulnerabilities,
+        ) as search:
+            inspector2.vulnerability_known(VULNERABILITY_ID)
+            inspector2.vulnerability_known(VULNERABILITY_ID)
+        assert search.call_count == 1
+
+    def test_vulnerability_known_is_false_when_the_lookup_is_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_search_vulnerabilities_denied,
+        ):
+            assert inspector2.vulnerability_known(VULNERABILITY_ID) is False
+
+    def test_vulnerability_known_is_false_without_an_enabled_region(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
+        inspector2.inspectors[0].status = "DISABLED"
+        assert inspector2.vulnerability_known(VULNERABILITY_ID) is False

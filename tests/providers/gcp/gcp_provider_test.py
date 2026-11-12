@@ -101,6 +101,7 @@ class TestGCPProvider:
             assert gcp_provider.identity == GCPIdentityInfo(profile="default")
             assert gcp_provider.audit_config == {
                 "shodan_api_key": None,
+                "threat_signatures": [],
                 "max_unused_account_days": 180,
                 "storage_min_retention_days": 90,
                 "secretmanager_max_rotation_days": 90,

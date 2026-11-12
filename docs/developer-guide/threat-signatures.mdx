@@ -1,0 +1,73 @@
+---
+title: 'Emerging Threat Signatures'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.50.0" />
+
+An emerging threat, such as a new vulnerability in an operating system image or a vendor appliance, is described to Prowler as a **threat signature**: data that says which machine images carry the vulnerability, how it is reached, and how to fix it. Detecting a threat needs no code. The `ec2_instance_emerging_threat_image`, `vm_emerging_threat_image`, and `compute_instance_emerging_threat_image` checks match every compute instance on AWS, Azure, and Google Cloud against every signature in force for the scan.
+
+## Where Signatures Come From
+
+| Source | Scope |
+|--------|-------|
+| `threat_signatures` in a provider's [configuration file](/user-guide/cli/tutorials/configuration_file) | Prowler CLI scans that use that configuration |
+| Scan configuration in Prowler Cloud | Prowler Cloud scans of the providers that use that configuration |
+| Prowler Cloud threat catalog | Every Prowler Cloud scan, maintained by Prowler as threats emerge |
+
+Prowler SDK ships the matching engine and the checks, without signatures of its own. A signature in a scan configuration with the same `id` as one from the Prowler Cloud catalog replaces it for those scans.
+
+## Writing a Signature
+
+To detect a threat with Prowler CLI:
+
+1. Copy `prowler/lib/threats/signatures/TEMPLATE.yaml.example`. The template explains each field, and `prowler/lib/threats/models.py` is the schema.
+2. Add the signature as an item of the `threat_signatures` list under the provider in the configuration file.
+3. Add `examples` to every image rule: real image names the rule must match and must miss, including the first fixed version of each release branch. A signature whose examples disagree with its rule is rejected: the scan logs a warning, skips that signature and still loads the others.
+4. Run the scan with the configuration file:
+
+   ```console
+   prowler aws --config-file config.yaml --checks ec2_instance_emerging_threat_image
+   ```
+
+## Writing Image Rules
+
+Each signature lists one or more rules per cloud. An instance is affected when any rule for its cloud matches the image it was created from:
+
+| Cloud | Name the rule matches | Publisher that proves provenance |
+|-------|-----------------------|----------------------------------|
+| AWS | Amazon Machine Image (AMI) name and description | AMI owner account ID |
+| Azure | Gallery image definition, custom image name, or marketplace `offer-sku-version` | Marketplace publisher |
+| Google Cloud | Boot disk source image name | Image project, for example `debian-cloud` |
+
+Rules follow these principles:
+
+- **Prefer publisher-verified matches.** List the official publisher. A match from a listed publisher proves the image; a name-only match is weaker evidence. When several rules of one signature match an image, the publisher-verified match is the one reported. Set `require_publisher: true` when the name alone is too generic to trust.
+- **Capture the version.** A `(?P<version>...)` group in `name_regex` is compared against `versions`, a list of inclusive ranges. Write one range per release branch when fixes ship per branch, so patched point releases are not flagged. Dashes are read as dots, because Google Cloud image names cannot hold dots.
+- **Write names as the cloud lists them.** AWS and Google Cloud image names are matched in their exact case. Azure names are matched in any case, because Azure compares resource names, offers and SKUs without case and reports them in the case the VM was created with.
+- **Exclude unaffected variants in the pattern.** For example, when only an image's minimal variant ships the vulnerable default, match that variant's name only.
+- **Keep the pattern fast.** `name_regex` runs on every image of every scanned account, through the [`regex`](https://pypi.org/project/regex/) engine with a limit of 0.1 seconds per image name. A rule that exceeds the limit on its own examples is rejected when the signature loads. A rule that exceeds it during a scan is skipped for that image and logged with the signature ID. Avoid nested or overlapping repetition such as `(a|aa)+`.
+
+## Describing Exposure and Impact
+
+- **`exposure`** lists the protocol and every port the vulnerable service listens on. Omit `exposure` for a threat that is not reached over the network. How each check reads it:
+  - **AWS:** the check reads the instance's own security groups, its public IPv4 and IPv6 addresses, and its subnet's routes. When the scan does not load those security groups, for example a scan limited to the instance with `--resource-arn`, exposure is reported as unknown rather than closed.
+  - **Google Cloud:** the check records whether the instance has an external IPv4 or IPv6 address. Firewall rules are evaluated by their own checks.
+  - **Azure:** the check does not evaluate network security groups.
+- **`credential_required`** is `false` for an authentication bypass or a pre-authentication remote code execution.
+- **`mitigations`** lists the controls that break the cyberattack chain. Each is observed on one cloud only, and only when the signature lists it:
+  - `port_not_exposed`: AWS, when no security group of the instance admits the internet to the threat's ports.
+  - `password_authentication_disabled`: Azure, from the Linux configuration of the virtual machine.
+- **`impact`** and **`remediation`** appear in the finding. State what a threat actor gains in one sentence, then how to contain the threat now and fix it.
+
+## Limits
+
+Signatures match the image an instance was created from, which proves where the host started, not what it runs now:
+
+- **AWS:** where Amazon Inspector actively scans the instance's packages, its findings decide. An active Inspector finding for the threat's CVE confirms the match. An instance Inspector scans with no such finding passes, so a host patched in place clears, but only once Inspector's vulnerability database lists every CVE of the threat: a CVE too new for Inspector proves nothing by its absence. The lookup needs `inspector2:SearchVulnerabilities`; without it, matches are never cleared.
+- **Elsewhere** (Azure, Google Cloud, and operating systems Inspector does not scan): a host patched in place keeps its original image, so its finding stays failed until the host is replaced or the finding is muted with a reason.
+
+Threats in managed services, container images, or packages installed after launch are outside what image signatures can detect.
+
+When the image of an instance cannot be looked up, for example because the scanning identity lacks `ec2:DescribeImages`, `compute.disks.list` or `compute.regionDisks.list`, the finding is MANUAL. When the image no longer exists or the instance does not report one, the finding passes and says so.

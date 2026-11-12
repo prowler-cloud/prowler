@@ -375,7 +375,7 @@ constraint-dependencies = [
   "pydantic-core==2.41.5",
   "pygithub==2.8.0",
   "pygments==2.20.0",
-  "pyjwt==2.14.0",
+  "pyjwt==2.15.0",
   "pylint==4.0.9",
   "pymsalruntime==0.18.1",
   "pynacl==1.6.2",
@@ -400,7 +400,7 @@ constraint-dependencies = [
   "pyyaml==6.0.3",
   "redis==7.1.0",
   "referencing==0.37.0",
-  "regex==2026.1.15",
+  "regex==2026.5.9",
   "reportlab==4.4.10",
   "requests==2.33.1",
   "requests-file==3.0.1",
@@ -504,5 +504,5 @@ override-dependencies = [
   "dulwich==1.2.9",
   # Same trailing-rev case as dulwich: h2 4.4.1 patches GHSA-6hr6-w5qg-qmwg.
   "h2==4.4.1",
-  "pyjwt[crypto]==2.14.0"
+  "pyjwt[crypto]==2.15.0"
 ]
