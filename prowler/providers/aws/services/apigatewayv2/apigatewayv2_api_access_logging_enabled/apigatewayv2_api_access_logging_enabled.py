@@ -8,8 +8,8 @@ class apigatewayv2_api_access_logging_enabled(Check):
     def execute(self):
         findings = []
         for api in apigatewayv2_client.apis:
-            report = Check_Report_AWS(metadata=self.metadata(), resource=api)
             for stage in api.stages:
+                report = Check_Report_AWS(metadata=self.metadata(), resource=api)
                 if stage.logging:
                     report.status = "PASS"
                     report.status_extended = f"API Gateway V2 {api.name} ID {api.id} in stage {stage.name} has access logging enabled."
