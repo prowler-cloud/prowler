@@ -1,0 +1,275 @@
+---
+title: "Exploitability Issues"
+sidebarTitle: "Exploitability Issues"
+description: "Fold failed findings into attack paths with an exploitability verdict in Prowler Cloud, track emerging threats, then triage issues, send them to Jira, or ask Lighthouse AI for a fix."
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+<VersionBadge version="5.46.0" />
+
+A scan returns a list of failed checks, and many of them describe one problem seen from several angles. **Exploitability issues** fold the failed findings of each account into attack paths and give each path a verdict, so the paths a threat actor can use today are fixed before anything else.
+
+<SubscriptionBanner />
+
+## What Is an Issue?
+
+An issue is a group of failed findings that together form one attack path on one account. Each issue states:
+
+- **Starts from:** Where the threat actor has to start, for example **The internet**, **Any signed-in identity**, **A leaked credential**, **A foothold on a host**, or **An outside user**.
+- **Leads to:** What walking the path gives the threat actor: **Data exposure**, **Privilege escalation**, or **Code execution**.
+- **Verdict:** How exploitable the path is, drawn from five legs of evidence.
+- **Fix:** The suggested remediation for the path.
+
+### How Findings Fold Into Issues
+
+After every scan, Prowler Cloud reads the failed findings of the scan and matches them against a set of attack patterns. Each pattern claims a list of Prowler checks, such as `s3_bucket_public_access`, and groups the findings of those checks into one issue per account.
+
+Patterns never re-run detection. They only read findings Prowler already produced, and they use other failed findings as amplifiers. For example, a public bucket and a disabled account-level public access block become one issue with one explanation, not two separate rows.
+
+Every failed finding lands in exactly one issue:
+
+- **Pattern issues:** Findings claimed by an attack pattern.
+- **Detection and hygiene gaps:** Findings for missing logging, detection, or retention controls, for example Amazon GuardDuty or AWS CloudTrail disabled. These cannot be exploited on their own, but they decide whether a cyberattack would be noticed. These issues have no starting point or outcome.
+- **Findings no attack path models yet:** The remaining findings, with an **Unknown** verdict. Unmodeled does not mean safe.
+
+Because no finding is dropped or counted twice, the number of findings folded matches the number of failed findings in scope. The one exception is a host whose image matches several emerging threats: it appears in the issue of each threat (see [Emerging Threats](#emerging-threats)).
+
+### Verdicts
+
+| Verdict | Meaning |
+| --- | --- |
+| **Exploitable** | A complete path exists today: reachable, accessible, and with a target. |
+| **Likely** | The path and the target are present, but one leg is unproven. |
+| **Conditional** | The path needs a foothold or credential the threat actor does not have yet. |
+| **Not exploitable** | Nothing can reach it, or there is nothing to reach. |
+| **Unknown** | The scan does not provide enough signal to decide. |
+
+**Exploitable** and **Likely** issues are counted as actionable.
+
+Three rules shape every verdict:
+
+- **A control in force moves the verdict one rung down.** The issue names the control that did it. A control never resolves an issue on its own.
+- **Verification never changes the verdict.** Whether a cyberattack would be detected does not change whether it works. Verification shows how visible it would be.
+- **A missing finding is not a passing control.** If a check did not run or produced no finding, the leg is **Unknown**. It never counts as safe.
+
+### Evidence Legs
+
+Each verdict is drawn from five legs. Every leg answers one question, names the checks and resources it was read from, and has a state of **Yes**, **No**, **Partly**, or **Unknown**:
+
+| Leg | Question |
+| --- | --- |
+| **Reachability** | Can a threat actor reach it? |
+| **Access** | Can a threat actor authenticate or bypass authentication? |
+| **Target** | Is there a target worth reaching? |
+| **Controls** | Are protective controls in place? |
+| **Verification** | Would the activity be detected? |
+
+Legs do not share a polarity: **No** on reachability is good news, while **No** on controls is the problem. Each leg is colored by meaning, so green always reads as favorable.
+
+When an issue covers several resources, it shows the path of the worst resource. A leg that does not hold for every resource states how many it applies to, for example "Holds for 3 of 5 resources in this issue."
+
+Because each leg lists its evidence, a verdict can be reviewed and challenged instead of taken on trust.
+
+## Browsing Issues
+
+To open the list, click **Exploitability issues** in the **Security** section of the sidebar.
+
+- **Summary line:** The line under the title shows how many issues were folded from how many failed findings, and how many findings are already covered by a control.
+- **Verdict tabs:** Filter the list by verdict. Each tab shows its count, and **All** shows every issue.
+- **Scope selectors:** Narrow every tab to specific provider groups or accounts.
+- **Table columns:** Each row shows the **Verdict**, the **Issue** title with its attack path, the **Why** column with the state of each of the five legs, **Severity**, **Account**, the number of **Findings**, and the **Triage** status. Hover a leg in the **Why** column to read its state and explanation.
+
+The Overview page also shows two cards, scoped by the same provider filters as the rest of the page:
+
+- **Exploitability:** The number of actionable issues, the count of the other verdicts, and the number of findings folded into issues.
+- **Top issues:** The five worst issues, with their verdict, account, and findings count.
+
+Click any count or issue to open the **Exploitability issues** page with that filter applied.
+
+## Reviewing an Issue in the Side Panel
+
+Click a row to open the issue in the side panel, next to Lighthouse AI. The header shows the verdict, severity, title, and the compliance frameworks its findings put at risk. The panel has the following tabs:
+
+| Tab | Content |
+| --- | --- |
+| **Exploitability** | Where the path starts, what it leads to, and each leg with its state, explanation, and evidence. |
+| **Attack path** | The issue graph of the affected resources. |
+| **Findings** | The failed findings folded into the issue. Click a finding to open its details inside the panel, then use the breadcrumb to return to the issue. |
+| **Resources** | The resources the issue affects. |
+| **Remediation** | The suggested fix for the path. |
+| **Triage** | The issue's triage status and notes. |
+
+The actions menu in the panel header includes **Open this scan's failed findings**, which opens the **Findings** page filtered to the failed findings of the issue's scan, and the [Send to Jira](#sending-an-issue-to-jira) action.
+
+## Triaging an Issue
+
+To record the decision on an attack path and why it was made, use the **Triage** tab:
+
+1. Select a status: **Open**, **Under Review**, **Remediating**, **Risk Accepted**, or **False Positive**.
+2. Optionally, write a triage note explaining the decision.
+3. Click **Save triage**.
+
+Notes are listed newest first, with their author and date. A note can be added without changing the status.
+
+The triage decision belongs to the account and the attack path, not to a single scan, so it still applies after the next scan. Prowler marks the issue **Resolved** when a later scan no longer finds the path and **Reopened** when the path comes back. Triage on an issue does not change its verdict: accepting a risk does not make a path unexploitable.
+
+For the triage of individual findings, see [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage).
+
+## Sending an Issue to Jira
+
+With the [Jira integration](/user-guide/tutorials/prowler-app-jira-integration) configured, the findings of an issue can be sent to Jira in one action:
+
+1. Open the issue in the side panel.
+2. Open the actions menu in the panel header and click **Send Findings to Jira**. The action appears once the issue's findings have loaded.
+3. Select the Jira project, issue type, and grouped or separate issue creation mode. A grouped issue keeps the whole attack path in one Jira ticket.
+4. Click **Send to Jira**.
+
+The ticket includes the findings loaded in the panel, up to 50 per issue. The dialog states how many of the issue's findings are sent.
+
+## Getting a Fix with Lighthouse AI
+
+The issue panel offers the **Contextual Fix** Lighthouse AI skill. Contextual Fix reads the issue's attack path, legs, and findings, then answers with:
+
+- The single change that closes the attack path fastest, and which leg it closes.
+- The per-resource fixes, grouped by check, with the real resource identifiers.
+- What to verify after applying the changes, and which findings should pass on the next scan.
+
+A custom question about the issue can also be typed in the panel. Lighthouse AI receives the issue as context. For Lighthouse AI setup, see [Lighthouse AI](/getting-started/products/prowler-cloud-lighthouse).
+
+## Emerging Threats
+
+<VersionBadge version="5.49.0" />
+
+When a new vulnerability lands in an operating system image or a vendor appliance, Exploitability issues answer which hosts are affected, and which of them can be reached today, across AWS, Azure, and Google Cloud in one list.
+
+### How Emerging Threats Are Detected
+
+A **threat signature** describes the vulnerability as data:
+
+- **Affected images:** Per cloud, a name pattern with optional version ranges, and the publishers that prove where an image came from (AMI owner accounts on AWS, marketplace publishers on Azure, image projects on Google Cloud).
+- **Exposure:** The network ports that make the vulnerability reachable.
+- **Impact and remediation:** What a threat actor gains, and how to contain and fix it.
+
+In every scan, the `ec2_instance_emerging_threat_image`, `vm_emerging_threat_image`, and `compute_instance_emerging_threat_image` checks match the image of each compute instance against every signature in force. Prowler Cloud maintains the threat catalog and adds new threats to every AWS, Azure, and Google Cloud scan as they are published, without waiting for a Prowler Cloud release.
+
+### How Emerging Threats Appear as Issues
+
+Each threat becomes one issue per account, titled with the threat, up to three of its CVE IDs, and the number of affected hosts. A host whose image matches several threats appears in the issue of each one, with the severity, verdict, and fix of that threat. The legs come from what the scan observed:
+
+| Leg | Evidence |
+| --- | --- |
+| **Reachability** | On AWS, the security groups and subnet of the instance: **Yes** when a security group admits the internet on a public IP in a public subnet, **Partly** when it admits the internet without a public route, **No** when it does not, and **Unknown** when the scan did not load those security groups, for example a scan limited to the instance. On Google Cloud, an instance without an external IP reads **No**. Otherwise, on Azure and Google Cloud, internet-exposure findings on network security groups and firewall rules in the same account count as **Partly**, because the scan does not tie them to the host. |
+| **Access** | **Yes** only when a vulnerability scanner reports the CVE of the threat on that host (Amazon Inspector, on AWS) and the threat needs no credential. An image match alone reads **Partly**, even from a verified publisher, because the host may have been patched since launch, so such an issue is at most **Likely**. |
+| **Target** | The host, with the impact the threat states. Other threats matching the same image are named here. |
+| **Controls** | Mitigations observed on the host, such as password authentication disabled at provisioning on Azure, move the verdict one rung down. A port closed to the internet shows in **Reachability**, not here. |
+| **Verification** | Network flow logging in the account. |
+
+On AWS, where Amazon Inspector actively scans the packages of an instance and knows every CVE of the threat, its findings decide: an instance with no finding for those CVEs passes, so a host patched in place clears. Elsewhere (Azure, Google Cloud, and operating systems Amazon Inspector does not scan on EC2) the check reads the launch image only. To clear the finding there, replace the host, or mute the finding with a reason after patching in place. The issue resolves once no affected host is left.
+
+The triage of a threat's issue resolves only when its hosts stop matching. When a threat is removed from the catalog, or the image of a host cannot be looked up in a scan (a **Manual** finding), the issue leaves that scan but its triage stays as it was set.
+
+### Finding a Threat
+
+Threat issues carry the threat name and up to three CVE IDs in their title, and the **Exploitability issues** page lists the worst verdicts first. Through the API, `filter[threat]` lists one threat by its ID, and `filter[search]` matches threat names, the CVE IDs named in titles, pattern IDs, and fixes.
+
+### Adding a Threat Signature
+
+To detect a vulnerability the catalog does not cover yet, or one specific to an organization, add a signature to a scan configuration under the `threat_signatures` key of the provider. A signature with the ID of a catalog threat replaces it for the providers that use that configuration. Prowler Cloud validates every signature when the configuration is saved, including its `examples`: image names the rule must match and must miss.
+
+```yaml
+aws:
+  threat_signatures:
+    - id: vendor-appliance-rce
+      title: Vendor appliance remote code execution
+      cves: [CVE-2026-0002]
+      severity: critical
+      summary: The appliance's management API runs unauthenticated commands.
+      images:
+        - cloud: aws
+          publishers: ["444455556666"]
+          name_regex: '^vendor-appliance-(?P<version>\d+\.\d+\.\d+)$'
+          versions:
+            - {min: "7.0.0", max: "7.0.9"}
+            - {min: "7.1.0", max: "7.1.3"}
+          examples:
+            matches: [vendor-appliance-7.0.9, vendor-appliance-7.1.0]
+            misses: [vendor-appliance-7.0.10, vendor-appliance-7.1.4]
+      exposure: {protocol: tcp, ports: [443, 8443]}
+      credential_required: false
+      impact: Code execution as root on the appliance.
+      remediation: Restrict TCP 443 and 8443, then upgrade the appliance to 7.0.10 or 7.1.4.
+```
+
+For every field of a signature, see [Emerging Threat Signatures](/developer-guide/threat-signatures).
+
+## Scope and Updates
+
+- Issues reflect the **latest completed scan per provider**, the same window the Overview page uses.
+- **Muted findings are excluded.** Muting findings rebuilds the issues of the affected scan.
+- Issues are rebuilt automatically after every scan and every imported scan. Evaluation reads stored findings only and makes no calls to the cloud provider.
+- Users without unlimited visibility only see issues for the providers their role grants access to. For more information, see [Role-Based Access Control (RBAC)](/user-guide/tutorials/prowler-app-rbac).
+
+## Supported Attack Patterns
+
+| Provider | Attack Pattern |
+| --- | --- |
+| AWS | Identities carrying full administrative rights |
+| AWS | Management ports open to the internet |
+| AWS | Object storage open to the public |
+| AWS | Root account MFA missing or not hardware-backed |
+| AWS | Secrets without a resource policy or rotation |
+| AWS | Data stored without encryption at rest |
+| AWS | Hosts on images affected by an emerging threat |
+| Azure | Entra sign-in without a second factor |
+| Azure | Key vaults reachable over the public network or without rotation |
+| Azure | Management ports open to the internet |
+| Azure | Too many identities hold tenant-wide administrative rights |
+| Azure | Data services and clusters on the public network |
+| Azure | Storage and app endpoints open to public access |
+| Azure | Data at rest without encryption or customer-managed keys |
+| Azure | VMs on images affected by an emerging threat |
+| Google Cloud | Workloads running as the default service account |
+| Google Cloud | Firewall rules admit the internet to management ports |
+| Google Cloud | Instance login not enforced through OS Login with two-factor |
+| Google Cloud | Cloud Storage open to the public |
+| Google Cloud | Data services shared publicly |
+| Google Cloud | Service accounts and API keys beyond their purpose |
+| Google Cloud | Instances on images affected by an emerging threat |
+| Microsoft 365 | Privileged credentials exposed on an endpoint |
+| Microsoft 365 | Workforce sign-in without modern authentication controls |
+| Microsoft 365 | Inbound delivery and sharing paths left open to outsiders |
+
+Findings from other providers fold into the hygiene and unmodeled issues described above.
+
+## Using the API
+
+Issues are available through the Prowler Cloud API:
+
+| Endpoint | Description |
+| --- | --- |
+| `GET /api/v1/issues` | Lists issues, worst verdict first. Filter by `verdict`, `verdict__in`, `cloud`, `pattern`, `severity`, `provider_id__in`, `provider_type__in`, `provider_groups__in`, `scan`, `search`, or `threat` (an emerging threat ID). |
+| `GET /api/v1/issues/{id}` | Returns one issue with its five legs, evidence, and the finding and resource UIDs it folds. |
+| `GET /api/v1/issues/overview` | Returns the count per verdict, the total issues, the findings they fold, the actionable count, the findings folded into not-exploitable issues, and the findings no attack path models yet. Accepts the same filters. |
+
+Example `overview` response attributes:
+
+```json
+{
+  "exploitable": 2,
+  "likely": 3,
+  "conditional": 3,
+  "not_exploitable": 6,
+  "unknown": 0,
+  "issues": 14,
+  "findings": 590,
+  "actionable": 5,
+  "not_exploitable_findings": 41,
+  "unmodelled_findings": 0
+}
+```
+
+## Sample Data Before the First Scan
+
+Until the first scan completes, the **Exploitability issues** page shows labelled sample issues from a demo AWS account, with a banner that follows the real scan. Sample issues are read-only: triage and other actions are disabled until a scan of a connected account completes.
