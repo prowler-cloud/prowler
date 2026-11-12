@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { useReportDownload } from "@/hooks/use-report-download";
 import {
   type ComplianceReportType,
   isOcsfSupported,
@@ -37,6 +38,8 @@ interface ComplianceDownloadContainerProps {
   /** Custom dropdown trigger (e.g. an outline "Report" button); only used
    *  when presentation is "dropdown". Defaults to the dots icon. */
   dropdownTrigger?: React.ReactNode;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export const ComplianceDownloadContainer = ({
@@ -49,7 +52,9 @@ export const ComplianceDownloadContainer = ({
   buttonWidth = "auto",
   presentation = "buttons",
   dropdownTrigger,
+  subscriptionOnly = false,
 }: ComplianceDownloadContainerProps) => {
+  const runReportDownload = useReportDownload(subscriptionOnly);
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
   const [isDownloadingOcsf, setIsDownloadingOcsf] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -60,35 +65,38 @@ export const ComplianceDownloadContainer = ({
   // action everywhere else so the user never hits a guaranteed 404.
   const ocsfAvailable = isOcsfSupported(complianceId);
 
-  const handleDownloadCsv = async () => {
-    if (isDownloadingCsv) return;
-    setIsDownloadingCsv(true);
-    try {
-      await downloadComplianceCsv(scanId, complianceId, toast);
-    } finally {
-      setIsDownloadingCsv(false);
-    }
-  };
+  const handleDownloadCsv = () =>
+    runReportDownload(async () => {
+      if (isDownloadingCsv) return;
+      setIsDownloadingCsv(true);
+      try {
+        await downloadComplianceCsv(scanId, complianceId, toast);
+      } finally {
+        setIsDownloadingCsv(false);
+      }
+    });
 
-  const handleDownloadOcsf = async () => {
-    if (!ocsfAvailable || isDownloadingOcsf) return;
-    setIsDownloadingOcsf(true);
-    try {
-      await downloadComplianceOcsf(scanId, complianceId, toast);
-    } finally {
-      setIsDownloadingOcsf(false);
-    }
-  };
+  const handleDownloadOcsf = () =>
+    runReportDownload(async () => {
+      if (!ocsfAvailable || isDownloadingOcsf) return;
+      setIsDownloadingOcsf(true);
+      try {
+        await downloadComplianceOcsf(scanId, complianceId, toast);
+      } finally {
+        setIsDownloadingOcsf(false);
+      }
+    });
 
-  const handleDownloadPdf = async () => {
-    if (!reportType || isDownloadingPdf) return;
-    setIsDownloadingPdf(true);
-    try {
-      await downloadCompliancePdf(scanId, reportType, toast);
-    } finally {
-      setIsDownloadingPdf(false);
-    }
-  };
+  const handleDownloadPdf = () =>
+    runReportDownload(async () => {
+      if (!reportType || isDownloadingPdf) return;
+      setIsDownloadingPdf(true);
+      try {
+        await downloadCompliancePdf(scanId, reportType, toast);
+      } finally {
+        setIsDownloadingPdf(false);
+      }
+    });
 
   const buttonClassName = cn(
     "border-button-primary text-button-primary hover:bg-button-primary/10",

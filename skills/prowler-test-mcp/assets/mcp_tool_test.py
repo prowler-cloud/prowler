@@ -1,5 +1,7 @@
 # Example: Prowler MCP Server tool test patterns
-# Source: mcp_server/tests/prowler_app/tools/test_findings.py
+# Pattern based on: mcp_server/tests/prowler_app/tools/test_findings.py
+# Illustrative tests; they pass against the current suite fixtures. Copy into a
+# tests/ subdirectory that has an __init__.py.
 
 import pytest
 from fastmcp import Client

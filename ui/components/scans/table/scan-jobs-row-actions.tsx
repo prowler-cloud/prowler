@@ -29,6 +29,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { useReportDownload } from "@/hooks/use-report-download";
 import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
@@ -54,14 +55,18 @@ interface ScanJobsRowActionsProps {
    * Schedule capability override. Only for Prowler Cloud.
    */
   capability?: ScanScheduleCapability;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export function ScanJobsRowActions({
   scan,
   tab,
   capability,
+  subscriptionOnly = false,
 }: ScanJobsRowActionsProps) {
   const router = useRouter();
+  const runReportDownload = useReportDownload(subscriptionOnly);
   const canEditSchedule =
     (capability ?? getScanScheduleCapability(isCloud())) ===
     SCAN_SCHEDULE_CAPABILITY.ADVANCED;
@@ -78,6 +83,11 @@ export function ScanJobsRowActions({
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
+  // Findings are stored check by check, so a running scan can already show some.
+  const isExecuting = scanState === "executing";
+  // Prowler Cloud partial scans re-check a few resources: they compute no
+  // compliance and write no report files, so neither entry applies.
+  const isPartial = scan.attributes.is_partial === true;
   const taskId = scan.relationships.task.data?.id;
   // The findings page bounds the UTC day range with completed_at; without it the
   // range collapses to the start day and can miss later findings.
@@ -93,7 +103,7 @@ export function ScanJobsRowActions({
     : undefined;
 
   const openFindings = () => {
-    if (!isCompleted || !hasCompletedAt) return;
+    if (!isExecuting && (!isCompleted || !hasCompletedAt)) return;
     router.push(
       `/findings?filter[scan__in]=${scan.id}&filter[status__in]=FAIL`,
     );
@@ -197,6 +207,13 @@ export function ScanJobsRowActions({
             onSelect={() => setEditOpen(true)}
           />
         )}
+        {isExecuting && (
+          <ActionDropdownItem
+            icon={<Eye />}
+            label="View Early Findings"
+            onSelect={openFindings}
+          />
+        )}
         {isCompleted && (
           <>
             <ActionDropdownItem
@@ -205,16 +222,22 @@ export function ScanJobsRowActions({
               onSelect={openFindings}
               disabled={!isCompleted || !hasCompletedAt}
             />
-            <ActionDropdownItem
-              icon={<ShieldCheck />}
-              label="View Compliance"
-              onSelect={openCompliance}
-            />
-            <ActionDropdownItem
-              icon={<Download />}
-              label="Download Scan Reports"
-              onSelect={() => downloadScanZip(scan.id, toast)}
-            />
+            {!isPartial && (
+              <ActionDropdownItem
+                icon={<ShieldCheck />}
+                label="View Compliance"
+                onSelect={openCompliance}
+              />
+            )}
+            {!isPartial && (
+              <ActionDropdownItem
+                icon={<Download />}
+                label="Download Scan Reports"
+                onSelect={() =>
+                  runReportDownload(() => downloadScanZip(scan.id, toast))
+                }
+              />
+            )}
           </>
         )}
         {isFailed && (

@@ -1689,27 +1689,6 @@
       ]
     },
     {
-      "Id": "2.4.1",
-      "Description": "Sign all artifacts in all releases with user or organization keys.",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "2 Build Pipelines",
-          "Subsection": "2.4 Pipeline Integrity",
-          "Profile": "Level 2",
-          "AssessmentStatus": "Manual",
-          "Description": "Sign all artifacts in all releases with user or organization keys.",
-          "RationaleStatement": "Signing artifacts is used to validate both their integrity and security. Organizations signal that artifacts may be trusted and they themselves produced them by ensuring that every artifact is properly signed. The presence of this signature also makes potentially malicious activity far more difficult.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "For every artifact in every release, verify that all are properly signed.",
-          "AuditProcedure": "Ensure every artifact in every release is signed.",
-          "AdditionalInformation": "",
-          "References": "",
-          "DefaultValue": ""
-        }
-      ]
-    },
-    {
       "Id": "2.4.2",
       "Description": "External dependencies may be public packages needed in the pipeline, or perhaps the public image being used for the build worker. Lock these external dependencies in every build pipeline.",
       "Checks": [],

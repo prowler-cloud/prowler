@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import type { ReactElement } from "react";
 
 import {
   Card,
@@ -40,7 +40,7 @@ const COLOR_STYLES = {
 } as const;
 
 export type ActionCardProps = CardProps & {
-  icon: string;
+  icon: ReactElement;
   title: string;
   color?: "success" | "secondary" | "warning" | "fail";
   description: string;
@@ -76,7 +76,12 @@ export const ActionCard = ({
             colors.iconWrapper,
           )}
         >
-          <Icon className={colors.icon} icon={icon} width={24} />
+          <span
+            aria-hidden="true"
+            className={cn("flex size-6 *:size-full", colors.icon)}
+          >
+            {icon}
+          </span>
         </div>
         <div className="flex flex-col">
           <p className="text-md">{title}</p>

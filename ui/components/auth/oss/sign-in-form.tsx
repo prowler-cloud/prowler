@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
+import { KeyRound } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -34,11 +34,13 @@ export const SignInForm = ({
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isSelfRegistrationEnabled = true,
 }: {
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isSelfRegistrationEnabled?: boolean;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,6 +81,11 @@ export const SignInForm = ({
             title: "Session Error",
             description:
               "There was a problem with your session. Please sign in again.",
+          },
+          SelfRegistrationDisabled: {
+            title: "Registration Disabled",
+            description:
+              "Self-registration is disabled. Ask an administrator for an invitation.",
           },
         };
 
@@ -161,11 +168,13 @@ export const SignInForm = ({
     <AuthLayout
       title={title}
       footer={
-        <AuthFooterLink
-          text="Need to create an account?"
-          linkText="Sign up"
-          href="/sign-up"
-        />
+        isSelfRegistrationEnabled ? (
+          <AuthFooterLink
+            text="Need to create an account?"
+            linkText="Sign up"
+            href="/sign-up"
+          />
+        ) : undefined
       }
     >
       <Form {...form}>
@@ -232,10 +241,9 @@ export const SignInForm = ({
                   form.setValue("isSamlMode", true);
                 }}
               >
-                <Icon
+                <KeyRound
+                  aria-hidden="true"
                   className="text-text-neutral-tertiary"
-                  icon="mdi:shield-key"
-                  width={24}
                 />
               </Button>
             </TooltipTrigger>

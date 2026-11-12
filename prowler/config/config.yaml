@@ -61,6 +61,10 @@ aws:
   # aws.ec2_elastic_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
@@ -139,6 +143,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -189,6 +215,14 @@ aws:
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
+
+  # AWS Inspector2
+  # aws.inspector2_coverage_recently_scanned
+  # Maximum days since Inspector2 last scanned an actively covered resource
+  inspector2_max_days_since_last_scan: 3
+  # aws.inspector2_active_findings_within_max_age
+  # Maximum days an Inspector2 finding can stay active since it was first observed
+  inspector2_active_finding_max_age_days: 192
 
   # AWS Trusted Advisor
   # aws.trustedadvisor_premium_support_plan_subscribed
@@ -536,14 +570,19 @@ azure:
   # azure.network_public_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
 
   # Configurable minimal risk level for attack path notifications
   # azure.defender_attack_path_notifications_properly_configured
   defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
@@ -626,6 +665,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2
@@ -642,6 +685,10 @@ gcp:
   # GCP Secret Manager Rotation Period
   # gcp.secretmanager_secret_rotation_enabled
   secretmanager_max_rotation_days: 90
+  # GCP App Engine PHP runtime
+  # gcp.appengine_version_php_runtime_supported
+  # Oldest PHP branch still receiving security fixes
+  appengine_php_min_version: "8.2"
 
 # Kubernetes Configuration
 kubernetes:
@@ -723,6 +770,15 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+  # cloudflare.account_super_admins_limited
+  # Maximum number of Super Administrators allowed per account
+  max_super_admins: 3
+  # cloudflare.account_api_token_recently_used
+  # Days without use after which an active API token is flagged
+  max_unused_api_token_days: 90
+  # cloudflare.workers_script_no_secrets_in_plain_text_bindings
+  # Regex patterns to exclude from secret scanning
+  secrets_ignore_patterns: []
 
 # Vercel Configuration
 vercel:
@@ -745,7 +801,7 @@ vercel:
   max_owner_percentage: 20
   # Maximum number of owners allowed (overrides percentage for large teams)
   max_owners: 3
-  # vercel.project_environment_no_secrets_in_plain_type
+  # vercel.project_environment_no_secrets_in_plain_type & vercel.project_environment_no_secrets_with_public_prefix
   # Suffixes that identify secret-like environment variable names
   secret_suffixes:
     - "_KEY"
@@ -754,6 +810,17 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+  # vercel.project_environment_no_secrets_with_public_prefix
+  # Prefixes that frontend frameworks inline into the browser bundle
+  public_env_prefixes:
+    - "NEXT_PUBLIC_"
+    - "NUXT_PUBLIC_"
+    - "VITE_"
+    - "REACT_APP_"
+    - "VUE_APP_"
+    - "GATSBY_"
+    - "EXPO_PUBLIC_"
+    - "PUBLIC_"
 
 okta:
   # Okta Sign-On Policies

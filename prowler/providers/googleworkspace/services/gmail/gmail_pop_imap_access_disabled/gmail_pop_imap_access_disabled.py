@@ -27,7 +27,13 @@ class gmail_pop_imap_access_disabled(Check):
             pop_enabled = gmail_client.policies.enable_pop_access
             imap_enabled = gmail_client.policies.enable_imap_access
 
-            if pop_enabled is False and imap_enabled is False:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no mailbox can be reached over POP or IMAP."
+                )
+            elif pop_enabled is False and imap_enabled is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"POP and IMAP access are both disabled "

@@ -42,9 +42,11 @@ def _get_ou_metadata(organizations_client, account_id):
 def get_organizations_metadata(
     aws_account_id: str,
     session: session.Session,
+    region: str | None = None,
 ) -> tuple[dict, dict, dict]:
     try:
-        organizations_client = session.client("organizations")
+        # Without a region botocore resolves the commercial endpoint, whatever the partition
+        organizations_client = session.client("organizations", region_name=region)
 
         organizations_metadata = organizations_client.describe_account(
             AccountId=aws_account_id

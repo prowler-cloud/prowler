@@ -1,0 +1,2970 @@
+{
+  "framework": "FedRAMP-20x-FRR-Class-C",
+  "name": "FedRAMP 20x Class C Rules (FRR) 2026",
+  "version": "2026.09.13.02",
+  "description": "FedRAMP Rules (FRR) that cloud service providers must follow for a FedRAMP 20x Class C Certification, from the FedRAMP Consolidated Rules for 2026 (release 2026.09.13.02, https://github.com/FedRAMP/rules). Covers the 158 provider rules of the 15 rulesets on the 20x Class C reference page; rules that only bind FedRAMP, agencies, assessors or advisors are excluded, and class-varying rules use their Class C statement. Most rules are program and process obligations that need manual evidence. The Key Security Indicators of the same ruleset are in the fedramp_20x_ksi_2026 framework.",
+  "icon": "fedramp",
+  "attributes_metadata": [
+    {
+      "key": "Ruleset",
+      "label": "Ruleset",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "AFC: Addressing FedRAMP Communication",
+        "CCM: Collaborative Continuous Monitoring",
+        "CDS: Certification Data Sharing",
+        "CMU: Cryptographic Module Use",
+        "CPO: Certification Package Overview",
+        "FRC: FedRAMP Certification",
+        "IEC: Incident Evaluation and Communication",
+        "IVV: Independent Verification and Validation",
+        "MAS: Minimum Assessment Scope",
+        "MKT: Marketplace Listing",
+        "SCG: Secure Configuration Guide",
+        "SCN: Significant Change Notification",
+        "SDR: Security Decision Record",
+        "VDR: Vulnerability Detection and Response",
+        "VER: Vulnerability Evaluation and Reporting"
+      ]
+    },
+    {
+      "key": "Subset",
+      "label": "Subset",
+      "type": "str",
+      "required": true
+    },
+    {
+      "key": "Force",
+      "label": "Force",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "MUST",
+        "MUST NOT",
+        "SHOULD",
+        "SHOULD NOT",
+        "MAY"
+      ]
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Ruleset"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#1B3A5C",
+      "secondary_color": "#2E6DA4",
+      "bg_color": "#F0F4FA",
+      "group_by_field": "Ruleset",
+      "sections": [
+        "AFC: Addressing FedRAMP Communication",
+        "CCM: Collaborative Continuous Monitoring",
+        "CDS: Certification Data Sharing",
+        "CMU: Cryptographic Module Use",
+        "CPO: Certification Package Overview",
+        "FRC: FedRAMP Certification",
+        "IEC: Incident Evaluation and Communication",
+        "IVV: Independent Verification and Validation",
+        "MAS: Minimum Assessment Scope",
+        "MKT: Marketplace Listing",
+        "SCG: Secure Configuration Guide",
+        "SCN: Significant Change Notification",
+        "SDR: Security Decision Record",
+        "VDR: Vulnerability Detection and Response",
+        "VER: Vulnerability Evaluation and Reporting"
+      ],
+      "section_short_names": {
+        "AFC: Addressing FedRAMP Communication": "AFC",
+        "CCM: Collaborative Continuous Monitoring": "CCM",
+        "CDS: Certification Data Sharing": "CDS",
+        "CMU: Cryptographic Module Use": "CMU",
+        "CPO: Certification Package Overview": "CPO",
+        "FRC: FedRAMP Certification": "FRC",
+        "IEC: Incident Evaluation and Communication": "IEC",
+        "IVV: Independent Verification and Validation": "IVV",
+        "MAS: Minimum Assessment Scope": "MAS",
+        "MKT: Marketplace Listing": "MKT",
+        "SCG: Secure Configuration Guide": "SCG",
+        "SCN: Significant Change Notification": "SCN",
+        "SDR: Security Decision Record": "SDR",
+        "VDR: Vulnerability Detection and Response": "VDR",
+        "VER: Vulnerability Evaluation and Reporting": "VER"
+      },
+      "charts": [
+        {
+          "id": "ruleset_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Ruleset",
+          "title": "Compliance Score by FRR Ruleset",
+          "y_label": "Ruleset",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "AFC-CSO-INB",
+      "name": "Maintain a FedRAMP Security Inbox",
+      "description": "Providers MUST establish and maintain an email address to receive messages from FedRAMP; this inbox is a FedRAMP Security Inbox (FSI).",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-NOC",
+      "name": "Notification of Changes",
+      "description": "Providers MUST immediately notify FedRAMP of any changes to the email address for their FedRAMP Security Inbox.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-TFG",
+      "name": "Trust @fedramp.gov and @gsa.gov",
+      "description": "Providers MUST treat any email originating from an @fedramp.gov or @gsa.gov email address as if it was sent from FedRAMP by default; if such a message is confirmed to originate from someone other than FedRAMP then the FedRAMP Security Inbox rules no longer apply.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-RCV",
+      "name": "Receive Email Without Disruption",
+      "description": "Providers MUST receive and react to email messages from FedRAMP without disruption and without requiring additional actions from FedRAMP.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-CRA",
+      "name": "Complete Required Actions",
+      "description": "Providers MUST complete the required actions in Emergency or Emergency Test designated messages sent by FedRAMP within the timeframe included in the message.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-EMR",
+      "name": "Emergency Message Routing",
+      "description": "Providers MUST route Emergency designated messages sent by FedRAMP to a senior security official for their awareness.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-IMA",
+      "name": "Important Message Actions",
+      "description": "Providers SHOULD complete the required actions in Important designated messages sent by FedRAMP within the timeframe specified in the message.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AFC-CSO-ACK",
+      "name": "Acknowledge Receipt",
+      "description": "Providers SHOULD promptly and automatically acknowledge the receipt of messages received from FedRAMP in their FedRAMP Security Inbox.",
+      "attributes": {
+        "Ruleset": "AFC: Addressing FedRAMP Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-AVL",
+      "name": "Report Availability",
+      "description": "Providers MUST supply an Ongoing Certification Report to all necessary parties every 3 months, covering the entire period since the previous summary, in a consistent format that is human readable; this report MUST include high-level summaries of at least the following information (if applicable): Changes to FedRAMP Certification Data; Planned changes to FedRAMP Certification Data during at least the next 3 months; Accepted vulnerabilities; Transformative changes; Updated recommendations or best practices for security, configuration, usage, or similar aspects of the cloud service offering; A list of all agencies that are directly using the product; FedRAMP Reportable Incidents or an attestation that no such incidents occurred; Lessons learned and changes planned or made as a result of FedRAMP Reportable Incidents (if such occurred)",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-NRD",
+      "name": "Next Report Date",
+      "description": "Providers MUST supply the target date for their next Ongoing Certification Report with other public FedRAMP Certification Data.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-FBM",
+      "name": "Feedback Mechanism",
+      "description": "Providers MUST supply an asynchronous mechanism for all necessary parties to provide feedback or ask questions about each Ongoing Certification Report.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-AFS",
+      "name": "Anonymized Feedback Summary",
+      "description": "Providers MUST supply an anonymized and desensitized summary of the feedback, questions, and answers about each Ongoing Certification Report as an addendum to the Ongoing Certification Report OR in the next Ongoing Certification Report.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-LSI",
+      "name": "Limit Sensitive Information",
+      "description": "Providers MUST NOT irresponsibly disclose sensitive information in an Ongoing Certification Report that would likely have an adverse effect on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "MUST NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-SOR",
+      "name": "Spread Out Reports",
+      "description": "Providers SHOULD establish a regular 3 month cycle for Ongoing Certification Reports that is spread out from the beginning, middle, or end of each quarter.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-OCR-RPS",
+      "name": "Responsible Public Certification Report Sharing",
+      "description": "Providers MAY responsibly supply some or all of the information an Ongoing Certification Report to the public or other parties if the provider determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "OCR: Ongoing Certification Reports",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-MTG",
+      "name": "Quarterly Review Meeting",
+      "description": "Providers with Class C Certifications MUST host a synchronous Quarterly Review every 3 months, open to all necessary parties, to review aspects of the most recent Ongoing Certification Reports that the provider determines are of the most relevance to agencies.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-REG",
+      "name": "Meeting Registration Info",
+      "description": "Providers MUST supply either a registration link or a downloadable calendar file with meeting information for Quarterly Reviews to all necessary parties.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-NRD",
+      "name": "Next Review Date",
+      "description": "Providers MUST publicly supply the target date for their next Quarterly Review with other public FedRAMP Certification Data.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-NID",
+      "name": "No Irresponsible Disclosure",
+      "description": "Providers MUST NOT irresponsibly disclose sensitive information in a Quarterly Review that would likely have an adverse effect on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "MUST NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-SAR",
+      "name": "Schedule Around Reports",
+      "description": "Providers SHOULD regularly schedule Quarterly Reviews to occur at least 3 business days after releasing an Ongoing Certification Report AND within 10 business days of such release.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-ACT",
+      "name": "Additional Content",
+      "description": "Providers SHOULD supply additional information in Quarterly Reviews that the provider determines is of interest, use, or otherwise relevant to agencies.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-RTR",
+      "name": "Record/Transcribe Reviews",
+      "description": "Providers SHOULD record or transcribe Quarterly Reviews and supply them to all necessary parties.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-RTP",
+      "name": "Restrict Third Parties",
+      "description": "Providers SHOULD NOT invite third parties to attend Quarterly Reviews intended for agencies unless they have specific relevance.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "SHOULD NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-SRR",
+      "name": "Share Recordings Responsibly",
+      "description": "Providers MAY responsibly supply recordings or transcriptions of Quarterly Reviews to the public or other parties ONLY if the provider removes all agency information (comments, questions, names, etc.) AND determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CCM-QTR-SCR",
+      "name": "Share Content Responsibly",
+      "description": "Providers MAY responsibly supply content prepared for a Quarterly Review to the public or other parties if the provider determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CCM: Collaborative Continuous Monitoring",
+        "Subset": "QTR: Quarterly Reviews",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-PUB",
+      "name": "Public Information",
+      "description": "Providers MUST publicly share up-to-date information about the cloud service offering in both human-readable and JSON formats, including at least the following information that is available and applicable: FedRAMP ID; Service Model; Deployment Model; Business Category; UEI Number; Sales Contact Information; Security Contact Information; Product Website Link; Link to Product Logo; Overall Service Description; Detailed list of specific services and their security categories (see CDS-CSO-SVC (Public Service List) (Service List)); Link to Secure Configuration Guidance; Overview of documentation supplied by the provider for the cloud service offering; Link to Trust Center landing page that includes instructions on accessing information in the trust center; Next Ongoing Certification Report date (see CCM-OCR-NRD (Next Report Date)); Current FedRAMP Recognized independent assessment service",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-SVC",
+      "name": "Public Service List",
+      "description": "Providers MUST publicly share a detailed list of specific services and their security categories that are included in the cloud service offering using clear feature or service names that align with standard public marketing materials; this list MUST be complete enough for a potential customer to determine which services are and are not included in the FedRAMP Minimum Assessment Scope without requesting access to underlying FedRAMP Certification Data.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-FID",
+      "name": "Always Include FedRAMP ID",
+      "description": "Providers MUST always include the FedRAMP ID of the related cloud service offering in all FedRAMP Certification Data once assigned, including all reports, notifications, and other communication that results from FedRAMP rules.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-FRC",
+      "name": "FedRAMP Certification Reports",
+      "description": "Providers MUST include FedRAMP Certification Reports with their FedRAMP Certification Data without inappropriate modifications, and make such reports available within 2 weeks of receiving the materials from FedRAMP.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-AVR",
+      "name": "Availability Reporting",
+      "description": "Providers with Class C Certifications MUST maintain a web service, available to all necessary parties, that indicates current and historical availability of core services within the cloud service offering over at least the past 30 days, including availability incidents, in both human-readable and machine-readable formats; this service MUST be available even if the primary cloud service offering is unavailable.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-UTC",
+      "name": "Use Trust Centers",
+      "description": "Providers MUST use a FedRAMP-compatible trust center to store and share FedRAMP Certification Data with all necessary parties.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-CBF",
+      "name": "Consistency Between Formats",
+      "description": "Providers MUST use automation to ensure information remains consistent between human-readable and machine-readable formats when FedRAMP Certification Data is provided in both formats.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-RIS",
+      "name": "Responsible Information Sharing",
+      "description": "Providers MUST provide sufficient information in FedRAMP Certification Data to support agency authorization decisions but SHOULD NOT include sensitive information that would likely enable a threat actor to gain unauthorized access, cause harm, disrupt operations, or otherwise have a negative adverse impact on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-IRP",
+      "name": "Include Relevant Policies",
+      "description": "Providers MUST supply all relevant policies and procedures in the FedRAMP Certification Data, including a human-readable and machine-readable reference that explains at least the following about each included policy and procedure: Name of policy or procedure; Name of file, document, web page, etc.; Brief summary of policy or procedure; Word count of document; Current version; Date of last update; Related FedRAMP Practices (if applicable)",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-HAD",
+      "name": "Historical FedRAMP Certification Data",
+      "description": "Providers MUST supply snapshots of FedRAMP Certification Data aligned to Ongoing Certification Reports to all necessary parties; these snapshots MUST be available for the duration of FedRAMP Certification.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-PSM",
+      "name": "Per-Service Certification Materials",
+      "description": "Providers with Class C Certifications MAY supply per-service FedRAMP Certification materials.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-CSO-RPS",
+      "name": "Responsible Public Package Sharing",
+      "description": "Providers MAY responsibly share some or all of the information in a FedRAMP Certification Package publicly or with other parties if the provider determines doing so will NOT likely have an adverse effect on the cloud service offering.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-TRC-USH",
+      "name": "Uninterrupted Sharing",
+      "description": "Trust centers MUST share FedRAMP Certification Data with all necessary parties without interruption.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "TRC: FedRAMP-Compatible Trust Centers",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-TRC-PAC",
+      "name": "Programmatic Access",
+      "description": "Trust centers MUST provide documented programmatic access to all FedRAMP Certification Data, including programmatic access to human-readable materials.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "TRC: FedRAMP-Compatible Trust Centers",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-TRC-AAI",
+      "name": "Agency Access Inventory",
+      "description": "Trust centers MUST maintain an inventory and history of federal agency users or systems with access to FedRAMP Certification Data and MUST make this information available to FedRAMP upon request.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "TRC: FedRAMP-Compatible Trust Centers",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-TRC-ACL",
+      "name": "Access Logging",
+      "description": "Trust centers MUST log access to FedRAMP Certification Data and store summaries of access for at least six months; such information, as it pertains to specific parties, SHOULD be made available upon request by those parties.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "TRC: FedRAMP-Compatible Trust Centers",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-TRC-HMR",
+      "name": "Human and Machine-Readable Certification Data",
+      "description": "Trust centers SHOULD make FedRAMP Certification Data available to view and download in both human-readable and machine-readable formats.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "TRC: FedRAMP-Compatible Trust Centers",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-TRC-SSM",
+      "name": "Self-Service Access Management",
+      "description": "Trust centers SHOULD include features that encourage all necessary parties to provision and manage access to FedRAMP Certification Data for their users and services directly.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "TRC: FedRAMP-Compatible Trust Centers",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-UTC-AAD",
+      "name": "Agency Access Denial",
+      "description": "Providers MUST notify FedRAMP within 5 business days of denying an agency access request for FedRAMP Certification Data.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "UTC: Using a Trust Center",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CDS-UTC-AGA",
+      "name": "Agency Access",
+      "description": "Providers SHOULD supply access to the FedRAMP Certification Package with agencies upon request.",
+      "attributes": {
+        "Ruleset": "CDS: Certification Data Sharing",
+        "Subset": "UTC: Using a Trust Center",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CMU-CSO-CMD",
+      "name": "Cryptographic Module Documentation",
+      "description": "Providers MUST document the cryptographic modules used in each service (or groups of services that use the same modules) where cryptographic services are used to protect federal customer data, including whether these modules are validated under the NIST Cryptographic Module Validation Program or are update streams of such modules.",
+      "attributes": {
+        "Ruleset": "CMU: Cryptographic Module Use",
+        "Subset": "CSO: Cloud Service Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CMU-CSO-UVM",
+      "name": "Using Validated Cryptographic Modules",
+      "description": "Providers with Class C Certifications SHOULD use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.",
+      "attributes": {
+        "Ruleset": "CMU: Cryptographic Module Use",
+        "Subset": "CSO: Cloud Service Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "elbv2_listener_fips_tls_enabled",
+          "transfer_server_fips_security_policy_enabled"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CMU-CSO-CAT",
+      "name": "Configuration of Agency Tenants",
+      "description": "Providers SHOULD configure agency tenants by default to use cryptographic services that use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when such modules are available.",
+      "attributes": {
+        "Ruleset": "CMU: Cryptographic Module Use",
+        "Subset": "CSO: Cloud Service Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CPO-CSO-OVR",
+      "name": "Overview of the Cloud Service Offering",
+      "description": "Providers MUST supply a Certification Package Overview within their FedRAMP Certification Package, in both human-readable and JSON formats, that includes at least all of the information required by the following rules: Certification Package Overview: CPO-CSO-MTD (Certification Package Overview Metadata); Certification Data Sharing: CDS-CSO-PUB (Public Information); Certification Data Sharing: CDS-CSO-SVC (Public Service List); Certification Data Sharing: CDS-CSO-IRP (Include Relevant Policies); Minimum Assessment Scope: MAS-CSO-IIR (Identify Information Resources); Minimum Assessment Scope: MAS-CSO-FLO (Information Flows and Security Categories); Minimum Assessment Scope: MAS-CSO-TPR (Third-Party Information Resources); Using Cryptographic Modules: CMU-CSO-CMD (Cryptographic Module Documentation); Independent Verification and Validation: IVV-CSO-ICP (Inclusion in Certification Package)",
+      "attributes": {
+        "Ruleset": "CPO: Certification Package Overview",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CPO-CSO-MTD",
+      "name": "Certification Package Overview Metadata",
+      "description": "Providers MUST also include the following basic metadata in their Certification Package Overview: Name, title, and contact information of official that is responsible and accountable for the FedRAMP Certification Package; Version; Date and time of last update; Source of update",
+      "attributes": {
+        "Ruleset": "CPO: Certification Package Overview",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CPO-CSO-OSA",
+      "name": "Overall Summary of Assessment in Certification Package",
+      "description": "Providers seeking Class C Certification MUST also include the overall summary of their FedRAMP independent assessment, supplied by the assessor per IVV-IAS-OSA (Overall Summary of Assessment), in their Certification Package Overview.",
+      "attributes": {
+        "Ruleset": "CPO: Certification Package Overview",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CPO-CSX-CPM",
+      "name": "Certification Package Maintenance for 20x",
+      "description": "Providers with 20x Class C Certifications MUST persistently maintain their FedRAMP Certification Package to ensure it is up to date and complete at least once every 2 weeks.",
+      "attributes": {
+        "Ruleset": "CPO: Certification Package Overview",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSO-FCP",
+      "name": "FedRAMP Certification Profile",
+      "description": "Providers MUST identify a target FedRAMP Certification Profile and apply all relevant FedRAMP Practices to the cloud service offering.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSO-PKG",
+      "name": "FedRAMP Certification Package",
+      "description": "Providers seeking a Certification MUST supply a complete FedRAMP Certification Package to FedRAMP for initial certification; the FedRAMP Certification Package MUST include at least the following information: Information about the Cloud Service Offering following CPO-CSO-OVR (Overview of the Cloud Service Offering); Implementation, Validation, and Assessment information for each relevant FedRAMP requirement/control/ksi as defined in SDR-CSO-FRR (FedRAMP Rules); A real or example Ongoing Certification Report following CCM-OCR-AVL (Report Availability)",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSO-JSN",
+      "name": "FedRAMP JSON Schemas",
+      "description": "Providers MUST supply machine-readable information in JSON documents that are valid against the corresponding JSON schema when a rule contains a FedRAMP JSON schema, UNLESS otherwise specified in the rule.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSO-MRA",
+      "name": "Maintain Responsibility and Accountability",
+      "description": "Providers MUST maintain responsibility and accountability for the accuracy and completeness of all information in the FedRAMP Certification Package, especially when they engage a third party (such as an independent assessor, advisory service, or external tools) to supply information on their behalf.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSO-POP",
+      "name": "Pick One Program Certification Type",
+      "description": "Providers MUST NOT seek both FedRAMP Rev5 Program Certification and FedRAMP 20x Program Certification for the same cloud service offering; pick one type.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-APP-MLF",
+      "name": "Marketplace Listing First",
+      "description": "Providers MUST be listed in the FedRAMP Marketplace before applying for FedRAMP Certification, including: FedRAMP Marketplace: MKT-CSO-MLR (Marketplace Listing Requirements); FedRAMP Marketplace: MKT-CSO-PML (Provider Marketplace Listing Requests); FedRAMP Marketplace: MKT-IIP-AGU (Agency Use Cases); FedRAMP Marketplace: MKT-IIP-DCP (Demonstrating Continuous Progress)",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "APP: Applying for FedRAMP Certification",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-APP-AFC",
+      "name": "Applying for FedRAMP Certification",
+      "description": "Providers MUST complete the FedRAMP Certification Application Form in full to request an initial assessment by FedRAMP.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "APP: Applying for FedRAMP Certification",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-APP-FCP",
+      "name": "Fresh FedRAMP Certification Package",
+      "description": "Providers MUST supply a fresh initial FedRAMP Certification Package that shows the current status of the cloud service offering as verified and validated by the provider within the previous 7 days.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "APP: Applying for FedRAMP Certification",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-APP-FIA",
+      "name": "Fresh Independent Assessment",
+      "description": "Providers seeking Class C Certification MUST supply a fresh initial FedRAMP independent assessment that was completed by a FedRAMP Recognized independent assessment service within the previous 3 months.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "APP: Applying for FedRAMP Certification",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-APP-NTP",
+      "name": "No Third-Party Applicants",
+      "description": "Providers MUST NOT use a third party to apply for a FedRAMP Certification on their behalf; this includes independent assessment services.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "APP: Applying for FedRAMP Certification",
+        "Force": "MUST NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-APP-USA",
+      "name": "Updating Stale Assessments",
+      "description": "Providers MAY freshen a stale initial independent verification and validation assessment by having a FedRAMP Recognized independent assessment service review any changes between the original assessment and the current status of the cloud service offering in place of a full re-assessment, UNLESS the stale assessment is more than 9 months old.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "APP: Applying for FedRAMP Certification",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSX-VVK",
+      "name": "Automated Verification and Validation of Key Security Indicators",
+      "description": "Providers seeking 20x Class C Certification MUST implement automated methods to persistently verify and validate the accuracy and completeness of Key Security Indicators with at least 2 automated methods for each Key Security Indicator.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSX-MOT",
+      "name": "Metrics Over Time for Key Security Indicators",
+      "description": "Providers seeking 20x Class C Certification MUST supply historical metrics including status from persistent validation over at least the past 6 months for all Key Security Indicators.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSX-VVR",
+      "name": "Automated Verification and Validation of FedRAMP Rules",
+      "description": "Providers seeking 20x Class C Certification SHOULD implement automated methods to persistently verify and validate the accuracy and completeness of the Security Decision Record for FedRAMP rules when applicable.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "FRC-CSX-MAS",
+      "name": "Application within MAS",
+      "description": "Providers SHOULD apply ALL Key Security Indicators to ALL aspects of their cloud service offering that are within the FedRAMP Minimum Assessment Scope.",
+      "attributes": {
+        "Ruleset": "FRC: FedRAMP Certification",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-EFR",
+      "name": "Evaluate FedRAMP Reportability",
+      "description": "Providers MUST promptly evaluate incidents to determine if they affect confidentiality or integrity of federal customer data or are likely to affect confidentiality or integrity of federal customer data; such incidents are FedRAMP Reportable Incidents and must be reported following the FedRAMP Incident Evaluation and Communication rules.",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-DPR",
+      "name": "Default PAIN Rating",
+      "description": "Providers MUST treat FedRAMP Reportable Incidents as if they have a Potential Agency Impact N-rating (PAIN) of 5 UNLESS they promptly estimate the PAIN rating following the rule in IEC-CSO-EFI (Estimate Federal Impact).",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-IIR",
+      "name": "Initial Incident Report",
+      "description": "Providers with Class C Certifications MUST responsibly notify all affected parties after identifying FedRAMP Reportable Incidents by providing an Initial Incident Report with as much of the following information that is available at the time of reporting and/or the current relevant status for each item: Contact information for the federal incident response coordinator.; Provider's internally assigned tracking identifier; Description of the incident; Timeline of the incident, including start time, time and source of detection, time of completed FedRAMP Reportable Incident evaluation, and other major incident milestones determined by the provider; Historically and currently estimated Potential Agency Impact N-rating (PAIN) of the incident, including an explanation of the evaluation following the requirements in IEC-CSO-EFI (Estimate Federal Impact) (if applicable); Functional impact to federal agency customers (include impact to confidentiality and/or integrity and the impacted federal customer data types); Estimated recovery plan, milestones, and timelines; List of likely affected customer agencies; N1 Initial Incident Report: 1 bizdays; N2 Initial Incident Report: 24 hours; N3 Initial Incident Report: 1 hours; N4 Initial Incident Report: 1 hours; N5 Initial Incident Report: 1 hours",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-OIR",
+      "name": "Ongoing Incident Reports",
+      "description": "Providers with Class C Certifications MUST responsibly notify all affected parties of ongoing activity as new information becomes available during incident response for FedRAMP Reportable Incidents, including updates (or lack of updates) to all previously reported information and as much of the following additional information that is available and/or the current relevant status for each item: Observed incident activity; Indicators of compromise; Related Common Vulnerabilities and Exposures (CVE) identifier, if applicable; Root cause; Response and recovery activities; N1 Ongoing Incident Report: 1 bizdays; N2 Ongoing Incident Report: 24 hours; N3 Ongoing Incident Report: 6 hours; N4 Ongoing Incident Report: 6 hours; N5 Ongoing Incident Report: 6 hours",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-FIR",
+      "name": "Final Incident Report",
+      "description": "Providers with Class C Certifications MUST responsibly notify all affected parties by providing a Final Incident Report once the incident has been resolved and recovery is complete, including final updates to all previously reported information. N1 Final Incident Report: 1 bizdays; N2 Final Incident Report: 1 bizdays; N3 Final Incident Report: 6 hours; N4 Final Incident Report: 6 hours; N5 Final Incident Report: 6 hours",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-EFI",
+      "name": "Estimate Federal Impact",
+      "description": "Providers SHOULD promptly estimate the likely adverse impact of an incident on agency customers to assign a Potential Agency Impact N-rating; this step is called Incident Rating. N1 for a likely minimal customer effect on 1 or more agencies.; N2 for a likely narrow customer effect on 1 or more agencies.; N3 for a likely disruptive customer effect on 1 agency.; N4 for a likely debilitating customer effect on 1 agency or a likely disruptive customer effect on more than 1 agency.; N5 for a likely debilitating customer effect on more than 1 agency.",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IEC-CSO-AIR",
+      "name": "Automated Incident Reporting",
+      "description": "Providers SHOULD use automation to minimize human intervention in the process of reporting FedRAMP Reportable Incidents to all affected parties.",
+      "attributes": {
+        "Ruleset": "IEC: Incident Evaluation and Communication",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-FIA",
+      "name": "FedRAMP Independent Assessments",
+      "description": "Providers with Class C Certifications MUST persistently complete an independent verification and validation assessment of all applicable FedRAMP rules with a FedRAMP Recognized independent assessment service OR FedRAMP at least once per year; this is a FedRAMP independent assessment.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-SEI",
+      "name": "Supply Evidence of Implementation",
+      "description": "Providers MUST supply evidence to all necessary assessors of the implementation of the measures that have been documented to meet FedRAMP Practices; this evidence is the result of verification.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-SEE",
+      "name": "Supply Evidence of Effectiveness",
+      "description": "Providers MUST supply evidence to all necessary assessors of the effectiveness of the measures that have been implemented to meet FedRAMP Practices; this evidence is the result of validation.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-ICP",
+      "name": "Inclusion in Certification Package",
+      "description": "Providers MUST supply the results of FedRAMP independent assessments in their FedRAMP Certification Package without inappropriate modification.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-DUS",
+      "name": "Document Use of Representative Samples",
+      "description": "Providers MUST document and explain the use of representative samples during verification and validation when using representative samples as allowed by IVV-CSO-USR (Use Representative Samples).",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-STE",
+      "name": "Supply Technical Explanations",
+      "description": "Providers SHOULD supply all necessary assessors with technical explanations, demonstrations, and other relevant supporting information about the technical capabilities they employ to address FedRAMP rules; this SHOULD be supplied as necessary to ensure the assessor can effectively complete verification and validation.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-USR",
+      "name": "Use Representative Samples",
+      "description": "Providers MAY use representative samples as appropriate during verification and validation.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSO-RAA",
+      "name": "Receiving Assessor Advice",
+      "description": "Providers MAY ask for and accept advice from their assessor during assessment regarding techniques and procedures that will improve their security posture or the effectiveness, clarity, and accuracy of their verification, validation and reporting procedures, UNLESS doing so is likely to compromise the objectivity and integrity of the assessment.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IVV-CSX-AIA",
+      "name": "Annual Independent Assessments for 20x",
+      "description": "Providers with 20x Class C Certifications MUST include all Key Security Indicators in a FedRAMP independent assessment at least once per year.",
+      "attributes": {
+        "Ruleset": "IVV: Independent Verification and Validation",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MAS-CSO-IIR",
+      "name": "Identify Information Resources",
+      "description": "Providers MUST identify a set of information resources to assess for FedRAMP Certification that includes all information resources that are likely to handle federal customer data or likely to impact the confidentiality, integrity, or availability of federal customer data handled by the cloud service offering; this set of information resources is the cloud service offering.",
+      "attributes": {
+        "Ruleset": "MAS: Minimum Assessment Scope",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "resourceexplorer2_indexes_found"
+        ],
+        "azure": [],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "MAS-CSO-FLO",
+      "name": "Information Flows and Security Categories",
+      "description": "Providers MUST clearly identify, document, and explain information flows and security categories for ALL information resources or sets of information resources in the cloud service offering.",
+      "attributes": {
+        "Ruleset": "MAS: Minimum Assessment Scope",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MAS-CSO-TPR",
+      "name": "Third-Party Information Resources",
+      "description": "Providers MUST address the potential impact to federal customer data from third-party information resources used by the cloud service offering, ONLY IF MAS-CSO-IIR (Identify Information Resources) APPLIES, by documenting the following information about each applicable third-party information resource: General usage and configuration; Explanation or justification for use; Mitigation measures in place to reduce the potential impact to federal customer data; Compensating controls in place to reduce the potential impact to federal customer data",
+      "attributes": {
+        "Ruleset": "MAS: Minimum Assessment Scope",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MAS-CSO-MDI",
+      "name": "Metadata Inclusion",
+      "description": "Providers MUST include metadata (including metadata about federal customer data) in the Minimum Assessment Scope ONLY IF MAS-CSO-IIR (Identify Information Resources) APPLIES.",
+      "attributes": {
+        "Ruleset": "MAS: Minimum Assessment Scope",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MAS-CSO-SUP",
+      "name": "Supplemental Information",
+      "description": "Providers MAY include additional materials about other information resources that are not part of the cloud service offering in a FedRAMP Certification Package supplement; these resources will not be FedRAMP Certified and MUST be clearly marked and separated from the cloud service offering.",
+      "attributes": {
+        "Ruleset": "MAS: Minimum Assessment Scope",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MKT-CSO-MLR",
+      "name": "Marketplace Listing Requirements",
+      "description": "Providers MUST address at least these FedRAMP rules to apply for a new FedRAMP Marketplace listing OR to request updates to an existing listing: Certification Data Sharing: CDS-CSO-PUB (Public Information)",
+      "attributes": {
+        "Ruleset": "MKT: Marketplace Listing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MKT-CSO-PML",
+      "name": "Provider Marketplace Listing Requests",
+      "description": "Providers MUST notify FedRAMP using the FedRAMP Marketplace Providing Listing Request Form to request a listing in the FedRAMP Marketplace.",
+      "attributes": {
+        "Ruleset": "MKT: Marketplace Listing",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MKT-IIP-AGU",
+      "name": "Agency Use Cases",
+      "description": "Providers MUST demonstrate that a cloud service offering is intended for one of the following use cases: Direct Use: The product will be used directly by agency customers for integration into a federal information system that falls within the scope of 44 USC § 3506 and will receive an agency Authorization to Operate.; Indirect Use: The product will be included as a third-party information resource in other cloud service offerings that are directly used by agency customers.",
+      "attributes": {
+        "Ruleset": "MKT: Marketplace Listing",
+        "Subset": "IIP: Provider Responsibilities for Initial Implementation Phase Listings",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MKT-IIP-DCP",
+      "name": "Demonstrating Continuous Progress",
+      "description": "Providers MUST demonstrate continuous progress towards a FedRAMP Certification, documented in their Trust Center or website and updated at least quarterly; progress is measured by the provider against documented goals and milestones.",
+      "attributes": {
+        "Ruleset": "MKT: Marketplace Listing",
+        "Subset": "IIP: Provider Responsibilities for Initial Implementation Phase Listings",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MKT-IIP-DLA",
+      "name": "Deadline for Assessment",
+      "description": "Providers MUST demonstrate that an assessment for a FedRAMP Certification Class B, C, or D has been scheduled within 2 years of initial listing in the Initial Implementation Phase.",
+      "attributes": {
+        "Ruleset": "MKT: Marketplace Listing",
+        "Subset": "IIP: Provider Responsibilities for Initial Implementation Phase Listings",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-CSO-RSC",
+      "name": "Recommended Secure Configuration",
+      "description": "Providers MUST create, maintain, and make available recommendations for securely configuring their cloud services (the Secure Configuration Guide) that includes at least the following information: Required: Instructions on how to securely access, configure, operate, and decommission top-level administrative accounts that control enterprise access to the entire cloud service offering.; Required: Explanations of security-related settings that can be operated only by top-level administrative accounts and their security implications.; Recommended: Explanations of security-related settings that can be operated only by privileged accounts and their security implications.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-CSO-AUP",
+      "name": "Use Instructions",
+      "description": "Providers MUST include instructions in the FedRAMP Certification Package that explain how to obtain and use the Secure Configuration Guide.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-CSO-PUB",
+      "name": "Public Secure Configuration Guidance",
+      "description": "Providers SHOULD make the Secure Configuration Guide available publicly.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-CSO-SDF",
+      "name": "Secure Defaults",
+      "description": "Providers SHOULD set all settings to their recommended secure defaults for top-level administrative accounts and privileged accounts when initially provisioned.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-ENH-CMP",
+      "name": "Comparison Capability",
+      "description": "Providers SHOULD offer the capability to compare all current settings for top-level administrative accounts and privileged accounts to the recommended secure defaults.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "ENH: Enhanced Capabilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-ENH-EXP",
+      "name": "Export Capability",
+      "description": "Providers SHOULD offer the capability to export all security settings in a machine-readable format.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "ENH: Enhanced Capabilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-ENH-API",
+      "name": "API Capability",
+      "description": "Providers SHOULD offer the capability to view and adjust security settings via an API or similar capability.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "ENH: Enhanced Capabilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-ENH-MRG",
+      "name": "Machine-Readable Guidance",
+      "description": "Providers SHOULD also provide the Secure Configuration Guide in a machine-readable format that can be used by customers or third-party tools to compare against current settings.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "ENH: Enhanced Capabilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCG-ENH-VRH",
+      "name": "Versioning and Release History",
+      "description": "Providers SHOULD provide versioning and a release history for recommended secure default settings for top-level administrative accounts and privileged accounts as they are adjusted over time.",
+      "attributes": {
+        "Ruleset": "SCG: Secure Configuration Guide",
+        "Subset": "ENH: Enhanced Capabilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-EVA",
+      "name": "Evaluate Changes",
+      "description": "Providers MUST evaluate all potential significant changes to determine the type of significant change and follow the appropriate Significant Change Notification rules. Is it a significant change? --> Continue evaluation and follow the Significant Change Notification rules.; If it is, is it an FedRAMP Certification class change? --> This requires a new assessment and cannot be done under the Significant Change Notification rules.; If it is not, is it a routine recurring change? --> Follow the Routine Recurring Change rules (SCN-RTR Routine Recurring Changes).; If it is not, is it a transformative change? --> Follow the Transformative Change rules (SCN-TRF Transformative Changes).; If it is not, then it is an adaptive change --> Follow the Adaptive Change rules (SCN-ADP Adaptive Changes).",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-MAR",
+      "name": "Maintain Audit Records",
+      "description": "Providers MUST maintain auditable records of the significant change evaluation activities required by SCN-CSO-EVA (Evaluate Changes) and make them available to FedRAMP as requested.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-INF",
+      "name": "Required Information",
+      "description": "Providers MUST include at least the following information in Significant Change Notifications: Service Offering FedRAMP ID; Assessor Name (if applicable); Related Vulnerability (if applicable); Significant Change type and explanation of categorization; Short description of change; Reason for change; Summary of customer impact, including changes to services and customer configuration responsibilities; Plan and timeline for the change, including for the verification, assessment, and/or validation of impacted Key Security Indicators or Rev5 Controls; Copy of the business or security impact analysis; Name and title of approver",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-HIS",
+      "name": "Historical Notifications",
+      "description": "Providers MUST keep 12 months of historical Significant Change Notifications available with their FedRAMP Certification Data.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-HRM",
+      "name": "Human and Machine-Readable Notifications",
+      "description": "Providers MUST make ALL Significant Change Notifications and related audit records available in human-readable and JSON formats.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-ARI",
+      "name": "Additional Relevant Information",
+      "description": "Providers MAY include additional relevant information in Significant Change Notifications.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-NOM",
+      "name": "Notification Mechanisms",
+      "description": "Providers MAY notify necessary parties in a variety of ways as long as the mechanism for notification is clearly documented in the FedRAMP Certification Package and easily accessible.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-CSO-EMG",
+      "name": "Emergency Changes",
+      "description": "Providers MAY execute significant changes (including transformative changes) during an emergency or incident without following the Significant Change Notification rules in advance. In such emergencies, providers MUST follow all relevant procedures, notify all necessary parties, retroactively provide all Significant Change Notification materials, and complete appropriate assessment after the incident.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-ADP-NTF",
+      "name": "Notification Requirements",
+      "description": "Providers MUST notify all necessary parties within 10 business days after finishing adaptive changes, also including the following information: Summary of any new risks identified and/or vulnerabilities resulting from the change (if applicable)",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "ADP: Adaptive Changes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-RTR-NNR",
+      "name": "No Notification Requirements",
+      "description": "Providers SHOULD NOT make formal Significant Change Notifications for routine recurring changes; this type of change is exempted from notification requirements.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "RTR: Routine Recurring Changes",
+        "Force": "SHOULD NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-TRF-NIP",
+      "name": "Notification of Initial Plans",
+      "description": "Providers MUST notify all necessary parties of initial plans for transformative changes at least 30 business days before starting transformative changes, including a summary of any likely security impacts or changes in risk.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "TRF: Transformative Changes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-TRF-NFP",
+      "name": "Notification of Final Plans",
+      "description": "Providers MUST notify all necessary parties of final plans for transformative changes at least 10 business days before starting transformative changes, including updates to all previously sent information.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "TRF: Transformative Changes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-TRF-NAF",
+      "name": "Notification After Finishing",
+      "description": "Providers MUST notify all necessary parties within 5 business days after finishing transformative changes, including updates to all previously sent information.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "TRF: Transformative Changes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-TRF-NAV",
+      "name": "Notification After Verification",
+      "description": "Providers MUST notify all necessary parties within 5 business days after completing the verification, assessment, and/or validation of transformative changes, also including the following information: Updates to all previously sent information; Summary of any new risks identified and/or vulnerabilities resulting from the change (if applicable); Copy of the security assessment report (if applicable)",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "TRF: Transformative Changes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-TRF-UPD",
+      "name": "Update Documentation",
+      "description": "Providers MUST publish updated service documentation and other materials to reflect transformative changes within 30 business days after finishing transformative changes.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "TRF: Transformative Changes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SCN-TRF-TPR",
+      "name": "Third-Party Review",
+      "description": "Providers SHOULD engage a third-party assessor to review the scope and impact of the planned change before starting transformative changes if human validation is necessary; such reviews SHOULD be limited to security decisions that require human validation.",
+      "attributes": {
+        "Ruleset": "SCN: Significant Change Notification",
+        "Subset": "TRF: Transformative Changes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SDR-CSO-FRR",
+      "name": "FedRAMP Rules",
+      "description": "Providers MUST supply a Security Decision Record, in both human-readable and JSON formats, that includes at least all of the following information for each applicable FedRAMP rule: Explanation of how the rule is followed, or an explanation of the reason and resulting risk to customers for not following the rule.; Verification that the implementation is appropriate for the rule, or that the reason for not implementing is accepted by a senior official.; Validation that the implementation is in place and working as intended, or that the reason for not implementing is accepted by a senior official.; Independent verification.; Independent validation.; Any responses or clarifications to the comments in the independent verification or validation.; Rule-specific artifacts (if applicable).",
+      "attributes": {
+        "Ruleset": "SDR: Security Decision Record",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SDR-CSO-MTD",
+      "name": "Security Decision Record Metadata",
+      "description": "Providers MUST also include the following basic metadata in their Security Decision Record: Version; Date and time of last update; Source of update",
+      "attributes": {
+        "Ruleset": "SDR: Security Decision Record",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SDR-CSX-KSI",
+      "name": "Key Security Indicators",
+      "description": "Providers MUST also include short and simple high-level summaries of at least the following for each applicable Key Security Indicator: Explanation of measures (and their objectives) that demonstrate the Key Security Indicator, or an explanation of the reason and resulting risk to customers for not having measures available for that Key Security Indicator.; Explanation of the cycle for any measures that are implemented persistently (if applicable).; Verification that the measures demonstrate the Key Security Indicator, or that the reason for not having them is accepted.; Verification that the automation in place is accurate and sufficient to demonstrate appropriate measures for the Key Security Indicator, or that automation is not necessary for each measure.; Validation that the measures are accurately produced and are in place and working as intended, or that the reason for not having them is valid.",
+      "attributes": {
+        "Ruleset": "SDR: Security Decision Record",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SDR-CSX-KMT",
+      "name": "Key Security Indicator Metrics",
+      "description": "Providers with 20x Class C Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator: Summary of each metric over the past 30 days; Summary of metric up to the past year (where available); All daily metric data up to the past year (where available)",
+      "attributes": {
+        "Ruleset": "SDR: Security Decision Record",
+        "Subset": "CSX: 20x-Specific Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-DET",
+      "name": "Vulnerability Detection",
+      "description": "Providers MUST systematically, persistently, and promptly discover and identify vulnerabilities within their cloud service offering using appropriate techniques such as assessment, scanning, threat intelligence, vulnerability disclosure mechanisms, bug bounties, penetration testing, incident response, automated control testing, supply chain monitoring, and other relevant capabilities; this process is called vulnerability detection. Vulnerability detection includes persistently verifying and validating that information resources and processes are operating as intended and documented for FedRAMP Practices.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "ecr_registry_enhanced_scanning_enabled",
+          "ecr_registry_scan_images_on_push_enabled",
+          "inspector2_is_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_cspm_is_on",
+          "sqlserver_va_periodic_recurring_scans_enabled"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VDR-CSO-RES",
+      "name": "Vulnerability Response",
+      "description": "Providers MUST systematically, persistently, and promptly track, evaluate, monitor, mitigate, remediate, assess exploitation of, report, and otherwise manage all detected vulnerabilities within their cloud service offering; this process is called vulnerability response.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "ecr_repositories_scan_vulnerabilities_in_latest_image",
+          "inspector2_active_findings_exist"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "ecr_repositories_scan_vulnerabilities_in_latest_image",
+          "ConfigKey": "ecr_repository_vulnerability_minimum_severity",
+          "Operator": "eq",
+          "Value": "MEDIUM",
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VDR-CSO-FAV",
+      "name": "Failures Are Vulnerabilities",
+      "description": "Providers MUST treat problems or failures with their vulnerability detection and response processes as vulnerabilities.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_coverage_scan_status_active"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-DFR",
+      "name": "Design For Resilience",
+      "description": "Providers SHOULD make design and architecture decisions for their cloud service offering that mitigate the risk of vulnerabilities by default AND decrease the risk and complexity of vulnerability detection and response.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-ADT",
+      "name": "Automate Detection",
+      "description": "Providers SHOULD use automated services to improve and streamline vulnerability detection and response.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "ecr_registry_enhanced_scanning_enabled",
+          "ecr_registry_scan_images_on_push_enabled",
+          "inspector2_is_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_scan_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-DAC",
+      "name": "Detect After Changes",
+      "description": "Providers SHOULD automatically perform vulnerability detection on representative samples of new or significantly changed information resources.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "ecr_registry_scan_images_on_push_enabled",
+          "inspector2_is_enabled"
+        ],
+        "azure": [
+          "defender_container_images_scan_enabled"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-MSP",
+      "name": "Maintain Security",
+      "description": "Providers SHOULD NOT weaken the security of information resources to facilitate vulnerability scanning, detection, or assessment activities.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-AKE",
+      "name": "Avoid KEVs",
+      "description": "Providers SHOULD NOT deploy or otherwise activate new machine-based information resources with Known Exploited Vulnerabilities.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "SHOULD NOT"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_active_findings_no_known_exploited_vulnerabilities"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-CSO-SIR",
+      "name": "Sampling",
+      "description": "Providers MAY sample effectively identical information resources, especially machine-based information resources, when performing vulnerability detection UNLESS doing so would decrease the efficiency or effectiveness of vulnerability detection.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "CSO: General Provider Responsibilities",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-TFR-NMV",
+      "name": "Non-Machine Verification and Validation",
+      "description": "Providers MUST verify and validate the status of non-machine-based information resources at least once every 3 months.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-TFR-PDD",
+      "name": "Persistent Drift Detection",
+      "description": "Providers with Class C Certifications SHOULD persistently perform vulnerability detection on all information resources that are likely to drift, at least once every 14 days.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_coverage_recently_scanned",
+          "inspector2_is_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_ensure_defender_cspm_is_on"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "inspector2_coverage_recently_scanned",
+          "ConfigKey": "inspector2_max_days_since_last_scan",
+          "Operator": "lte",
+          "Value": 14,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VDR-TFR-PCD",
+      "name": "Persistently Complete Detection",
+      "description": "Providers with Class C Certifications SHOULD persistently perform vulnerability detection on all information resources that are NOT likely to drift, at least once every month.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_coverage_recently_scanned"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "inspector2_coverage_recently_scanned",
+          "ConfigKey": "inspector2_max_days_since_last_scan",
+          "Operator": "lte",
+          "Value": 30,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VDR-TFR-PVR",
+      "name": "Mitigation and Remediation Expectations",
+      "description": "Providers with Class C Certifications SHOULD partially mitigate vulnerabilities, fully mitigate vulnerabilities, or remediate vulnerabilities to a lower Potential Agency Impact N-rating within the timeframes from evaluation shown below, factoring for the current Potential Agency Impact N-rating as defined in VER-EVA-EPA (Estimate Potential Agency Impact), internet reachability, and likely exploitability: N2 Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 48 days; N2 Not Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 128 days; N2 Not Likely Exploitable Vulnerability: 192 days; N3 Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 16 days; N3 Not Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 32 days; N3 Not Likely Exploitable Vulnerability: 128 days; N4 Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 4 days; N4 Not Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 8 days; N4 Not Likely Exploitable Vulnerability: 64 days; N5 Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 2 days; N5 Not Internet-Reachable Vulnerability + Likely Exploitable Vulnerability: 4 days; N5 Not Likely Exploitable Vulnerability: 16 days",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-TFR-RMN",
+      "name": "Remaining Vulnerabilities",
+      "description": "Providers SHOULD mitigate or remediate remaining vulnerabilities during routine operations as determined necessary by the provider.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_ensure_system_updates_are_applied"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-TFR-KEV",
+      "name": "Remediate KEVs",
+      "description": "Providers SHOULD remediate Known Exploited Vulnerabilities according to the due dates in the CISA Known Exploited Vulnerabilities Catalog (even if the vulnerability has been fully mitigated) as required by CISA Binding Operational Directive (BOD) 26-04 or any successor guidance from CISA.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_active_findings_kev_within_due_date"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VDR-TFR-PSD",
+      "name": "Persistent Sample Detection",
+      "description": "Providers with Class C Certifications SHOULD persistently perform vulnerability detection on representative samples of similar machine-based information resources, at least once every 3 days.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_coverage_recently_scanned"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "inspector2_coverage_recently_scanned",
+          "ConfigKey": "inspector2_max_days_since_last_scan",
+          "Operator": "lte",
+          "Value": 3,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VDR-TFR-MVX",
+      "name": "Persistent Machine Verification and Validation for 20x",
+      "description": "Providers of FedRAMP 20x Class C offerings MUST verify and validate the status of machine-based information resources at least once every 3 days.",
+      "attributes": {
+        "Ruleset": "VDR: Vulnerability Detection and Response",
+        "Subset": "TFR: Timeframes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "inspector2_coverage_recently_scanned",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_ensure_defender_cspm_is_on"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "inspector2_coverage_recently_scanned",
+          "ConfigKey": "inspector2_max_days_since_last_scan",
+          "Operator": "lte",
+          "Value": 3,
+          "Provider": "aws"
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VER-EVA-ELX",
+      "name": "Evaluate Exploitability",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to determine if they are likely exploitable vulnerabilities.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-EVA-EIR",
+      "name": "Evaluate Internet-Reachability",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to determine if they are internet-reachable vulnerabilities.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-EVA-EPA",
+      "name": "Estimate Potential Agency Impact",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to estimate the potential agency impact of exploitation on government customers AND assign one of the following Potential Agency Impact N-ratings (PAIN): N1: Exploitation could be expected to have minimal customer effects on one or more agencies that use the cloud service offering.; N2: Exploitation could be expected to have narrow customer effects on one or more agencies that use the cloud service offering.; N3: Exploitation could be expected to have a disruptive customer effect on one agency that uses the cloud service offering.; N4: Exploitation could be expected to have a debilitating customer effect on one agency that uses the cloud service offering OR a disruptive customer effect on more than one federal agency that uses the cloud service offering.; N5: Exploitation could be expected to have a debilitating customer effect on more than one agency that uses the cloud service offering.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-EVA-AIA",
+      "name": "Assume It's Automatable",
+      "description": "Providers MUST assume the exploitation of vulnerabilities can be automated UNLESS they have evidence proving otherwise.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-EVA-GRV",
+      "name": "Group Vulnerabilities",
+      "description": "Providers SHOULD evaluate detected vulnerabilities, considering the context of the cloud service offering, to identify logical groupings of affected information resources that may improve the efficiency and effectiveness of vulnerability response by consolidating further activity; FedRAMP Vulnerability Detection and Response rules are then applied to these consolidated groupings of vulnerabilities instead of each individual detected instance.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-EVA-EFP",
+      "name": "Evaluate False Positives",
+      "description": "Providers SHOULD evaluate detected vulnerabilities, considering the context of the cloud service offering, to determine if they are false positive vulnerabilities.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-EVA-EFA",
+      "name": "Evaluation Factors",
+      "description": "Providers SHOULD consider at least the following factors when considering the context of the cloud service offering to evaluate detected vulnerabilities: Criticality: How important are the systems or information that might be impacted by the vulnerability?; Reachability: How might a threat actor reach the vulnerability and how likely is that?; Exploitability: How easy is it for a threat actor to exploit the vulnerability and how likely is that?; Detectability: How easy is it for a threat actor to become aware of the vulnerability and how likely is that?; Prevalence: How much of the cloud service offering is affected by the vulnerability?; Privilege: How much privileged authority or access is granted or can be gained from exploiting the vulnerability?; Proximate Vulnerabilities: How does this vulnerability interact with previously detected vulnerabilities, especially partially or fully mitigated vulnerabilities?; Known Threats: How might already known threats leverage the vulnerability and how likely is that?",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "EVA: Evaluation",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-RPT-PER",
+      "name": "Persistent Reporting",
+      "description": "Providers MUST report vulnerability detection and response activity (including persistent verification and validation) to all necessary parties persistently, summarizing ALL activity since the previous report; these reports are FedRAMP Certification Data and are subject to FedRAMP Certification Data Sharing rules.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "RPT: Reporting",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-RPT-VDT",
+      "name": "Vulnerability Details",
+      "description": "Providers MUST include the following information (if applicable) on detected vulnerabilities when reporting on vulnerability detection and response activity, UNLESS it is an accepted vulnerability: Provider's internally assigned tracking identifier; Time and source of the detection; Time of completed evaluation; Is it an internet-reachable vulnerability or not?; Is it a likely exploitable vulnerability or not?; Historically and currently estimated Potential Agency Impact N-rating of exploitation; Time and Potential Agency Impact N-rating of each completed and evaluated reduction in Potential Agency Impact N-rating; Estimated time and target Potential Agency Impact N-rating of next reduction in Potential Agency Impact N-rating; Is it currently or is it likely to become an overdue vulnerability or not? If so, explain.; Any supplementary information the provider responsibly determines will help federal agencies assess or mitigate the risk to their federal customer data within the cloud service offering resulting from the vulnerability; Final disposition of the vulnerability",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "RPT: Reporting",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-RPT-AVI",
+      "name": "Accepted Vulnerability Info",
+      "description": "Providers MUST include the following information on accepted vulnerabilities when reporting on vulnerability detection and response activity: Provider's internally assigned tracking identifier; Time and source of the detection; Time of completed evaluation; Is it an internet-reachable vulnerability or not?; Is it a likely exploitable vulnerability or not?; Currently estimated Potential Agency Impact N-rating; Explanation of why this is an accepted vulnerability; Any supplementary information the provider determines will responsibly help federal agencies assess or mitigate the risk to their federal customer data within the cloud service offering resulting from the accepted vulnerability",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "RPT: Reporting",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-RPT-NID",
+      "name": "Responsible Disclosure",
+      "description": "Providers MUST NOT irresponsibly disclose specific sensitive information about vulnerabilities that would likely lead to exploitation, but MUST disclose sufficient information for informed risk-based decision-making to all necessary parties.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "RPT: Reporting",
+        "Force": "MUST NOT"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-RPT-HLO",
+      "name": "High-Level Overviews",
+      "description": "Providers SHOULD include high-level overviews of ALL vulnerability detection and response activities conducted during this period for the cloud service offering; this includes vulnerability disclosure programs, bug bounty programs, penetration testing, assessments, etc.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "RPT: Reporting",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-RPT-RPD",
+      "name": "Responsible Public Disclosure",
+      "description": "Providers MAY responsibly disclose vulnerabilities publicly or with other parties if the provider determines doing so will NOT likely lead to exploitation.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "RPT: Reporting",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-TFR-MHR",
+      "name": "Monthly Activity Report",
+      "description": "Providers MUST report vulnerability detection and response activity to all necessary parties in a consistent format that is human readable at least monthly.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "TFR: Timeframes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-TFR-MAV",
+      "name": "Mark Accepted Vulnerabilities",
+      "description": "Providers MUST categorize any vulnerability that is not or will not be fully mitigated or remediated within 192 days of evaluation as an accepted vulnerability.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "TFR: Timeframes",
+        "Force": "MUST"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_active_findings_within_max_age"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "inspector2_active_findings_within_max_age",
+          "ConfigKey": "inspector2_active_finding_max_age_days",
+          "Operator": "lte",
+          "Value": 192,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "VER-TFR-MRH",
+      "name": "Historical Activity",
+      "description": "Providers with Class C Certifications SHOULD make all recent historical vulnerability detection and response activity available in JSON format for automated retrieval by all necessary parties (e.g. using an API service or similar); this information SHOULD be updated persistently, at least once every 14 days.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-TFR-EVU",
+      "name": "Evaluate Vulnerabilities Quickly",
+      "description": "Providers with Class C Certifications SHOULD evaluate ALL vulnerabilities as required by VER-EVA (Evaluation) within 5 days of detection.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-TFR-IRI",
+      "name": "Internet-Reachable Incidents",
+      "description": "Providers with Class C Certifications SHOULD treat internet-reachable likely exploitable vulnerabilities where Potential Agency Impact N-rating > 3 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N3 or below.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "TFR: Timeframes",
+        "Force": "SHOULD"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "VER-TFR-NRI",
+      "name": "Non-Internet-Reachable Incidents",
+      "description": "Providers with Class C Certifications MAY treat likely exploitable vulnerabilities that are NOT internet-reachable where Potential Agency Impact N-rating = 5 as a FedRAMP Reportable Incident until they are partially mitigated vulnerabilities at N4 or below.",
+      "attributes": {
+        "Ruleset": "VER: Vulnerability Evaluation and Reporting",
+        "Subset": "TFR: Timeframes",
+        "Force": "MAY"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    }
+  ]
+}

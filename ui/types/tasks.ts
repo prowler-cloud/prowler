@@ -1,3 +1,18 @@
+/**
+ * Generic settle outcome for a polled async task: it succeeded, it failed, or the
+ * wait was exhausted with the task still running. `CONNECTION_CHECK_STATUS` in
+ * `types/providers.ts` is a connection-specific alias of this same shape, kept as
+ * its own export so a caller that only cares about a connection result does not
+ * have to name a generic task type to use it.
+ */
+export const TASK_OUTCOME = {
+  SUCCESS: "success",
+  FAILED: "failed",
+  PENDING: "pending",
+} as const;
+
+export type TaskOutcome = (typeof TASK_OUTCOME)[keyof typeof TASK_OUTCOME];
+
 export type TaskState =
   | "available"
   | "scheduled"

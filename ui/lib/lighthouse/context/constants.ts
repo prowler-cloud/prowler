@@ -1,6 +1,7 @@
 export const LIGHTHOUSE_CONTEXT_KIND = {
   PAGE: "page",
   FINDING: "finding",
+  ISSUE: "issue",
   RESOURCE: "resource",
   COMPLIANCE: "compliance",
   ATTACK_PATH: "attack_path",
@@ -28,6 +29,8 @@ export const LIGHTHOUSE_CONTEXT_LIMIT = {
   ATTACK_PATH_PARAMETERS: 8,
   ATTACK_PATH_REDACTED_PARAMETERS: 8,
   ATTACK_PATH_TYPE_COUNTS: 12,
+  ISSUE_FINDING_IDS: 20,
+  ISSUE_LEGS: 5,
 } as const;
 
 export const LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT = {

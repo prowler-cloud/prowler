@@ -1,4 +1,5 @@
 import type { ScheduleFrequency } from "./schedules";
+import { TASK_OUTCOME, type TaskOutcome } from "./tasks";
 
 export const PROVIDER_TYPES = [
   "aws",
@@ -21,6 +22,17 @@ export const PROVIDER_TYPES = [
 
 /** The closed set of provider types this UI build ships bespoke assets for. */
 export type KnownProviderType = (typeof PROVIDER_TYPES)[number];
+
+/**
+ * Outcome of a provider connection check (or a poll of one): confirmed
+ * connected, confirmed failed, or still running past the wait. An alias of the
+ * generic `TASK_OUTCOME` (see `types/tasks.ts`), which `pollTaskCompletion` also
+ * returns for the unrelated task it polls (organization/node deletion). Kept
+ * import-free (types only) so it can be used by test doubles and UI-only code
+ * without pulling in `lib/provider-helpers.ts`'s server-action dependencies.
+ */
+export const CONNECTION_CHECK_STATUS = TASK_OUTCOME;
+export type ConnectionCheckStatus = TaskOutcome;
 
 // Autocomplete for predefined + open for dynamic providers
 export type ProviderType = KnownProviderType | (string & {});

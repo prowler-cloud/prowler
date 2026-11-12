@@ -49,6 +49,7 @@ class Entra(M365Service):
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
         service_principals (dict): Dictionary of service principals with credentials and role assignments.
+        cross_tenant_access_default (CrossTenantAccessDefault): The default cross-tenant access policy configuration.
     """
 
     def __init__(self, provider: M365Provider):
@@ -90,6 +91,10 @@ class Entra(M365Service):
         # dependencies) fails, so checks can report that users are unavailable
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
+        # Set when the Microsoft Graph /groups request fails (permissions,
+        # throttling, mid-pagination error), so checks can emit a MANUAL
+        # finding instead of silently evaluating an empty group list.
+        self.groups_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
@@ -114,6 +119,7 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_cross_tenant_access_default(),
             )
         )
 
@@ -150,6 +156,9 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.cross_tenant_access_default: Optional[CrossTenantAccessDefault] = (
+            attributes[21]
+        )
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -227,6 +236,12 @@ class Entra(M365Service):
                 ),
                 guest_invite_settings=auth_policy.allow_invites_from,
                 guest_user_role_id=auth_policy.guest_user_role_id,
+                allowed_to_use_sspr=getattr(
+                    auth_policy, "allowed_to_use_s_s_p_r", None
+                ),
+                block_msol_powershell=getattr(
+                    auth_policy, "block_msol_power_shell", None
+                ),
             )
         except Exception as error:
             logger.error(
@@ -807,6 +822,14 @@ class Entra(M365Service):
         )
 
     async def _get_groups(self):
+        """Retrieve all Entra ID groups via Microsoft Graph.
+
+        Fetches groups with their core properties including dynamic membership
+        configuration.  On any API error (permissions, throttling,
+        mid-pagination failure) the partial result collected so far is returned
+        **and** ``self.groups_error`` is set so that checks can emit a MANUAL
+        finding instead of silently evaluating an incomplete group list.
+        """
         logger.info("Entra - Getting groups...")
         groups = []
         try:
@@ -817,6 +840,7 @@ class Entra(M365Service):
                         "displayName",
                         "groupTypes",
                         "membershipRule",
+                        "membershipRuleProcessingState",
                         "isAssignableToRole",
                         "isManagementRestricted",
                     ],
@@ -837,6 +861,9 @@ class Entra(M365Service):
                             name=group.display_name,
                             groupTypes=group.group_types or [],
                             membershipRule=group.membership_rule,
+                            membership_rule_processing_state=getattr(
+                                group, "membership_rule_processing_state", None
+                            ),
                             is_assignable_to_role=getattr(
                                 group, "is_assignable_to_role", False
                             )
@@ -851,10 +878,24 @@ class Entra(M365Service):
                 next_link = getattr(groups_data, "odata_next_link", None)
                 if not next_link:
                     break
-                groups_data = await self.client.groups.with_url(next_link).get()
+                try:
+                    groups_data = await self.client.groups.with_url(next_link).get()
+                except Exception as pagination_error:
+                    logger.error(
+                        f"{pagination_error.__class__.__name__}[{pagination_error.__traceback__.tb_lineno}]: {pagination_error}"
+                    )
+                    self.groups_error = (
+                        f"Groups list may be incomplete due to a pagination error: "
+                        f"{pagination_error.__class__.__name__}"
+                    )
+                    break
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            self.groups_error = (
+                f"Unable to retrieve groups from Microsoft Graph "
+                f"({error.__class__.__name__})"
             )
         return groups
 
@@ -1551,6 +1592,86 @@ OAuthAppInfo
             )
         return b2b_policy
 
+    async def _get_cross_tenant_access_default(self):
+        """Retrieve the default cross-tenant access policy configuration.
+
+        Fetches the tenant's default cross-tenant access policy from
+        ``policies/crossTenantAccessPolicy/default`` to determine whether
+        B2B collaboration outbound and B2B direct connect outbound settings
+        are unrestricted (allowed for all users and all applications).
+
+        Returns:
+            Optional[CrossTenantAccessDefault]: The parsed default cross-tenant
+                access policy, or None on error.
+        """
+        logger.info("Entra - Getting cross-tenant access default policy...")
+        cross_tenant_default = None
+        try:
+            policy = await self.client.policies.cross_tenant_access_policy.default.get()
+            if policy:
+                cross_tenant_default = CrossTenantAccessDefault(
+                    b2b_collaboration_outbound=self._parse_b2b_setting(
+                        policy.b2b_collaboration_outbound
+                    ),
+                    b2b_direct_connect_outbound=self._parse_b2b_setting(
+                        policy.b2b_direct_connect_outbound
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return cross_tenant_default
+
+    @staticmethod
+    def _parse_b2b_setting(setting) -> Optional["CrossTenantB2BSetting"]:
+        """Parse a crossTenantAccessPolicyB2BSetting into a model.
+
+        Extracts the ``usersAndGroups`` and ``applications`` target configuration
+        from a Graph SDK B2B setting object and converts them into a
+        ``CrossTenantB2BSetting`` model.
+
+        Args:
+            setting: A Graph SDK ``CrossTenantAccessPolicyB2BSetting`` object,
+                or None if the setting is absent.
+
+        Returns:
+            Optional[CrossTenantB2BSetting]: The parsed B2B setting, or None
+                if the input is None.
+        """
+        if setting is None:
+            return None
+
+        def parse_target_config(config) -> Optional["CrossTenantTargetConfiguration"]:
+            """Parse a target configuration (usersAndGroups or applications)."""
+            if config is None:
+                return None
+            access_type = None
+            if config.access_type is not None:
+                access_type = config.access_type.value
+            targets = []
+            if config.targets:
+                for t in config.targets:
+                    target_value = getattr(t, "target", None)
+                    target_type = getattr(t, "target_type", None)
+                    if target_type is not None:
+                        target_type = target_type.value
+                    targets.append(
+                        CrossTenantTarget(
+                            target=target_value,
+                            target_type=target_type,
+                        )
+                    )
+            return CrossTenantTargetConfiguration(
+                access_type=access_type,
+                targets=targets,
+            )
+
+        return CrossTenantB2BSetting(
+            users_and_groups=parse_target_config(setting.users_and_groups),
+            applications=parse_target_config(setting.applications),
+        )
+
     async def _get_named_locations(self):
         """Retrieve Conditional Access named locations from Microsoft Entra.
 
@@ -2116,11 +2237,34 @@ OAuthAppInfo
                             )
                         )
 
+                    # Extract redirect URIs from web, spa and publicClient
+                    web_obj = getattr(app, "web", None)
+                    web_redirect_uris = (
+                        list(getattr(web_obj, "redirect_uris", []) or [])
+                        if web_obj
+                        else []
+                    )
+                    spa_obj = getattr(app, "spa", None)
+                    spa_redirect_uris = (
+                        list(getattr(spa_obj, "redirect_uris", []) or [])
+                        if spa_obj
+                        else []
+                    )
+                    public_client_obj = getattr(app, "public_client", None)
+                    public_client_redirect_uris = (
+                        list(getattr(public_client_obj, "redirect_uris", []) or [])
+                        if public_client_obj
+                        else []
+                    )
+
                     app_registrations[object_id] = AppRegistration(
                         id=object_id,
                         app_id=app_id,
                         name=getattr(app, "display_name", "") or "",
                         password_credentials=password_credentials,
+                        web_redirect_uris=web_redirect_uris,
+                        spa_redirect_uris=spa_redirect_uris,
+                        public_client_redirect_uris=public_client_redirect_uris,
                     )
 
                 next_link = getattr(app_response, "odata_next_link", None)
@@ -2510,12 +2654,16 @@ class DefaultUserRolePermissions(BaseModel):
 
 
 class AuthorizationPolicy(BaseModel):
+    """Tenant-wide authorization policy from Microsoft Entra ID."""
+
     id: str
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+    allowed_to_use_sspr: Optional[bool] = None
+    block_msol_powershell: Optional[bool] = None
 
 
 # Well-known directory setting template IDs (from /groupSettings).
@@ -2643,10 +2791,13 @@ class AuthenticationMethodConfiguration(BaseModel):
 
 
 class Group(BaseModel):
+    """Model representing a Microsoft Entra ID group."""
+
     id: str
     name: str
     groupTypes: List[str]
     membershipRule: Optional[str]
+    membership_rule_processing_state: Optional[str] = None
     is_assignable_to_role: bool = False
     is_management_restricted: bool = False
 
@@ -2929,9 +3080,69 @@ class AppRegistration(BaseModel):
         name: The application's display name.
         password_credentials: List of password credentials (client secrets)
             registered on the application.
+        web_redirect_uris: Redirect URIs configured for the web platform.
+        spa_redirect_uris: Redirect URIs configured for the SPA platform.
+        public_client_redirect_uris: Redirect URIs configured for the
+            public client (mobile/desktop) platform.
     """
 
     id: str
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+    web_redirect_uris: List[str] = []
+    spa_redirect_uris: List[str] = []
+    public_client_redirect_uris: List[str] = []
+
+
+class CrossTenantTarget(BaseModel):
+    """A single target entry in a cross-tenant access target configuration.
+
+    Attributes:
+        target: The target identifier (e.g. ``AllUsers``, ``AllApplications``,
+            or a specific group/application ID).
+        target_type: The type of the target (e.g. ``user``, ``application``).
+    """
+
+    target: Optional[str] = None
+    target_type: Optional[str] = None
+
+
+class CrossTenantTargetConfiguration(BaseModel):
+    """Target configuration for users/groups or applications in a B2B setting.
+
+    Attributes:
+        access_type: The access type (``allowed``, ``blocked``, or
+            ``unknownFutureValue``). None if not set.
+        targets: List of targets for this configuration.
+    """
+
+    access_type: Optional[str] = None
+    targets: List[CrossTenantTarget] = []
+
+
+class CrossTenantB2BSetting(BaseModel):
+    """A B2B setting (collaboration or direct connect) within the cross-tenant policy.
+
+    Attributes:
+        users_and_groups: Target configuration for users and groups.
+        applications: Target configuration for applications.
+    """
+
+    users_and_groups: Optional[CrossTenantTargetConfiguration] = None
+    applications: Optional[CrossTenantTargetConfiguration] = None
+
+
+class CrossTenantAccessDefault(BaseModel):
+    """Default cross-tenant access policy configuration.
+
+    Represents the tenant's default cross-tenant access policy, specifically
+    the B2B collaboration outbound and B2B direct connect outbound settings.
+
+    Attributes:
+        b2b_collaboration_outbound: The outbound B2B collaboration setting.
+        b2b_direct_connect_outbound: The outbound B2B direct connect setting.
+    """
+
+    b2b_collaboration_outbound: Optional[CrossTenantB2BSetting] = None
+    b2b_direct_connect_outbound: Optional[CrossTenantB2BSetting] = None
