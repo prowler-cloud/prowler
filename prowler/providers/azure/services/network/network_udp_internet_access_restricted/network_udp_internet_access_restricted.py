@@ -1,9 +1,19 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.network.network_client import network_client
+from prowler.providers.azure.services.network.network_service import (
+    security_rule_allows_internet,
+)
 
 
 class network_udp_internet_access_restricted(Check):
     def execute(self) -> Check_Report_Azure:
+        """Check whether each security group allows UDP from the Internet.
+
+        Returns:
+            One finding per security group. The finding fails when an inbound
+            allow rule accepts UDP from Internet, *, or 0.0.0.0/0, including a
+            source stored only in source_address_prefixes.
+        """
         findings = []
         for subscription, security_groups in network_client.security_groups.items():
             subscription_name = network_client.subscriptions.get(
@@ -19,11 +29,7 @@ class network_udp_internet_access_restricted(Check):
                 rule_fail_condition = any(
                     (
                         rule.protocol in ["UDP", "Udp"]
-                        and (
-                            rule.source_address_prefix
-                            and rule.source_address_prefix
-                            in ["Internet", "*", "0.0.0.0/0"]
-                        )
+                        and security_rule_allows_internet(rule)
                         and rule.access == "Allow"
                         and rule.direction == "Inbound"
                     )
