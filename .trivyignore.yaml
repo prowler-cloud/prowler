@@ -226,3 +226,25 @@ vulnerabilities:
     purls:
       - "pkg:nuget/System.Security.Cryptography.Pkcs@10.0.0"
     expired_at: 2026-12-15
+
+  # Ships in the image: MicrosoftTeams/8.0.0/netcoreapp3.1/Microsoft.Rest.ClientRuntime.dll.
+  # 8.0.0 is the latest stable gallery release and still bundles 2.3.21, so only Microsoft
+  # can update it. Re-check on the next Teams release.
+  - id: CVE-2022-26907
+    purls:
+      - "pkg:nuget/Microsoft.Rest.ClientRuntime@2.3.21"
+    expired_at: 2026-12-31
+
+  # Compiled into the Trivy binary (usr/local/bin/trivy) of the SDK and API images. 0.76.2,
+  # the latest release, is built with Go 1.27.3 and x/crypto 0.58.0; the fixes are Go
+  # 1.27.4 and an unreleased x/crypto commit. Prowler only runs `trivy image` / `trivy fs`
+  # as a client, so the MaxBytesReader server path is never served. Pinned so both stop
+  # matching with the next Trivy bump.
+  - id: CVE-2026-97054
+    purls:
+      - "pkg:golang/stdlib@v1.27.3"
+    expired_at: 2026-12-31
+  - id: GO-2026-5932
+    purls:
+      - "pkg:golang/golang.org/x/crypto@v0.58.0"
+    expired_at: 2026-12-31
