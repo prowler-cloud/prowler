@@ -161,6 +161,7 @@
                   "user-guide/tutorials/prowler-app-attack-paths-active-queries"
                 ]
               },
+              "user-guide/tutorials/prowler-cloud-realtime",
               {
                 "group": "Compliance",
                 "pages": [
