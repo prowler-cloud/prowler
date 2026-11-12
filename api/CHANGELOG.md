@@ -4,6 +4,20 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.50.0] (Prowler v5.49.0)
+
+### 🔄 Changed
+
+- `regex` constraint raised to 2026.5.9 to match the pin the Prowler SDK requires [(#13330)](https://github.com/prowler-cloud/prowler/pull/13330)
+
+### 🔐 Security
+
+- `pyjwt` from 2.14.0 to 2.15.0, patching CVE-2026-101918 and CVE-2026-102275 [(#13297)](https://github.com/prowler-cloud/prowler/pull/13297)
+- zlib1g to 1:1.3.dfsg+really1.3.1-1+deb13u1 and Trivy from 0.76.1 to 0.76.2 in the API container image, patching CVE-2026-76844, CVE-2026-85091 and CVE-2026-78661 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+- PowerShell from 7.5.13 to 7.6.10 (.NET runtime 10.0.15), uv from 0.13.4 to 0.13.7 and multidict, opentelemetry and setuptools in the API container image, patching CVE-2026-109475, CVE-2026-104874, CVE-2026-114603, CVE-2026-59890 and the rustls advisories in uv [(#13342)](https://github.com/prowler-cloud/prowler/pull/13342)
+
+---
+
 ## [1.49.0] (Prowler v5.48.0)
 
 ### 🔄 Changed
