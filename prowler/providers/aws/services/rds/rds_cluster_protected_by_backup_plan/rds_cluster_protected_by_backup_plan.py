@@ -5,6 +5,14 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 
 class rds_cluster_protected_by_backup_plan(Check):
     def execute(self):
+        """Evaluate RDS cluster coverage by AWS Backup selections.
+
+        Apply selection-local exclusions before the existing inclusion rules.
+        Selection coverage does not establish backup completion or restorability.
+
+        Returns:
+            A list of findings, one per collected RDS cluster.
+        """
         findings = []
         for db_cluster in rds_client.db_clusters.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
@@ -13,11 +21,12 @@ class rds_cluster_protected_by_backup_plan(Check):
                 f"RDS Cluster {db_cluster.id} is not protected by a backup plan."
             )
 
+            protected_resources = backup_client.get_protected_resources(db_cluster.arn)
             if (
-                db_cluster.arn in backup_client.protected_resources
+                db_cluster.arn in protected_resources
                 or f"arn:{rds_client.audited_partition}:rds:*:*:cluster:*"
-                in backup_client.protected_resources
-                or "*" in backup_client.protected_resources
+                in protected_resources
+                or "*" in protected_resources
             ):
                 report.status = "PASS"
                 report.status_extended = (
