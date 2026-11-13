@@ -352,6 +352,7 @@ class Test_kms_key_not_publicly_accessible:
             check = kms_key_not_publicly_accessible()
             result = check.execute()
 
-            assert len(result) == expected_no_of_passes
+            assert len(result) == no_of_keys_created
             statuses = [r.status for r in result]
             assert statuses.count("PASS") == expected_no_of_passes
+            assert statuses.count("MANUAL") == 2

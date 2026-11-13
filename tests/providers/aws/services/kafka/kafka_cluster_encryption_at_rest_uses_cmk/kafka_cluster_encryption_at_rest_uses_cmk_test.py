@@ -8,6 +8,27 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provi
 
 
 class Test_kafka_cluster_encryption_at_rest_uses_cmk:
+    @staticmethod
+    def _provisioned_cluster():
+        return Cluster(
+            id="6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
+            name="demo-cluster-1",
+            arn="arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
+            region=AWS_REGION_US_EAST_1,
+            tags=[],
+            state="ACTIVE",
+            kafka_version="2.2.1",
+            data_volume_kms_key_id=f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c",
+            encryption_in_transit=EncryptionInTransit(
+                client_broker="TLS_PLAINTEXT",
+                in_cluster=True,
+            ),
+            tls_authentication=True,
+            public_access=True,
+            unauthentication_access=False,
+            enhanced_monitoring="DEFAULT",
+        )
+
     def test_kafka_no_clusters(self):
         kafka_client = MagicMock()
         kafka_client.clusters = {}
@@ -223,3 +244,75 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_kafka_cluster_reports_manual_when_kms_inventory_fails(self):
+        kafka_client = MagicMock()
+        cluster = self._provisioned_cluster()
+        kafka_client.clusters = {cluster.arn: cluster}
+
+        kms_client = MagicMock()
+        kms_client.keys = []
+        kms_client.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDeniedException"}
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
+                new=kms_client,
+            ),
+        ):
+            from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
+                kafka_cluster_encryption_at_rest_uses_cmk,
+            )
+
+            result = kafka_cluster_encryption_at_rest_uses_cmk().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "KMS keys could not be listed" in result[0].status_extended
+        assert "AccessDeniedException" in result[0].status_extended
+
+    def test_kafka_cluster_reports_manual_when_kms_key_detail_fails(self):
+        kafka_client = MagicMock()
+        cluster = self._provisioned_cluster()
+        kafka_client.clusters = {cluster.arn: cluster}
+
+        key = MagicMock()
+        key.arn = cluster.data_volume_kms_key_id
+        key.detail_retrieved = False
+        key.detail_fetch_error = "AccessDeniedException"
+        kms_client = MagicMock()
+        kms_client.keys = [key]
+        kms_client.keys_scan_errors = {}
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
+                new=kms_client,
+            ),
+        ):
+            from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
+                kafka_cluster_encryption_at_rest_uses_cmk,
+            )
+
+            result = kafka_cluster_encryption_at_rest_uses_cmk().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "could not be described" in result[0].status_extended
+        assert "AccessDeniedException" in result[0].status_extended

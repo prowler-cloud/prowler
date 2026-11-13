@@ -6,6 +6,10 @@ from prowler.providers.aws.services.kms.lib.enclave import (
     statement_binds_deployment,
     statement_targets_sensitive_actions,
 )
+from prowler.providers.aws.services.kms.lib.inventory import (
+    get_kms_inventory_error_reports,
+    get_kms_key_detail_error_report,
+)
 
 
 class kms_key_enclave_attestation_no_deployment_binding(Check):
@@ -57,8 +61,11 @@ class kms_key_enclave_attestation_no_deployment_binding(Check):
         Returns:
             list[Check_Report_AWS]: One report per selected enclave KMS key.
         """
-        findings = []
+        findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
         for key in kms_client.keys:
+            if not key.detail_retrieved:
+                findings.append(get_kms_key_detail_error_report(self.metadata(), key))
+                continue
             if (
                 key.manager != "CUSTOMER"
                 or key.state != "Enabled"
