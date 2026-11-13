@@ -1,1 +1,0 @@
-`organizations_security_services_delegated_admin_not_management_account` check for AWS provider, verifying that security services with trusted access in the organization have a delegated administrator instead of being administered from the management account

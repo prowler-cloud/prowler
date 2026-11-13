@@ -5,6 +5,7 @@ description: "Choose a plan, install Prowler Private Cloud in your own AWS accou
 ---
 
 import { AwsMarketplaceBanner } from "/snippets/aws-marketplace-banner.mdx"
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <AwsMarketplaceBanner />
 
@@ -156,6 +157,25 @@ The installation runs in the customer's AWS account, in the chosen Region. Users
 * **Monthly statement:** at the start of each month, the installation emails last month's usage.
 
 If the subscription ends, Prowler keeps working for 7 days and a daily email counts the days down. After that, new scans and premium features pause, but findings, history and reports stay. Subscribing again resumes everything within the hour.
+
+### Billing After a Plan Change
+
+<VersionBadge version="5.49.0" />
+
+A plan change during a month does not change the prices of that month:
+
+* **Month of the change:** the whole month is billed at the plan the month started on. Accounts beyond what that plan includes are billed as extra accounts, at 125 USD each.
+* **Following months:** the prices of the new plan apply from the 1st of the next month.
+* **Monthly statement:** the statement for that month shows the lines of the starting plan and a note on the plan change.
+
+Example: a change from the 10-Account Bundle to the 25-Account Bundle in October, with 14 paid accounts scanned that month:
+
+| Month | Charge | Quantity × price | Subtotal |
+| --- | --- | --- | --- |
+| October | 10-Account Bundle | 1 × 1,000 USD | 1,000 USD |
+| October | Extra accounts (4 paid accounts beyond the 10 included) | 4 × 125 USD | 500 USD |
+| **October total** | | | **1,500 USD** |
+| November | 25-Account Bundle | 1 × 2,000 USD | 2,000 USD |
 
 ## Updates and Settings
 

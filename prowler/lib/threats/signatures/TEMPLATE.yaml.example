@@ -34,7 +34,8 @@ images:
     require_publisher: false
     # Searched in the image name (AMI name, Azure gallery definition or
     # offer-sku-version, GCP boot disk source image). The named group
-    # `version` is what the ranges below compare.
+    # `version` is what the ranges below compare. Azure names match in any
+    # case; AWS and GCP names only in their exact case.
     name_regex: '^example-vpn-(?P<version>\d+\.\d+\.\d+)-x86_64'
     # Affected versions, both bounds inclusive. One range per release branch
     # when fixes ship per branch; an open bound is unbounded.
