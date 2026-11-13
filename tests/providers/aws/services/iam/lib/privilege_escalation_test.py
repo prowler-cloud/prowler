@@ -285,3 +285,77 @@ class Test_PrivilegeEscalation:
             ],
         }
         assert check_privilege_escalation(policy) == ""
+
+    def test_check_privilege_escalation_iam_wildcard_detected_with_retired_action(
+        self,
+    ):
+        # Regression test for issue #13361: the retired
+        # codestar:CreateProject action used to raise inside the combination
+        # loop and make every policy evaluate to no escalation.
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:*", "Resource": "*"},
+            ],
+        }
+        result = check_privilege_escalation(policy)
+        assert result != ""
+        assert "iam:PutUserPolicy" in result
+        assert "iam:CreatePolicyVersion" in result
+
+    def test_check_privilege_escalation_retired_action_policy_does_not_break_evaluation(
+        self,
+    ):
+        # A policy granting only the retired action plus iam:PassRole must
+        # not raise and must not match any combination, while a policy that
+        # also grants a real escalation path is still detected.
+        retired_only_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": ["iam:PassRole", "codestar:CreateProject"],
+                    "Resource": "*",
+                }
+            ],
+        }
+        assert check_privilege_escalation(retired_only_policy) == ""
+
+        lambda_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:PassRole",
+                        "codestar:CreateProject",
+                        "lambda:CreateFunction",
+                        "lambda:InvokeFunction",
+                    ],
+                    "Resource": "*",
+                }
+            ],
+        }
+        result = check_privilege_escalation(lambda_policy)
+        assert "lambda:CreateFunction" in result
+        assert "lambda:InvokeFunction" in result
+
+    def test_check_privilege_escalation_unknown_action_combination_is_skipped(
+        self, monkeypatch
+    ):
+        # A combination holding an unknown or retired action must be skipped
+        # on its own instead of silencing the whole evaluation.
+        monkeypatch.setitem(
+            privilege_escalation_policies_combination,
+            "PassRole+RetiredService",
+            {"iam:PassRole", "retiredservice:DoThing"},
+        )
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:*", "Resource": "*"},
+            ],
+        }
+        result = check_privilege_escalation(policy)
+        assert "iam:PutUserPolicy" in result
+        assert "retiredservice:DoThing" not in result
