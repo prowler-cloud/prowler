@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from itertools import permutations
 from unittest import mock
 
 import botocore
@@ -782,6 +783,42 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
         )
         _assert_regional_manual(result[1], AWS_REGION_EU_WEST_2, "RuntimeError")
         _assert_customer_managed_pass(result[2])
+
+    @mock_aws
+    def test_regional_errors_are_sorted_for_every_insertion_order(self):
+        """Report selected regional errors in Region order for any collected order."""
+        errors = {
+            AWS_REGION_US_EAST_1: "AccessDeniedException",
+            AWS_REGION_EU_WEST_2: "RuntimeError",
+            AWS_REGION_EU_WEST_1: "ThrottlingException",
+        }
+        expected_order = [
+            AWS_REGION_EU_WEST_1,
+            AWS_REGION_EU_WEST_2,
+            AWS_REGION_US_EAST_1,
+        ]
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _read_failure(),
+                AWS_REGION_EU_WEST_2: RuntimeError("read failed"),
+                AWS_REGION_EU_WEST_1: _read_failure("ThrottlingException"),
+            },
+            audit_resources=[_vault_arn(region) for region in errors],
+        ) as service:
+            assert service.token_vaults == {}
+            assert service.token_vaults_scan_errors == errors
+            # The collector's insertion order follows thread completion and is not
+            # fixed, so replay every order the check could receive.
+            for insertion_order in permutations(errors):
+                service.token_vaults_scan_errors = {
+                    region: errors[region] for region in insertion_order
+                }
+                result = _execute_check(service)
+
+                regions = [finding.region for finding in result]
+                assert regions == expected_order
+                for finding, region in zip(result, expected_order):
+                    _assert_regional_manual(finding, region, errors[region])
 
     @mock_aws
     def test_mixed_service_selection_scopes_vaults_and_errors(self):
