@@ -121,8 +121,8 @@ class M365Provider(Provider):
         tenant_id: str = None,
         client_id: str = None,
         client_secret: str = None,
-        user: str = None,
-        password: str = None,
+        user: str = None,  # noqa
+        password: str = None,  # noqa
         certificate_content: str = None,
         certificate_path: str = None,
         init_modules: bool = False,
@@ -448,7 +448,9 @@ class M365Provider(Provider):
             test_session = M365PowerShell(credentials, identity)
             try:
                 if init_modules:
-                    initialize_m365_powershell_modules()
+                    credentials.pnp_powershell_ready = (
+                        initialize_m365_powershell_modules()
+                    )
                 return credentials
             finally:
                 test_session.close()
