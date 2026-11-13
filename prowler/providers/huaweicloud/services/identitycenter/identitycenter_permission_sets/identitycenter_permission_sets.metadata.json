@@ -1,0 +1,34 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "identitycenter_permission_sets",
+  "CheckTitle": "Identity Center has permission sets configured",
+  "CheckType": [],
+  "ServiceName": "identitycenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "IdentityCenterInstance",
+  "ResourceGroup": "IAM",
+  "Description": "Ensure Huawei Cloud Identity Center has permission sets configured",
+  "Risk": "Without permission sets, federated users cannot be granted appropriate access to Huawei Cloud resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure permission sets in Identity Center under IAM > Identity Center > Permission Sets.",
+      "Url": "https://hub.prowler.com/check/identitycenter_permission_sets"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
