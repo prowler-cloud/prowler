@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_managed_injection_rule_groups_enabled",
+  "CheckTitle": "WAFv2 Web ACL enforces the AWS managed SQL injection and known bad inputs rule groups",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:scope/webacl/webacl-name/webacl-id",
+  "Severity": "high",
+  "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "network",
+  "Description": "**WAFv2 Web ACLs** are evaluated to confirm that both the `AWSManagedRulesSQLiRuleSet` and `AWSManagedRulesKnownBadInputsRuleSet` managed rule groups are attached, directly or through AWS Firewall Manager, with their `OverrideAction` set to `None`, so matching requests are blocked rather than only counted. Non-blocking rule overrides or scope-down statements on these groups need manual review.",
+  "Risk": "Without both rule groups enforced, SQL injection payloads and known exploit probes (Log4j JNDI strings, Java deserialization payloads, vulnerable-path scans) reach the application and any AI endpoint behind the Web ACL uninspected, exposing databases, prompts and data stores to **data exfiltration** and **integrity** loss. A group overridden to Count logs matches but lets requests through.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-use-case.html#aws-managed-rule-groups-use-case-sql-db",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html#aws-managed-rule-groups-baseline-known-bad-inputs",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-rule-group-override-options.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::WebACL\n    Properties:\n      Name: <example_resource_name>\n      Scope: REGIONAL\n      DefaultAction:\n        Allow: {}\n      VisibilityConfig:\n        SampledRequestsEnabled: true\n        CloudWatchMetricsEnabled: true\n        MetricName: <example_resource_name>\n      Rules:\n        - Name: AWS-AWSManagedRulesSQLiRuleSet\n          Priority: 0\n          OverrideAction:\n            None: {}  # Critical: Count would only log matches instead of blocking\n          Statement:\n            ManagedRuleGroupStatement:\n              VendorName: AWS\n              Name: AWSManagedRulesSQLiRuleSet  # Critical: SQL injection rule group\n          VisibilityConfig:\n            SampledRequestsEnabled: true\n            CloudWatchMetricsEnabled: true\n            MetricName: AWSManagedRulesSQLiRuleSet\n        - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet\n          Priority: 1\n          OverrideAction:\n            None: {}\n          Statement:\n            ManagedRuleGroupStatement:\n              VendorName: AWS\n              Name: AWSManagedRulesKnownBadInputsRuleSet  # Critical: known bad inputs rule group\n          VisibilityConfig:\n            SampledRequestsEnabled: true\n            CloudWatchMetricsEnabled: true\n            MetricName: AWSManagedRulesKnownBadInputsRuleSet\n```",
+      "Other": "1. Open the AWS WAF console and select the Web ACL\n2. In the Rules tab choose Add rules > Add managed rule groups > AWS managed rule groups\n3. Add the SQL database (AWSManagedRulesSQLiRuleSet) and Known bad inputs (AWSManagedRulesKnownBadInputsRuleSet) rule groups\n4. For each of the two rules, make sure the rule group action override is not set to Count\n5. Save the Web ACL",
+      "Terraform": "```hcl\nresource \"aws_wafv2_web_acl\" \"<example_resource_name>\" {\n  name  = \"<example_resource_name>\"\n  scope = \"REGIONAL\"\n\n  default_action {\n    allow {}\n  }\n\n  rule {\n    name     = \"AWS-AWSManagedRulesSQLiRuleSet\"\n    priority = 0\n\n    override_action {\n      none {} # Critical: count {} would only log matches instead of blocking\n    }\n\n    statement {\n      managed_rule_group_statement {\n        name        = \"AWSManagedRulesSQLiRuleSet\" # Critical: SQL injection rule group\n        vendor_name = \"AWS\"\n      }\n    }\n\n    visibility_config {\n      cloudwatch_metrics_enabled = true\n      metric_name                = \"AWSManagedRulesSQLiRuleSet\"\n      sampled_requests_enabled   = true\n    }\n  }\n\n  rule {\n    name     = \"AWS-AWSManagedRulesKnownBadInputsRuleSet\"\n    priority = 1\n\n    override_action {\n      none {}\n    }\n\n    statement {\n      managed_rule_group_statement {\n        name        = \"AWSManagedRulesKnownBadInputsRuleSet\" # Critical: known bad inputs rule group\n        vendor_name = \"AWS\"\n      }\n    }\n\n    visibility_config {\n      cloudwatch_metrics_enabled = true\n      metric_name                = \"AWSManagedRulesKnownBadInputsRuleSet\"\n      sampled_requests_enabled   = true\n    }\n  }\n\n  visibility_config {\n    cloudwatch_metrics_enabled = true\n    metric_name                = \"<example_resource_name>\"\n    sampled_requests_enabled   = true\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach the AWS managed **SQL database** (`AWSManagedRulesSQLiRuleSet`) and **Known bad inputs** (`AWSManagedRulesKnownBadInputsRuleSet`) rule groups to every Web ACL protecting internet-facing or AI endpoints, keep their override action set to `None` so matches are blocked, and use Count only while tuning. Pair them with the Core rule set and logging for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/wafv2_webacl_managed_injection_rule_groups_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "wafv2_webacl_managed_rule_groups_enabled",
+    "wafv2_webacl_with_rules"
+  ],
+  "Notes": "A rule group overridden to Count as a whole is reported as FAIL. Per-rule action overrides other than Block (RuleActionOverrides) and legacy ExcludedRules, which set the rule to Count, are reported as MANUAL naming the affected rules: without the group's rule catalog the check cannot tell a partial exception from a wholesale exclusion and must not emit a false PASS. A rule overridden to Allow in any reference keeps the group MANUAL even when another reference has no overrides, because Allow terminates evaluation and Firewall Manager pre-process groups and rule priorities are not evaluated. A rule group referenced only with a scope-down statement is also reported as MANUAL, since requests outside the scope are not inspected by it. A rule group that is also referenced without overrides and without a scope-down statement still passes. Managed rule groups attached through AWS Firewall Manager policies are evaluated. Web ACLs that could not be listed or read (including CLOUDFRONT Web ACLs when us-east-1 is not scanned) are reported in one account-level MANUAL finding."
+}
