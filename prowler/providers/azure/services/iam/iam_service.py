@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 from azure.mgmt.authorization import AuthorizationManagementClient
@@ -42,6 +42,8 @@ class IAM(AzureService):
                                         permission, "condition_version", ""
                                     ),
                                     actions=getattr(permission, "actions", []),
+                                    not_actions=getattr(permission, "not_actions", [])
+                                    or [],
                                 )
                                 for permission in getattr(role, "permissions", [])
                             ],
@@ -97,6 +99,7 @@ class Permission:
     actions: List[str]
     condition: str
     condition_version: str
+    not_actions: List[str] = field(default_factory=list)
 
 
 @dataclass
