@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
+import httpx
 import pytest
 from azure.core.credentials import AccessToken
 from azure.core.exceptions import HttpResponseError
@@ -1140,6 +1141,88 @@ class TestAzureProviderSovereignCloudSupport:
             _, kwargs = subscription_client_class.call_args
             assert kwargs["base_url"] == base_url
             assert kwargs["credential_scopes"] == credential_scopes
+
+    @pytest.mark.parametrize(
+        "region,_authority,_base_url,_credential_scopes,graph_scope,_logs_endpoint,_login_endpoint",
+        REGION_CASES,
+    )
+    def test_setup_identity_uses_per_cloud_graph_endpoints(
+        self,
+        region,
+        _authority,
+        _base_url,
+        _credential_scopes,
+        graph_scope,
+        _logs_endpoint,
+        _login_endpoint,
+    ):
+        """setup_identity must send both Graph lookups (domains, then me) to
+        the region's Graph host with a token for the region's Graph scope,
+        and the me lookup must reach the /me route on the wire."""
+        graph_host = graph_scope.removesuffix("/.default")
+        requested_scopes = []
+        graph_requests = []
+
+        class FakeCredential:
+            """Credential stub that records the requested token scopes."""
+
+            def get_token(self, *scopes, **_kwargs):
+                """Record the scopes and return a static access token."""
+                requested_scopes.extend(scopes)
+                return AccessToken("fake-token", 9999999999)
+
+        async def fake_handle_async_request(_transport, request):
+            """Capture the request after the Graph middleware has run and
+            return a canned domains or user response."""
+            graph_requests.append(request)
+            if request.url.path.endswith("/domains"):
+                body = {"value": [{"id": "contoso.example", "isDefault": True}]}
+            else:
+                body = {"userPrincipalName": "user@contoso.example"}
+            return httpx.Response(200, json=body, request=request)
+
+        subscription = MagicMock()
+        subscription.display_name = "Sub"
+        subscription.subscription_id = str(uuid4())
+        subscription_client_instance = MagicMock()
+        subscription_client_instance.subscriptions.list = MagicMock(
+            return_value=[subscription]
+        )
+        subscription_client_instance.tenants.list = MagicMock(return_value=[])
+
+        with (
+            patch.object(AzureProvider, "__init__", return_value=None),
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient",
+                MagicMock(return_value=subscription_client_instance),
+            ),
+            patch.object(
+                httpx.AsyncHTTPTransport,
+                "handle_async_request",
+                fake_handle_async_request,
+            ),
+        ):
+            azure_provider = AzureProvider()
+            azure_provider._session = FakeCredential()
+            azure_provider._region_config = AzureProvider.setup_region_config(region)
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=True,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[],
+                client_id=None,
+            )
+
+        assert identity.tenant_domain == "contoso.example"
+        assert identity.identity_id == "user@contoso.example"
+        assert len(graph_requests) == 2
+        assert graph_requests[1].url.path.endswith("/me")
+        for request in graph_requests:
+            assert f"{request.url.scheme}://{request.url.host}" == graph_host
+            assert request.headers["Authorization"] == "Bearer fake-token"
+        assert set(requested_scopes) == {graph_scope}
 
 
 class TestAzureProviderSetupIdentityEventLoop:
