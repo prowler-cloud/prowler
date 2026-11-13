@@ -1,4 +1,4 @@
-from py_iam_expand.actions import expand_actions
+from py_iam_expand.actions import InvalidActionPatternError, expand_actions
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.iam.lib.policy import get_effective_actions
@@ -194,11 +194,6 @@ privilege_escalation_policies_combination = {
         "datapipeline:CreatePipeline",
         "datapipeline:PutPipelineDefinition",
         "datapipeline:ActivatePipeline",
-    },
-    # CodeStar-based privilege escalation patterns
-    "PassRole+CodeStar": {
-        "iam:PassRole",
-        "codestar:CreateProject",
     },
     # CodeBuild-based privilege escalation patterns
     "PassRole+CodeBuildCreateProject+StartBuild": {
@@ -490,8 +485,16 @@ def check_privilege_escalation(policy: dict) -> str:
         ) in privilege_escalation_policies_combination.items():
             # Expand the required actions for the current combo
             expanded_required_actions = set()
-            for action_pattern in required_actions_patterns:
-                expanded_required_actions.update(expand_actions(action_pattern))
+            try:
+                for action_pattern in required_actions_patterns:
+                    expanded_required_actions.update(expand_actions(action_pattern))
+            except InvalidActionPatternError as error:
+                # A retired or unknown action must only skip this
+                # combination, not silence the whole evaluation
+                logger.warning(
+                    f"Skipping privilege escalation combination '{combo_key}': {error}"
+                )
+                continue
 
             # Check if all expanded required actions are present in the effective actions
             if expanded_required_actions and expanded_required_actions.issubset(
