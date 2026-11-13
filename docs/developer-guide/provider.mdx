@@ -3251,7 +3251,7 @@ If your provider has specific fields, add them to the finding transformation:
 **File:** `prowler/lib/outputs/finding.py`
 
 ```python
-def transform_api_finding(cls, finding, provider) -> "Finding":
+def transform_api_finding(cls, finding, provider, metadata_cache=None) -> "Finding":
     # ... existing code ...
 
     # Your provider specific field

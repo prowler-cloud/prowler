@@ -46,6 +46,17 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
+        if grep -q "prowler-cloud/prowler" uv.lock; then
+          :
+        else
+          status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "::error::grep failed reading uv.lock (exit code $status)."
+            exit "$status"
+          fi
+          echo "No prowler-cloud/prowler entry in uv.lock, nothing to update."
+          exit 0
+        fi
         LATEST_COMMIT=$(curl -sf --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github+json" \
@@ -66,6 +77,17 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
+        if grep -q "prowler-cloud/prowler" uv.lock; then
+          :
+        else
+          status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "::error::grep failed reading uv.lock (exit code $status)."
+            exit "$status"
+          fi
+          echo "No prowler-cloud/prowler entry in uv.lock, nothing to update."
+          exit 0
+        fi
         LATEST_COMMIT=$(curl -sf --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github+json" \
@@ -86,7 +108,7 @@ runs:
       run: pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir "uv==${UV_VERSION}"
 
     - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: ${{ inputs.python-version }}
         cache: 'pip'

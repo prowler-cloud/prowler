@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel, Field
@@ -130,6 +130,7 @@ class StateMachine(BaseModel):
     arn: str
     name: Optional[str] = None
     status: StateMachineStatus
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("definition",)
     definition: Optional[str] = None
     role_arn: Optional[str] = None
     type: StateMachineType

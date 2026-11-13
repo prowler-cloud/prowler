@@ -248,7 +248,17 @@ class Test_App_Service:
             )
 
     def test_get_function_host_keys_logs_warning_on_optional_failure(self):
-        from prowler.providers.azure.services.app.app_service import App
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
 
         mock_client = MagicMock()
         mock_client.web_apps.list_host_keys.side_effect = Exception("Forbidden")
@@ -272,7 +282,17 @@ class Test_App_Service:
         mock_error.assert_not_called()
 
     def test_list_application_settings_logs_warning_on_optional_failure(self):
-        from prowler.providers.azure.services.app.app_service import App
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
 
         mock_client = MagicMock()
         mock_client.web_apps.list_application_settings.side_effect = Exception(
@@ -572,7 +592,17 @@ class Test_App_get_functions:
         )
 
     def test_get_functions_sets_https_only(self):
-        from prowler.providers.azure.services.app.app_service import App
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
 
         mock_client = MagicMock()
         mock_function = MagicMock()

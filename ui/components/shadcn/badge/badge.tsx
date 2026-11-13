@@ -24,6 +24,8 @@ const badgeVariants = cva(
           "border-bg-warning/30 bg-bg-warning-secondary/20 text-text-warning-primary",
         error:
           "border-transparent bg-bg-fail-secondary text-text-error-primary",
+        "error-outline":
+          "border-border-error bg-bg-fail-secondary text-text-error-primary",
         info: "border-transparent bg-bg-data-info/15 text-bg-data-info",
         cloud:
           "bg-feature-cloud h-6 rounded-lg border-0 px-2 py-0 text-xs leading-5 font-bold text-black",

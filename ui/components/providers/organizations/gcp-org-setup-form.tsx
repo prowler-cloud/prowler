@@ -9,6 +9,10 @@ import { z } from "zod";
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { GCPProviderBadge } from "@/components/icons/providers-badge";
 import { RadioCard } from "@/components/providers/radio-card";
+import {
+  ONBOARDING_METHOD,
+  OnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/connect/onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -104,6 +108,8 @@ interface GcpOrgSetupFormInitialValues {
 
 interface GcpOrgSetupFormProps {
   onBack: () => void;
+  /** Keeps the single/organization tabs on screen; absent when the flow was entered directly. */
+  onSelectSingleAccount?: () => void;
   onClose?: () => void;
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
@@ -115,6 +121,7 @@ interface GcpOrgSetupFormProps {
 
 export function GcpOrgSetupForm({
   onBack,
+  onSelectSingleAccount,
   onClose,
   onNext,
   onFooterChange,
@@ -327,6 +334,14 @@ export function GcpOrgSetupForm({
                 Google Cloud (GCP) / Organization Details
               </h3>
             </div>
+
+            {onSelectSingleAccount && (
+              <OnboardingMethodTabs
+                orgType={ORGANIZATION_TYPE.GCP}
+                value={ONBOARDING_METHOD.ORGANIZATION}
+                onSelectSingle={onSelectSingleAccount}
+              />
+            )}
 
             <p className="text-muted-foreground text-sm">
               Enter the Google Cloud organization ID for the projects you want

@@ -30,6 +30,8 @@ class AttackPathsTools(BaseTool):
     - prowler_run_attack_paths_query: Execute query and analyze attack paths
     """
 
+    read_only_tools = frozenset({"run_attack_paths_query"})
+
     async def list_attack_paths_scans(
         self,
         provider_id: list[str] = Field(

@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, test as base, vi } from "vitest";
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { getPathEdges, isProwlerFindingNode } from "@/lib/attack-paths";
+import { layoutWithDagre } from "@/lib/attack-paths/layout";
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
 import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 
@@ -37,8 +39,6 @@ vi.mock("@/actions/findings", async () => {
 });
 
 import { useGraphStore } from "./_hooks/use-graph-state";
-import { getPathEdges, isProwlerFindingNode } from "./_lib";
-import { layoutWithDagre } from "./_lib/layout";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { AttackPathPageHarness } from "./attack-paths-page.harness";
@@ -407,19 +407,24 @@ describe("exploring the graph", () => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForGraphStable(3);
-
-    const initialViewport = graph.viewportTransform;
+    // Settle before each capture so the next change can only come from the
+    // action under test, not the tail of the previous fit animation.
+    const initialViewport = await graph.waitForViewportSettled();
 
     await graph.clickFirstResourceNode();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitForViewportChange(initialViewport);
 
-    const contextualViewport = graph.viewportTransform;
+    const contextualViewport = await graph.waitForViewportSettled();
+    const visibleNodeIds = graph.renderedNodeIds;
 
     await graph.fit();
 
     await graph.waitForViewportChange(contextualViewport);
+    // The fit must end with the whole visible graph on screen, not just move
+    await graph.waitForViewportSettled();
+    await graph.waitForNodesInViewport(visibleNodeIds);
   });
   test("clicking an expanded resource re-fits the remaining visible graph", async ({
     mountWith,
@@ -611,11 +616,15 @@ describe("auto-fitting the viewport", () => {
     // their positions can sit outside the framed viewport. Expanding the
     // resources should re-fit so the user does not have to hunt for the
     // newly visible findings off-screen.
-    const before = graph.viewportTransform;
+    const before = await graph.waitForViewportSettled();
     expect(before).toBeTruthy();
 
-    await graph.expandAllFindings();
+    // Use a single resource click so only the automatic fit can recover the
+    // findings; expandAllFindings also uses the toolbar to frame the full graph.
+    await graph.clickNode("s3-1");
     await graph.waitForViewportChange(before);
+    await graph.waitForViewportSettled();
+    await graph.waitForNodesInViewport(["s3-1", "f-1"]);
 
     expect(graph.viewportTransform).not.toBe(before);
   });
@@ -627,8 +636,9 @@ describe("auto-fitting the viewport", () => {
     await graph.executeQuery();
     await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
-
-    const beforeFilter = graph.viewportTransform;
+    // Expanding starts its own fit; settle it so the click targets a still node
+    // and the change below can only come from the filtered-view fit.
+    const beforeFilter = await graph.waitForViewportSettled();
     expect(beforeFilter).toBeTruthy();
 
     await graph.clickFirstFindingNode();

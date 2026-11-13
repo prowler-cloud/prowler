@@ -19,8 +19,13 @@ const buttonVariants = cva(
           "border border-transparent bg-bg-fail text-white hover:bg-bg-fail/90 active:bg-bg-fail/80 focus-visible:ring-bg-fail/50",
         outline:
           "border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary text-text-neutral-primary focus-visible:ring-border-neutral-tertiary/50",
+        "aws-marketplace":
+          "border-2 border-button-aws-marketplace bg-transparent text-button-aws-marketplace font-semibold hover:bg-button-aws-marketplace/5 active:bg-button-aws-marketplace/10 focus-visible:ring-button-aws-marketplace",
         ghost:
           "border border-transparent text-text-neutral-primary hover:bg-bg-neutral-tertiary active:bg-border-neutral-secondary focus-visible:ring-border-neutral-secondary/50",
+        // Lighthouse AI entry points: the brand gradient with dark text.
+        lighthouse:
+          "border border-transparent bg-lighthouse text-black font-semibold shadow-sm hover:brightness-105 hover:shadow-md active:brightness-95 focus-visible:ring-border-lighthouse disabled:bg-none",
         link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover disabled:bg-transparent",
         // Chrome-free: no border/background, only the icon shows. Hover/active shift
         // the icon color instead of painting a box. Pair with an `icon*` size.

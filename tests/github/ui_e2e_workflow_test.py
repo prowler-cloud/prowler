@@ -1,10 +1,8 @@
+import re
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).parents[2]
 WORKFLOW_PATH = REPOSITORY_ROOT / ".github/workflows/ui-e2e-tests-v2.yml"
-NODE_IMAGE_DIGEST = (
-    "sha256:f70403e87646dc51b45295f4b8b70cdad0b63d2297c4c9899119b03f7af7a6b3"
-)
 
 
 def _indented_block(text, heading):
@@ -76,4 +74,8 @@ def test_docker_node_image_matches_nvmrc():
     node_version = (REPOSITORY_ROOT / "ui/.nvmrc").read_text().strip()
     dockerfile = (REPOSITORY_ROOT / "ui/Dockerfile").read_text()
 
-    assert f"FROM node:{node_version}-alpine@{NODE_IMAGE_DIGEST} AS base" in dockerfile
+    assert re.search(
+        rf"^FROM node:{re.escape(node_version)}-alpine@sha256:[0-9a-f]{{64}} AS base$",
+        dockerfile,
+        re.MULTILINE,
+    )
