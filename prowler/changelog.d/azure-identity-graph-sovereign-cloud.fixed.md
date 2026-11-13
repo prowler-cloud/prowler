@@ -1,0 +1,1 @@
+Azure tenant domain and signed-in user lookups now use the selected cloud's Microsoft Graph endpoint, so Azure Government and Azure China no longer call `graph.microsoft.com` or report an unknown tenant domain

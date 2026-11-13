@@ -2,10 +2,14 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
+import httpx
 import pytest
 from azure.core.credentials import AccessToken
 from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential
+from kiota_authentication_azure.azure_identity_authentication_provider import (
+    AzureIdentityAuthenticationProvider,
+)
 from mock import MagicMock
 
 from prowler.config.config import (
@@ -1225,3 +1229,107 @@ class TestAzureProviderSetupIdentityEventLoop:
         assert isinstance(identity, AzureIdentityInfo)
         assert identity.subscriptions == {sub_id: "Sub"}
         graph_client.domains.get.assert_awaited_once()
+
+
+class TestAzureProviderIdentityGraphCloud:
+    """The identity lookups (tenant domain, signed-in user) must use the
+    selected cloud's Graph endpoint, not graph.microsoft.com."""
+
+    @pytest.mark.parametrize(
+        "region, graph_host",
+        [
+            ("AzureCloud", "https://graph.microsoft.com"),
+            ("AzureUSGovernment", "https://graph.microsoft.us"),
+            ("AzureChinaCloud", "https://microsoftgraph.chinacloudapi.cn"),
+        ],
+    )
+    def test_build_graph_client_targets_the_cloud_graph_host(self, region, graph_host):
+        region_config = AzureProvider.setup_region_config(region)
+        assert region_config.graph_host == graph_host
+
+        with patch(
+            "prowler.providers.azure.azure_provider.AzureIdentityAuthenticationProvider",
+            wraps=AzureIdentityAuthenticationProvider,
+        ) as auth_provider:
+            client = AzureProvider.build_graph_client(MagicMock(), region_config)
+
+        assert client.request_adapter.base_url == f"{graph_host}/v1.0/"
+        _, kwargs = auth_provider.call_args
+        assert kwargs["scopes"] == [f"{graph_host}/.default"]
+
+    @pytest.mark.parametrize(
+        "region, graph_host",
+        [
+            ("AzureCloud", "https://graph.microsoft.com"),
+            ("AzureUSGovernment", "https://graph.microsoft.us"),
+            ("AzureChinaCloud", "https://microsoftgraph.chinacloudapi.cn"),
+        ],
+    )
+    def test_signed_in_user_lookup_reaches_the_me_route_of_the_cloud_graph_host(
+        self, region, graph_host
+    ):
+        sent_requests = []
+
+        async def capture_request(_transport, request):
+            sent_requests.append(request)
+            return httpx.Response(
+                200, json={"userPrincipalName": "user@contoso.example"}, request=request
+            )
+
+        credentials = MagicMock()
+        credentials.get_token.return_value = AccessToken("fake-token", 9999999999)
+        client = AzureProvider.build_graph_client(
+            credentials, AzureProvider.setup_region_config(region)
+        )
+
+        with patch.object(
+            httpx.AsyncHTTPTransport, "handle_async_request", capture_request
+        ):
+            me = asyncio.run(client.me.get())
+
+        assert me.user_principal_name == "user@contoso.example"
+        assert len(sent_requests) == 1
+        url = sent_requests[0].url
+        assert f"{url.scheme}://{url.host}" == graph_host
+        assert url.path.endswith("/me")
+
+    def test_setup_identity_looks_up_the_tenant_domain_in_the_selected_cloud(self):
+        with patch.object(AzureProvider, "__init__", return_value=None):
+            azure_provider = AzureProvider()
+        azure_provider._session = MagicMock()
+        azure_provider._region_config = AzureProvider.setup_region_config(
+            "AzureUSGovernment"
+        )
+
+        domain = MagicMock(id="contoso.onmicrosoft.us", is_default=True)
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(return_value=MagicMock(value=[domain]))
+
+        subscriptions_client = MagicMock()
+        subscription = MagicMock(display_name="Sub", subscription_id=str(uuid4()))
+        subscriptions_client.return_value.subscriptions.list.return_value = [
+            subscription
+        ]
+        subscriptions_client.return_value.tenants.list.return_value = []
+
+        with (
+            patch.object(
+                AzureProvider, "build_graph_client", return_value=graph_client
+            ) as build_graph_client,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient",
+                subscriptions_client,
+            ),
+        ):
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=True,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[],
+                client_id="00000000-0000-0000-0000-000000000000",
+            )
+
+        region_config = build_graph_client.call_args.args[1]
+        assert region_config.graph_host == "https://graph.microsoft.us"
+        assert identity.tenant_domain == "contoso.onmicrosoft.us"
