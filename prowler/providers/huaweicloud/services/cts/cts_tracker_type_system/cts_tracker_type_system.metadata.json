@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cts_tracker_type_system",
+  "CheckTitle": "CTS system-type tracker is configured and enabled",
+  "CheckType": [],
+  "ServiceName": "cts",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CTS::Tracker",
+  "ResourceGroup": "monitoring",
+  "Description": "Ensure that CTS has a system-type tracker configured and enabled. System trackers automatically record all API calls and operations across the Huawei Cloud account.",
+  "Risk": "Without an enabled system-type tracker, critical audit events for management operations may not be recorded, making it difficult to investigate security incidents or comply with regulatory requirements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0002.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud CTS UpdateTracker --tracker_name system --status enabled",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Trace Service.\n3. Click the Trace Management tab.\n4. Ensure the system tracker is enabled.\n5. If disabled, enable it and configure an OBS bucket for trace storage.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the system-type CTS tracker to record all management operations across the account.",
+      "Url": "https://hub.prowler.com/check/cts_tracker_type_system"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
