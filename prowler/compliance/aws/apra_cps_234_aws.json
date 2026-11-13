@@ -1,0 +1,497 @@
+{
+  "Framework": "APRA-CPS-234",
+  "Name": "APRA CPS 234 Information Security",
+  "Provider": "AWS",
+  "Version": "2019",
+  "Description": "Prudential Standard CPS 234 (Information Security) requires APRA-regulated entities to maintain information security commensurate with the size and extent of threats to their information assets. This framework maps the operative requirements of CPS 234 (paragraphs 13-36, July 2019) to AWS controls verifiable with Prowler. Paragraph references are taken from the official APRA CPS 234 standard. Governance and process obligations that cannot be observed via AWS APIs are marked Manual.",
+  "Requirements": [
+    {
+      "Id": "cps234-13-roles-responsibilities",
+      "Description": "The Board of an APRA-regulated entity is ultimately responsible for the information security of the entity, and the entity must clearly define the information security-related roles and responsibilities of the Board, senior management, governing bodies and individuals.",
+      "Name": "Roles and responsibilities",
+      "Attributes": [
+        {
+          "Section": "Roles and responsibilities",
+          "ItemId": "13",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "Description": "Clearly defined information security roles and responsibilities, with the Board ultimately accountable (paragraphs 13-14).",
+          "RationaleStatement": "Accountability for information security must rest with the Board; undefined ownership leaves gaps no control can close.",
+          "ImpactStatement": "Without clear accountability, security decisions stall and incidents lack an owner.",
+          "RemediationProcedure": "Document information security roles in board charters and a RACI; assign senior ownership of the security function.",
+          "AuditProcedure": "Review board charters, delegations and the security RACI for explicit information security accountability.",
+          "AdditionalInformation": "CPS 234 paragraphs 13-14. Governance requirement; not observable from AWS APIs.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-15-security-capability",
+      "Description": "An APRA-regulated entity must maintain an information security capability commensurate with the size and extent of threats to its information assets (including assets managed by related/third parties) and actively maintain it as vulnerabilities and threats change.",
+      "Name": "Information security capability",
+      "Attributes": [
+        {
+          "Section": "Information security capability",
+          "ItemId": "15",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "Description": "Information security capability (people, processes and technology) commensurate with the threat environment, actively maintained (paragraphs 15-17).",
+          "RationaleStatement": "Capability must scale with threats; AWS-native detective services evidence the technology component but not people/process.",
+          "ImpactStatement": "Under-resourced capability leaves threats undetected and unmanaged.",
+          "RemediationProcedure": "Maintain a resourced security function; enable AWS detective services (see cps234-21-threat-detection) as the technology component.",
+          "AuditProcedure": "Assess team structure, skills and tooling against the threat profile; confirm AWS detective controls are enabled.",
+          "AdditionalInformation": "CPS 234 paragraphs 15-17. Largely procedural; technology component partially evidenced via GuardDuty/Security Hub/Inspector.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-18-policy-framework",
+      "Description": "An APRA-regulated entity must maintain an information security policy framework commensurate with its exposures to vulnerabilities and threats, providing direction on the responsibilities of all parties who have an obligation to maintain information security.",
+      "Name": "Policy framework",
+      "Attributes": [
+        {
+          "Section": "Policy framework",
+          "ItemId": "18",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "Description": "A documented information security policy framework providing direction to all parties (paragraphs 18-19).",
+          "RationaleStatement": "Policies define the control intent that technical configurations implement; absent policy, controls drift without a baseline.",
+          "ImpactStatement": "No policy framework means inconsistent control application and no auditable standard.",
+          "RemediationProcedure": "Establish and maintain an information security policy suite covering the obligations in CPS 234.",
+          "AuditProcedure": "Review the policy framework for currency, approval and coverage of CPS 234 requirements.",
+          "AdditionalInformation": "CPS 234 paragraphs 18-19. Governance requirement; not observable from AWS APIs.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-20-asset-classification",
+      "Description": "An APRA-regulated entity must classify its information assets, including those managed by related parties and third parties, by criticality and sensitivity.",
+      "Name": "Information asset identification and classification",
+      "Attributes": [
+        {
+          "Section": "Information asset identification and classification",
+          "ItemId": "20",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "Description": "Identification and classification of information assets by criticality and sensitivity (paragraph 20).",
+          "RationaleStatement": "Controls must be commensurate with asset criticality; without classification, protection cannot be risk-prioritised.",
+          "ImpactStatement": "Unclassified assets receive uniform (often inadequate) protection.",
+          "RemediationProcedure": "Maintain an asset inventory and classification scheme; on AWS, support it with mandatory resource tagging, AWS Config inventory and Resource Groups.",
+          "AuditProcedure": "Review the classification scheme and inventory; sample AWS resource tags for classification metadata.",
+          "AdditionalInformation": "CPS 234 paragraph 20. Largely procedural; partially supportable on AWS via tagging and Config - not asserted automatically.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-21-access-control",
+      "Description": "An APRA-regulated entity must have information security controls to protect its information assets, implemented in a timely manner and commensurate with vulnerabilities and threats, asset criticality and sensitivity, life-cycle stage, and potential consequences - including identity and access management enforcing least privilege.",
+      "Name": "Implementation of controls - access management",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Least-privilege identity and access management: no broad administrative entitlements, minimised long-lived credentials, access analysis enabled.",
+          "RationaleStatement": "Excessive entitlements and long-lived credentials are the most common path to account compromise; least privilege limits blast radius.",
+          "ImpactStatement": "An over-privileged or leaked credential can read, alter or destroy all information assets.",
+          "RemediationProcedure": "Remove AdministratorAccess and *:* policies from users; use roles and short-lived credentials; remove unused/duplicate access keys; enable IAM Access Analyzer.",
+          "AuditProcedure": "Confirm no admin policies on users, no *:* policies, no stale/duplicate keys, and Access Analyzer enabled.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS services: IAM, IAM Access Analyzer.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "iam_user_administrator_access_policy",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_user_with_temporary_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_two_active_access_key",
+        "iam_root_credentials_management_enabled",
+        "accessanalyzer_enabled"
+      ]
+    },
+    {
+      "Id": "cps234-21-mfa",
+      "Description": "Implementation of controls (paragraph 21): multi-factor authentication for privileged and console access, including the root user.",
+      "Name": "Implementation of controls - multi-factor authentication",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Multi-factor authentication enabled for the root user (hardware preferred) and all console users.",
+          "RationaleStatement": "MFA defeats credential theft, phishing and password reuse - the dominant initial-access techniques.",
+          "ImpactStatement": "Single-factor access means one stolen password yields full session access.",
+          "RemediationProcedure": "Enable MFA on the root user (hardware token) and enforce MFA for all IAM users with console access.",
+          "AuditProcedure": "Confirm root and all console users have MFA; confirm root uses a hardware MFA device.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS service: IAM.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_hardware_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "cps234-21-password-policy",
+      "Description": "Implementation of controls (paragraph 21): a strong account password policy.",
+      "Name": "Implementation of controls - password policy",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Account password policy enforcing length, complexity, reuse prevention and rotation.",
+          "RationaleStatement": "Weak password policies enable brute-force and credential-stuffing attacks against IAM users.",
+          "ImpactStatement": "Short or reusable passwords are guessable, enabling unauthorised access and lateral movement.",
+          "RemediationProcedure": "Set an IAM account password policy: minimum length 14, require upper/lower/number/symbol, prevent reuse of last 24, expire within 90 days.",
+          "AuditProcedure": "Confirm the IAM account password policy satisfies each listed check.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS service: IAM.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_uppercase",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_expires_passwords_within_90_days_or_less"
+      ]
+    },
+    {
+      "Id": "cps234-21-encryption-at-rest",
+      "Description": "Implementation of controls (paragraph 21): protect the confidentiality and integrity of information assets at rest through encryption.",
+      "Name": "Implementation of controls - encryption at rest",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Encryption at rest across S3, EBS (volumes, snapshots, account default), RDS instances and clusters, DynamoDB and Backup vaults.",
+          "RationaleStatement": "Encryption at rest protects confidentiality if storage media, snapshots or backups are exposed or exfiltrated.",
+          "ImpactStatement": "Unencrypted data at rest is readable by anyone obtaining the underlying storage or snapshot.",
+          "RemediationProcedure": "Enable default encryption on S3 and EBS; encrypt RDS/DynamoDB with KMS; encrypt Backup vaults; remediate unencrypted resources.",
+          "AuditProcedure": "Confirm each listed encryption check passes across storage and database services.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS services: S3, EBS, RDS, DynamoDB, Backup, KMS.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "ec2_ebs_default_encryption",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_snapshots_encrypted",
+        "rds_instance_storage_encrypted",
+        "rds_cluster_storage_encrypted",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "backup_vaults_encrypted"
+      ]
+    },
+    {
+      "Id": "cps234-21-encryption-in-transit",
+      "Description": "Implementation of controls (paragraph 21): protect the confidentiality and integrity of information assets in transit.",
+      "Name": "Implementation of controls - encryption in transit",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "partial",
+          "Description": "Encryption of information assets in transit (TLS), starting with database connections.",
+          "RationaleStatement": "Cleartext transit exposes data to interception on untrusted network paths.",
+          "ImpactStatement": "Unencrypted connections allow man-in-the-middle interception and tampering.",
+          "RemediationProcedure": "Enforce TLS for RDS connections; additionally enforce HTTPS-only S3 bucket policies and TLS on load balancers (reviewed manually).",
+          "AuditProcedure": "Confirm RDS transport encryption; manually review ELB/S3 TLS enforcement for full coverage.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). Partial AWS automation - RDS only via Prowler today.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "rds_instance_transport_encrypted"
+      ]
+    },
+    {
+      "Id": "cps234-21-key-management",
+      "Description": "Implementation of controls (paragraph 21): secure management of cryptographic keys throughout their lifecycle.",
+      "Name": "Implementation of controls - key management",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Cryptographic key lifecycle management: rotation enabled, keys in use, and protection against accidental deletion.",
+          "RationaleStatement": "Encryption is only as strong as key management; unrotated or deletable keys undermine the controls that depend on them.",
+          "ImpactStatement": "Compromised or deleted keys can expose data or render encrypted assets permanently unrecoverable.",
+          "RemediationProcedure": "Enable automatic rotation on KMS CMKs, remove unused keys, and apply deletion protection / monitoring on CMKs.",
+          "AuditProcedure": "Confirm CMK rotation enabled, keys in use, and deletion safeguards in place.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS service: KMS.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_are_used",
+        "kms_cmk_not_deleted_unintentionally"
+      ]
+    },
+    {
+      "Id": "cps234-21-public-exposure",
+      "Description": "Implementation of controls (paragraph 21): prevent the unauthorised disclosure of information assets, including unintended public exposure.",
+      "Name": "Implementation of controls - prevent public exposure",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Block public access to information assets at account and resource level, including S3 buckets and EBS snapshots.",
+          "RationaleStatement": "Accidental public exposure of storage is a leading cause of large-scale data breaches.",
+          "ImpactStatement": "A single public bucket or snapshot can disclose sensitive information assets to the internet.",
+          "RemediationProcedure": "Enable S3 Block Public Access at account and bucket level; enable EBS snapshot public-access block; remediate any public resources.",
+          "AuditProcedure": "Confirm account and bucket-level public access blocks and EBS snapshot block are enabled; no public resources found.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS services: S3, EC2/EBS.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_level_public_access_block",
+        "s3_bucket_public_access",
+        "ec2_ebs_public_snapshot",
+        "ec2_ebs_snapshot_account_block_public_access"
+      ]
+    },
+    {
+      "Id": "cps234-21-logging",
+      "Description": "Implementation of controls (paragraph 21): audit logging to support the detection of, and response to, information security incidents and to provide an audit trail.",
+      "Name": "Implementation of controls - audit logging",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Tamper-evident, multi-region audit logging: CloudTrail, AWS Config recording, VPC flow logs and S3 access logging.",
+          "RationaleStatement": "Without complete, tamper-evident logs an entity cannot detect, investigate or evidence incidents.",
+          "ImpactStatement": "Missing or mutable logs blind incident response and break the audit trail required for investigation.",
+          "RemediationProcedure": "Enable multi-region CloudTrail with log-file validation and KMS encryption, deliver to CloudWatch Logs, enable Config recorder in all regions, VPC flow logs and S3 access logging.",
+          "AuditProcedure": "Confirm each logging check passes across CloudTrail, Config, VPC and S3.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls); supports incident management (paragraph 23). AWS services: CloudTrail, Config, VPC, S3.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "config_recorder_all_regions_enabled",
+        "vpc_flow_logs_enabled",
+        "s3_bucket_server_access_logging_enabled"
+      ]
+    },
+    {
+      "Id": "cps234-21-threat-detection",
+      "Description": "Implementation of controls (paragraph 21): detective controls capable of identifying information security incidents in a timely manner.",
+      "Name": "Implementation of controls - threat detection",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Continuous threat detection and posture management via GuardDuty, Security Hub and Inspector.",
+          "RationaleStatement": "Timely detection limits dwell time and the impact of incidents.",
+          "ImpactStatement": "Without detective controls, compromises persist undetected until material harm occurs.",
+          "RemediationProcedure": "Enable GuardDuty, Security Hub and Inspector v2 across all in-use regions and centralise findings.",
+          "AuditProcedure": "Confirm GuardDuty, Security Hub and Inspector are enabled.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls); supports capability (paragraph 15) and incident detection (paragraph 23). AWS services: GuardDuty, Security Hub, Inspector.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "inspector2_is_enabled"
+      ]
+    },
+    {
+      "Id": "cps234-21-backups",
+      "Description": "Implementation of controls (paragraph 21): protect the availability of information assets, including backup and recovery controls.",
+      "Name": "Implementation of controls - backup and availability",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "21",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "Description": "Backup plans and vaults exist and key data stores are protected by backup plans.",
+          "RationaleStatement": "Recoverability protects the availability and integrity of information assets against ransomware, error and failure.",
+          "ImpactStatement": "Without tested backups, data loss from attack or failure may be unrecoverable.",
+          "RemediationProcedure": "Create AWS Backup plans and vaults; protect RDS, DynamoDB and EBS with backup plans; verify recovery.",
+          "AuditProcedure": "Confirm backup plans/vaults exist and key resources are covered by backup plans.",
+          "AdditionalInformation": "CPS 234 paragraph 21 (implementation of controls). AWS service: AWS Backup. Backup-restore testing remains manual (see cps234-27).",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "rds_instance_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan"
+      ]
+    },
+    {
+      "Id": "cps234-22-third-party-controls",
+      "Description": "Where an APRA-regulated entity's information assets are managed by a related party or third party, the entity must evaluate the design of that party's information security controls that protect the entity's information assets.",
+      "Name": "Implementation of controls - third-party control design",
+      "Attributes": [
+        {
+          "Section": "Implementation of controls",
+          "ItemId": "22",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "Description": "Evaluation of the design of third-party / related-party information security controls protecting the entity's assets (paragraph 22).",
+          "RationaleStatement": "Outsourced custody of information assets does not outsource the obligation to ensure they are protected.",
+          "ImpactStatement": "Unevaluated third-party controls are an unmanaged path to compromise of the entity's assets.",
+          "RemediationProcedure": "Assess third-party control design via due diligence, SOC 2 / ISO 27001 reports, contractual security requirements and the AWS shared-responsibility model.",
+          "AuditProcedure": "Review third-party control evaluations and supporting assurance artefacts.",
+          "AdditionalInformation": "CPS 234 paragraph 22. Procedural; not observable from AWS APIs.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-23-incident-detection",
+      "Description": "An APRA-regulated entity must have robust mechanisms in place to detect and respond to information security incidents in a timely manner, including alerting on anomalous and unauthorised activity.",
+      "Name": "Incident management - detection and alerting",
+      "Attributes": [
+        {
+          "Section": "Incident management",
+          "ItemId": "23",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "partial",
+          "Description": "Metric-filter alarms for unauthorised API calls, authentication failures, root usage and sign-in without MFA.",
+          "RationaleStatement": "Real-time alerting on high-risk events enables the timely detection CPS 234 requires.",
+          "ImpactStatement": "Without alerting, malicious activity is found only in retrospective log review, after impact.",
+          "RemediationProcedure": "Create CloudWatch metric filters and alarms for the listed security events on the CloudTrail log group.",
+          "AuditProcedure": "Confirm metric filters and alarms exist for each listed event.",
+          "AdditionalInformation": "CPS 234 paragraph 23. Detection is automatable; response plans are covered by cps234-24-response-plans.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa"
+      ]
+    },
+    {
+      "Id": "cps234-24-response-plans",
+      "Description": "An APRA-regulated entity must maintain information security response plans covering all relevant stages of an incident (detection to post-incident review) and escalation/reporting to the Board, and must annually review and test those plans.",
+      "Name": "Incident management - response plans",
+      "Attributes": [
+        {
+          "Section": "Incident management",
+          "ItemId": "24",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "Description": "Maintained, annually-tested incident response plans with Board escalation (paragraphs 24-26).",
+          "RationaleStatement": "Detection without a tested response plan leaves the entity improvising during an incident.",
+          "ImpactStatement": "Untested plans fail under real incident pressure, increasing impact and recovery time.",
+          "RemediationProcedure": "Document response plans covering all incident stages and Board escalation; review and test at least annually (e.g. tabletop/game-day exercises).",
+          "AuditProcedure": "Review response plans and evidence of annual review/testing.",
+          "AdditionalInformation": "CPS 234 paragraphs 24-26. Procedural; AWS detective controls (cps234-23) feed these plans.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-27-testing-effectiveness",
+      "Description": "An APRA-regulated entity must test the effectiveness of its information security controls through a systematic testing program, with nature and frequency commensurate with the rate of change of threats, asset criticality, incident consequences, untrusted environments and the rate of change to assets.",
+      "Name": "Testing control effectiveness",
+      "Attributes": [
+        {
+          "Section": "Testing control effectiveness",
+          "ItemId": "27",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "partial",
+          "Description": "Continuous vulnerability assessment (Inspector v2) with managed-instance coverage (SSM).",
+          "RationaleStatement": "Controls degrade over time; continuous vulnerability identification evidences ongoing effectiveness testing.",
+          "ImpactStatement": "Untested controls and unscanned assets accumulate exploitable vulnerabilities.",
+          "RemediationProcedure": "Enable Inspector v2 and ensure EC2 instances are managed by SSM for full scan coverage; remediate findings.",
+          "AuditProcedure": "Confirm Inspector v2 is enabled and instances are SSM-managed; review the formal testing program/cadence manually.",
+          "AdditionalInformation": "CPS 234 paragraphs 27-31. Vulnerability scanning is automatable; the systematic testing program, independence and cadence are procedural.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "ec2_instance_managed_by_ssm"
+      ]
+    },
+    {
+      "Id": "cps234-32-internal-audit",
+      "Description": "An APRA-regulated entity's internal audit activities must include a review of the design and operating effectiveness of information security controls, provided by appropriately skilled personnel, including assurance over related-party and third-party controls relied upon.",
+      "Name": "Internal audit",
+      "Attributes": [
+        {
+          "Section": "Internal audit",
+          "ItemId": "32",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "Description": "Independent internal audit review of information security control design and operating effectiveness (paragraphs 32-34).",
+          "RationaleStatement": "Independent assurance validates that controls are both well-designed and operating as intended.",
+          "ImpactStatement": "Without independent review, control failures go unchallenged until an incident exposes them.",
+          "RemediationProcedure": "Include information security control effectiveness in the internal audit plan with appropriate scope, skills and independence; assess third-party assurance relied upon.",
+          "AuditProcedure": "Review the internal audit plan, scope and reports covering information security controls.",
+          "AdditionalInformation": "CPS 234 paragraphs 32-34. Governance requirement; not observable from AWS APIs.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "cps234-35-apra-notification",
+      "Description": "An APRA-regulated entity must notify APRA as soon as possible and no later than 72 hours after becoming aware of an information security incident that materially affected (or had the potential to materially affect) the entity or its customers, or that was notified to other regulators; and no later than 10 business days after becoming aware of a material information security control weakness it expects it will not be able to remediate in a timely manner.",
+      "Name": "APRA notification",
+      "Attributes": [
+        {
+          "Section": "APRA notification",
+          "ItemId": "35",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "Description": "Timely notification to APRA of material incidents (within 72 hours) and material control weaknesses (within 10 business days) (paragraphs 35-36).",
+          "RationaleStatement": "Prudential supervision depends on timely notification of material incidents and weaknesses.",
+          "ImpactStatement": "Failure to notify within the required timeframes is a breach of the standard, independent of the underlying incident.",
+          "RemediationProcedure": "Maintain a notification process with defined materiality thresholds and the 72-hour / 10-business-day timelines; AWS detective controls (cps234-23) support timely awareness.",
+          "AuditProcedure": "Review the notification procedure and evidence of past notifications against the required timelines.",
+          "AdditionalInformation": "CPS 234 paragraphs 35-36. Process obligation; not observable from AWS APIs.",
+          "References": "https://www.apra.gov.au/sites/default/files/cps_234_july_2019_for_public_release.pdf"
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}
