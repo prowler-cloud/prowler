@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Pod",
   "ResourceGroup": "container",
-  "Description": "**Kubernetes Pods** are evaluated for Windows settings where `securityContext.windowsOptions.hostProcess` is set to `true`, indicating they can run **Windows HostProcess containers**.",
+  "Description": "**Kubernetes Pods** are evaluated for `securityContext.windowsOptions.hostProcess` set to `true` at the Pod level or in any regular, init, or ephemeral container.",
   "Risk": "Enabling **HostProcess** grants containers direct access to the Windows node, eroding isolation. Attackers can read node data, tamper with services, capture credentials, and pivot across the cluster, impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
