@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "dcs_instance_ssl_enabled",
+  "CheckTitle": "DCS Redis instances have SSL/TLS encryption enabled",
+  "CheckType": [],
+  "ServiceName": "dcs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::DCS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Ensure that DCS Redis instances have SSL/TLS encryption enabled for data in transit.",
+  "Risk": "Redis instances without SSL/TLS encryption transmit data in plaintext, making it vulnerable to interception and tampering on the network.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-dcs/dcs-ug-0312016.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Distributed Cache Service.\n3. Select the instance.\n4. Enable SSL/TLS encryption for the instance.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable SSL/TLS encryption for DCS Redis instances to encrypt data in transit.",
+      "Url": "https://hub.prowler.com/check/dcs_instance_ssl_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if DCS Redis instances have SSL/TLS enabled (enable_ssl is not false)."
+}
