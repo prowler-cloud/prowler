@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic.v1 import BaseModel
 
@@ -68,7 +68,7 @@ class NetworkPolicyRule(BaseModel):
 
 
 def parse_network_policy(
-    policy_name: str, policy_document
+    policy_name: str, policy_document: Any
 ) -> Optional[list[NetworkPolicyRule]]:
     """Flatten an OpenSearch Serverless network policy into rules.
 
