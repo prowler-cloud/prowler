@@ -1,1 +1,0 @@
-Organization condition parsing for AWS resource policy checks accepts `aws:PrincipalOrgPaths` and `ForAnyValue` operators as restrictive, and no longer treats a wildcard organization ID inside a list as restrictive

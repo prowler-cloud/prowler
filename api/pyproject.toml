@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.50.0"
+version = "1.51.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -329,7 +329,7 @@ constraint-dependencies = [
   "msgraph-sdk==1.55.0",
   "msrest==0.7.1",
   "msrestazure==0.6.4.post1",
-  "multidict==6.7.1",
+  "multidict==6.9.1",
   "mypy==1.20.2",
   "mypy-extensions==1.1.0",
   "narwhals==2.16.0",
@@ -341,9 +341,9 @@ constraint-dependencies = [
   "oci==2.184.1",
   "openai==1.109.1",
   "openstacksdk==4.2.0",
-  "opentelemetry-api==1.39.1",
-  "opentelemetry-sdk==1.39.1",
-  "opentelemetry-semantic-conventions==0.60b1",
+  "opentelemetry-api==1.45.1",
+  "opentelemetry-sdk==1.45.1",
+  "opentelemetry-semantic-conventions==0.66b1",
   "os-service-types==1.8.2",
   "packageurl-python==0.17.6",
   "packaging==26.0",
@@ -375,7 +375,7 @@ constraint-dependencies = [
   "pydantic-core==2.41.5",
   "pygithub==2.8.0",
   "pygments==2.20.0",
-  "pyjwt==2.14.0",
+  "pyjwt==2.15.0",
   "pylint==4.0.9",
   "pymsalruntime==0.18.1",
   "pynacl==1.6.2",
@@ -400,7 +400,7 @@ constraint-dependencies = [
   "pyyaml==6.0.3",
   "redis==7.1.0",
   "referencing==0.37.0",
-  "regex==2026.1.15",
+  "regex==2026.5.9",
   "reportlab==4.4.10",
   "requests==2.33.1",
   "requests-file==3.0.1",
@@ -417,7 +417,7 @@ constraint-dependencies = [
   "scaleway-core==2.10.3",
   "schema==0.7.5",
   "sentry-sdk==2.56.0",
-  "setuptools==80.10.2",
+  "setuptools==84.1.0",
   "shellingham==1.5.4",
   "shodan==1.31.0",
   "six==1.17.0",
@@ -504,5 +504,5 @@ override-dependencies = [
   "dulwich==1.2.9",
   # Same trailing-rev case as dulwich: h2 4.4.1 patches GHSA-6hr6-w5qg-qmwg.
   "h2==4.4.1",
-  "pyjwt[crypto]==2.14.0"
+  "pyjwt[crypto]==2.15.0"
 ]
