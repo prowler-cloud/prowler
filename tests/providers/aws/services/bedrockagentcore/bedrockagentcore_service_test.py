@@ -1,14 +1,17 @@
 """Tests for the Bedrock AgentCore service collectors."""
 
+from datetime import datetime, timezone
 from unittest import mock
 
 import botocore
+import pytest
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
+    mocked_api_response,
     set_mocked_aws_provider,
 )
 
@@ -25,6 +28,25 @@ RUNTIME_ARN = (
     f":runtime/{RUNTIME_ID}"
 )
 KMS_KEY_ARN = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/test-key-id"
+
+
+def _token_vault_response(key_type="ServiceManagedKey"):
+    """Build a validated GetTokenVault response for the selected key type."""
+    configuration = {"keyType": key_type}
+    if key_type == "CustomerManagedKey":
+        configuration["kmsKeyArn"] = (
+            f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}"
+            ":key/12345678-1234-1234-1234-123456789012"
+        )
+    return mocked_api_response(
+        "bedrock-agentcore-control",
+        "GetTokenVault",
+        {
+            "tokenVaultId": "default",
+            "kmsConfiguration": configuration,
+            "lastModifiedDate": datetime(2026, 11, 9, tzinfo=timezone.utc),
+        },
+    )
 
 
 def mock_make_api_call_agentcore(self, operation_name, kwarg):
@@ -102,10 +124,7 @@ def mock_make_api_call_agentcore(self, operation_name, kwarg):
             "recording": {"enabled": True},
         }
     if operation_name == "GetTokenVault":
-        return {
-            "tokenVaultId": "default",
-            "kmsConfiguration": {"keyType": "CustomerManagedKey"},
-        }
+        return _token_vault_response("CustomerManagedKey")
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -279,7 +298,7 @@ def _one_call_raises(failing_operation, code="AccessDeniedException"):
         "ListAgentRuntimes": {"agentRuntimes": []},
         "ListBrowsers": {"browserSummaries": []},
         "ListCodeInterpreters": {"codeInterpreterSummaries": []},
-        "GetTokenVault": {"tokenVaultId": "default"},
+        "GetTokenVault": _token_vault_response(),
     }
 
     def _mock(self, operation_name, kwarg):
@@ -307,6 +326,42 @@ def _build_service_inventory():
         return_value=aws_provider,
     ):
         return BedrockAgentCore(aws_provider)
+
+
+class Test_AgentCore_Token_Vault_Encryption:
+    @mock_aws
+    def test_documented_omitted_configuration_uses_aws_owned_key(self):
+        """Treat documented configuration omission as the default AWS-owned key."""
+        response = _token_vault_response()
+        del response["kmsConfiguration"]
+        # Compatibility for documented parent omission, rejected by the pinned SDK.
+        with pytest.raises(AssertionError, match="kmsConfiguration"):
+            mocked_api_response("bedrock-agentcore-control", "GetTokenVault", response)
+
+        def _call(client, operation_name, api_params):
+            """Return the omitted configuration only for the token-vault request."""
+            if (
+                client.meta.service_model.service_name == "bedrock-agentcore-control"
+                and operation_name == "GetTokenVault"
+            ):
+                return response
+            return mock_make_api_call_agentcore(client, operation_name, api_params)
+
+        with mock.patch("botocore.client.BaseClient._make_api_call", new=_call):
+            service = _build_service_inventory()
+
+        vault_arn = (
+            f"arn:aws:bedrock-agentcore:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}"
+            ":token-vault/default"
+        )
+        assert set(service.token_vaults) == {vault_arn}
+        vault = service.token_vaults[vault_arn]
+        assert vault.id == "default"
+        assert vault.arn == vault_arn
+        assert vault.region == AWS_REGION_US_EAST_1
+        assert vault.kms_key_type == "ServiceManagedKey"
+        assert vault.detail_retrieved is True
+        assert service.token_vaults_scan_errors == {}
 
 
 class Test_BedrockAgentCore_inventory_errors:
@@ -464,7 +519,7 @@ def _type_sensitive_mock(requested):
         if operation_name == "GetCodeInterpreter":
             return {"networkConfiguration": {"networkMode": "SANDBOX"}}
         if operation_name == "GetTokenVault":
-            return {"kmsConfiguration": {"keyType": "ServiceManagedKey"}}
+            return _token_vault_response()
         # Everything else the service lists is out of scope here. Answer with an empty page rather
         # than delegating to the real _make_api_call: delegation needs a module-level capture of the
         # original, which is exactly what makes this file unsafe under xdist.
@@ -590,7 +645,7 @@ def _mock_targets(
             "ListAgentRuntimes": {"agentRuntimes": []},
             "ListBrowsers": {"browserSummaries": []},
             "ListCodeInterpreters": {"codeInterpreterSummaries": []},
-            "GetTokenVault": {"tokenVaultId": "default"},
+            "GetTokenVault": _token_vault_response(),
         }.get(operation_name, {})
 
     return _call
@@ -759,6 +814,8 @@ class Test_AgentCore_Browser_Recording_Unknown:
                 if recording != "omit":
                     info["recording"] = recording
                 return info
+            if operation_name == "GetTokenVault":
+                return _token_vault_response()
             return {}
 
         return _call
@@ -822,6 +879,8 @@ class Test_AgentCore_Memory_Arn_Only_Summary:
                 # encryptionKeyArn is silently ignored, so asserting only detail_retrieved -- which
                 # is set either way -- would pass without the enrichment ever landing.
                 return {"memory": {"encryptionKeyArn": MEMORY_KEY_ARN}}
+            if operation_name == "GetTokenVault":
+                return _token_vault_response()
             return {}
 
         return _call
@@ -949,6 +1008,8 @@ class Test_AgentCore_Unexpected_Listing_Errors:
                 raise ConnectionResetError("peer went away")
             if operation_name == "GetGateway":
                 return {"authorizerType": "CUSTOM_JWT"}
+            if operation_name == "GetTokenVault":
+                return _token_vault_response()
             return {}
 
         ac = _collect_unexpected(_call)
