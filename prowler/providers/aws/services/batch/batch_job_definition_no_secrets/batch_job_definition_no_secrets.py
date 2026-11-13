@@ -21,6 +21,8 @@ class batch_job_definition_no_secrets(Check):
         )
         validate = batch_client.audit_config.get("secrets_validate", False)
 
+        confidence = batch_client.audit_config.get("secrets_confidence", "low")
+
         job_definitions = list(batch_client.job_definitions.values())
 
         def scan_payloads():
@@ -45,6 +47,7 @@ class batch_job_definition_no_secrets(Check):
                 scan_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

@@ -28,6 +28,8 @@ class awslambda_function_no_secrets_in_code(Check):
         )
         validate = awslambda_client.audit_config.get("secrets_validate", False)
 
+        confidence = awslambda_client.audit_config.get("secrets_confidence", "low")
+
         # Scan files of every function's package in batched
         # Kingfisher invocations instead of one subprocess per file per function.
         # Each package is extracted one at a time and its files are
@@ -69,6 +71,7 @@ class awslambda_function_no_secrets_in_code(Check):
                 code_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

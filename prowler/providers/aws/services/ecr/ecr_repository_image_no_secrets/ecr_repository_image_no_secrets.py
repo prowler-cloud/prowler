@@ -40,6 +40,7 @@ class ecr_repository_image_no_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = ecr_client.audit_config.get("secrets_validate", False)
+        confidence = ecr_client.audit_config.get("secrets_confidence", "low")
 
         # Phase 1: collect. The service yields (repository, image, scan_data)
         # lazily, downloading each image's manifest, config, and layers; each
@@ -77,6 +78,7 @@ class ecr_repository_image_no_secrets(Check):
                 image_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

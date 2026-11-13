@@ -31,6 +31,9 @@ class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
             "secrets_ignore_patterns", []
         )
         validate = elasticbeanstalk_client.audit_config.get("secrets_validate", False)
+        confidence = elasticbeanstalk_client.audit_config.get(
+            "secrets_confidence", "low"
+        )
         environments = list(elasticbeanstalk_client.environments.values())
 
         # Phase 1: collect — build the payload strings only, no scan yet.
@@ -50,7 +53,10 @@ class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

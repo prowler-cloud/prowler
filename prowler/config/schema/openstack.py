@@ -1,6 +1,6 @@
 """OpenStack provider config schema with safety bounds."""
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import Field
 
@@ -30,5 +30,20 @@ class OpenStackProviderConfig(ProviderConfigBase):
         description=(
             "Regex patterns whose matches are excluded from secret "
             "scanning of resource metadata."
+        ),
+    )
+    secrets_validate: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Validate discovered secrets against the provider APIs (live check). "
+            "Makes outbound network calls that authenticate with the discovered "
+            "secret. Disabled by default."
+        ),
+    )
+    secrets_confidence: Optional[Literal["low", "medium", "high"]] = Field(
+        default=None,
+        description=(
+            "Minimum Kingfisher confidence level for reporting secret findings. "
+            "Possible values: low, medium, high. Default: low."
         ),
     )

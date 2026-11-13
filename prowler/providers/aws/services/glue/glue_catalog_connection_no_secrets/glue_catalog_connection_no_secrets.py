@@ -23,6 +23,8 @@ class glue_catalog_connection_no_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = glue_client.audit_config.get("secrets_validate", False)
+
+        confidence = glue_client.audit_config.get("secrets_confidence", "low")
         connections = list(glue_client.connections)
 
         # Collect every connection property across all connections and scan them
@@ -40,7 +42,10 @@ class glue_catalog_connection_no_secrets(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

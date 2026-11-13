@@ -16,6 +16,8 @@ class awslambda_function_no_secrets_in_variables(Check):
             "secrets_ignore_patterns", []
         )
         validate = awslambda_client.audit_config.get("secrets_validate", False)
+
+        confidence = awslambda_client.audit_config.get("secrets_confidence", "low")
         functions = list(awslambda_client.functions.values())
 
         # Scan every function's environment variables in batched Kingfisher
@@ -33,6 +35,7 @@ class awslambda_function_no_secrets_in_variables(Check):
                 environment_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}
