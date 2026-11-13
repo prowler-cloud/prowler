@@ -24,6 +24,7 @@ class ECS(AWSService):
         self.task_definitions = {}
         self._task_definition_arns = None
         self._task_definition_arns_by_region = {}
+        self.task_definition_list_failed_regions = set()
         self.task_definition_limit = get_resource_scan_limit(
             self.audit_config, "max_ecs_task_definitions"
         )
@@ -72,6 +73,7 @@ class ECS(AWSService):
                 regional_arns.append((task_definition, regional_client.region))
             self._task_definition_arns_by_region[regional_client.region] = regional_arns
         except Exception as error:
+            self.task_definition_list_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -167,6 +169,11 @@ class ECS(AWSService):
                             "readonlyRootFilesystem", False
                         ),
                         user=container.get("user", ""),
+                        added_capabilities=(
+                            container.get("linuxParameters", {})
+                            .get("capabilities", {})
+                            .get("add", [])
+                        ),
                         environment=environment,
                         log_driver=container.get("logConfiguration", {}).get(
                             "logDriver", ""
@@ -295,6 +302,7 @@ class ContainerDefinition(BaseModel):
     privileged: bool
     readonly_rootfilesystem: bool = False
     user: str
+    added_capabilities: Optional[list[str]] = None
     environment: list[ContainerEnvVariable]
     log_driver: Optional[str]
     log_option: Optional[str]
