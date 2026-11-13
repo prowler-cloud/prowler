@@ -134,6 +134,7 @@ ai-config.json
 .terraform*
 *.tfstate
 *.tfstate.*
+permissions/templates/terraform/**/*.zip
 
 # .env
 ui/.env*
