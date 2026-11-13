@@ -226,6 +226,7 @@ runs:
           openstack)       provider_name="OpenStack" ;;
           oraclecloud)     provider_name="Oracle Cloud" ;;
           vercel)          provider_name="Vercel" ;;
+          supabase)        provider_name="Supabase" ;;
           *)               provider_name="${INPUT_PROVIDER^}" ;;
         esac
 

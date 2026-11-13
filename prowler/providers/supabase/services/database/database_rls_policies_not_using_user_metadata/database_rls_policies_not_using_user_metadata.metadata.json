@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_rls_policies_not_using_user_metadata",
+  "CheckTitle": "Supabase Row Level Security policies do not rely on user editable metadata",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase RLS policies** are assessed for references to **`raw_user_meta_data` / `user_metadata`**. That field is writable by the user through the Auth API, so any policy based on it can be satisfied by the user editing their own profile.",
+  "Risk": "A policy such as `auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'` lets any user **grant themselves admin rights** with one `updateUser` call, bypassing the intended authorization entirely.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0015_rls_references_user_metadata"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify the policy from the finding\n2. Rewrite it to use `app_metadata` (writable only with the service role), a roles table joined on auth.uid(), or custom claims from an auth hook\n3. Re-test the policy as a regular user",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Authorize with `app_metadata` or a server-controlled roles table, never with user editable metadata.",
+      "Url": "https://hub.prowler.com/check/database_rls_policies_not_using_user_metadata"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

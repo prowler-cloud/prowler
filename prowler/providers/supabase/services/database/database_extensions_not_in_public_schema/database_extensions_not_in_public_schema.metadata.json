@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_extensions_not_in_public_schema",
+  "CheckTitle": "Supabase database extensions are not installed in the public schema",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase database extensions** are assessed for installation in the **public schema**, whose objects are reachable through the Data API and can shadow application functions.",
+  "Risk": "Extension functions in `public` are callable by `anon` and `authenticated` through RPC and can **collide with or shadow** application objects, enlarging the attack surface and enabling search_path tricks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "DROP EXTENSION <EXTENSION>; CREATE EXTENSION <EXTENSION> WITH SCHEMA extensions;",
+      "NativeIaC": "",
+      "Other": "1. Identify the extension from the finding\n2. Reinstall it with `CREATE EXTENSION <name> WITH SCHEMA extensions;` after dropping it from public\n3. Update application code that referenced its functions unqualified",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Install extensions in the `extensions` schema and keep `public` for application objects only.",
+      "Url": "https://hub.prowler.com/check/database_extensions_not_in_public_schema"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

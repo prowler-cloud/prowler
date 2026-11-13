@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "projects_pitr_enabled",
+  "CheckTitle": "Supabase project has Point-in-Time Recovery enabled",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase projects** are assessed for **Point-in-Time Recovery (PITR)**, which archives WAL continuously so the database can be restored to any second instead of only to the last daily backup.",
+  "Risk": "Without PITR a destructive migration, ransomware style data wipe or compromised service key means **losing up to a day of data**, and recovery is limited to coarse daily snapshots, increasing the blast radius of any security incident.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/platform/backups#point-in-time-recovery"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > Add-ons (or Database > Backups)\n3. Enable the Point in Time Recovery add-on and choose a retention period\n4. Document the restore procedure and test it",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable PITR on every production project and rehearse restores; keep daily backups for non-production workloads.",
+      "Url": "https://hub.prowler.com/check/projects_pitr_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "PITR is a paid add-on; the check reports FAIL on free projects so teams can decide whether the data warrants it."
+}

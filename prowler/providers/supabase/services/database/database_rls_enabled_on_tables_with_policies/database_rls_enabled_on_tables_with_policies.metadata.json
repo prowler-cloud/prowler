@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_rls_enabled_on_tables_with_policies",
+  "CheckTitle": "Supabase tables that define policies have Row Level Security enabled",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase tables** are assessed for policies that exist while **Row Level Security is disabled**. Policies only take effect once RLS is enabled, so the table behaves as if it had none.",
+  "Risk": "A team that wrote policies believes the table is protected, yet every row stays **readable and writable with the anon key** until RLS is switched on, hiding the exposure behind a false sense of security.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0007_policy_exists_rls_disabled"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER TABLE public.<TABLE> ENABLE ROW LEVEL SECURITY;",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Policies\n3. For every table that lists policies but shows RLS disabled, click Enable RLS",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable RLS wherever policies exist and review the policies once they start applying.",
+      "Url": "https://hub.prowler.com/check/database_rls_enabled_on_tables_with_policies"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

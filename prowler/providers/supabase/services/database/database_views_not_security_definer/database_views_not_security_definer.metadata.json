@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_views_not_security_definer",
+  "CheckTitle": "Supabase views exposed through the Data API do not run with SECURITY DEFINER",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase views** in exposed schemas are assessed for **SECURITY DEFINER** semantics. Such views execute with the permissions of their owner (usually postgres) instead of the querying user, so RLS on the underlying tables is skipped.",
+  "Risk": "A SECURITY DEFINER view turns every policy on its base tables into a no-op for anyone with the anon key, allowing **unauthenticated reads of protected rows** through a single `select` on the view.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER VIEW public.<VIEW> SET (security_invoker = on);",
+      "NativeIaC": "",
+      "Other": "1. Identify the view from the finding\n2. Run `ALTER VIEW <schema>.<view> SET (security_invoker = on);`\n3. Verify the view still returns the intended rows for `anon` and `authenticated`",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create exposed views with `security_invoker = on` so the caller's RLS applies, or move them to a private schema.",
+      "Url": "https://hub.prowler.com/check/database_views_not_security_definer"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}
