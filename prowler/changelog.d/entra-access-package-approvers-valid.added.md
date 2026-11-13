@@ -1,0 +1,1 @@
+`entra_access_package_assignment_policy_approvers_valid` check for M365 provider, flagging access package assignment policies whose approval stages rely on deleted or disabled users or on deleted or empty groups
