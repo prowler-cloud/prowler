@@ -440,6 +440,28 @@ describe("RegistryExplorer", () => {
     expect(cardFor("AWS guard")).toBeTruthy();
   });
 
+  it("re-renders the page when a refresh reports a lapsed subscription", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "subscription_required",
+    });
+    // When
+    await screen.getByRole("button", { name: "Refresh Registry" }).click();
+    // Then
+    // The mocked router never swaps the page, so the explorer may refresh again.
+    await expect
+      .poll(() => vi.mocked(registryRouter.refresh).mock.calls.length)
+      .toBeGreaterThanOrEqual(1);
+    expect(vi.mocked(registryRouter.replace)).not.toHaveBeenCalled();
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeEnabled();
+    expect(document.body.textContent).not.toContain(
+      "Registry could not be refreshed.",
+    );
+  });
+
   it.each(["access_denied", "reconnect", "onboarding"])(
     "honors %s from a collection refresh",
     async (status) => {
@@ -752,8 +774,29 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).not.toContain(
         "preserved tenant artifact",
       );
-      expect(document.body.textContent).toContain("Explore Prowler Registry");
+      expect(document.body.textContent).not.toContain(
+        "Explore Prowler Registry",
+      );
       expect(document.body.textContent).not.toContain("Search artifacts");
+    });
+
+    it("links the banner to the configured Registry", async () => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer
+          initialState={onboardingState}
+          registryUrl="https://registry.internal.test/"
+        />,
+      );
+
+      // Then
+      await expect
+        .element(
+          screen.getByRole("link", {
+            name: "Explore Prowler Registry (opens in a new tab)",
+          }),
+        )
+        .toHaveAttribute("href", "https://registry.internal.test/");
     });
 
     it("lets a replacement key supersede a pending validation from the banner", async () => {
@@ -825,7 +868,7 @@ describe("RegistryExplorer", () => {
     const screen = await render(
       <RegistryExplorer
         initialState={onboardingState}
-        registryKeyUrl="https://registry.private.test/keys"
+        registryUrl="https://registry.private.test/"
       />,
     );
 
@@ -840,7 +883,7 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("link", { name: "Where do I find my key?" }))
-      .toHaveAttribute("href", "https://registry.private.test/keys");
+      .toHaveAttribute("href", "https://registry.private.test/");
 
     // When
     await screen.getByRole("button", { name: "Cancel", exact: true }).click();

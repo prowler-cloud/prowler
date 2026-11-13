@@ -17,7 +17,7 @@ from api.models import (
     Role,
     UserRoleRelationship,
 )
-from api.v1.serializers import FindingMetadataSerializer
+from api.v1.serializers import FindingMetadataSerializer, KubernetesProviderSecret
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Subquery
@@ -201,6 +201,13 @@ def return_prowler_provider(
     return prowler_provider
 
 
+def _validate_kubernetes_secret(secret: dict) -> None:
+    """Re-validate a stored kubeconfig at use time; errors never echo its content."""
+    KubernetesProviderSecret(
+        data={"kubeconfig_content": secret.get("kubeconfig_content")}
+    ).is_valid(raise_exception=True)
+
+
 def get_prowler_provider_kwargs(
     provider: Provider, mutelist_processor: Processor | None = None
 ) -> dict:
@@ -225,6 +232,7 @@ def get_prowler_provider_kwargs(
             "project_ids": [provider.uid],
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
+        _validate_kubernetes_secret(prowler_provider_kwargs)
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
     elif provider.provider == Provider.ProviderChoices.GITHUB.value:
         if provider.uid:
@@ -302,9 +310,18 @@ def get_prowler_provider_kwargs(
 def _normalize_oraclecloud_provider_kwargs(secret: dict) -> dict:
     """Normalize external OCI secret fields into SDK provider kwargs."""
     prowler_provider_kwargs = secret.copy()
-    prowler_provider_kwargs.pop("region", None)
+    home_region = _oraclecloud_home_region(prowler_provider_kwargs.pop("region", None))
+    if home_region:
+        prowler_provider_kwargs["home_region"] = home_region
 
     return prowler_provider_kwargs
+
+
+def _oraclecloud_home_region(region) -> str | None:
+    """Return the stored OCI region as a home region, ignoring blank or non-string legacy values."""
+    if isinstance(region, str) and region.strip():
+        return region.strip()
+    return None
 
 
 def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
@@ -312,7 +329,7 @@ def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
     from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
     prowler_provider_kwargs = secret.copy()
-    prowler_provider_kwargs.pop("region", None)
+    home_region = _oraclecloud_home_region(prowler_provider_kwargs.pop("region", None))
 
     if (
         prowler_provider_kwargs.get("user")
@@ -323,11 +340,9 @@ def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
             or prowler_provider_kwargs.get("key_file")
         )
     ):
-        # Connection validation needs one OCI endpoint, but scans remain unfiltered.
-        prowler_provider_kwargs["region"] = getattr(
-            OraclecloudProvider,
-            "_bootstrap_region",
-            OraclecloudProvider._home_region,
+        # Identity calls only succeed in a region the tenancy is subscribed to.
+        prowler_provider_kwargs["region"] = (
+            home_region or OraclecloudProvider._bootstrap_region
         )
 
     return prowler_provider_kwargs
@@ -384,6 +399,16 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         prowler_provider_kwargs = provider.secret.secret
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
+
+    if provider.provider == Provider.ProviderChoices.KUBERNETES.value:
+        # A rejected stored kubeconfig is a failed connection, not a task error.
+        try:
+            _validate_kubernetes_secret(prowler_provider_kwargs)
+        except ValidationError as validation_error:
+            return Connection(
+                is_connected=False,
+                error=Exception(validation_error.detail["kubeconfig_content"][0]),
+            )
 
     # For IaC provider, construct the kwargs properly for test_connection
     if provider.provider == Provider.ProviderChoices.IAC.value:

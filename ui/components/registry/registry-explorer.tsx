@@ -107,12 +107,12 @@ function mutationFailureMessage(result: RegistryMutationResult) {
 
 interface RegistryExplorerProps {
   initialState: RegistryBootstrapState;
-  registryKeyUrl?: string;
+  registryUrl?: string;
 }
 
 export function RegistryExplorer({
   initialState,
-  registryKeyUrl,
+  registryUrl,
 }: RegistryExplorerProps) {
   // The API is the sole access authority: a denied action result routes to
   // Profile once, and the navigation unmounts this component with its state.
@@ -182,6 +182,9 @@ export function RegistryExplorer({
       onResult: (result) => {
         if (result.status === "access_denied") {
           router.replace("/profile");
+        } else if (result.status === "subscription_required") {
+          // The server page swaps the catalog for the paid-plan prompt.
+          router.refresh();
         } else if (result.status === "complete") {
           setRefreshMessage(undefined);
           setState((current) =>
@@ -464,7 +467,7 @@ export function RegistryExplorer({
   }
 
   const accessDialogProps = {
-    registryKeyUrl,
+    registryUrl,
     errorMessage: operationMessage,
     onOpenChange: (open: boolean) => {
       if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.CREDENTIAL) {
@@ -504,6 +507,7 @@ export function RegistryExplorer({
         )}
         <RegistryCredentialBanner
           connectButtonRef={connectButtonRef}
+          registryUrl={registryUrl}
           onConnect={() =>
             setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.CONNECT)
           }

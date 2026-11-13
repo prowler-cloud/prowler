@@ -50,6 +50,7 @@ const EMPTY_CATALOG: ComplianceCatalog = {
 const UNAVAILABLE_CATALOG: ComplianceCatalogLoad = {
   ...EMPTY_CATALOG,
   unavailable: true,
+  incomplete: false,
 };
 
 const GENERIC_ERROR = "Could not update the compliance watchlist.";
@@ -140,7 +141,9 @@ export const getComplianceCatalog = async (
       Math.max(1, firstPage.pageCount),
       MAX_CATALOG_PAGES,
     );
-    if (pageCount <= 1) return { ...firstPage.catalog, unavailable: false };
+    if (pageCount <= 1) {
+      return { ...firstPage.catalog, unavailable: false, incomplete: false };
+    }
 
     const rest: ComplianceCatalog[] = [];
     let incomplete = firstPage.pageCount > MAX_CATALOG_PAGES;
@@ -157,7 +160,8 @@ export const getComplianceCatalog = async (
 
     return {
       ...mergeCatalogPages([firstPage.catalog, ...rest]),
-      unavailable: incomplete,
+      unavailable: false,
+      incomplete,
     };
   } catch (error) {
     console.error("Error fetching compliance catalog:", error);

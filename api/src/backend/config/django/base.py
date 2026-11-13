@@ -130,6 +130,8 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    # redoc@latest is 3.x, whose standalone bundle fails as a classic script
+    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@2.5.1",
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
     ],

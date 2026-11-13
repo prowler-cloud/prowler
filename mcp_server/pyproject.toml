@@ -4,8 +4,8 @@ requires = ["setuptools>=61.0", "wheel"]
 
 [dependency-groups]
 dev = [
-  "bandit==1.8.3",
-  "coverage==7.15.2",
+  "bandit==1.9.4",
+  "coverage==7.17.0",
   "pytest==9.0.3",
   "pytest-asyncio==1.4.0",
   "pytest-cov==6.0.0",
@@ -16,7 +16,7 @@ dev = [
 
 [project]
 dependencies = [
-  "fastmcp==3.4.5",
+  "fastmcp==3.4.10",
   "httpx==0.28.1"
 ]
 description = "MCP server for Prowler ecosystem"
@@ -74,12 +74,15 @@ extend-select = [
 ]
 
 [tool.uv]
-package = true
-
-# Transitive pins fastmcp does not raise on its own; each carries a known HIGH.
+# Transitive pins fastmcp does not raise on its own; each carries a known CVE.
 constraint-dependencies = [
+  "authlib==1.9.1",
   "cryptography==50.0.0",
-  "joserfc==1.6.8",
-  "mcp==1.28.1",
-  "python-multipart==0.0.30"
+  "dnspython==2.9.0",
+  "joserfc==1.7.6",
+  "mcp==1.30.0",
+  "opentelemetry-api==1.45.1",
+  "pyjwt==2.15.0",
+  "python-multipart==0.0.31"
 ]
+package = true

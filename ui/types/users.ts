@@ -93,6 +93,7 @@ export const PERMISSION_KEY = {
   MANAGE_ALERTS: "manage_alerts",
   MANAGE_LIGHTHOUSE_AI_CONFIGURATION: "manage_lighthouse_ai_configuration",
   MANAGE_REGISTRY: "manage_registry",
+  MANAGE_REALTIME: "manage_prowler_realtime",
   UNLIMITED_VISIBILITY: "unlimited_visibility",
 } as const;
 
@@ -114,6 +115,7 @@ export type TenantMembershipRole =
 
 export interface RoleDetailAttributes {
   manage_registry?: boolean;
+  manage_prowler_realtime?: boolean;
   name: string;
   manage_users: boolean;
   manage_account: boolean;

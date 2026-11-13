@@ -283,6 +283,74 @@ function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
   );
 }
 
+describe("sample resource actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isCloudMock.mockReturnValue(true);
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  const sampleResource = () =>
+    makeResource({
+      id: "sample-resource-s3_bucket-1",
+      findingId: "sample-finding-s3_bucket_public_access-1",
+      checkId: "s3_bucket_public_access",
+      providerUid: "123456789012",
+      providerAlias: "Sample AWS account",
+      resourceName: "acme-customer-exports",
+      resourceUid: "arn:aws:s3:::acme-customer-exports",
+      triage: makeTriageSummary({
+        findingId: "sample-finding-s3_bucket_public_access-1",
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.SAMPLE,
+      }),
+    });
+
+  it("does not send sample IDs to Lighthouse from a resource row", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Lighthouse Skills" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(launchSkillMock).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch sample findings to the real Jira workflow", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: /Send.*Jira/ });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
+  });
+
+  it("does not start the real re-check workflow for a sample resource", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Re-check resource" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toBeNull();
+  });
+});
+
 function renderResourceActionsCell({
   resource = makeResource(),
   onSkillLaunchOpenDrawer,

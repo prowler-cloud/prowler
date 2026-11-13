@@ -1,4 +1,4 @@
-import { Info } from "lucide-react";
+import { Info, ShieldCheck } from "lucide-react";
 import { Suspense } from "react";
 
 import {
@@ -7,7 +7,7 @@ import {
   getCompliancesOverview,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
-import { getScan, getScans, getScansByState } from "@/actions/scans";
+import { getScan, getScans } from "@/actions/scans";
 import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
@@ -17,10 +17,12 @@ import { ComplianceFilters } from "@/components/compliance/compliance-header/com
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
 import { WatchlistControls } from "@/components/compliance/watchlist/watchlist-controls";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
-import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import { isReportDownloadLocked } from "@/lib/report-download-access";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { toSampleComplianceOverviews } from "@/lib/sample-preview/sample-compliance";
+import { getSampleComplianceTotals } from "@/lib/sample-preview/sample-compliance-requirements";
 import { isCloud } from "@/lib/shared/env";
 import {
   ExpandedScanData,
@@ -30,8 +32,10 @@ import {
 } from "@/types";
 import { COMPLIANCE_TAB, ComplianceOverviewData } from "@/types/compliance";
 
+import { ComplianceOverviewPanel } from "./_components/compliance-overview-panel";
 import { CompliancePageTabs } from "./_components/compliance-page-tabs";
 import { getComplianceTab } from "./_components/compliance-page-tabs.shared";
+import { ComplianceSamplePreview } from "./_components/compliance-sample-preview";
 import { CrossAccountOverviewSection } from "./_components/cross-account-overview-section";
 import { CrossProviderOverview } from "./_components/cross-provider-overview";
 import {
@@ -71,6 +75,21 @@ export default async function Compliance({
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
+  // Sample data replaces both tabs until the first scan completes.
+  const preview = await getSamplePreviewState();
+  if (preview.active) {
+    return (
+      <ContentLayout title="Compliance" icon={<ShieldCheck />}>
+        <ComplianceSamplePreview
+          state={preview}
+          overviews={toSampleComplianceOverviews(
+            await getSampleComplianceTotals(),
+          )}
+        />
+      </ContentLayout>
+    );
+  }
+
   const resolvedSearchParams = await searchParams;
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
@@ -93,29 +112,8 @@ export default async function Compliance({
   // Only the active tab's payload is built: switching tabs is a real
   // navigation, so pre-building the inactive tab buys nothing.
   if (activeTab === COMPLIANCE_TAB.CROSS_PROVIDER) {
-    // The tour's anchors (search, framework cards) only exist on Single Scan,
-    // so replaying it from here navigates there — and with no scan to render
-    // those anchors never mount. Fall back to the scan flow instead, matching
-    // the Per Scan branch below. Fail-open: a failed fetch assumes scans exist.
-    const scansByState = await getScansByState();
-    const hasCompletedScan = Array.isArray(scansByState?.data)
-      ? scansByState.data.length > 0
-      : true;
-
     return (
-      <ContentLayout
-        title="Compliance"
-        icon="lucide:shield-check"
-        onboardingAction={
-          hasCompletedScan
-            ? { flowId: "view-compliance" }
-            : {
-                flowId: "view-compliance",
-                fallbackFlowId: "view-first-scan",
-                useFallback: true,
-              }
-        }
-      >
+      <ContentLayout title="Compliance" icon={<ShieldCheck />}>
         <CompliancePageTabs
           activeTab={activeTab}
           crossProviderEnabled={crossProviderEnabled}
@@ -170,15 +168,7 @@ export default async function Compliance({
 
   if (!scansData?.data) {
     return (
-      <ContentLayout
-        title="Compliance"
-        icon="lucide:shield-check"
-        onboardingAction={{
-          flowId: "view-compliance",
-          fallbackFlowId: "view-first-scan",
-          useFallback: true,
-        }}
-      >
+      <ContentLayout title="Compliance" icon={<ShieldCheck />}>
         <CompliancePageTabs
           activeTab={activeTab}
           crossProviderEnabled={crossProviderEnabled}
@@ -226,14 +216,6 @@ export default async function Compliance({
     (await resolveUrlScanId(scanIdFromUrl, expandedScansData)) ||
     expandedScansData[0]?.id ||
     null;
-  const onboardingAction = selectedScanId
-    ? { flowId: "view-compliance" }
-    : {
-        flowId: "view-compliance",
-        fallbackFlowId: "view-first-scan",
-        useFallback: true,
-      };
-
   const selectedScan = expandedScansData.find(
     (scan) => scan.id === selectedScanId,
   );
@@ -321,11 +303,7 @@ export default async function Compliance({
   );
 
   return (
-    <ContentLayout
-      title="Compliance"
-      icon="lucide:shield-check"
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Compliance" icon={<ShieldCheck />}>
       <CompliancePageTabs
         activeTab={activeTab}
         crossProviderEnabled={crossProviderEnabled}
@@ -448,21 +426,5 @@ const ComplianceWatchlistControls = async ({
       entries={watchlist.entries}
       canManageWatchlist={watchlist.canManage}
     />
-  );
-};
-
-const ComplianceOverviewPanel = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <Card
-      variant="base"
-      padding="none"
-      className="minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm"
-    >
-      <CardContent className="flex flex-col gap-4 p-4">{children}</CardContent>
-    </Card>
   );
 };

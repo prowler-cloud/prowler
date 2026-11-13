@@ -1,3 +1,4 @@
+import { formatRegistryLabel } from "@/lib/registry/labels";
 import { isKnownProviderType } from "@/types/providers";
 import type {
   RegistryCatalogArtifact,
@@ -11,6 +12,8 @@ export interface RegistryProviderOption {
 }
 
 export const REGISTRY_PROVIDER_DISCOVERY = {
+  SUBSCRIPTION_REQUIRED: "subscription_required",
+  ONBOARDING: "onboarding",
   READY: "ready",
   ACCESS_DENIED: "access_denied",
   /** Access could not be evaluated: keep Registry hidden but retryable. */
@@ -19,6 +22,8 @@ export const REGISTRY_PROVIDER_DISCOVERY = {
 } as const;
 
 export type RegistryProviderDiscoveryResult =
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.ONBOARDING }
   | {
       status: typeof REGISTRY_PROVIDER_DISCOVERY.READY;
       options: RegistryProviderOption[];
@@ -63,7 +68,8 @@ export function buildRegistryProviderOptions(
       );
     }
   }
-  return Array.from(options.values()).sort((left, right) =>
-    left.label.localeCompare(right.label),
-  );
+  return Array.from(options.values(), (option) => ({
+    ...option,
+    label: formatRegistryLabel(option.label),
+  })).sort((left, right) => left.label.localeCompare(right.label));
 }

@@ -5142,7 +5142,8 @@
         "ssm_managed_compliant_patching",
         "elasticache_redis_cluster_auto_minor_version_upgrades",
         "codeartifact_packages_external_public_publishing_disabled",
-        "elasticbeanstalk_environment_managed_updates_enabled"
+        "elasticbeanstalk_environment_managed_updates_enabled",
+        "elasticbeanstalk_environment_php_platform_updated"
       ]
     },
     {

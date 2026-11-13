@@ -47,8 +47,10 @@ export function HorizontalBarChart({
     return orderA - orderB;
   });
 
+  // Measures itself: in a narrow card the fixed label and value columns
+  // would otherwise squeeze the bar track to nothing.
   return (
-    <div className="w-full space-y-6">
+    <div className="@container w-full space-y-6">
       {title && (
         <div>
           <h3 className="text-text-neutral-primary text-lg font-semibold">
@@ -83,7 +85,7 @@ export function HorizontalBarChart({
             <div
               key={item.name}
               className={cn(
-                "flex items-center gap-6",
+                "flex items-center gap-3 @sm:gap-6",
                 isClickable && "cursor-pointer",
               )}
               role={isClickable ? "button" : undefined}
@@ -109,7 +111,7 @@ export function HorizontalBarChart({
               }}
             >
               {/* Label */}
-              <div className="w-20 shrink-0">
+              <div className="w-16 shrink-0 @sm:w-20">
                 <span
                   className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
@@ -183,7 +185,7 @@ export function HorizontalBarChart({
 
               {/* Percentage and Count */}
               <div
-                className="text-text-neutral-secondary ml-6 flex min-w-[90px] shrink-0 items-center gap-2 text-sm"
+                className="text-text-neutral-secondary flex shrink-0 items-center gap-2 text-sm @sm:ml-6 @sm:min-w-[90px]"
                 style={{
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",

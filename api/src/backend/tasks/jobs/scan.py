@@ -997,11 +997,12 @@ def _process_finding_micro_batch(
                         snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.type = finding.resource_type
                         updated = True
-                    if resource_instance.metadata != finding.resource_metadata:
+                    serialized_metadata = json.dumps(
+                        finding.resource_metadata, cls=CustomEncoder
+                    )
+                    if resource_instance.metadata != serialized_metadata:
                         snapshot_resource_fields(resource_uid, resource_instance)
-                        resource_instance.metadata = json.dumps(
-                            finding.resource_metadata, cls=CustomEncoder
-                        )
+                        resource_instance.metadata = serialized_metadata
                         updated = True
                     if resource_instance.details != finding.resource_details:
                         snapshot_resource_fields(resource_uid, resource_instance)
@@ -2113,7 +2114,9 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
             .annotate(
                 total=Count("id"),
                 failed=Count("id", filter=Q(status="FAIL", muted=False)),
-                muted=Count("id", filter=Q(status="FAIL", muted=True)),
+                # Not `muted`: an annotation named after a model field comes
+                # back as `muted_new` from the psqlextra queryset.
+                muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
             )
         )
 
@@ -2124,7 +2127,7 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
 
             aggregated_counts[attack_surface_type]["total"] += stats["total"] or 0
             aggregated_counts[attack_surface_type]["failed"] += stats["failed"] or 0
-            aggregated_counts[attack_surface_type]["muted"] += stats["muted"] or 0
+            aggregated_counts[attack_surface_type]["muted"] += stats["muted_count"] or 0
 
     overview_objects = []
     for attack_surface_type, counts in aggregated_counts.items():

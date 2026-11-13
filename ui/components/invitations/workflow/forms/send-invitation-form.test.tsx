@@ -66,7 +66,13 @@ const fillAndSubmit = async (user: ReturnType<typeof userEvent.setup>) => {
 describe("SendInvitationForm", () => {
   beforeEach(() => {
     pushMock.mockReset();
-    sendInviteMock.mockReset().mockResolvedValue({ data: { id: "inv-1" } });
+    // The API answers with the created record, token included.
+    sendInviteMock.mockReset().mockResolvedValue({
+      data: {
+        id: "inv-1",
+        attributes: { email: "teammate@company.com", token: "abc123DEF45678" },
+      },
+    });
   });
 
   it("navigates to the invitation details by default", async () => {
@@ -95,7 +101,7 @@ describe("SendInvitationForm", () => {
       <SendInvitationForm
         roles={ROLES}
         isSelectorDisabled={false}
-        source="onboarding"
+        source="provider_connect"
         onSuccess={onSuccess}
       />,
     );
@@ -107,6 +113,6 @@ describe("SendInvitationForm", () => {
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith("inv-1"));
     expect(pushMock).not.toHaveBeenCalled();
     const formData = sendInviteMock.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("source")).toBe("onboarding");
+    expect(formData.get("source")).toBe("provider_connect");
   });
 });

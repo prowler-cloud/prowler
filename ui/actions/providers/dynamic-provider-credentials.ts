@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import { parseRegistryCredentialSchema } from "@/lib/provider-credentials/provider-credential-schema";
-import { validateCredentialValues } from "@/lib/provider-credentials/provider-credential-values";
+import { parseRegistryCredentialVariants } from "@/lib/provider-credentials/provider-credential-schema";
+import { validateCredentialVariants } from "@/lib/provider-credentials/provider-credential-values";
 import { isKnownProviderType } from "@/types/providers";
 
 import { getProviderSchemas } from "./provider-schemas";
@@ -66,11 +66,11 @@ export async function saveDynamicProviderCredentials(
       !Object.hasOwn(schemas.secretTypes, secretType)
     )
       return { status: "schema_unavailable" };
-    const schema = parseRegistryCredentialSchema(
+    const variants = parseRegistryCredentialVariants(
       schemas.secretTypes[secretType],
     );
-    if (!schema) return { status: "schema_unavailable" };
-    const validated = validateCredentialValues(schema, secret);
+    if (!variants) return { status: "schema_unavailable" };
+    const validated = validateCredentialVariants(variants, secret);
     if (!validated.valid)
       return { status: "invalid", errors: validated.errors };
 

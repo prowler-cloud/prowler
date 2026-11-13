@@ -14,11 +14,7 @@ import type {
   ProviderCheckIdsMap,
 } from "../_types";
 
-/** The composed display name the per-scan mappers give every requirement.
- *  Shared with `buildRequirementExtrasMap` so the extras join never parses
- *  strings back apart. */
-const composeRequirementName = (id: string, name: string): string =>
-  name ? `${id} - ${name}` : id;
+import { candidateRequirementNames } from "./requirement-names";
 
 /**
  * Convert a cross-provider overview into the `{AttributesData,
@@ -84,8 +80,8 @@ export const crossProviderToMapperInput = (
 };
 
 /**
- * Cross-provider context for each requirement, keyed by the exact composed
- * name the mappers produce, so renderers can join per-provider statuses and
+ * Cross-provider context for each requirement, keyed by every name a mapper
+ * may give it, so renderers can join per-provider statuses and
  * scan/check splits onto mapped requirements without touching the mappers.
  */
 export const buildRequirementExtrasMap = (
@@ -94,12 +90,21 @@ export const buildRequirementExtrasMap = (
   const extras = new Map<string, CrossProviderRequirementExtras>();
 
   for (const requirement of attrs.requirements) {
-    extras.set(composeRequirementName(requirement.id, requirement.name), {
+    const entry: CrossProviderRequirementExtras = {
       requirementId: requirement.id,
       providers: requirement.providers,
       checkIdsByProvider: requirement.check_ids_by_provider ?? {},
       scanIdsByProvider: attrs.scan_ids_by_provider,
-    });
+    };
+    for (const name of candidateRequirementNames(
+      requirement.id,
+      requirement.name,
+    )) {
+      // First registration wins, so a bare-name key never hijacks an id key.
+      if (!extras.has(name)) {
+        extras.set(name, entry);
+      }
+    }
   }
 
   return extras;

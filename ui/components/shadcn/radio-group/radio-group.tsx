@@ -11,7 +11,11 @@ function RadioGroup({
   return (
     <RadioGroupPrimitive.Root
       data-slot="radio-group"
-      className={cn("flex flex-col gap-4", className)}
+      // Radix sets aria-orientation only when `orientation` is passed.
+      className={cn(
+        "flex flex-col gap-4 aria-[orientation=horizontal]:flex-row aria-[orientation=horizontal]:flex-wrap",
+        className,
+      )}
       {...props}
     />
   );

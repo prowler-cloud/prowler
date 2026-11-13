@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import ClassVar, Dict, List
 
 from openstack import exceptions as openstack_exceptions
 
@@ -89,4 +89,5 @@ class ObjectStorageContainer:
     history_location: str
     sync_to: str
     sync_key: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("metadata",)
     metadata: Dict[str, str]

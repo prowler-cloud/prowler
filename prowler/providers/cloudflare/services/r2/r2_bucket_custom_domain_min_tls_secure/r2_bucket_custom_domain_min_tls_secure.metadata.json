@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "r2_bucket_custom_domain_min_tls_secure",
+  "CheckTitle": "Cloudflare R2 bucket custom domains require TLS 1.2 or higher",
+  "CheckType": [],
+  "ServiceName": "r2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "R2Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Cloudflare R2 bucket custom domains** are assessed for their **minimum TLS version**. Custom domains without an explicit setting accept TLS 1.0.",
+  "Risk": "Accepting **TLS 1.0 or 1.1** allows clients to connect using deprecated protocols.\n- **Confidentiality**: weak protocol versions are vulnerable to downgrade and known cryptographic attacks\n- **Compliance**: PCI DSS and NIST guidance require TLS 1.2 or higher",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/r2/buckets/public-buckets/#custom-domains"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to R2 Object Storage and select the bucket\n3. Open Settings > Custom Domains\n4. Edit each domain and set Minimum TLS version to 1.2 or 1.3\n5. Save the changes",
+      "Terraform": "```hcl\nresource \"cloudflare_r2_custom_domain\" \"example\" {\n  account_id  = \"<ACCOUNT_ID>\"\n  bucket_name = \"example-bucket\"\n  domain      = \"assets.example.com\"\n  zone_id     = \"<ZONE_ID>\"\n  enabled     = true\n  min_tls     = \"1.2\" # Critical: reject TLS 1.0 and 1.1\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Require **TLS 1.2 or higher** on every custom domain that serves R2 content.\n- Prefer TLS 1.3 where clients support it\n- Set the minimum TLS version explicitly instead of relying on the default",
+      "Url": "https://hub.prowler.com/checks/cloudflare/r2_bucket_custom_domain_min_tls_secure"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only enabled custom domains are evaluated. Buckets without custom domains are not reported."
+}
