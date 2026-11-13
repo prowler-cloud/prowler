@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "microsoft.network/networksecuritygroups",
   "ResourceGroup": "network",
-  "Description": "**Azure NSG** are evaluated for inbound rules that allow public **HTTP** access on `TCP 80`, including cases where `80` is covered by a port range, from `0.0.0.0/0`, `Internet`, or `*`.",
+  "Description": "**Azure NSG** are evaluated for inbound rules that allow public **HTTP** access on `TCP 80`, including cases where `80` is covered by a port range, `destination_port_ranges`, or `*`, from `0.0.0.0/0`, `Internet`, or `*`.",
   "Risk": "Exposing `TCP 80` to the Internet increases attack surface:\n- Web recon and exploits compromise **integrity** and **availability**\n- Cleartext HTTP can leak credentials, cookies, and data, harming **confidentiality**\n- Public endpoints enable bot abuse and footholds for lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [

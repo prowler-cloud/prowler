@@ -70,6 +70,10 @@ class Network(AzureService):
                                     ),
                                     access=getattr(rule, "access", "Allow"),
                                     direction=getattr(rule, "direction", "Inbound"),
+                                    destination_port_ranges=_port_values(
+                                        getattr(rule, "destination_port_ranges", None)
+                                    )
+                                    or None,
                                 )
                                 for rule in getattr(
                                     security_group, "security_rules", []
@@ -423,6 +427,52 @@ class SecurityRule:
     source_address_prefix: Optional[str]
     access: Optional[str]
     direction: Optional[str]
+    destination_port_ranges: Optional[List[str]] = None
+
+
+def _port_values(value) -> List[str]:
+    """Return the port specs stored in a singular string or a plural list."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        values = [value]
+    elif isinstance(value, (list, tuple)):
+        values = list(value)
+    else:
+        return []
+    return [
+        str(item).strip() for item in values if item is not None and str(item).strip()
+    ]
+
+
+def _spec_includes_port(spec: str, port: int) -> bool:
+    """Return whether one Azure port spec includes port.
+
+    Azure uses ``*`` for every port and ``start-end`` for an inclusive range.
+    """
+    if spec == "*":
+        return True
+    if "-" in spec:
+        start, end = spec.split("-", 1)
+        try:
+            return int(start) <= port <= int(end)
+        except ValueError:
+            return False
+    try:
+        return int(spec) == port
+    except ValueError:
+        return False
+
+
+def security_rule_exposes_port(rule: object, port: int) -> bool:
+    """Return whether an NSG rule destination includes port.
+
+    Azure sets either ``destination_port_range`` or ``destination_port_ranges``.
+    A rule that only fills the plural field still exposes the listed ports.
+    """
+    specs = _port_values(getattr(rule, "destination_port_range", None))
+    specs.extend(_port_values(getattr(rule, "destination_port_ranges", None)))
+    return any(_spec_includes_port(spec, port) for spec in specs)
 
 
 @dataclass
