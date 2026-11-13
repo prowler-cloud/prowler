@@ -32,6 +32,7 @@ class DNS(GCPService):
                                 key_specs=managed_zone.get("dnssecConfig", {}).get(
                                     "defaultKeySpecs", []
                                 ),
+                                visibility=managed_zone.get("visibility", "public"),
                                 project_id=project_id,
                             )
                         )
@@ -79,6 +80,7 @@ class ManagedZone(BaseModel):
     id: str
     dnssec: bool
     key_specs: list
+    visibility: str = "public"
     project_id: str
 
 
