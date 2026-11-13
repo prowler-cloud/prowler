@@ -808,6 +808,78 @@ class TestCheckLoader:
         )
         assert result == set()
 
+    def test_severity_with_compliance_discards_threat_detection_checks(self):
+        """When --severity selects the checks, the compliance branch never
+        runs (it sits below severities in the elif chain), so a passed
+        --compliance must not exempt the threat-detection discard, even
+        when the framework maps the check (CodeRabbit review on #13360).
+        Only checks the compliance branch itself selected are exempt."""
+        bulk_checks_metadata = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        bulk_compliance_frameworks = {
+            "soc2_aws": Compliance(
+                Framework="SOC2",
+                Name="SOC2",
+                Provider="aws",
+                Version="2.0",
+                Description="SOC2 framework for testing purposes",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME],
+                        Id="CC1.1",
+                        Description="",
+                        Attributes=[],
+                    )
+                ],
+            ),
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            severities=["critical"],
+            compliance_frameworks=["soc2_aws"],
+            provider=self.provider,
+        )
+        assert result == set()
+
+    def test_services_with_compliance_discards_threat_detection_checks(self):
+        """Same for the SDK path, where services and compliances are both
+        passed: the services branch wins the elif chain, so the compliance
+        branch never runs and the threat-detection discard still applies,
+        even when the framework maps the check (CodeRabbit review on
+        #13360)."""
+        bulk_checks_metadata = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        bulk_compliance_frameworks = {
+            "soc2_aws": Compliance(
+                Framework="SOC2",
+                Name="SOC2",
+                Provider="aws",
+                Version="2.0",
+                Description="SOC2 framework for testing purposes",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME],
+                        Id="CC1.1",
+                        Description="",
+                        Attributes=[],
+                    )
+                ],
+            ),
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            service_list=["cloudtrail"],
+            compliance_frameworks=["soc2_aws"],
+            provider=self.provider,
+        )
+        assert result == set()
+
     def test_compliance_keeps_mapped_threat_detection_checks_cis_azure(self):
         """Regression test for #13356 using the real Azure metadata: with
         cis_6.0_azure selected, the run set must agree with --list-checks

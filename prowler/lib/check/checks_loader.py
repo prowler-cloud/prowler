@@ -41,6 +41,10 @@ def load_checks_to_execute(
         check_categories = {}
         check_resource_groups = {}
         check_severities = {severity.value: [] for severity in Severity}
+        # True only when the compliance branch below selected the checks.
+        # A merely passed --compliance does not count: the elif chain may
+        # have let severity, services or checks win instead.
+        compliance_selected_checks = False
 
         if not bulk_checks_metadata:
             bulk_checks_metadata = CheckMetadata.get_bulk(provider=provider)
@@ -158,6 +162,7 @@ def load_checks_to_execute(
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
+            compliance_selected_checks = True
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             for compliance_framework in compliance_frameworks:
@@ -228,9 +233,15 @@ def load_checks_to_execute(
         # Only execute threat detection checks if threat-detection category is set
         # Skip this exclusion when listing checks (--list-checks or --list-checks-json)
         # and when the checks were explicitly selected, either by name (--checks)
-        # or through a compliance framework (--compliance): a framework requirement
+        # or by the compliance branch (--compliance): a framework requirement
         # naming a check means that check must be evaluated, otherwise the
         # requirement would silently disappear from the compliance report.
+        # The exemption keys on the compliance branch having run, not on
+        # --compliance merely being passed: severity, services or checks sit
+        # above compliance in the elif chain, so a combined run (for example
+        # --severity with --compliance, or services with compliances via the
+        # SDK) selects without the framework, and those threat-detection
+        # checks must still be dropped.
         # Unfiltered runs (no selection, by service, severity or category) still
         # drop threat-detection checks, preserving the performance gate from #7742
         # for the heavy CloudTrail event-lookup checks.
@@ -238,7 +249,7 @@ def load_checks_to_execute(
             (not categories or "threat-detection" not in categories)
             and not check_list
             and not list_checks
-            and not compliance_frameworks
+            and not compliance_selected_checks
         ):
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
