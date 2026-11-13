@@ -391,6 +391,71 @@ class Test_Storage_Service_Retention_Policy_None_Handling:
         assert account.file_service_properties.share_delete_retention_policy.days == 0
 
 
+class Test_Storage_Blob_Soft_Delete_Vs_Container_Soft_Delete:
+    """CIS 9.2.1 (blob soft delete) must not be evaluated using container soft delete"""
+
+    def test_get_blob_properties_collects_blob_level_delete_retention_policy(self):
+        account = Account(
+            id="id",
+            name="name",
+            resouce_group_name="rg",
+            enable_https_traffic_only=False,
+            infrastructure_encryption=False,
+            allow_blob_public_access=False,
+            network_rule_set=NetworkRuleSet(
+                bypass="AzureServices", default_action="Allow"
+            ),
+            encryption_type="None",
+            minimum_tls_version="TLS1_2",
+            key_expiration_period_in_days=None,
+            private_endpoint_connections=[],
+            location="westeurope",
+            blob_properties=None,
+        )
+
+        mock_properties = MagicMock()
+        mock_properties.id = "id"
+        mock_properties.name = "name"
+        mock_properties.type = "type"
+        mock_properties.default_service_version = None
+        mock_properties.is_versioning_enabled = False
+        # Container soft delete enabled, blob soft delete disabled: the exact
+        # configuration where CIS 9.2.1 (blobs) must FAIL and 9.2.2 (containers) PASSes.
+        mock_properties.container_delete_retention_policy = MagicMock(
+            enabled=True, days=7
+        )
+        mock_properties.delete_retention_policy = MagicMock(enabled=False, days=0)
+
+        mock_client = MagicMock()
+        mock_client.blob_services.get_service_properties.return_value = mock_properties
+
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
+                return_value={AZURE_SUBSCRIPTION_ID: [account]},
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_blob_properties",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_file_share_properties",
+                return_value=None,
+            ),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage._get_blob_properties()
+
+        blob_properties = storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+            0
+        ].blob_properties
+        assert (
+            blob_properties.delete_retention_policy.enabled is False
+        ), "Blob-level soft delete (CIS 9.2.1) must be collected separately from container soft delete (CIS 9.2.2)"
+
+
 class Test_Storage_get_storage_accounts:
     def test_get_storage_accounts_no_resource_groups(self):
         mock_client = MagicMock()
