@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ecs_instance_enterprise_project",
+  "CheckTitle": "ECS instances should be assigned to an enterprise project",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that ECS instances are assigned to an enterprise project for resource isolation, cost management, and access control.",
+  "Risk": "ECS instances without an enterprise project cannot be isolated by project-level permissions, making it harder to enforce fine-grained access control and cost allocation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-eps/eps_01_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud ECS ChangeEnterpriseProject --server_id <instance_id> --enterprise_project_id <project_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Enterprise Project\n5. Select the target enterprise project\n6. Click OK",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Assign all ECS instances to an appropriate enterprise project.",
+      "Url": "https://hub.prowler.com/check/ecs_instance_enterprise_project"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
