@@ -227,10 +227,18 @@ def load_checks_to_execute(
                 checks_to_execute.add(check_name)
         # Only execute threat detection checks if threat-detection category is set
         # Skip this exclusion when listing checks (--list-checks or --list-checks-json)
+        # and when the checks were explicitly selected, either by name (--checks)
+        # or through a compliance framework (--compliance): a framework requirement
+        # naming a check means that check must be evaluated, otherwise the
+        # requirement would silently disappear from the compliance report.
+        # Unfiltered runs (no selection, by service, severity or category) still
+        # drop threat-detection checks, preserving the performance gate from #7742
+        # for the heavy CloudTrail event-lookup checks.
         if (
             (not categories or "threat-detection" not in categories)
             and not check_list
             and not list_checks
+            and not compliance_frameworks
         ):
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)

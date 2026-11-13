@@ -676,6 +676,187 @@ class TestCheckLoader:
         assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME not in result
         assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result
 
+    def test_compliance_frameworks_keep_threat_detection_checks(self):
+        """A threat-detection check mapped by a selected compliance framework
+        must run (fixes #13356): the framework names the check, so dropping
+        it would silently leave the requirement unevaluated."""
+        bulk_checks_metadata = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        bulk_compliance_frameworks = {
+            "soc2_aws": Compliance(
+                Framework="SOC2",
+                Name="SOC2",
+                Provider="aws",
+                Version="2.0",
+                Description="SOC2 framework for testing purposes",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME],
+                        Id="CC1.1",
+                        Description="",
+                        Attributes=[],
+                    )
+                ],
+            ),
+        }
+
+        run = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["soc2_aws"],
+            provider=self.provider,
+        )
+        listed = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["soc2_aws"],
+            provider=self.provider,
+            list_checks=True,
+        )
+        assert run == {CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME}
+        assert run == listed
+
+    def test_compliance_frameworks_keep_threat_detection_checks_with_other_checks(
+        self,
+    ):
+        """A compliance run keeps both mapped threat-detection checks and
+        mapped regular checks (fixes #13356)."""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+        bulk_compliance_frameworks = {
+            "soc2_aws": Compliance(
+                Framework="SOC2",
+                Name="SOC2",
+                Provider="aws",
+                Version="2.0",
+                Description="SOC2 framework for testing purposes",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[
+                            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+                            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME,
+                        ],
+                        Id="CC1.1",
+                        Description="",
+                        Attributes=[],
+                    )
+                ],
+            ),
+        }
+
+        run = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["soc2_aws"],
+            provider=self.provider,
+        )
+        assert run == {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME,
+        }
+
+    def test_compliance_frameworks_keep_threat_detection_checks_universal(self):
+        """The same guarantee holds when the framework is a universal
+        compliance framework (fixes #13356)."""
+        from prowler.lib.check.compliance_models import (
+            ComplianceFramework,
+            UniversalComplianceRequirement,
+        )
+
+        bulk_checks_metadata = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        universal_framework = ComplianceFramework(
+            framework="csa_ccm",
+            name="CSA CCM 4.0",
+            version="4.0",
+            description="Cloud Controls Matrix",
+            requirements=[
+                UniversalComplianceRequirement(
+                    id="A&A-01",
+                    description="Audit & Assurance",
+                    attributes={},
+                    checks={"aws": [CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME]},
+                ),
+            ],
+        )
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks={},
+            compliance_frameworks=["csa_ccm_4.0"],
+            provider=self.provider,
+            universal_frameworks={"csa_ccm_4.0": universal_framework},
+        )
+        assert result == {CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME}
+
+    def test_service_list_discards_threat_detection_checks(self):
+        """Non-compliance selections still drop threat-detection checks,
+        preserving the performance gate from #7742 for the heavy
+        CloudTrail event-lookup checks."""
+        bulk_checks_metadata = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            service_list=["cloudtrail"],
+            provider=self.provider,
+        )
+        assert result == set()
+
+    def test_compliance_keeps_mapped_threat_detection_checks_cis_azure(self):
+        """Regression test for #13356 using the real Azure metadata: with
+        cis_6.0_azure selected, the run set must agree with --list-checks
+        and include defender_ensure_defender_cspm_is_on (CIS 6.0 8.1.1.1).
+        Before the fix the run set was one check short (88 listed, 87 run)."""
+        bulk_checks_metadata = CheckMetadata.get_bulk(provider="azure")
+        bulk_compliance_frameworks = Compliance.get_bulk(provider="azure")
+
+        run = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["cis_6.0_azure"],
+            provider="azure",
+        )
+        listed = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["cis_6.0_azure"],
+            provider="azure",
+            list_checks=True,
+        )
+        assert run == listed
+        assert "defender_ensure_defender_cspm_is_on" in run
+
+    def test_compliance_keeps_mapped_threat_detection_checks_fsbp_aws(self):
+        """Regression test for #13356 using the real AWS metadata: with
+        aws_foundational_security_best_practices_aws selected, the run set
+        must agree with --list-checks and include
+        cognito_user_pool_advanced_security_enabled. Before the fix the run
+        set was one check short (204 listed, 203 run)."""
+        bulk_checks_metadata = CheckMetadata.get_bulk(provider="aws")
+        bulk_compliance_frameworks = Compliance.get_bulk(provider="aws")
+
+        run = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["aws_foundational_security_best_practices_aws"],
+            provider=self.provider,
+        )
+        listed = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            compliance_frameworks=["aws_foundational_security_best_practices_aws"],
+            provider=self.provider,
+            list_checks=True,
+        )
+        assert run == listed
+        assert "cognito_user_pool_advanced_security_enabled" in run
+
     def test_load_checks_to_execute_universal_framework_takes_precedence(self):
         """When ``--compliance <fw>`` matches a universal framework, the
         loader must source checks from ``universal_frameworks[fw].requirements[*]
