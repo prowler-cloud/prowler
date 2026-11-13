@@ -1,0 +1,1 @@
+`network_rdp_internet_access_restricted`, `network_ssh_internet_access_restricted` and `network_http_internet_access_restricted` Azure checks now detect NSG rules that list ports in `destinationPortRanges` or allow all ports with `*`
