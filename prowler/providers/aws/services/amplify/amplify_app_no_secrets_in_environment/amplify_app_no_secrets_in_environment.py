@@ -18,6 +18,8 @@ class amplify_app_no_secrets_in_environment(Check):
             "secrets_ignore_patterns", []
         )
         validate = amplify_client.audit_config.get("secrets_validate", False)
+
+        confidence = amplify_client.audit_config.get("secrets_confidence", "low")
         apps = list(amplify_client.apps.values())
         line_context_by_app = {}
 
@@ -34,6 +36,7 @@ class amplify_app_no_secrets_in_environment(Check):
                 payloads_list,
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

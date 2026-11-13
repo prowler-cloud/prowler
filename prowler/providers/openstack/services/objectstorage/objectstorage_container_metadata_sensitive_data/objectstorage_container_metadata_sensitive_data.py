@@ -21,6 +21,7 @@ class objectstorage_container_metadata_sensitive_data(Check):
             "secrets_ignore_patterns", []
         )
         validate = objectstorage_client.audit_config.get("secrets_validate", False)
+        confidence = objectstorage_client.audit_config.get("secrets_confidence", "low")
         containers = list(objectstorage_client.containers)
 
         # Collect one payload per container (its metadata) and scan them all in
@@ -33,7 +34,10 @@ class objectstorage_container_metadata_sensitive_data(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

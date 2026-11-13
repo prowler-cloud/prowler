@@ -273,6 +273,18 @@ class Test_AWS_Secrets_Ignore_Files:
         }
 
 
+class Test_AWS_Secrets_Confidence:
+    def test_valid_confidence_levels(self):
+        for level in ["low", "medium", "high"]:
+            assert _validate({"secrets_confidence": level}) == {
+                "secrets_confidence": level
+            }
+
+    def test_invalid_confidence_levels_are_dropped(self):
+        for level in ["LOW", "Medium", "ANY", "", "X"]:
+            assert _validate({"secrets_confidence": level}) == {}
+
+
 class Test_AWS_Booleans:
     @pytest.mark.parametrize(
         "key",
@@ -280,6 +292,7 @@ class Test_AWS_Booleans:
             "mute_non_default_regions",
             "verify_premium_support_plans",
             "check_rds_instance_replicas",
+            "secrets_validate",
         ],
     )
     def test_true_and_false_round_trip(self, key):
