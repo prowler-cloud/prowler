@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_instance_high_availability",
+  "CheckTitle": "RDS instances have high availability configured",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Check whether RDS instances use the primary/standby high availability (Ha) deployment type.",
+  "Risk": "Single-node RDS instances have no standby node for failover, increasing downtime risk during node failures and maintenance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/api-rds/rds_01_0004.html",
+    "https://registry.terraform.io/providers/huaweicloud/huaweicloud/latest/docs/resources/rds_instance"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Create a primary/standby RDS instance or change the single-node instance to the primary/standby deployment type. High availability and multi-AZ placement are separate controls; select distinct AZs when multi-AZ resilience is also required.",
+      "Terraform": "```hcl\nresource \"huaweicloud_rds_instance\" \"example\" {\n  flavor              = \"rds.pg.n1.large.2.ha\"\n  ha_replication_mode = \"async\"\n  availability_zone   = [var.primary_az, var.standby_az]\n\n  # Configure the remaining required instance arguments.\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use the RDS primary/standby (Ha) deployment type to provide a standby node for failover.",
+      "Url": "https://hub.prowler.com/check/rds_instance_high_availability"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
