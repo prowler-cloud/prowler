@@ -35,7 +35,8 @@ class bedrock_model_invocation_job_output_encrypted_with_cmk(Check):
             report.status = "MANUAL"
             report.status_extended = (
                 f"Bedrock model invocation jobs could not be listed in region "
-                f"{region} ({error}); verify manually that every model "
+                f"{region} ({error}); grant bedrock:ListModelInvocationJobs "
+                "to the scanning identity or verify manually that every model "
                 "invocation job output uses a customer-managed KMS key."
             )
             findings.append(report)

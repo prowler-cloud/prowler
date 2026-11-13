@@ -790,6 +790,28 @@ class TestBedrockModelInvocationJobPagination:
         assert bedrock_service.model_invocation_jobs == {}
         assert bedrock_service.model_invocation_jobs_scan_errors == {}
 
+    def test_list_model_invocation_jobs_validation_exception_after_page_is_scan_error(
+        self,
+    ):
+        job_arn = "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1"
+        bedrock_service, regional_client, paginator = self._build_service()
+
+        def pages():
+            yield {"invocationJobSummaries": [{"jobArn": job_arn, "jobName": "job-1"}]}
+            raise botocore.exceptions.ClientError(
+                {"Error": {"Code": "ValidationException", "Message": "bad token"}},
+                "ListModelInvocationJobs",
+            )
+
+        paginator.paginate.return_value = pages()
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert list(bedrock_service.model_invocation_jobs) == [job_arn]
+        assert bedrock_service.model_invocation_jobs_scan_errors == {
+            "us-east-1": "ValidationException"
+        }
+
     def test_list_model_invocation_jobs_access_denied_is_scan_error(self):
         bedrock_service, regional_client, paginator = self._build_service()
         paginator.paginate.side_effect = botocore.exceptions.ClientError(

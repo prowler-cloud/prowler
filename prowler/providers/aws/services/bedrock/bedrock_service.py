@@ -87,9 +87,11 @@ class Bedrock(AWSService):
     def _list_model_invocation_jobs(self, regional_client):
         """List Bedrock model invocation jobs in a region."""
         logger.info("Bedrock - Listing Model Invocation Jobs...")
+        page_listed = False
         try:
             paginator = regional_client.get_paginator("list_model_invocation_jobs")
             for page in paginator.paginate():
+                page_listed = True
                 for job in page.get("invocationJobSummaries", []):
                     job_arn = job.get("jobArn", "")
                     if job_arn and (
@@ -103,7 +105,10 @@ class Bedrock(AWSService):
                         )
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
-            if code != "ValidationException":
+            # ValidationException on the first call means Bedrock is unavailable
+            # in the region: a definite "no jobs". Once a page has been listed,
+            # the inventory is incomplete and must become a MANUAL finding.
+            if code != "ValidationException" or page_listed:
                 self.model_invocation_jobs_scan_errors[regional_client.region] = code
             logger.error(
                 f"{regional_client.region} -- "
