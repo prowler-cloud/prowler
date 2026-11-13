@@ -16,6 +16,8 @@ CHECK_MODULE = "prowler.providers.aws.services.opensearchserverless.opensearchse
 
 orig_make_api_call = botocore.client.BaseClient._make_api_call
 
+VPC_ENDPOINT_ID = "vpce-0123456789abcdef0"
+
 
 def create_collection(aoss_client, name):
     """Create a collection with moto, which requires a matching encryption policy."""
@@ -45,14 +47,20 @@ def create_network_policy(
         name=name,
         type="network",
         policy=json.dumps(
-            [
-                {
-                    "Rules": [{"ResourceType": resource_type, "Resource": patterns}],
-                    "AllowFromPublic": allow_from_public,
-                }
-            ]
+            [network_policy_block(resource_type, patterns, allow_from_public)]
         ),
     )
+
+
+def network_policy_block(resource_type, patterns, allow_from_public):
+    """Build a network policy block; private blocks need a source, as in AWS."""
+    block = {
+        "Rules": [{"ResourceType": resource_type, "Resource": patterns}],
+        "AllowFromPublic": allow_from_public,
+    }
+    if not allow_from_public:
+        block["SourceVPCEs"] = [VPC_ENDPOINT_ID]
+    return block
 
 
 def deny_get_security_policy(policy_name):

@@ -4,6 +4,7 @@ from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
+from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.service.service import AWSService
 from prowler.providers.aws.services.opensearchserverless.lib.network_policy import (
     NetworkPolicyRule,
@@ -24,7 +25,7 @@ class OpenSearchServerless(AWSService):
     so that checks can report them instead of treating them as empty.
     """
 
-    def __init__(self, provider):
+    def __init__(self, provider: AwsProvider) -> None:
         """Initialize the service and collect all the data it needs.
 
         Args:

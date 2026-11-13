@@ -20,6 +20,8 @@ from tests.providers.aws.utils import (
 
 orig_make_api_call = botocore.client.BaseClient._make_api_call
 
+VPC_ENDPOINT_ID = "vpce-0123456789abcdef0"
+
 
 def create_collection(aoss_client, name, tags=None):
     """Create a collection with moto, which requires a matching encryption policy."""
@@ -47,25 +49,20 @@ def create_network_policy(aoss_client, name, patterns, allow_from_public):
     aoss_client.create_security_policy(
         name=name,
         type="network",
-        policy=json.dumps(
-            [
-                {
-                    "Rules": [{"ResourceType": "collection", "Resource": patterns}],
-                    "AllowFromPublic": allow_from_public,
-                }
-            ]
-        ),
+        policy=json.dumps(network_policy_document(patterns, allow_from_public)),
     )
 
 
 def network_policy_document(patterns, allow_from_public):
     """Build the policy document AWS returns for a single collection rule."""
-    return [
-        {
-            "Rules": [{"ResourceType": "collection", "Resource": patterns}],
-            "AllowFromPublic": allow_from_public,
-        }
-    ]
+    block = {
+        "Rules": [{"ResourceType": "collection", "Resource": patterns}],
+        "AllowFromPublic": allow_from_public,
+    }
+    if not allow_from_public:
+        # AWS requires a source for private policies
+        block["SourceVPCEs"] = [VPC_ENDPOINT_ID]
+    return [block]
 
 
 def access_denied(operation_name):
