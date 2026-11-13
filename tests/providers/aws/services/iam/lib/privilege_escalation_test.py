@@ -1,3 +1,4 @@
+from prowler.providers.aws.services.iam.lib import privilege_escalation
 from prowler.providers.aws.services.iam.lib.privilege_escalation import (
     check_privilege_escalation,
     privilege_escalation_policies_combination,
@@ -344,18 +345,35 @@ class Test_PrivilegeEscalation:
         self, monkeypatch
     ):
         # A combination holding an unknown or retired action must be skipped
-        # on its own instead of silencing the whole evaluation.
-        monkeypatch.setitem(
-            privilege_escalation_policies_combination,
-            "PassRole+RetiredService",
-            {"iam:PassRole", "retiredservice:DoThing"},
+        # on its own instead of silencing the whole evaluation. The invalid
+        # combination is listed first and a valid one second, with the policy
+        # granting only the valid combination's actions, so the test only
+        # passes if evaluation continues past the invalid combination.
+        monkeypatch.setattr(
+            privilege_escalation,
+            "privilege_escalation_policies_combination",
+            {
+                "PassRole+RetiredService": {
+                    "iam:PassRole",
+                    "retiredservice:DoThing",
+                },
+                "PutUserPolicy+CreateAccessKey": {
+                    "iam:PutUserPolicy",
+                    "iam:CreateAccessKey",
+                },
+            },
         )
         policy = {
             "Version": "2012-10-17",
             "Statement": [
-                {"Effect": "Allow", "Action": "iam:*", "Resource": "*"},
+                {
+                    "Effect": "Allow",
+                    "Action": ["iam:PutUserPolicy", "iam:CreateAccessKey"],
+                    "Resource": "*",
+                },
             ],
         }
         result = check_privilege_escalation(policy)
         assert "iam:PutUserPolicy" in result
+        assert "iam:CreateAccessKey" in result
         assert "retiredservice:DoThing" not in result
