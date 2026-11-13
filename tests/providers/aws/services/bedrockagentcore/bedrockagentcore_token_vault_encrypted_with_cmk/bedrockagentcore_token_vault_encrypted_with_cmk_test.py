@@ -12,7 +12,13 @@ from prowler.providers.aws.services.bedrockagentcore.bedrockagentcore_service im
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_CN_NORTH_1,
+    AWS_REGION_CN_NORTHWEST_1,
+    AWS_REGION_EU_CENTRAL_1,
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_EU_WEST_2,
     AWS_REGION_US_EAST_1,
+    AWS_REGION_US_WEST_2,
     mocked_api_response,
     set_mocked_aws_provider,
 )
@@ -29,6 +35,51 @@ CHECK_MODULE = (
 )
 VAULT_ID = "default"
 VAULT_ARN = f"arn:aws:bedrock-agentcore:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:token-vault/{VAULT_ID}"
+OTHER_ACCOUNT = "210987654321"
+AWS_REGION_CA_CENTRAL_1 = "ca-central-1"
+AWS_REGION_AP_NORTHEAST_1 = "ap-northeast-1"
+
+
+def _vault_arn(region, vault_id=VAULT_ID, partition="aws", account=AWS_ACCOUNT_NUMBER):
+    """Build a token-vault ARN in the collector's format."""
+    return (
+        f"arn:{partition}:bedrock-agentcore:{region}:{account}:token-vault/{vault_id}"
+    )
+
+
+def _read_failure(code="AccessDeniedException"):
+    """Build a GetTokenVault client error with the given code."""
+    return ClientError(
+        {"Error": {"Code": code, "Message": "read failed"}}, "GetTokenVault"
+    )
+
+
+def _assert_regional_manual(
+    finding, region, error, partition="aws", account=AWS_ACCOUNT_NUMBER
+):
+    """Assert the regional MANUAL identity and text for an unreadable vault."""
+    assert finding.status == "MANUAL"
+    assert (
+        finding.status_extended
+        == f"Bedrock AgentCore token vault could not be retrieved in region {region} ({error}); verify access to GetTokenVault and manually confirm whether the vault uses a customer-managed KMS key."
+    )
+    assert finding.resource_id == "token-vault/unknown"
+    assert finding.resource_arn == _vault_arn(
+        region, "unknown", partition=partition, account=account
+    )
+    assert finding.region == region
+
+
+def _assert_customer_managed_pass(finding, region=AWS_REGION_US_EAST_1):
+    """Assert the PASS identity and text for a collected customer-managed vault."""
+    assert finding.status == "PASS"
+    assert (
+        finding.status_extended
+        == f"Bedrock AgentCore token vault {VAULT_ID} is encrypted with a customer-managed KMS key in region {region}."
+    )
+    assert finding.resource_id == VAULT_ID
+    assert finding.resource_arn == _vault_arn(region)
+    assert finding.region == region
 
 
 def _vault_response(key_type):
@@ -551,3 +602,232 @@ class Test_bedrockagentcore_token_vault_encrypted_with_cmk:
                 result[0].resource_arn
                 == f"arn:{partition}:bedrock-agentcore:{region}:{account}:token-vault/{VAULT_ID}"
             )
+
+    @mock_aws
+    def test_selected_vault_excludes_read_error_from_unselected_region(self):
+        """Drop a read error from a Region where no selected vault can exist."""
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey"),
+                AWS_REGION_EU_WEST_1: _read_failure(),
+            },
+            audit_resources=[VAULT_ARN],
+        ) as service:
+            assert set(service.token_vaults) == {VAULT_ARN}
+            assert service.token_vaults_scan_errors == {
+                AWS_REGION_EU_WEST_1: "AccessDeniedException"
+            }
+            result = _execute_check(service)
+
+        assert len(result) == 1
+        _assert_customer_managed_pass(result[0])
+
+    @pytest.mark.parametrize(
+        "unrelated_arn",
+        [
+            f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:instance/i-0123456789abcdef0",
+            f"arn:aws:bedrock-agentcore:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:runtime/agent-0123456789",
+            f"arn:aws:bedrock-agentcore:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:token-vaults/{VAULT_ID}",
+            _vault_arn(AWS_REGION_EU_WEST_1, account=OTHER_ACCOUNT),
+            _vault_arn(AWS_REGION_EU_WEST_1, partition="aws-cn"),
+            _vault_arn(AWS_REGION_EU_WEST_1, vault_id=""),
+            f"arn:aws:bedrock-agentcore:{AWS_REGION_EU_WEST_1}",
+            # Not a TokenVaultIdType (1-64 of [a-zA-Z0-9-_]), so no read can return it.
+            _vault_arn(
+                AWS_REGION_EU_WEST_1, vault_id="default/oauth2credentialprovider/google"
+            ),
+            _vault_arn(AWS_REGION_EU_WEST_1, vault_id="default/"),
+            _vault_arn(AWS_REGION_EU_WEST_1, vault_id="default.vault"),
+            _vault_arn(AWS_REGION_EU_WEST_1, vault_id="*"),
+            _vault_arn(AWS_REGION_EU_WEST_1, vault_id="a" * 65),
+            _vault_arn(AWS_REGION_EU_WEST_1, vault_id="default\n"),
+        ],
+        ids=[
+            "other-service",
+            "other-agentcore-type",
+            "lookalike-type",
+            "other-account",
+            "other-partition",
+            "empty-vault-id",
+            "truncated-arn",
+            "nested-child",
+            "trailing-separator",
+            "invalid-character",
+            "wildcard",
+            "too-long-id",
+            "trailing-newline",
+        ],
+    )
+    @mock_aws
+    def test_unrelated_selected_arn_does_not_widen_error_scope(self, unrelated_arn):
+        """Keep a read error only for an ARN that can identify this account's vault."""
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey"),
+                AWS_REGION_EU_WEST_1: _read_failure(),
+            },
+            audit_resources=[VAULT_ARN, unrelated_arn],
+        ) as service:
+            assert set(service.token_vaults) == {VAULT_ARN}
+            assert service.token_vaults_scan_errors == {
+                AWS_REGION_EU_WEST_1: "AccessDeniedException"
+            }
+            result = _execute_check(service)
+
+        assert len(result) == 1
+        _assert_customer_managed_pass(result[0])
+
+    @pytest.mark.parametrize(
+        "audit_resources",
+        [
+            [
+                f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/i-0123456789abcdef0"
+            ],
+            [
+                f"arn:aws:bedrock-agentcore:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:runtime/agent-0123456789"
+            ],
+        ],
+        ids=["other-service", "other-agentcore-type"],
+    )
+    @mock_aws
+    def test_selection_without_vault_reports_nothing(self, audit_resources):
+        """Report no vault finding when the selection names no token vault."""
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _read_failure(),
+                AWS_REGION_EU_WEST_1: _vault_response("CustomerManagedKey"),
+            },
+            audit_resources=audit_resources,
+        ) as service:
+            assert service.token_vaults == {}
+            assert service.token_vaults_scan_errors == {
+                AWS_REGION_US_EAST_1: "AccessDeniedException"
+            }
+            result = _execute_check(service)
+
+        assert result == []
+
+    @pytest.mark.parametrize(
+        "selected_vault_id",
+        [VAULT_ID, "other", "Vault-01_x", "a" * 64],
+        ids=["default", "other", "hyphen-underscore-id", "max-length-id"],
+    )
+    @mock_aws
+    def test_selected_vault_region_keeps_read_error(self, selected_vault_id):
+        """Keep a read error for any selected vault ID in that Region, before vaults."""
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey"),
+                AWS_REGION_EU_WEST_1: _read_failure("ThrottlingException"),
+            },
+            audit_resources=[
+                VAULT_ARN,
+                _vault_arn(AWS_REGION_EU_WEST_1, vault_id=selected_vault_id),
+            ],
+        ) as service:
+            result = _execute_check(service)
+
+        assert len(result) == 2
+        _assert_regional_manual(result[0], AWS_REGION_EU_WEST_1, "ThrottlingException")
+        _assert_customer_managed_pass(result[1])
+
+    @mock_aws
+    def test_error_scope_uses_audited_partition_and_account(self):
+        """Match selected vault ARNs against the audited partition and account."""
+        with _collect_token_vault(
+            {
+                AWS_REGION_CN_NORTH_1: _read_failure(),
+                AWS_REGION_CN_NORTHWEST_1: _read_failure(),
+            },
+            audit_resources=[
+                _vault_arn(
+                    AWS_REGION_CN_NORTH_1, partition="aws-cn", account=OTHER_ACCOUNT
+                )
+            ],
+            partition="aws-cn",
+            account=OTHER_ACCOUNT,
+        ) as service:
+            assert service.token_vaults_scan_errors == {
+                AWS_REGION_CN_NORTH_1: "AccessDeniedException",
+                AWS_REGION_CN_NORTHWEST_1: "AccessDeniedException",
+            }
+            result = _execute_check(service)
+
+        assert len(result) == 1
+        _assert_regional_manual(
+            result[0],
+            AWS_REGION_CN_NORTH_1,
+            "AccessDeniedException",
+            partition="aws-cn",
+            account=OTHER_ACCOUNT,
+        )
+
+    @pytest.mark.parametrize("audit_resources", [None, []], ids=["unset", "empty"])
+    @mock_aws
+    def test_no_selected_arn_reports_every_regional_error(self, audit_resources):
+        """Report every regional error in Region order, then vaults, for a full scan."""
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _vault_response("CustomerManagedKey"),
+                AWS_REGION_EU_WEST_2: RuntimeError("read failed"),
+                AWS_REGION_EU_WEST_1: _read_failure(),
+            },
+            audit_resources=audit_resources,
+        ) as service:
+            result = _execute_check(service)
+
+        assert len(result) == 3
+        _assert_regional_manual(
+            result[0], AWS_REGION_EU_WEST_1, "AccessDeniedException"
+        )
+        _assert_regional_manual(result[1], AWS_REGION_EU_WEST_2, "RuntimeError")
+        _assert_customer_managed_pass(result[2])
+
+    @mock_aws
+    def test_mixed_service_selection_scopes_vaults_and_errors(self):
+        """Scope successes and each failure kind to selected vaults across Regions."""
+        malformed = _vault_response("ServiceManagedKey")
+        malformed["kmsConfiguration"] = "invalid"
+        aws_owned_arn = _vault_arn(AWS_REGION_CA_CENTRAL_1)
+        with _collect_token_vault(
+            {
+                AWS_REGION_US_EAST_1: _read_failure(),
+                AWS_REGION_EU_WEST_2: malformed,
+                AWS_REGION_CA_CENTRAL_1: _vault_response("ServiceManagedKey"),
+                AWS_REGION_EU_WEST_1: RuntimeError("read failed"),
+                AWS_REGION_US_WEST_2: _read_failure("ThrottlingException"),
+                AWS_REGION_EU_CENTRAL_1: _read_failure(),
+                AWS_REGION_AP_NORTHEAST_1: _vault_response("CustomerManagedKey"),
+            },
+            audit_resources=[
+                VAULT_ARN,
+                _vault_arn(AWS_REGION_EU_WEST_2),
+                aws_owned_arn,
+                f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:instance/i-0123456789abcdef0",
+                f"arn:aws:bedrock-agentcore:{AWS_REGION_US_WEST_2}:{AWS_ACCOUNT_NUMBER}:runtime/agent-0123456789",
+            ],
+        ) as service:
+            # The collector omits the unselected ap-northeast-1 vault and keeps every error.
+            assert set(service.token_vaults) == {aws_owned_arn}
+            assert service.token_vaults_scan_errors == {
+                AWS_REGION_US_EAST_1: "AccessDeniedException",
+                AWS_REGION_EU_WEST_2: "AttributeError",
+                AWS_REGION_EU_WEST_1: "RuntimeError",
+                AWS_REGION_US_WEST_2: "ThrottlingException",
+                AWS_REGION_EU_CENTRAL_1: "AccessDeniedException",
+            }
+            result = _execute_check(service)
+
+        assert len(result) == 3
+        _assert_regional_manual(result[0], AWS_REGION_EU_WEST_2, "AttributeError")
+        _assert_regional_manual(
+            result[1], AWS_REGION_US_EAST_1, "AccessDeniedException"
+        )
+        assert result[2].status == "FAIL"
+        assert (
+            result[2].status_extended
+            == f"Bedrock AgentCore token vault {VAULT_ID} is encrypted with the default AWS-owned key instead of a customer-managed KMS key in region {AWS_REGION_CA_CENTRAL_1}."
+        )
+        assert result[2].resource_id == VAULT_ID
+        assert result[2].resource_arn == aws_owned_arn
+        assert result[2].region == AWS_REGION_CA_CENTRAL_1
