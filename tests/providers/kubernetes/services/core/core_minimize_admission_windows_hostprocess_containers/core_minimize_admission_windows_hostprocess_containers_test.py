@@ -10,6 +10,8 @@ from tests.providers.kubernetes.services.core.conftest import (
 CHECK_ID = "core_minimize_admission_windows_hostprocess_containers"
 MODULE = f"prowler.providers.kubernetes.services.core.{CHECK_ID}.{CHECK_ID}"
 
+def test_no_resources():
+    assert run_check(MODULE, CHECK_ID, make_core_client({})) == []
 
 def test_hostprocess_enabled_at_pod_level_fails():
     pod = make_pod(containers={"app": make_container()})
