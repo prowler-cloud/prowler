@@ -14,13 +14,18 @@ class opensearchserverless_collection_not_publicly_accessible(Check):
       for sure, because public exposure cannot be ruled out.
     - PASS if all network policies were read, at least one rule covers it for
       sure, and none of the rules that cover it allows public access.
+
+    Regions whose collections could not be fully listed get one MANUAL
+    finding each, since collections missing from the inventory cannot be
+    evaluated.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
         """Execute the check logic.
 
         Returns:
-            A list of reports, one per collection.
+            A list of reports, one per collection, plus one MANUAL report per
+            region whose collections could not be fully listed.
         """
         findings = []
         for collection in opensearchserverless_client.collections.values():
@@ -76,6 +81,24 @@ class opensearchserverless_collection_not_publicly_accessible(Check):
                     "review its network access manually."
                 )
 
+            findings.append(report)
+
+        for region in sorted(
+            opensearchserverless_client.collections_listing_failed_regions
+        ):
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
+            report.region = region
+            report.resource_id = "unknown"
+            report.resource_arn = opensearchserverless_client.get_unknown_arn(
+                region=region, resource_type="collection"
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Could not evaluate public access for OpenSearch Serverless "
+                f"collections in {region}: the collections could not be fully "
+                "listed. Verify that aoss:ListCollections is granted to the "
+                "scanning identity."
+            )
             findings.append(report)
 
         return findings

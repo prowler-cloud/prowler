@@ -97,6 +97,7 @@ class Test_OpenSearchServerless_Service:
         opensearchserverless = OpenSearchServerless(aws_provider)
 
         assert opensearchserverless.collections == {}
+        assert opensearchserverless.collections_listing_failed_regions == set()
         assert opensearchserverless.network_rules == {}
 
     @mock_aws
@@ -352,3 +353,36 @@ class Test_OpenSearchServerless_Service:
             opensearchserverless = OpenSearchServerless(aws_provider)
 
         assert opensearchserverless.collections == {}
+        assert opensearchserverless.collections_listing_failed_regions == {
+            AWS_REGION_US_EAST_1
+        }
+
+    @mock_aws
+    def test_list_collections_error_on_second_page_keeps_first_page(self):
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListCollections":
+                if kwarg.get("nextToken") == "page-2":
+                    raise access_denied(operation_name)
+                return {
+                    "collectionSummaries": [
+                        {
+                            "id": "id1",
+                            "name": "collection-1",
+                            "arn": f"arn:aws:aoss:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:collection/id1",
+                            "status": "ACTIVE",
+                        }
+                    ],
+                    "nextToken": "page-2",
+                }
+            return orig_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+            opensearchserverless = OpenSearchServerless(aws_provider)
+
+        assert [c.name for c in opensearchserverless.collections.values()] == [
+            "collection-1"
+        ]
+        assert opensearchserverless.collections_listing_failed_regions == {
+            AWS_REGION_US_EAST_1
+        }

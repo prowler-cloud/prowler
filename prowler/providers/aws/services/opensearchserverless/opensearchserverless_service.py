@@ -20,6 +20,8 @@ class OpenSearchServerless(AWSService):
     the rules whose patterns cover it. A region is only marked as complete
     when all its network policies were listed and read; any failure leaves
     it incomplete so that checks never assume the absence of public access.
+    Regions whose collections could not be fully listed are recorded too,
+    so that checks can report them instead of treating them as empty.
     """
 
     def __init__(self, provider):
@@ -30,6 +32,7 @@ class OpenSearchServerless(AWSService):
         """
         super().__init__("opensearchserverless", provider)
         self.collections = {}
+        self.collections_listing_failed_regions = set()
         self.network_rules = {}
         self.network_policies_complete_regions = set()
         self.__threading_call__(self._list_collections)
@@ -49,6 +52,9 @@ class OpenSearchServerless(AWSService):
 
     def _list_collections(self, regional_client):
         """List the collections of a region, following pagination.
+
+        If any page fails, the collections already listed are kept and the
+        region is recorded as incompletely listed.
 
         Args:
             regional_client: The OpenSearch Serverless client of the region.
@@ -75,6 +81,7 @@ class OpenSearchServerless(AWSService):
                 if not next_token:
                     break
         except Exception as error:
+            self.collections_listing_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

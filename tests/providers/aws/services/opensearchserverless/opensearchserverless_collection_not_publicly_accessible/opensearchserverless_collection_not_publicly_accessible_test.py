@@ -223,3 +223,32 @@ class Test_opensearchserverless_collection_not_publicly_accessible:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert "not covered by any network policy rule" in result[0].status_extended
+
+    @mock_aws
+    def test_failed_collection_listing_is_manual_for_the_region(self):
+        aoss_client = client("opensearchserverless", region_name=AWS_REGION_US_EAST_1)
+        create_collection(aoss_client, "logs-prod")
+        create_network_policy(aoss_client, "net-public", ["collection/logs-*"], True)
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListCollections":
+                raise ClientError(
+                    {"Error": {"Code": "AccessDeniedException", "Message": "Denied"}},
+                    operation_name,
+                )
+            return orig_make_api_call(self, operation_name, kwarg)
+
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_make_api_call
+        ):
+            result = execute_check()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].resource_id == "unknown"
+        assert result[0].resource_arn == (
+            f"arn:aws:opensearchserverless:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:collection/unknown"
+        )
+        assert "could not be fully listed" in result[0].status_extended
