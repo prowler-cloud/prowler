@@ -3,7 +3,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import botocore
+import pytest
 from boto3 import client
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.backup.backup_service import (
@@ -14,6 +16,7 @@ from prowler.providers.aws.services.backup.backup_service import (
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
 
@@ -218,6 +221,78 @@ class TestBackupService:
         assert backup.backup_report_plans[0].last_successful_execution_date == datetime(
             2015, 1, 1
         )
+
+    @pytest.mark.parametrize("region", [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+    @pytest.mark.parametrize("filter_report_plans", [False, True])
+    @pytest.mark.parametrize("empty_first_page", [False, True])
+    @mock_aws
+    def test_list_backup_report_plans_pagination(
+        self, region, filter_report_plans, empty_first_page
+    ):
+        """Collect report plans from every page returned by AWS Backup."""
+        regional_client = client("backup", region_name=region)
+        regional_client.region = region
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+                return_value={region: regional_client},
+            ),
+            patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call),
+        ):
+            backup = Backup(set_mocked_aws_provider([region]))
+        backup.backup_report_plans = []
+        plans = [
+            {
+                "ReportPlanArn": f"arn:aws:backup:{region}:{AWS_ACCOUNT_NUMBER}:report-plan:plan-{number}",
+                "ReportPlanName": f"plan-{number}",
+                "LastAttemptedExecutionTime": datetime(2025, 1, number),
+                "LastSuccessfulExecutionTime": datetime(2025, 1, number),
+            }
+            for number in (1, 2)
+        ]
+        backup.audit_resources = (
+            [plans[1]["ReportPlanArn"]] if filter_report_plans else []
+        )
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_report_plans",
+                {
+                    "ReportPlans": [] if empty_first_page else [plans[0]],
+                    "NextToken": "page-2",
+                },
+                {},
+            )
+            stubber.add_response(
+                "list_report_plans",
+                {"ReportPlans": [], "NextToken": "page-3"},
+                {"NextToken": "page-2"},
+            )
+            stubber.add_response(
+                "list_report_plans",
+                {"ReportPlans": [plans[1]]},
+                {"NextToken": "page-3"},
+            )
+
+            backup._list_backup_report_plans(regional_client)
+
+            expected_plans = (
+                plans[1:] if filter_report_plans or empty_first_page else plans
+            )
+            assert [plan.arn for plan in backup.backup_report_plans] == [
+                plan["ReportPlanArn"] for plan in expected_plans
+            ]
+            for actual, expected in zip(backup.backup_report_plans, expected_plans):
+                assert actual.region == region
+                assert actual.name == expected["ReportPlanName"]
+                assert (
+                    actual.last_attempted_execution_date
+                    == expected["LastAttemptedExecutionTime"]
+                )
+                assert (
+                    actual.last_successful_execution_date
+                    == expected["LastSuccessfulExecutionTime"]
+                )
+            stubber.assert_no_pending_responses()
 
     # Test Backup List Backup Selections
     @mock_aws
