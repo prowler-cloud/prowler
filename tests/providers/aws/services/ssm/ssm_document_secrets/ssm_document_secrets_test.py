@@ -7,6 +7,7 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 class Test_ssm_documents_secrets:
     def test_no_documents(self):
         ssm_client = mock.MagicMock
+        ssm_client.audit_config = {}
         ssm_client.documents = {}
         with mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
@@ -64,6 +65,7 @@ class Test_ssm_documents_secrets:
         document_name = "test-document"
         document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:document/{document_name}"
         ssm_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssm_client.audit_config = {}
         ssm_client.documents = {
             document_name: Document(
                 arn=document_arn,
