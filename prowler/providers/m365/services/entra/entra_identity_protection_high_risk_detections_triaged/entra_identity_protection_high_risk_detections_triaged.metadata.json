@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_identity_protection_high_risk_detections_triaged",
+  "CheckTitle": "Identity Protection detects and ensures triage of high-risk sign-in and user detections",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **ID Protection** flags risk detections such as leaked credentials, anomalous tokens, or password spray attempts. This check verifies that no detections with ``riskLevel`` **high** remain in ``riskState`` **atRisk**, which would indicate they have not been remediated, dismissed or confirmed.",
+  "Risk": "Untriaged high-risk detections (leaked credentials, attacker-in-the-middle, password spray) are strong indicators of **account compromise**. Leaving them unaddressed means a potentially compromised identity retains its access, enabling data exfiltration, lateral movement, privilege escalation, and persistent access by the attacker.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/id-protection/concept-identity-protection-risks",
+    "https://learn.microsoft.com/entra/id-protection/howto-identity-protection-remediate-unblock",
+    "https://learn.microsoft.com/graph/api/riskdetection-list"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Get-MgRiskDetection -All -Filter \"riskLevel eq 'high' and riskState eq 'atRisk'\"",
+      "NativeIaC": "",
+      "Other": "1. Sign in to Microsoft Entra admin center (entra.microsoft.com)\n2. Go to Protection > Identity Protection > Risk detections\n3. Filter by Risk level: High and Risk state: At risk\n4. For each detection, investigate the affected user and sign-in activity\n5. Remediate by resetting the user password and revoking sessions, or dismiss/confirm the detection\n6. Configure user-risk and sign-in-risk Conditional Access policies to automate remediation for high-risk events",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Investigate and triage all high-risk Identity Protection detections promptly. Configure **Conditional Access** user-risk and sign-in-risk policies to automatically require password change or MFA for high-risk events. Establish an operational process to regularly review the Identity Protection dashboard and respond to new detections.",
+      "Url": "https://hub.prowler.com/check/entra_identity_protection_high_risk_detections_triaged"
+    }
+  },
+  "Categories": [
+    "threat-detection",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_identity_protection_sign_in_risk_enabled",
+    "entra_identity_protection_user_risk_enabled"
+  ],
+  "Notes": "Requires Microsoft Entra ID P2 license and IdentityRiskEvent.Read.All permission. Risk detections are retained for 90 days, so results reflect recent activity only."
+}
