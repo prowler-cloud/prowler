@@ -230,6 +230,27 @@ class TestGithubActionsService:
             call_kwargs = mock_clone.call_args
             assert isinstance(call_kwargs.kwargs["errstream"], io.BytesIO)
 
+    def test_clone_repository_with_installation_token(self):
+        """An App installation token goes in as the password of x-access-token."""
+        with (
+            patch("tempfile.mkdtemp", return_value="/tmp/test"),
+            patch("dulwich.porcelain.clone") as mock_clone,
+        ):
+            service = GithubActions.__new__(GithubActions)
+            result = service._clone_repository(
+                "https://github.com/owner/repo",
+                token="ghs_installation",
+                installation=True,
+            )
+
+            assert result == "/tmp/test"
+            mock_clone.assert_called_once_with(
+                "https://x-access-token:ghs_installation@github.com/owner/repo",
+                "/tmp/test",
+                depth=1,
+                errstream=ANY,
+            )
+
     def test_clone_repository_without_token(self):
         with (
             patch("tempfile.mkdtemp", return_value="/tmp/test"),

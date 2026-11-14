@@ -1,0 +1,1 @@
+Add `--github-app-installation-token` (and `GITHUB_APP_INSTALLATION_TOKEN`) to the GitHub provider, so a GitHub App installation token minted outside Prowler can be used and the App private key can stay in a KMS or HSM
