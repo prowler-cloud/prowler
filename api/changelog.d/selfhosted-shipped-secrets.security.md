@@ -1,0 +1,1 @@
+`DJANGO_SECRETS_ENCRYPTION_KEY` and `SECRET_KEY` are generated on the first start and persisted under `_data/api` when empty, the API refuses to start with an encryption key that was ever published in this repository, and the self-hosted `.env` no longer ships working values for `DJANGO_SECRETS_ENCRYPTION_KEY` and `AUTH_SECRET`
