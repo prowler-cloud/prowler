@@ -1,0 +1,1 @@
+Oracle Cloud SSH and RDP exposure checks now treat the IPv6 `::/0` source block as unrestricted, so ingress rules that expose a security list or network security group to the whole IPv6 internet no longer report a false PASS

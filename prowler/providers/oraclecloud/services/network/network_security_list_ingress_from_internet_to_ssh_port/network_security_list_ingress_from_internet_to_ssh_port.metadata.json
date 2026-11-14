@@ -1,7 +1,7 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_list_ingress_from_internet_to_ssh_port",
-  "CheckTitle": "Security list restricts ingress from 0.0.0.0/0 to port 22 (SSH)",
+  "CheckTitle": "Security list restricts ingress from the internet to port 22 (SSH)",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "SecurityList",
   "ResourceGroup": "network",
-  "Description": "**OCI security lists** are evaluated for rules that permit **inbound SSH** from `0.0.0.0/0`. Any rule where the destination includes `TCP 22`-or broader rules allowing all TCP or all protocols from `0.0.0.0/0`-indicates public SSH exposure.",
+  "Description": "**OCI security lists** are evaluated for rules that permit **inbound SSH** from `0.0.0.0/0` (IPv4) or `::/0` (IPv6). Any rule where the destination includes `TCP 22`-or broader rules allowing all TCP or all protocols from an unrestricted CIDR-indicates public SSH exposure.",
   "Risk": "**Public SSH access** enables Internet-wide **brute force** and **credential stuffing**, risking unauthorized shell access. Compromise can cause data exfiltration (**confidentiality**), command tampering (**integrity**), service disruption (**availability**), and lateral movement in the VCN.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"oci_core_security_list\" \"<example_resource_name>\" {\n  compartment_id = \"<example_compartment_ocid>\"\n  vcn_id         = \"<example_vcn_id>\"\n\n  ingress_security_rules {\n    protocol = \"6\"\n    source   = \"<ALLOWED_CIDR>\" # Critical: restrict source; do not use 0.0.0.0/0 to block public SSH\n\n    tcp_options {\n      destination_port_range {\n        min = 22  # Critical: only SSH port\n        max = 22\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict **SSH** to trusted sources using least-privilege network rules; avoid `0.0.0.0/0`. Prefer **private access** via VPN/peering or a hardened **bastion**. Apply **network segmentation** (NSGs/security lists) to narrow scope. Enforce **key-based authentication**, disable password login, and monitor access.",
+      "Text": "Restrict **SSH** to trusted sources using least-privilege network rules; avoid `0.0.0.0/0` and `::/0`. Prefer **private access** via VPN/peering or a hardened **bastion**. Apply **network segmentation** (NSGs/security lists) to narrow scope. Enforce **key-based authentication**, disable password login, and monitor access.",
       "Url": "https://hub.prowler.com/check/network_security_list_ingress_from_internet_to_ssh_port"
     }
   },
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "OCI security lists and network security groups accept both IPv4 and IPv6 rules. An ingress rule with source `::/0` exposes the resource to the whole IPv6 internet exactly like `0.0.0.0/0` does for IPv4, so both are treated as unrestricted here."
 }
