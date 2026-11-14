@@ -17,7 +17,9 @@ def check_alert_rule(alert_rule, expected_equal) -> bool:
 
     if alert_rule.enabled:
         for element in alert_rule.condition.all_of:
-            if element.field == "operationName" and element.equals == expected_equal:
+            if (element.field or "").casefold() == "operationname" and (
+                element.equals or ""
+            ).casefold() == expected_equal.casefold():
                 return True
 
     return False

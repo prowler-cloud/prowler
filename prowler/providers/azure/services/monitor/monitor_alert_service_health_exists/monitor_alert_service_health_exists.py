@@ -19,15 +19,11 @@ class monitor_alert_service_health_exists(Check):
                     has_service_health_category = False
                     has_incident_type_incident = False
                     for element in alert_rule.condition.all_of:
-                        if (
-                            element.field == "category"
-                            and element.equals == "ServiceHealth"
-                        ):
+                        field = (element.field or "").casefold()
+                        value = (element.equals or "").casefold()
+                        if field == "category" and value == "servicehealth":
                             has_service_health_category = True
-                        if (
-                            element.field == "properties.incidentType"
-                            and element.equals == "Incident"
-                        ):
+                        if field == "properties.incidenttype" and value == "incident":
                             has_incident_type_incident = True
 
                     if has_service_health_category and has_incident_type_incident:
