@@ -27,7 +27,7 @@ The delegated user must be a **super administrator** in your Google Workspace or
 
 ### Optional Scope for Edition Context
 
-Prowler can read which Google Workspace editions the tenant holds, Cloud Identity Premium included, and state in a finding when the audited feature is not sold on them (for example, Data Loss Prevention (DLP) for Drive or Google session control). This needs the Enterprise License Manager API enabled in the GCP project (Step 2) and the scope `https://www.googleapis.com/auth/apps.licensing` added to the Domain-Wide Delegation list (Step 5). Without the scope, every check runs the same and findings carry no edition context.
+Prowler can read which Google Workspace editions the tenant holds, Cloud Identity Premium included. When the audited feature is not sold on them, such as Data Loss Prevention (DLP) for Drive or Google session control, Prowler states it in the finding. This requires the Enterprise License Manager API enabled in the GCP project (Step 2) and the scope `https://www.googleapis.com/auth/apps.licensing` added to the Domain-Wide Delegation list (Step 5). Without the scope, every check runs the same and findings carry no edition context.
 
 <Warning>
 The `apps.licensing` scope is Google's "view and manage licenses" scope and has no read-only variant. Prowler only lists license assignments, but anyone holding the Service Account key could assign or revoke licenses with it on behalf of the super administrator. Grant it only if you want the edition context, and protect the key accordingly.
