@@ -1,4 +1,6 @@
+import pytest
 from botocore.client import BaseClient
+from botocore.stub import Stubber
 from mock import patch
 from moto import mock_aws
 
@@ -51,6 +53,144 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_Athena_Service:
+    @pytest.mark.parametrize(
+        "first_page_has_workgroup, filter_resources, expected_names",
+        [
+            (True, False, {"first", "second"}),
+            (False, False, {"second"}),
+            (True, True, {"second"}),
+        ],
+        ids=["multiple-pages", "empty-first-page", "filtered-later-page"],
+    )
+    @mock_aws
+    def test_list_workgroups_paginated(
+        self, first_page_has_workgroup, filter_resources, expected_names
+    ):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        athena = Athena(aws_provider)
+        athena.workgroups.clear()
+        regional_client = athena.regional_clients[AWS_REGION_EU_WEST_1]
+        second_arn = f"arn:aws:athena:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:workgroup/second"
+        if filter_resources:
+            athena.audit_resources = [second_arn]
+
+        with (
+            patch.object(
+                regional_client,
+                "list_work_groups",
+                wraps=regional_client.list_work_groups,
+            ) as list_work_groups_spy,
+            Stubber(regional_client) as stubber,
+        ):
+            stubber.add_response(
+                "list_work_groups",
+                {
+                    "WorkGroups": (
+                        [{"Name": "first", "State": "ENABLED"}]
+                        if first_page_has_workgroup
+                        else []
+                    ),
+                    "NextToken": "next-page",
+                },
+                {},
+            )
+            stubber.add_response(
+                "list_work_groups",
+                {"WorkGroups": [{"Name": "second", "State": "DISABLED"}]},
+                {"NextToken": "next-page"},
+            )
+
+            athena._list_workgroups(regional_client)
+
+            assert {
+                group.name for group in athena.workgroups.values()
+            } == expected_names
+            assert athena.workgroups[second_arn].state == "DISABLED"
+            assert athena.workgroups[second_arn].region == AWS_REGION_EU_WEST_1
+            assert list_work_groups_spy.call_count == 2
+            stubber.assert_no_pending_responses()
+
+    @pytest.mark.parametrize("missing_page", [0, 1, 2])
+    @mock_aws
+    def test_list_workgroups_missing_workgroups(self, missing_page, caplog):
+        athena = Athena(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        athena.workgroups.clear()
+        regional_client = athena.regional_clients[AWS_REGION_EU_WEST_1]
+        names = ["first", "second", "third"]
+        caplog.clear()
+
+        with (
+            patch.object(
+                regional_client,
+                "list_work_groups",
+                wraps=regional_client.list_work_groups,
+            ) as list_work_groups_spy,
+            Stubber(regional_client) as stubber,
+        ):
+            for index, name in enumerate(names):
+                response = (
+                    {}
+                    if index == missing_page
+                    else {"WorkGroups": [{"Name": name, "State": "ENABLED"}]}
+                )
+                if index < 2:
+                    response["NextToken"] = f"page-{index + 2}"
+                params = {"NextToken": f"page-{index + 1}"} if index else {}
+                stubber.add_response("list_work_groups", response, params)
+
+            athena._list_workgroups(regional_client)
+
+            assert {group.name for group in athena.workgroups.values()} == {
+                name for index, name in enumerate(names) if index != missing_page
+            }
+            assert list_work_groups_spy.call_count == 3
+            assert not caplog.records
+            stubber.assert_no_pending_responses()
+
+    @mock_aws
+    def test_list_workgroups_empty(self):
+        athena = Athena(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        athena.workgroups.clear()
+        regional_client = athena.regional_clients[AWS_REGION_EU_WEST_1]
+
+        with Stubber(regional_client) as stubber:
+            stubber.add_response("list_work_groups", {"WorkGroups": []}, {})
+
+            athena._list_workgroups(regional_client)
+
+            assert athena.workgroups == {}
+            stubber.assert_no_pending_responses()
+
+    @mock_aws
+    def test_list_workgroups_later_page_error(self, caplog):
+        athena = Athena(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        athena.workgroups.clear()
+        regional_client = athena.regional_clients[AWS_REGION_EU_WEST_1]
+        caplog.clear()
+
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_work_groups",
+                {
+                    "WorkGroups": [{"Name": "first", "State": "ENABLED"}],
+                    "NextToken": "next-page",
+                },
+                {},
+            )
+            stubber.add_client_error(
+                "list_work_groups",
+                service_error_code="InternalServerException",
+                service_message="Unable to list the next page",
+                expected_params={"NextToken": "next-page"},
+            )
+
+            athena._list_workgroups(regional_client)
+
+            assert {group.name for group in athena.workgroups.values()} == {"first"}
+            assert "InternalServerException" in caplog.text
+            assert "Unable to list the next page" in caplog.text
+            stubber.assert_no_pending_responses()
+
     # Test Athena Get Workgrups
     @mock_aws
     def test_get_workgroupsnot_encrypted(self):
