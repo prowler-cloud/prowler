@@ -1,0 +1,1 @@
+`entra_app_registration_certificate_lifetime_restricted` check for M365 provider, flagging app registrations with certificate credentials valid for longer than a configurable maximum (365 days by default)

@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_app_registration_certificate_lifetime_restricted",
+  "CheckTitle": "App registration certificate lifetime restriction prevents long-lived credential exposure",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **app registration** certificate credentials (keyCredentials) should not have **excessive validity periods**. A certificate that is valid for longer than the configured maximum (default **365 days**) extends the window during which a compromised private key can be used to authenticate as the application.",
+  "Risk": "If a certificate's **private key is stolen**, the attacker can authenticate as the application until the certificate expires. A multi-year certificate turns a single key compromise into a **long-lived backdoor**. The default app management policy restriction only applies to credentials added after the policy takes effect; existing long-lived certificates are never re-evaluated.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity-platform/certificate-credentials",
+    "https://learn.microsoft.com/entra/identity/enterprise-apps/app-management-policies-overview",
+    "https://maester.dev/docs/tests/MT.1198"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az ad app credential reset --id <appId> --cert @<new-cert.pem> --append",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Applications > App registrations\n3. Select the flagged application\n4. Go to Certificates & secrets > Certificates\n5. Upload a new certificate with a validity period within the allowed maximum\n6. Update the workload to use the new certificate\n7. Delete the long-lived certificate",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace long-lived certificates with short-lived ones (at most **365 days**, or **180 days** per CIS M365 7.0 5.1.5.6). Enable the **asymmetricKeyLifetime** restriction in the default app management policy to prevent new long-lived certificates. Prefer **managed identities** or **workload identity federation** where possible.",
+      "Url": "https://hub.prowler.com/check/entra_app_registration_certificate_lifetime_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_default_app_management_policy_enabled",
+    "entra_app_registration_client_secret_unused"
+  ],
+  "Notes": "Only app registrations (/applications) are in scope, consistent with Maester MT.1198. Certificates stored directly on service principals (e.g. SAML signing certificates of enterprise apps) are out of scope. Expired certificates are ignored by this check (they are covered by entra_app_registration_certificate_not_expired). The maximum validity period is configurable via the audit_config key app_registration_certificate_max_validity_days (default 365)."
+}

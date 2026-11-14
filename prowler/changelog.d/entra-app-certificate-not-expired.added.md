@@ -1,0 +1,1 @@
+`entra_app_registration_certificate_not_expired` check for M365 provider, flagging app registrations with expired certificate credentials or certificates that expire within a configurable number of days (30 by default)
