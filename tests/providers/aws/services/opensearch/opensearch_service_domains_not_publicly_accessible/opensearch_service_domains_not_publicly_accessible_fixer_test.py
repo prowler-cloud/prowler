@@ -1,4 +1,4 @@
-from json import dumps
+from json import dumps, loads
 from unittest import mock
 
 from boto3 import client
@@ -142,3 +142,86 @@ class Test_opensearch_service_domains_not_publicly_accessible_fixer:
             )
 
             assert fixer(domain_name, AWS_REGION_US_WEST_2)
+
+    @mock_aws
+    def test_policy_data_not_restricted_keeps_non_public_statements(self):
+        domain_resource = (
+            f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}/*"
+        )
+        public_statement = {
+            "Effect": "Allow",
+            "Principal": {"AWS": ["*"]},
+            "Action": ["es:*"],
+            "Resource": domain_resource,
+        }
+        account_statement = {
+            "Effect": "Allow",
+            "Principal": {"AWS": [f"{AWS_ACCOUNT_NUMBER}"]},
+            "Action": ["es:*"],
+            "Resource": domain_resource,
+        }
+        trusted_ip_statement = {
+            "Effect": "Allow",
+            "Principal": {"AWS": "*"},
+            "Action": ["es:ESHttpGet"],
+            "Resource": domain_resource,
+            "Condition": {"IpAddress": {"aws:SourceIp": ["10.0.0.0/16"]}},
+        }
+        deny_statement = {
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": ["es:ESHttpDelete"],
+            "Resource": domain_resource,
+        }
+
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
+        opensearch_client.create_domain(DomainName=domain_name)
+        opensearch_client.update_domain_config(
+            DomainName=domain_name,
+            AccessPolicies=dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        public_statement,
+                        account_statement,
+                        trusted_ip_statement,
+                        deny_statement,
+                    ],
+                }
+            ),
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_WEST_2], audit_config={"trusted_ips": ["10.0.0.0/16"]}
+        )
+
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible_fixer.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible_fixer import (
+                fixer,
+            )
+
+            assert fixer(domain_name, AWS_REGION_US_WEST_2)
+
+            policy = loads(
+                opensearch_client.describe_domain(DomainName=domain_name)[
+                    "DomainStatus"
+                ]["AccessPolicies"]
+            )
+            assert policy["Statement"] == [
+                account_statement,
+                trusted_ip_statement,
+                deny_statement,
+            ]
