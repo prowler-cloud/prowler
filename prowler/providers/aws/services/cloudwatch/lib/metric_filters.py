@@ -51,9 +51,11 @@ def check_cloudwatch_log_metric_filter(
 ) -> Check_Report_AWS | None:
     """Report whether a trail's log group has a matching metric filter and an alarm.
 
-    Only metric filters attached to a log group that a CloudTrail trail delivers to
-    are considered, and only those whose own pattern matches
-    ``metric_filter_pattern``. A filter whose log group was not retrieved is skipped
+    Only metric filters attached to the exact log group that a CloudTrail trail
+    delivers to are considered, and only those whose own pattern matches
+    ``metric_filter_pattern``. Trail destinations and collected log groups are
+    compared by full ARN, with only the API-equivalent terminal ``:*`` removed
+    from either form. A filter whose log group was not retrieved is skipped
     rather than dereferenced. One compliant filter anywhere short-circuits to PASS;
     otherwise the last matching filter found without an alarm is returned as FAIL.
 
@@ -72,18 +74,22 @@ def check_cloudwatch_log_metric_filter(
     """
     report = None
     # 1. Iterate for CloudWatch Log Group in CloudTrail trails
-    log_groups = []
+    log_group_arns = set()
     if trails is not None and metric_filters is not None and metric_alarms is not None:
         for trail in trails.values():
             if trail.log_group_arn:
-                log_groups.append(trail.log_group_arn.split(":")[6])
+                # The trail destination and DescribeLogGroups may expose the
+                # same log group with or without the terminal ``:*``.
+                log_group_arns.add(trail.log_group_arn.removesuffix(":*"))
         # 2. Describe metric filters for previous log groups
         for metric_filter in metric_filters:
             # A filter whose log group was not retrieved cannot be matched against
             # the trail log groups, so it cannot satisfy the requirement.
             if metric_filter.log_group is None:
                 continue
-            if metric_filter.log_group.name in log_groups and re.search(
+            if metric_filter.log_group.arn.removesuffix(
+                ":*"
+            ) in log_group_arns and re.search(
                 metric_filter_pattern, metric_filter.pattern, flags=re.DOTALL
             ):
                 report = Check_Report_AWS(
