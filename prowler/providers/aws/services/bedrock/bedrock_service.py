@@ -352,6 +352,7 @@ class BedrockAgent(AWSService):
         self.__threading_call__(self._get_prompt, self.prompts.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
         self.__threading_call__(self._list_knowledge_bases)
+        self.__threading_call__(self._get_knowledge_base, self.knowledge_bases.values())
         self.__threading_call__(self._list_data_sources, self.knowledge_bases.values())
         self.__threading_call__(self._get_data_source, self.data_sources.values())
 
@@ -557,6 +558,26 @@ class BedrockAgent(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_knowledge_base(self, knowledge_base):
+        """Fetch full knowledge base details to capture the service role ARN.
+
+        list_knowledge_bases only returns summaries (no roleArn), so we need
+        a per-knowledge-base GetKnowledgeBase call. Stored on the KnowledgeBase
+        model for use by checks like
+        bedrock_knowledge_base_role_least_privilege.
+        """
+        logger.info("Bedrock Agent - Getting Knowledge Base...")
+        try:
+            kb_info = self.regional_clients[knowledge_base.region].get_knowledge_base(
+                knowledgeBaseId=knowledge_base.id
+            )
+            knowledge_base.role_arn = kb_info.get("knowledgeBase", {}).get("roleArn")
+            knowledge_base.detail_retrieved = True
+        except Exception as error:
+            logger.error(
+                f"{knowledge_base.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_data_sources(self, knowledge_base):
         """List the data sources attached to one knowledge base.
 
@@ -682,6 +703,11 @@ class KnowledgeBase(BaseModel):
     name: str
     arn: str
     region: str
+    # Service role ARN from GetKnowledgeBase (roleArn). None when the detail
+    # call failed or the field was absent: unknown, not unset.
+    role_arn: Optional[str] = None
+    # False when GetKnowledgeBase failed: an absent role ARN is unknown, not unset.
+    detail_retrieved: bool = False
     # False when ListDataSources failed: empty set is unknown, not none.
     data_sources_listed: bool = False
     # The error code from a failed ListDataSources, for the finding message.
