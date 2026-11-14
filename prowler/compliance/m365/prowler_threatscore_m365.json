@@ -390,7 +390,8 @@
       "Description": "Enable Identity Protection user risk policies",
       "Checks": [
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
-        "entra_identity_protection_user_risk_enabled"
+        "entra_identity_protection_user_risk_enabled",
+        "entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
       ],
       "Attributes": [
         {
@@ -408,7 +409,8 @@
       "Id": "1.2.5",
       "Description": "Enable Identity Protection sign-in risk policies ",
       "Checks": [
-        "entra_identity_protection_sign_in_risk_enabled"
+        "entra_identity_protection_sign_in_risk_enabled",
+        "entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
       ],
       "Attributes": [
         {

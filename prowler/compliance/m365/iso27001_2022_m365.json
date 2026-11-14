@@ -22,7 +22,8 @@
         "defender_antispam_policy_inbound_no_allowed_domains",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_identity_protection_sign_in_risk_enabled",
-        "entra_identity_protection_user_risk_enabled"
+        "entra_identity_protection_user_risk_enabled",
+        "entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
       ]
     },
     {
@@ -121,7 +122,8 @@
         "entra_conditional_access_policy_block_elevated_insider_risk",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_identity_protection_sign_in_risk_enabled",
-        "entra_identity_protection_user_risk_enabled"
+        "entra_identity_protection_user_risk_enabled",
+        "entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
       ]
     },
     {
@@ -212,7 +214,9 @@
         "entra_cross_tenant_access_default_outbound_restricted",
         "entra_dynamic_group_member_of_rule_not_used",
         "entra_policy_guest_users_access_restrictions",
-        "entra_seamless_sso_disabled"
+        "entra_seamless_sso_disabled",
+        "entra_conditional_access_policy_target_resources_configured",
+        "entra_conditional_access_policy_non_corporate_device_persistent_browser_disabled"
       ]
     },
     {
@@ -266,7 +270,8 @@
         "entra_users_mfa_enabled",
         "exchange_organization_modern_authentication_enabled",
         "exchange_transport_config_smtp_auth_disabled",
-        "sharepoint_modern_authentication_required"
+        "sharepoint_modern_authentication_required",
+        "entra_conditional_access_policy_non_corporate_device_persistent_browser_disabled"
       ]
     },
     {
@@ -493,7 +498,9 @@
         "entra_policy_guest_users_access_restrictions",
         "entra_policy_restricts_user_consent_for_apps",
         "exchange_mailbox_policy_additional_storage_restricted",
-        "exchange_roles_assignment_policy_addins_disabled"
+        "exchange_roles_assignment_policy_addins_disabled",
+        "entra_conditional_access_policy_target_resources_configured",
+        "entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
       ]
     },
     {
@@ -742,7 +749,10 @@
         "entra_policy_admin_self_service_password_reset_disabled",
         "entra_seamless_sso_disabled",
         "entra_service_principal_no_secrets_for_permanent_tier0_roles",
-        "entra_users_mfa_enabled"
+        "entra_users_mfa_enabled",
+        "entra_conditional_access_policy_target_resources_configured",
+        "entra_conditional_access_policy_non_corporate_device_persistent_browser_disabled",
+        "entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
       ]
     },
     {
