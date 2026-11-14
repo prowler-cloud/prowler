@@ -30,6 +30,7 @@ class rds_instance_no_public_access(Check):
                                         "tcp",
                                         [db_instance_port],
                                         any_address=True,
+                                        prefix_lists=ec2_client.managed_prefix_lists,
                                     ):
                                         report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} but is not in a public subnet."
                                         public_sg = True
