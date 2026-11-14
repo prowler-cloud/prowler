@@ -18,7 +18,7 @@ vi.mock("@/lib/report-download-access", () => ({
   isReportDownloadLocked: isReportDownloadLockedMock,
 }));
 
-describe("GET /api/scans/[scanId]/report", () => {
+describe("GET /downloads/scans/[scanId]/report", () => {
   beforeEach(() => {
     isReportDownloadLockedMock.mockResolvedValue(false);
   });
@@ -29,8 +29,8 @@ describe("GET /api/scans/[scanId]/report", () => {
   });
 
   it.each([
-    { label: "download", url: "http://localhost/api" },
-    { label: "preflight", url: "http://localhost/api?preflight=1" },
+    { label: "download", url: "http://localhost/downloads" },
+    { label: "preflight", url: "http://localhost/downloads?preflight=1" },
   ])(
     "rejects the $label without reaching the API when downloads are locked",
     async ({ url }) => {
@@ -73,7 +73,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     vi.stubGlobal("fetch", fetchMock);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
-    const response = await GET(new Request("http://localhost/api"), {
+    const response = await GET(new Request("http://localhost/downloads"), {
       params: Promise.resolve({ scanId: "scan-123" }),
     });
 
@@ -109,7 +109,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
     const response = await GET(
-      new Request("http://localhost/api?preflight=1"),
+      new Request("http://localhost/downloads?preflight=1"),
       {
         params: Promise.resolve({ scanId: "scan-123" }),
       },
@@ -131,7 +131,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     vi.stubGlobal("fetch", fetchMock);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
-    const response = await GET(new Request("http://localhost/api"), {
+    const response = await GET(new Request("http://localhost/downloads"), {
       params: Promise.resolve({ scanId: "scan-123" }),
     });
 
@@ -159,7 +159,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
     const response = await GET(
-      new Request("http://localhost/api?preflight=1"),
+      new Request("http://localhost/downloads?preflight=1"),
       {
         params: Promise.resolve({ scanId: "scan-123" }),
       },
@@ -181,7 +181,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     );
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
-    const response = await GET(new Request("http://localhost/api"), {
+    const response = await GET(new Request("http://localhost/downloads"), {
       params: Promise.resolve({ scanId: "scan-123" }),
     });
 
@@ -197,7 +197,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
     const response = await GET(
-      new Request("http://localhost/api?preflight=1"),
+      new Request("http://localhost/downloads?preflight=1"),
       {
         params: Promise.resolve({ scanId: "scan-123" }),
       },
@@ -224,7 +224,7 @@ describe("GET /api/scans/[scanId]/report", () => {
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
 
     const response = await GET(
-      new Request("http://localhost/api?preflight=1"),
+      new Request("http://localhost/downloads?preflight=1"),
       {
         params: Promise.resolve({ scanId: "scan-123" }),
       },
