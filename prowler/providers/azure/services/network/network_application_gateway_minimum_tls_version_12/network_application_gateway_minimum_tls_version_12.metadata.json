@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_application_gateway_minimum_tls_version_12",
+  "CheckTitle": "Application Gateway requires TLS 1.2 or higher on its SSL policies",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.network/applicationgateways",
+  "ResourceGroup": "network",
+  "Description": "**Azure Application Gateways** are evaluated for the minimum TLS version set by the gateway **SSL policy**, or by the default policy Azure applies when the gateway sets none, and by every **SSL profile** a listener uses.",
+  "Risk": "A minimum below **TLS 1.2** keeps a retired TLS policy on the gateway. Application Gateway stopped supporting TLS 1.0 and 1.1 on 31 August 2025, and a gateway still configured with one of those policies enters a **Failed** state on its next configuration update, so no further change can be applied until the policy is replaced.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-policy-overview",
+    "https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-tls-version-retirement"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network application-gateway ssl-policy set --resource-group <resource_group> --gateway-name <gateway_name> --name AppGwSslPolicy20220101 --policy-type Predefined",
+      "NativeIaC": "```bicep\nresource appGw 'Microsoft.Network/applicationGateways@2024-05-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    sslPolicy: {\n      policyType: 'Predefined'\n      policyName: 'AppGwSslPolicy20220101' // Critical: minimum TLS 1.2\n    }\n    sslProfiles: [\n      {\n        name: '<example_ssl_profile_name>'\n        properties: {\n          sslPolicy: {\n            policyType: 'Predefined'\n            policyName: 'AppGwSslPolicy20220101' // Critical: every SSL profile in the same deployment\n          }\n        }\n      }\n    ]\n    // ...existing gateway configuration\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the Application Gateway\n2. Under Settings, select Listeners. Under SSL Policy, click Change, select AppGwSslPolicy20220101 and click Save. The CLI command changes this gateway policy only\n3. Under Settings > SSL settings, set every SSL profile a listener uses to AppGwSslPolicy20220101, or to a CustomV2 policy with a minimum of TLSv1_2\n4. Application Gateway rejects a mix of the older policies (AppGwSslPolicy20150501, AppGwSslPolicy20170401, AppGwSslPolicy20170401S and Custom) with AppGwSslPolicy20220101, AppGwSslPolicy20220101S or CustomV2 across the gateway and its SSL profiles. If a save or the CLI command is rejected, change the gateway policy and every SSL profile in one deployment, as in the Bicep or Terraform example",
+      "Terraform": "```hcl\nresource \"azurerm_application_gateway\" \"example_resource\" {\n  # ...existing gateway configuration\n  ssl_policy {\n    policy_type = \"Predefined\"\n    policy_name = \"AppGwSslPolicy20220101\" # Critical: minimum TLS 1.2\n  }\n  ssl_profile {\n    name = \"example_ssl_profile\"\n    ssl_policy {\n      policy_type = \"Predefined\"\n      policy_name = \"AppGwSslPolicy20220101\" # Critical: every SSL profile in the same apply\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use **AppGwSslPolicy20220101** or a **CustomV2** policy with a minimum of `TLSv1_2` on the gateway and on every SSL profile, so clients can only negotiate modern protocols and cipher suites.",
+      "Url": "https://hub.prowler.com/check/network_application_gateway_minimum_tls_version_12"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Predefined policy names map to their minimum TLS version through a static table taken from Microsoft's TLS policy overview, matched without regard to case. A gateway that sets no SSL policy, or an empty one, is evaluated on the default policy Azure reports for it, and is MANUAL when Azure reports none. An SSL profile without its own policy uses the gateway policy, and SSL profiles no listener uses are skipped. Every gateway is evaluated, including gateways with only HTTP listeners, as in the CIS audit. Since 31 August 2025 Application Gateway no longer negotiates TLS 1.0 or 1.1, so a FAIL means the configuration still names a retired minimum. Application Gateway does not allow the older policies to be mixed with AppGwSslPolicy20220101, AppGwSslPolicy20220101S or CustomV2 across the gateway and its SSL profiles, so they have to be changed together."
+}
