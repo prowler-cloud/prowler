@@ -1,0 +1,1 @@
+Add `--oidc-auth` to the M365 provider: workload identity federation with a federated token (`AZURE_FEDERATED_TOKEN` or `AZURE_FEDERATED_TOKEN_FILE`) instead of a client secret or certificate, including the Exchange Online and Teams PowerShell connections
