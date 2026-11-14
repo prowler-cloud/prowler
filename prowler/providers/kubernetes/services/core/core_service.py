@@ -23,8 +23,8 @@ class Core(KubernetesService):
         self._in_worker_node()
 
     def _get_pods(self):
-        try:
-            for namespace in self.namespaces:
+        for namespace in self.namespaces:
+            try:
                 pods = self.client.list_namespaced_pod(namespace)
                 for pod in pods.items:
                     containers = self._build_containers(pod.spec.containers)
@@ -57,10 +57,10 @@ class Core(KubernetesService):
                         ephemeral_containers=ephemeral_containers,
                         volumes=volumes,
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] in namespace '{namespace}': {error}"
+                )
 
     @staticmethod
     def _build_containers(containers) -> dict:
