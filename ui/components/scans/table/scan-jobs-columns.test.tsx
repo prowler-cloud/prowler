@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { type ScanProps, SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import { SCAN_STATE } from "@/types/scans";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -214,6 +215,52 @@ describe("getScanJobsColumns", () => {
     renderCell("scanInfo", makeCompletedScan());
 
     expect(screen.queryByText("Partial")).not.toBeInTheDocument();
+  });
+
+  it("links the completed row resource count using its scan id", () => {
+    // Given
+    const scan = makeCompletedScan();
+
+    // When
+    renderCell("resources", scan);
+
+    // Then
+    expect(screen.getByRole("link", { name: "7" })).toHaveAttribute(
+      "href",
+      "/resources?filter[scan]=scan-1",
+    );
+  });
+
+  it.each(
+    Object.values(SCAN_STATE).filter((state) => state !== SCAN_STATE.COMPLETED),
+  )("keeps a positive resource count as text for a %s scan", (state) => {
+    // Given
+    const scan = makeCompletedScan();
+    scan.attributes.state = state;
+
+    // When
+    renderCell("resources", scan);
+
+    // Then
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText("7")).toBeVisible();
+  });
+
+  it("does not link a synthetic schedule row even when its count is positive", () => {
+    // Given
+    const scan = makeCompletedScan();
+    const pendingScan = {
+      ...scan,
+      id: "schedule-provider-1",
+      pendingSchedule: { summary: "Daily" },
+    };
+
+    // When
+    renderCell("resources", pendingScan);
+
+    // Then
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText("7")).toBeVisible();
   });
 
   it("renders the completed duration column", () => {
