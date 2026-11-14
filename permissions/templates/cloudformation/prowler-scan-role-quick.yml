@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  Creates the read-only ProwlerScan IAM Role for a single AWS account so Prowler Cloud
+  can scan it. Trimmed-down version of prowler-scan-role.yml for the quick onboarding
+  flow: the only input is the External ID, everything else is fixed for Prowler Cloud.
+  For self-hosted Prowler, AWS Organizations or the S3 integration use prowler-scan-role.yml.
+
+Parameters:
+  ExternalId:
+    Description: |
+      External ID that Prowler Cloud will use to assume the ProwlerScan IAM Role. Pre-filled by Prowler, do not edit.
+    Type: String
+    MinLength: 1
+    AllowedPattern: ".+"
+    ConstraintDescription: "ExternalId must not be empty."
+
+Mappings:
+  ProwlerCloud:
+    Principal:
+      AccountId: "232136659152"
+      IAMPrincipal: "role/prowler*"
+
+Resources:
+  ProwlerScan:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ProwlerScan
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub
+                - "arn:${AWS::Partition}:iam::${AccountId}:root"
+                - AccountId: !FindInMap [ProwlerCloud, Principal, AccountId]
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "sts:ExternalId": !Ref ExternalId
+              StringLike:
+                "aws:PrincipalArn": !Sub
+                  - "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
+                  - AccountId: !FindInMap [ProwlerCloud, Principal, AccountId]
+                    IAMPrincipal: !FindInMap [ProwlerCloud, Principal, IAMPrincipal]
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
+      Policies:
+        - PolicyName: ProwlerScan
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowMoreReadOnly
+                Effect: Allow
+                Action:
+                  - "account:Get*"
+                  - "amplify:ListApps"
+                  - "amplify:ListBranches"
+                  - "appstream:Describe*"
+                  - "appstream:List*"
+                  - "backup:List*"
+                  - "backup:Get*"
+                  - "bedrock:List*"
+                  - "bedrock:Get*"
+                  - "cloudtrail:GetInsightSelectors"
+                  - "codeartifact:List*"
+                  - "codebuild:BatchGet*"
+                  - "codebuild:ListReportGroups"
+                  - "cognito-idp:GetUserPoolMfaConfig"
+                  - "datapipeline:DescribePipelines"
+                  - "datapipeline:GetPipelineDefinition"
+                  - "datapipeline:ListPipelines"
+                  - "dlm:Get*"
+                  - "drs:Describe*"
+                  - "ds:Get*"
+                  - "ds:Describe*"
+                  - "ds:List*"
+                  - "dynamodb:GetResourcePolicy"
+                  - "ec2:GetEbsEncryptionByDefault"
+                  - "ec2:GetSnapshotBlockPublicAccessState"
+                  - "ec2:GetInstanceMetadataDefaults"
+                  - "ecr:Describe*"
+                  - "ecr:GetRegistryScanningConfiguration"
+                  - "ecr:BatchGetImage"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "elasticfilesystem:DescribeBackupPolicy"
+                  - "glue:GetConnections"
+                  - "glue:GetSecurityConfiguration*"
+                  - "glue:SearchTables"
+                  - "glue:GetMLTransforms"
+                  - "inspector2:BatchGetFindingDetails"
+                  - "lambda:GetFunction*"
+                  - "logs:FilterLogEvents"
+                  - "lightsail:GetRelationalDatabases"
+                  - "macie2:GetMacieSession"
+                  - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "rolesanywhere:ListProfiles"
+                  - "rolesanywhere:ListTagsForResource"
+                  - "rolesanywhere:ListTrustAnchors"
+                  - "s3:GetAccountPublicAccessBlock"
+                  - "shield:DescribeProtection"
+                  - "shield:GetSubscriptionState"
+                  - "securityhub:GetFindings"
+                  - "servicecatalog:Describe*"
+                  - "servicecatalog:List*"
+                  - "ssm:GetDocument"
+                  - "ssm-incidents:List*"
+                  - "states:ListTagsForResource"
+                  - "support:Describe*"
+                  - "tag:GetTagKeys"
+                  - "wellarchitected:List*"
+                Resource: "*"
+              - Sid: AllowSecurityHubImportFindings
+                Effect: Allow
+                Action:
+                  - "securityhub:BatchImportFindings"
+                Resource: "*"
+              - Sid: AllowAPIGatewayReadOnly
+                Effect: Allow
+                Action:
+                  - "apigateway:GET"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/domainnames"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/domainnames/*"
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerScan"
+
+Outputs:
+  ProwlerScanRoleArn:
+    Description: "ARN of the ProwlerScan IAM Role. Paste it into Prowler."
+    Value: !GetAtt ProwlerScan.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
