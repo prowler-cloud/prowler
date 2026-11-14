@@ -1,0 +1,17 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == <Snowflake Account Identifier or Locator>
+### Region == * (Snowflake resources are account-scoped, not regional)
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "myorg-myaccount":
+      Checks:
+        "users_mfa_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "BREAKGLASS_ADMIN"
