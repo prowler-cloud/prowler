@@ -881,6 +881,15 @@ class TestAzureProviderSovereignCloudSupport:
             "https://api.loganalytics.us",
             "login.microsoftonline.us",
         ),
+        (
+            "AzureBleuCloud",
+            "login.sovcloud-identity.fr",
+            "https://management.sovcloud-api.fr",
+            ["https://management.sovcloud-api.fr/.default"],
+            "https://graph.svc.sovcloud.fr/.default",
+            "https://api.loganalytics.sovcloud-api.fr",
+            "login.sovcloud-identity.fr",
+        ),
     ]
 
     @pytest.mark.parametrize(

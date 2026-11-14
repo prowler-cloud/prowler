@@ -24,6 +24,12 @@ REGION_CASES = [
         "https://graph.microsoft.us/.default",
         "https://api.loganalytics.us",
     ),
+    (
+        "AzureBleuCloud",
+        "https://graph.svc.sovcloud.fr",
+        "https://graph.svc.sovcloud.fr/.default",
+        "https://api.loganalytics.sovcloud-api.fr",
+    ),
 ]
 
 
