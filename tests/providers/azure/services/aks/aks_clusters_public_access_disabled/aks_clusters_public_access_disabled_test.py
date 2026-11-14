@@ -1,7 +1,12 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.aks.aks_service import Cluster
+import pytest
+
+from prowler.providers.azure.services.aks.aks_service import (
+    Cluster,
+    ManagedClusterAgentPoolProfile,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
@@ -11,6 +16,72 @@ from tests.providers.azure.azure_fixtures import (
 
 
 class Test_aks_clusters_public_access_disabled:
+    @pytest.mark.parametrize(
+        "private_fqdn, public_ip_flags, expected_status",
+        [
+            ("private.example", [False, True], "FAIL"),
+            ("private.example", [True, False], "FAIL"),
+            ("private.example", [False, False, True], "FAIL"),
+            ("private.example", [True, True], "FAIL"),
+            ("private.example", [False, False], "PASS"),
+            ("private.example", [False], "PASS"),
+            ("private.example", [], "FAIL"),
+            (None, [False, False], "FAIL"),
+        ],
+    )
+    def test_all_node_pools_must_disable_public_ips(
+        self, private_fqdn, public_ip_flags, expected_status
+    ):
+        """A private pool must not hide public IPs on another node pool."""
+        cluster_id = str(uuid4())
+        client = mock.MagicMock()
+        client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        client.clusters = {
+            AZURE_SUBSCRIPTION_ID: {
+                cluster_id: Cluster(
+                    id=cluster_id,
+                    name="mixed-pools",
+                    public_fqdn="public.example",
+                    private_fqdn=private_fqdn,
+                    network_policy="azure",
+                    agent_pool_profiles=[
+                        ManagedClusterAgentPoolProfile(
+                            name=f"pool{index}", enable_node_public_ip=public_ip
+                        )
+                        for index, public_ip in enumerate(public_ip_flags)
+                    ],
+                    location="westeurope",
+                    rbac_enabled=True,
+                )
+            }
+        }
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_service.AKS.__init__",
+                return_value=None,
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
+                new=client,
+            ),
+        ):
+            from prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled import (
+                aks_clusters_public_access_disabled,
+            )
+
+            findings = aks_clusters_public_access_disabled().execute()
+
+        assert len(findings) == 1
+        assert findings[0].status == expected_status
+        assert findings[0].resource_id == cluster_id
+        assert findings[0].resource_name == "mixed-pools"
+        assert findings[0].subscription == AZURE_SUBSCRIPTION_ID
+        assert findings[0].location == "westeurope"
+
     def test_aks_no_subscriptions(self):
         aks_client = mock.MagicMock
         aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
