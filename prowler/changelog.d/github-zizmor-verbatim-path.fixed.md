@@ -1,0 +1,1 @@
+`githubactions_workflow_security_scan` check for GitHub provider dropped every zizmor finding with zizmor 1.27.0 or later, which reports the workflow path as `verbatim_path`, and reported PASS for repositories with workflow issues
