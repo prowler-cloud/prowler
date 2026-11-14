@@ -5,6 +5,7 @@ import {
   getAuthUrl,
   isGithubOAuthEnabled,
   isGoogleOAuthEnabled,
+  isMicrosoftOAuthEnabled,
 } from "@/lib/helper";
 import { isCloud, isSelfRegistrationEnabled } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
@@ -26,6 +27,7 @@ const SignUp = async ({
 
   const GOOGLE_AUTH_URL = getAuthUrl("google");
   const GITHUB_AUTH_URL = getAuthUrl("github");
+  const MICROSOFT_AUTH_URL = getAuthUrl("microsoft");
 
   return (
     <AuthForm
@@ -34,8 +36,10 @@ const SignUp = async ({
       isCloudEnv={isCloudEnv}
       googleAuthUrl={GOOGLE_AUTH_URL}
       githubAuthUrl={GITHUB_AUTH_URL}
+      microsoftAuthUrl={MICROSOFT_AUTH_URL}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
       isGithubOAuthEnabled={isGithubOAuthEnabled}
+      isMicrosoftOAuthEnabled={isMicrosoftOAuthEnabled}
     />
   );
 };

@@ -4,6 +4,7 @@ import {
   GithubIcon,
   GoogleIcon,
   GoogleMonoIcon,
+  MicrosoftIcon,
 } from "@/components/icons/Icons";
 import {
   Button,
@@ -94,17 +95,21 @@ const SocialButton = ({
 export const SocialButtons = ({
   googleAuthUrl,
   githubAuthUrl,
+  microsoftAuthUrl,
   callbackUrl = "/",
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isMicrosoftOAuthEnabled,
   isDisabled = false,
   disabledTooltipContent,
 }: {
   googleAuthUrl?: string;
   githubAuthUrl?: string;
+  microsoftAuthUrl?: string;
   callbackUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isMicrosoftOAuthEnabled?: boolean;
   isDisabled?: boolean;
   disabledTooltipContent?: ReactNode;
 }) => {
@@ -113,6 +118,9 @@ export const SocialButtons = ({
     : undefined;
   const githubUrl = githubAuthUrl
     ? appendCallbackState(githubAuthUrl, callbackUrl)
+    : undefined;
+  const microsoftUrl = microsoftAuthUrl
+    ? appendCallbackState(microsoftAuthUrl, callbackUrl)
     : undefined;
   const socialDisabledTooltip =
     disabledTooltipContent || "Social login is currently unavailable.";
@@ -140,6 +148,18 @@ export const SocialButtons = ({
       disabledDocs: {
         message: "Social Login with Github is not enabled.",
         href: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration",
+      },
+    },
+    {
+      key: "microsoft",
+      label: "Continue with Microsoft",
+      url: microsoftUrl,
+      isOAuthEnabled: isMicrosoftOAuthEnabled,
+      enabledIcon: MicrosoftIcon,
+      disabledIcon: MicrosoftIcon,
+      disabledDocs: {
+        message: "Social Login with Microsoft is not enabled.",
+        href: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#microsoft-entra-id-oauth-configuration",
       },
     },
   ];

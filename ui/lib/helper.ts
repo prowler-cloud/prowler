@@ -94,6 +94,21 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
         scope: "user:email",
       },
     },
+    microsoft: {
+      // Entra ID authorize endpoint is tenant-scoped. "organizations" (the
+      // default) allows any work/school account; a specific directory (tenant)
+      // ID restricts sign-in to a single Entra ID tenant.
+      baseUrl: `https://login.microsoftonline.com/${encodeURIComponent(
+        process.env.SOCIAL_MICROSOFT_OAUTH_TENANT || "organizations",
+      )}/oauth2/v2.0/authorize`,
+      params: {
+        client_id: process.env.SOCIAL_MICROSOFT_OAUTH_CLIENT_ID,
+        redirect_uri: process.env.SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL,
+        response_type: "code",
+        scope: "openid email profile User.Read",
+        prompt: "select_account",
+      },
+    },
   };
 
   const { baseUrl, params } = config[provider];
@@ -350,6 +365,10 @@ export const isGoogleOAuthEnabled =
 export const isGithubOAuthEnabled =
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
+
+export const isMicrosoftOAuthEnabled =
+  !!process.env.SOCIAL_MICROSOFT_OAUTH_CLIENT_ID &&
+  !!process.env.SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET;
 
 /** Returned by {@link checkTaskStatus} when `maxRetries` is exhausted, so callers
  * can tell an exhausted wait apart from a real task failure. */

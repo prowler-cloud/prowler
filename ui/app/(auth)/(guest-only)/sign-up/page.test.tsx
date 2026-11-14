@@ -21,6 +21,7 @@ vi.mock("@/lib/helper", () => ({
   getAuthUrl: () => "",
   isGithubOAuthEnabled: false,
   isGoogleOAuthEnabled: false,
+  isMicrosoftOAuthEnabled: false,
 }));
 
 vi.mock("@/components/auth/oss", () => ({
