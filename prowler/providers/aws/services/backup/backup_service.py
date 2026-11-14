@@ -126,29 +126,33 @@ class Backup(AWSService):
         logger.info("Backup - Listing Backup Report Plans...")
 
         try:
-            list_backup_report_plans = regional_client.list_report_plans()[
-                "ReportPlans"
-            ]
-            for backup_report_plan in list_backup_report_plans:
-                if not self.audit_resources or (
-                    is_resource_filtered(
-                        backup_report_plan.get("ReportPlanArn"),
-                        self.audit_resources,
-                    )
-                ):
-                    self.backup_report_plans.append(
-                        BackupReportPlan(
-                            arn=backup_report_plan.get("ReportPlanArn"),
-                            region=regional_client.region,
-                            name=backup_report_plan.get("ReportPlanName"),
-                            last_attempted_execution_date=backup_report_plan.get(
-                                "LastAttemptedExecutionTime"
-                            ),
-                            last_successful_execution_date=backup_report_plan.get(
-                                "LastSuccessfulExecutionTime"
-                            ),
+            list_report_plans_args = {}
+            while True:
+                response = regional_client.list_report_plans(**list_report_plans_args)
+                for backup_report_plan in response["ReportPlans"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            backup_report_plan.get("ReportPlanArn"),
+                            self.audit_resources,
                         )
-                    )
+                    ):
+                        self.backup_report_plans.append(
+                            BackupReportPlan(
+                                arn=backup_report_plan.get("ReportPlanArn"),
+                                region=regional_client.region,
+                                name=backup_report_plan.get("ReportPlanName"),
+                                last_attempted_execution_date=backup_report_plan.get(
+                                    "LastAttemptedExecutionTime"
+                                ),
+                                last_successful_execution_date=backup_report_plan.get(
+                                    "LastSuccessfulExecutionTime"
+                                ),
+                            )
+                        )
+                next_token = response.get("NextToken")
+                if not next_token:
+                    break
+                list_report_plans_args["NextToken"] = next_token
 
         except Exception as error:
             logger.error(
