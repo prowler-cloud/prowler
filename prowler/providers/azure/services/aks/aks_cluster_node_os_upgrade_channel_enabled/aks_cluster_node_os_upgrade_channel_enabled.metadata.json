@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_node_os_upgrade_channel_enabled",
+  "CheckTitle": "AKS cluster has a managed node OS auto-upgrade channel enabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.containerservice/managedclusters",
+  "ResourceGroup": "container",
+  "Description": "**AKS clusters** are evaluated for a managed **node OS auto-upgrade channel**, meaning `SecurityPatch` or `NodeImage`. This channel controls how operating system security updates reach the node VMs and is independent of the cluster upgrade channel, which only moves the Kubernetes version. `None` and `Unmanaged` leave node OS patching outside AKS control.",
+  "Risk": "Nodes running an unpatched OS image keep **known CVEs** in the kernel and system packages that every pod on the host shares. A compromised container can then use a local privilege escalation to escape, gain root on the node, and take the kubelet credentials and the node's managed identity, turning one workload compromise into cluster-wide access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster",
+    "https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-node-os-image"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --node-os-upgrade-channel NodeImage",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the node OS auto-upgrade channel to `NodeImage` or `SecurityPatch` so AKS applies operating system security updates on a managed cadence, and pair it with a planned maintenance window because both channels can reimage nodes. `NodeImage` ships weekly, carries bug fixes as well as security fixes, and adds no extra cost. `SecurityPatch` ships faster, carries security fixes only, and incurs VHD hosting cost in the node resource group. Avoid `None` and `Unmanaged` unless a documented exception and a manual patching process exist.",      
+      "Url": "https://hub.prowler.com/check/aks_cluster_node_os_upgrade_channel_enabled"
+    }
+  },
+  "Categories": [
+    "vulnerabilities",
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "`Unmanaged` is reported as a finding alongside `None`. On that channel the operating system's own updater applies packages, AKS has no control over how or when they land, Microsoft recommends `SecurityPatch` over it, and on Windows node pools it behaves the same as `None`. Two operational caveats: channel changes can take up to 24 hours to take effect, and `SecurityPatch` is not supported on Windows node pools, so `NodeImage` is the option there."
+}
