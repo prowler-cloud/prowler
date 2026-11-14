@@ -26,6 +26,8 @@ test_arn_model = (
 )
 test_training_job = "test-training-job"
 test_arn_training_job = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_model}"
+test_tuning_job = "test-tuning-job"
+test_arn_tuning_job = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:hyper-parameter-tuning-job/{test_tuning_job}"
 subnet_id = "subnet-" + str(uuid4())
 kms_key_id = str(uuid4())
 lifecycle_config_name = "test-lifecycle-config"
@@ -73,6 +75,23 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "TrainingJobArn": test_arn_training_job,
                 },
             ]
+        }
+    if operation_name == "ListHyperParameterTuningJobs":
+        return {
+            "HyperParameterTuningJobSummaries": [
+                {
+                    "HyperParameterTuningJobName": test_tuning_job,
+                    "HyperParameterTuningJobArn": test_arn_tuning_job,
+                },
+            ]
+        }
+    if operation_name == "DescribeHyperParameterTuningJob":
+        return {
+            "TrainingJobDefinition": {
+                "ResourceConfig": {
+                    "VolumeKmsKeyId": kms_key_id,
+                },
+            },
         }
     if operation_name == "DescribeNotebookInstance":
         return {
@@ -248,6 +267,23 @@ class Test_SageMaker_Service:
             {"Key": "test", "Value": "test"},
         ]
 
+    # Test SageMaker list hyperparameter tuning jobs
+    def test_list_hyper_parameter_tuning_jobs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_hyperparameter_tuning_jobs) == 1
+        assert sagemaker.sagemaker_hyperparameter_tuning_jobs[0].name == test_tuning_job
+        assert (
+            sagemaker.sagemaker_hyperparameter_tuning_jobs[0].arn == test_arn_tuning_job
+        )
+        assert (
+            sagemaker.sagemaker_hyperparameter_tuning_jobs[0].region
+            == AWS_REGION_EU_WEST_1
+        )
+        assert sagemaker.sagemaker_hyperparameter_tuning_jobs[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+
     # Test SageMaker describe notebook instance
     def test_describe_notebook_instance(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -334,6 +370,121 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_training_jobs[0].network_isolation
         assert sagemaker.sagemaker_training_jobs[0].volume_kms_key_id == kms_key_id
         assert sagemaker.sagemaker_training_jobs[0].vpc_config_subnets == [subnet_id]
+
+    # Test SageMaker describe hyperparameter tuning jobs
+    def test_describe_hyper_parameter_tuning_jobs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_hyperparameter_tuning_jobs) == 1
+        assert (
+            sagemaker.sagemaker_hyperparameter_tuning_jobs[0].all_definitions_encrypted
+            is True
+        )
+        assert (
+            sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved is True
+        )
+
+    def test_describe_hyper_parameter_tuning_jobs_encrypted_via_tuning_resource_config(
+        self,
+    ):
+        def mock_tuning_resource_config(self, operation_name, kwarg):
+            if operation_name == "DescribeHyperParameterTuningJob":
+                return {
+                    "TrainingJobDefinition": {
+                        "HyperParameterTuningResourceConfig": {
+                            "VolumeKmsKeyId": kms_key_id
+                        },
+                    },
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_tuning_resource_config,
+        ):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[
+                    0
+                ].all_definitions_encrypted
+                is True
+            )
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved
+                is True
+            )
+
+    def test_describe_hyper_parameter_tuning_jobs_unencrypted(self):
+        def mock_unencrypted(self, operation_name, kwarg):
+            if operation_name == "DescribeHyperParameterTuningJob":
+                return {
+                    "TrainingJobDefinition": {
+                        "ResourceConfig": {},
+                    },
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_unencrypted):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[
+                    0
+                ].all_definitions_encrypted
+                is False
+            )
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved
+                is True
+            )
+
+    def test_describe_hyper_parameter_tuning_jobs_multi_definitions(self):
+        def mock_multi(self, operation_name, kwarg):
+            if operation_name == "DescribeHyperParameterTuningJob":
+                return {
+                    "TrainingJobDefinitions": [
+                        {"ResourceConfig": {"VolumeKmsKeyId": kms_key_id}},
+                        {"ResourceConfig": {}},
+                    ],
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_multi):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[
+                    0
+                ].all_definitions_encrypted
+                is False
+            )
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved
+                is True
+            )
+
+    def test_describe_hyper_parameter_tuning_jobs_client_error(self):
+        def mock_error(self, operation_name, kwarg):
+            if operation_name == "DescribeHyperParameterTuningJob":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "ResourceNotFound",
+                            "Message": "Job not found",
+                        }
+                    },
+                    "DescribeHyperParameterTuningJob",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_error):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved
+                is False
+            )
 
     # Test SageMaker list endpoint configs
     def test_list_endpoint_configs(self):
@@ -461,17 +612,20 @@ class Test_SageMaker_Service:
                 patch(
                     "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_domains"
                 ),
+                patch(
+                    "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_hyper_parameter_tuning_jobs"
+                ),
             ):
                 sagemaker_service = SageMaker(audit_info)
 
                 # Check that __threading_call__ was called for _list_tags_for_resource
-                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains)
+                # (one for each resource type: models, notebooks, training jobs, processing jobs, hyperparameter tuning jobs, endpoint configs, domains)
                 tag_calls = [
                     c
                     for c in mock_threading_call.call_args_list
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
-                assert len(tag_calls) == 6
+                assert len(tag_calls) == 7
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):
@@ -502,3 +656,25 @@ class Test_SageMaker_Service:
         with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
             sagemaker = SageMaker(aws_provider)
             assert sagemaker.sagemaker_model_registries == []
+
+    def test_list_hyper_parameter_tuning_jobs_error(self):
+        def mock_access_denied(self, operation_name, kwarg):
+            if operation_name == "ListHyperParameterTuningJobs":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    "ListHyperParameterTuningJobs",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.sagemaker_hyperparameter_tuning_jobs == []
+            assert sagemaker.sagemaker_hyperparameter_tuning_jobs_scan_errors == {
+                AWS_REGION_EU_WEST_1: "AccessDeniedException"
+            }
