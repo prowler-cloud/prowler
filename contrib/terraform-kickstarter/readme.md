@@ -16,17 +16,13 @@ Installing Prowler with Terraform is simple and can be completed in under 1 minu
   sudo yum install -y yum-utils
   sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
   sudo yum -y install terraform
-  cd util/terraform-kickstarter
+  cd contrib/terraform-kickstarter
   ```
 - Issue a `terraform init`
 
 - Issue a `terraform apply`
 
-  ![Prowler Install](https://prowler-docs.s3.amazonaws.com/Prowler-Terraform-Install.gif)
-
    - It is likely an error will return related to the SecurityHub subscription.  This appears to be Terraform related and you can validate the configuration by navigating to the SecurityHub console.  Click Integrations and search for Prowler. Take note of the green check where it says *Accepting findings*
-
-  ![Prowler Subscription](https://prowler-docs.s3.amazonaws.com/Validate-Prowler-Subscription.gif)
 
 
 Thats it!  Install is now complete.  The resources include a Cloudwatch event that will trigger the AWS Codebuild to run daily at 00:00 GMT.  If you'd like to run an assessment after the deployment then simply navigate to the Codebuild console and start the job manually.
