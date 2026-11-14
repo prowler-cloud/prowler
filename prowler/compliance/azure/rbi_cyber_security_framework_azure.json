@@ -219,7 +219,10 @@
         "defender_ensure_notify_alerts_severity_is_high",
         "defender_ensure_notify_emails_to_owners",
         "defender_ensure_mcas_is_enabled",
-        "defender_ensure_wdatp_is_enabled"
+        "defender_ensure_wdatp_is_enabled",
+        "storage_queue_service_logging_enabled",
+        "storage_blob_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
