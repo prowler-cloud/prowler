@@ -19,20 +19,35 @@ class SES(AWSService):
         )
 
     def _list_email_identities(self, regional_client):
+        """Collect all pages of SES email identities for a region."""
         logger.info("SES - describing identities...")
         try:
-            response = regional_client.list_email_identities()
-            for email_identity in response["EmailIdentities"]:
-                identity_arn = f"arn:{self.audited_partition}:ses:{regional_client.region}:{self.audited_account}:identity/{email_identity['IdentityName']}"
-                if not self.audit_resources or (
-                    is_resource_filtered(identity_arn, self.audit_resources)
-                ):
-                    self.email_identities[identity_arn] = Identity(
-                        arn=identity_arn,
-                        type=email_identity["IdentityType"],
-                        name=email_identity["IdentityName"],
-                        region=regional_client.region,
+            request = {}
+            seen_tokens = set()
+            while True:
+                response = regional_client.list_email_identities(**request)
+                for email_identity in response.get("EmailIdentities", []):
+                    identity_arn = f"arn:{self.audited_partition}:ses:{regional_client.region}:{self.audited_account}:identity/{email_identity['IdentityName']}"
+                    if not self.audit_resources or is_resource_filtered(
+                        identity_arn, self.audit_resources
+                    ):
+                        self.email_identities[identity_arn] = Identity(
+                            arn=identity_arn,
+                            type=email_identity["IdentityType"],
+                            name=email_identity["IdentityName"],
+                            region=regional_client.region,
+                        )
+
+                next_token = response.get("NextToken")
+                if not next_token:
+                    break
+                if next_token in seen_tokens:
+                    logger.error(
+                        f"{regional_client.region} -- SES ListEmailIdentities returned a repeated pagination token"
                     )
+                    break
+                seen_tokens.add(next_token)
+                request["NextToken"] = next_token
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
