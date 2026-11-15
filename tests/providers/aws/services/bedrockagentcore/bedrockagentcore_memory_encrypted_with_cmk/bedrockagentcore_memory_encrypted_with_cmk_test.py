@@ -124,7 +124,7 @@ class Test_bedrockagentcore_memory_encrypted_with_cmk:
         assert result[0].status == "MANUAL"
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore memory {MEMORY_NAME} is encrypted with the KMS key {KMS_KEY_ARN} in region {AWS_REGION_US_EAST_1}, but the key details could not be retrieved; verify manually that it is a customer-managed KMS key."
+            == f"Bedrock AgentCore memory {MEMORY_NAME} is encrypted with the KMS key {KMS_KEY_ARN} in region {AWS_REGION_US_EAST_1}, but the key details could not be retrieved; verify that the scanning identity is allowed to call kms:ListKeys and kms:DescribeKey, and verify manually that it is a customer-managed KMS key."
         )
 
     def test_memory_with_undescribed_key_is_manual(self):
@@ -139,7 +139,7 @@ class Test_bedrockagentcore_memory_encrypted_with_cmk:
         assert result[0].status == "MANUAL"
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore memory {MEMORY_NAME} encryption configuration could not be retrieved in region {AWS_REGION_US_EAST_1}; verify manually that it uses a customer-managed KMS key."
+            == f"Bedrock AgentCore memory {MEMORY_NAME} encryption configuration could not be retrieved in region {AWS_REGION_US_EAST_1}; verify that the scanning identity is allowed to call bedrock-agentcore:GetMemory, and verify manually that it uses a customer-managed KMS key."
         )
         assert result[0].resource_id == MEMORY_ID
 
@@ -163,7 +163,7 @@ class Test_bedrockagentcore_memory_encrypted_with_cmk:
         )
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore memories could not be listed in region {AWS_REGION_EU_WEST_1} (AccessDeniedException); verify manually that every memory uses a customer-managed KMS key."
+            == f"Bedrock AgentCore memories could not be listed in region {AWS_REGION_EU_WEST_1} (AccessDeniedException); verify that the scanning identity is allowed to call bedrock-agentcore:ListMemories, and verify manually that every memory uses a customer-managed KMS key."
         )
 
     def test_multiple_memories(self):

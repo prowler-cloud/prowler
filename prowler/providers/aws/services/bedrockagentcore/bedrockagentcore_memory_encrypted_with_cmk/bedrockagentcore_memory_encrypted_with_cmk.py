@@ -33,7 +33,7 @@ class bedrockagentcore_memory_encrypted_with_cmk(Check):
             report.resource_id = "memory/unknown"
             report.resource_arn = f"arn:{bedrockagentcore_client.audited_partition}:bedrock-agentcore:{region}:{bedrockagentcore_client.audited_account}:memory/unknown"
             report.status = "MANUAL"
-            report.status_extended = f"Bedrock AgentCore memories could not be listed in region {region} ({error}); verify manually that every memory uses a customer-managed KMS key."
+            report.status_extended = f"Bedrock AgentCore memories could not be listed in region {region} ({error}); verify that the scanning identity is allowed to call bedrock-agentcore:ListMemories, and verify manually that every memory uses a customer-managed KMS key."
             findings.append(report)
 
         key_managers = {key.arn: key.manager for key in kms_client.keys}
@@ -46,7 +46,7 @@ class bedrockagentcore_memory_encrypted_with_cmk(Check):
 
             if not memory.detail_retrieved:
                 report.status = "MANUAL"
-                report.status_extended = f"Bedrock AgentCore memory {memory_name} encryption configuration could not be retrieved in region {memory.region}; verify manually that it uses a customer-managed KMS key."
+                report.status_extended = f"Bedrock AgentCore memory {memory_name} encryption configuration could not be retrieved in region {memory.region}; verify that the scanning identity is allowed to call bedrock-agentcore:GetMemory, and verify manually that it uses a customer-managed KMS key."
             elif not key_arn:
                 report.status = "FAIL"
                 report.status_extended = f"Bedrock AgentCore memory {memory_name} is not encrypted with a customer-managed KMS key in region {memory.region}."
@@ -60,7 +60,7 @@ class bedrockagentcore_memory_encrypted_with_cmk(Check):
                 report.status_extended = f"Bedrock AgentCore memory {memory_name} is encrypted with the AWS-managed KMS key {key_arn} instead of a customer-managed KMS key in region {memory.region}."
             else:
                 report.status = "MANUAL"
-                report.status_extended = f"Bedrock AgentCore memory {memory_name} is encrypted with the KMS key {key_arn} in region {memory.region}, but the key details could not be retrieved; verify manually that it is a customer-managed KMS key."
+                report.status_extended = f"Bedrock AgentCore memory {memory_name} is encrypted with the KMS key {key_arn} in region {memory.region}, but the key details could not be retrieved; verify that the scanning identity is allowed to call kms:ListKeys and kms:DescribeKey, and verify manually that it is a customer-managed KMS key."
             findings.append(report)
 
         return findings
