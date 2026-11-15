@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_memory_encrypted_with_cmk",
+  "CheckTitle": "Amazon Bedrock AgentCore memory is encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Data Encryption"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon Bedrock AgentCore memories** are evaluated for encryption with a **customer-managed KMS key**. A memory with `encryptionKeyArn` set to a customer-managed key stores its events and extracted records under a key the organization controls, instead of the default AWS-owned key or an AWS-managed key.",
+  "Risk": "AgentCore memory keeps conversation history and facts extracted about users, which often include personal or business data. Without a **customer-managed key** there is no key policy to limit who can decrypt the data, no control over rotation, and no way to cut off access by disabling the key, which weakens **confidentiality**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/storage-encryption.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_CreateMemory.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_GetMemory.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  AgentMemory:\n    Type: AWS::BedrockAgentCore::Memory\n    Properties:\n      Name: <example_resource_name>\n      EventExpiryDuration: 90\n      EncryptionKeyArn: <example_kms_key_arn> # Critical: omitting this uses an AWS-owned key\n```",
+      "Other": "1. Open the Amazon Bedrock AgentCore console\n2. Open Memory and choose Create memory\n3. In the encryption settings, select a customer-managed KMS key\n4. Create the memory and point the agents to it\n5. Delete the old memory once it is no longer needed",
+      "Terraform": "```hcl\nresource \"aws_bedrockagentcore_memory\" \"example\" {\n  name                  = \"<example_resource_name>\"\n  event_expiry_duration = 90\n  encryption_key_arn    = \"<example_kms_key_arn>\" # Critical: omitting this uses an AWS-owned key\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create AgentCore memories with a **customer-managed KMS key** and a least-privilege key policy. The key cannot be changed on an existing memory, so create a new encrypted memory, move the agents to it, and delete the old one.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_memory_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The encryption key is set when the memory is created and cannot be changed later. The key manager is read from KMS: an AWS-managed key fails, and a key from another account passes because only customer-managed keys can be shared across accounts. A memory whose detail or key could not be retrieved, or a region whose memories could not be listed, returns MANUAL."
+}
