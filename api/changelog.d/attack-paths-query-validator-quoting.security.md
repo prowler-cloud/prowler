@@ -1,0 +1,1 @@
+Attack Paths custom queries are validated with backtick-quoted identifiers unquoted, reject `\uXXXX` escapes and block `apoc.when`, `apoc.case`, `apoc.graph` and `apoc.spatial`, so a blocked operation can no longer be hidden behind quoting or passed as a nested query string
