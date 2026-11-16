@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1"
+  version: "1.2"
   scope: [root, ui]
   auto_invoke: "App Router / Server Actions"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -31,7 +31,9 @@ app/
 
 ## Next.js 16 Notes
 
+- Next.js ships docs for the installed version in `ui/node_modules/next/dist/docs/` (`01-app/`, `03-architecture/`...). Read the relevant page before version-sensitive work; it beats training data and this summary.
 - Prowler UI runs Next.js 16.4 with `reactCompiler: true` and Turbopack (`ui/next.config.js`). Cache Components (`cacheComponents`) is NOT enabled.
+- Never pass functions from a Server Component to a Client Component (for example a `labelFormatter` in filter config). TypeScript and jsdom tests accept it; the real page throws.
 - Request APIs are async: `await cookies()`, `await headers()`, and `params` / `searchParams` are `Promise`s in pages, layouts and route handlers.
 - Use `proxy.ts` for request-boundary logic. `middleware.ts` is deprecated in Next.js 16. Prowler's `ui/proxy.ts` is `export default auth(async (req) => ...)` (NextAuth v5 wrapper).
 - `proxy.ts` runs on the Node.js runtime and cannot be configured for Edge.
