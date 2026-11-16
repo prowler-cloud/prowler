@@ -1,0 +1,1 @@
+`bedrock_guardrail_iam_condition_enforcement_enabled` check for AWS provider, verifying that customer-managed and inline IAM policies allowing Bedrock model invocation require a guardrail through the `bedrock:GuardrailIdentifier` condition key
