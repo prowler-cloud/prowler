@@ -1806,7 +1806,7 @@ clouds:
             )
             responses.add(method, metadata_url, status=200, json={})
 
-        OpenstackProvider.test_connection(
+        result = OpenstackProvider.test_connection(
             auth_url="https://keystone.example.com/v3",
             username="test-user",
             password="test-password",
@@ -1815,7 +1815,7 @@ clouds:
             raise_on_exception=False,
         )
 
-        assert not any(
-            call.request.url.startswith("http://169.254.169.254")
-            for call in responses.calls
-        )
+        requested = [call.request.url for call in responses.calls]
+        assert any(url.startswith("https://keystone.example.com/") for url in requested)
+        assert not any(url.startswith("http://169.254.169.254") for url in requested)
+        assert isinstance(result.error, OpenStackAuthUrlNotAllowedError)

@@ -1,7 +1,6 @@
 from os import environ
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
 
 from colorama import Fore, Style
 from keystoneauth1.session import TCPKeepAliveAdapter
@@ -39,15 +38,10 @@ from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackS
 class _GuardedAdapter(TCPKeepAliveAdapter):
     """Adapter that keeps redirects and catalog endpoints inside the SSRF guard."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._validated_origins = set()
-
     def send(self, request, *args, **kwargs):
-        origin = urlparse(request.url)[:2]
-        if origin not in self._validated_origins:
-            validate_outbound_url(request.url)
-            self._validated_origins.add(origin)
+        # Not cached per host: a later request may open a new connection and
+        # resolve the name again
+        validate_outbound_url(request.url)
         return super().send(request, *args, **kwargs)
 
 
