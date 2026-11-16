@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { useRouter } from "next/navigation";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { userEvent } from "vitest/browser";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { page, userEvent } from "vitest/browser";
 
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
@@ -507,7 +507,7 @@ describe("RegistryExplorer", () => {
     const screen = await render(<RegistryExplorer initialState={readyState} />);
     await screen.getByRole("tab", { name: /My artifacts/ }).click();
     // When
-    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen.getByRole("button", { name: "Registry API key" }).click();
     await screen
       .getByLabelText("Registry key")
       .fill("synthetic-replacement-key");
@@ -843,7 +843,7 @@ describe("RegistryExplorer", () => {
         .poll(() => submitRegistryCredentialMock.mock.calls)
         .toEqual([["replacement-key"]]);
       await expect
-        .element(screen.getByRole("button", { name: "Manage access" }))
+        .element(screen.getByRole("button", { name: "Registry API key" }))
         .toBeVisible();
     });
   });
@@ -908,14 +908,15 @@ describe("RegistryExplorer", () => {
     trackAndPollTaskMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
-    // Access stays available by its accessible name, without a text label.
+    // The accessible name contains the visible label.
     expect(document.body.textContent).not.toContain("API key connected");
     expect(
-      document.querySelector('button[aria-label="Manage access"]')?.textContent,
-    ).toBe("");
+      document.querySelector('button[aria-label="Registry API key"]')
+        ?.textContent,
+    ).toBe("API key");
 
     // When
-    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen.getByRole("button", { name: "Registry API key" }).click();
     await screen.getByLabelText("Registry key").fill(key);
     await screen.getByRole("button", { name: "Replace key" }).click();
 
@@ -1243,7 +1244,7 @@ describe("RegistryExplorer", () => {
       const screen = await render(
         <RegistryExplorer initialState={readyState} />,
       );
-      await screen.getByRole("button", { name: "Manage access" }).click();
+      await screen.getByRole("button", { name: "Registry API key" }).click();
 
       // When
       await screen.getByRole("button", { name: "Disconnect" }).click();
@@ -1288,7 +1289,7 @@ describe("RegistryExplorer", () => {
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
-    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen.getByRole("button", { name: "Registry API key" }).click();
     await screen.getByLabelText("Registry key").fill(key);
     await screen.getByRole("button", { name: "Replace key" }).click();
 
@@ -1307,7 +1308,7 @@ describe("RegistryExplorer", () => {
       new Error("Disconnect transport failed"),
     );
     const screen = await render(<RegistryExplorer initialState={readyState} />);
-    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen.getByRole("button", { name: "Registry API key" }).click();
 
     // When
     await screen.getByRole("button", { name: "Disconnect" }).click();
@@ -1350,7 +1351,7 @@ describe("RegistryExplorer", () => {
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
-    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen.getByRole("button", { name: "Registry API key" }).click();
     await screen.getByRole("button", { name: "Disconnect" }).click();
 
     // Then
@@ -1561,6 +1562,45 @@ describe("RegistryExplorer", () => {
       // Then: downloads order puts Cloud guard first
       await expect.poll(() => order()[0] < order()[1]).toBe(true);
       await expect.poll(() => order()[1] < order()[2]).toBe(true);
+    });
+
+    it("lists built-in artifacts after the Registry artifacts under their own heading", async () => {
+      // Given: a built-in whose name sorts before every Registry artifact
+      await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            catalog: {
+              status: "complete",
+              artifacts: [
+                ...readyState.catalog.artifacts,
+                {
+                  ...readyState.catalog.artifacts[2],
+                  normalizedName: "a-builtin",
+                  name: "A built-in",
+                  isBuiltin: true,
+                  isInstallable: false,
+                },
+              ],
+            },
+          }}
+        />,
+      );
+
+      // Then
+      const heading = document.getElementById("registry-builtin-heading")!;
+      expect(heading.textContent).toBe("Included in Prowler");
+      for (const name of ["AWS guard", "Cloud guard", "Later guard"]) {
+        expect(
+          cardFor(name).compareDocumentPosition(heading) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      }
+      expect(
+        heading.compareDocumentPosition(cardFor("A built-in")) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(document.body.textContent).toContain("4 artifacts");
     });
 
     it("shows a complete empty catalog without degrading controls", async () => {
@@ -2182,6 +2222,60 @@ describe("RegistryExplorer", () => {
     await expect
       .element(screen.getByRole("button", { name: "Confirm Remove" }))
       .toBeVisible();
+  });
+
+  describe("at phone width", () => {
+    afterEach(async () => {
+      await page.viewport(1280, 800);
+    });
+
+    it("pairs the filters, keeps the header actions on the tab row, and never scrolls sideways", async () => {
+      // Given
+      await page.viewport(390, 844);
+      const screen = await render(
+        <div
+          data-responsive-container
+          className="@container"
+          style={{ width: 390 }}
+        >
+          <RegistryExplorer initialState={readyState} />
+        </div>,
+      );
+      const box = (element: Element) => element.getBoundingClientRect();
+      const sameRow = (first: Element, second: Element) =>
+        box(first).top < box(second).bottom &&
+        box(second).top < box(first).bottom;
+
+      // Then
+      await expect
+        .element(screen.getByRole("combobox", { name: "Sort artifacts" }))
+        .toBeVisible();
+      const providers = screen
+        .getByRole("combobox", { name: "Filter by provider" })
+        .element();
+      const capabilities = screen
+        .getByRole("combobox", { name: "Filter by capability" })
+        .element();
+      expect(Math.round(box(providers).top)).toBe(
+        Math.round(box(capabilities).top),
+      );
+      expect(
+        sameRow(
+          screen.getByText("3 artifacts", { exact: true }).element(),
+          screen.getByRole("combobox", { name: "Sort artifacts" }).element(),
+        ),
+      ).toBe(true);
+      const tabs = screen.getByRole("tablist").element();
+      for (const name of ["Refresh Registry", "Registry API key"]) {
+        expect(
+          sameRow(tabs, screen.getByRole("button", { name }).element()),
+        ).toBe(true);
+      }
+      await expect
+        .element(screen.getByText("API key", { exact: true }))
+        .not.toBeVisible();
+      expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
+    });
   });
 
   describe("when complete catalog data is unavailable", () => {

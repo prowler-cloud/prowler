@@ -109,7 +109,7 @@ export class RegistryPage extends BasePage {
   async verifyMarketplaceReady(): Promise<void> {
     await expect(this.exploreTab).toBeVisible();
     await expect(
-      this.page.getByRole("button", { name: "Manage access" }),
+      this.page.getByRole("button", { name: "Registry API key" }),
     ).toBeVisible();
   }
 

@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  KeyRound,
   PackageSearch,
   RefreshCw,
   SearchX,
-  Settings,
   TriangleAlert,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -682,6 +682,20 @@ export function RegistryExplorer({
       />
     );
   }
+  // Registry artifacts first, then the ones that ship with Prowler.
+  const exploreCount = model.artifacts.length + model.builtinArtifacts.length;
+  const renderCatalogCard = (artifact: RegistryMarketplaceArtifact) => (
+    <li key={artifact.normalizedName}>
+      <RegistryArtifactCard
+        artifact={artifact}
+        pendingAddName={pendingAddName}
+        onAdd={() => handleAdd(artifact)}
+        onRemove={(trigger) =>
+          openRemoveDialog(artifact.normalizedName, trigger)
+        }
+      />
+    </li>
+  );
   return (
     <div className="space-y-6">
       <h1 className="sr-only">Registry marketplace</h1>
@@ -697,8 +711,8 @@ export function RegistryExplorer({
         onValueChange={(value) => setActiveTab(value as RegistryTab)}
         value={activeTab}
       >
-        <div className="border-border-neutral-secondary flex flex-wrap items-center justify-between gap-4 border-b">
-          <div className="min-w-52 flex-1">
+        <div className="border-border-neutral-secondary flex items-center justify-between gap-2 border-b">
+          <div className="min-w-0">
             <TabsList>
               <TabsTrigger
                 adornment={
@@ -722,7 +736,7 @@ export function RegistryExplorer({
               </TabsTrigger>
             </TabsList>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               aria-label="Refresh Registry"
               aria-busy={isRefreshing}
@@ -735,18 +749,20 @@ export function RegistryExplorer({
               variant="ghost"
             >
               <RefreshCw aria-hidden />
-              {isRefreshing ? "Refreshing…" : "Refresh"}
+              <span className="hidden sm:inline">
+                {isRefreshing ? "Refreshing…" : "Refresh"}
+              </span>
             </Button>
             <Button
-              aria-label="Manage access"
-              title="Manage access"
+              aria-label="Registry API key"
               onClick={openManageDialog}
               ref={manageButtonRef}
-              size="icon"
+              size="sm"
               type="button"
               variant="ghost"
             >
-              <Settings aria-hidden />
+              <KeyRound aria-hidden />
+              <span className="hidden sm:inline">API key</span>
             </Button>
           </div>
         </div>
@@ -756,7 +772,7 @@ export function RegistryExplorer({
             onFiltersChange={setFilters}
             onSortChange={setSort}
             providers={model.providers}
-            resultsCount={model.artifacts.length}
+            resultsCount={exploreCount}
             sort={sort}
           />
           {state.catalog.artifacts.length === 0 ? (
@@ -767,7 +783,7 @@ export function RegistryExplorer({
               actionLabel="Refresh catalog"
               onAction={requestRefresh}
             />
-          ) : model.artifacts.length === 0 ? (
+          ) : exploreCount === 0 ? (
             <RegistryEmptyState
               icon={<SearchX />}
               title="No artifacts match the current filters."
@@ -776,20 +792,29 @@ export function RegistryExplorer({
               onAction={() => setFilters({})}
             />
           ) : (
-            <RegistryArtifactGrid>
-              {model.artifacts.map((artifact) => (
-                <li key={artifact.normalizedName}>
-                  <RegistryArtifactCard
-                    artifact={artifact}
-                    pendingAddName={pendingAddName}
-                    onAdd={() => handleAdd(artifact)}
-                    onRemove={(trigger) =>
-                      openRemoveDialog(artifact.normalizedName, trigger)
-                    }
-                  />
-                </li>
-              ))}
-            </RegistryArtifactGrid>
+            <>
+              {model.artifacts.length > 0 && (
+                <RegistryArtifactGrid>
+                  {model.artifacts.map(renderCatalogCard)}
+                </RegistryArtifactGrid>
+              )}
+              {model.builtinArtifacts.length > 0 && (
+                <section
+                  aria-labelledby="registry-builtin-heading"
+                  className="space-y-3 pt-2"
+                >
+                  <h2
+                    id="registry-builtin-heading"
+                    className="text-text-neutral-secondary text-sm font-medium"
+                  >
+                    Included in Prowler
+                  </h2>
+                  <RegistryArtifactGrid>
+                    {model.builtinArtifacts.map(renderCatalogCard)}
+                  </RegistryArtifactGrid>
+                </section>
+              )}
+            </>
           )}
         </TabsContent>
         <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.MINE}>
