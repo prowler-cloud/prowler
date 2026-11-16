@@ -38,5 +38,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Scope is customer-managed policies (attached ones, or all when scanning unused services) and inline policies; AWS-managed policies are skipped because they cannot be edited. Policies that grant neither operation produce no finding. An Action of \"*\" is left to the administrative-privileges checks. A Deny in the same policy clears the finding when it covers the Allow's resources and applies either unconditionally or exactly when no guardrail is supplied; guardrail enforcement placed in a different policy, a permissions boundary or an SCP is not evaluated."
+  "Notes": "Scope is customer-managed policies (attached ones, or all when scanning unused services) and inline policies; AWS-managed policies are skipped because they cannot be edited. Policies that grant neither operation produce no finding. An Action of \"*\" or \"*:*\" counts as granting both operations when its Resource can reach a Bedrock ARN. A Deny in the same policy clears the finding when it covers the Allow's resources and applies either unconditionally or exactly when no guardrail is supplied; guardrail enforcement placed in a different policy, a permissions boundary or an SCP is not evaluated."
 }
