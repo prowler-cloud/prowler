@@ -1,1 +1,0 @@
-Sessions started through SAML SSO or with an API key stay in the organization that issued them: they only see and manage that organization, `POST /api/v1/tokens/switch` does not move them to another one and rejects API keys, and users who belong to several organizations cannot change the account password or email or delete the account from such a session
