@@ -458,6 +458,198 @@ class TestUserViewSet:
         target_user.refresh_from_db()
         assert target_user.email == original_email
 
+    @staticmethod
+    def _add_target_user_to_tenant(email, password, tenant):
+        target_user = User.objects.create_user(
+            name="target", email=email, password=password
+        )
+        Membership.objects.create(
+            user=target_user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        return target_user
+
+    def test_users_partial_update_manage_users_other_user_password_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            "target-mu-password@example.com", original_password, tenant
+        )
+        payload = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"password": new_password},
+            },
+        }
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Only the user themselves can change their password."
+        )
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+        assert not target_user.check_password(new_password)
+
+    def test_users_partial_update_manage_users_multi_tenant_user_password_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        from rest_framework.test import APIClient
+
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        tenant_a = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        tenant_b = Tenant.objects.create(name="Tenant B")
+        target_user = self._add_target_user_to_tenant(
+            "target-cross-tenant@example.com", original_password, tenant_a
+        )
+        Membership.objects.create(
+            user=target_user, tenant=tenant_b, role=Membership.RoleChoices.OWNER
+        )
+        admin_role_b = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_b.id,
+            manage_users=True,
+            manage_account=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=target_user, role=admin_role_b, tenant_id=tenant_b.id
+        )
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {"password": new_password},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        token_response = APIClient().post(
+            reverse("token-obtain"),
+            {
+                "data": {
+                    "type": "tokens",
+                    "attributes": {
+                        "email": target_user.email,
+                        "password": new_password,
+                        "tenant_id": str(tenant_b.id),
+                    },
+                }
+            },
+            format="vnd.api+json",
+        )
+        assert token_response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+
+    def test_users_partial_update_manage_users_other_user_email_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_email = "target-mu-email@example.com"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            original_email, "OriginalPassword123@", tenant
+        )
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {"email": "updated-mu-email@example.com"},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Only the user themselves can change their email."
+        )
+        target_user.refresh_from_db()
+        assert target_user.email == original_email
+
+    def test_users_partial_update_manage_users_other_user_profile_allowed(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_email = "target-mu-profile@example.com"
+        original_password = "OriginalPassword123@"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            original_email, original_password, tenant
+        )
+
+        # The UI edit form re-sends the unchanged email alongside profile fields.
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {
+                        "name": "Renamed Target",
+                        "company_name": "New Company",
+                        "email": original_email.upper(),
+                    },
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        target_user.refresh_from_db()
+        assert target_user.name == "Renamed Target"
+        assert target_user.company_name == "New Company"
+        assert target_user.email == original_email
+        assert target_user.check_password(original_password)
+
+    def test_users_partial_update_own_password_allowed(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        user = authenticated_client_rbac_manage_users_only.user
+        new_password = "UpdatedPassword123@"
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(user.id),
+                    "attributes": {"password": new_password},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        user.refresh_from_db()
+        assert user.check_password(new_password)
+
     def test_users_partial_update_invalid_content_type(
         self, authenticated_client, create_test_user
     ):
