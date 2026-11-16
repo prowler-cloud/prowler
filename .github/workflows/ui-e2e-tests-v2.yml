@@ -237,12 +237,13 @@ jobs:
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
 
       # The kubeconfig points at kind-control-plane on the private kind network, which the
-      # Kubernetes provider rejects unless the network is declared as trusted.
+      # Kubernetes provider rejects unless the network is declared as trusted. The host
+      # resolves to both an IPv4 and an IPv6 address, so trust every subnet of the network.
       - name: Allow the kind network for the Kubernetes provider
         run: |
           set -o pipefail
           kind_subnets=$(docker network inspect kind --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}' |
-            tr ' ' '\n' | grep -v ':' | grep . | paste -sd, -)
+            tr ' ' '\n' | grep . | paste -sd, -)
           echo "Trusted private networks: ${kind_subnets}"
           sed -i '/^PROWLER_ALLOWED_PRIVATE_NETWORKS=/d' .env
           echo "PROWLER_ALLOWED_PRIVATE_NETWORKS=${kind_subnets}" >> .env
