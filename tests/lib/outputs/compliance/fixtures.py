@@ -590,6 +590,53 @@ ENS_RD2022_AZURE = Compliance(
         ),
     ],
 )
+ENS_RD2022_M365 = Compliance(
+    Framework="ENS",
+    Name="ENS RD 311/2022 - Categoría Alta",
+    Provider="M365",
+    Version="RD2022",
+    Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="op.exp.8.m365.purview.1",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar el registro de auditoría unificado para que quede constancia de la actividad de usuarios y administradores.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=["purview_audit_log_search_enabled", "service_test_check_id"],
+        ),
+        Compliance_Requirement(
+            Id="op.exp.8.m365.purview.2",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar el registro de auditoría unificado para que quede constancia de la actividad de usuarios y administradores.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
 ENS_RD2022_GCP = Compliance(
     Framework="ENS",
     Name="ENS RD 311/2022 - Categoría Alta",
