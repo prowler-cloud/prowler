@@ -29,9 +29,11 @@ from tasks.jobs.attack_paths.config import get_provider_label
 # The regex engine finds the leftmost match, so a string like 'https://prowler.com'
 # is consumed as a string before the // inside it can match as a comment, and a
 # quote inside a backtick-quoted identifier cannot open a string
+# Neo4j ends a line comment at \r as well as \n, and an escape inside a string
+# can be followed by a newline
 _PROTECTED_RE = re.compile(
     r"`(?:[^`]|``)*`"
-    r"|'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|//[^\n]*|/\*[\s\S]*?\*/"
+    r"|'(?:[^'\\]|\\[\s\S])*'|\"(?:[^\"\\]|\\[\s\S])*\"|//[^\n\r]*|/\*[\s\S]*?\*/"
 )
 
 # Step 2 - Clause splitting
@@ -171,7 +173,9 @@ _BLOCKED_APOC_NAMESPACES = (
 )
 # Neo4j decodes \uXXXX anywhere in the query text, so an escape can spell a
 # keyword or close a string literal before any of the checks below see it
-_UNICODE_ESCAPE_RE = re.compile(r"\\u[0-9a-fA-F]{4}")
+# Any \u counts unless its backslash is itself escaped: Neo4j also accepts
+# forms such as \u+004f
+_UNICODE_ESCAPE_RE = re.compile(r"(?<!\\)(?:\\\\)*\\u")
 _BLOCKED_PATTERNS = [
     re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
     *(
@@ -194,7 +198,8 @@ def validate_custom_query(cypher: str) -> None:
     def _for_matching(match):
         token = match.group(0)
         if token.startswith("`"):
-            return token[1:-1].replace("``", "`")
+            # Padded so the name cannot fuse with the keyword next to it
+            return f" {token[1:-1].replace('``', '`')} "
         return " "
 
     if _UNICODE_ESCAPE_RE.search(cypher):
