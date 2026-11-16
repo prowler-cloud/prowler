@@ -866,6 +866,40 @@ class TestBuildInfoRows:
         assert ("Account ID:", "N/A") in rows
         assert ("Alias:", "N/A") in rows
 
+    def test_cover_page_does_not_render_markup_from_provider_alias(self):
+        from unittest.mock import Mock, patch
+
+        generator = self._create_generator(language="en")
+        mock_provider = Mock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "123456789012"
+        mock_provider.alias = (
+            '<img src="http://169.254.169.254/latest/meta-data/"/> padding padding'
+        )
+        data = ComplianceData(
+            tenant_id="t1",
+            scan_id="scan-123",
+            provider_id="p1",
+            compliance_id="test_compliance",
+            framework="Test",
+            name="Test",
+            version="1.0",
+            description="",
+            provider_obj=mock_provider,
+        )
+
+        with patch("reportlab.platypus.paraparser.ImageReader") as image_reader:
+            elements = generator.create_cover_page(data)
+
+        image_reader.assert_not_called()
+        info_table = next(e for e in elements if isinstance(e, Table))
+        alias_cell = next(
+            value for label, value in info_table._cellvalues if label == "Alias:"
+        )
+        assert not any(
+            getattr(frag, "cbDefn", None) for frag in getattr(alias_cell, "frags", [])
+        )
+
     def test_build_info_rows_without_description(self):
         """Test info rows exclude description when empty."""
         generator = self._create_generator(language="en")
