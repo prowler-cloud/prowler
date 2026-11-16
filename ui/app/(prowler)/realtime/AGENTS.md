@@ -30,6 +30,7 @@ Realtime reads AWS CloudTrail events, raises detections, and can fix (and revert
 Pure helpers in `_lib/` and the actions/adapter carry most tests. Components are tested where they branch on demo data or permissions, and the tables have a browser test (`_components/realtime-tables.integration.test.tsx`).
 
 ```bash
-cd ui && pnpm exec vitest run --project unit "app/(prowler)/realtime"
-cd ui && pnpm exec vitest run --project integration "app/(prowler)/realtime"
+cd ui
+pnpm exec vitest run --project unit "app/(prowler)/realtime"
+pnpm exec vitest run --project integration "app/(prowler)/realtime"
 ```

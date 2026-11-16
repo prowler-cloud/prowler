@@ -35,6 +35,7 @@ Show what the agent is doing from real stream events: the running tool, or "Thin
 - Stream ordering and remount behavior need a browser test or a real run; jsdom cannot show a lost event.
 
 ```bash
-cd ui && pnpm exec vitest run --project unit "app/(prowler)/lighthouse"
-cd ui && pnpm exec vitest run "app/api/lighthouse"
+cd ui
+pnpm exec vitest run --project unit "app/(prowler)/lighthouse"
+pnpm exec vitest run "app/api/lighthouse"
 ```

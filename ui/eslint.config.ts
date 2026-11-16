@@ -167,6 +167,12 @@ export default tseslint.config(
         },
         {
           selector:
+            "JSXAttribute[name.name='className'] TemplateElement[value.raw=/var\\(--/]",
+          message:
+            "Do not use var() in className. Use the token's Tailwind class, or the style prop for library props.",
+        },
+        {
+          selector:
             "TSTypeAliasDeclaration > TSUnionType.typeAnnotation:not(:has(> :not(TSLiteralType:has(> Literal.literal[value=/^/]))))",
           message:
             "Declare a const object and derive the type: (typeof X)[keyof typeof X].",

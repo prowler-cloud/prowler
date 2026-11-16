@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke:
     - "Adding, changing or reviewing a React effect"
@@ -167,13 +167,15 @@ useEffect(() => {
   return () => source.close();
 }, [url]);
 
-// GOOD: useEffectEvent reads the latest props
-const handleMessage = useEffectEvent((event: MessageEvent) => onMessage(event));
-useEffect(() => {
-  const source = new EventSource(url);
-  source.onmessage = handleMessage;
-  return () => source.close();
-}, [url]);
+// GOOD: useEffectEvent reads the latest props; the effect lives in a named hook
+function useEventSource(url: string, onMessage: (event: MessageEvent) => void) {
+  const handleMessage = useEffectEvent((event: MessageEvent) => onMessage(event));
+  useEffect(() => {
+    const source = new EventSource(url);
+    source.onmessage = handleMessage;
+    return () => source.close();
+  }, [url]);
+}
 ```
 
 Call the function `useEffectEvent` returns only from inside effects, never during render or as a prop.
@@ -208,8 +210,9 @@ Flag effects that derive state, relay events, mirror props or query data, or res
 ## Commands
 
 ```bash
-cd ui && pnpm run lint:check       # react-hooks compiler rules + restricted imports
-cd ui && pnpm run test:integration # the only Vitest project compiled with the React Compiler
+cd ui
+pnpm run lint:check       # react-hooks compiler rules + restricted imports
+pnpm run test:integration # the only Vitest project compiled with the React Compiler
 ```
 
 ## Resources

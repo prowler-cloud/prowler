@@ -249,10 +249,16 @@ When you only need to adjust some state (not reset everything):
 ### Best: derive it during render
 
 ```tsx
-function List({ items }) {
+function List({ items, onRemove }) {
   const [selectedId, setSelectedId] = useState(null);
-  // If selected item no longer exists, selection clears automatically
+  // A missing item shows no selection; selectedId still holds its id
   const selection = items.find(item => item.id === selectedId) ?? null;
+
+  function handleRemove(id) {
+    onRemove(id);
+    // Forget the id too, so the item is not reselected if it comes back
+    if (id === selectedId) setSelectedId(null);
+  }
 }
 ```
 
@@ -513,8 +519,8 @@ function ChatRoom({ roomId, onMessage }) {
   }, [roomId]);
 }
 
-// GOOD: useEffectEvent captures latest values automatically
-function ChatRoom({ roomId, onMessage }) {
+// GOOD: useEffectEvent captures latest values; the effect lives in a named hook
+function useChatConnection(roomId, onMessage) {
   const onMsg = useEffectEvent((msg) => {
     onMessage(msg);
   });
@@ -524,6 +530,11 @@ function ChatRoom({ roomId, onMessage }) {
     conn.on('message', onMsg);
     return () => conn.disconnect();
   }, [roomId]); // onMsg is stable, no need to list it
+}
+
+function ChatRoom({ roomId, onMessage }) {
+  useChatConnection(roomId, onMessage);
+  // ...
 }
 ```
 
@@ -542,15 +553,19 @@ function Page({ url }) {
   // ...
 }
 
-// GOOD: useEffectEvent
-function Page({ url }) {
-  const [theme, setTheme] = useState('light');
+// GOOD: useEffectEvent inside a named hook
+function usePageVisitLog(url, theme) {
   const onVisit = useEffectEvent(() => {
     logVisit(url, theme); // always reads latest theme
   });
   useEffect(() => {
     onVisit();
   }, [url]);
+}
+
+function Page({ url }) {
+  const [theme, setTheme] = useState('light');
+  usePageVisitLog(url, theme);
 
   // ...
 }

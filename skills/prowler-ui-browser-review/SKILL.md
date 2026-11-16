@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Verifying a user-visible UI change in the browser"
 allowed-tools: Read, Glob, Grep, Bash
@@ -29,12 +29,13 @@ For a small visual change you are confident about (a token, a label, an icon), s
 ## Run the App
 
 ```bash
-# Local API (Django, Postgres, Valkey, worker) on :8080
+# From the repo root: local API (Django, Postgres, Valkey, worker) on :8080
 docker compose -f docker-compose-dev.yml up -d api-dev worker-dev
 
 # UI on :3000, pointing at that API
-cd ui && echo 'UI_API_BASE_URL=http://localhost:8080/api/v1' >> .env.local
-cd ui && pnpm run dev
+cd ui
+echo 'UI_API_BASE_URL=http://localhost:8080/api/v1' >> .env.local
+pnpm run dev
 ```
 
 - Reuse a dev server that is already running; do not start a second one on another port.
@@ -64,8 +65,9 @@ Report the flow you reviewed, whether it worked, any regressions, and what you d
 ## Commands
 
 ```bash
-cd ui && pnpm run test:integration   # browser-mode Vitest (real layout, React Compiler on)
-cd ui && pnpm run test:e2e           # Playwright E2E against a running stack
+cd ui
+pnpm run test:integration   # browser-mode Vitest (real layout, React Compiler on)
+pnpm run test:e2e           # Playwright E2E against a running stack
 ```
 
 ## Resources
