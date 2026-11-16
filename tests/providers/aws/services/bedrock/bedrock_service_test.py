@@ -6,7 +6,11 @@ import pytest
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock, BedrockAgent
+from prowler.providers.aws.services.bedrock.bedrock_service import (
+    Bedrock,
+    BedrockAgent,
+    ModelInvocationJob,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -662,3 +666,227 @@ class TestBedrockPromptPagination:
 
         assert bedrock_agent_service.prompts == {}
         assert bedrock_agent_service.prompt_scanned_regions == set()
+
+
+class TestBedrockModelInvocationJobPagination:
+    def test_list_model_invocation_jobs_pagination(self):
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        paginator = MagicMock()
+        paginator.paginate.return_value = [
+            {
+                "invocationJobSummaries": [
+                    {
+                        "jobArn": "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1",
+                        "jobName": "job-1",
+                    }
+                ]
+            },
+            {
+                "invocationJobSummaries": [
+                    {
+                        "jobArn": "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-2",
+                        "jobName": "job-2",
+                    }
+                ]
+            },
+        ]
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_service = Bedrock(audit_info)
+        bedrock_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_service.model_invocation_jobs = {}
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert len(bedrock_service.model_invocation_jobs) == 2
+
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1"
+            in bedrock_service.model_invocation_jobs
+        )
+
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-2"
+            in bedrock_service.model_invocation_jobs
+        )
+
+        regional_client.get_paginator.assert_called_once_with(
+            "list_model_invocation_jobs"
+        )
+        paginator.paginate.assert_called_once()
+
+    def test_get_model_invocation_job_s3_encryption_key(self):
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        regional_client.get_model_invocation_job.return_value = {
+            "outputDataConfig": {
+                "s3OutputDataConfig": {
+                    "s3EncryptionKeyId": "arn:aws:kms:us-east-1:123456789012:key/test-key"
+                }
+            }
+        }
+
+        bedrock_service = Bedrock(audit_info)
+        bedrock_service.regional_clients = {"us-east-1": regional_client}
+
+        job = ModelInvocationJob(
+            name="job-1",
+            arn="arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1",
+            region="us-east-1",
+        )
+
+        bedrock_service._get_model_invocation_job(job)
+
+        assert (
+            job.s3_encryption_key_id
+            == "arn:aws:kms:us-east-1:123456789012:key/test-key"
+        )
+        assert job.detail_retrieved is True
+
+        regional_client.get_model_invocation_job.assert_called_once_with(
+            jobIdentifier=job.arn
+        )
+
+    @staticmethod
+    def _build_service(audit_resources=None):
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = audit_resources
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        paginator = MagicMock()
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_service = Bedrock(audit_info)
+        bedrock_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_service.model_invocation_jobs = {}
+        bedrock_service.model_invocation_jobs_scan_errors = {}
+        return bedrock_service, regional_client, paginator
+
+    def test_list_model_invocation_jobs_validation_exception_is_not_scan_error(self):
+        bedrock_service, regional_client, paginator = self._build_service()
+        paginator.paginate.side_effect = botocore.exceptions.ClientError(
+            {"Error": {"Code": "ValidationException", "Message": "unsupported"}},
+            "ListModelInvocationJobs",
+        )
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert bedrock_service.model_invocation_jobs == {}
+        assert bedrock_service.model_invocation_jobs_scan_errors == {}
+
+    def test_list_model_invocation_jobs_validation_exception_after_page_is_scan_error(
+        self,
+    ):
+        job_arn = "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1"
+        bedrock_service, regional_client, paginator = self._build_service()
+
+        def pages():
+            yield {"invocationJobSummaries": [{"jobArn": job_arn, "jobName": "job-1"}]}
+            raise botocore.exceptions.ClientError(
+                {"Error": {"Code": "ValidationException", "Message": "bad token"}},
+                "ListModelInvocationJobs",
+            )
+
+        paginator.paginate.return_value = pages()
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert list(bedrock_service.model_invocation_jobs) == [job_arn]
+        assert bedrock_service.model_invocation_jobs_scan_errors == {
+            "us-east-1": "ValidationException"
+        }
+
+    def test_list_model_invocation_jobs_access_denied_is_scan_error(self):
+        bedrock_service, regional_client, paginator = self._build_service()
+        paginator.paginate.side_effect = botocore.exceptions.ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            "ListModelInvocationJobs",
+        )
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert bedrock_service.model_invocation_jobs == {}
+        assert bedrock_service.model_invocation_jobs_scan_errors == {
+            "us-east-1": "AccessDeniedException"
+        }
+
+    def test_list_model_invocation_jobs_generic_exception_is_scan_error(self):
+        bedrock_service, regional_client, paginator = self._build_service()
+        paginator.paginate.side_effect = RuntimeError("boom")
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert bedrock_service.model_invocation_jobs == {}
+        assert bedrock_service.model_invocation_jobs_scan_errors == {
+            "us-east-1": "RuntimeError"
+        }
+
+    def test_list_model_invocation_jobs_skips_empty_job_arn(self):
+        bedrock_service, regional_client, paginator = self._build_service()
+        paginator.paginate.return_value = [
+            {
+                "invocationJobSummaries": [
+                    {"jobArn": "", "jobName": "no-arn"},
+                    {"jobName": "missing-arn"},
+                ]
+            }
+        ]
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert bedrock_service.model_invocation_jobs == {}
+        assert bedrock_service.model_invocation_jobs_scan_errors == {}
+
+    def test_list_model_invocation_jobs_filters_audit_resources(self):
+        job_1_arn = "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1"
+        job_2_arn = "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-2"
+        bedrock_service, regional_client, paginator = self._build_service(
+            audit_resources=[job_1_arn]
+        )
+        paginator.paginate.return_value = [
+            {
+                "invocationJobSummaries": [
+                    {"jobArn": job_1_arn, "jobName": "job-1"},
+                    {"jobArn": job_2_arn, "jobName": "job-2"},
+                ]
+            }
+        ]
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert list(bedrock_service.model_invocation_jobs) == [job_1_arn]
+
+    def test_get_model_invocation_job_error_leaves_detail_unretrieved(self):
+        bedrock_service, regional_client, _ = self._build_service()
+        regional_client.get_model_invocation_job.side_effect = (
+            botocore.exceptions.ClientError(
+                {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+                "GetModelInvocationJob",
+            )
+        )
+        job = ModelInvocationJob(
+            name="job-1",
+            arn="arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1",
+            region="us-east-1",
+        )
+
+        bedrock_service._get_model_invocation_job(job)
+
+        assert job.detail_retrieved is False
+        assert job.s3_encryption_key_id is None
