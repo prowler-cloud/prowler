@@ -110,18 +110,21 @@ class TestComputeService:
             assert compute_client.subnets[0].flow_logs
             assert compute_client.subnets[0].network == "network1"
             assert compute_client.subnets[0].project_id == GCP_PROJECT_ID
+            assert compute_client.subnets[0].region == "europe-west1-b"
 
             assert compute_client.subnets[1].name == "subnetwork2"
             assert compute_client.subnets[1].id.__class__.__name__ == "str"
             assert not compute_client.subnets[1].flow_logs
             assert compute_client.subnets[1].network == "network1"
             assert compute_client.subnets[1].project_id == GCP_PROJECT_ID
+            assert compute_client.subnets[1].region == "europe-west1-b"
 
             assert compute_client.subnets[2].name == "subnetwork3"
             assert compute_client.subnets[2].id.__class__.__name__ == "str"
             assert not compute_client.subnets[2].flow_logs
             assert compute_client.subnets[2].network == "network3"
             assert compute_client.subnets[2].project_id == GCP_PROJECT_ID
+            assert compute_client.subnets[2].region == "europe-west1-c"
 
             assert len(compute_client.addresses) == 3
 
