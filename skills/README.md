@@ -58,6 +58,7 @@ Reusable patterns for common technologies:
 |-------|-------------|
 | `typescript` | Const types, flat interfaces, utility types |
 | `react-19` | React 19 patterns, React Compiler |
+| `no-use-effect` | No direct useEffect: derive state, handlers, server data, key resets |
 | `nextjs-16` | App Router, Server Actions, proxy.ts, streaming |
 | `tailwind-4` | cn() utility, no var() in className |
 | `zod-4` | Zod 4 API patterns (z.email(), z.uuid()) |
@@ -97,6 +98,7 @@ Patterns tailored for Prowler development:
 | `prowler-test-sdk` | SDK testing (pytest + moto) |
 | `prowler-test-api` | API testing (pytest-django + RLS) |
 | `prowler-test-ui` | E2E testing (Playwright) |
+| `prowler-ui-browser-review` | Browser sign-off for user-visible UI changes |
 | `prowler-test-mcp` | MCP server testing (FastMCP clients, mocked httpx) |
 
 ### Prowler Workflow Skills
