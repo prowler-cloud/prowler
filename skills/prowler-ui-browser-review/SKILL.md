@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1"
+  version: "1.2"
   scope: [root, ui]
   auto_invoke: "Verifying a user-visible UI change in the browser"
 allowed-tools: Read, Glob, Grep, Bash
@@ -32,10 +32,9 @@ For a small visual change you are confident about (a token, a label, an icon), s
 # From the repo root: local API (Django, Postgres, Valkey, worker) on :8080
 docker compose -f docker-compose-dev.yml up -d api-dev worker-dev
 
-# UI on :3000, pointing at that API
+# UI on :3000, pointing at that API (process env wins over .env.local)
 cd ui
-echo 'UI_API_BASE_URL=http://localhost:8080/api/v1' >> .env.local
-pnpm run dev
+UI_API_BASE_URL=http://localhost:8080/api/v1 pnpm run dev
 ```
 
 - Reuse a dev server that is already running; do not start a second one on another port.
