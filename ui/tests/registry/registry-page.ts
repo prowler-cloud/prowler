@@ -185,7 +185,9 @@ export class RegistryPage extends BasePage {
   async verifyBuiltInArtifactHasNoAdd(name: string): Promise<void> {
     const card = this.artifactCardFor(name);
 
-    await expect(card.getByRole("status", { name: "Built in" })).toBeVisible();
+    await expect(
+      card.getByText("Included in Prowler", { exact: true }),
+    ).toBeVisible();
     await expect(
       card.getByRole("button", { name: `Add ${name}` }),
     ).toBeHidden();

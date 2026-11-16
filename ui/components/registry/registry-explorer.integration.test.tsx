@@ -1392,6 +1392,12 @@ describe("RegistryExplorer", () => {
           screen.getByRole("button", { name: "Add Ineligible artifact" }),
         )
         .not.toBeInTheDocument();
+      // Built-ins say so in the action slot instead.
+      expect(
+        cardFor("Ineligible artifact").textContent?.includes(
+          "Included in Prowler",
+        ),
+      ).toBe("isBuiltin" in flags);
       expect(executeRegistryArtifactAdditionMock).not.toHaveBeenCalled();
     });
 
@@ -1419,10 +1425,10 @@ describe("RegistryExplorer", () => {
       );
 
       // Then
-      await expect
-        .element(screen.getByRole("status", { name: "Built in" }))
-        .toBeVisible();
-      expect(document.body.textContent).toContain("Added");
+      expect(cardFor("AWS guard").textContent).toContain("Added");
+      expect(cardFor("AWS guard").textContent).not.toContain(
+        "Included in Prowler",
+      );
       const removeButton = screen.getByRole("button", {
         name: "Remove AWS guard",
       });
@@ -1578,8 +1584,8 @@ describe("RegistryExplorer", () => {
         .toBeVisible();
     });
 
-    it("counts logos and pills together toward the four-item cap and overflow", async () => {
-      // Given: six providers alternating known logos and dynamic pills
+    it("names four providers as focusable icons and the rest in the overflow", async () => {
+      // Given: six providers alternating known and dynamic types
       const blendedArtifact = {
         ...readyState.catalog.artifacts[2],
         normalizedName: "blended-guard",
@@ -1607,142 +1613,93 @@ describe("RegistryExplorer", () => {
         />,
       );
 
-      // Then: the cap keeps the first four items of BOTH kinds, so only the
-      // first two pills are visible and two items collapse into "+2".
-      const blendedCard = cardFor("Blended guard");
-      expect(blendedCard.textContent).toContain("6 providers");
-      expect(blendedCard.innerText).toContain("+2");
+      // Then: the first four are focusable icons, whatever their kind.
+      for (const name of ["AWS", "Template", "Azure", "Custom Scan"]) {
+        await expect
+          .element(screen.getByRole("img", { name, exact: true }))
+          .toHaveAttribute("tabindex", "0");
+      }
+      // Collapsed providers stay named for keyboard and assistive technology.
       await expect
         .element(
-          screen.getByRole("listitem").getByText("Template", { exact: true }),
+          screen.getByRole("img", {
+            name: "2 more: Google Cloud, Local Thing",
+          }),
         )
-        .toBeVisible();
-      await expect
-        .element(
-          screen
-            .getByRole("listitem")
-            .getByText("Custom Scan", { exact: true }),
-        )
-        .toBeVisible();
-      await expect
-        .element(
-          screen
-            .getByRole("listitem")
-            .getByText("Local Thing", { exact: true }),
-        )
-        .not.toBeInTheDocument();
-      // Even collapsed providers remain named for assistive technology.
-      expect(blendedCard.textContent).toContain(
-        "Providers: AWS, Template, Azure, Custom Scan, Google Cloud, Local Thing",
-      );
+        .toHaveAttribute("tabindex", "0");
+      expect(cardFor("Blended guard").textContent).not.toContain("6 providers");
     });
 
-    it("groups artifact metadata, preserves zero counts, and hides missing values", async () => {
+    it("shows a chip per capability, preserves zero counts, and hides missing values", async () => {
       // Given
       const artifact = {
         ...readyState.catalog.artifacts[0],
+        hasCompliance: true,
         isAdded: false,
         updateAvailable: false,
         extendsProviderSlugs: [],
         checkCount: 645,
         complianceCount: 45,
       };
-      const screen = await render(
+      const card = (overrides: Partial<typeof artifact>) => (
         <RegistryArtifactCard
-          artifact={artifact}
+          artifact={{ ...artifact, ...overrides }}
           onAdd={() => {}}
           onRemove={() => {}}
-        />,
+        />
       );
-
-      // Then: counts, version, and downloads share one labelled metadata block.
+      const chips = () =>
+        Array.from(
+          document.querySelectorAll('ul[aria-label="Contents"] > li'),
+          (chip) => chip.textContent,
+        );
+      const screen = await render(card({}));
       const metadata = screen.getByRole("group", { name: "Artifact metadata" });
-      await expect.element(metadata).toBeVisible();
-      for (const label of ["Compliance", "Checks", "Version", "Downloads"]) {
-        await expect
-          .element(metadata.getByText(label, { exact: true }))
-          .toBeVisible();
-      }
-      await expect
-        .element(metadata.getByText("45", { exact: true }))
-        .toBeVisible();
-      await expect
-        .element(metadata.getByText("645", { exact: true }))
-        .toBeVisible();
+
+      // Then: capabilities are chips; version and downloads stay in the footer.
+      expect(chips()).toEqual([
+        "Provider",
+        "645 checks",
+        "45 compliance frameworks",
+      ]);
       await expect
         .element(metadata.getByText(artifact.latestVersion!, { exact: true }))
         .toBeVisible();
-      await expect
-        .element(metadata.getByText("12", { exact: true }))
-        .toBeVisible();
-      await expect
-        .element(screen.getByText("45 Compliance", { exact: true }))
-        .not.toBeInTheDocument();
+      expect(metadata.element().textContent).toContain("12 downloads");
 
-      // When / Then: zero is a known count for every metric.
+      // When / Then: a compliance-only artifact gets no checks chip.
       await screen.rerender(
-        <RegistryArtifactCard
-          artifact={{
-            ...artifact,
-            checkCount: 0,
-            complianceCount: 0,
-            totalDownloads: 0,
-          }}
-          onAdd={() => {}}
-          onRemove={() => {}}
-        />,
+        card({ hasProvider: false, hasChecks: false, checkCount: 0 }),
       );
-      expect(metadata.element().querySelectorAll("dd")).toHaveLength(4);
-      expect(
-        Array.from(
-          metadata.element().querySelectorAll("dd"),
-          (value) => value.textContent,
-        ),
-      ).toEqual(["0", "0", artifact.latestVersion, "0"]);
+      expect(chips()).toEqual(["45 compliance frameworks"]);
 
-      // When / Then: built-in artifacts keep their metadata without downloads.
+      // When / Then: zero is a known count for a capability it has.
       await screen.rerender(
-        <RegistryArtifactCard
-          artifact={{ ...artifact, isBuiltin: true, totalDownloads: 0 }}
-          onAdd={() => {}}
-          onRemove={() => {}}
-        />,
+        card({ checkCount: 0, complianceCount: 0, totalDownloads: 0 }),
       );
-      await expect
-        .element(metadata.getByText("Downloads", { exact: true }))
-        .not.toBeInTheDocument();
-      expect(
-        Array.from(
-          metadata.element().querySelectorAll("dd"),
-          (value) => value.textContent,
-        ),
-      ).toEqual(["45", "645", artifact.latestVersion]);
+      expect(chips()).toEqual([
+        "Provider",
+        "0 checks",
+        "0 compliance frameworks",
+      ]);
+      expect(metadata.element().textContent).toContain("0 downloads");
+
+      // When / Then: built-in artifacts show no downloads.
+      await screen.rerender(card({ isBuiltin: true, totalDownloads: 0 }));
+      expect(metadata.element().textContent).toBe(
+        `Version${artifact.latestVersion}`,
+      );
 
       // When / Then: older responses have no counts, rather than zero counts.
       await screen.rerender(
-        <RegistryArtifactCard
-          artifact={{
-            ...artifact,
-            checkCount: undefined,
-            complianceCount: undefined,
-            latestVersion: undefined,
-          }}
-          onAdd={() => {}}
-          onRemove={() => {}}
-        />,
+        card({
+          checkCount: undefined,
+          complianceCount: undefined,
+          latestVersion: undefined,
+        }),
       );
-      await expect
-        .element(metadata.getByText("Compliance", { exact: true }))
-        .not.toBeInTheDocument();
-      await expect
-        .element(metadata.getByText("Checks", { exact: true }))
-        .not.toBeInTheDocument();
-      await expect
-        .element(metadata.getByText("Version", { exact: true }))
-        .not.toBeInTheDocument();
-      await expect
-        .element(metadata.getByText("Downloads", { exact: true }))
-        .toBeVisible();
+      expect(chips()).toEqual(["Provider", "Checks", "Compliance"]);
+      expect(metadata.element().textContent).toBe("Downloads12 downloads");
     });
 
     it("recovers the owner image when a fresh URL replaces an expired one", async () => {
