@@ -16153,6 +16153,84 @@ class TestTenantFinishACSView:
             not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
         )
 
+    def test_saml_token_cannot_switch_to_tenant_outside_the_saml_tenant(
+        self, client, create_test_user, tenants_fixture, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        saml_tenant, other_tenant = tenants_fixture[0], tenants_fixture[1]
+        assert user.is_member_of_tenant(str(other_tenant.id))
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={"firstName": ["John"], "lastName": ["Doe"]},
+        )
+        request = RequestFactory().get(
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(
+                tenant_id=saml_tenant.id
+            )
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=saml_tenant
+            )
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug=saml_setup["domain"])
+
+        assert response.status_code == 302
+        token_id = parse_qs(urlparse(response.url).query)["id"][0]
+        saml_access = SAMLToken.objects.using(MainRouter.admin_db).get(id=token_id)
+        auth_headers = {"Authorization": f"Bearer {saml_access.token['access']}"}
+
+        def switch_to(tenant):
+            return client.post(
+                reverse("token-switch"),
+                data={
+                    "data": {
+                        "type": "tokens-switch-tenant",
+                        "attributes": {"tenant_id": str(tenant.id)},
+                    }
+                },
+                content_type=API_JSON_CONTENT_TYPE,
+                headers=auth_headers,
+            )
+
+        assert switch_to(saml_tenant).status_code == status.HTTP_200_OK
+        assert switch_to(other_tenant).status_code in (
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_403_FORBIDDEN,
+        )
+
     def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
         """Test that a user is properly deleted when created during SAML flow and an error occurs"""
         monkeypatch.setenv("AUTH_URL", "http://localhost")

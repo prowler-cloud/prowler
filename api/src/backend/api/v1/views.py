@@ -19,6 +19,11 @@ from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    session_bound_tenant_id,
+    session_reaches_other_tenants,
+)
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     COMPLIANCE_WARMED,
@@ -1032,7 +1037,8 @@ class TenantFinishACSView(FinishACSView):
         )
 
         serializer = TokenSocialLoginSerializer(
-            data={"email": user.email, "tenant_id": str(tenant.id)}
+            data={"email": user.email, "tenant_id": str(tenant.id)},
+            context={SSO_TENANT_CLAIM: str(tenant.id)},
         )
         serializer.is_valid(raise_exception=True)
 
@@ -1171,6 +1177,8 @@ class UserViewSet(BaseUserViewset):
                 )
             # Email and password belong to the user, not to this tenant.
             self._reject_credential_changes_for_other_user(user, request.data)
+        elif session_reaches_other_tenants(request):
+            self._reject_credential_changes_from_bound_session(user, request.data)
 
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -1195,9 +1203,34 @@ class UserViewSet(BaseUserViewset):
         if errors:
             raise ValidationError(errors)
 
+    @staticmethod
+    def _reject_credential_changes_from_bound_session(user, data):
+        # Email and password are shared by every tenant the user belongs to.
+        errors = {}
+        if "password" in data:
+            errors["password"] = (
+                "This session is limited to one organization and cannot change a "
+                "password shared with your other organizations."
+            )
+        new_email = data.get("email")
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = (
+                "This session is limited to one organization and cannot change an "
+                "email shared with your other organizations."
+            )
+        if errors:
+            raise ValidationError(errors)
+
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
+        if session_reaches_other_tenants(request):
+            raise ValidationError(
+                "This session is limited to one organization and cannot delete an "
+                "account that belongs to other organizations."
+            )
 
         user = self.get_object()
         user.delete(using=MainRouter.admin_db)
@@ -1407,6 +1440,15 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def _tenants_reachable_from(request):
+    """Tenants of the user that the current session is allowed to act on."""
+    queryset = Tenant.objects.filter(membership__user=request.user)
+    bound_tenant_id = session_bound_tenant_id(request)
+    if bound_tenant_id:
+        queryset = queryset.filter(id=bound_tenant_id)
+    return queryset
+
+
 @extend_schema_view(
     list=extend_schema(
         tags=["Tenant"],
@@ -1459,10 +1501,14 @@ class TenantViewSet(BaseTenantViewset):
             self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
-        queryset = Tenant.objects.filter(membership__user=self.request.user)
+        queryset = _tenants_reachable_from(self.request)
         return queryset.prefetch_related("memberships")
 
     def create(self, request, *args, **kwargs):
+        if session_bound_tenant_id(request):
+            raise ValidationError(
+                "This session is limited to one organization and cannot create another."
+            )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tenant = Tenant.objects.using(MainRouter.admin_db).create(
@@ -1589,7 +1635,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     def get_tenant(self):
         tenant_id = self.kwargs.get("tenant_pk")
         return get_object_or_404(
-            Tenant.objects.filter(membership__user=self.request.user),
+            _tenants_reachable_from(self.request),
             id=tenant_id,
         )
 
