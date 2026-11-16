@@ -4,6 +4,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 import yaml
+from api.authentication import SSO_TENANT_CLAIM, session_bound_tenant_id
 from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
@@ -157,7 +158,9 @@ class StateEnumSerializerField(serializers.ChoiceField):
 # Tokens
 
 
-def generate_tokens(user: User, tenant_id: str) -> dict:
+def generate_tokens(
+    user: User, tenant_id: str, sso_tenant_id: str | None = None
+) -> dict:
     try:
         refresh = RefreshToken.for_user(user)
     except InvalidKeyError:
@@ -174,6 +177,8 @@ def generate_tokens(user: User, tenant_id: str) -> dict:
     # Post-process the tokens
     # Set the tenant_id
     refresh["tenant_id"] = tenant_id
+    if sso_tenant_id:
+        refresh[SSO_TENANT_CLAIM] = sso_tenant_id
 
     # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
     # way to set the nbf claim
@@ -212,7 +217,9 @@ class BaseTokenSerializer(TokenObtainPairSerializer):
                 raise ValidationError("User has no memberships.")
             tenant_id = str(first_membership.tenant_id)
 
-        return generate_tokens(user, tenant_id)
+        return generate_tokens(
+            user, tenant_id, sso_tenant_id=self.context.get(SSO_TENANT_CLAIM)
+        )
 
 
 class TokenSerializer(BaseTokenSerializer):
@@ -351,7 +358,15 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
         if not user.is_member_of_tenant(tenant_id):
             raise ValidationError("Tenant does not exist or user is not a member.")
 
-        return generate_tokens(user, tenant_id)
+        bound_tenant_id = session_bound_tenant_id(request)
+        if bound_tenant_id and bound_tenant_id != tenant_id:
+            raise ValidationError(
+                "This session can only access the organization it signed in to. "
+                "Sign in again to switch to another organization.",
+                code="session-bound-to-tenant",
+            )
+
+        return generate_tokens(user, tenant_id, sso_tenant_id=bound_tenant_id)
 
 
 # Users

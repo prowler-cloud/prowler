@@ -1,0 +1,1 @@
+Sessions started through SAML SSO or with an API key stay in the organization that issued them: `POST /api/v1/tokens/switch` only returns a token for that organization, and those sessions cannot change the account password or email or delete the account

@@ -154,6 +154,19 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         ).update(last_used_at=now)
 
 
+SSO_TENANT_CLAIM = "sso_tenant_id"
+
+
+def session_bound_tenant_id(request: Request) -> str | None:
+    """Tenant a session is confined to: SSO logins and API keys vouch for one tenant only."""
+    auth = request.auth
+    if auth is None:
+        return None
+    if auth.get("api_key_prefix"):
+        return auth.get("tenant_id")
+    return auth.get(SSO_TENANT_CLAIM)
+
+
 class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):
     jwt_auth = JWTAuthentication()
     api_key_auth = TenantAPIKeyAuthentication()

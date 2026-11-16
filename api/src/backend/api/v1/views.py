@@ -19,6 +19,7 @@ from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
+from api.authentication import SSO_TENANT_CLAIM, session_bound_tenant_id
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     COMPLIANCE_WARMED,
@@ -1032,7 +1033,8 @@ class TenantFinishACSView(FinishACSView):
         )
 
         serializer = TokenSocialLoginSerializer(
-            data={"email": user.email, "tenant_id": str(tenant.id)}
+            data={"email": user.email, "tenant_id": str(tenant.id)},
+            context={SSO_TENANT_CLAIM: str(tenant.id)},
         )
         serializer.is_valid(raise_exception=True)
 
@@ -1171,6 +1173,8 @@ class UserViewSet(BaseUserViewset):
                 )
             # Email and password belong to the user, not to this tenant.
             self._reject_credential_changes_for_other_user(user, request.data)
+        elif session_bound_tenant_id(request):
+            self._reject_credential_changes_from_bound_session(user, request.data)
 
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -1195,9 +1199,31 @@ class UserViewSet(BaseUserViewset):
         if errors:
             raise ValidationError(errors)
 
+    @staticmethod
+    def _reject_credential_changes_from_bound_session(user, data):
+        # Email and password are shared by every tenant the user belongs to.
+        errors = {}
+        if "password" in data:
+            errors["password"] = (
+                "Sign in with your password to change it; this session cannot."
+            )
+        new_email = data.get("email")
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = (
+                "Sign in with your password to change your email; this session cannot."
+            )
+        if errors:
+            raise ValidationError(errors)
+
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
+        if session_bound_tenant_id(request):
+            raise ValidationError(
+                "Sign in with your password to delete your account; this session cannot."
+            )
 
         user = self.get_object()
         user.delete(using=MainRouter.admin_db)
