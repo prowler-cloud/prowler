@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.2"
+  version: "1.3"
   scope: [root, ui]
   auto_invoke: "Verifying a user-visible UI change in the browser"
 allowed-tools: Read, Glob, Grep, Bash
@@ -32,11 +32,19 @@ For a small visual change you are confident about (a token, a label, an icon), s
 # From the repo root: local API (Django, Postgres, Valkey, worker) on :8080
 docker compose -f docker-compose-dev.yml up -d api-dev worker-dev
 
-# UI on :3000, pointing at that API (process env wins over .env.local)
+# UI on :3000. First run only: create ui/.env.local (an existing file is left alone)
 cd ui
-UI_API_BASE_URL=http://localhost:8080/api/v1 pnpm run dev
+[ -f .env.local ] || cat > .env.local <<EOF
+UI_API_BASE_URL=http://localhost:8080/api/v1
+AUTH_URL=http://localhost:3000
+AUTH_SECRET=$(openssl rand -base64 32)
+AUTH_TRUST_HOST=true
+EOF
+pnpm run dev
 ```
 
+- `lib/env.ts` stops the boot when `UI_API_BASE_URL`, `AUTH_URL` or `AUTH_SECRET` is missing. Next does not read the root `.env` from `ui/`; that file lists the other UI variables.
+- To point an existing `.env.local` at another API for one run, set the variable on the process: `UI_API_BASE_URL=<url> pnpm run dev`. A value already in the environment wins over `.env.local`.
 - Reuse a dev server that is already running; do not start a second one on another port.
 - Authenticated routes need a signed-in user. Never type a developer's real password: ask them to sign in, or use a test account created for the local stack.
 - Cloud-only screens (Realtime, Lighthouse v2, upgrade prompts) render only with `UI_CLOUD_ENABLED=true` and an API that serves them.
