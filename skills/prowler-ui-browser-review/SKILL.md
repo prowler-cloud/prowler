@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.3"
+  version: "1.4"
   scope: [root, ui]
   auto_invoke: "Verifying a user-visible UI change in the browser"
 allowed-tools: Read, Glob, Grep, Bash
@@ -40,7 +40,7 @@ AUTH_URL=http://localhost:3000
 AUTH_SECRET=$(openssl rand -base64 32)
 AUTH_TRUST_HOST=true
 EOF
-pnpm run dev
+UI_API_BASE_URL=http://localhost:8080/api/v1 pnpm run dev
 ```
 
 - `lib/env.ts` stops the boot when `UI_API_BASE_URL`, `AUTH_URL` or `AUTH_SECRET` is missing. Next does not read the root `.env` from `ui/`; that file lists the other UI variables.
