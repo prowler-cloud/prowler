@@ -237,7 +237,7 @@ constraint-dependencies = [
   "djangorestframework==3.18.3",
   "djangorestframework-jsonapi==7.0.2",
   "djangorestframework-simplejwt==5.5.1",
-  "dnspython==2.9.0",
+  "dnspython==2.9.2",
   "docker==7.1.0",
   "dogpile-cache==1.5.0",
   "dparse==0.6.4",
