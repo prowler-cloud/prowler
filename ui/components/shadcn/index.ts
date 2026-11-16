@@ -20,6 +20,7 @@ export * from "./headers";
 export * from "./info-field";
 export * from "./input/input";
 export * from "./label";
+export * from "./lighthouse-callout";
 export * from "./navigation-button";
 export * from "./navigation-progress";
 export * from "./progress";

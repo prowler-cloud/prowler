@@ -14,7 +14,7 @@ docs_mcp_server = FastMCP("prowler-docs", mask_error_details=True)
 prowler_docs_search_engine = ProwlerDocsSearchEngine()
 
 
-@docs_mcp_server.tool()
+@docs_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 def search(
     term: NonBlankStr = Field(
         description="The term to search for in the documentation"
@@ -41,7 +41,7 @@ def search(
     return prowler_docs_search_engine.search(term, page_size)  # type: ignore In the hint we cannot put SearchResult type because JSON API MCP Generator cannot handle Pydantic models yet
 
 
-@docs_mcp_server.tool()
+@docs_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 def get_document(
     doc_path: NonBlankStr = Field(
         description="Path to the documentation file to retrieve. It is the same as the 'path' field of the search results. Use `prowler_docs_search` to find the path first."

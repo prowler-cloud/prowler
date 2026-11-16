@@ -9,13 +9,14 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Add or edit changelog fragments in <component>/changelog.d/ | `prowler-changelog` |
 | Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Creating a git commit | `prowler-commit` |
 | Review changelog format and conventions | `prowler-changelog` |
-| Update CHANGELOG.md in any component | `prowler-changelog` |
+| Testing MCP tools or models | `prowler-test-mcp` |
 | Working on MCP server tools | `prowler-mcp` |
-| Writing tests for the MCP server | `prowler-test-mcp` |
+| Writing Prowler MCP server tests | `prowler-test-mcp` |
 
 ## Project Overview
 
@@ -27,7 +28,7 @@ The Prowler MCP Server provides AI agents access to the Prowler ecosystem throug
 
 ### Tool Implementation
 - ALWAYS: Extend `BaseTool` ABC for Prowler tools (auto-registration)
-- ALWAYS: Use `@mcp.tool()` decorator for Hub/Docs tools
+- ALWAYS: Use `@hub_mcp_server.tool(annotations={...})` (or the docs server equivalent) for Hub/Docs tools
 - NEVER: Manually register BaseTool subclasses
 - NEVER: Import tools directly in server.py
 
@@ -63,7 +64,7 @@ prowler_mcp_server.mount(docs_mcp_server, namespace="prowler_docs")
 
 ## TECH STACK
 
-Python 3.12+ | FastMCP 3.4.4 | httpx (async) | Pydantic | uv | pytest
+Python 3.12+ | FastMCP 3.4.5 | httpx (async) | Pydantic | uv | pytest
 
 ---
 

@@ -123,7 +123,8 @@
         "inspector2_active_findings_exist",
         "awslambda_function_using_supported_runtimes",
         "rds_instance_deprecated_engine_version",
-        "rds_instance_extended_support"
+        "rds_instance_extended_support",
+        "elasticbeanstalk_environment_php_platform_updated"
       ],
       "Attributes": [
         {
@@ -160,7 +161,8 @@
         "redshift_cluster_automatic_upgrades",
         "kafka_cluster_uses_latest_version",
         "opensearch_service_domains_updated_to_the_latest_service_software_version",
-        "ecs_service_fargate_latest_platform_version"
+        "ecs_service_fargate_latest_platform_version",
+        "elasticbeanstalk_environment_php_platform_updated"
       ],
       "Attributes": [
         {
@@ -215,7 +217,8 @@
         "eks_cluster_uses_a_supported_version",
         "ecs_service_fargate_latest_platform_version",
         "kafka_cluster_uses_latest_version",
-        "opensearch_service_domains_updated_to_the_latest_service_software_version"
+        "opensearch_service_domains_updated_to_the_latest_service_software_version",
+        "elasticbeanstalk_environment_php_platform_updated"
       ],
       "Attributes": [
         {

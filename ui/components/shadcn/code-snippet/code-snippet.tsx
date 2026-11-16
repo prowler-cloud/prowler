@@ -74,7 +74,7 @@ export const CodeSnippet = ({
   return (
     <div
       className={cn(
-        "flex w-fit min-w-0 items-center gap-1.5 text-xs",
+        "flex w-fit max-w-full min-w-0 items-center gap-1.5 text-xs",
         transparent
           ? "text-text-neutral-tertiary border-0 bg-transparent px-0 py-0"
           : "text-text-neutral-primary bg-bg-neutral-tertiary border-border-neutral-tertiary border-2 px-2 py-0.5",

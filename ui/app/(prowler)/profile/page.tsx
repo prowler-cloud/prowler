@@ -89,13 +89,7 @@ const SSRDataUser = async ({
       role.attributes.manage_account === true && userRoleIds.includes(role.id),
   );
 
-  const hasManageIntegrations = roleDetails.some(
-    (role) =>
-      role.attributes.manage_integrations === true &&
-      userRoleIds.includes(role.id),
-  );
-
-  const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
+  const samlConfig = hasManageAccount ? await getSamlConfig() : undefined;
 
   return (
     <Card
@@ -112,7 +106,7 @@ const SSRDataUser = async ({
           <ApiKeysCard searchParams={searchParams} />
         </div>
       )}
-      {hasManageIntegrations && (
+      {hasManageAccount && (
         <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
       )}
       <MembershipsCard

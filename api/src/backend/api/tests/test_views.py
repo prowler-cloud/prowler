@@ -31,6 +31,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
     InvitationRoleRelationship,
@@ -63,6 +64,7 @@ from api.models import (
 from api.rbac.permissions import TASK_REVOKE_PERMISSIONS
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
+from api.v1.serializers import MembershipIncludeSerializer
 from api.v1.views import (
     ComplianceOverviewViewSet,
     CustomSAMLLoginView,
@@ -97,6 +99,11 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_resource_scan_summaries,
+)
 
 
 class TestViewSet:
@@ -132,6 +139,145 @@ class TestUserViewSet:
         response = authenticated_client.get(reverse("user-me"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == create_test_user.email
+
+    @staticmethod
+    def _shared_user_in_two_tenants(tenant_a, tenant_b):
+        shared_user = User.objects.create_user(
+            name="shared_user",
+            email=f"shared-user-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=shared_user, tenant=tenant_a)
+        Membership.objects.create(user=shared_user, tenant=tenant_b)
+        role_a = Role.objects.create(name="role-a", tenant=tenant_a)
+        role_b = Role.objects.create(name="role-b", tenant=tenant_b)
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=role_a, tenant=tenant_a
+        )
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=role_b, tenant=tenant_b
+        )
+        return shared_user, role_a, role_b
+
+    @staticmethod
+    def _user_in_two_tenants_with_unique_roles(tenant_a, tenant_b):
+        suffix = uuid4()
+        user = User.objects.create_user(
+            name="scaled_user",
+            email=f"scaled-user-{suffix}@prowler.com",
+            password="TmpPass123@",
+        )
+        for tenant in (tenant_a, tenant_b):
+            Membership.objects.create(user=user, tenant=tenant)
+            role = Role.objects.create(name=f"role-{tenant.id}-{suffix}", tenant=tenant)
+            UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant)
+        return user
+
+    def test_users_list_query_count_does_not_grow_with_user_count(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+        params = {"include": "memberships,roles"}
+
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        baseline_users = len(response.json()["data"])
+
+        for _ in range(3):
+            self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > baseline_users
+
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Tenant-scoped relations are re-querying per user: "
+            f"{len(baseline.captured_queries)} queries for {baseline_users} users "
+            f"vs {len(scaled.captured_queries)} for "
+            f"{len(response.json()['data'])}. The prefetch is being discarded."
+        )
+
+    def test_users_retrieve_scopes_relations_to_active_tenant(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        shared_user, role_a, role_b = self._shared_user_in_two_tenants(
+            tenant_a, tenant_b
+        )
+
+        response = authenticated_client.get(
+            reverse("user-detail", kwargs={"pk": shared_user.id}),
+            {"include": "memberships,roles,memberships.tenant"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        relationships = payload["data"]["relationships"]
+        assert len(relationships["memberships"]["data"]) == 1
+        assert [item["id"] for item in relationships["roles"]["data"]] == [
+            str(role_a.id)
+        ]
+
+        included = payload["included"]
+        included_memberships = [i for i in included if i["type"] == "memberships"]
+        assert len(included_memberships) == 1
+        assert included_memberships[0]["relationships"]["tenant"]["data"]["id"] == str(
+            tenant_a.id
+        )
+        assert {i["id"] for i in included if i["type"] == "roles"} == {str(role_a.id)}
+        assert {
+            i["attributes"]["name"] for i in included if i["type"] == "tenants"
+        } == {tenant_a.name}
+        body = response.content.decode()
+        assert tenant_b.name not in body
+        assert str(tenant_b.id) not in body
+        assert str(role_b.id) not in body
+
+    def test_users_me_keeps_own_memberships_and_scopes_roles(
+        self, authenticated_client, create_test_user, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+
+        response = authenticated_client.get(
+            reverse("user-me"), {"include": "memberships,roles,memberships.tenant"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        relationships = payload["data"]["relationships"]
+        assert len(relationships["memberships"]["data"]) == 2
+        assert {
+            i["attributes"]["name"]
+            for i in payload["included"]
+            if i["type"] == "tenants"
+        } == {tenant_a.name, tenant_b.name}
+        active_roles = create_test_user.roles.filter(tenant_id=tenant_a.id)
+        assert {i["id"] for i in relationships["roles"]["data"]} == {
+            str(role.id) for role in active_roles
+        }
+
+    def test_membership_include_serializer_hides_tenant_of_non_member(
+        self, create_test_user, tenants_fixture
+    ):
+        tenant_a, _, isolated_tenant = tenants_fixture
+        outsider = User.objects.create_user(
+            name="outsider",
+            email=f"outsider-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        foreign_membership = Membership.objects.create(
+            user=outsider, tenant=isolated_tenant
+        )
+        own_membership = Membership.objects.get(user=create_test_user, tenant=tenant_a)
+        request = SimpleNamespace(user=create_test_user, tenant_id=str(tenant_a.id))
+
+        serializer = MembershipIncludeSerializer(context={"request": request})
+
+        assert serializer.get_tenant(own_membership) == tenant_a
+        assert serializer.get_tenant(foreign_membership) is None
 
     def test_users_create(self, client):
         valid_user_payload = {
@@ -311,6 +457,198 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         target_user.refresh_from_db()
         assert target_user.email == original_email
+
+    @staticmethod
+    def _add_target_user_to_tenant(email, password, tenant):
+        target_user = User.objects.create_user(
+            name="target", email=email, password=password
+        )
+        Membership.objects.create(
+            user=target_user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        return target_user
+
+    def test_users_partial_update_manage_users_other_user_password_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            "target-mu-password@example.com", original_password, tenant
+        )
+        payload = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"password": new_password},
+            },
+        }
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Only the user themselves can change their password."
+        )
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+        assert not target_user.check_password(new_password)
+
+    def test_users_partial_update_manage_users_multi_tenant_user_password_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        from rest_framework.test import APIClient
+
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        tenant_a = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        tenant_b = Tenant.objects.create(name="Tenant B")
+        target_user = self._add_target_user_to_tenant(
+            "target-cross-tenant@example.com", original_password, tenant_a
+        )
+        Membership.objects.create(
+            user=target_user, tenant=tenant_b, role=Membership.RoleChoices.OWNER
+        )
+        admin_role_b = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_b.id,
+            manage_users=True,
+            manage_account=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=target_user, role=admin_role_b, tenant_id=tenant_b.id
+        )
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {"password": new_password},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        token_response = APIClient().post(
+            reverse("token-obtain"),
+            {
+                "data": {
+                    "type": "tokens",
+                    "attributes": {
+                        "email": target_user.email,
+                        "password": new_password,
+                        "tenant_id": str(tenant_b.id),
+                    },
+                }
+            },
+            format="vnd.api+json",
+        )
+        assert token_response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+
+    def test_users_partial_update_manage_users_other_user_email_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_email = "target-mu-email@example.com"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            original_email, "OriginalPassword123@", tenant
+        )
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {"email": "updated-mu-email@example.com"},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Only the user themselves can change their email."
+        )
+        target_user.refresh_from_db()
+        assert target_user.email == original_email
+
+    def test_users_partial_update_manage_users_other_user_profile_allowed(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_email = "target-mu-profile@example.com"
+        original_password = "OriginalPassword123@"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            original_email, original_password, tenant
+        )
+
+        # The UI edit form re-sends the unchanged email alongside profile fields.
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {
+                        "name": "Renamed Target",
+                        "company_name": "New Company",
+                        "email": original_email.upper(),
+                    },
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        target_user.refresh_from_db()
+        assert target_user.name == "Renamed Target"
+        assert target_user.company_name == "New Company"
+        assert target_user.email == original_email
+        assert target_user.check_password(original_password)
+
+    def test_users_partial_update_own_password_allowed(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        user = authenticated_client_rbac_manage_users_only.user
+        new_password = "UpdatedPassword123@"
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(user.id),
+                    "attributes": {"password": new_password},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        user.refresh_from_db()
+        assert user.check_password(new_password)
 
     def test_users_partial_update_invalid_content_type(
         self, authenticated_client, create_test_user
@@ -3104,7 +3442,7 @@ class TestProviderSecretViewSet:
                         "client_email": "client-email",
                         "client_id": "client-id",
                         "auth_uri": "auth-uri",
-                        "token_uri": "token-uri",
+                        "token_uri": "https://oauth2.googleapis.com/token",
                         "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
                         "client_x509_cert_url": "client-x509-cert-url",
                         "universe_domain": "universe-domain",
@@ -3548,6 +3886,78 @@ current-context: test-context
             "/data/attributes/secret/okta_private_key"
         )
 
+    @pytest.mark.parametrize(
+        "service_account_key",
+        [
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"file": "/etc/passwd"},
+            },
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"url": "http://169.254.169.254/"},
+            },
+            {"type": "impersonated_service_account"},
+            {"type": "authorized_user"},
+            {"private_key": "missing-type"},
+            "not-a-dict",
+            {},
+            {
+                "type": "service_account",
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {"type": "service_account"},
+            {
+                "type": "service_account",
+                "token_uri": ["https://oauth2.googleapis.com/token"],
+            },
+            {"type": "service_account", "token_uri": {"url": "x"}},
+        ],
+    )
+    def test_provider_secrets_invalid_create_gcp_non_service_account_key(
+        self,
+        gcp_provider,
+        authenticated_client,
+        service_account_key,
+    ):
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "GCP Secret",
+                    "secret_type": ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                    "secret": {"service_account_key": service_account_key},
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(gcp_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/service_account_key"
+        )
+        assert not ProviderSecret.objects.filter(provider=gcp_provider).exists()
+
     def test_provider_secrets_partial_update(
         self, authenticated_client, provider_secret_fixture
     ):
@@ -3727,7 +4137,11 @@ current-context: test-context
                 "attributes": {
                     "name": "new_name",
                     "secret": {
-                        "service_account_key": {},
+                        "service_account_key": {
+                            "type": "service_account",
+                            "project_id": "project-id",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                        },
                     },
                     "secret_type": "service_account",
                 },
@@ -3749,7 +4163,13 @@ current-context: test-context
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
         assert provider_secret.name == "new_name"
-        assert provider_secret.secret == {"service_account_key": {}}
+        assert provider_secret.secret == {
+            "service_account_key": {
+                "type": "service_account",
+                "project_id": "project-id",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        }
 
     def test_provider_secrets_partial_update_with_invalid_secret_type(
         self, authenticated_client, provider_secret_fixture
@@ -6949,6 +7369,99 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+def _client_restricted_to_provider(tenant, provider, factory):
+    """Authenticated client for a fresh member whose role only sees `provider`."""
+    user = User.objects.create_user(
+        name=f"restricted-{uuid4()}",
+        email=f"restricted-{uuid4()}@prowler.com",
+        password=TEST_PASSWORD,
+    )
+    Membership.objects.create(
+        user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+    )
+    role = Role.objects.create(
+        name=f"restricted-{uuid4()}",
+        tenant_id=tenant.id,
+        manage_users=False,
+        manage_account=False,
+        manage_billing=False,
+        manage_providers=False,
+        manage_integrations=False,
+        manage_scans=False,
+        unlimited_visibility=False,
+    )
+    UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    provider_group = ProviderGroup.objects.create(
+        name=f"restricted-{uuid4()}", tenant_id=tenant.id
+    )
+    ProviderGroupMembership.objects.create(
+        tenant_id=tenant.id, provider_group=provider_group, provider=provider
+    )
+    RoleProviderGroupRelationship.objects.create(
+        tenant_id=tenant.id, role=role, provider_group=provider_group
+    )
+    return factory(user, tenant)
+
+
+def _completed_scan_with_summaries(
+    tenant, provider, resources, *, categories, resource_group
+):
+    """Completed scan for `provider` with one finding over `resources`, summary tables filled."""
+    tenant_id = str(tenant.id)
+    scan = Scan.objects.create(
+        name=f"scan-{uuid4()}",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid=f"finding-{uuid4()}",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="scoped_check",
+        check_metadata={"CheckId": "scoped_check"},
+        categories=categories,
+        resource_groups=resource_group,
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources(resources)
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    aggregate_scan_category_summaries(tenant_id, str(scan.id))
+    aggregate_scan_resource_group_summaries(tenant_id, str(scan.id))
+    return scan
+
+
+@pytest.fixture
+def scans_per_provider_fixture(tenants_fixture, aws_provider_pair, resources_fixture):
+    """One completed scan per provider; provider 2 only owns the `test` typed resource."""
+    tenant = tenants_fixture[0]
+    provider1, provider2 = aws_provider_pair
+    resource1, resource2, resource3 = resources_fixture
+    _completed_scan_with_summaries(
+        tenant,
+        provider1,
+        [resource1, resource2],
+        categories=["iam"],
+        resource_group="identity",
+    )
+    _completed_scan_with_summaries(
+        tenant,
+        provider2,
+        [resource3],
+        categories=["data-protection"],
+        resource_group="data",
+    )
+    return tenant, provider2
+
+
 @pytest.mark.django_db
 class TestResourceViewSet:
     def test_resources_list_none(self, authenticated_client):
@@ -7319,6 +7832,42 @@ class TestResourceViewSet:
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
+
+    def test_resources_metadata_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("resource-metadata"), {"filter[updated_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
+
+    def test_resources_metadata_latest_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("resource-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
 
     def test_resources_latest_filter_by_provider_id(
         self, authenticated_client, latest_scan_resource
@@ -8951,6 +9500,53 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert "groups" in attributes
         assert "ai_ml" in attributes["groups"]
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_latest_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+        assert set(attributes["groups"]) == {"data"}
 
     def test_findings_filter_by_category(
         self, authenticated_client, findings_with_categories
@@ -19499,6 +20095,30 @@ class TestFindingGroupViewSet:
         assert (
             attrs["check_description"] == "EC2 instances should use private IPs only."
         )
+
+    def test_finding_groups_check_title_from_sdk_without_summaries(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """A first scan writes no summaries until it completes; titles come from the SDK."""
+        FindingGroupDailySummary.objects.all().delete()
+        Scan.objects.filter(
+            id__in=Finding.objects.filter(check_id="ec2_instance_public_ip").values(
+                "scan_id"
+            )
+        ).update(state=StateChoices.EXECUTING, completed_at=None)
+
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert attrs["check_title"] == "EC2 instance does not have a public IP address"
+        assert attrs["check_description"].startswith("**EC2 instances**")
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture

@@ -73,6 +73,130 @@ class TestGoogleWorkspaceProvider:
             assert provider.domain_resource.name == DOMAIN
             assert provider._audit_config == {}
 
+    def test_editions_are_read_once_from_the_licensing_api(self):
+        """The licensed editions let checks say when a feature is not sold on the tenant's edition"""
+        mock_credentials = MagicMock(spec=Credentials)
+        licensing = MagicMock()
+        pages = {"Google-Apps": {"items": [{"skuId": "1010020027"}]}, "101005": {}}
+
+        def list_for_product(productId, **_kwargs):
+            request = MagicMock()
+            request.execute.return_value = pages[productId]
+            return request
+
+        licensing.licenseAssignments().listForProduct.side_effect = list_for_product
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
+                return_value=GoogleWorkspaceIdentityInfo(
+                    domain=DOMAIN,
+                    customer_id=CUSTOMER_ID,
+                    delegated_user=DELEGATED_USER,
+                    profile="default",
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build",
+                return_value=licensing,
+            ) as build,
+        ):
+            provider = GoogleworkspaceProvider(
+                credentials_file="/path/to/credentials.json",
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert provider.editions == ["Business Starter"]
+            assert provider.editions == ["Business Starter"]
+
+            mock_credentials.with_scopes.assert_called_once_with(
+                ["https://www.googleapis.com/auth/apps.licensing"]
+            )
+            build.assert_called_once_with(
+                "licensing",
+                "v1",
+                credentials=mock_credentials.with_scopes.return_value,
+                cache_discovery=False,
+            )
+            # One pass over both products, nothing on the second access
+            assert licensing.licenseAssignments().listForProduct.call_count == 2
+
+    def test_editions_stay_unknown_when_the_licensing_api_is_unavailable(self):
+        """A missing scope or disabled API must not cost anything else"""
+        mock_credentials = MagicMock(spec=Credentials)
+        licensing = MagicMock()
+        licensing.licenseAssignments().listForProduct.return_value.execute.side_effect = Exception(
+            "unauthorized_client"
+        )
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
+                return_value=GoogleWorkspaceIdentityInfo(
+                    domain=DOMAIN,
+                    customer_id=CUSTOMER_ID,
+                    delegated_user=DELEGATED_USER,
+                    profile="default",
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build",
+                return_value=licensing,
+            ),
+        ):
+            provider = GoogleworkspaceProvider(
+                credentials_file="/path/to/credentials.json",
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert provider.editions == []
+
+    def test_editions_stay_unknown_when_the_licensing_client_cannot_be_built(self):
+        mock_credentials = MagicMock(spec=Credentials)
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
+                return_value=(
+                    GoogleWorkspaceSession(credentials=mock_credentials),
+                    DELEGATED_USER,
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
+                return_value=GoogleWorkspaceIdentityInfo(
+                    domain=DOMAIN,
+                    customer_id=CUSTOMER_ID,
+                    delegated_user=DELEGATED_USER,
+                    profile="default",
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build",
+                side_effect=Exception("discovery document unavailable"),
+            ),
+        ):
+            provider = GoogleworkspaceProvider(
+                credentials_file="/path/to/credentials.json",
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert provider.editions == []
+
     def test_googleworkspace_provider_with_credentials_content(self):
         """Test provider initialization with credentials content"""
         import json

@@ -5,6 +5,8 @@ from api.v1.serializer_utils.integrations import (
 )
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.v1.serializers import (
+    KUBERNETES_KUBECONFIG_INVALID_ERROR,
+    KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
     ImageProviderSecret,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
@@ -339,6 +341,278 @@ current-context: test-context
 
         assert not serializer.is_valid()
         assert "kubeconfig_content" in serializer.errors
+
+    @staticmethod
+    def _kubeconfig(user_extra="", cluster_extra=""):
+        return f"""
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+{cluster_extra}
+users:
+  - name: test-user
+    user:
+      token: test-token
+{user_extra}
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+    @staticmethod
+    def _assert_rejected_without_echo(
+        kubeconfig_content, leaked_value, expected_message
+    ):
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert serializer.is_valid() is False
+        assert serializer.errors["kubeconfig_content"] == [expected_message]
+        assert leaked_value not in str(serializer.errors)
+
+    def test_inline_token_with_certificate_authority_data_is_accepted(self):
+        kubeconfig_content = self._kubeconfig(
+            cluster_extra="      certificate-authority-data: dGVzdA=="
+        )
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert serializer.is_valid()
+
+    def test_kubeconfig_with_token_file_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      tokenFile: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_client_certificate_file_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      client-certificate: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_client_key_file_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      client-key: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_certificate_authority_file_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(cluster_extra="      certificate-authority: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_cluster_proxy_url_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(cluster_extra="      proxy-url: http://proxy.evil.test"),
+            "proxy.evil.test",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    @pytest.mark.parametrize("provider_name", ["gcp", "oidc", "azure"])
+    def test_kubeconfig_with_any_auth_provider_is_rejected(self, provider_name):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(
+                user_extra=(
+                    "      auth-provider:\n"
+                    f"        name: {provider_name}\n"
+                    "        config:\n"
+                    "          idp-issuer-url: https://idp.evil.test"
+                )
+            ),
+            "idp.evil.test",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_unknown_user_key_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      bogus: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_unknown_cluster_key_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(cluster_extra="      bogus: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_allowlisted_cluster_keys_is_accepted(self):
+        serializer = KubernetesProviderSecret(
+            data={
+                "kubeconfig_content": self._kubeconfig(
+                    cluster_extra=(
+                        "      certificate-authority-data: dGVzdA==\n"
+                        "      insecure-skip-tls-verify: false\n"
+                        "      tls-server-name: kubernetes.example.test\n"
+                        "      disable-compression: true\n"
+                        "      extensions: []"
+                    )
+                )
+            }
+        )
+
+        assert serializer.is_valid(), serializer.errors
+
+    def test_kubeconfig_with_non_list_clusters_is_rejected(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  name: /etc/passwd
+"""
+        self._assert_rejected_without_echo(
+            kubeconfig_content, "/etc/passwd", KUBERNETES_KUBECONFIG_INVALID_ERROR
+        )
+
+    def test_kubeconfig_with_non_dict_cluster_entry_is_rejected(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - /etc/passwd
+"""
+        self._assert_rejected_without_echo(
+            kubeconfig_content, "/etc/passwd", KUBERNETES_KUBECONFIG_INVALID_ERROR
+        )
+
+    def test_kubeconfig_with_non_dict_cluster_value_is_rejected(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster: /etc/passwd
+"""
+        self._assert_rejected_without_echo(
+            kubeconfig_content, "/etc/passwd", KUBERNETES_KUBECONFIG_INVALID_ERROR
+        )
+
+    @pytest.mark.parametrize(
+        "user_extra",
+        [
+            "      token: test-token",
+            "      username: test-user\n      password: test-password",
+            "      client-certificate-data: dGVzdA==\n      client-key-data: dGVzdA==",
+            "      token: test-token\n      as: other-user",
+            "      token: test-token\n      as-uid: 1234",
+            "      token: test-token\n      as-groups:\n        - group-a",
+            "      token: test-token\n      as-user-extra:\n        scopes:\n          - read",
+        ],
+        ids=[
+            "token",
+            "username-password",
+            "client-cert-data",
+            "as",
+            "as-uid",
+            "as-groups",
+            "as-user-extra",
+        ],
+    )
+    def test_kubeconfig_with_allowlisted_user_keys_is_accepted(self, user_extra):
+        kubeconfig_content = f"""
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+      certificate-authority-data: dGVzdA==
+users:
+  - name: test-user
+    user:
+{user_extra}
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert serializer.is_valid()
+
+    @pytest.mark.parametrize(
+        "kubeconfig_content",
+        [
+            """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: good-user
+    user:
+      token: test-token
+  - name: bad-user
+    user:
+      tokenFile: /etc/passwd
+""",
+            """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: good-cluster
+    cluster:
+      server: https://kubernetes.example.test
+  - name: bad-cluster
+    cluster:
+      server: https://kubernetes.example.test
+      certificate-authority: /etc/passwd
+users:
+  - name: test-user
+    user:
+      token: test-token
+""",
+        ],
+        ids=["second-user", "second-cluster"],
+    )
+    def test_kubeconfig_with_bad_second_entry_is_rejected(self, kubeconfig_content):
+        self._assert_rejected_without_echo(
+            kubeconfig_content,
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_indented_document_is_rejected(self):
+        kubeconfig_content = (
+            "  wrapper:\n"
+            "  users:\n"
+            "  - name: u\n"
+            "    user:\n"
+            "      tokenFile: /etc/passwd\n"
+            "  clusters:\n"
+            "  - name: c\n"
+            "    cluster:\n"
+            "      server: https://example.test\n"
+        )
+
+        self._assert_rejected_without_echo(
+            kubeconfig_content,
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
 
     def test_malformed_kubeconfig_is_rejected(self):
         serializer = KubernetesProviderSecret(

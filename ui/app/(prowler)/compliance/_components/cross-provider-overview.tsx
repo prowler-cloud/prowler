@@ -214,6 +214,16 @@ export const CrossProviderOverview = async ({
         providerGroups={providerGroups}
       />
 
+      {catalog.incomplete && (
+        <Alert variant="warning">
+          <AlertTriangle className="size-4" />
+          <AlertDescription>
+            Some compliance frameworks could not be listed. Showing the ones
+            that loaded — try again later.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {loadErrors.length > 0 && (
         <Alert variant="warning">
           <AlertTriangle className="size-4" />
@@ -226,6 +236,7 @@ export const CrossProviderOverview = async ({
       )}
 
       {loadErrors.length === 0 &&
+        !catalog.incomplete &&
         summaries.every((summary) => summary.totalRequirements === 0) && (
           <Alert variant="info">
             <Info className="size-4" />

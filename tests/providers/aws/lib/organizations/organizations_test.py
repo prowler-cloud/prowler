@@ -238,6 +238,17 @@ class Test_AWS_Organizations:
         assert default_config is not None
         assert BOTO3_USER_AGENT_EXTRA in default_config.user_agent_extra
 
+    def test_get_organizations_metadata_uses_the_given_region(self):
+        # A session with no region resolves Organizations to the commercial
+        # global endpoint, unreachable from GovCloud
+        wrapper = MagicMock(wraps=boto3.Session())
+
+        get_organizations_metadata("123456789012", wrapper, region="us-gov-west-1")
+
+        wrapper.client.assert_called_once_with(
+            "organizations", region_name="us-gov-west-1"
+        )
+
     def test_parse_organizations_metadata_with_empty_ou_metadata(self):
         tags = {"Tags": []}
         metadata = {
