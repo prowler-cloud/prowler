@@ -1,6 +1,7 @@
 import pytest
 from api.authentication import SSO_TENANT_CLAIM
-from api.models import Role, User, UserRoleRelationship
+from api.models import Membership, Role, User, UserRoleRelationship
+from api.rls import Tenant
 from api.v1.serializers import generate_tokens
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.urls import reverse
@@ -144,6 +145,124 @@ class TestSSOBoundSession:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=create_test_user.id).exists()
 
+    def test_other_tenant_is_not_listed(self, bound):
+        tokens, sso_tenant, _ = bound
+
+        response = APIClient().get(
+            reverse("tenant-list"), headers=_bearer(tokens["access"])
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [t["id"] for t in response.json()["data"]] == [str(sso_tenant.id)]
+
+    def test_other_tenant_cannot_be_renamed(self, bound, create_test_user):
+        tokens, sso_tenant, other_tenant = bound
+        role = Role.objects.create(
+            tenant_id=sso_tenant.id, name="admin", manage_account=True
+        )
+        UserRoleRelationship.objects.create(
+            user=create_test_user, role=role, tenant_id=sso_tenant.id
+        )
+
+        response = APIClient().patch(
+            reverse("tenant-detail", kwargs={"pk": other_tenant.id}),
+            data={
+                "data": {
+                    "type": "tenants",
+                    "id": str(other_tenant.id),
+                    "attributes": {"name": "renamed"},
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+            headers=_bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        other_tenant.refresh_from_db()
+        assert other_tenant.name != "renamed"
+
+    def test_other_tenant_cannot_be_deleted(self, bound, create_test_user):
+        tokens, sso_tenant, other_tenant = bound
+        role = Role.objects.create(
+            tenant_id=sso_tenant.id, name="admin", manage_account=True
+        )
+        UserRoleRelationship.objects.create(
+            user=create_test_user, role=role, tenant_id=sso_tenant.id
+        )
+        Membership.objects.filter(user=create_test_user, tenant=other_tenant).update(
+            role=Membership.RoleChoices.OWNER
+        )
+
+        response = APIClient().delete(
+            reverse("tenant-detail", kwargs={"pk": other_tenant.id}),
+            headers=_bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert Tenant.objects.filter(id=other_tenant.id).exists()
+
+    def test_other_tenant_members_are_not_listed(self, bound):
+        tokens, _, other_tenant = bound
+
+        response = APIClient().get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": other_tenant.id}),
+            headers=_bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_tenant_creation_is_rejected(self, bound):
+        tokens, _, _ = bound
+
+        response = APIClient().post(
+            reverse("tenant-list"),
+            data={"data": {"type": "tenants", "attributes": {"name": "another"}}},
+            content_type=API_JSON_CONTENT_TYPE,
+            headers=_bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not Tenant.objects.filter(name="another").exists()
+
+
+@pytest.mark.django_db
+class TestSSOBoundSessionOfSingleTenantUser:
+    @pytest.fixture
+    def bound(self, tenants_fixture):
+        user = User.objects.create_user(
+            password="OriginalPassword123@", email="sso-only@example.com"
+        )
+        tenant = tenants_fixture[0]
+        Membership.objects.create(user=user, tenant=tenant)
+        role = Role.objects.create(tenant_id=tenant.id, name="admin", manage_users=True)
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        tokens = generate_tokens(user, str(tenant.id), sso_tenant_id=str(tenant.id))
+        return tokens, user
+
+    def test_own_password_change_is_allowed(self, bound):
+        tokens, user = bound
+
+        response = _patch_own_user(
+            APIClient(),
+            user,
+            {"password": "AnotherPassword123@"},
+            _bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        user.refresh_from_db()
+        assert user.check_password("AnotherPassword123@")
+
+    def test_own_account_deletion_is_allowed(self, bound):
+        tokens, user = bound
+
+        response = APIClient().delete(
+            reverse("user-detail", kwargs={"pk": user.id}),
+            headers=_bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
 
 @pytest.mark.django_db
 class TestPasswordSession:
@@ -167,6 +286,15 @@ class TestAPIKeySession:
         headers = {"Authorization": f"Api-Key {api_keys_fixture[0]._raw_key}"}
 
         response = _switch(APIClient(), tenants_fixture[1], headers)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_switch_to_its_own_tenant_is_rejected(
+        self, api_keys_fixture, tenants_fixture
+    ):
+        headers = {"Authorization": f"Api-Key {api_keys_fixture[0]._raw_key}"}
+
+        response = _switch(APIClient(), tenants_fixture[0], headers)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 

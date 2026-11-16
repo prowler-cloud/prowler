@@ -4,7 +4,11 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 import yaml
-from api.authentication import SSO_TENANT_CLAIM, session_bound_tenant_id
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    is_api_key_session,
+    session_bound_tenant_id,
+)
 from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
@@ -353,6 +357,12 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
 
         if not user.is_authenticated:
             raise ValidationError("Invalid or expired token.")
+
+        if is_api_key_session(request):
+            raise ValidationError(
+                "API keys cannot be exchanged for a session token.",
+                code="session-bound-to-tenant",
+            )
 
         tenant_id = str(attrs.get("tenant_id"))
         if not user.is_member_of_tenant(tenant_id):
