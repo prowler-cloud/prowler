@@ -153,6 +153,7 @@ jobs:
             api.ecr-public.us-east-1.amazonaws.com:443
             auth.docker.io:443
             cdn.powershellgallery.com:443
+            devopsgallerystorage.blob.core.windows.net:443
             debian.map.fastlydns.net:80
             files.pythonhosted.org:443
             github.com:443

@@ -4,6 +4,72 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.49.0" description="November 12, 2026">
+  ### 🚨 Emerging Threats — Affected Machine Images on AWS, Azure and Google Cloud
+
+  When a new vulnerability lands in an operating system image or a vendor appliance, the first question is which instances run an affected image. Answering it used to take a new check per vulnerability. A vulnerability is now described as data, a **threat signature**, and three new checks match every compute instance against the signatures in force for the scan:
+
+  - `ec2_instance_emerging_threat_image` matches the Amazon Machine Image (AMI) by name and, when the signature requires a verified publisher, by owner account, `vm_emerging_threat_image` matches Azure gallery, custom and marketplace images, and `compute_instance_emerging_threat_image` matches the boot disk source image of Google Cloud instances.
+  - A signature lists the affected image publishers, a name pattern and one version range per release branch, so the fixed point release of a branch is not flagged, plus the exposed ports, the impact and the remediation. A signature can carry examples of image names its pattern must match and must miss; they are checked when it loads, so a pattern that disagrees with its examples is rejected before it reaches a scan.
+  - Prowler ships the engine and the checks with no signatures of its own. Signatures are supplied per scan under the new `threat_signatures` configuration key for AWS, Azure and Google Cloud.
+  - On AWS, Amazon Inspector confirms or clears a match when it scans the instance's packages: an active finding for the Common Vulnerabilities and Exposures (CVE) entry of the threat confirms the match, and an instance Inspector scans with no such finding passes, as long as Inspector knows every CVE of the threat, so a host patched in place clears. The lookup needs the new `inspector2:SearchVulnerabilities` permission, included in the Prowler additions policy and the CloudFormation scan role; without it, matches are never cleared.
+  - To support the match, the EC2 service keeps the owner and name of third-party AMIs, Azure VMs keep their full image reference and Google Cloud instances keep their boot disk source image. Each failed finding stores the matched threats in its raw result through the new `Check_Report.raw` payload.
+
+  See [Emerging Threat Signatures](/developer-guide/threat-signatures) to write a signature from the template.
+
+  <Note>
+  The threat catalog and the threat issues below are available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - **Prowler Cloud** maintains a threat catalog and adds it to every AWS, Azure and Google Cloud scan. A new threat reaches scans as soon as it is published, without waiting for a release, and a signature in a scan configuration with the same `id` replaces the catalog one.
+  - Each threat becomes one **Exploitability issue** per account, listing its affected hosts. An image match alone is at most `likely`; the issue is `exploitable` only when a vulnerability scanner reports the CVE on the host and the threat needs no credential.
+  - `GET /api/v1/issues` and `GET /api/v1/issues/overview` accept `filter[threat]` to list one threat and `filter[search]` to match threat names and CVE IDs.
+
+  See [Exploitability Issues](/user-guide/tutorials/prowler-app-issues#emerging-threats) for how a threat is judged and cleared.
+
+  ### 🏛️ AWS — Organizations and CloudWatch Observability Access Manager Checks
+
+  - `organizations_security_services_delegated_admin_not_management_account` verifies that security services with trusted access in the organization have a delegated administrator instead of being administered from the management account. Contributed by @tamg-aws. Thank you!
+  - A new `oam` service with `oam_sink_not_publicly_accessible`, which reports CloudWatch Observability Access Manager sinks whose resource policy lets any AWS account link to them. Contributed by @tamg-aws. Thank you!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🛠️ Improvements and Fixes
+
+  - The CloudFormation scan role grants `lambda:GetLayerVersion`, and its StackSet role `amplify:ListApps` and `amplify:ListBranches`, so `awslambda_layer_no_secrets_in_content` and `amplify_app_no_secrets_in_environment` can scan accounts onboarded with it. Update the stack to pick up the new actions. Contributed by @oleksii-udovychenko. Thank you!
+  - `organizations_delegated_administrators` no longer reports PASS when an untrusted delegated administrator is listed before a trusted one, or when delegated administrators cannot be listed because of throttling or service errors.
+  - AWS resource policy checks accept `aws:PrincipalOrgPaths` and `ForAnyValue` operators as restrictive organization conditions, and no longer treat a wildcard organization ID inside a list as restrictive.
+  - `elbv2_insecure_ssl_ciphers` no longer fails load balancers that use secure non-PQ FIPS TLS policies. Contributed by @Puro-33. Thank you!
+  - Google Cloud Storage buckets are still listed and evaluated when the IAM policy of one bucket cannot be read; `cloudstorage_bucket_public_access` reports that bucket as `MANUAL`. Contributed by @wils0ns. Thank you!
+  - `compute_loadbalancer_logging_enabled` no longer fails load balancers whose URL map default service is a global backend bucket, which has no `logConfig` and always logs requests. Contributed by @jamalkamaladdin. Thank you!
+  - `vm_emerging_threat_image` matches marketplace offers, SKUs and gallery image names regardless of case.
+  - The Sentry browser and server setup no longer passes the deprecated `profilesSampleRate` option, which had no effect without a profiling integration. Contributed by @jasontd92. Thank you!
+  - **Prowler Local Server:** adding Amazon S3 integrations is a Prowler Cloud feature; the button opens the upgrade dialog, and existing integrations can still be edited, tested, toggled and deleted. Realtime appears in the sidebar as a Prowler Cloud feature.
+  - **Prowler Private Cloud:** on AWS Marketplace, a plan change during a month is billed that month at the plan it started on, with the new plan's prices from the 1st of the next month.
+
+  ### 🔐 Security Updates
+
+  - `pyjwt` upgraded to 2.15.0 in the SDK, the API and the MCP Server, patching CVE-2026-101918 and CVE-2026-102275.
+  - PowerShell upgraded to 7.6.10 in the SDK and API images, bundling .NET runtime 10.0.15, and `uv` to 0.13.7, patching the rustls advisories.
+  - `zlib` upgraded to its patched release in the SDK, API, UI and MCP Server images, and Trivy to 0.76.2 in the SDK and API images.
+  - `mcp` upgraded to 1.30.0 in the MCP Server image, together with `joserfc`, `opentelemetry-api`, `pydantic-settings` and `python-multipart`.
+  - `multidict`, `opentelemetry` and `setuptools` upgraded to patched versions in the SDK and API images.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @tamg-aws: AWS Organizations delegated administration check and the new `oam` service with its sink exposure check ([#12565](https://github.com/prowler-cloud/prowler/pull/12565), [#12562](https://github.com/prowler-cloud/prowler/pull/12562))
+  - @oleksii-udovychenko: missing actions in the CloudFormation scan role ([#12923](https://github.com/prowler-cloud/prowler/pull/12923))
+  - @Puro-33: non-PQ FIPS TLS policies in `elbv2_insecure_ssl_ciphers` ([#13292](https://github.com/prowler-cloud/prowler/pull/13292))
+  - @wils0ns: Google Cloud Storage bucket IAM policy fix ([#13333](https://github.com/prowler-cloud/prowler/pull/13333))
+  - @jamalkamaladdin: load balancer logging fix for backend buckets ([#12904](https://github.com/prowler-cloud/prowler/pull/12904))
+  - @jasontd92: deprecated Sentry option cleanup ([#13119](https://github.com/prowler-cloud/prowler/pull/13119))
+  - @baggers27: Python version requirement in the README ([#12951](https://github.com/prowler-cloud/prowler/pull/12951))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.49.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.48.0" description="November 6, 2026">
   ### ⚡ Prowler Realtime — Detection and Remediation for AWS
 

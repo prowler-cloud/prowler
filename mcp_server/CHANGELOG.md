@@ -4,6 +4,16 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.2] (Prowler v5.49.0)
+
+### 🔐 Security
+
+- `pyjwt` from 2.14.0 to 2.15.0, patching CVE-2026-101918 and CVE-2026-102275 [(#13297)](https://github.com/prowler-cloud/prowler/pull/13297)
+- zlib to 1.4-r0 in the MCP Server container image, patching CVE-2026-4738 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+- mcp from 1.28.1 to 1.30.0 plus joserfc, opentelemetry-api, pydantic-settings and python-multipart in the MCP Server container image, patching CVE-2026-59951, CVE-2026-116684, CVE-2026-116685, CVE-2026-116686, CVE-2026-119284, CVE-2026-114603, CVE-2026-53540 and GHSA-4xgf-cpjx-pc3j [(#13342)](https://github.com/prowler-cloud/prowler/pull/13342)
+
+---
+
 ## [0.13.1] (Prowler v5.48.0)
 
 ### 🔐 Security
