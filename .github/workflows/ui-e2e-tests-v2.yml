@@ -236,6 +236,17 @@ jobs:
           yq -i '.networks.kind.external = true' docker-compose.yml
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
 
+      # The kubeconfig points at kind-control-plane on the private kind network, which the
+      # Kubernetes provider rejects unless the network is declared as trusted.
+      - name: Allow the kind network for the Kubernetes provider
+        run: |
+          set -o pipefail
+          kind_subnets=$(docker network inspect kind --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}' |
+            tr ' ' '\n' | grep -v ':' | grep . | paste -sd, -)
+          echo "Trusted private networks: ${kind_subnets}"
+          sed -i '/^PROWLER_ALLOWED_PRIVATE_NETWORKS=/d' .env
+          echo "PROWLER_ALLOWED_PRIVATE_NETWORKS=${kind_subnets}" >> .env
+
       - name: Fix API data directory permissions
         run: docker run --rm -v "$(pwd)/_data/api:/data" alpine chown -R 1000:1000 /data
 
@@ -251,13 +262,38 @@ jobs:
         #
         # The image installs the SDK from git@master (api/uv.lock), so a PR changing BOTH the SDK
         # and the API would run against the OLD SDK and crash on startup. Overlay the checkout's
-        # SDK source so both run together. New SDK dependencies still need an api/uv.lock bump.
+        # SDK source so both run together, and install the SDK dependencies the locked SDK does
+        # not have yet (e.g. `regex` for prowler/lib/threats), or every scan fails on import
+        # until api/uv.lock is bumped. Packages the API already pins are left as they are.
         run: |
+          set -o pipefail
           docker build -t prowlercloud/prowler-api:pr-base ./api
-          docker build -t prowlercloud/prowler-api:latest -f - prowler <<'DOCKERFILE'
+          missing_sdk_deps=$(
+            python3 -c 'import tomllib; print("\n".join(tomllib.load(open("pyproject.toml", "rb"))["project"]["dependencies"]))' |
+              docker run --rm -i --entrypoint /home/prowler/.venv/bin/python prowlercloud/prowler-api:pr-base -c '
+          import importlib.metadata as metadata, sys
+          from packaging.requirements import Requirement
+          for line in filter(None, map(str.strip, sys.stdin)):
+              req = Requirement(line)
+              if req.marker and not req.marker.evaluate():
+                  continue
+              try:
+                  metadata.version(req.name)
+              except metadata.PackageNotFoundError:
+                  extras = "[" + ",".join(sorted(req.extras)) + "]" if req.extras else ""
+                  print(req.name + extras + str(req.specifier))
+          ' | tr '\n' ' '
+          )
+          echo "SDK dependencies missing from api/uv.lock: ${missing_sdk_deps:-none}"
+          docker build --build-arg "SDK_MISSING_DEPS=${missing_sdk_deps}" \
+            -t prowlercloud/prowler-api:latest -f - prowler <<'DOCKERFILE'
           FROM prowlercloud/prowler-api:pr-base
+          ARG SDK_MISSING_DEPS
           RUN rm -rf /home/prowler/.venv/lib/python3.12/site-packages/prowler
           COPY --chown=prowler:prowler . /home/prowler/.venv/lib/python3.12/site-packages/prowler
+          RUN if [ -n "$SDK_MISSING_DEPS" ]; then \
+                uv pip install --python /home/prowler/.venv/bin/python $SDK_MISSING_DEPS && rm -rf ~/.cache/uv; \
+              fi
           DOCKERFILE
 
       - name: Start API services
