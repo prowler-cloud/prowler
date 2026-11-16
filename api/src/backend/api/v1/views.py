@@ -1072,7 +1072,12 @@ class TenantFinishACSView(FinishACSView):
     partial_update=extend_schema(
         tags=["User"],
         summary="Update user information",
-        description="Partially update information about a user.",
+        description=(
+            "Partially update information about a user. Users with the "
+            "`manage_users` permission can update the profile fields of other "
+            "users in the tenant, but credentials (`password` and `email`) can "
+            "only be changed by the user themselves."
+        ),
     ),
     destroy=extend_schema(
         tags=["User"],
@@ -1164,6 +1169,8 @@ class UserViewSet(BaseUserViewset):
                 raise ValidationError(
                     "Only users with manage users permission can update other users."
                 )
+            # Email and password belong to the user, not to this tenant.
+            self._reject_credential_changes_for_other_user(user, request.data)
 
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -1173,6 +1180,20 @@ class UserViewSet(BaseUserViewset):
             user._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    @staticmethod
+    def _reject_credential_changes_for_other_user(user, data):
+        errors = {}
+        if "password" in data:
+            errors["password"] = "Only the user themselves can change their password."
+        new_email = data.get("email")
+        # Re-sending the current email (e.g. from an edit form) is not a change.
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = "Only the user themselves can change their email."
+        if errors:
+            raise ValidationError(errors)
 
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
