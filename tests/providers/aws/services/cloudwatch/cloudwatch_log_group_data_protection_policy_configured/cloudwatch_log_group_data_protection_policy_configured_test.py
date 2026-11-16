@@ -255,7 +255,7 @@ class Test_cloudwatch_log_group_data_protection_policy_configured:
                 never_expire=False,
                 kms_id=None,
                 region=AWS_REGION_US_EAST_1,
-                data_protection_status=None,
+                data_protection_status="ACTIVATED",
                 inherited_properties=[],
                 data_protection_policy=None,
                 data_protection_policy_retrieved=False,
@@ -269,6 +269,38 @@ class Test_cloudwatch_log_group_data_protection_policy_configured:
         assert (
             result[0].status_extended
             == f"Log Group {log_group_name} data protection policy could not be retrieved in region {AWS_REGION_US_EAST_1}; verify manually."
+        )
+        assert result[0].resource_id == log_group_name
+        assert result[0].resource_arn == log_group_arn
+        assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_log_group_never_configured_fails_without_policy_lookup(self):
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            LogGroup,
+        )
+
+        log_groups = {
+            log_group_arn: LogGroup(
+                arn=log_group_arn,
+                name=log_group_name,
+                retention_days=365,
+                never_expire=False,
+                kms_id=None,
+                region=AWS_REGION_US_EAST_1,
+                data_protection_status=None,
+                inherited_properties=[],
+                data_protection_policy=None,
+                data_protection_policy_retrieved=False,
+            )
+        }
+
+        result = _run_check(log_groups)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"Log Group {log_group_name} does not have an active data protection policy configured."
         )
         assert result[0].resource_id == log_group_name
         assert result[0].resource_arn == log_group_arn

@@ -129,8 +129,15 @@ class Logs(AWSService):
                 "cloudwatch_log_group_data_protection_policy_configured"
                 in provider.audit_metadata.expected_checks
             ):
+                # Only an ACTIVATED policy can pass on its document, so the rest
+                # are not worth one GetDataProtectionPolicy call per log group.
                 self.__threading_call__(
-                    self._get_data_protection_policy, self.log_groups.values()
+                    self._get_data_protection_policy,
+                    [
+                        log_group
+                        for log_group in self.log_groups.values()
+                        if log_group.data_protection_status == "ACTIVATED"
+                    ],
                 )
 
     def _select_log_groups_for_analysis(self):
@@ -372,11 +379,11 @@ class Logs(AWSService):
             response = regional_client.get_data_protection_policy(
                 logGroupIdentifier=log_group.name
             )
-            if "policyDocument" in response:
+            if response.get("policyDocument"):
                 log_group.data_protection_policy = json.loads(
                     response["policyDocument"]
                 )
-                log_group.data_protection_policy_retrieved = True
+            log_group.data_protection_policy_retrieved = True
         except ClientError as error:
             if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 log_group.data_protection_policy_retrieved = True

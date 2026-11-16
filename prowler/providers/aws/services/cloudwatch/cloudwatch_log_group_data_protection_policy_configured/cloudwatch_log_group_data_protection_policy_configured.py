@@ -30,7 +30,7 @@ class cloudwatch_log_group_data_protection_policy_configured(Check):
 
     PASS when the log group has an active data protection policy configured or inherited.
     FAIL when no active data protection policy exists on the log group.
-    MANUAL when the policy could not be retrieved (e.g. AccessDenied).
+    MANUAL when an activated policy could not be retrieved (e.g. AccessDenied).
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -58,16 +58,15 @@ class cloudwatch_log_group_data_protection_policy_configured(Check):
             if "ACCOUNT_DATA_PROTECTION" in log_group.inherited_properties:
                 report.status = "PASS"
                 report.status_extended = f"Log Group {log_group.name} has a data protection policy configured via account-level inheritance."
-            elif (
-                log_group.data_protection_policy
-                and log_group.data_protection_status == "ACTIVATED"
-                and _has_active_data_protection(log_group.data_protection_policy)
-            ):
-                report.status = "PASS"
-                report.status_extended = f"Log Group {log_group.name} has a data protection policy configured to audit or de-identify sensitive data identifiers."
+            elif log_group.data_protection_status != "ACTIVATED":
+                report.status = "FAIL"
+                report.status_extended = f"Log Group {log_group.name} does not have an active data protection policy configured."
             elif not log_group.data_protection_policy_retrieved:
                 report.status = "MANUAL"
                 report.status_extended = f"Log Group {log_group.name} data protection policy could not be retrieved in region {log_group.region}; verify manually."
+            elif _has_active_data_protection(log_group.data_protection_policy):
+                report.status = "PASS"
+                report.status_extended = f"Log Group {log_group.name} has a data protection policy configured to audit or de-identify sensitive data identifiers."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Log Group {log_group.name} does not have an active data protection policy configured."

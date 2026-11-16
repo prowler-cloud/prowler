@@ -24,6 +24,13 @@ from tests.providers.aws.utils import (
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
+def _with_activated_data_protection(operation_name, response):
+    if operation_name == "DescribeLogGroups":
+        for log_group in response["logGroups"]:
+            log_group["dataProtectionStatus"] = "ACTIVATED"
+    return response
+
+
 class Test_CloudWatch_Service:
     # Test CloudWatch Service
     @mock_aws
@@ -372,7 +379,9 @@ class Test_CloudWatch_Service:
                     },
                     operation_name,
                 )
-            return make_api_call(self, operation_name, kwarg)
+            return _with_activated_data_protection(
+                operation_name, make_api_call(self, operation_name, kwarg)
+            )
 
         with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
             logs = Logs(aws_provider)
@@ -380,6 +389,51 @@ class Test_CloudWatch_Service:
         assert arn in logs.log_groups
         assert logs.log_groups[arn].data_protection_policy is None
         assert logs.log_groups[arn].data_protection_policy_retrieved is True
+
+    @mock_aws
+    def test_get_data_protection_policy_response_without_document(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/no-document")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/no-document:*"
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                return {"logGroupIdentifier": kwarg["logGroupIdentifier"]}
+            return _with_activated_data_protection(
+                operation_name, make_api_call(self, operation_name, kwarg)
+            )
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert logs.log_groups[arn].data_protection_policy is None
+        assert logs.log_groups[arn].data_protection_policy_retrieved is True
+
+    @mock_aws
+    def test_get_data_protection_policy_skipped_when_not_activated(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/never-configured")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/never-configured:*"
+        calls = []
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            calls.append(operation_name)
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert arn in logs.log_groups
+        assert "GetDataProtectionPolicy" not in calls
+        assert logs.log_groups[arn].data_protection_policy_retrieved is False
 
     @mock_aws
     def test_get_data_protection_policy_access_denied(self):
@@ -402,7 +456,9 @@ class Test_CloudWatch_Service:
                     },
                     operation_name,
                 )
-            return make_api_call(self, operation_name, kwarg)
+            return _with_activated_data_protection(
+                operation_name, make_api_call(self, operation_name, kwarg)
+            )
 
         with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
             logs = Logs(aws_provider)
@@ -424,7 +480,9 @@ class Test_CloudWatch_Service:
         def mock_make_api_call(self, operation_name, kwarg):
             if operation_name == "GetDataProtectionPolicy":
                 raise Exception("Unexpected error")
-            return make_api_call(self, operation_name, kwarg)
+            return _with_activated_data_protection(
+                operation_name, make_api_call(self, operation_name, kwarg)
+            )
 
         with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
             logs = Logs(aws_provider)

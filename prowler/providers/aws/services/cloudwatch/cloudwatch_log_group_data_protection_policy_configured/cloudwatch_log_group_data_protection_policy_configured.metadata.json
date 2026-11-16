@@ -38,5 +38,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check evaluates all CloudWatch Log Groups in scope. It retrieves the detailed data protection policy document via GetDataProtectionPolicy to confirm that an active policy exists."
+  "Notes": "This check evaluates all CloudWatch Log Groups in scope. Log groups that inherit the account-level policy pass. For log groups whose own policy is activated, the policy document is retrieved via GetDataProtectionPolicy to confirm that it audits or de-identifies at least one data identifier; every other log group fails without that call."
 }
