@@ -248,7 +248,7 @@ describe("Registry card metadata layout", () => {
       const onAdd = vi.fn();
       const screen = await render(
         <main className="p-4">
-          <RegistryArtifactGrid isEmpty={false} emptyMessage="No artifacts">
+          <RegistryArtifactGrid>
             <li>
               <RegistryArtifactCard
                 artifact={artifact}

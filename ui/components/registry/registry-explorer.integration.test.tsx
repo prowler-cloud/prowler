@@ -713,6 +713,15 @@ describe("RegistryExplorer", () => {
     const screen = await render(
       <RegistryExplorer initialState={{ status: "reconnect" }} />,
     );
+    const title = screen.getByRole("heading", {
+      name: "Reconnect the Registry",
+    });
+    await expect.element(title).toBeVisible();
+    // Both actions share one panel, Replace key first.
+    const panel = title.element().closest("section");
+    expect(
+      Array.from(panel!.querySelectorAll("button"), (b) => b.textContent),
+    ).toEqual(["Replace key", "Retry"]);
     await screen.getByRole("button", { name: "Replace key" }).click();
     await expect.element(screen.getByRole("dialog")).toBeVisible();
     await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
@@ -769,11 +778,9 @@ describe("RegistryExplorer", () => {
         "Connect your Registry API key",
       );
       expect(document.body.textContent).toContain(
-        "A Registry API key is required to install artifacts into this workspace.",
+        "A Registry API key is needed to add artifacts to this workspace.",
       );
-      expect(document.body.textContent).not.toContain(
-        "preserved tenant artifact",
-      );
+      expect(document.body.textContent).not.toContain("stay installed");
       expect(document.body.textContent).not.toContain(
         "Explore Prowler Registry",
       );
@@ -817,15 +824,15 @@ describe("RegistryExplorer", () => {
 
       // Pending validation leaves the form available for a replacement.
       expect(document.body.textContent).toContain(
-        "Registry validation in progress",
+        "Validating your Registry API key",
       );
       await expect
-        .element(screen.getByRole("button", { name: "Connect API key" }))
+        .element(screen.getByRole("button", { name: "Use a different key" }))
         .toBeEnabled();
       expect(document.body.textContent).not.toContain("Search artifacts");
 
       // When
-      await screen.getByRole("button", { name: "Connect API key" }).click();
+      await screen.getByRole("button", { name: "Use a different key" }).click();
       await screen.getByLabelText("Registry key").fill("replacement-key");
       await screen
         .getByRole("button", { name: "Connect", exact: true })
@@ -1027,7 +1034,7 @@ describe("RegistryExplorer", () => {
       .toBeEnabled();
     await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
     expect(document.body.textContent).toContain(
-      "Registry validation in progress",
+      "Validating your Registry API key",
     );
   });
 
@@ -1116,7 +1123,7 @@ describe("RegistryExplorer", () => {
       .toBeEnabled();
     // And the underlying banner reflects the pending validation
     expect(document.body.textContent).toContain(
-      "Registry validation in progress",
+      "Validating your Registry API key",
     );
   });
 
@@ -1351,7 +1358,7 @@ describe("RegistryExplorer", () => {
       .poll(() => document.body.textContent)
       .toContain("Connect your Registry API key");
     expect(document.body.textContent).toContain(
-      "Your 2 preserved tenant artifacts will remain available in My artifacts.",
+      "The 2 artifacts already in this workspace stay installed.",
     );
   });
 
@@ -2247,7 +2254,7 @@ describe("RegistryExplorer", () => {
 
       // Then
       expect(document.body.textContent).toContain("unexpected Registry error");
-      expect(document.body.textContent).not.toContain("Reconnect Registry");
+      expect(document.body.textContent).not.toContain("Reconnect the Registry");
     });
   });
 });

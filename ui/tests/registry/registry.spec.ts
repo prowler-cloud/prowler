@@ -272,7 +272,7 @@ test.describe.serial("Registry", () => {
       await controlledRegistryFixture.setDiscoveryMode("reconnect");
       await page.reload();
       await expect(
-        page.getByRole("heading", { name: "Reconnect Registry" }),
+        page.getByRole("heading", { name: "Reconnect the Registry" }),
       ).toBeVisible();
       await controlledRegistryFixture.setDiscoveryMode("unavailable");
       await page.reload();
