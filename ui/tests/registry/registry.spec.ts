@@ -207,7 +207,7 @@ test.describe.serial("Registry", () => {
       await expect(
         page.getByRole("button", { name: "Connecting…" }),
       ).toBeDisabled();
-      await expect(page.getByLabel("Registry key")).toBeDisabled();
+      await expect(registryPage.registryKeyInput).toBeDisabled();
       await registryPage.verifyKeyIsNotDisclosed(
         FIXTURE_REGISTRY_KEY,
         requestUrls,

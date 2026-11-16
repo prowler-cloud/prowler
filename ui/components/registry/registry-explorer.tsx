@@ -61,7 +61,10 @@ import {
   type RegistryTenantArtifact,
 } from "@/types/registry";
 
-import { RegistryAccessDialog } from "./registry-access-dialog";
+import {
+  REGISTRY_KEY_STATUS,
+  RegistryAccessDialog,
+} from "./registry-access-dialog";
 import {
   RegistryArtifactCard,
   RegistryTenantArtifactCard,
@@ -230,6 +233,12 @@ function RegistryPageIntro({ errorMessage }: { errorMessage?: string }) {
   );
 }
 
+interface RegistryRemoveTarget {
+  normalizedName: string;
+  /** Display name shown in the dialog. */
+  label: string;
+}
+
 function mutationFailureMessage(result: RegistryMutationResult) {
   if (result.status === REGISTRY_MUTATION.REFUSED) return result.message;
   if (result.status === REGISTRY_MUTATION.REFRESH_FAILED) {
@@ -375,7 +384,7 @@ export function RegistryExplorer({
   }, []);
   const [accessDialogMode, setAccessDialogMode] =
     useState<RegistryAccessDialogMode>();
-  const [removeTarget, setRemoveTarget] = useState<string>();
+  const [removeTarget, setRemoveTarget] = useState<RegistryRemoveTarget>();
   const [removeError, setRemoveError] = useState<RegistryRemoveDialogError>();
   const [operationMessage, setOperationMessage] = useState<string>();
   const connectButtonRef = useRef<HTMLButtonElement>(null);
@@ -591,13 +600,17 @@ export function RegistryExplorer({
   }
 
   function openRemoveDialog(
-    normalizedName: string,
+    target: RegistryRemoveTarget,
     trigger: HTMLButtonElement | null,
   ) {
     removeTriggerRef.current = trigger;
     setRemoveError(undefined);
-    setRemoveTarget(normalizedName);
+    setRemoveTarget(target);
   }
+  const catalogRemoveTarget = (artifact: RegistryMarketplaceArtifact) => ({
+    normalizedName: artifact.normalizedName,
+    label: artifact.name ?? artifact.normalizedName,
+  });
 
   const accessDialogProps = {
     registryUrl,
@@ -621,6 +634,13 @@ export function RegistryExplorer({
     ) : accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.MANAGE ? (
       <RegistryAccessDialog
         mode="manage"
+        keyStatus={
+          state.status === REGISTRY_BOOTSTRAP_STATE.READY
+            ? REGISTRY_KEY_STATUS.CONNECTED
+            : state.status === REGISTRY_BOOTSTRAP_STATE.RECONNECT
+              ? REGISTRY_KEY_STATUS.REJECTED
+              : undefined
+        }
         onDisconnect={handleDisconnect}
         {...accessDialogProps}
       />
@@ -691,7 +711,7 @@ export function RegistryExplorer({
         pendingAddName={pendingAddName}
         onAdd={() => handleAdd(artifact)}
         onRemove={(trigger) =>
-          openRemoveDialog(artifact.normalizedName, trigger)
+          openRemoveDialog(catalogRemoveTarget(artifact), trigger)
         }
       />
     </li>
@@ -836,7 +856,10 @@ export function RegistryExplorer({
                       pendingAddName={pendingAddName}
                       onAdd={() => handleAdd(myArtifact.catalogArtifact!)}
                       onRemove={(trigger) =>
-                        openRemoveDialog(myArtifact.normalizedName, trigger)
+                        openRemoveDialog(
+                          catalogRemoveTarget(myArtifact.catalogArtifact!),
+                          trigger,
+                        )
                       }
                     />
                   ) : (
@@ -844,7 +867,13 @@ export function RegistryExplorer({
                       extendsProviderSlugs={myArtifact.extendsProviderSlugs}
                       normalizedName={myArtifact.normalizedName}
                       onRemove={(trigger) =>
-                        openRemoveDialog(myArtifact.normalizedName, trigger)
+                        openRemoveDialog(
+                          {
+                            normalizedName: myArtifact.normalizedName,
+                            label: myArtifact.normalizedName,
+                          },
+                          trigger,
+                        )
                       }
                       resolvedVersion={myArtifact.resolvedVersion}
                     />
@@ -857,10 +886,12 @@ export function RegistryExplorer({
       </Tabs>
       {accessDialog}
       <RegistryRemoveDialog
-        artifactName={removeTarget}
+        artifactLabel={removeTarget?.label}
         error={removeError}
         isPending={pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE}
-        onConfirm={() => removeTarget && handleRemove(removeTarget)}
+        onConfirm={() =>
+          removeTarget && handleRemove(removeTarget.normalizedName)
+        }
         onOpenChange={(open) => {
           if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.REMOVE) {
             setRemoveError(undefined);
