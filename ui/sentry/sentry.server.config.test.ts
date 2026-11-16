@@ -34,7 +34,6 @@ describe("sentry.server.config", () => {
       dsn: "https://key@o0.ingest.sentry.io/1",
       environment: "pro",
       tracesSampleRate: 0.5,
-      profilesSampleRate: 0.5,
     });
   });
 
@@ -71,6 +70,5 @@ describe("sentry.server.config", () => {
     const options = initMock.mock.calls[0][0];
     expect(options.environment).toBe("production");
     expect(options.tracesSampleRate).toBe(0.5);
-    expect(options.profilesSampleRate).toBe(0.5);
   });
 });

@@ -17,6 +17,7 @@ class Inspector2(AWSService):
         self.inspectors = []
         self.known_exploited_vulnerabilities = {}
         self.vulnerability_lookup_failed = set()
+        self._vulnerability_database = {}
         self.__threading_call__(self._batch_get_account_status)
         self.__threading_call__(self._list_active_findings, self.inspectors)
         enabled_inspectors = [
@@ -160,6 +161,49 @@ class Inspector2(AWSService):
             logger.error(
                 f"{inspector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def vulnerability_known(self, vulnerability_id: str) -> bool:
+        """Whether Amazon Inspector's vulnerability database lists the CVE.
+
+        No finding for a CVE on a scanned host means the host is not affected
+        only when Inspector can detect that CVE, which a brand new CVE may not
+        be yet. Looked up on first use and cached for the scan.
+
+        Returns:
+            ``True`` when the database lists it; ``False`` when it does not, or
+            when the lookup is not possible (Inspector off, access denied).
+        """
+        if vulnerability_id not in self._vulnerability_database:
+            self._vulnerability_database[vulnerability_id] = self._search_vulnerability(
+                vulnerability_id
+            )
+        return self._vulnerability_database[vulnerability_id]
+
+    def _search_vulnerability(self, vulnerability_id: str) -> bool:
+        """Look a CVE up in the vulnerability database of an enabled Region."""
+        region = next(
+            (
+                inspector.region
+                for inspector in self.inspectors
+                if inspector.status == "ENABLED"
+            ),
+            None,
+        )
+        if region is None:
+            return False
+        try:
+            response = self.regional_clients[region].search_vulnerabilities(
+                filterCriteria={"vulnerabilityIds": [vulnerability_id]}
+            )
+            return any(
+                vulnerability.get("id") == vulnerability_id
+                for vulnerability in response.get("vulnerabilities", [])
+            )
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return False
 
     def _get_covered_resource_arn(self, resource_type, resource_id, region):
         """Return the ARN of a covered resource, building it for EC2 instance IDs."""

@@ -22,6 +22,7 @@ from prowler.config.schema.validators import (
     validate_ip_networks,
     validate_port_range,
 )
+from prowler.lib.threats.models import ThreatSignatureList
 
 # ---- Reusable constants -----------------------------------------------------
 
@@ -204,6 +205,16 @@ class AWSProviderConfig(ProviderConfigBase):
         default=None,
         max_length=512,
         description="API key for Shodan lookups on EC2 public IPs.",
+    )
+
+    # --- Emerging threats -------------------------------------------------
+    threat_signatures: Optional[ThreatSignatureList] = Field(
+        default=None,
+        description=(
+            "Emerging threats to match compute instances against, in addition to "
+            "the signatures Prowler ships. A signature with the id of a built-in "
+            "one replaces it. See prowler/lib/threats/models.py for the format."
+        ),
     )
     max_security_group_rules: Optional[int] = Field(
         default=None,
