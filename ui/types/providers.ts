@@ -66,6 +66,17 @@ export const PROVIDER_DISPLAY_NAMES: Record<KnownProviderType, string> = {
   okta: "Okta",
 };
 
+// SDK providers without UI assets, named as in the README provider table.
+const SDK_PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  e2enetworks: "E2E Networks",
+  huaweicloud: "Huawei Cloud",
+  linode: "Linode",
+  llm: "LLM",
+  nhn: "NHN",
+  scaleway: "Scaleway",
+  stackit: "StackIT",
+};
+
 /**
  * Turns a raw provider id into a human-readable label: splits on `-`/`_` and
  * capitalizes each word (e.g. `template` → "Template", `local-template` →
@@ -81,9 +92,13 @@ export function humanizeProviderId(id: string): string {
 
 export function getProviderDisplayName(providerId: string): string {
   const normalized = providerId.toLowerCase();
-  return isKnownProviderType(normalized)
-    ? PROVIDER_DISPLAY_NAMES[normalized]
-    : humanizeProviderId(normalized);
+  if (isKnownProviderType(normalized)) {
+    return PROVIDER_DISPLAY_NAMES[normalized];
+  }
+  if (Object.hasOwn(SDK_PROVIDER_DISPLAY_NAMES, normalized)) {
+    return SDK_PROVIDER_DISPLAY_NAMES[normalized];
+  }
+  return humanizeProviderId(normalized);
 }
 
 export interface ProviderProps {
