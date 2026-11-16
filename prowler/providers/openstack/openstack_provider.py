@@ -1,8 +1,10 @@
 from os import environ
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 from colorama import Fore, Style
+from keystoneauth1.session import TCPKeepAliveAdapter
 from openstack import config, connect
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
@@ -32,6 +34,21 @@ from prowler.providers.openstack.exceptions.exceptions import (
 )
 from prowler.providers.openstack.lib.mutelist.mutelist import OpenStackMutelist
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
+
+
+class _GuardedAdapter(TCPKeepAliveAdapter):
+    """Adapter that keeps redirects and catalog endpoints inside the SSRF guard."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._validated_origins = set()
+
+    def send(self, request, *args, **kwargs):
+        origin = urlparse(request.url)[:2]
+        if origin not in self._validated_origins:
+            validate_outbound_url(request.url)
+            self._validated_origins.add(origin)
+        return super().send(request, *args, **kwargs)
 
 
 class OpenstackProvider(Provider):
@@ -490,8 +507,13 @@ class OpenstackProvider(Provider):
                 load_envvars=False,
                 **session.as_sdk_config(region_override=region),
             )
+            for scheme in ("http://", "https://"):
+                conn.session.mount(scheme, _GuardedAdapter())
             conn.authorize()
             return conn
+        except OutboundURLNotAllowedError as error:
+            logger.warning(f"OpenStack request rejected: {error}")
+            raise OpenStackAuthUrlNotAllowedError()
         except openstack_exceptions.SDKException as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "

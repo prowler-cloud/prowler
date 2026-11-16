@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from unittest.mock import MagicMock, patch
 
 import pytest
+import responses
 from openstack import exceptions as openstack_exceptions
 
 from prowler.config.config import (
@@ -1791,3 +1793,29 @@ clouds:
         assert result.is_connected is True
         assert result.error is None
         mock_connect.assert_called_once()
+
+    @responses.activate
+    def test_test_connection_does_not_follow_redirect_to_non_public_host(self):
+        metadata_url = "http://169.254.169.254/latest/meta-data/"
+        for method in (responses.GET, responses.POST):
+            responses.add(
+                method,
+                re.compile(r"https://keystone\.example\.com/.*"),
+                status=307,
+                headers={"Location": metadata_url},
+            )
+            responses.add(method, metadata_url, status=200, json={})
+
+        OpenstackProvider.test_connection(
+            auth_url="https://keystone.example.com/v3",
+            username="test-user",
+            password="test-password",
+            project_id="test-project-id",
+            region_name="RegionOne",
+            raise_on_exception=False,
+        )
+
+        assert not any(
+            call.request.url.startswith("http://169.254.169.254")
+            for call in responses.calls
+        )
