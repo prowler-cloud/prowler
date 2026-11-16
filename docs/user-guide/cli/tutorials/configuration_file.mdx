@@ -206,6 +206,21 @@ prowler aws --scan-secrets-validate
 Secret validation makes outbound network calls that authenticate with each discovered secret. The credential is exercised against the provider, so the call appears in the audited account's logs and can trigger its monitoring (for example, AWS CloudTrail records the validation request). Validation stays disabled by default so that scans remain fully offline.
 </Warning>
 
+### Setting the Secret Detection Confidence
+
+<VersionBadge version="5.50.0" />
+
+`secrets_confidence` sets the minimum Kingfisher confidence level a finding needs to be reported by the secret-scanning checks. The accepted values are `low`, `medium`, and `high`, and the default is `low`.
+
+At `low`, the generic rules (Generic Password, Generic Secret, and Generic API Key) are enabled, which keeps keyword-based coverage. At `medium` and `high` those generic rules do not fire, which reduces false positives at the cost of some coverage.
+
+The value is available under the `aws`, `cloudflare`, and `openstack` sections:
+
+```yaml
+aws:
+  secrets_confidence: "medium"
+```
+
 
 ## Azure
 

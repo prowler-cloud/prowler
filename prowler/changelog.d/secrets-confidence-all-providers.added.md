@@ -1,1 +1,1 @@
-Add `secrets_confidence` config to all Kingfisher secret-scanning checks across AWS, Cloudflare, and OpenStack providers
+`secrets_confidence` config to set the minimum Kingfisher confidence level in the secret-scanning checks of the AWS, Cloudflare, and OpenStack providers
