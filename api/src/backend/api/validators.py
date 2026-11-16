@@ -62,8 +62,8 @@ def _validate_lighthouse_public_ip(address: str) -> None:
             embedded_ip_address = ipaddress.IPv4Address(int(ip_address) & 0xFFFFFFFF)
         if embedded_ip_address is not None:
             ip_address = embedded_ip_address
-    # is_global alone lets through ranges such as ::/96, which embed an IPv4
-    # address the properties below do classify
+    # is_global is true for ::/96 and ::ffff:0:0/96 on some Python versions;
+    # is_reserved covers both
     if not ip_address.is_global or any(
         getattr(ip_address, prop) for prop in LIGHTHOUSE_NON_PUBLIC_IP_PROPERTIES
     ):
