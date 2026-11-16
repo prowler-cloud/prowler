@@ -81,6 +81,8 @@ class Lightsail(AWSService):
                             ip_address_type=instance.get("ipAddressType", "ipv4"),
                             ports=ports,
                             auto_snapshot=auto_snapshot_enabled,
+                            blueprint_id=instance.get("blueprintId", ""),
+                            blueprint_name=instance.get("blueprintName", ""),
                         )
 
         except Exception as error:
@@ -183,6 +185,8 @@ class Instance(BaseModel):
     ip_address_type: str
     ports: List[PortRange]
     auto_snapshot: bool
+    blueprint_id: str = ""
+    blueprint_name: str = ""
 
 
 class Database(BaseModel):

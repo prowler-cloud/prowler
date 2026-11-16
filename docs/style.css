@@ -80,6 +80,7 @@
    nested spans of a tag pill such as Coming Soon.
    Icon source: /images/icons/cloud-bold.svg. See AGENTS.md "Cloud Marker" convention. */
 li[data-title="Prowler Cloud"] > button span:first-child::after,
+li[id="/getting-started/products/prowler-private-cloud-aws-marketplace"] a > div > div > span:first-child::after,
 li[data-title="Prowler Lighthouse AI"] > button span:first-child::after,
 li[data-title="Providers"] > button span:first-child::after,
 li[data-title="Scans"] > button span:first-child::after,
@@ -89,6 +90,7 @@ div:has(+ ul a[href="/security/encryption"]) h3 span::after,
 li[id="/user-guide/compliance/tutorials/cross-provider-compliance"] a > div > div > span:first-child::after,
 li[id="/user-guide/compliance/tutorials/cross-provider-type-compliance"] a > div > div > span:first-child::after,
 li[id="/user-guide/tutorials/prowler-alerts"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-app-issues"] a > div > div > span:first-child::after,
 li[id="/user-guide/tutorials/prowler-app-attack-paths-active-queries"] a > div > div > span:first-child::after,
 li[id="/user-guide/tutorials/prowler-app-findings-triage"] a > div > div > span:first-child::after,
 li[id="/user-guide/tutorials/prowler-app-scan-configuration"] a > div > div > span:first-child::after,

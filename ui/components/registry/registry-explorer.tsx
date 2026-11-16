@@ -182,6 +182,9 @@ export function RegistryExplorer({
       onResult: (result) => {
         if (result.status === "access_denied") {
           router.replace("/profile");
+        } else if (result.status === "subscription_required") {
+          // The server page swaps the catalog for the paid-plan prompt.
+          router.refresh();
         } else if (result.status === "complete") {
           setRefreshMessage(undefined);
           setState((current) =>

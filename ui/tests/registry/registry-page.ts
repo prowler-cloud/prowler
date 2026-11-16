@@ -252,6 +252,20 @@ export class RegistryPage extends BasePage {
       expect(storedValue).not.toContain(key);
     }
   }
+  // Saves the account and its credentials and tests the connection in one
+  // submit; a passed test lands on the wizard's launch step.
+  async submitProviderConnectStep(): Promise<void> {
+    const submit = this.page.getByRole("button", {
+      name: "Connect provider",
+      exact: true,
+    });
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(
+      this.page.getByRole("radio", { name: "Run now", exact: true }),
+    ).toBeVisible({ timeout: 30000 });
+  }
+
   async connectInstalledProviderAndScan(): Promise<void> {
     await this.page.getByRole("link", { name: "Go to Providers" }).click();
     await expect(this.page).toHaveURL(/\/providers$/);
@@ -283,24 +297,19 @@ export class RegistryPage extends BasePage {
     await this.page
       .getByRole("option", { name: "Fixture Cloud Registry" })
       .click();
+    // One connect step: account fields and the schema-driven credentials together.
     await this.page
       .getByLabel("Provider UID", { exact: true })
       .fill("fixture-account");
     await this.page
       .getByLabel("Provider alias (optional)")
       .fill("Registry test account");
-    await this.page.getByRole("button", { name: "Next", exact: true }).click();
     const token = this.page.getByLabel("API token", { exact: false });
     await expect(token).toBeVisible();
     await expect(token).toHaveAttribute("type", "password");
     await this.captureEvidence("registry-provider-credentials");
     await token.fill("fixture-provider-token-not-a-secret");
-    await this.page
-      .getByRole("button", { name: "Authenticate", exact: true })
-      .click();
-    await this.page
-      .getByRole("button", { name: "Check connection", exact: true })
-      .click();
+    await this.submitProviderConnectStep();
     await this.page
       .getByRole("radio", { name: "Run now", exact: true })
       .click();

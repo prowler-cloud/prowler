@@ -28,15 +28,15 @@ import {
   TableRow,
 } from "@/components/shadcn/table";
 import { DataTableAnimatedRow } from "@/components/shadcn/table/data-table-animated-row";
-import { DataTablePagination } from "@/components/shadcn/table/data-table-pagination";
+import {
+  DataTablePagination,
+  type DataTablePaginationLock,
+} from "@/components/shadcn/table/data-table-pagination";
 import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
 import { useFilterTransitionOptional } from "@/contexts";
+import { useScrollportPin } from "@/hooks/use-scrollport-pin";
 import { cn } from "@/lib/utils";
 import { FilterOption, MetaDataProps } from "@/types";
-
-type DataTableRowAttributes = {
-  [key: `data-${string}`]: string | undefined;
-};
 
 /**
  * Default column size used by TanStack Table when no explicit size is set.
@@ -48,6 +48,20 @@ const ACTIONS_COLUMN_ID = "actions";
 const TABLE_COLUMN_GAP_CLASS = "pr-6";
 const STICKY_ACTION_COLUMN_CLASS = "sticky right-0 z-20 min-w-12";
 const STICKY_ACTION_CELL_CLASS = `${STICKY_ACTION_COLUMN_CLASS} last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary`;
+
+// Locked cells stay in the DOM as a teaser but cannot be read or focused.
+// The row receives clicks to open the upgrade prompt instead of cell actions.
+// The blur goes on the cells: browsers do not reliably filter table rows.
+const LOCKED_ROW_CLASS_NAME =
+  "cursor-pointer select-none opacity-70 hover:bg-transparent [&>td]:blur-[6px]";
+
+/**
+ * Preview lock: rows past `visibleRowCount` render blurred with inert content,
+ * `overlay` floats over them, and row/pagination clicks call `onLockedInteraction`.
+ */
+export interface DataTablePreviewLock extends DataTablePaginationLock {
+  overlay: ReactNode;
+}
 
 const getTableColumnClassName = (
   columnId: string,
@@ -130,12 +144,11 @@ interface DataTableProviderProps<TData, TValue> {
   searchBadge?: { label: string; onDismiss: () => void };
   /** Optional click handler for top-level rows. */
   onRowClick?: (row: Row<TData>) => void;
-  /** Optional data attributes applied to each top-level row. */
-  getRowAttributes?: (row: Row<TData>) => DataTableRowAttributes;
   /** Optional header rendered inside the table container, above the toolbar. */
   header?: ReactNode;
   /** Optional content rendered in the toolbar before the total entries count. */
   toolbarRightContent?: ReactNode;
+  previewLock?: DataTablePreviewLock;
 }
 
 export function DataTable<TData, TValue>({
@@ -166,9 +179,9 @@ export function DataTable<TData, TValue>({
   renderAfterRow,
   searchBadge,
   onRowClick,
-  getRowAttributes,
   header,
   toolbarRightContent,
+  previewLock,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -212,6 +225,17 @@ export function DataTable<TData, TValue>({
   // Track whether initial expansion has been applied
   const hasInitiallyExpanded = useRef(false);
 
+  // The preview overlay pins itself to the visible scrollport: centered on the
+  // full table width it would scroll away (and clip) on wide tables. Measured
+  // on mount only, which is when a locked table arrives from the server.
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const previewOverlayRef = useRef<HTMLDivElement>(null);
+  const lastRowRef = useRef<HTMLTableRowElement>(null);
+  const [previewPaddingBottom, setPreviewPaddingBottom] = useState(0);
+  const scrollportPin = useScrollportPin(() =>
+    previewLock ? scrollContainerRef.current : null,
+  );
+
   // Expand all rows on mount when defaultExpanded={true}
   useEffect(() => {
     if (
@@ -244,8 +268,54 @@ export function DataTable<TData, TValue>({
   const showToolbar = showSearch || metadata || toolbarRightContent;
 
   const rows = table.getRowModel().rows;
+  // Position in the rendered order, not row.index: the lock hides what the
+  // user would see next, whatever the data order is.
+  const isLockedPosition = (position: number) =>
+    previewLock !== undefined && position >= previewLock.visibleRowCount;
+  const overlayPosition =
+    previewLock !== undefined && rows.length > previewLock.visibleRowCount
+      ? previewLock.visibleRowCount - 1
+      : null;
 
-  const handleRowClick = (row: Row<TData>, target: HTMLElement | null) => {
+  // A short result set may not have enough blurred rows to contain the card.
+  // Reserve its overflow inside the table so the scrollport cannot clip the CTA.
+  useEffect(() => {
+    const overlay = previewOverlayRef.current;
+    const lastRow = lastRowRef.current;
+    const scrollContainer = scrollContainerRef.current;
+    if (overlayPosition === null || !overlay || !lastRow || !scrollContainer) {
+      return;
+    }
+
+    const measure = () => {
+      setPreviewPaddingBottom(
+        Math.max(
+          0,
+          Math.ceil(
+            overlay.getBoundingClientRect().bottom -
+              lastRow.getBoundingClientRect().bottom,
+          ),
+        ),
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(overlay);
+    observer.observe(scrollContainer);
+    return () => observer.disconnect();
+  }, [overlayPosition, rows.length]);
+
+  const handleRowClick = (
+    row: Row<TData>,
+    target: HTMLElement | null,
+    position: number,
+  ) => {
+    if (isLockedPosition(position)) {
+      previewLock?.onLockedInteraction();
+      return;
+    }
+
     if (!onRowClick) {
       return;
     }
@@ -259,6 +329,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div
+      ref={scrollContainerRef}
       // Expanded sub-rows pin themselves to this scrollport (sticky left) so
       // horizontal scrolling moves the group columns, not the expanded panel.
       data-table-scroll-container=""
@@ -299,7 +370,14 @@ export function DataTable<TData, TValue>({
           </div>
         </div>
       )}
-      <Table className={getSubRows ? "table-fixed" : undefined}>
+      <Table
+        className={getSubRows ? "table-fixed" : undefined}
+        style={
+          overlayPosition !== null
+            ? { paddingBottom: previewPaddingBottom }
+            : undefined
+        }
+      >
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={`${headerGroup.id}-${selectionKey}-${expansionKey}`}>
@@ -334,7 +412,7 @@ export function DataTable<TData, TValue>({
         <TableBody>
           <AnimatePresence initial={false}>
             {rows?.length ? (
-              rows.map((row) =>
+              rows.map((row, position) =>
                 getSubRows && row.depth > 0 ? (
                   <DataTableAnimatedRow
                     key={row.id}
@@ -345,11 +423,25 @@ export function DataTable<TData, TValue>({
                 ) : (
                   <Fragment key={row.id}>
                     <TableRow
-                      {...getRowAttributes?.(row)}
+                      ref={
+                        position === rows.length - 1 ? lastRowRef : undefined
+                      }
                       data-state={row.getIsSelected() && "selected"}
-                      className={cn("group", onRowClick && "cursor-pointer")}
+                      data-locked-row={
+                        isLockedPosition(position) ? "" : undefined
+                      }
+                      aria-hidden={isLockedPosition(position) || undefined}
+                      className={cn(
+                        "group",
+                        onRowClick && "cursor-pointer",
+                        isLockedPosition(position) && LOCKED_ROW_CLASS_NAME,
+                      )}
                       onClick={(event) =>
-                        handleRowClick(row, event.target as HTMLElement)
+                        handleRowClick(
+                          row,
+                          event.target as HTMLElement,
+                          position,
+                        )
                       }
                     >
                       {row.getVisibleCells().map((cell) => (
@@ -360,14 +452,54 @@ export function DataTable<TData, TValue>({
                             "cell",
                           )}
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+                          {isLockedPosition(position) ? (
+                            <div inert className="pointer-events-none">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </div>
+                          ) : (
+                            flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )
                           )}
                         </TableCell>
                       ))}
                     </TableRow>
-                    {renderAfterRow?.(row)}
+                    {!isLockedPosition(position) && renderAfterRow?.(row)}
+                    {position === overlayPosition && previewLock && (
+                      // Zero-height row: the overlay floats over the locked
+                      // rows below without pushing them down.
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell
+                          colSpan={columns.length}
+                          // p-0! beats first:pl-3/last:pr-3: any padding shrinks
+                          // the range the sticky wrapper can pin across.
+                          className="h-0 overflow-visible border-0 p-0! after:hidden"
+                        >
+                          {/* Sticky wrapper sized to the scrollport; without a
+                              measurement it spans the row. z-30 clears the
+                              sticky actions cells (z-20) of the locked rows. */}
+                          <div
+                            className="sticky left-0 z-30"
+                            style={
+                              scrollportPin && scrollportPin.width > 0
+                                ? { width: scrollportPin.width }
+                                : undefined
+                            }
+                          >
+                            <div
+                              ref={previewOverlayRef}
+                              className="absolute inset-x-0 top-8 flex justify-center px-4"
+                            >
+                              {previewLock.overlay}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </Fragment>
                 ),
               )
@@ -393,6 +525,7 @@ export function DataTable<TData, TValue>({
           controlledPageSize={controlledPageSize}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
+          lock={previewLock}
         />
       )}
     </div>

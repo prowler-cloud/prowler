@@ -3,6 +3,10 @@
 import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { evaluateJiraDispatchTask } from "@/lib/jira-dispatch-result";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { handleApiError } from "@/lib/server-actions-helper";
 import type {
   IntegrationProps,
@@ -122,6 +126,8 @@ export const sendJiraDispatch = async ({
   | { success: true; taskId: string; message: string }
   | { success: false; error: string }
 > => {
+  if (targetIds.some(isSampleId))
+    return { success: false, error: SAMPLE_WRITE_MESSAGE };
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(
     `${apiBaseUrl}/integrations/${integrationId}/jira/dispatches`,

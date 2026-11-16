@@ -42,6 +42,13 @@ def mock_make_api_call_no_filter(self, operation_name, kwarg):
 
 
 def mock_make_api_call_with_filter(self, operation_name, kwarg):
+    """Serve one guardrail carrying a sensitive information policy, so this check must PASS.
+
+    sensitiveInformationPolicy is a structure of piiEntities and regexes, never the boolean this
+    fixture previously sent. The check only asks whether the key is present, so the boolean did
+    not change its verdict -- but it also meant no test in the suite exercised the collector
+    against a response the API can actually return.
+    """
     if operation_name == "ListGuardrails":
         return {
             "guardrails": [
@@ -59,7 +66,9 @@ def mock_make_api_call_with_filter(self, operation_name, kwarg):
             "guardrailId": "test-id",
             "guardrailArn": GUARDRAIL_ARN,
             "status": "READY",
-            "sensitiveInformationPolicy": True,
+            "sensitiveInformationPolicy": {
+                "piiEntities": [{"type": "EMAIL", "action": "ANONYMIZE"}]
+            },
             "contentPolicy": {"filters": []},
             "blockedInputMessaging": "Sorry, the model cannot answer this question.",
             "blockedOutputsMessaging": "Sorry, the model cannot answer this question.",

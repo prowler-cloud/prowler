@@ -24,7 +24,7 @@ Use these skills for detailed patterns on-demand:
 | `jsonapi` | Strict JSON:API v1.1 spec compliance | [SKILL.md](skills/jsonapi/SKILL.md) |
 | `zod-4` | New API (z.email(), z.uuid()) | [SKILL.md](skills/zod-4/SKILL.md) |
 | `zustand-5` | Persist, selectors, slices | [SKILL.md](skills/zustand-5/SKILL.md) |
-| `ai-sdk-5` | UIMessage, streaming, LangChain | [SKILL.md](skills/ai-sdk-5/SKILL.md) |
+| `ai-sdk-5` | Vercel AI SDK 6 (UIMessage, streaming), Lighthouse v1 | [SKILL.md](skills/ai-sdk-5/SKILL.md) |
 | `vitest` | Unit testing, React Testing Library | [SKILL.md](skills/vitest/SKILL.md) |
 | `tdd` | Test-Driven Development workflow | [SKILL.md](skills/tdd/SKILL.md) |
 
@@ -40,10 +40,13 @@ Use these skills for detailed patterns on-demand:
 | `prowler-test-sdk` | SDK testing (pytest + moto) | [SKILL.md](skills/prowler-test-sdk/SKILL.md) |
 | `prowler-test-api` | API testing (pytest-django + RLS) | [SKILL.md](skills/prowler-test-api/SKILL.md) |
 | `prowler-test-ui` | E2E testing (Playwright) | [SKILL.md](skills/prowler-test-ui/SKILL.md) |
+| `prowler-test-mcp` | MCP server testing (pytest + FastMCP Client) | [SKILL.md](skills/prowler-test-mcp/SKILL.md) |
 | `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/prowler-compliance/SKILL.md) |
 | `prowler-compliance-review` | Review compliance framework PRs | [SKILL.md](skills/prowler-compliance-review/SKILL.md) |
 | `prowler-provider` | Add new cloud providers | [SKILL.md](skills/prowler-provider/SKILL.md) |
-| `prowler-changelog` | Changelog entries (keepachangelog.com) | [SKILL.md](skills/prowler-changelog/SKILL.md) |
+| `prowler-registry-artifact` | Package checks, compliance and providers as plug-ins; publish to Prowler Registry | [SKILL.md](skills/prowler-registry-artifact/SKILL.md) |
+| `prowler-readme-table` | Sync README provider/check counts table | [SKILL.md](skills/prowler-readme-table/SKILL.md) |
+| `prowler-changelog` | Changelog fragments (towncrier, `changelog.d/`) | [SKILL.md](skills/prowler-changelog/SKILL.md) |
 | `prowler-ci` | CI checks and PR gates (GitHub Actions) | [SKILL.md](skills/prowler-ci/SKILL.md) |
 | `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
@@ -51,9 +54,9 @@ Use these skills for detailed patterns on-demand:
 | `django-migration-psql` | Django migration best practices for PostgreSQL | [SKILL.md](skills/django-migration-psql/SKILL.md) |
 | `postgresql-indexing` | PostgreSQL indexing, EXPLAIN, monitoring, maintenance | [SKILL.md](skills/postgresql-indexing/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
-| `prowler-tour` | Keep product-tour definitions aligned with the UI | [SKILL.md](skills/prowler-tour/SKILL.md) |
 | `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
+| `skill-sync` | Sync skill metadata to AGENTS.md Auto-invoke tables | [SKILL.md](skills/skill-sync/SKILL.md) |
 
 ### Auto-invoke Skills
 
@@ -62,6 +65,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Add or edit changelog fragments in <component>/changelog.d/ | `prowler-changelog` |
 | Adding ConfigRequirements guardrails to compliance requirements | `prowler-compliance` |
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding a compliance output formatter (per-provider class + table dispatcher) | `prowler-compliance` |
@@ -69,12 +73,10 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Adding new providers | `prowler-provider` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Adding services to existing providers | `prowler-provider` |
-| Adding, updating, or removing a tour definition (*.tour.ts) | `prowler-tour` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-16` |
 | Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
 | Building AI chat features | `ai-sdk-5` |
-| Changing button labels or section headings on a tour-covered page | `prowler-tour` |
 | Committing changes | `prowler-commit` |
 | Configuring MCP servers in agentic workflows | `gh-aw` |
 | Create PR that requires changelog entry | `prowler-changelog` |
@@ -94,7 +96,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
 | Debugging gh-aw compilation errors | `gh-aw` |
-| Editing a UI file containing data-tour-id attributes | `prowler-tour` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | Fixing bug | `tdd` |
 | Fixing compliance JSON bugs (duplicate IDs, empty Section, stale refs) | `prowler-compliance` |
@@ -109,10 +110,10 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Modifying API responses | `jsonapi` |
 | Modifying component | `tdd` |
 | Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
+| Packaging checks, compliance frameworks or providers as external packages | `prowler-registry-artifact` |
+| Publishing artifacts to Prowler Registry | `prowler-registry-artifact` |
 | Refactoring code | `tdd` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
-| Renaming or removing a data-tour-id attribute value | `prowler-tour` |
-| Restructuring routes or layouts covered by a tour | `prowler-tour` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
@@ -120,6 +121,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Syncing compliance framework with upstream catalog | `prowler-compliance` |
+| Testing MCP tools or models | `prowler-test-mcp` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Testing hooks or utilities | `vitest` |
 | Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
@@ -127,7 +129,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Understand PR title conventional-commit validation | `prowler-ci` |
 | Understand changelog gate and no-changelog label behavior | `prowler-ci` |
 | Understand review ownership with CODEOWNERS | `prowler-pr` |
-| Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating README.md provider statistics table | `prowler-readme-table` |
 | Updating checks, services, compliance, or categories count in README.md | `prowler-readme-table` |
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
@@ -140,6 +141,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Working with Tailwind classes | `tailwind-4` |
 | Writing Playwright E2E tests | `playwright` |
 | Writing Prowler API tests | `prowler-test-api` |
+| Writing Prowler MCP server tests | `prowler-test-mcp` |
 | Writing Prowler SDK tests | `prowler-test-sdk` |
 | Writing Prowler UI E2E tests | `prowler-test-ui` |
 | Writing Python tests with pytest | `pytest` |
@@ -156,14 +158,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 ## Project Overview
 
 Prowler is an open-source cloud security assessment tool supporting AWS, Azure, GCP, Kubernetes, GitHub, M365, and more.
-
-| Component | Location | Tech Stack |
-|-----------|----------|------------|
-| SDK | `prowler/` | Python 3.10+, uv |
-| API | `api/` | Django 5.1, DRF, Celery |
-| UI | `ui/` | Next.js 16, React 19, Tailwind 4 |
-| MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
-| Dashboard | `dashboard/` | Dash, Plotly |
 
 ---
 
@@ -186,7 +180,7 @@ uv run prek run --all-files
 
 Follow conventional-commit style: `<type>[scope]: <description>`
 
-**Types:** `feat`, `fix`, `docs`, `chore`, `perf`, `refactor`, `style`, `test`
+**Types:** `feat`, `fix`, `docs`, `chore`, `perf`, `refactor`, `style`, `test`, `build`, `ci`, `revert` (add `!` for breaking changes)
 
 Before creating a PR:
 1. Complete checklist in `.github/pull_request_template.md`

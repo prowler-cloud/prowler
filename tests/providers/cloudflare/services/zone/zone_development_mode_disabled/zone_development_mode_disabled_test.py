@@ -102,8 +102,10 @@ class Test_zone_development_mode_disabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Development mode is enabled" in result[0].status_extended
-            assert "bypasses" in result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Development mode is enabled for zone {ZONE_NAME}."
+            )
 
     def test_zone_development_mode_none(self):
         zone_client = mock.MagicMock
