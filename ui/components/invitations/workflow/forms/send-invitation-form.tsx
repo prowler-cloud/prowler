@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import type { InvitationRoleOption } from "@/types/onboarding-invite";
+import type { InvitationRoleOption } from "@/types/invitations";
 
 import { useSendInvitation } from "./use-send-invitation";
 
@@ -23,7 +23,7 @@ interface SendInvitationFormProps {
   defaultRole?: string;
   isSelectorDisabled: boolean;
   // Where the invitation was sent from, forwarded to the API as `?source=`
-  // so the origin can be told apart (e.g. the onboarding invite step).
+  // so the origin can be told apart (e.g. the add-provider wizard).
   source?: string;
   // Replaces the default navigation to the invitation details page.
   onSuccess?: (invitationId: string) => void;

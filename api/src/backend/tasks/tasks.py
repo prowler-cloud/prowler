@@ -897,8 +897,12 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     )
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+            metadata_cache = {}
             fos = [
-                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
+                FindingOutput.transform_api_finding(
+                    f, prowler_provider, metadata_cache=metadata_cache
+                )
+                for f in batch
             ]
 
             # Outputs
@@ -978,6 +982,8 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                     writer.transform(fos, compliance_obj, name)
                 writer.batch_write_data_to_file()
                 writer._data.clear()
+
+            del fos, metadata_cache
 
     compressed = _compress_output_files(out_dir)
 

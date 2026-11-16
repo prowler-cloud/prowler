@@ -1,9 +1,16 @@
 # Production Settings Reference
 
+> **Scope**: generic Django hardening guidance, NOT a copy of Prowler's settings. What Prowler actually sets
+> lives in `api/src/backend/config/django/base.py` and `production.py`: `SECURE_PROXY_SSL_HEADER`,
+> `SECURE_CONTENT_TYPE_NOSNIFF`, `X_FRAME_OPTIONS = "DENY"`, `SECURE_REFERRER_POLICY`, `CSRF_COOKIE_SECURE`,
+> `SESSION_COOKIE_SECURE`, `DEBUG` from `DJANGO_DEBUG`, `ALLOWED_HOSTS` from `DJANGO_ALLOWED_HOSTS`.
+> TLS redirect and HSTS are expected at the reverse proxy; they are not set in Django. `manage.py` defaults to
+> `DJANGO_SETTINGS_MODULE=config.django.production`.
+
 ## Django Deployment Checklist Command
 
 ```bash
-cd api && uv run python src/backend/manage.py check --deploy
+cd api/src/backend && uv run python manage.py check --deploy
 ```
 
 This command checks for common deployment issues and missing security settings.
@@ -28,7 +35,7 @@ This command checks for common deployment issues and missing security settings.
 ## Full Production Settings Example
 
 ```python
-# settings/production.py
+# Generic example (Prowler uses config/env.py + config/django/production.py)
 import environ
 
 env = environ.Env()

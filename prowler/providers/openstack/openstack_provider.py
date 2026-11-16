@@ -14,12 +14,14 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.lib.logger import logger
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError, validate_outbound_url
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.openstack.exceptions.exceptions import (
     OpenStackAmbiguousRegionError,
     OpenStackAuthenticationError,
+    OpenStackAuthUrlNotAllowedError,
     OpenStackCloudNotFoundError,
     OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
@@ -455,6 +457,15 @@ class OpenstackProvider(Provider):
             )
 
     @staticmethod
+    def _validate_auth_url(auth_url: str) -> None:
+        """Reject an auth_url the worker must not reach; the detail stays in the log."""
+        try:
+            validate_outbound_url(auth_url, allowed_schemes=("http", "https"))
+        except OutboundURLNotAllowedError as error:
+            logger.warning(f"OpenStack auth_url rejected: {error}")
+            raise OpenStackAuthUrlNotAllowedError()
+
+    @staticmethod
     def _create_connection(
         session: OpenStackSession,
         region: str | None = None,
@@ -471,6 +482,7 @@ class OpenstackProvider(Provider):
             region: Optional region override — when given, the connection is
                 scoped to this specific region instead of the session default.
         """
+        OpenstackProvider._validate_auth_url(session.auth_url)
         try:
             # Don't load from clouds.yaml or environment variables, we configure this in setup_session()
             conn = connect(
@@ -636,6 +648,7 @@ class OpenstackProvider(Provider):
         except (
             OpenStackCredentialsError,
             OpenStackAuthenticationError,
+            OpenStackAuthUrlNotAllowedError,
             OpenStackSessionError,
             OpenStackConfigFileNotFoundError,
             OpenStackCloudNotFoundError,

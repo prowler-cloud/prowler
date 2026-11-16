@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getProviderDisplayName } from "@/types/providers";
 
-import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";
+import { CONNECT_ACTION_KIND, type ConnectUiState } from "../connect/types";
 
 import { InviteTeammatePanel } from "./invite-teammate-panel";
 
@@ -77,12 +77,12 @@ function Harness({
   onUiState,
   onBusyChange,
 }: {
-  onUiState: (state: AwsConnectUiState) => void;
+  onUiState: (state: ConnectUiState) => void;
   onBusyChange: (isBusy: boolean) => void;
 }) {
-  const [uiState, setUiState] = useState<AwsConnectUiState | null>(null);
+  const [uiState, setUiState] = useState<ConnectUiState | null>(null);
   // Stable like the wizard's own setter: the panel keys an effect on it.
-  const handleUiState = useRef((state: AwsConnectUiState) => {
+  const handleUiState = useRef((state: ConnectUiState) => {
     setUiState(state);
     onUiState(state);
   }).current;
@@ -115,7 +115,7 @@ function renderPanel() {
 }
 
 const lastUiState = (onUiState: ReturnType<typeof vi.fn>) =>
-  onUiState.mock.calls.at(-1)?.[0] as AwsConnectUiState;
+  onUiState.mock.calls.at(-1)?.[0] as ConnectUiState;
 
 async function fillAndSend(user: ReturnType<typeof userEvent.setup>) {
   await user.type(
@@ -150,7 +150,7 @@ describe("InviteTeammatePanel", () => {
       showAction: true,
       actionLabel: "Send invitation",
       actionDisabled: true,
-      actionKind: AWS_CONNECT_ACTION_KIND.SUBMIT,
+      actionKind: CONNECT_ACTION_KIND.SUBMIT,
     });
     expect(screen.getByRole("status")).toHaveTextContent(/Loading roles/);
   });
@@ -206,7 +206,7 @@ describe("InviteTeammatePanel", () => {
     expect(lastUiState(onUiState)).toMatchObject({
       actionLabel: "Done",
       actionDisabled: false,
-      actionKind: AWS_CONNECT_ACTION_KIND.CLOSE,
+      actionKind: CONNECT_ACTION_KIND.CLOSE,
     });
     expect(onBusyChange).toHaveBeenLastCalledWith(false);
     expect(onBusyChange).toHaveBeenCalledWith(true);
@@ -251,7 +251,7 @@ describe("InviteTeammatePanel", () => {
     expect(screen.queryByText(/Invitation sent/)).not.toBeInTheDocument();
     expect(lastUiState(onUiState)).toMatchObject({
       actionLabel: "Send invitation",
-      actionKind: AWS_CONNECT_ACTION_KIND.SUBMIT,
+      actionKind: CONNECT_ACTION_KIND.SUBMIT,
     });
   });
 
@@ -282,13 +282,15 @@ describe("InviteTeammatePanel", () => {
     // When
     const { onUiState } = renderPanel();
 
-    // Then
+    // Then: the footer drops the action a commit after the message shows.
     expect(
       await screen.findByText(/Roles could not be loaded right now/),
     ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Send invitation" }),
+      ).not.toBeInTheDocument(),
+    );
     expect(lastUiState(onUiState)).toMatchObject({ showAction: false });
-    expect(
-      screen.queryByRole("button", { name: "Send invitation" }),
-    ).not.toBeInTheDocument();
   });
 });

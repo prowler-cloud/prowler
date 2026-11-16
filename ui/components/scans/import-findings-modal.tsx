@@ -7,6 +7,8 @@ import { Button } from "@/components/shadcn/button/button";
 import { FileUploadDropzone } from "@/components/shadcn/file-upload/file-upload-dropzone";
 import { Modal } from "@/components/shadcn/modal/modal";
 import { useToast } from "@/components/shadcn/toast/use-toast";
+import { ViewPlansLink } from "@/components/shared/usage-limit-message";
+import { ACTION_ERROR_STATUS } from "@/lib/action-errors";
 import { type Ingestion, type IngestionResponse } from "@/types";
 
 import {
@@ -63,6 +65,7 @@ interface FailedImportState {
   file: File;
   // Absent when the upload itself was rejected: no job, so no counters.
   ingestion?: Ingestion;
+  usageLimited?: boolean;
 }
 
 interface InvalidImportState {
@@ -193,6 +196,7 @@ export function ImportFindingsModal() {
           ? await responseError(response, START_ERROR)
           : START_ERROR,
         file,
+        usageLimited: response?.status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
       });
       return;
     }
@@ -262,7 +266,15 @@ export function ImportFindingsModal() {
               )}
               {state.type === IMPORT_STATE.FAILED && (
                 <>
-                  <p role="alert">{state.error}</p>
+                  <p role="alert">
+                    {state.error}
+                    {state.usageLimited && (
+                      <>
+                        {" "}
+                        <ViewPlansLink />
+                      </>
+                    )}
+                  </p>
                   {state.ingestion && (
                     <p>
                       Reported progress: {state.ingestion.processedRecords} of{" "}

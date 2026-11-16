@@ -9,7 +9,6 @@ import {
   buildScanSummaryContext,
 } from "@/lib/lighthouse/context/contributions";
 import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
-import { SCAN_JOBS_TAB } from "@/types";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { AutoRefresh } from "../auto-refresh";
@@ -82,14 +81,6 @@ export function ScanJobsTable({
           columns={columns}
           data={data}
           metadata={meta}
-          // Anchor the view-first-scan tour's "in-progress" step to the first row of
-          // the active (In Progress) tab; absent on other tabs so the tour only points
-          // at a running scan.
-          getRowAttributes={(row) =>
-            row.index === 0 && tab === SCAN_JOBS_TAB.ACTIVE
-              ? { "data-tour-id": "view-first-scan-in-progress" }
-              : {}
-          }
         />
       )}
     </>

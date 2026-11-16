@@ -2859,7 +2859,8 @@
         "waf_regional_webacl_with_rules",
         "wafv2_webacl_logging_enabled",
         "wafv2_webacl_rule_logging_enabled",
-        "wafv2_webacl_with_rules"
+        "wafv2_webacl_with_rules",
+        "wafv2_webacl_managed_rule_groups_enabled"
       ],
       "ConfigRequirements": [
         {
@@ -3622,7 +3623,8 @@
         "rds_instance_deprecated_engine_version",
         "rds_instance_minor_version_upgrade_enabled",
         "redshift_cluster_automatic_upgrades",
-        "ssm_managed_compliant_patching"
+        "ssm_managed_compliant_patching",
+        "elasticbeanstalk_environment_php_platform_updated"
       ],
       "Attributes": [
         {

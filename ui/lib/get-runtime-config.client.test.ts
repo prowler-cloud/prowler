@@ -145,6 +145,7 @@ describe("getRuntimeConfigClient", () => {
         "posthogIngestionHost",
         "posthogKey",
         "posthogUiHost",
+        "registryEnabled",
         "reoDevClientId",
         "selfRegistrationEnabled",
         "sentryDsn",
