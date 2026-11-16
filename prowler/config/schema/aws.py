@@ -510,6 +510,13 @@ class AWSProviderConfig(ProviderConfigBase):
             "secret. Disabled by default."
         ),
     )
+    secrets_confidence: Optional[Literal["low", "medium", "high"]] = Field(
+        default=None,
+        description=(
+            "Minimum Kingfisher confidence level for reporting secret findings. "
+            "Possible values: low, medium, high. Default: low."
+        ),
+    )
     max_days_secret_unused: Optional[int] = Field(
         default=None,
         ge=7,
