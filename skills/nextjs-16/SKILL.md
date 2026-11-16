@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "App Router / Server Actions"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -31,7 +31,9 @@ app/
 
 ## Next.js 16 Notes
 
-- Use `proxy.ts` for request-boundary logic. `middleware.ts` is deprecated in Next.js 16.
+- Prowler UI runs Next.js 16.4 with `reactCompiler: true` and Turbopack (`ui/next.config.js`). Cache Components (`cacheComponents`) is NOT enabled.
+- Request APIs are async: `await cookies()`, `await headers()`, and `params` / `searchParams` are `Promise`s in pages, layouts and route handlers.
+- Use `proxy.ts` for request-boundary logic. `middleware.ts` is deprecated in Next.js 16. Prowler's `ui/proxy.ts` is `export default auth(async (req) => ...)` (NextAuth v5 wrapper).
 - `proxy.ts` runs on the Node.js runtime and cannot be configured for Edge.
 - Keep `proxy.ts` matchers narrow. Exclude `api`, static files, and image assets unless the route explicitly needs proxy logic.
 - Route Handlers in `app/api/**/route.ts` are the right fit for health checks, webhooks, backend-for-frontend endpoints, and server-only proxy calls.
@@ -64,6 +66,22 @@ export async function createUser(formData: FormData) {
 }
 ```
 
+## Async params / searchParams
+
+```typescript
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { id } = await params;
+  const query = await searchParams;
+  return <Detail id={id} query={query} />;
+}
+```
+
 ## Data Fetching
 
 ```typescript
@@ -87,29 +105,35 @@ export async function refreshDashboard() {
   "use server";
 
   revalidatePath("/");
-  revalidateTag("dashboard");
+  revalidateTag("dashboard", "max"); // Next 16: second arg (cacheLife profile) is required
 }
 ```
 
 - Use `revalidatePath` for route-level invalidation after mutations.
-- Use `revalidateTag` when data fetches share a cache tag across routes.
+- Use `revalidateTag(tag, profile)` when data fetches share a cache tag across routes. The single-argument form is deprecated in Next.js 16 (see `ui/actions/api-keys/api-keys.ts`).
 - With Cache Components enabled, put `"use cache"` only in pure server-side cached functions. Do not cache auth, tenant-scoped, or per-user responses unless the cache key explicitly isolates them.
 
 ## Route Handlers (API)
 
 ```typescript
-// app/api/users/route.ts
+// app/api/users/[id]/route.ts
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const users = await db.users.findMany();
-  return NextResponse.json(users);
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return NextResponse.json(await db.users.find(id));
 }
 
-export async function POST(request: Request) {
-  const body = await request.json();
-  const user = await db.users.create({ data: body });
-  return NextResponse.json(user, { status: 201 });
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const user = await db.users.update(id, await request.json());
+  return NextResponse.json(user);
 }
 ```
 

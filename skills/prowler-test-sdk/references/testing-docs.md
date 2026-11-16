@@ -2,16 +2,12 @@
 
 ## Local Documentation
 
-For detailed SDK testing patterns, see:
+- `docs/developer-guide/unit-testing.mdx` - Full SDK testing guide: moto vs `mock_make_api_call` vs MagicMock, patching vs importing, AWS service dependency table, GCP/Azure/K8s/M365 patterns
+- `docs/developer-guide/test-impact-analysis.mdx` - How CI selects which tests to run for a PR
 
-- `docs/developer-guide/unit-testing.mdx` - Complete guide for writing check tests
+## Source of Truth in Code
 
-## Contents
-
-The documentation covers:
-- AWS testing with moto (`@mock_aws` decorator)
-- Azure testing with MagicMock
-- GCP testing with MagicMock
-- Provider-specific fixtures (`set_mocked_aws_provider`, etc.)
-- Service dependency table for CI optimization
-- Test structure and required scenarios
+- `tests/providers/aws/utils.py` - `set_mocked_aws_provider`, `mocked_api_response`, AWS constants
+- `tests/providers/{provider}/{provider}_fixtures.py` - `set_mocked_{provider}_provider` and constants
+- `tests/conftest.py` - Autouse fixture that resets attributes set on mock classes
+- `.github/workflows/sdk-tests.yml` - Per-provider test jobs and the AWS `dependents` table

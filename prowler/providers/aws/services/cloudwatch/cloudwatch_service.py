@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
@@ -381,6 +381,7 @@ class LogGroup(BaseModel):
     # Properties inherited from account-level settings, e.g. ACCOUNT_DATA_PROTECTION.
     inherited_properties: list[str] = []
     region: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("log_streams",)
     log_streams: dict[str, list[str]] = (
         {}
     )  # Log stream name as the key, array of events as the value

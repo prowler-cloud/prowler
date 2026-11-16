@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getRegistryBootstrap } from "@/actions/registry/registry";
 import { RegistryExplorer } from "@/components/registry/registry-explorer";
+import { RegistryUpgradePrompt } from "@/components/registry/registry-upgrade-prompt";
 import { ContentLayout } from "@/components/shadcn/content-layout/content-layout";
 import { readRegistryPresentation } from "@/lib/registry/presentation";
 import { REGISTRY_FAILURE } from "@/types/registry";
@@ -15,10 +16,14 @@ export default async function RegistryPage() {
 
   return (
     <ContentLayout title="Registry" icon={<Package />}>
-      <RegistryExplorer
-        initialState={bootstrap.state}
-        registryUrl={readRegistryPresentation().registryUrl}
-      />
+      {bootstrap.status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED ? (
+        <RegistryUpgradePrompt />
+      ) : (
+        <RegistryExplorer
+          initialState={bootstrap.state}
+          registryUrl={readRegistryPresentation().registryUrl}
+        />
+      )}
     </ContentLayout>
   );
 }

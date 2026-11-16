@@ -205,7 +205,7 @@ repos:
       - id: trufflehog
         name: TruffleHog
         description: Detect secrets in your data.
-        entry: bash -c 'trufflehog --no-update git file://. --since-commit HEAD --only-verified --fail'
+        entry: bash -c 'trufflehog --no-update git file://. --since-commit HEAD --branch HEAD --only-verified --fail'
         # For running trufflehog in docker, use the following entry instead:
         # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system

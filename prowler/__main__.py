@@ -698,6 +698,8 @@ def prowler():
                 html_output = HTML(
                     findings=finding_outputs,
                     file_path=f"{filename}{html_file_suffix}",
+                    # Only the OSS CLI shows the Prowler Cloud hand-off block
+                    show_cloud_cta=True,
                 )
                 generated_outputs["regular"].append(html_output)
                 html_output.batch_write_data_to_file(

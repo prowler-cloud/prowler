@@ -6,11 +6,17 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Using Zustand stores"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
+
+## Prowler UI Layout
+
+- Stores live in `ui/store/{feature}/store.ts` (some single files, e.g. `ui/store/side-panel.ts`) and are re-exported from `ui/store/index.ts`.
+- Tests: `ui/store/__tests__/*.test.ts` or co-located `store.test.ts`.
+- `zustand/middleware` (`persist`, `createJSONStorage`) is used; `immer` is NOT installed in `ui/`.
 
 ## Basic Store
 
@@ -31,9 +37,11 @@ const useCounterStore = create<CounterStore>((set) => ({
   reset: () => set({ count: 0 }),
 }));
 
-// Usage
+// Usage - select what you need
 function Counter() {
-  const { count, increment, decrement } = useCounterStore();
+  const count = useCounterStore((s) => s.count);
+  const increment = useCounterStore((s) => s.increment);
+  const decrement = useCounterStore((s) => s.decrement);
   return (
     <div>
       <span>{count}</span>
@@ -93,6 +101,10 @@ function UserInfo() {
 
 // ❌ AVOID: Selecting entire store (causes re-render on any change)
 const store = useUserStore();  // Re-renders on ANY state change
+
+// ❌ v5 BREAKS: selector returning a new object/array without useShallow
+// -> "Maximum update depth exceeded" (v5 `create` hooks compare with Object.is and take no equalityFn)
+const { name, email } = useUserStore((s) => ({ name: s.name, email: s.email }));
 ```
 
 ## Async Actions
@@ -126,6 +138,8 @@ const useUserStore = create<UserStore>((set) => ({
 ## Slices Pattern
 
 ```typescript
+import { create, type StateCreator } from "zustand";
+
 // userSlice.ts
 interface UserSlice {
   user: User | null;
@@ -133,7 +147,7 @@ interface UserSlice {
   clearUser: () => void;
 }
 
-const createUserSlice = (set): UserSlice => ({
+const createUserSlice: StateCreator<UserSlice & CartSlice, [], [], UserSlice> = (set) => ({
   user: null,
   setUser: (user) => set({ user }),
   clearUser: () => set({ user: null }),
@@ -146,7 +160,7 @@ interface CartSlice {
   removeItem: (id: string) => void;
 }
 
-const createCartSlice = (set): CartSlice => ({
+const createCartSlice: StateCreator<UserSlice & CartSlice, [], [], CartSlice> = (set) => ({
   items: [],
   addItem: (item) => set((state) => ({ items: [...state.items, item] })),
   removeItem: (id) => set((state) => ({
@@ -161,35 +175,6 @@ const useStore = create<Store>()((...args) => ({
   ...createUserSlice(...args),
   ...createCartSlice(...args),
 }));
-```
-
-## Immer Middleware
-
-```typescript
-import { create } from "zustand";
-import { immer } from "zustand/middleware/immer";
-
-interface TodoStore {
-  todos: Todo[];
-  addTodo: (text: string) => void;
-  toggleTodo: (id: string) => void;
-}
-
-const useTodoStore = create<TodoStore>()(
-  immer((set) => ({
-    todos: [],
-
-    addTodo: (text) => set((state) => {
-      // Mutate directly with Immer!
-      state.todos.push({ id: crypto.randomUUID(), text, done: false });
-    }),
-
-    toggleTodo: (id) => set((state) => {
-      const todo = state.todos.find(t => t.id === id);
-      if (todo) todo.done = !todo.done;
-    }),
-  }))
-);
 ```
 
 ## DevTools

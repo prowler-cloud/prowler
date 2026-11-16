@@ -136,6 +136,7 @@ class Project(VercelService):
             )
 
         except Exception as error:
+            project.environment_variables_fetched = False
             logger.error(
                 f"Project - Error fetching env vars for {project.name}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -185,3 +186,4 @@ class VercelProject(BaseModel):
     managed_rules: Optional[dict] = None
     bot_id_enabled: Optional[bool] = None
     environment_variables: list[VercelEnvironmentVariable] = Field(default_factory=list)
+    environment_variables_fetched: bool = True

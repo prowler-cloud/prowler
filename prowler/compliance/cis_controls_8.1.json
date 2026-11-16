@@ -280,7 +280,11 @@
           "ec2_instance_with_outdated_ami",
           "eks_cluster_uses_a_supported_version",
           "kafka_cluster_uses_latest_version",
-          "rds_instance_deprecated_engine_version"
+          "rds_instance_deprecated_engine_version",
+          "elasticbeanstalk_environment_php_platform_updated"
+        ],
+        "gcp": [
+          "appengine_version_php_runtime_supported"
         ]
       }
     },
@@ -3717,7 +3721,8 @@
           "waf_regional_rule_with_conditions",
           "waf_regional_rulegroup_not_empty",
           "waf_regional_webacl_with_rules",
-          "wafv2_webacl_with_rules"
+          "wafv2_webacl_with_rules",
+          "wafv2_webacl_managed_rule_groups_enabled"
         ],
         "cloudflare": [
           "dns_record_proxied",

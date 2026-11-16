@@ -1,7 +1,7 @@
 import json
 import time
 from enum import Enum
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -194,6 +194,7 @@ class Document(BaseModel):
     arn: str
     name: str
     region: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("content",)
     content: dict = None
     account_owners: list[str] = None
     tags: Optional[list] = []

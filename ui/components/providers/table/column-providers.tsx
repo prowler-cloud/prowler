@@ -41,6 +41,7 @@ import type {
 import { LinkToScans } from "../link-to-scans";
 
 import { DataTableRowActions } from "./data-table-row-actions";
+import { RegistryRowLogo } from "./registry-row-logo";
 
 interface GroupNameChipsProps {
   groupNames?: string[];
@@ -247,6 +248,11 @@ export function getColumnProviders(
           >
             <EntityInfo
               cloudProvider={provider.attributes.provider}
+              icon={
+                provider.attributes.is_dynamic ? (
+                  <RegistryRowLogo type={provider.attributes.provider} />
+                ) : undefined
+              }
               entityAlias={provider.attributes.alias}
               entityId={provider.attributes.uid}
               nameAction={

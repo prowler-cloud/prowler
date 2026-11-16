@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Required edition: Frontline Standard or Plus, Business Plus, Enterprise Standard or Plus, Education Fundamentals, Standard or Plus, Enterprise Essentials Plus, G Suite Business, or Cloud Identity Premium; the Admin console has no Google session control page on the other editions and the web session stays at Google's 14-day default. When the Licensing API scope is authorized and every edition the tenant holds lacks it, the finding says so."
 }
