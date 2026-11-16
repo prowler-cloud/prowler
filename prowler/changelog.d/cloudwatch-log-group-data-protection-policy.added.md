@@ -1,0 +1,1 @@
+`cloudwatch_log_group_data_protection_policy_configured` check for AWS provider
