@@ -1,6 +1,12 @@
 "use client";
 
-import { BadgeCheck, Check, Package, ShieldCheck } from "lucide-react";
+import {
+  BadgeCheck,
+  Check,
+  ExternalLink,
+  Package,
+  ShieldCheck,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 import { ProviderTypeIconStack } from "@/components/icons/providers-badge/provider-type-icon";
@@ -13,7 +19,10 @@ import {
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
-import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
+import {
+  getRegistryNotInstallableMessage,
+  REGISTRY_NOT_INSTALLABLE_REASON,
+} from "@/lib/registry/installability";
 import { cn } from "@/lib/utils";
 import { getProviderDisplayName } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
@@ -255,6 +264,8 @@ function RegistryArtifactFacts({
 interface RegistryArtifactCardProps {
   artifact: RegistryMarketplaceArtifact;
   pendingAddName?: string;
+  /** Base for the Registry page where access is requested. */
+  registryUrl?: string;
   onAdd: () => void;
   onRemove: (trigger: HTMLButtonElement | null) => void;
 }
@@ -262,10 +273,18 @@ interface RegistryArtifactCardProps {
 export function RegistryArtifactCard({
   artifact,
   pendingAddName,
+  registryUrl,
   onAdd,
   onRemove,
 }: RegistryArtifactCardProps) {
   const displayName = artifact.name ?? artifact.normalizedName;
+  const accessRequestUrl =
+    artifact.notInstallableReason ===
+      REGISTRY_NOT_INSTALLABLE_REASON.ACCESS_REQUIRED &&
+    registryUrl &&
+    artifact.accessRequestPath
+      ? new URL(artifact.accessRequestPath, registryUrl).href
+      : undefined;
   const isPackageId =
     !artifact.name ||
     normalizePackageName(artifact.name) ===
@@ -355,6 +374,18 @@ export function RegistryArtifactCard({
                 Remove
               </Button>
             </>
+          ) : accessRequestUrl ? (
+            <Button asChild size="sm" variant="outline">
+              <a
+                aria-label={`Request access to ${displayName} in the Prowler Registry (opens in a new tab)`}
+                href={accessRequestUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Request access
+                <ExternalLink aria-hidden />
+              </a>
+            </Button>
           ) : artifact.isInstallable ? (
             <Button
               aria-label={`Add ${displayName}`}

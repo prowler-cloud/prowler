@@ -71,7 +71,7 @@ describe("Registry card install verdict", () => {
         artifact={{
           ...checksArtifact,
           isInstallable: false,
-          notInstallableReason: "checks_target_is_not_builtin",
+          notInstallableReason: "artifact_targets_no_provider",
         }}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
@@ -81,8 +81,45 @@ describe("Registry card install verdict", () => {
     // Then
     await expect
       .element(
+        screen.getByText("It ships checks but names no provider to extend."),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: /Add/ }))
+      .not.toBeInTheDocument();
+  });
+
+  it("links an artifact that needs approved access to its Registry bundle", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...checksArtifact,
+          isInstallable: false,
+          notInstallableReason: "access_required",
+          accessRequestPath: "/bundles/vcf-bundle",
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+        registryUrl="https://registry.example.com/"
+      />,
+    );
+
+    // Then: the link takes the action slot and the note says why.
+    const link = screen.getByRole("link", {
+      name: "Request access to Acme AWS checks in the Prowler Registry (opens in a new tab)",
+    });
+    await expect
+      .element(link)
+      .toHaveAttribute(
+        "href",
+        "https://registry.example.com/bundles/vcf-bundle",
+      );
+    await expect.element(link).toHaveTextContent("Request access");
+    await expect
+      .element(
         screen.getByText(
-          "Its checks are written for a provider this deployment does not ship.",
+          "Needs approved access in the Prowler Registry. Once approved, it installs with that account's Registry API key.",
         ),
       )
       .toBeVisible();

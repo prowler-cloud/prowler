@@ -5,6 +5,7 @@ import {
   confirmRegistryArtifactAddition,
 } from "@/actions/registry/registry";
 import { notifyRegistryArtifactOutcome } from "@/lib/registry/artifact-notifications";
+import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
 import {
   TASK_WATCHER_STATUS,
   trackAndPollTask,
@@ -22,7 +23,12 @@ import {
 export const REGISTRY_ARTIFACT_TASK_KIND = "registry-artifact-add";
 
 const artifactTaskResultSchema = z
-  .object({ installed: z.boolean(), error: z.string().nullable() })
+  .object({
+    installed: z.boolean(),
+    error: z.string().nullable(),
+    // Optional: tasks queued before the API sent a code have none.
+    code: z.string().nullable().optional(),
+  })
   .strict();
 
 async function runRegistryArtifactAddition(
@@ -85,8 +91,11 @@ export async function confirmRegistryArtifactTask(
   if (!result.data.installed) {
     return {
       status: REGISTRY_MUTATION.REFUSED,
-      // Task errors are backend diagnostics, not user-facing refusal codes.
-      message: "The artifact could not be installed.",
+      // Task errors are backend diagnostics; only a known code is explained.
+      message: getRegistryNotInstallableMessage(
+        result.data.code ?? undefined,
+        "The artifact could not be installed.",
+      ),
     };
   }
 

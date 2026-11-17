@@ -4,6 +4,7 @@ import { type Ref } from "react";
 import { Button } from "@/components/shadcn/button/button";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
+  STATUS_PANEL_LAYOUT,
   StatusPanel,
   StatusPanelActions,
   StatusPanelBody,
@@ -15,6 +16,8 @@ import {
 export const REGISTRY_CREDENTIAL_BANNER = {
   ONBOARDING: "onboarding",
   VALIDATING: "validating",
+  /** The catalog works without a key; only entitled artifacts need one. */
+  OPTIONAL_KEY: "optional_key",
 } as const;
 
 type RegistryCredentialBannerVariant =
@@ -43,9 +46,48 @@ export function RegistryCredentialBanner({
   registryUrl,
   tenantArtifactCount,
 }: RegistryCredentialBannerProps) {
+  if (variant === REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY) {
+    return (
+      <StatusPanel aria-live="polite" layout={STATUS_PANEL_LAYOUT.INLINE}>
+        <StatusPanelIcon>
+          <KeyRound />
+        </StatusPanelIcon>
+        <StatusPanelBody>
+          <StatusPanelDescription>
+            Artifacts open to every workspace install without a key. Connect a
+            Registry API key to add the ones that need approved access.
+          </StatusPanelDescription>
+        </StatusPanelBody>
+        <StatusPanelActions>
+          {registryUrl && (
+            <Button asChild size="sm" variant="ghost">
+              <a
+                aria-label="Explore Prowler Registry (opens in a new tab)"
+                href={registryUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Explore Prowler Registry
+                <ExternalLink aria-hidden />
+              </a>
+            </Button>
+          )}
+          <Button
+            onClick={onConnect}
+            ref={connectButtonRef}
+            size="sm"
+            type="button"
+          >
+            Connect API key
+          </Button>
+        </StatusPanelActions>
+      </StatusPanel>
+    );
+  }
+
   if (variant === REGISTRY_CREDENTIAL_BANNER.VALIDATING) {
     return (
-      <StatusPanel aria-busy aria-live="polite">
+      <StatusPanel aria-live="polite">
         <StatusPanelIcon>
           <Spinner />
         </StatusPanelIcon>

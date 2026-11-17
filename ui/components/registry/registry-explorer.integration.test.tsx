@@ -810,6 +810,80 @@ describe("RegistryExplorer", () => {
         .toHaveAttribute("href", "https://registry.internal.test/");
     });
 
+    it("connects, not manages, a key when the catalog loads without one", async () => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            credential: onboardingState.credential,
+          }}
+          registryUrl="https://registry.internal.test/"
+        />,
+      );
+
+      // Then: an inline callout sits above the catalog.
+      await expect
+        .element(
+          screen.getByText(
+            "Artifacts open to every workspace install without a key. Connect a Registry API key to add the ones that need approved access.",
+          ),
+        )
+        .toBeVisible();
+      expect(cardFor("AWS guard")).toBeTruthy();
+
+      // When
+      const keyButton = screen.getByRole("button", {
+        name: "Registry API key",
+      });
+      await keyButton.click();
+
+      // Then
+      await expect
+        .element(
+          screen.getByRole("dialog", { name: "Connect Registry API key" }),
+        )
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Disconnect" }))
+        .not.toBeInTheDocument();
+
+      // When
+      await userEvent.keyboard("{Escape}");
+
+      // Then
+      await expect.element(keyButton).toHaveFocus();
+    });
+
+    it("manages, not connects, a stored key the Registry rejected", async () => {
+      // Given: the catalog loads without a valid tenant key, but one is stored
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            credential: {
+              configured: true,
+              isValid: false,
+              scopes: [],
+              validationPending: false,
+            },
+          }}
+        />,
+      );
+
+      // When
+      await screen.getByRole("button", { name: "Registry API key" }).click();
+
+      // Then: the stored key can be replaced or disconnected
+      const dialog = screen.getByRole("dialog", { name: "Registry API key" });
+      await expect
+        .element(dialog.getByText("Rejected by the Registry"))
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Disconnect" }))
+        .toBeVisible();
+    });
+
     it("lets a replacement key supersede a pending validation from the banner", async () => {
       // Given: a validation that never settled must not dead-end the user
       submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
@@ -830,6 +904,14 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).toContain(
         "Validating your Registry API key",
       );
+      // aria-busy would hold back the live region's announcement for good.
+      const validatingPanel = Array.from(
+        document.querySelectorAll('[aria-live="polite"]'),
+      ).find((element) =>
+        element.textContent?.includes("Validating your Registry API key"),
+      );
+      expect(validatingPanel).toBeTruthy();
+      expect(validatingPanel?.hasAttribute("aria-busy")).toBe(false);
       await expect
         .element(screen.getByRole("button", { name: "Use a different key" }))
         .toBeEnabled();
@@ -1346,13 +1428,45 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
-  it("returns to the credential banner after disconnecting Registry access", async () => {
-    // Given
+  it("keeps the catalog after disconnecting when it stays readable without a key", async () => {
+    // Given: with the Prowler Cloud key the catalog reads without a tenant key
     disconnectRegistryCredentialMock.mockResolvedValue({
       status: "disconnected",
       credential: onboardingState.credential,
       tenantArtifacts: readyState.tenantArtifacts,
     });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    const readsBefore = refreshRegistryCollectionsMock.mock.calls.length;
+
+    // When
+    await screen.getByRole("button", { name: "Registry API key" }).click();
+    await screen.getByRole("button", { name: "Disconnect" }).click();
+
+    // Then: the catalog is read again without the key and stays on screen
+    await expect
+      .poll(() => refreshRegistryCollectionsMock.mock.calls.length)
+      .toBeGreaterThan(readsBefore);
+    await expect
+      .element(
+        screen.getByText(
+          "Artifacts open to every workspace install without a key. Connect a Registry API key to add the ones that need approved access.",
+        ),
+      )
+      .toBeVisible();
+    expect(cardFor("AWS guard")).toBeTruthy();
+    expect(document.body.textContent).not.toContain(
+      "Connect your Registry API key",
+    );
+  });
+
+  it("returns to the credential banner after disconnecting Registry access", async () => {
+    // Given: without the Prowler Cloud key the catalog needs a tenant key
+    disconnectRegistryCredentialMock.mockResolvedValue({
+      status: "disconnected",
+      credential: onboardingState.credential,
+      tenantArtifacts: readyState.tenantArtifacts,
+    });
+    refreshRegistryCollectionsMock.mockResolvedValue({ status: "onboarding" });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When

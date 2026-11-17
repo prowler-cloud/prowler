@@ -452,6 +452,65 @@ describe("Registry guarded reads", () => {
     },
   );
 
+  it("shows the catalog without a key when the API serves it", async () => {
+    // Given: with the Prowler Cloud key the catalog needs no tenant key
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(noCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(catalogResponse());
+
+    // When
+    const result = await getRegistryBootstrap();
+
+    // Then
+    expect(result).toMatchObject({
+      status: "ready",
+      state: {
+        status: "ready",
+        credential: noCredential,
+        catalog: { status: "complete" },
+      },
+    });
+  });
+
+  it("falls back to onboarding when the API needs a tenant key", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(noCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { errors: [{ code: "registry_credential_not_configured" }] },
+          409,
+        ),
+      );
+
+    // When
+    const result = await getRegistryBootstrap();
+
+    // Then
+    expect(result).toMatchObject({
+      status: "ready",
+      state: { status: "onboarding", credential: noCredential },
+    });
+  });
+
+  it("keeps a pending validation on its own state without reading the catalog", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(pendingCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse());
+
+    // When
+    const result = await getRegistryBootstrap();
+
+    // Then
+    expect(result).toMatchObject({
+      state: { status: "validation_pending" },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("bootstraps in credential, tenant-artifact, then complete-catalog order", async () => {
     // Given
     fetchMock
@@ -500,10 +559,9 @@ describe("Registry guarded reads", () => {
     });
   });
 
-  it.each([
-    [noCredential, "onboarding"],
-    [pendingCredential, "validation_pending"],
-  ] as const)(
+  // A missing key no longer blocks the catalog: the API may serve it with the
+  // Prowler Cloud key (see "shows the catalog without a key" above).
+  it.each([[pendingCredential, "validation_pending"]] as const)(
     "blocks catalog bootstrap as %s credential is authoritative",
     async (credential, expectedStatus) => {
       // Given
@@ -900,9 +958,9 @@ describe("Registry artifact mutations", () => {
       {
         has_checks: true,
         is_installable: false,
-        not_installable_reason: "checks_target_is_not_builtin",
+        not_installable_reason: "artifact_targets_no_provider",
       },
-      "Its checks are written for a provider this deployment does not ship.",
+      "It ships checks but names no provider to extend.",
     ],
     [
       {
