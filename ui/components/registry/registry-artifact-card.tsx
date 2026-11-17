@@ -20,6 +20,11 @@ import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import {
   getRegistryNotInstallableMessage,
   REGISTRY_NOT_INSTALLABLE_REASON,
 } from "@/lib/registry/installability";
@@ -33,6 +38,8 @@ import {
 } from "./registry-explorer.model";
 
 const MAX_PROVIDER_ICONS = 4;
+// Names are wider than logos, so fewer fit on one line.
+const MAX_PROVIDER_NAMES = 3;
 
 const PROVIDER_LIST_FORMAT = new Intl.ListFormat("en", {
   style: "long",
@@ -203,6 +210,53 @@ function RegistryExtendedProviders({ slugs }: RegistryExtendedProvidersProps) {
   );
 }
 
+interface RegistryProviderNamesProps {
+  providers: string[];
+}
+
+/** Providers without a logo, capped like the logo stack with the rest behind +N. */
+function RegistryProviderNames({ providers }: RegistryProviderNamesProps) {
+  if (providers.length === 0) return null;
+  const visible = providers.slice(0, MAX_PROVIDER_NAMES);
+  const overflow = providers.slice(MAX_PROVIDER_NAMES);
+  const overflowLabel = overflow.map(getProviderDisplayName).join(", ");
+
+  return (
+    <ul
+      aria-label="Providers"
+      className="text-text-neutral-secondary flex flex-wrap items-center gap-x-1 text-xs"
+    >
+      {visible.map((provider, index) => (
+        <li
+          key={provider}
+          className={cn(index < visible.length - 1 && "after:content-[',']")}
+        >
+          {getProviderDisplayName(provider)}
+        </li>
+      ))}
+      {overflow.length > 0 && (
+        <li>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <span
+                aria-label={`${overflow.length} more: ${overflowLabel}`}
+                className="focus-visible:outline-button-primary rounded-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
+                role="img"
+                tabIndex={0}
+              >
+                +{overflow.length}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs" side="top">
+              {overflowLabel}
+            </TooltipContent>
+          </Tooltip>
+        </li>
+      )}
+    </ul>
+  );
+}
+
 interface RegistryArtifactFactsProps {
   version: string;
   /** Set when an update is available; `version` is then the installed one. */
@@ -321,17 +375,8 @@ export function RegistryArtifactCard({
       )}
       <RegistryArtifactChips artifact={artifact} />
       {note}
-      {/* No logo of their own: a generic glyph each would make them identical.
-          Kept out of the footer so it stays one line and footers line up. */}
-      {namedProviders.length > 0 && (
-        <ul aria-label="Providers" className="flex flex-wrap gap-1.5">
-          {namedProviders.map((provider) => (
-            <li key={provider}>
-              <Badge variant="tag">{getProviderDisplayName(provider)}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Kept out of the footer so it stays one line and footers line up. */}
+      <RegistryProviderNames providers={namedProviders} />
       <div className="border-border-neutral-tertiary mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
         {logoProviders.length > 0 && (
           <ProviderTypeIconStack

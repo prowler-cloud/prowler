@@ -294,6 +294,48 @@ describe("Registry card metadata layout", () => {
     }
   });
 
+  it("shows three Registry provider names and lists the rest behind +N", async () => {
+    // Given: a built-in and six providers without a logo
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          providers: [
+            "aws",
+            "openai",
+            "chatgpt",
+            "vcf",
+            "snowflake",
+            "datadog",
+            "salesforce",
+          ],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then: three names read as text and one +3 holds the rest
+    const names = screen.getByRole("list", { name: "Providers" });
+    expect(
+      names
+        .getByRole("listitem")
+        .elements()
+        .map((item) => item.textContent),
+    ).toEqual(["Openai", "Chatgpt", "Vcf", "+3"]);
+
+    // When: keyboard users reach the overflow
+    const more = screen.getByRole("img", {
+      name: "3 more: Snowflake, Datadog, Salesforce",
+    });
+    (more.element() as HTMLElement).focus();
+
+    // Then
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Snowflake, Datadog, Salesforce");
+  });
+
   it.each([
     { width: 320, theme: "dark" },
     { width: 768, theme: "dark" },
