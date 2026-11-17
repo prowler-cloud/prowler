@@ -21,6 +21,14 @@ inputs:
     description: Output format(s) for scan results (e.g. "json-ocsf", "sarif json-ocsf")
     required: false
     default: json-ocsf
+  artifact-name:
+    description: Name of the uploaded scan results artifact. Defaults to prowler-<provider> when omitted or empty.
+    required: false
+    default: ""
+  scan-name:
+    description: Display name appended to the scan summary heading.
+    required: false
+    default: ""
   push-to-cloud:
     description: Push scan findings to Prowler Cloud. Requires the PROWLER_CLOUD_API_KEY environment variable. See https://docs.prowler.com/user-guide/tutorials/prowler-import-findings#using-the-cli
     required: false
@@ -141,7 +149,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
-        name: prowler-${{ inputs.provider }}
+        name: ${{ inputs.artifact-name || format('prowler-{0}', inputs.provider) }}
         path: output/
         retention-days: 30
         if-no-files-found: warn
@@ -177,6 +185,8 @@ runs:
       shell: bash
       env:
         INPUT_PROVIDER: ${{ inputs.provider }}
+        INPUT_ARTIFACT_NAME: ${{ inputs.artifact-name || format('prowler-{0}', inputs.provider) }}
+        INPUT_SCAN_NAME: ${{ inputs.scan-name }}
         INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
         INPUT_PUSH_TO_CLOUD: ${{ inputs.push-to-cloud }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -232,7 +242,7 @@ runs:
         ocsf_file=$(find output/ -name '*.ocsf.json' -type f 2>/dev/null | head -1)
 
         {
-          echo "## Prowler ${provider_name} Scan Summary"
+          echo "## Prowler ${provider_name} Scan Summary${INPUT_SCAN_NAME:+ · ${INPUT_SCAN_NAME}}"
           echo ""
 
           counts=""
@@ -275,7 +285,7 @@ runs:
             echo ""
           fi
 
-          echo "**Get the full report:** [\`prowler-${INPUT_PROVIDER}\` artifact](${RUN_URL}#artifacts)"
+          echo "**Get the full report:** [\`${INPUT_ARTIFACT_NAME}\` artifact](${RUN_URL}#artifacts)"
 
           if [ "$INPUT_UPLOAD_SARIF" = "true" ] && [ -n "$BRANCH" ]; then
             encoded_branch=$(jq -nr --arg b "$BRANCH" '$b|@uri')
