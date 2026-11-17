@@ -321,6 +321,17 @@ export function RegistryArtifactCard({
       )}
       <RegistryArtifactChips artifact={artifact} />
       {note}
+      {/* No logo of their own: a generic glyph each would make them identical.
+          Kept out of the footer so it stays one line and footers line up. */}
+      {namedProviders.length > 0 && (
+        <ul aria-label="Providers" className="flex flex-wrap gap-1.5">
+          {namedProviders.map((provider) => (
+            <li key={provider}>
+              <Badge variant="tag">{getProviderDisplayName(provider)}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="border-border-neutral-tertiary mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
         {logoProviders.length > 0 && (
           <ProviderTypeIconStack
@@ -334,12 +345,6 @@ export function RegistryArtifactCard({
             }))}
           />
         )}
-        {/* No logo of their own: a generic glyph each would make them identical. */}
-        {namedProviders.map((provider) => (
-          <Badge key={provider} variant="tag">
-            {getProviderDisplayName(provider)}
-          </Badge>
-        ))}
         <RegistryArtifactFacts
           version={
             artifact.isAdded

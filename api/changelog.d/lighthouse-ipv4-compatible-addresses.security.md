@@ -1,1 +1,0 @@
-Lighthouse OpenAI-compatible base URL validation rejects IPv4-compatible (`::a.b.c.d`) and IPv4-translated (`::ffff:0:a.b.c.d`) IPv6 literals, which were classified as public even when the embedded IPv4 address was private or link-local

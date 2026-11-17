@@ -4,6 +4,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.50.0] (Prowler v5.50.0)
+
+### 🐞 Fixed
+
+- Edit user form no longer sends the email when it was not changed [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+---
+
 ## [1.49.0] (Prowler v5.49.0)
 
 ### 🔄 Changed
