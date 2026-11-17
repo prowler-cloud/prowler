@@ -96,6 +96,32 @@
       "Checks": []
     },
     {
+      "Id": "op.acc.6.m365.entra.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La cuenta se bloquea durante al menos un minuto tras un máximo de diez intentos de autenticación fallidos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_password_protection_lockout_threshold_limited",
+        "entra_password_protection_lockout_duration_configured"
+      ]
+    },
+    {
       "Id": "op.acc.6.r1.m365.entra.1",
       "Description": "Contraseñas",
       "Attributes": [
@@ -117,32 +143,6 @@
         }
       ],
       "Checks": []
-    },
-    {
-      "Id": "op.acc.6.r1.m365.entra.2",
-      "Description": "Contraseñas",
-      "Attributes": [
-        {
-          "IdGrupoControl": "op.acc.6.r1",
-          "Marco": "operacional",
-          "Categoria": "control de acceso",
-          "DescripcionControl": "La cuenta se bloquea durante al menos un minuto tras un máximo de diez intentos de autenticación fallidos.",
-          "Nivel": "alto",
-          "Tipo": "refuerzo",
-          "Dimensiones": [
-            "confidencialidad",
-            "integridad",
-            "trazabilidad",
-            "autenticidad"
-          ],
-          "ModoEjecucion": "automático",
-          "Dependencias": []
-        }
-      ],
-      "Checks": [
-        "entra_password_protection_lockout_threshold_limited",
-        "entra_password_protection_lockout_duration_configured"
-      ]
     },
     {
       "Id": "op.acc.6.r2.m365.entra.1",
@@ -266,14 +266,14 @@
       "Checks": []
     },
     {
-      "Id": "op.acc.6.r9.m365.entra.1",
-      "Description": "Acceso remoto",
+      "Id": "op.acc.6.r8.m365.entra.3",
+      "Description": "Doble factor para acceso desde o a través de zonas no controladas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.acc.6.r9",
+          "IdGrupoControl": "op.acc.6.r8",
           "Marco": "operacional",
           "Categoria": "control de acceso",
-          "DescripcionControl": "El acceso remoto, entendido como acceso desde Internet, exige autenticación multifactor (MFA).",
+          "DescripcionControl": "El acceso desde Internet, como zona no controlada, exige autenticación multifactor (MFA).",
           "Nivel": "alto",
           "Tipo": "refuerzo",
           "Dimensiones": [
@@ -291,7 +291,7 @@
       ]
     },
     {
-      "Id": "op.acc.6.r9.m365.entra.2",
+      "Id": "op.acc.6.r9.m365.entra.1",
       "Description": "Acceso remoto",
       "Attributes": [
         {
@@ -314,7 +314,7 @@
       "Checks": []
     },
     {
-      "Id": "op.acc.6.r9.m365.entra.3",
+      "Id": "op.acc.6.r9.m365.entra.2",
       "Description": "Acceso remoto",
       "Attributes": [
         {
