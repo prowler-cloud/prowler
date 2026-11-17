@@ -6,8 +6,8 @@ report and the UI group the requirements by the metadata of the measure they are
 under, so every requirement has to describe its measure the same way:
 
 - the execution mode says whether Prowler evaluates the requirement,
-- ``IdGrupoControl`` is the code of a measure of Annex II of the RD, or of one of its
-  reinforcements, in a group that exists in the RD,
+- ``IdGrupoControl`` is the code of a measure that exists in Annex II of the RD, or of
+  one of its reinforcements,
 - ``Marco`` and ``Categoria`` are the block and the group of Annex II that measure
   belongs to.
 """
@@ -23,8 +23,32 @@ COMPLIANCE_DIR = os.path.normpath(
 
 # <group>.<number>, optionally followed by a reinforcement (.rN). The organisational
 # framework has no groups, so its measures are org.<number>.
-MEASURE_ID = re.compile(r"(?P<group>org|(?:op|mp)\.[a-z]+)\.\d+(?:\.r\d+)?")
+MEASURE_ID = re.compile(
+    r"(?P<group>org|(?:op|mp)\.[a-z]+)\.(?P<number>[1-9]\d*)(?:\.r[1-9]\d*)?"
+)
 ORGANISATIONAL = "org"
+
+# Number of measures of each group in the summary table of Annex II of Real Decreto
+# 311/2022, 73 in all. The reinforcements are not listed: the RD defines them in the
+# text of each measure.
+MEASURES = {
+    "org": 4,
+    "op.pl": 5,
+    "op.acc": 6,
+    "op.exp": 10,
+    "op.ext": 4,
+    "op.nub": 1,
+    "op.cont": 4,
+    "op.mon": 3,
+    "mp.if": 7,
+    "mp.per": 4,
+    "mp.eq": 4,
+    "mp.com": 4,
+    "mp.si": 5,
+    "mp.sw": 2,
+    "mp.info": 6,
+    "mp.s": 4,
+}
 
 # Blocks and groups of measures of Annex II of Real Decreto 311/2022, as the catalogs
 # write them. No catalog files requirements under the organisational framework yet.
@@ -51,13 +75,12 @@ CATEGORIAS = {
 def measure_group(measure_id: str) -> Optional[str]:
     """Return the group of Annex II a measure code belongs to, or None if it is not one.
 
-    The code has to be well formed and its group has to exist in the RD, so a code with
-    a mistyped group, such as ``mp.comm.4``, is not a measure.
+    The code has to be well formed and name a measure of the RD, so neither a code with
+    a mistyped group, such as ``mp.comm.4``, nor one past the last measure of its
+    group, such as ``op.acc.7``, is a measure.
     """
     measure = MEASURE_ID.fullmatch(measure_id)
-    if measure and (
-        measure["group"] == ORGANISATIONAL or measure["group"] in CATEGORIAS
-    ):
+    if measure and int(measure["number"]) <= MEASURES.get(measure["group"], 0):
         return measure["group"]
     return None
 

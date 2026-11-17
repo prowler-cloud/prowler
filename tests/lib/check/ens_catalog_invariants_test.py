@@ -30,7 +30,9 @@ def _requirement(
     }
 
 
-@pytest.mark.parametrize("group", ["op.acc.6", "op.acc.6.r9", "mp.com.4", "org.1"])
+@pytest.mark.parametrize(
+    "group", ["op.acc.6", "op.acc.6.r9", "op.exp.10", "mp.com.4", "mp.s.4.r1", "org.4"]
+)
 def test_the_code_of_a_measure_is_accepted(group):
     assert not malformed_measure_ids([_requirement(group)])
 
@@ -43,6 +45,11 @@ def test_the_code_of_a_measure_is_accepted(group):
         "opc.acc.1",  # mistyped block
         "mp.comm.4",  # mistyped group
         "op.unknown.1",  # group that is not in the RD
+        "op.acc.7",  # op.acc has six measures
+        "mp.sw.3",  # mp.sw has two measures
+        "org.5",  # the organisational framework has four measures
+        "op.acc.0",  # measures are numbered from 1
+        "op.acc.6.r0",  # reinforcements are numbered from 1
     ],
 )
 def test_a_code_that_is_not_a_measure_is_reported(group):
