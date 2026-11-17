@@ -1,12 +1,62 @@
 from csv import DictWriter
+from functools import wraps
 from pathlib import Path
-from typing import List
+from typing import Callable, List
 
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
 from prowler.lib.outputs.utils import sanitize_csv_value
+
+
+def _without_manual_requirements(compliance: Compliance) -> Compliance:
+    """
+    Returns the compliance framework without its manual requirements, the ones that map no checks.
+
+    Parameters:
+        - compliance (Compliance): A compliance model.
+
+    Returns:
+        - Compliance: A copy of the model that keeps only the requirements with checks.
+    """
+    return compliance.copy(
+        update={
+            "Requirements": [
+                requirement
+                for requirement in compliance.Requirements
+                if requirement.Checks
+            ]
+        }
+    )
+
+
+def _emit_manual_requirements_once(transform: Callable) -> Callable:
+    """
+    Makes a formatter's transform emit the manual requirements only the first time it runs on a writer.
+
+    Every formatter appends the manual requirements of the framework after the rows of the
+    findings it receives. A writer that streams the findings in batches calls transform once
+    per batch, so each manual requirement was written once per batch instead of once per output.
+    From the second call on, transform receives the framework without its manual requirements.
+    They map no checks, so the rows of the findings do not change.
+
+    Parameters:
+        - transform (Callable): The transform method of a compliance formatter.
+
+    Returns:
+        - Callable: The transform method, emitting the manual requirements once per writer.
+    """
+
+    @wraps(transform)
+    def guarded_transform(self, findings, compliance, *args, **kwargs):
+        if self._manual_requirements_emitted:
+            compliance = _without_manual_requirements(compliance)
+        result = transform(self, findings, compliance, *args, **kwargs)
+        self._manual_requirements_emitted = True
+        return result
+
+    return guarded_transform
 
 
 class ComplianceOutput(Output):
@@ -16,6 +66,7 @@ class ComplianceOutput(Output):
     Attributes:
         _data (list): A list to store transformed data from findings.
         _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
+        _manual_requirements_emitted (bool): Whether transform already emitted the manual requirements.
 
     Methods:
         __init__: Initializes the Output class with findings, optionally creates a file descriptor.
@@ -25,6 +76,13 @@ class ComplianceOutput(Output):
         batch_write_data_to_file: Abstract method to write data to a file in batches.
         create_file_descriptor: Method to create a file descriptor for writing data to a file.
     """
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        # Guard transform here so that every formatter, current or new, emits the manual
+        # requirements once per writer without repeating the check in each of them.
+        if "transform" in cls.__dict__:
+            cls.transform = _emit_manual_requirements_once(cls.__dict__["transform"])
 
     def __init__(
         self,
@@ -36,6 +94,7 @@ class ComplianceOutput(Output):
     ) -> None:
         # TODO: This class needs to be refactored to use the Output class init, methods and properties
         self._data = []
+        self._manual_requirements_emitted = False
         self.close_file = False
         self.file_path = file_path
         self.file_descriptor = None
