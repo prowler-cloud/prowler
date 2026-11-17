@@ -1,0 +1,1 @@
+`bedrockagentcore_runtime_jwt_identity_propagation_configured` check for AWS provider, verifying Amazon Bedrock AgentCore runtimes with a custom JWT authorizer forward the end-user `Authorization` header to the agent
