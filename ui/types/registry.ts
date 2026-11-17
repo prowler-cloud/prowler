@@ -195,8 +195,7 @@ export type RegistryCredentialActionResult =
     }
   | {
       status: typeof REGISTRY_CREDENTIAL_ACTION.DISCONNECTED;
-      credential: RegistryCredentialStatus;
-      tenantArtifacts: RegistryTenantArtifact[];
+      state: RegistryBootstrapState;
     }
   | {
       status:

@@ -534,6 +534,9 @@ export function RegistryExplorer({
     if (generation !== operationGeneration.current) return;
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");
+    // The server page swaps the catalog for the paid-plan prompt.
+    if (result.status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED)
+      return router.refresh();
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_CREDENTIAL_ACTION.DISCONNECTED) {
@@ -543,23 +546,10 @@ export function RegistryExplorer({
       return;
     }
 
+    // Already fresh: the keyless catalog, or onboarding without the Cloud key.
+    invalidateRefresh(false);
     setAccessDialogMode(undefined);
-    // With the Prowler Cloud key the catalog stays readable: keep it and read
-    // it again without the tenant key. Without that key the read onboards.
-    setState((current) =>
-      current.status === REGISTRY_BOOTSTRAP_STATE.READY
-        ? {
-            ...current,
-            credential: result.credential,
-            tenantArtifacts: result.tenantArtifacts,
-          }
-        : {
-            status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
-            credential: result.credential,
-            tenantArtifacts: result.tenantArtifacts,
-          },
-    );
-    invalidateRefresh(true);
+    setState(result.state);
   }
 
   async function handleRemove(normalizedName: string) {
@@ -652,9 +642,11 @@ export function RegistryExplorer({
     pending: pendingOperation === REGISTRY_PENDING_OPERATION.CREDENTIAL,
     returnFocus: () => {
       const opener = accessDialogOpenerRef.current;
-      // A successful connect unmounts the banner or status button that opened
-      // the dialog; the catalog's API key button replaces it.
-      (opener?.isConnected ? opener : manageButtonRef.current)?.focus();
+      // Connect or disconnect can unmount the opener; focus its replacement.
+      (opener?.isConnected
+        ? opener
+        : (manageButtonRef.current ?? connectButtonRef.current)
+      )?.focus();
     },
   };
   const accessDialog =

@@ -334,7 +334,12 @@ function bootstrapFailure(
 export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  return readRegistryBootstrap(access);
+}
 
+async function readRegistryBootstrap(
+  access: string,
+): Promise<RegistryBootstrapResult> {
   const credentialRead = await readRegistryCredential(access);
   if (credentialRead.status !== REGISTRY_CREDENTIAL_READ.STATUS) {
     return bootstrapFailure(credentialRead);
@@ -620,15 +625,11 @@ export async function disconnectRegistryCredential(): Promise<RegistryCredential
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
 
-  const credential = await readRegistryCredential(access);
-  const tenantArtifacts = await readRegistryTenantArtifacts(access);
-  if (credential.status !== REGISTRY_CREDENTIAL_READ.STATUS) return credential;
-  if (tenantArtifacts.status !== "ready") return tenantArtifacts;
   if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };
 
-  return {
-    status: REGISTRY_CREDENTIAL_ACTION.DISCONNECTED,
-    credential: credential.credential,
-    tenantArtifacts: tenantArtifacts.tenantArtifacts,
-  };
+  // The page a reload would show: the keyless catalog, or onboarding.
+  const next = await readRegistryBootstrap(access);
+  return next.status === REGISTRY_BOOTSTRAP_STATE.READY
+    ? { status: REGISTRY_CREDENTIAL_ACTION.DISCONNECTED, state: next.state }
+    : next;
 }

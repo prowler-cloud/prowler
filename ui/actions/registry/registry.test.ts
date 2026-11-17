@@ -829,12 +829,18 @@ describe("Registry guarded reads", () => {
     expect(pollTaskUntilSettledMock).not.toHaveBeenCalled();
   });
 
-  it("re-reads credential and preserves authoritative My artifacts after disconnect", async () => {
+  it("returns onboarding with My artifacts after disconnect when the API needs a tenant key", async () => {
     // Given
     fetchMock
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(credentialResponse(noCredential))
-      .mockResolvedValueOnce(tenantArtifactsResponse());
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { errors: [{ code: "registry_credential_not_configured" }] },
+          409,
+        ),
+      );
 
     // When
     const result = await disconnectRegistryCredential();
@@ -842,26 +848,57 @@ describe("Registry guarded reads", () => {
     // Then
     expect(result).toEqual({
       status: "disconnected",
-      credential: noCredential,
-      tenantArtifacts: [
-        {
-          normalizedName: "prowler-aws",
-          versionSpec: "latest",
-          extendsProviderSlugs: [],
-          insertedAt: "2026-03-20T12:00:00Z",
-        },
-      ],
+      state: {
+        status: "onboarding",
+        credential: noCredential,
+        tenantArtifacts: [
+          {
+            normalizedName: "prowler-aws",
+            versionSpec: "latest",
+            extendsProviderSlugs: [],
+            insertedAt: "2026-03-20T12:00:00Z",
+          },
+        ],
+      },
     });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/artifacts",
+      "https://api.test/api/v1/registry/available-artifacts?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     ]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "https://api.test/api/v1/registry/credential",
       expect.objectContaining({ cache: "no-store", method: "DELETE" }),
     );
+  });
+
+  it("returns the keyless catalog after disconnect when the API still serves it", async () => {
+    // Given: with the Prowler Cloud key the catalog needs no tenant key
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(credentialResponse(noCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(catalogResponse());
+
+    // When
+    const result = await disconnectRegistryCredential();
+
+    // Then
+    expect(result).toMatchObject({
+      status: "disconnected",
+      state: {
+        status: "ready",
+        credential: noCredential,
+        catalog: {
+          status: "complete",
+          artifacts: [
+            expect.objectContaining({ normalizedName: "prowler-aws" }),
+          ],
+        },
+      },
+    });
   });
 
   it("rejects a task-binding mismatch without returning the key or a task", async () => {
