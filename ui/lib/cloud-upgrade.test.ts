@@ -39,6 +39,7 @@ describe("cloud upgrade content", () => {
       "Send Findings to Jira at Scale",
       "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
+      "Catch Risky AWS Changes as They Happen",
       "Configure Every Scan Once",
       "Use One SAML Configuration Across Domains",
     ]);
@@ -92,6 +93,7 @@ describe("cloud upgrade URLs", () => {
     [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH, "jira-dispatch"],
     [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI, "lighthouse-ai"],
     [CLOUD_UPGRADE_FEATURE.GENERAL, "general"],
+    [CLOUD_UPGRADE_FEATURE.REALTIME, "realtime"],
     [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, "scan-configuration"],
     [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS, "saml-domains"],
   ])("should use the canonical content slug for %s", (feature, contentSlug) => {

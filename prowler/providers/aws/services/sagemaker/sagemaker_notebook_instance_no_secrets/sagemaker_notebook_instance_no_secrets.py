@@ -35,6 +35,8 @@ class sagemaker_notebook_instance_no_secrets(Check):
         )
         validate = sagemaker_client.audit_config.get("secrets_validate", False)
 
+        confidence = sagemaker_client.audit_config.get("secrets_confidence", "low")
+
         # Instances that actually contribute a script to the batch. Only these
         # (plus instances whose describe/decode failed) may be marked MANUAL on
         # a batch scan failure; instances with nothing to scan must PASS.
@@ -55,6 +57,7 @@ class sagemaker_notebook_instance_no_secrets(Check):
                 payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

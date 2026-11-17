@@ -105,6 +105,24 @@ def test_lighthouse_base_url_accepts_embedded_public_ip(base_url):
     )
 
 
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://[::127.0.0.1]/v1",
+        "https://[::169.254.169.254]/v1",
+        "https://[::a9fe:a9fe]/v1",
+        "https://[::10.0.0.1]/v1",
+        "https://[::ffff:0:10.0.0.1]/v1",
+    ],
+)
+def test_lighthouse_base_url_rejects_ipv4_compatible_and_translated_ip(base_url):
+    with pytest.raises(ValidationError, match="external public endpoint"):
+        validate_lighthouse_openai_compatible_base_url(
+            base_url,
+            resolve_dns=False,
+        )
+
+
 def test_lighthouse_base_url_accepts_hostname_without_dns_resolution():
     assert (
         validate_lighthouse_openai_compatible_base_url(

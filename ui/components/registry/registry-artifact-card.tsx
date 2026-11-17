@@ -1,34 +1,21 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Check,
-  ClipboardCheck,
-  Download,
-  ListChecks,
-  Package,
-  ShieldCheck,
-  Tag,
-} from "lucide-react";
+import { BadgeCheck, Check, Package, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { ProviderTypeIconStack } from "@/components/icons/providers-badge/provider-type-icon";
 import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
 import {
   Avatar,
-  AvatarImage,
   AvatarFallback,
+  AvatarImage,
 } from "@/components/shadcn/avatar/avatar";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
 import { cn } from "@/lib/utils";
-import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
+import { getProviderDisplayName } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
 
 import {
@@ -36,88 +23,158 @@ import {
   type RegistryMarketplaceArtifact,
 } from "./registry-explorer.model";
 
-interface RegistryArtifactCardProps {
-  artifact: RegistryMarketplaceArtifact;
-  pendingAddName?: string;
-  onAdd: () => void;
-  onRemove: (trigger: HTMLButtonElement | null) => void;
-}
-
-function capabilitySummary(artifact: RegistryMarketplaceArtifact) {
-  const labels = [
-    artifact.hasProvider && REGISTRY_CAPABILITY_LABELS.provider,
-    artifact.hasChecks && REGISTRY_CAPABILITY_LABELS.checks,
-    artifact.hasCompliance && REGISTRY_CAPABILITY_LABELS.compliance,
-  ].filter((label) => label !== false);
-  return labels.join(", ");
-}
-
-/**
- * Maximum provider logos rendered in the footer cluster before collapsing
- * the remainder into a "+N" overflow badge (registry.dev card reference).
- */
-const MAX_PROVIDER_LOGOS = 4;
+const MAX_PROVIDER_ICONS = 4;
 
 const PROVIDER_LIST_FORMAT = new Intl.ListFormat("en", {
   style: "long",
   type: "conjunction",
 });
 
-interface RegistryProviderClusterProps {
-  providers: string[];
+// Package names compare case-insensitively, with runs of -_. as one "-".
+function normalizePackageName(value: string) {
+  return value.toLowerCase().replace(/[-_.]+/g, "-");
 }
 
-function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
-  if (providers.length === 0) return null;
+interface RegistryArtifactHeaderProps {
+  title: string;
+  /** Monospace when the title is the package id, not a display name. */
+  isPackageId: boolean;
+  byline: ReactNode;
+}
 
-  const displayNames = providers.map(getProviderDisplayName);
-  const visibleProviders = providers.slice(0, MAX_PROVIDER_LOGOS);
-  const overflowCount = providers.length - visibleProviders.length;
+function RegistryArtifactHeader({
+  title,
+  isPackageId,
+  byline,
+}: RegistryArtifactHeaderProps) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        aria-hidden
+        className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
+      >
+        {/* Artifacts can span several providers, so the header shows a
+            neutral package mark instead of any single provider logo. */}
+        <Package size={26} />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <h3
+          className={cn(
+            "text-text-neutral-primary truncate text-sm font-semibold",
+            isPackageId && "font-mono",
+          )}
+        >
+          {title}
+        </h3>
+        <div className="flex min-h-5 min-w-0 flex-wrap items-center gap-2">
+          {byline}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface RegistryArtifactBylineProps {
+  isOfficial: boolean;
+  isVerified: boolean;
+  owner?: RegistryArtifactOwner;
+}
+
+function RegistryArtifactByline({
+  isOfficial,
+  isVerified,
+  owner,
+}: RegistryArtifactBylineProps) {
+  return (
+    <>
+      {owner &&
+        (owner.name.trim().toLowerCase() === "prowler" ? (
+          <ProwlerShort aria-label="Prowler" role="img" size={20} />
+        ) : (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Avatar aria-hidden className="size-5">
+              <AvatarImage alt="" src={owner.logoUrl} />
+              <AvatarFallback>{owner.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className="text-text-neutral-secondary truncate text-xs">
+              {owner.name}
+            </span>
+          </span>
+        ))}
+      {/* Official already implies verified: one trust mark per card. */}
+      {isOfficial ? (
+        <Badge size="sm" variant="tag">
+          <ShieldCheck aria-hidden />
+          Official
+        </Badge>
+      ) : isVerified ? (
+        <Badge size="sm" variant="success">
+          <BadgeCheck aria-hidden />
+          Verified
+        </Badge>
+      ) : null}
+    </>
+  );
+}
+
+function countChip(
+  count: number | undefined,
+  singular: string,
+  plural: string,
+  bare: string,
+): ReactNode {
+  if (typeof count !== "number") return bare;
+  return (
+    <>
+      <span className="font-semibold tabular-nums">
+        {count.toLocaleString("en-US")}
+      </span>{" "}
+      {count === 1 ? singular : plural}
+    </>
+  );
+}
+
+// One chip per capability the artifact has; null counts stay unknown.
+function RegistryArtifactChips({
+  artifact,
+}: {
+  artifact: RegistryMarketplaceArtifact;
+}) {
+  const chips = [
+    artifact.hasProvider && {
+      key: "provider",
+      content: REGISTRY_CAPABILITY_LABELS.provider,
+    },
+    artifact.hasChecks && {
+      key: "checks",
+      content: countChip(
+        artifact.checkCount,
+        "check",
+        "checks",
+        REGISTRY_CAPABILITY_LABELS.checks,
+      ),
+    },
+    artifact.hasCompliance && {
+      key: "compliance",
+      content: countChip(
+        artifact.complianceCount,
+        "compliance framework",
+        "compliance frameworks",
+        REGISTRY_CAPABILITY_LABELS.compliance,
+      ),
+    },
+  ].filter((chip) => chip !== false);
+
+  if (chips.length === 0) return null;
 
   return (
-    <span className="flex items-center gap-1.5">
-      {/* Icons alone must never be the only carrier of the provider names. */}
-      <span className="sr-only">
-        {providers.length === 1
-          ? `Provider: ${displayNames[0]}`
-          : `Providers: ${displayNames.join(", ")}`}
-      </span>
-      {providers.length > 1 && (
-        <span aria-hidden className="text-text-neutral-secondary text-xs">
-          {providers.length} providers
-        </span>
-      )}
-      <span className="flex items-center gap-1">
-        {visibleProviders.map((provider) => (
-          <Tooltip key={provider} delayDuration={150}>
-            <TooltipTrigger asChild>
-              <span
-                role="img"
-                aria-label={getProviderDisplayName(provider)}
-                tabIndex={0}
-                className="focus-visible:outline-button-primary inline-flex shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                {isKnownProviderType(provider) ? (
-                  <ProviderTypeIcon size={16} type={provider} />
-                ) : (
-                  <Badge size="sm" variant="tag">
-                    {getProviderDisplayName(provider)}
-                  </Badge>
-                )}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {getProviderDisplayName(provider)}
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </span>
-      {overflowCount > 0 && (
-        <span aria-hidden className="text-text-neutral-secondary text-xs">
-          +{overflowCount}
-        </span>
-      )}
-    </span>
+    <ul aria-label="Contents" className="flex flex-wrap gap-1.5">
+      {chips.map((chip) => (
+        <li key={chip.key} className="max-w-full">
+          <Badge variant="tag">{chip.content}</Badge>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -137,123 +194,69 @@ function RegistryExtendedProviders({ slugs }: RegistryExtendedProvidersProps) {
   );
 }
 
-interface RegistryOwnerRowProps {
-  isOfficial: boolean;
-  isVerified: boolean;
-  owner?: RegistryArtifactOwner;
-}
-
-function RegistryOwnerRow({
-  isOfficial,
-  isVerified,
-  owner,
-}: RegistryOwnerRowProps) {
-  if (!owner && !isOfficial && !isVerified) return null;
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {owner &&
-        (owner.name.trim().toLowerCase() === "prowler" ? (
-          <ProwlerShort aria-label="Prowler" role="img" size={20} />
-        ) : (
-          <span className="flex min-w-0 items-center gap-2">
-            <Avatar aria-hidden className="size-5">
-              <AvatarImage alt="" src={owner.logoUrl} />
-              <AvatarFallback>{owner.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <span className="text-text-neutral-secondary truncate text-xs">
-              {owner.name}
-            </span>
-          </span>
-        ))}
-      {isOfficial && (
-        <Badge variant="tag">
-          <ShieldCheck aria-hidden />
-          Official
-        </Badge>
-      )}
-      {isVerified && (
-        <Badge variant="success">
-          <BadgeCheck aria-hidden />
-          Verified
-        </Badge>
-      )}
-    </div>
-  );
-}
-
-interface RegistryArtifactMetadataProps {
-  complianceCount?: number;
-  checkCount?: number;
-  version?: string;
-  isAdded?: boolean;
+interface RegistryArtifactFactsProps {
+  version: string;
+  /** Set when an update is available; `version` is then the installed one. */
   availableVersion?: string;
+  versionLabel: string;
   downloads?: number;
 }
 
-function RegistryArtifactMetadata({
-  complianceCount,
-  checkCount,
+function RegistryArtifactFacts({
   version,
-  isAdded,
   availableVersion,
+  versionLabel,
   downloads,
-}: RegistryArtifactMetadataProps) {
-  const items = [
-    {
-      label: REGISTRY_CAPABILITY_LABELS.compliance,
-      value: complianceCount,
-      icon: ClipboardCheck,
-    },
-    {
-      label: REGISTRY_CAPABILITY_LABELS.checks,
-      value: checkCount,
-      icon: ListChecks,
-    },
-    { label: isAdded ? "Installed" : "Version", value: version, icon: Tag },
-    { label: "Available", value: availableVersion, icon: Tag },
-    { label: "Downloads", value: downloads, icon: Download },
-  ].filter(({ value }) => value !== undefined && value !== "");
-
-  if (items.length === 0) return null;
+}: RegistryArtifactFactsProps) {
+  if (!version && downloads === undefined) return null;
 
   return (
-    <div className="@container">
-      <dl
-        role="group"
-        aria-label="Artifact metadata"
-        className={cn(
-          "border-border-neutral-tertiary grid grid-cols-1 gap-x-4 gap-y-3 border-t pt-3",
-          items.length > 1 && "grid-cols-2",
-          items.length === 3 && "@sm:grid-cols-3",
-          items.length === 4 && "@sm:grid-cols-4",
-          items.length === 5 && "@sm:grid-cols-3",
-        )}
-      >
-        {items.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="min-w-0 space-y-1">
-            <dt className="text-text-neutral-secondary flex items-center gap-1.5 text-xs">
-              <Icon
-                aria-hidden
-                className="text-text-neutral-tertiary size-3.5 shrink-0"
-              />
-              {label}
-            </dt>
-            <dd
-              className={cn(
-                "text-text-neutral-primary text-sm leading-5 font-medium wrap-anywhere tabular-nums",
-                Icon === Tag && "font-mono",
-              )}
-            >
-              {typeof value === "number"
-                ? value.toLocaleString("en-US")
-                : value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <dl
+      role="group"
+      aria-label="Artifact metadata"
+      className="text-text-neutral-secondary flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+    >
+      {version && (
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1">
+          <dt className="sr-only">
+            {availableVersion ? "Installed" : versionLabel}
+          </dt>
+          <dd className="text-text-neutral-primary font-mono wrap-anywhere">
+            {version}
+          </dd>
+          {availableVersion && (
+            <>
+              <dt className="sr-only">Available</dt>
+              <dd className="text-text-neutral-primary font-mono wrap-anywhere">
+                <span aria-hidden className="text-text-neutral-secondary">
+                  →{" "}
+                </span>
+                {availableVersion}
+              </dd>
+            </>
+          )}
+        </div>
+      )}
+      {downloads !== undefined && (
+        <div className="min-w-0">
+          <dt className="sr-only">Downloads</dt>
+          <dd className="wrap-anywhere">
+            <span className="text-text-neutral-primary font-semibold tabular-nums">
+              {downloads.toLocaleString("en-US")}
+            </span>{" "}
+            {downloads === 1 ? "download" : "downloads"}
+          </dd>
+        </div>
+      )}
+    </dl>
   );
+}
+
+interface RegistryArtifactCardProps {
+  artifact: RegistryMarketplaceArtifact;
+  pendingAddName?: string;
+  onAdd: () => void;
+  onRemove: (trigger: HTMLButtonElement | null) => void;
 }
 
 export function RegistryArtifactCard({
@@ -263,122 +266,110 @@ export function RegistryArtifactCard({
   onRemove,
 }: RegistryArtifactCardProps) {
   const displayName = artifact.name ?? artifact.normalizedName;
-  const subtitle = [
-    artifact.providers.map(getProviderDisplayName).join(", "),
-    capabilitySummary(artifact),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const isPackageId =
+    !artifact.name ||
+    normalizePackageName(artifact.name) ===
+      normalizePackageName(artifact.normalizedName);
+  const note = artifact.isAdded ? (
+    <RegistryExtendedProviders slugs={artifact.extendsProviderSlugs} />
+  ) : !artifact.isInstallable && !artifact.isBuiltin ? (
+    <p className="text-text-neutral-secondary text-xs">
+      {getRegistryNotInstallableMessage(artifact.notInstallableReason)}
+    </p>
+  ) : null;
 
   return (
     <Card className="h-full gap-3" padding="md" variant="inner">
-      <div className="flex items-start gap-3">
-        <span
-          aria-hidden
-          className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
-        >
-          {/* Artifacts can span several providers, so the header shows a
-              neutral package mark instead of any single provider logo. */}
-          <Package size={26} />
-        </span>
-        <div className="min-w-0">
-          <p className="text-text-neutral-primary truncate text-sm font-semibold">
-            {displayName}
-          </p>
-          {subtitle && (
-            <p className="text-text-neutral-secondary truncate text-xs">
-              {subtitle}
-            </p>
-          )}
-        </div>
-      </div>
+      <RegistryArtifactHeader
+        title={displayName}
+        isPackageId={isPackageId}
+        byline={
+          <RegistryArtifactByline
+            isOfficial={artifact.isOfficial}
+            isVerified={artifact.isVerified}
+            owner={artifact.owners[0]}
+          />
+        }
+      />
       {artifact.description && (
         <p className="text-text-neutral-secondary line-clamp-2 text-sm">
           {artifact.description}
         </p>
       )}
-      <div className="mt-auto space-y-3">
-        <RegistryOwnerRow
-          isOfficial={artifact.isOfficial}
-          isVerified={artifact.isVerified}
-          owner={artifact.owners[0]}
-        />
-        <RegistryArtifactMetadata
-          complianceCount={artifact.complianceCount}
-          checkCount={artifact.checkCount}
+      <RegistryArtifactChips artifact={artifact} />
+      {note}
+      <div className="border-border-neutral-tertiary mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
+        {artifact.providers.length > 0 && (
+          <ProviderTypeIconStack
+            focusable
+            max={MAX_PROVIDER_ICONS}
+            size={16}
+            items={artifact.providers.map((provider) => ({
+              key: provider,
+              type: provider,
+              tooltip: getProviderDisplayName(provider),
+            }))}
+          />
+        )}
+        <RegistryArtifactFacts
           version={
             artifact.isAdded
               ? artifact.resolvedVersion || "Unknown"
-              : artifact.latestVersion
+              : (artifact.latestVersion ?? "")
           }
-          isAdded={artifact.isAdded}
           availableVersion={
-            artifact.isAdded &&
-            artifact.latestVersion !== artifact.resolvedVersion
-              ? artifact.latestVersion
-              : undefined
+            artifact.updateAvailable ? artifact.latestVersion : undefined
           }
+          versionLabel={artifact.isAdded ? "Installed" : "Version"}
           downloads={artifact.isBuiltin ? undefined : artifact.totalDownloads}
         />
-        <RegistryExtendedProviders slugs={artifact.extendsProviderSlugs} />
-        {!artifact.isAdded &&
-          !artifact.isInstallable &&
-          !artifact.isBuiltin && (
-            <p className="text-text-neutral-secondary text-xs">
-              {getRegistryNotInstallableMessage(artifact.notInstallableReason)}
-            </p>
-          )}
-        <div className="flex flex-wrap items-center gap-3">
-          <RegistryProviderCluster providers={artifact.providers} />
-          <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
-            {artifact.isBuiltin && (
-              <Badge aria-label="Built in" role="status" variant="tag">
-                Built in
-              </Badge>
-            )}
-            {artifact.isAdded ? (
-              <>
-                {artifact.updateAvailable && artifact.isInstallable ? (
-                  <Button
-                    aria-label={`Update ${displayName} to ${artifact.latestVersion}`}
-                    disabled={Boolean(pendingAddName)}
-                    onClick={onAdd}
-                    size="sm"
-                    type="button"
-                  >
-                    {pendingAddName === artifact.normalizedName
-                      ? "Updating…"
-                      : "Update"}
-                  </Button>
-                ) : (
-                  <Badge variant="outline">
-                    <Check aria-hidden />
-                    Added
-                  </Badge>
-                )}
+        <div className="ml-auto flex min-h-8 shrink-0 items-center gap-2">
+          {artifact.isAdded ? (
+            <>
+              {artifact.updateAvailable && artifact.isInstallable ? (
                 <Button
-                  aria-label={`Remove ${displayName}`}
-                  disabled={pendingAddName === artifact.normalizedName}
-                  onClick={(event) => onRemove(event.currentTarget)}
+                  aria-label={`Update ${displayName} to ${artifact.latestVersion}`}
+                  disabled={Boolean(pendingAddName)}
+                  onClick={onAdd}
                   size="sm"
                   type="button"
-                  variant="outline"
                 >
-                  Remove
+                  {pendingAddName === artifact.normalizedName
+                    ? "Updating…"
+                    : "Update"}
                 </Button>
-              </>
-            ) : artifact.isInstallable ? (
+              ) : (
+                <Badge variant="outline">
+                  <Check aria-hidden />
+                  Added
+                </Badge>
+              )}
               <Button
-                aria-label={`Add ${displayName}`}
-                disabled={Boolean(pendingAddName)}
-                onClick={onAdd}
+                aria-label={`Remove ${displayName}`}
+                disabled={pendingAddName === artifact.normalizedName}
+                onClick={(event) => onRemove(event.currentTarget)}
                 size="sm"
                 type="button"
+                variant="ghost"
               >
-                {pendingAddName === artifact.normalizedName ? "Adding…" : "Add"}
+                Remove
               </Button>
-            ) : null}
-          </span>
+            </>
+          ) : artifact.isInstallable ? (
+            <Button
+              aria-label={`Add ${displayName}`}
+              disabled={Boolean(pendingAddName)}
+              onClick={onAdd}
+              size="sm"
+              type="button"
+            >
+              {pendingAddName === artifact.normalizedName ? "Adding…" : "Add"}
+            </Button>
+          ) : artifact.isBuiltin ? (
+            <span className="text-text-neutral-secondary text-xs">
+              Included in Prowler
+            </span>
+          ) : null}
         </div>
       </div>
     </Card>
@@ -400,38 +391,31 @@ export function RegistryTenantArtifactCard({
 }: RegistryTenantArtifactCardProps) {
   return (
     <Card className="h-full gap-3" padding="md" variant="inner">
-      <div className="flex items-start gap-3">
-        <span
-          aria-hidden
-          className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
-        >
-          {/* Tenant artifacts carry no provider metadata; the neutral package
-              mark matches the marketplace card header. */}
-          <Package size={26} />
-        </span>
-        <div className="min-w-0">
-          <p className="text-text-neutral-primary truncate text-sm font-semibold">
-            {normalizedName}
-          </p>
-        </div>
-      </div>
+      <RegistryArtifactHeader
+        title={normalizedName}
+        isPackageId
+        byline={
+          <span className="text-text-neutral-secondary text-xs">
+            Installed in this workspace
+          </span>
+        }
+      />
       <p className="text-text-neutral-secondary text-sm">
-        Installed in this workspace. Catalog metadata is not available for this
-        artifact.
+        Catalog details are not available for this artifact.
       </p>
-      <div className="mt-auto space-y-3">
-        <RegistryArtifactMetadata
-          isAdded
+      <RegistryExtendedProviders slugs={extendsProviderSlugs} />
+      <div className="border-border-neutral-tertiary mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
+        <RegistryArtifactFacts
           version={resolvedVersion || "Unknown"}
+          versionLabel="Installed"
         />
-        <RegistryExtendedProviders slugs={extendsProviderSlugs} />
-        <div className="flex justify-end">
+        <div className="ml-auto flex min-h-8 shrink-0 items-center gap-2">
           <Button
             aria-label={`Remove ${normalizedName}`}
             onClick={(event) => onRemove(event.currentTarget)}
             size="sm"
             type="button"
-            variant="outline"
+            variant="ghost"
           >
             Remove
           </Button>

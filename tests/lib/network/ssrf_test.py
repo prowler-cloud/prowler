@@ -70,6 +70,14 @@ class TestValidateOutboundHost:
         with pytest.raises(OutboundURLNotAllowedError):
             validate_outbound_host(address)
 
+    @pytest.mark.parametrize(
+        "address",
+        ["::127.0.0.1", "::169.254.169.254", "::10.0.0.1", "::ffff:0:10.0.0.1"],
+    )
+    def test_rejects_ipv4_compatible_and_translated_ipv6(self, address):
+        with pytest.raises(OutboundURLNotAllowedError):
+            validate_outbound_host(address)
+
     def test_rejects_a_hostname_resolving_to_a_private_address(self):
         with _resolves_to("10.0.0.5"):
             with pytest.raises(OutboundURLNotAllowedError):
