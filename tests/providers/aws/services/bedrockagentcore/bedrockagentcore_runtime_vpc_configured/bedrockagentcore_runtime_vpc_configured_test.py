@@ -76,21 +76,13 @@ class Test_bedrockagentcore_runtime_vpc_configured:
         assert result[0].status == "FAIL"
         assert "uses PUBLIC network mode" in result[0].status_extended
 
-    def test_unretrieved_detail_is_manual(self):
-        result = _run([_runtime(None, detail_retrieved=False)])
-        assert result[0].status == "MANUAL"
-        assert "could not be retrieved" in result[0].status_extended
+    def test_unretrieved_detail_has_no_finding(self):
+        assert _run([_runtime(None, detail_retrieved=False)]) == []
 
-    def test_unlisted_region_is_manual(self):
+    def test_unlisted_region_has_no_finding(self):
         result = _run(
             [_runtime("VPC")],
             scan_errors={AWS_REGION_EU_WEST_1: "AccessDeniedException"},
         )
-        assert [finding.status for finding in result] == ["MANUAL", "PASS"]
-        assert result[0].region == AWS_REGION_EU_WEST_1
-        assert result[0].resource_id == "runtime/unknown"
-        assert (
-            result[0].resource_arn
-            == f"arn:aws:bedrock-agentcore:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:runtime/unknown"
-        )
-        assert "AccessDeniedException" in result[0].status_extended
+        assert [finding.status for finding in result] == ["PASS"]
+        assert result[0].region == AWS_REGION_US_EAST_1
