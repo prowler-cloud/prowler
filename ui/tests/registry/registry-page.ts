@@ -101,6 +101,12 @@ export class RegistryPage extends BasePage {
   }
 
   async verifyOnboarding(): Promise<void> {
+    // The catalog's connect callout shares the button and link below.
+    await expect(
+      this.page.getByRole("heading", {
+        name: "Connect your Registry API key",
+      }),
+    ).toBeVisible();
     await expect(this.connectButton).toBeVisible();
     await expect(
       this.page.getByRole("link", {
