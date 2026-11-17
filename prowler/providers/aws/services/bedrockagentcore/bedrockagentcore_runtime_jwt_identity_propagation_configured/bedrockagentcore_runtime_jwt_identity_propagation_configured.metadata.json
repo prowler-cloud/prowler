@@ -8,7 +8,7 @@
   "ServiceName": "bedrockagentcore",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**Amazon Bedrock AgentCore runtimes** that authenticate callers with a **custom JWT authorizer** are evaluated for forwarding the `Authorization` header to the agent through `requestHeaderAllowlist`. Without it, the end-user token is validated at the runtime endpoint and then dropped, so the agent code never sees who the caller is.",
