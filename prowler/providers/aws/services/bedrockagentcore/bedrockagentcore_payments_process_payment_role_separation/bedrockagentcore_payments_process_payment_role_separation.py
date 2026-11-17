@@ -81,8 +81,6 @@ class bedrockagentcore_payments_process_payment_role_separation(Check):
     payment action are skipped.
     - PASS: The role allows only one of CreatePaymentSession and ProcessPayment.
     - FAIL: The role allows both actions.
-    - No finding: The IAM roles could not be listed, or one of the role's policies could not be
-      read and the readable ones do not already allow both actions.
     """
 
     def execute(self) -> list[Check_Report_AWS]:

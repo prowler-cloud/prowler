@@ -11,7 +11,6 @@ class bedrockagentcore_runtime_vpc_configured(Check):
     decides the result.
     - PASS: The runtime uses VPC network mode.
     - FAIL: The runtime uses PUBLIC network mode.
-    - No finding: Runtimes could not be listed in a region, or the runtime detail could not be retrieved.
     """
 
     def execute(self) -> list[Check_Report_AWS]:

@@ -12,7 +12,6 @@ class bedrockagentcore_full_access_policy_attached(Check):
     BedrockAgentCoreFullAccess or AgentRegistryFullAccess AWS-managed policy attached.
     - PASS: The IAM role has neither policy attached.
     - FAIL: The IAM role has at least one of the policies attached.
-    - No finding: The IAM roles could not be listed.
     """
 
     def execute(self) -> list[Check_Report_AWS]:

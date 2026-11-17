@@ -38,5 +38,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "A runtime whose detail could not be retrieved, or a region whose runtimes could not be listed, produces no finding; the service logs the error."
+  "Notes": ""
 }
