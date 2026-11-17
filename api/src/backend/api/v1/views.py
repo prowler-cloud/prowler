@@ -3569,9 +3569,13 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
     def _get_findings_prefetch(self):
-        findings_queryset = Finding.all_objects.defer("scan", "resources").filter(
-            tenant_id=self.request.tenant_id
-        )
+        findings_queryset = Finding.all_objects.filter(tenant_id=self.request.tenant_id)
+        include_param = self.request.query_params.get("include", "")
+        if "findings" in include_param.split(","):
+            findings_queryset = findings_queryset.defer("scan", "resources")
+        else:
+            # The relationship only serializes the finding ids
+            findings_queryset = findings_queryset.only("id")
         return [Prefetch("findings", queryset=findings_queryset)]
 
     def get_serializer_class(self):

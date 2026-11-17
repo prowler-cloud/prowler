@@ -7623,6 +7623,28 @@ class TestResourceViewSet:
         assert "partition" in response.json()["data"][0]["attributes"]
         assert "groups" in response.json()["data"][0]["attributes"]
 
+    def test_resources_list_loads_only_finding_ids_for_the_relationship(
+        self, authenticated_client, resources_fixture, findings_fixture
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-list"),
+                {"include": "provider", "filter[updated_at]": TODAY},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        related_finding_ids = {
+            finding["id"]
+            for resource in response.json()["data"]
+            for finding in resource["relationships"]["findings"]["data"]
+        }
+        assert related_finding_ids == {str(finding.id) for finding in findings_fixture}
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
+        assert '"findings"."check_metadata"' not in findings_queries[0]
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
