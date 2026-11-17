@@ -179,8 +179,13 @@ interface ProviderTypeIconStackProps {
   items: ProviderTypeIconStackItem[];
   max?: number;
   size?: number;
+  /** Lets keyboard users reach each name; keep off inside buttons. */
+  focusable?: boolean;
   className?: string;
 }
+
+const FOCUSABLE_ICON_CLASS =
+  "focus-visible:outline-button-primary rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2";
 
 /**
  * Icon with a hover tooltip. `TooltipContent` (shadcn) already renders inside a
@@ -192,11 +197,22 @@ interface ProviderTypeIconStackProps {
 const IconWithTooltip = ({
   item,
   size,
+  focusable,
 }: {
   item: ProviderTypeIconStackItem;
   size: number;
+  focusable: boolean;
 }) => {
-  const icon = (
+  const icon = focusable ? (
+    <span
+      role="img"
+      aria-label={item.tooltip}
+      tabIndex={0}
+      className={cn("inline-flex shrink-0", FOCUSABLE_ICON_CLASS)}
+    >
+      <ProviderTypeIcon type={item.type} size={size} />
+    </span>
+  ) : (
     <span className="inline-flex shrink-0">
       <ProviderTypeIcon type={item.type} size={size} />
     </span>
@@ -221,6 +237,7 @@ export const ProviderTypeIconStack = ({
   items,
   max = 3,
   size = 18,
+  focusable = false,
   className,
 }: ProviderTypeIconStackProps) => {
   const visible = items.slice(0, max);
@@ -234,13 +251,26 @@ export const ProviderTypeIconStack = ({
     <span className={cn("flex shrink-0 items-center gap-1", className)}>
       <span className="flex items-center gap-1">
         {visible.map((item) => (
-          <IconWithTooltip key={item.key} item={item} size={size} />
+          <IconWithTooltip
+            key={item.key}
+            item={item}
+            size={size}
+            focusable={focusable}
+          />
         ))}
       </span>
       {overflow.length > 0 && (
         <Tooltip delayDuration={150}>
           <TooltipTrigger asChild>
-            <Badge variant="tag" className="px-1.5 py-0.5 text-xs font-medium">
+            <Badge
+              variant="tag"
+              className="px-1.5 py-0.5 text-xs font-medium"
+              {...(focusable && {
+                role: "img",
+                tabIndex: 0,
+                "aria-label": `${overflow.length} more: ${overflowLabel}`,
+              })}
+            >
               +{overflow.length}
             </Badge>
           </TooltipTrigger>

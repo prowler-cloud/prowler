@@ -34,12 +34,30 @@ def validate_provider_config(
         return model.model_dump(exclude_unset=True)
     except ValidationError as exc:
         bad_keys: set[str] = set()
+        # In a list of records (such as ``threat_signatures``), one invalid
+        # record drops that record only, not every other one with it.
+        bad_records: dict[str, set[int]] = {}
         for err in exc.errors():
             loc = err.get("loc") or ()
             if not loc:
                 continue
             key = loc[0]
             if not isinstance(key, str):
+                continue
+            value = raw.get(key)
+            if (
+                len(loc) > 1
+                and isinstance(loc[1], int)
+                and isinstance(value, list)
+                and all(isinstance(item, dict) for item in value)
+            ):
+                if loc[1] not in bad_records.setdefault(key, set()):
+                    bad_records[key].add(loc[1])
+                    logger.warning(
+                        f"prowler.config[{provider}.{key}][{loc[1]}] is invalid "
+                        f"({err.get('msg', 'validation error')}); that entry will "
+                        f"be ignored."
+                    )
                 continue
             bad_keys.add(key)
             logger.warning(
@@ -49,6 +67,11 @@ def validate_provider_config(
             )
 
         cleaned = {k: v for k, v in raw.items() if k not in bad_keys}
+        for key, indexes in bad_records.items():
+            if key in cleaned:
+                cleaned[key] = [
+                    item for i, item in enumerate(cleaned[key]) if i not in indexes
+                ]
         # Retry validation with the cleaned dict. Dropping invalid keys handles
         # common field-level mismatches, but revalidation can still fail due to
         # higher-level structural constraints (e.g. nested validation errors not
