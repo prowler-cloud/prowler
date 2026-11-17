@@ -956,6 +956,28 @@ describe("RegistryExplorer", () => {
     await expect.element(connectButton).toHaveFocus();
   });
 
+  it("returns focus to the API key button when connecting replaces the banner", async () => {
+    // Given
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: readyState.credential,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await registryKeyInput().fill("registry-test-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: the banner that opened the dialog is gone; focus lands on its replacement
+    await expect
+      .element(screen.getByRole("button", { name: "Registry API key" }))
+      .toHaveFocus();
+  });
+
   it("presents the connect dialog with help link and cancel action", async () => {
     // Given
     const screen = await render(
@@ -1436,16 +1458,27 @@ describe("RegistryExplorer", () => {
       tenantArtifacts: readyState.tenantArtifacts,
     });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
-    const readsBefore = refreshRegistryCollectionsMock.mock.calls.length;
+    // The keyless read returns a catalog the stored one does not have.
+    const keylessArtifact = {
+      ...readyState.catalog.artifacts[0],
+      normalizedName: "keyless-guard",
+      name: "Keyless guard",
+    };
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "complete",
+      catalog: {
+        status: "complete",
+        artifacts: [...readyState.catalog.artifacts, keylessArtifact],
+      },
+      tenantArtifacts: readyState.tenantArtifacts,
+    });
 
     // When
     await screen.getByRole("button", { name: "Registry API key" }).click();
     await screen.getByRole("button", { name: "Disconnect" }).click();
 
-    // Then: the catalog is read again without the key and stays on screen
-    await expect
-      .poll(() => refreshRegistryCollectionsMock.mock.calls.length)
-      .toBeGreaterThan(readsBefore);
+    // Then: the catalog is read again without the key and replaces the old one
+    await expect.element(screen.getByText("Keyless guard")).toBeVisible();
     await expect
       .element(
         screen.getByText(

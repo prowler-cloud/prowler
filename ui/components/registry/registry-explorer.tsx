@@ -650,7 +650,12 @@ export function RegistryExplorer({
     onSubmit: handleCredentialSubmit,
     open: true,
     pending: pendingOperation === REGISTRY_PENDING_OPERATION.CREDENTIAL,
-    returnFocusRef: accessDialogOpenerRef,
+    returnFocus: () => {
+      const opener = accessDialogOpenerRef.current;
+      // A successful connect unmounts the banner or status button that opened
+      // the dialog; the catalog's API key button replaces it.
+      (opener?.isConnected ? opener : manageButtonRef.current)?.focus();
+    },
   };
   const accessDialog =
     accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.CONNECT ? (
