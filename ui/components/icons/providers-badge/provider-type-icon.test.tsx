@@ -31,8 +31,20 @@ vi.mock("@/components/icons/providers-badge", () => ({
 // Render the tooltip pieces inline so the hover content is queryable in jsdom.
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  Badge: ({ children }: { children: React.ReactNode }) => (
-    <span data-testid="badge">{children}</span>
+  Badge: ({
+    children,
+    role,
+    tabIndex,
+    "aria-label": ariaLabel,
+  }: React.ComponentProps<"span">) => (
+    <span
+      data-testid="badge"
+      role={role}
+      tabIndex={tabIndex}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </span>
   ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
@@ -109,6 +121,28 @@ describe("ProviderTypeIconStack", () => {
     // First icon is shown; items sliced beyond `max` never reach the DOM.
     expect(await screen.findByText("AWS")).toBeInTheDocument();
     expect(screen.queryByText("Okta")).not.toBeInTheDocument();
+  });
+
+  it("lets the keyboard reach every provider name only when focusable", async () => {
+    const items = [
+      { key: "aws", type: "aws", tooltip: "AWS" },
+      { key: "gcp", type: "gcp", tooltip: "Google Cloud" },
+    ];
+    const { container, rerender } = render(
+      <ProviderTypeIconStack focusable max={1} items={items} />,
+    );
+
+    expect(await screen.findByRole("img", { name: "AWS" })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
+    expect(
+      screen.getByRole("img", { name: "1 more: Google Cloud" }),
+    ).toHaveAttribute("tabindex", "0");
+
+    rerender(<ProviderTypeIconStack max={1} items={items} />);
+
+    expect(container.querySelector("[tabindex]")).not.toBeInTheDocument();
   });
 
   it("renders known icons and the generic glyph for unknown types without crashing", async () => {
