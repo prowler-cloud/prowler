@@ -342,7 +342,8 @@ describe("Registry card metadata layout", () => {
   );
 
   it("lines up the footers of cards in the same row", async () => {
-    // Given: three cards with different descriptions, chips and notes.
+    // Given: three cards with different descriptions, chips, notes and
+    // providers, most of them Registry-only.
     await page.viewport(1440, 1000);
     await render(
       <main className="p-4">
@@ -358,6 +359,16 @@ describe("Registry card metadata layout", () => {
             <RegistryArtifactCard
               artifact={{
                 ...checksArtifact,
+                providers: [
+                  "aws",
+                  "azure",
+                  "openai",
+                  "chatgpt",
+                  "vcf",
+                  "snowflake",
+                  "datadog",
+                  "salesforce",
+                ],
                 description: undefined,
                 isInstallable: false,
                 notInstallableReason: "checks_target_is_not_builtin",
