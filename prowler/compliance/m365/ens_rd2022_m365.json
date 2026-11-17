@@ -66,13 +66,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "admincenter_users_between_two_and_four_global_admins"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.acc.3.m365.entra.1",
@@ -238,13 +236,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "entra_conditional_access_trusted_named_location_exists"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.acc.6.r8.m365.entra.2",
@@ -514,6 +510,14 @@
         "exchange_organization_mailbox_auditing_enabled",
         "exchange_user_mailbox_auditing_enabled",
         "exchange_mailbox_audit_bypass_disabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90
+        }
       ]
     },
     {
