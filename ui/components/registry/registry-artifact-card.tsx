@@ -24,7 +24,7 @@ import {
   REGISTRY_NOT_INSTALLABLE_REASON,
 } from "@/lib/registry/installability";
 import { cn } from "@/lib/utils";
-import { getProviderDisplayName } from "@/types/providers";
+import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
 
 import {
@@ -278,6 +278,10 @@ export function RegistryArtifactCard({
   onRemove,
 }: RegistryArtifactCardProps) {
   const displayName = artifact.name ?? artifact.normalizedName;
+  const logoProviders = artifact.providers.filter(isKnownProviderType);
+  const namedProviders = artifact.providers.filter(
+    (provider) => !isKnownProviderType(provider),
+  );
   const accessRequestUrl =
     artifact.notInstallableReason ===
       REGISTRY_NOT_INSTALLABLE_REASON.ACCESS_REQUIRED &&
@@ -318,18 +322,24 @@ export function RegistryArtifactCard({
       <RegistryArtifactChips artifact={artifact} />
       {note}
       <div className="border-border-neutral-tertiary mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
-        {artifact.providers.length > 0 && (
+        {logoProviders.length > 0 && (
           <ProviderTypeIconStack
             focusable
             max={MAX_PROVIDER_ICONS}
             size={16}
-            items={artifact.providers.map((provider) => ({
+            items={logoProviders.map((provider) => ({
               key: provider,
               type: provider,
               tooltip: getProviderDisplayName(provider),
             }))}
           />
         )}
+        {/* No logo of their own: a generic glyph each would make them identical. */}
+        {namedProviders.map((provider) => (
+          <Badge key={provider} variant="tag">
+            {getProviderDisplayName(provider)}
+          </Badge>
+        ))}
         <RegistryArtifactFacts
           version={
             artifact.isAdded

@@ -240,14 +240,14 @@ describe("Registry card metadata layout", () => {
     // Given
     const screen = await render(
       <RegistryArtifactCard
-        artifact={{ ...artifact, providers: ["aws", "gcp", "template"] }}
+        artifact={{ ...artifact, providers: ["aws", "gcp"] }}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
       />,
     );
 
     // When / Then: each visible provider uses its own display name.
-    for (const name of ["AWS", "Google Cloud", "Template"]) {
+    for (const name of ["AWS", "Google Cloud"]) {
       const logo = screen.getByRole("img", { name, exact: true });
       await logo.hover();
       await expect.element(screen.getByRole("tooltip")).toHaveTextContent(name);
@@ -268,6 +268,30 @@ describe("Registry card metadata layout", () => {
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent("Google Cloud");
+  });
+
+  it("names Registry providers in text, since they have no logo of their own", async () => {
+    // Given: an artifact covering a built-in and two providers without a logo
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          providers: ["aws", "template", "local-template"],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then: the built-in keeps its logo, the others read without hovering
+    await expect
+      .element(screen.getByRole("img", { name: "AWS", exact: true }))
+      .toBeVisible();
+    for (const name of ["Template", "Local Template"]) {
+      await expect
+        .element(screen.getByText(name, { exact: true }))
+        .toBeVisible();
+    }
   });
 
   it.each([

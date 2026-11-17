@@ -1743,8 +1743,8 @@ describe("RegistryExplorer", () => {
         .toBeVisible();
     });
 
-    it("names four providers as focusable icons and the rest in the overflow", async () => {
-      // Given: six providers alternating known and dynamic types
+    it("shows four built-in logos, names the rest of them in the overflow and the dynamic ones in text", async () => {
+      // Given: six built-in providers interleaved with two dynamic types
       const blendedArtifact = {
         ...readyState.catalog.artifacts[2],
         normalizedName: "blended-guard",
@@ -1755,9 +1755,11 @@ describe("RegistryExplorer", () => {
           "aws",
           "template",
           "azure",
-          "custom-scan",
           "gcp",
-          "local_thing",
+          "custom-scan",
+          "kubernetes",
+          "m365",
+          "github",
         ],
       };
 
@@ -1772,8 +1774,8 @@ describe("RegistryExplorer", () => {
         />,
       );
 
-      // Then: the first four are focusable icons, whatever their kind.
-      for (const name of ["AWS", "Template", "Azure", "Custom Scan"]) {
+      // Then: the first four built-ins are focusable logos.
+      for (const name of ["AWS", "Azure", "Google Cloud", "Kubernetes"]) {
         await expect
           .element(screen.getByRole("img", { name, exact: true }))
           .toHaveAttribute("tabindex", "0");
@@ -1782,11 +1784,18 @@ describe("RegistryExplorer", () => {
       await expect
         .element(
           screen.getByRole("img", {
-            name: "2 more: Google Cloud, Local Thing",
+            name: "2 more: Microsoft 365, GitHub",
           }),
         )
         .toHaveAttribute("tabindex", "0");
-      expect(cardFor("Blended guard").textContent).not.toContain("6 providers");
+      // Dynamic types have no logo of their own, so they read as text.
+      const card = page.elementLocator(cardFor("Blended guard"));
+      for (const name of ["Template", "Custom Scan"]) {
+        await expect
+          .element(card.getByText(name, { exact: true }))
+          .toBeVisible();
+      }
+      expect(cardFor("Blended guard").textContent).not.toContain("8 providers");
     });
 
     it("shows a chip per capability, preserves zero counts, and hides missing values", async () => {
