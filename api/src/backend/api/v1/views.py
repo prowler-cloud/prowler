@@ -4306,9 +4306,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
                 )
-            return Response(
-                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
-            )
+            return Response(get_findings_metadata_no_aggregations(filtered_queryset))
 
         if service_filter := query_params.get("filter[service]") or query_params.get(
             "filter[service__in]"
@@ -4433,7 +4431,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
             return Response(
                 get_findings_metadata_no_aggregations(
-                    tenant_id, self.filter_queryset(self.get_queryset())
+                    self.filter_queryset(self.get_queryset())
                 )
             )
 

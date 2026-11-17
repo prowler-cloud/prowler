@@ -9536,6 +9536,36 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         mock_backfill_task.assert_not_called()
 
+    def test_findings_metadata_without_summaries_skips_resources_join(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        finding_1, finding_2 = findings_fixture
+        Finding.objects.filter(id=finding_1.id).update(
+            categories=["encryption", "logging"], resource_groups="storage"
+        )
+        Finding.objects.filter(id=finding_2.id).update(
+            categories=["encryption"], resource_groups="compute"
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": str(scans_fixture[0].id)},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2", "s3"}
+        assert set(attributes["regions"]) == {"eu-west-1", "us-east-1"}
+        assert set(attributes["resource_types"]) == {"prowler-test"}
+        assert attributes["categories"] == ["encryption", "logging"]
+        assert attributes["groups"] == ["compute", "storage"]
+        assert not [
+            query["sql"]
+            for query in queries
+            if "resource_finding_mappings" in query["sql"]
+        ]
+
     def test_findings_metadata_latest_backfill(
         self, authenticated_client, scans_fixture, findings_fixture
     ):
