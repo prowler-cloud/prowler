@@ -1,7 +1,7 @@
 from csv import DictWriter
 from functools import wraps
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.logger import logger
@@ -33,13 +33,20 @@ def _without_manual_requirements(compliance: Compliance) -> Compliance:
 
 def _emit_manual_requirements_once(transform: Callable) -> Callable:
     """
-    Makes a formatter's transform emit the manual requirements only the first time it runs on a writer.
+    Makes a formatter's transform emit the manual requirements once per writer.
 
     Every formatter appends the manual requirements of the framework after the rows of the
     findings it receives. A writer that streams the findings in batches calls transform once
     per batch, so each manual requirement was written once per batch instead of once per output.
-    From the second call on, transform receives the framework without its manual requirements.
-    They map no checks, so the rows of the findings do not change.
+
+    The transform it returns accepts include_manual, the flag the universal exporters use.
+    When the caller does not pass it, the writer decides from its own state: the first batch
+    it transforms carries the manual requirements and the rest do not. The state lives in the
+    writer because a writer created with no findings has not transformed anything yet, so the
+    first batch it receives later still has to carry them.
+
+    Without the manual requirements, transform receives the framework without them. They map
+    no checks, so the rows of the findings do not change.
 
     Parameters:
         - transform (Callable): The transform method of a compliance formatter.
@@ -49,11 +56,21 @@ def _emit_manual_requirements_once(transform: Callable) -> Callable:
     """
 
     @wraps(transform)
-    def guarded_transform(self, findings, compliance, *args, **kwargs):
-        if self._manual_requirements_emitted:
+    def guarded_transform(
+        self,
+        findings,
+        compliance,
+        *args,
+        include_manual: Optional[bool] = None,
+        **kwargs,
+    ):
+        if include_manual is None:
+            include_manual = not self._manual_requirements_emitted
+        if not include_manual:
             compliance = _without_manual_requirements(compliance)
         result = transform(self, findings, compliance, *args, **kwargs)
-        self._manual_requirements_emitted = True
+        if include_manual:
+            self._manual_requirements_emitted = True
         return result
 
     return guarded_transform

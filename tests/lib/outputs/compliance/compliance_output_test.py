@@ -7,7 +7,8 @@ per batch on the same writer, so each manual requirement was written once per ba
 
 ``ComplianceOutput`` guards ``transform`` for all its subclasses. These tests run every
 formatter the way the API does and check that only the first batch carries the manual
-requirements, while the rows of the findings stay the same.
+requirements, while the rows of the findings stay the same. A caller can still decide
+per call with ``include_manual``, the flag the universal exporters use.
 """
 
 import importlib
@@ -146,6 +147,27 @@ def test_writer_without_initial_findings_emits_manual_requirements_once():
 
     assert len(_manual_rows(writer.data)) == 1
     assert len(writer.data) == 3
+
+
+def test_include_manual_lets_the_caller_decide_for_a_batch():
+    finding = _finding_for(ENS_RD2022_AWS)
+    writer = AWSENS([], ENS_RD2022_AWS)
+
+    # Left out on request: the writer has still not emitted them.
+    writer.transform(
+        [finding], ENS_RD2022_AWS, ENS_RD2022_AWS.Framework, include_manual=False
+    )
+    assert _manual_rows(writer.data) == []
+
+    writer.transform([finding], ENS_RD2022_AWS, ENS_RD2022_AWS.Framework)
+    assert len(_manual_rows(writer.data)) == 1
+
+    # Asked for explicitly: emitted again, whatever the writer did before.
+    writer.transform(
+        [finding], ENS_RD2022_AWS, ENS_RD2022_AWS.Framework, include_manual=True
+    )
+    assert len(_manual_rows(writer.data)) == 2
+    assert len(_finding_rows(writer.data)) == 3
 
 
 def test_streamed_csv_holds_each_manual_requirement_once(tmp_path):
