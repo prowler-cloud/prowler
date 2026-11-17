@@ -125,6 +125,49 @@ class TestM365ENS:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
+    def test_output_transform_keeps_a_failed_finding_failed(self):
+        findings = [
+            generate_finding_output(
+                status="FAIL",
+                status_extended="Unified audit log search is disabled.",
+                compliance={"ENS-RD2022": "op.exp.8.m365.purview.1"},
+                provider="m365",
+                account_uid=TENANT_ID,
+                region=LOCATION,
+            ),
+        ]
+        output = M365ENS(findings, ENS_RD2022_M365)
+        row = output.data[0]
+        assert row.Requirements_Id == "op.exp.8.m365.purview.1"
+        assert row.Status == "FAIL"
+        assert row.StatusExtended == "Unified audit log search is disabled."
+
+    def test_output_transform_applies_the_requirement_config_override(self):
+        # A requirement whose configurable checks ran with a config too loose to
+        # trust reports FAIL even when its finding passed.
+        findings = [
+            generate_finding_output(
+                status="PASS",
+                status_extended="Unified audit log search is enabled.",
+                compliance={"ENS-RD2022": "op.exp.8.m365.purview.1"},
+                provider="m365",
+                account_uid=TENANT_ID,
+                region=LOCATION,
+            ),
+        ]
+        with patch(
+            "prowler.lib.outputs.compliance.ens.ens_m365.build_requirement_config_status",
+            return_value={
+                "op.exp.8.m365.purview.1": (False, "audit retention is too short")
+            },
+        ):
+            output = M365ENS(findings, ENS_RD2022_M365)
+        row = output.data[0]
+        assert row.Requirements_Id == "op.exp.8.m365.purview.1"
+        assert row.Status == "FAIL"
+        assert "audit retention is too short" in row.StatusExtended
+        assert "Unified audit log search is enabled." in row.StatusExtended
+
     @freeze_time("2025-01-01 00:00:00")
     @mock.patch(
         "prowler.lib.outputs.compliance.ens.ens_m365.timestamp", "2025-01-01 00:00:00"
