@@ -6,6 +6,7 @@ import os
 import time
 import uuid
 import zipfile
+import zlib
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
@@ -2538,7 +2539,7 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
                     return not_found
                 member = max(members, key=lambda info: (info.date_time, info.filename))
                 return archive.read(member), os.path.basename(member.filename)
-        except (OSError, zipfile.BadZipFile):
+        except (OSError, zipfile.BadZipFile, zlib.error):
             return not_found
 
     def _serve_file(self, content, filename, content_type):

@@ -206,18 +206,29 @@ def _remove_archived_files(zip_path: str) -> None:
     """Delete the loose files next to the archive that the archive already contains."""
     scan_dir = os.path.dirname(os.path.abspath(zip_path))
     with zipfile.ZipFile(zip_path) as zipf:
-        archived = zipf.namelist()
+        corrupt_member = zipf.testzip()
+        if corrupt_member:
+            raise zipfile.BadZipFile(f"Corrupt archive member {corrupt_member}")
+        archived = zipf.infolist()
 
+    emptied_dirs = set()
     for member in archived:
-        file_path = os.path.abspath(os.path.join(scan_dir, member))
+        file_path = os.path.abspath(os.path.join(scan_dir, member.filename))
         if os.path.commonpath([scan_dir, file_path]) != scan_dir:
             continue
         try:
+            if os.path.islink(file_path) or not os.path.isfile(file_path):
+                continue
+            # A size mismatch means the loose file changed after it was archived.
+            if os.path.getsize(file_path) != member.file_size:
+                logger.warning(f"Keeping {file_path}: it differs from the archive")
+                continue
             os.remove(file_path)
+            emptied_dirs.add(os.path.dirname(file_path))
         except OSError as error:
             logger.warning(f"Could not remove archived output {file_path}: {error}")
 
-    for foldername, _, _ in os.walk(scan_dir, topdown=False):
+    for foldername in sorted(emptied_dirs, key=len, reverse=True):
         if foldername != scan_dir and not os.listdir(foldername):
             os.rmdir(foldername)
 
@@ -313,6 +324,20 @@ def get_s3_presign_client():
     )
 
 
+def _gzip_copy(local_path: str) -> str | None:
+    """Write a gzip copy next to the file, or return None when there is no room for it."""
+    gzip_path = f"{local_path}.gz"
+    try:
+        with open(local_path, "rb") as source, gzip.open(gzip_path, "wb") as target:
+            shutil.copyfileobj(source, target)
+    except OSError as error:
+        logger.warning(f"Uploading {local_path} uncompressed: {error}")
+        if os.path.exists(gzip_path):
+            os.remove(gzip_path)
+        return None
+    return gzip_path
+
+
 def _upload_to_s3(
     tenant_id: str,
     scan_id: str,
@@ -351,25 +376,20 @@ def _upload_to_s3(
         s3 = get_s3_client()
 
         s3_key = f"{tenant_id}/{scan_id}/{relative_key}"
-        if gzip_encode:
-            gzip_path = f"{local_path}.gz"
-            try:
-                with (
-                    open(local_path, "rb") as source,
-                    gzip.open(gzip_path, "wb") as target,
-                ):
-                    shutil.copyfileobj(source, target)
+        gzip_path = _gzip_copy(local_path) if gzip_encode else None
+        try:
+            if gzip_path:
                 s3.upload_file(
                     Filename=gzip_path,
                     Bucket=bucket,
                     Key=s3_key,
                     ExtraArgs={"ContentEncoding": "gzip"},
                 )
-            finally:
-                if os.path.exists(gzip_path):
-                    os.remove(gzip_path)
-        else:
-            s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
+            else:
+                s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
+        finally:
+            if gzip_path and os.path.exists(gzip_path):
+                os.remove(gzip_path)
 
         return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
