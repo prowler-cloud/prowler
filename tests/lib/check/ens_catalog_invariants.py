@@ -7,7 +7,7 @@ under, so every requirement has to describe its measure the same way:
 
 - the execution mode says whether Prowler evaluates the requirement,
 - ``IdGrupoControl`` is the code of a measure of Annex II of the RD, or of one of its
-  reinforcements,
+  reinforcements, in a group that exists in the RD,
 - ``Marco`` and ``Categoria`` are the block and the group of Annex II that measure
   belongs to.
 """
@@ -15,6 +15,7 @@ under, so every requirement has to describe its measure the same way:
 import json
 import os
 import re
+from typing import Optional
 
 COMPLIANCE_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "prowler", "compliance")
@@ -23,6 +24,7 @@ COMPLIANCE_DIR = os.path.normpath(
 # <group>.<number>, optionally followed by a reinforcement (.rN). The organisational
 # framework has no groups, so its measures are org.<number>.
 MEASURE_ID = re.compile(r"(?P<group>org|(?:op|mp)\.[a-z]+)\.\d+(?:\.r\d+)?")
+ORGANISATIONAL = "org"
 
 # Blocks and groups of measures of Annex II of Real Decreto 311/2022, as the catalogs
 # write them. No catalog files requirements under the organisational framework yet.
@@ -44,6 +46,20 @@ CATEGORIAS = {
     "mp.info": "protección de la información",
     "mp.s": "protección de los servicios",
 }
+
+
+def measure_group(measure_id: str) -> Optional[str]:
+    """Return the group of Annex II a measure code belongs to, or None if it is not one.
+
+    The code has to be well formed and its group has to exist in the RD, so a code with
+    a mistyped group, such as ``mp.comm.4``, is not a measure.
+    """
+    measure = MEASURE_ID.fullmatch(measure_id)
+    if measure and (
+        measure["group"] == ORGANISATIONAL or measure["group"] in CATEGORIAS
+    ):
+        return measure["group"]
+    return None
 
 
 def load_requirements(provider: str) -> list[dict]:
@@ -74,7 +90,7 @@ def malformed_measure_ids(requirements: list[dict]) -> list[tuple[str, str]]:
         (requirement["Id"], attribute["IdGrupoControl"])
         for requirement in requirements
         for attribute in requirement["Attributes"]
-        if not MEASURE_ID.fullmatch(attribute["IdGrupoControl"])
+        if measure_group(attribute["IdGrupoControl"]) is None
     ]
 
 
@@ -83,11 +99,12 @@ def misfiled_measures(requirements: list[dict]) -> list[tuple[str, str, str]]:
     misfiled = []
     for requirement in requirements:
         for attribute in requirement["Attributes"]:
-            measure = MEASURE_ID.fullmatch(attribute["IdGrupoControl"])
-            if not measure or measure["group"] not in CATEGORIAS:
+            group = measure_group(attribute["IdGrupoControl"])
+            # A code that is not a measure is reported by malformed_measure_ids, and the
+            # organisational framework has no groups to be filed under.
+            if group is None or group == ORGANISATIONAL:
                 continue
-            block = measure["group"].split(".")[0]
             filed_under = (attribute["Marco"], attribute["Categoria"])
-            if filed_under != (MARCOS[block], CATEGORIAS[measure["group"]]):
+            if filed_under != (MARCOS[group.split(".")[0]], CATEGORIAS[group]):
                 misfiled.append((requirement["Id"], *filed_under))
     return misfiled
