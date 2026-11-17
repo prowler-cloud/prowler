@@ -18,10 +18,25 @@ export const REGISTRY_CREDENTIAL_BANNER = {
   VALIDATING: "validating",
   /** The catalog works without a key; only entitled artifacts need one. */
   OPTIONAL_KEY: "optional_key",
+  /** The catalog works without a key, and the stored one was rejected. */
+  REJECTED_KEY: "rejected_key",
 } as const;
 
 type RegistryCredentialBannerVariant =
   (typeof REGISTRY_CREDENTIAL_BANNER)[keyof typeof REGISTRY_CREDENTIAL_BANNER];
+
+const INLINE_KEY_COPY = {
+  [REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY]: {
+    description:
+      "Artifacts open to every workspace install without a key. Connect a Registry API key to add the ones that need approved access.",
+    action: "Connect API key",
+  },
+  [REGISTRY_CREDENTIAL_BANNER.REJECTED_KEY]: {
+    description:
+      "The Registry rejected this workspace's API key. Replace it to add the artifacts that need approved access.",
+    action: "Replace key",
+  },
+} as const;
 
 interface RegistryCredentialBannerProps {
   variant: RegistryCredentialBannerVariant;
@@ -46,17 +61,18 @@ export function RegistryCredentialBanner({
   registryUrl,
   tenantArtifactCount,
 }: RegistryCredentialBannerProps) {
-  if (variant === REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY) {
+  if (
+    variant === REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY ||
+    variant === REGISTRY_CREDENTIAL_BANNER.REJECTED_KEY
+  ) {
+    const copy = INLINE_KEY_COPY[variant];
     return (
       <StatusPanel aria-live="polite" layout={STATUS_PANEL_LAYOUT.INLINE}>
         <StatusPanelIcon>
           <KeyRound />
         </StatusPanelIcon>
         <StatusPanelBody>
-          <StatusPanelDescription>
-            Artifacts open to every workspace install without a key. Connect a
-            Registry API key to add the ones that need approved access.
-          </StatusPanelDescription>
+          <StatusPanelDescription>{copy.description}</StatusPanelDescription>
         </StatusPanelBody>
         <StatusPanelActions>
           {registryUrl && (
@@ -78,7 +94,7 @@ export function RegistryCredentialBanner({
             size="sm"
             type="button"
           >
-            Connect API key
+            {copy.action}
           </Button>
         </StatusPanelActions>
       </StatusPanel>

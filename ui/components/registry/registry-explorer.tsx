@@ -756,11 +756,23 @@ export function RegistryExplorer({
         </Alert>
       )}
       {!hasActiveKey && (
+        // A stored key the Registry rejected opens Manage, like the header.
         <RegistryCredentialBanner
-          variant={REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY}
+          variant={
+            state.credential.configured
+              ? REGISTRY_CREDENTIAL_BANNER.REJECTED_KEY
+              : REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY
+          }
           connectButtonRef={connectButtonRef}
           registryUrl={registryUrl}
-          onConnect={openConnectDialog}
+          onConnect={() =>
+            openAccessDialog(
+              state.credential.configured
+                ? REGISTRY_ACCESS_DIALOG_MODE.MANAGE
+                : REGISTRY_ACCESS_DIALOG_MODE.CONNECT,
+              connectButtonRef.current,
+            )
+          }
         />
       )}
       <Tabs

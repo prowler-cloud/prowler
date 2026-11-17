@@ -884,6 +884,51 @@ describe("RegistryExplorer", () => {
         .toBeVisible();
     });
 
+    it("asks to replace, not connect, a stored key the Registry rejected", async () => {
+      // Given: the catalog loads without a valid tenant key, but one is stored
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            credential: {
+              configured: true,
+              isValid: false,
+              scopes: [],
+              validationPending: false,
+            },
+          }}
+        />,
+      );
+
+      // Then: the callout names the rejected key instead of asking for one
+      await expect
+        .element(
+          screen.getByText(
+            "The Registry rejected this workspace's API key. Replace it to add the artifacts that need approved access.",
+          ),
+        )
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Connect API key" }))
+        .not.toBeInTheDocument();
+
+      // When
+      const replaceButton = screen.getByRole("button", { name: "Replace key" });
+      await replaceButton.click();
+
+      // Then: the same dialog the header button opens
+      const dialog = screen.getByRole("dialog", { name: "Registry API key" });
+      await expect
+        .element(dialog.getByText("Rejected by the Registry"))
+        .toBeVisible();
+
+      // When
+      await userEvent.keyboard("{Escape}");
+
+      // Then
+      await expect.element(replaceButton).toHaveFocus();
+    });
+
     it("lets a replacement key supersede a pending validation from the banner", async () => {
       // Given: a validation that never settled must not dead-end the user
       submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
