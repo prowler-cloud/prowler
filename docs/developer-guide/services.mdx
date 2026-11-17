@@ -403,16 +403,18 @@ from prowler.providers.aws.services.service_b.service_b_client import service_b_
 
 ```python
 # Handle cross-service scenarios
-resource_found_in_account = False
-for external_resource in other_service_client.resources.values():
-    if target_resource_id == external_resource.id:
-        resource_found_in_account = True
-        # Process found resource
-        break
+for resource in service_client.resources.values():
+    resource_found_in_account = False
+    for external_resource in other_service_client.resources.values():
+        if resource.target_resource_id == external_resource.id:
+            resource_found_in_account = True
+            break
 
-if not resource_found_in_account:
-    # Cross-account or out of audit scope: emit no finding, never MANUAL
-    continue
+    if not resource_found_in_account:
+        # Cross-account or out of audit scope: emit no finding, never MANUAL
+        continue
+
+    # Build the report for the found resource
 ```
 
 **3. Document cross-service dependencies:**
