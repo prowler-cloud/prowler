@@ -67,6 +67,7 @@ def mock_make_api_call_agentcore(self, operation_name, kwarg):
             "agentRuntimeName": "rt",
             "agentRuntimeArn": RUNTIME_ARN,
             "networkConfiguration": {"networkMode": "VPC"},
+            "requestHeaderConfiguration": {"requestHeaderAllowlist": ["Authorization"]},
         }
     if operation_name == "ListCodeInterpreters":
         return {
@@ -180,6 +181,7 @@ class Test_Bedrock_AgentCore_Service:
         assert runtime.id == RUNTIME_ID
         assert runtime.arn == RUNTIME_ARN
         assert runtime.network_mode == "VPC"
+        assert runtime.request_header_allowlist == ["Authorization"]
 
         assert len(ac.code_interpreters) == 1
         assert next(iter(ac.code_interpreters.values())).network_mode == "SANDBOX"
