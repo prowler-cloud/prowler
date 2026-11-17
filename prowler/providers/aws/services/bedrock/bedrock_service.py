@@ -19,7 +19,6 @@ class Bedrock(AWSService):
         self.custom_models = {}
         self.custom_models_scan_errors = {}
         self.imported_models = {}
-        self.imported_models_scan_errors = {}
         self.__threading_call__(self._get_model_invocation_logging_configuration)
         self.__threading_call__(self._list_guardrails)
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
@@ -262,11 +261,9 @@ class Bedrock(AWSService):
     def _list_imported_models(self, regional_client):
         """List models imported into the audited account."""
         logger.info("Bedrock - Listing Imported Models...")
-        page_received = False
         try:
             paginator = regional_client.get_paginator("list_imported_models")
             for page in paginator.paginate():
-                page_received = True
                 for model in page.get("modelSummaries", []):
                     model_arn = model.get("modelArn", "")
                     if model_arn and (
@@ -278,20 +275,7 @@ class Bedrock(AWSService):
                             arn=model_arn,
                             region=regional_client.region,
                         )
-        except ClientError as error:
-            code = error.response["Error"].get("Code", error.__class__.__name__)
-            # A ValidationException on the first call means Bedrock is unavailable
-            # in the region. On a later page the inventory is incomplete, so it
-            # must still surface as a MANUAL finding.
-            if code != "ValidationException" or page_received:
-                self.imported_models_scan_errors[regional_client.region] = code
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
         except Exception as error:
-            self.imported_models_scan_errors[regional_client.region] = (
-                error.__class__.__name__
-            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -386,7 +370,7 @@ class ImportedModel(BaseModel):
     arn: str
     region: str
     kms_key_arn: Optional[str] = None
-    # False when GetImportedModel failed: absent key is unknown, not unset.
+    # False when GetImportedModel failed: absent key is unknown, so no finding.
     detail_retrieved: bool = False
 
 

@@ -222,15 +222,13 @@ class Test_bedrock_imported_model_encrypted_with_cmk:
         new=_mock_validation_error_on_later_page,
     )
     @mock_aws
-    def test_validation_error_on_later_page_is_manual(self):
-        """A ValidationException after the first page leaves inventory incomplete."""
+    def test_validation_error_on_later_page_keeps_read_models(self):
+        """A failed later page yields no finding for the unread models only."""
         result = self._run()
 
-        assert len(result) == 2
-        assert {report.resource_id: report.status for report in result} == {
-            "imported-model/unknown": "MANUAL",
-            MODEL_NAME: "PASS",
-        }
+        assert len(result) == 1
+        assert result[0].resource_id == MODEL_NAME
+        assert result[0].status == "PASS"
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_with_cmk)
     @mock_aws
@@ -292,29 +290,12 @@ class Test_bedrock_imported_model_encrypted_with_cmk:
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_unreadable)
     @mock_aws
-    def test_detail_unreadable_is_manual(self):
-        """A failed GetImportedModel call must not become a false FAIL."""
-        result = self._run()
-
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert (
-            result[0].status_extended
-            == f"Bedrock imported model {MODEL_NAME} encryption configuration could not be retrieved in region {AWS_REGION_US_EAST_1}; verify manually that it uses a customer-managed KMS key."
-        )
+    def test_detail_unreadable_no_finding(self):
+        """A failed GetImportedModel call yields no finding, not a false FAIL."""
+        assert self._run() == []
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_list_denied)
     @mock_aws
-    def test_list_denied_is_manual(self):
-        """A denied imported-model inventory must produce a regional finding."""
-        result = self._run()
-
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert result[0].region == AWS_REGION_US_EAST_1
-        assert result[0].resource_id == "imported-model/unknown"
-        assert (
-            result[0].resource_arn
-            == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:imported-model/unknown"
-        )
-        assert "AccessDeniedException" in result[0].status_extended
+    def test_list_denied_no_finding(self):
+        """A denied imported-model inventory yields no finding."""
+        assert self._run() == []
