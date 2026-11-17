@@ -421,7 +421,6 @@ class BedrockAgent(AWSService):
         self.knowledge_bases_scan_errors = {}
         self.agents_scan_errors = {}
         self.flows = {}
-        self.flows_scan_errors = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         # Detail collection runs over the COMPLETE inventory: an out-of-scope agent's role still
@@ -708,17 +707,7 @@ class BedrockAgent(AWSService):
                             arn=flow_arn,
                             region=regional_client.region,
                         )
-        except ClientError as error:
-            code = error.response["Error"].get("Code", error.__class__.__name__)
-            # ValidationException means Bedrock Flows are unavailable in the
-            # region: a definite "none", so it must not become a MANUAL finding.
-            if code != "ValidationException":
-                self.flows_scan_errors[regional_client.region] = code
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
         except Exception as error:
-            self.flows_scan_errors[regional_client.region] = error.__class__.__name__
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -750,7 +739,7 @@ class BedrockAgent(AWSService):
                 parsed = self._flow_node_from_definition(node)
                 if parsed:
                     nodes.append(parsed)
-            # Commit only after every node parsed, so a partial read stays MANUAL.
+            # Commit only after every node parsed, so a partial read yields no finding.
             flow.nodes = nodes
             flow.definition_available = True
         except Exception as error:

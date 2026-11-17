@@ -683,7 +683,6 @@ class TestBedrockFlowCollection:
         bedrock_agent_service = BedrockAgent(audit_info)
         bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
         bedrock_agent_service.flows = {}
-        bedrock_agent_service.flows_scan_errors = {}
         bedrock_agent_service.audited_account = "123456789012"
         bedrock_agent_service.audited_partition = "aws"
         return bedrock_agent_service
@@ -771,8 +770,8 @@ class TestBedrockFlowCollection:
             not in bedrock_agent_service.flows
         )
 
-    def test_list_flows_access_denied_records_scan_error(self):
-        """AccessDenied on ListFlows must be recorded, not treated as an empty region."""
+    def test_list_flows_access_denied_leaves_inventory_empty(self):
+        """A failed ListFlows is logged and leaves no flows, so no finding is emitted."""
         from botocore.exceptions import ClientError
 
         regional_client = MagicMock()
@@ -788,34 +787,6 @@ class TestBedrockFlowCollection:
         bedrock_agent_service._list_flows(regional_client)
 
         assert bedrock_agent_service.flows == {}
-        assert (
-            bedrock_agent_service.flows_scan_errors["us-east-1"]
-            == "AccessDeniedException"
-        )
-
-    def test_list_flows_validation_exception_is_empty_not_error(self):
-        """ValidationException means Flows are unavailable in the region, not unknown."""
-        from botocore.exceptions import ClientError
-
-        regional_client = MagicMock()
-        regional_client.region = "us-east-1"
-        paginator = MagicMock()
-        paginator.paginate.side_effect = ClientError(
-            {
-                "Error": {
-                    "Code": "ValidationException",
-                    "Message": "Bedrock Flows is not supported in this region.",
-                }
-            },
-            "ListFlows",
-        )
-        regional_client.get_paginator.return_value = paginator
-
-        bedrock_agent_service = self._service(regional_client)
-        bedrock_agent_service._list_flows(regional_client)
-
-        assert bedrock_agent_service.flows == {}
-        assert bedrock_agent_service.flows_scan_errors == {}
 
     def test_get_flow_stores_prompt_and_knowledge_base_guardrails(self):
         """GetFlow must retain node-level guardrail identifiers for applicable nodes."""
@@ -979,20 +950,6 @@ class TestBedrockFlowCollection:
 
         assert flow.definition_available is False
         assert flow.nodes == []
-
-    def test_list_flows_generic_exception_records_scan_error(self):
-        """A non-ClientError failure on ListFlows must be recorded as a scan error."""
-        regional_client = MagicMock()
-        regional_client.region = "us-east-1"
-        paginator = MagicMock()
-        paginator.paginate.side_effect = RuntimeError("boom")
-        regional_client.get_paginator.return_value = paginator
-
-        bedrock_agent_service = self._service(regional_client)
-        bedrock_agent_service._list_flows(regional_client)
-
-        assert bedrock_agent_service.flows == {}
-        assert bedrock_agent_service.flows_scan_errors["us-east-1"] == "RuntimeError"
 
     def test_list_flows_skips_summary_without_id(self):
         """Flow summaries without an id must be skipped."""

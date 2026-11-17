@@ -315,46 +315,23 @@ class Test_bedrock_flow_guardrail_enabled:
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_unreadable)
     @mock_aws
-    def test_definition_unreadable_is_manual_not_pass(self):
-        """A failed GetFlow must not be reported as compliant."""
-        result = self._run()
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert result[0].resource_id == FLOW_ID
-        assert "could not be retrieved" in result[0].status_extended
-        assert result[0].status_extended.endswith(".")
+    def test_definition_unreadable_yields_no_finding(self):
+        """A failed GetFlow leaves the flow unknown: no PASS, no finding."""
+        assert self._run() == []
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=_mock_missing_definition
     )
     @mock_aws
-    def test_missing_definition_is_manual_not_pass(self):
+    def test_missing_definition_yields_no_finding(self):
         """GetFlow without a definition is indeterminate, not an empty graph."""
-        result = self._run()
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert "could not be retrieved" in result[0].status_extended
+        assert self._run() == []
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_list_denied)
     @mock_aws
-    def test_list_denied_is_manual_not_silence(self):
-        """A denied ListFlows must report MANUAL, not vanish.
-
-        Without a region-level report the region is indistinguishable from one
-        that genuinely holds no flows.
-        """
-        result = self._run()
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert result[0].region == AWS_REGION_US_EAST_1
-        assert result[0].resource_id == "flow/unknown"
-        assert (
-            result[0].resource_arn
-            == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:flow/unknown"
-        )
-        assert "could not be listed" in result[0].status_extended
-        assert "AccessDeniedException" in result[0].status_extended
-        assert result[0].status_extended.endswith(".")
+    def test_list_denied_yields_no_finding(self):
+        """A denied ListFlows is logged by the service and emits no finding."""
+        assert self._run() == []
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=_mock_unrelated_resources

@@ -40,5 +40,5 @@
     "bedrock_agent_guardrail_enabled",
     "bedrock_guardrails_configured"
   ],
-  "Notes": "Reports one finding per flow. Node configuration is read from GetFlow because ListFlows summaries do not carry it. A flow whose definition could not be retrieved returns MANUAL rather than PASS. ListFlows AccessDenied is a region-level MANUAL finding; ValidationException (unsupported region) is treated as empty inventory."
+  "Notes": "Reports one finding per flow. Node configuration is read from GetFlow because ListFlows summaries do not carry it. A flow whose definition could not be retrieved, or a region where ListFlows fails, produces no finding rather than a PASS."
 }
