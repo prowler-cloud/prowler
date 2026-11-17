@@ -876,7 +876,7 @@
       "Description": "Protección de claves criptográficas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.exp.10 ",
+          "IdGrupoControl": "op.exp.10",
           "Marco": "operacional",
           "Categoria": "explotación",
           "DescripcionControl": "Configuración de KEY Vault, limitando el acceso a administradores.",
@@ -903,7 +903,7 @@
       "Description": "Protección de claves criptográficas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.exp.10 ",
+          "IdGrupoControl": "op.exp.10",
           "Marco": "operacional",
           "Categoria": "explotación",
           "DescripcionControl": "Habilitación de las claves criptográficas para las cuentas de almacenamiento",
@@ -931,7 +931,7 @@
       "Description": "Algoritmos autorizados",
       "Attributes": [
         {
-          "IdGrupoControl": "op.exp.10.r1 ",
+          "IdGrupoControl": "op.exp.10.r1",
           "Marco": "operacional",
           "Categoria": "explotación",
           "DescripcionControl": "Asegurar que los algoritmos utilizados estén aprobados por el CCN",
@@ -955,7 +955,7 @@
       "Description": "Plan de continuidad",
       "Attributes": [
         {
-          "IdGrupoControl": "op.cont.2 ",
+          "IdGrupoControl": "op.cont.2",
           "Marco": "operacional",
           "Categoria": "continuidad del servicio",
           "DescripcionControl": "Garantizar la resiliencia y la continuidad a través de planes de recuperación de desastres",
@@ -975,7 +975,7 @@
       "Description": "Pruebas periódicas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.cont.3 ",
+          "IdGrupoControl": "op.cont.3",
           "Marco": "operacional",
           "Categoria": "continuidad del servicio",
           "DescripcionControl": "Habilitar las pruebas periodicas para los servicios de GCP",
@@ -997,7 +997,7 @@
       "Description": "Detección de intrusión",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.1 ",
+          "IdGrupoControl": "op.mon.1",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Activación del Network Watcher para la captura de paquetes y detección del tráfico de la red.",
@@ -1024,7 +1024,7 @@
       "Description": "Detección basada en reglas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.1.r1 ",
+          "IdGrupoControl": "op.mon.1.r1",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Activación del Network Flow Log para la identificación del tráfico de la red.",
@@ -1050,7 +1050,7 @@
       "Description": "Procedimientos de respuesta",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.1.r2 ",
+          "IdGrupoControl": "op.mon.1.r2",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Utilizar Defender para el análisis y verificación de vulnerabilidades detectadas.",
@@ -1076,7 +1076,7 @@
       "Description": "Sistema de métricas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.2 ",
+          "IdGrupoControl": "op.mon.2",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Configurar el monitor de diagnóstico para los elementos habilitados de la nube.",
@@ -1102,7 +1102,7 @@
       "Description": "Efectividad del sistema de incidentes",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.2.r1 ",
+          "IdGrupoControl": "op.mon.2.r1",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Configurar el monitor de alerta para los cambios en los elementos de seguridad habilitados.",
@@ -1132,7 +1132,7 @@
       "Description": "Eficiencia del sistema de gestión de la seguridad",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.2.r2 ",
+          "IdGrupoControl": "op.mon.2.r2",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Asegurar que el monitor de diagnóstico de la actividad de la subscrición esté activa.",
@@ -1160,7 +1160,7 @@
       "Description": "Vigilancia",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3 ",
+          "IdGrupoControl": "op.mon.3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Habilitar Network Watcher para registrar y mantener la información de seguridad centralizada.",
@@ -1189,7 +1189,7 @@
       "Description": "Vigilancia",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3 ",
+          "IdGrupoControl": "op.mon.3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Auditoría delos registros de los servicios de GCP con la suficiente retención para la vigilancia de la información",
@@ -1218,7 +1218,7 @@
       "Description": "Correlación de eventos",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r1 ",
+          "IdGrupoControl": "op.mon.3.r1",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Habilitar el monitoreo del servidor en defender",
@@ -1244,7 +1244,7 @@
       "Description": "Análisis dinámico",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r2 ",
+          "IdGrupoControl": "op.mon.3.r2",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Activar log analícs de Defender para la detección automática de eventos de seguridad.",
@@ -1270,7 +1270,7 @@
       "Description": "Ciberamenazas avanzadas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r3 ",
+          "IdGrupoControl": "op.mon.3.r3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Se deberá utilizar la evaluación de vulnerabilidades con Defender y el aseguramiento de la notificación de alertas de severidad alta.",
@@ -1298,7 +1298,7 @@
       "Description": "Ciberamenazas avanzadas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r3 ",
+          "IdGrupoControl": "op.mon.3.r3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Habilitar la protección de amenazas avanzadas para la detección de ciberamenazas en la nube.",
@@ -1324,7 +1324,7 @@
       "Description": "Ciberamenazas avanzadas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r3 ",
+          "IdGrupoControl": "op.mon.3.r3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Detección de vulnerabilidades en los sistemas de bases de datos",
@@ -1351,7 +1351,7 @@
       "Description": "Observatorios digitales",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r4 ",
+          "IdGrupoControl": "op.mon.3.r4",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Se deberá asegurar las notificaciones por correo a los propietarios a través de Defender.",
@@ -1377,7 +1377,7 @@
       "Description": "Minería de datos",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r5 ",
+          "IdGrupoControl": "op.mon.3.r5",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Aplicación de medidas para restringir el acceso a datos sin autorización en los servicios de la nube",
@@ -1404,7 +1404,7 @@
       "Description": "Inspecciones de seguridad",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3.r6 ",
+          "IdGrupoControl": "op.mon.3.r6",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Utilizar las alertas para las inspecciones de seguridad",
@@ -1511,7 +1511,7 @@
       "Description": "Protección de la integridad y de la autenticidad",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3 ",
+          "IdGrupoControl": "mp.com.3",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Asegurarse de que la comunicación del frontal sea a través de HTTPS.",
@@ -1536,7 +1536,7 @@
       "Description": "Protección de la integridad y de la autenticidad",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3 ",
+          "IdGrupoControl": "mp.com.3",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Asegurarse que la seguridad en transferencia de datos para  las cuentas de almacenamiento esté habilitada",
@@ -1559,7 +1559,7 @@
       "Description": "Redes privadas virtuales",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3.r1 ",
+          "IdGrupoControl": "mp.com.3.r1",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Habilitar la integración de las redes privadas virtuales para las funciones de aplicación",
@@ -1582,7 +1582,7 @@
       "Description": "Algoritmos y parámetros autorizados",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3.r2 ",
+          "IdGrupoControl": "mp.com.3.r2",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "La versión de TLS para las aplicaciones debe de ser como mínimo versión 1.2",
@@ -1606,7 +1606,7 @@
       "Description": "Algoritmos y parámetros autorizados",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3.r2 ",
+          "IdGrupoControl": "mp.com.3.r2",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "La versión de TLS para MYSQL debe ser como mínimo versión 1.2",
@@ -1629,7 +1629,7 @@
       "Description": "Algoritmos y parámetros autorizados",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3.r2 ",
+          "IdGrupoControl": "mp.com.3.r2",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "La versión de TLS para las cuentas de almacenamiento deben ser como mínimo versión 1.2",
@@ -1652,7 +1652,7 @@
       "Description": "Dispositivos hardware",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3.r3 ",
+          "IdGrupoControl": "mp.com.3.r3",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Protección de los dispositivos de hardware",
@@ -1673,7 +1673,7 @@
       "Description": "Productos certificados",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.3.r4 ",
+          "IdGrupoControl": "mp.com.3.r4",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Se utilizará productos certificados CPSTIC del CCN.",
