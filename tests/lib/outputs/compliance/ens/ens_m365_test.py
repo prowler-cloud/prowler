@@ -143,8 +143,6 @@ class TestM365ENS:
         assert row.StatusExtended == "Unified audit log search is disabled."
 
     def test_output_transform_applies_the_requirement_config_override(self):
-        # A requirement whose configurable checks ran with a config too loose to
-        # trust reports FAIL even when its finding passed.
         findings = [
             generate_finding_output(
                 status="PASS",
