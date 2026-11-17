@@ -12,7 +12,7 @@ class bedrockagentcore_runtime_jwt_identity_propagation_configured(Check):
     - FAIL: The runtime has a custom JWT authorizer but drops the Authorization header,
       so the agent can only act under its execution role.
     - No finding: The runtime uses IAM (SigV4) inbound auth, whose callers are IAM
-      principals rather than end users, or its configuration could not be retrieved.
+      principals rather than end users.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
