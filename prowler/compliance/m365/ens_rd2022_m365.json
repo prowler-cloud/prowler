@@ -50,6 +50,29 @@
       ]
     },
     {
+      "Id": "op.acc.2.m365.sharepoint.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se han comprobado los niveles de permisos de los recursos de SharePoint Online asignados mediante sus grupos de propietarios, miembros y visitantes.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.acc.3.m365.admincenter.1",
       "Description": "Segregación de funciones y tareas",
       "Attributes": [
@@ -96,6 +119,52 @@
       "Checks": []
     },
     {
+      "Id": "op.acc.3.m365.sharepoint.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Cuando la organización delega la administración del servicio, el rol de administrador de SharePoint está asignado a un usuario administrador específico de SharePoint Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.4.m365.sharepoint.1",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se han creado niveles de permisos específicos para la organización en los sitios de SharePoint Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.acc.6.m365.entra.1",
       "Description": "Mecanismo de autenticación (usuarios de la organización)",
       "Attributes": [
@@ -120,6 +189,100 @@
         "entra_password_protection_lockout_threshold_limited",
         "entra_password_protection_lockout_duration_configured"
       ]
+    },
+    {
+      "Id": "op.acc.6.m365.sharepoint.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se ha informado a los usuarios de que deben mantener deshabilitadas las cookies persistentes de inicio de sesión, de modo que la sesión no permanezca iniciada al cerrar el navegador.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.m365.sharepoint.2",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "SharePoint Online advierte a los usuarios y cierra su sesión después de un período de inactividad.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.m365.sharepoint.3",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "SharePoint Online bloquea el acceso de las aplicaciones que no usan la autenticación moderna.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "sharepoint_modern_authentication_required"
+      ]
+    },
+    {
+      "Id": "op.acc.6.m365.sharepoint.4",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se ha activado la ubicación de red de SharePoint Online para permitir el acceso solo desde determinadas direcciones IP y se ha limitado el acceso de los administradores.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.acc.6.r1.m365.entra.1",
@@ -415,6 +578,54 @@
       ]
     },
     {
+      "Id": "op.exp.2.m365.sharepoint.1",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El uso compartido externo de SharePoint Online y OneDrive está restringido en la organización al nivel menos permisivo, que solo permite compartir entre los miembros de la organización.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.sharepoint.2",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se ha bloqueado la integración de SharePoint Online con Yammer.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.exp.6.m365.defender.1",
       "Description": "Protección frente a código dañino",
       "Attributes": [
@@ -511,6 +722,30 @@
           "Marco": "operacional",
           "Categoria": "explotación",
           "DescripcionControl": "Se comprueba periódicamente la detección de amenazas en tiempo real de Microsoft Defender para Office 365 y se genera el informe correspondiente.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.6.m365.sharepoint.1",
+      "Description": "Protección frente a código dañino",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Los usuarios no pueden ejecutar scripts personalizados en los sitios personales ni en los sitios de SharePoint Online creados por ellos mismos.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -706,6 +941,46 @@
       "Checks": []
     },
     {
+      "Id": "mp.info.2.m365.sharepoint.1",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Las bibliotecas de SharePoint Online con contenido sensible no se indizan, de modo que no aparecen en los resultados de búsqueda.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.2.m365.sharepoint.2",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Los elementos de las bibliotecas de SharePoint Online con contenido sensible no pueden descargarse en clientes sin conexión.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "mp.info.5.m365.apps.1",
       "Description": "Limpieza de documentos",
       "Attributes": [
@@ -734,6 +1009,26 @@
           "Marco": "medidas de protección",
           "Categoria": "protección de la información",
           "DescripcionControl": "Se dispone de planes específicos de copias de seguridad de la información en los servicios de Microsoft 365 que lo admitan, conforme al modelo de responsabilidad compartida.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.m365.sharepoint.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se ha comunicado a los usuarios cómo gestionar el control de versiones de los documentos y la papelera de reciclaje de SharePoint Online.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
