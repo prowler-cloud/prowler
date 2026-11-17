@@ -3,6 +3,7 @@ import io
 import json
 import os
 import tempfile
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -5354,6 +5355,51 @@ class TestScanViewSet:
             cd = resp["Content-Disposition"]
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
+
+    def test_compliance_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_cis_1.4_aws.csv", "archived")
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"archived"
+        assert resp["Content-Disposition"].endswith('filename="scan_cis_1.4_aws.csv"')
+
+    def test_compliance_local_file_missing_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_cis_no_output(self, authenticated_client, scans_fixture):
         """CIS PDF endpoint must 404 when the scan has no output_location."""

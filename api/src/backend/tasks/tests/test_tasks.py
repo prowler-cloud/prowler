@@ -423,6 +423,72 @@ class TestGenerateOutputs:
             assert result == {"upload": False}
             mock_scan_update.return_value.update.assert_called_once()
 
+    def _run_generate_outputs(self, tmp_path, upload_return):
+        scan_dir = tmp_path / "scan"
+        compliance_dir = scan_dir / "compliance"
+        compliance_dir.mkdir(parents=True)
+        artifact = compliance_dir / "out_dora_2022_2554.ocsf.json"
+        artifact.write_text("[]")
+        compressed = str(scan_dir / "out.zip")
+
+        with (
+            patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.initialize_prowler_provider"),
+            patch("tasks.tasks.Compliance.get_bulk"),
+            patch("tasks.tasks.get_compliance_frameworks"),
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+            patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
+            patch(
+                "tasks.tasks._generate_output_directory",
+                return_value=(str(scan_dir / "out"), str(compliance_dir / "out")),
+            ),
+            patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+            patch("tasks.tasks.FindingOutput.transform_api_finding"),
+            patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
+            patch("tasks.tasks.COMPLIANCE_CLASS_MAP", {"aws": []}),
+            patch("tasks.tasks._compress_output_files", return_value=compressed),
+            patch(
+                "tasks.tasks._upload_to_s3", return_value=upload_return
+            ) as mock_upload,
+            patch("tasks.tasks._remove_archived_files") as mock_remove_archived,
+            patch("tasks.tasks.Scan.all_objects.filter"),
+            patch("tasks.tasks.rmtree"),
+        ):
+            mock_filter.return_value.exists.return_value = True
+            mock_findings.return_value.order_by.return_value.iterator.return_value = [
+                [MagicMock()],
+                True,
+            ]
+            generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+        return artifact, compressed, mock_upload, mock_remove_archived
+
+    def test_generate_outputs_uploads_compliance_artifacts_gzip_encoded(self, tmp_path):
+        artifact, _, mock_upload, mock_remove_archived = self._run_generate_outputs(
+            tmp_path, "s3://bucket/out.zip"
+        )
+
+        mock_upload.assert_any_call(
+            self.tenant_id,
+            self.scan_id,
+            str(artifact),
+            f"compliance/{artifact.name}",
+            gzip_encode=True,
+        )
+        mock_remove_archived.assert_not_called()
+
+    def test_generate_outputs_without_bucket_removes_archived_files(self, tmp_path):
+        _, compressed, _, mock_remove_archived = self._run_generate_outputs(
+            tmp_path, None
+        )
+
+        mock_remove_archived.assert_called_once_with(compressed)
+
     def test_generate_outputs_removes_previous_run_artifacts(self):
         """Regression for PROWLER-2266.
 

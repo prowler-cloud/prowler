@@ -1,5 +1,7 @@
+import gzip
 import os
 import re
+import shutil
 import zipfile
 
 import boto3
@@ -200,6 +202,26 @@ def _compress_output_files(output_directory: str) -> str:
     return zip_path
 
 
+def _remove_archived_files(zip_path: str) -> None:
+    """Delete the loose files next to the archive that the archive already contains."""
+    scan_dir = os.path.dirname(os.path.abspath(zip_path))
+    with zipfile.ZipFile(zip_path) as zipf:
+        archived = zipf.namelist()
+
+    for member in archived:
+        file_path = os.path.abspath(os.path.join(scan_dir, member))
+        if os.path.commonpath([scan_dir, file_path]) != scan_dir:
+            continue
+        try:
+            os.remove(file_path)
+        except OSError as error:
+            logger.warning(f"Could not remove archived output {file_path}: {error}")
+
+    for foldername, _, _ in os.walk(scan_dir, topdown=False):
+        if foldername != scan_dir and not os.listdir(foldername):
+            os.rmdir(foldername)
+
+
 def get_s3_client():
     """
     Create and return a boto3 S3 client using AWS credentials from environment variables.
@@ -292,7 +314,11 @@ def get_s3_presign_client():
 
 
 def _upload_to_s3(
-    tenant_id: str, scan_id: str, local_path: str, relative_key: str
+    tenant_id: str,
+    scan_id: str,
+    local_path: str,
+    relative_key: str,
+    gzip_encode: bool = False,
 ) -> str | None:
     """
     Upload a local artifact to an S3 bucket under the tenant/scan prefix.
@@ -302,6 +328,8 @@ def _upload_to_s3(
         scan_id (str): The scan identifier used as the second segment of the S3 key.
         local_path (str): Filesystem path to the artifact to upload.
         relative_key (str): Object key relative to `<tenant_id>/<scan_id>/`.
+        gzip_encode (bool): Store the object gzip-compressed under the same key, with
+            `Content-Encoding: gzip` so HTTP clients receive the original bytes.
 
     Returns:
         str | None: S3 URI of the uploaded artifact, or None if the upload is skipped.
@@ -323,7 +351,25 @@ def _upload_to_s3(
         s3 = get_s3_client()
 
         s3_key = f"{tenant_id}/{scan_id}/{relative_key}"
-        s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
+        if gzip_encode:
+            gzip_path = f"{local_path}.gz"
+            try:
+                with (
+                    open(local_path, "rb") as source,
+                    gzip.open(gzip_path, "wb") as target,
+                ):
+                    shutil.copyfileobj(source, target)
+                s3.upload_file(
+                    Filename=gzip_path,
+                    Bucket=bucket,
+                    Key=s3_key,
+                    ExtraArgs={"ContentEncoding": "gzip"},
+                )
+            finally:
+                if os.path.exists(gzip_path):
+                    os.remove(gzip_path)
+        else:
+            s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
 
         return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:

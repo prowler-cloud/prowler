@@ -64,6 +64,7 @@ from tasks.jobs.export import (
     OUTPUT_FORMATS_MAPPING,
     _compress_output_files,
     _generate_output_directory,
+    _remove_archived_files,
     _upload_to_s3,
 )
 from tasks.jobs.integrations import (
@@ -1003,6 +1004,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                     scan_id,
                     str(artifact_path),
                     f"compliance/{artifact_path.name}",
+                    gzip_encode=True,
                 )
 
     # S3 integrations (need output_directory)
@@ -1039,6 +1041,10 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
             logger.error(f"Error deleting output files: {e}")
         final_location, did_upload = upload_uri, True
     else:
+        try:
+            _remove_archived_files(compressed)
+        except Exception as e:
+            logger.error(f"Error deleting archived output files: {e}")
         final_location, did_upload = compressed, False
 
     Scan.all_objects.filter(id=scan_id).update(output_location=final_location)

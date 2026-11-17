@@ -1,3 +1,4 @@
+import gzip
 import os
 import uuid
 import zipfile
@@ -14,6 +15,7 @@ from tasks.jobs.export import (
     _compress_output_files,
     _generate_compliance_output_directory,
     _generate_output_directory,
+    _remove_archived_files,
     _upload_to_s3,
     get_s3_client,
     get_s3_presign_client,
@@ -104,6 +106,71 @@ class TestOutputs:
         client = get_s3_client()
         assert client is not None
         assert mock_boto_client.call_args_list[1] == call("s3")
+
+    def test_remove_archived_files_keeps_only_archive_and_unarchived(self, tmpdir):
+        scan_dir = Path(str(tmpdir.mkdir("scan")))
+        output = scan_dir / "prowler-output-aws-20260101000000"
+        (scan_dir / "prowler-output-aws-20260101000000.csv").write_text("finding")
+        compliance_dir = scan_dir / "compliance"
+        compliance_dir.mkdir()
+        (
+            compliance_dir / "prowler-output-aws-20260101000000_cis_1.4_aws.csv"
+        ).write_text("requirement")
+
+        zip_path = _compress_output_files(str(output))
+
+        pdf_dir = scan_dir / "threatscore"
+        pdf_dir.mkdir()
+        (pdf_dir / "report.pdf").write_bytes(b"pdf")
+
+        _remove_archived_files(zip_path)
+
+        assert sorted(p.name for p in scan_dir.iterdir()) == [
+            "prowler-output-aws-20260101000000.zip",
+            "threatscore",
+        ]
+        assert (pdf_dir / "report.pdf").exists()
+        with zipfile.ZipFile(zip_path) as zipf:
+            assert sorted(zipf.namelist()) == [
+                "compliance/prowler-output-aws-20260101000000_cis_1.4_aws.csv",
+                "prowler-output-aws-20260101000000.csv",
+            ]
+
+    @patch("tasks.jobs.export.get_s3_client")
+    @patch("tasks.jobs.export.base")
+    def test_upload_to_s3_gzip_encode(self, mock_base, mock_get_client, tmpdir):
+        mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
+        artifact = Path(str(tmpdir.mkdir("gzip"))) / "report_dora.ocsf.json"
+        artifact.write_text("[" + "{}," * 1000 + "{}]")
+
+        uploaded = {}
+
+        def capture(Filename, Bucket, Key, ExtraArgs):
+            uploaded["key"] = Key
+            uploaded["extra"] = ExtraArgs
+            uploaded["body"] = gzip.decompress(Path(Filename).read_bytes())
+            uploaded["size"] = Path(Filename).stat().st_size
+
+        client_mock = MagicMock()
+        client_mock.upload_file.side_effect = capture
+        mock_get_client.return_value = client_mock
+
+        result = _upload_to_s3(
+            "tenant-id",
+            "scan-id",
+            str(artifact),
+            "compliance/report_dora.ocsf.json",
+            gzip_encode=True,
+        )
+
+        assert result == (
+            "s3://test-bucket/tenant-id/scan-id/compliance/report_dora.ocsf.json"
+        )
+        assert uploaded["key"] == "tenant-id/scan-id/compliance/report_dora.ocsf.json"
+        assert uploaded["extra"] == {"ContentEncoding": "gzip"}
+        assert uploaded["body"] == artifact.read_bytes()
+        assert uploaded["size"] < artifact.stat().st_size
+        assert not Path(f"{artifact}.gz").exists()
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
