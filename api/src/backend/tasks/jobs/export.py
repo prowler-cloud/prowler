@@ -131,8 +131,8 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
-        (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
         (lambda name: name.startswith("ens_"), M365ENS),
+        (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
         (lambda name: name.startswith("iso27001_"), M365ISO27001),
     ],
     "github": [
