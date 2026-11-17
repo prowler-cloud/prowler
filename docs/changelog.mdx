@@ -4,6 +4,53 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.50.0" description="November 16, 2026">
+  ### 🤖 AWS — Bedrock Guardrails, Batch Output Encryption and Log Data Protection
+
+  - `bedrock_guardrail_iam_condition_enforcement_enabled` verifies that customer-managed and inline IAM policies allowing `bedrock:InvokeModel` or `bedrock:InvokeModelWithResponseStream` require a guardrail through the `bedrock:GuardrailIdentifier` condition key, or deny those operations when no guardrail is supplied. Contributed by @basitalisandhu. Thank you!
+  - `bedrock_model_invocation_job_output_encrypted_with_cmk` verifies that the S3 output of Bedrock model invocation jobs is encrypted with a customer managed key (CMK) in AWS Key Management Service (KMS). Contributed by @Sipivishta. Thank you!
+  - `cloudwatch_log_group_data_protection_policy_configured` verifies that CloudWatch log groups have a data protection policy that audits and masks sensitive data such as personal information and credentials. Contributed by @sandiyochristan. Thank you!
+  - The AWS AI Security Framework gains seven Manual requirements covering Bedrock data retention, retrieval-augmented generation (RAG) authorization and agent governance. Contributed by @tamg-aws. Thank you!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🔑 Accounts and Sessions
+
+  - Only the account owner can change their own email address or password: `PATCH /api/v1/users/{id}` rejects `email` and `password` changes made to another user's account, and the edit user form no longer sends the email when it was not changed. See [Role-Based Access Control](/user-guide/tutorials/prowler-app-rbac).
+  - Sessions started through SAML single sign-on (SSO) or with an API key stay in the organization that issued them. They only see and manage that organization, `POST /api/v1/tokens/switch` does not move them to another one and rejects API keys, and users who belong to several organizations cannot change the account password or email or delete the account from such a session. See [Sessions Started with SSO](/user-guide/tutorials/prowler-app-sso#sessions-started-with-sso).
+
+  ### 🛠️ Improvements and Fixes
+
+  - A new `secrets_confidence` configuration key sets the minimum Kingfisher confidence level (`low`, `medium` or `high`) a secret needs to be reported by the secret-scanning checks of the AWS, Cloudflare and OpenStack providers. The default `low` keeps the generic password, secret and API key rules; from `medium` those rules do not fire, which reduces false positives at the cost of some coverage. Contributed by @tom-intruder. Thank you!
+  - `network_udp_internet_access_restricted` no longer reports a false negative for Azure network security group (NSG) rules that allow Any protocol (`*`) inbound from the Internet. Contributed by @pouria-l. Thank you!
+  - `dns_dnssec_disabled` no longer evaluates private Google Cloud DNS zones, which cannot enable DNS Security Extensions (DNSSEC). Contributed by @wils0ns. Thank you!
+  - `compute_instance_encryption_with_csek_enabled` explains in its FAIL message why the finding cannot be remediated: Google disabled encryption with customer-supplied encryption keys (CSEK) on July 20, 2026, and the check will be deprecated on July 20, 2027, when CSEK is removed from Compute Engine. Contributed by @yilinjuang. Thank you!
+
+  ### 🔐 Security Updates
+
+  - Three providers validate where they connect to protect against server-side request forgery (SSRF). Image registry URLs that resolve to loopback, private, shared or otherwise non-public addresses are rejected before any request leaves the adapter, including every destination a redirect points to. Kubernetes kubeconfig cluster servers pointing at loopback, private or otherwise non-public addresses are rejected before the client connects. OpenStack redirects and Keystone catalog endpoints resolving to non-public hosts are rejected on every request, not only the initial `auth_url`.
+  - Attack Paths custom queries are validated with backtick-quoted identifiers unquoted, reject `\u` escapes and block `apoc.when`, `apoc.case`, `apoc.graph` and `apoc.spatial`. The tokenizer follows Neo4j on line comments ended by a carriage return and on escaped newlines in strings, so a blocked operation can no longer be hidden behind quoting, escapes or comments, or passed as a nested query string.
+  - The Lighthouse AI OpenAI-compatible base URL validation rejects IPv4-compatible (`::a.b.c.d`) and IPv4-translated (`::ffff:0:a.b.c.d`) IPv6 literals, which were classified as public even when the embedded IPv4 address was private or link-local.
+  - Compliance PDF reports escape the values of the cover page information table, so markup in a provider alias or UID is printed as text and no longer makes the report worker fetch an image URL.
+  - `dnspython` upgraded to 2.9.2 in the SDK for Python 3.11 and later and in the SDK and MCP Server images, patching CVE-2026-128089. Python 3.10 stays on 2.8.0, which the 2.9 series no longer supports.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @basitalisandhu: Bedrock guardrail enforcement check for IAM policies ([#13065](https://github.com/prowler-cloud/prowler/pull/13065))
+  - @Sipivishta: Bedrock model invocation job output encryption check ([#12801](https://github.com/prowler-cloud/prowler/pull/12801))
+  - @sandiyochristan: CloudWatch log group data protection policy check ([#13085](https://github.com/prowler-cloud/prowler/pull/13085))
+  - @tamg-aws: Manual requirements in the AWS AI Security Framework ([#13338](https://github.com/prowler-cloud/prowler/pull/13338))
+  - @tom-intruder: `secrets_confidence` configuration for the secret-scanning checks ([#13362](https://github.com/prowler-cloud/prowler/pull/13362))
+  - @pouria-l: Any protocol NSG rules in `network_udp_internet_access_restricted` ([#12886](https://github.com/prowler-cloud/prowler/pull/12886))
+  - @wils0ns: private zones in `dns_dnssec_disabled` ([#13334](https://github.com/prowler-cloud/prowler/pull/13334))
+  - @yilinjuang: CSEK retirement notice in the instance encryption check ([#12735](https://github.com/prowler-cloud/prowler/pull/12735))
+  - @Tiwari-yash07: Alibaba Cloud output formats and prerequisites in the documentation ([#13351](https://github.com/prowler-cloud/prowler/pull/13351))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.50.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.49.0" description="November 12, 2026">
   ### 🚨 Emerging Threats — Affected Machine Images on AWS, Azure and Google Cloud
 

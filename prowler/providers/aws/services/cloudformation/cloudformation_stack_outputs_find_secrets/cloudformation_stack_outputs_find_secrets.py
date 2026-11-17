@@ -19,6 +19,8 @@ class cloudformation_stack_outputs_find_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = cloudformation_client.audit_config.get("secrets_validate", False)
+
+        confidence = cloudformation_client.audit_config.get("secrets_confidence", "low")
         stacks = list(cloudformation_client.stacks)
 
         # Collect one payload per stack (its Outputs) and scan them all in
@@ -31,7 +33,10 @@ class cloudformation_stack_outputs_find_secrets(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

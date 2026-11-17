@@ -3,6 +3,7 @@ import io
 import json
 import os
 import tempfile
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -5354,6 +5355,140 @@ class TestScanViewSet:
             cd = resp["Content-Disposition"]
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
+
+    def test_compliance_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_cis_1.4_aws.csv", "archived")
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"archived"
+        assert resp["Content-Disposition"].endswith('filename="scan_cis_1.4_aws.csv"')
+
+    def test_compliance_ocsf_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_dora_2022_2554.csv", "csv")
+                zipf.writestr("compliance/scan_dora_2022_2554.ocsf.json", "[]")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance-ocsf",
+                kwargs={"pk": scan.id, "name": "dora_2022_2554"},
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"[]"
+        assert resp["Content-Disposition"].endswith(
+            'filename="scan_dora_2022_2554.ocsf.json"'
+        )
+
+    def test_compliance_local_file_served_from_newest_archive_member(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/b_cis_1.4_aws.csv", (2026, 1, 1, 0, 0, 0)
+                    ),
+                    "old",
+                )
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/a_cis_1.4_aws.csv", (2026, 6, 1, 0, 0, 0)
+                    ),
+                    "new",
+                )
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"new"
+
+    @pytest.mark.parametrize("corruption", ["not_a_zip", "corrupt_member", "missing"])
+    def test_compliance_local_unreadable_archive_returns_404(
+        self, authenticated_client, scans_fixture, corruption
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            if corruption == "not_a_zip":
+                archive.write_bytes(b"not a zip")
+            elif corruption == "corrupt_member":
+                member = "compliance/scan_cis_1.4_aws.csv"
+                with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    zipf.writestr(member, "finding;" * 500)
+                raw = bytearray(archive.read_bytes())
+                raw[30 + len(member) + 2] ^= 0xFF
+                archive.write_bytes(bytes(raw))
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_local_file_missing_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_cis_no_output(self, authenticated_client, scans_fixture):
         """CIS PDF endpoint must 404 when the scan has no output_location."""
@@ -16151,6 +16286,84 @@ class TestTenantFinishACSView:
         )
         assert (
             not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
+        )
+
+    def test_saml_token_cannot_switch_to_tenant_outside_the_saml_tenant(
+        self, client, create_test_user, tenants_fixture, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        saml_tenant, other_tenant = tenants_fixture[0], tenants_fixture[1]
+        assert user.is_member_of_tenant(str(other_tenant.id))
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={"firstName": ["John"], "lastName": ["Doe"]},
+        )
+        request = RequestFactory().get(
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(
+                tenant_id=saml_tenant.id
+            )
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=saml_tenant
+            )
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug=saml_setup["domain"])
+
+        assert response.status_code == 302
+        token_id = parse_qs(urlparse(response.url).query)["id"][0]
+        saml_access = SAMLToken.objects.using(MainRouter.admin_db).get(id=token_id)
+        auth_headers = {"Authorization": f"Bearer {saml_access.token['access']}"}
+
+        def switch_to(tenant):
+            return client.post(
+                reverse("token-switch"),
+                data={
+                    "data": {
+                        "type": "tokens-switch-tenant",
+                        "attributes": {"tenant_id": str(tenant.id)},
+                    }
+                },
+                content_type=API_JSON_CONTENT_TYPE,
+                headers=auth_headers,
+            )
+
+        assert switch_to(saml_tenant).status_code == status.HTTP_200_OK
+        assert switch_to(other_tenant).status_code in (
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
