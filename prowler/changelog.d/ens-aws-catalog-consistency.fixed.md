@@ -1,1 +1,1 @@
-ENS RD 311/2022 for AWS: the three `op.exp.10` KMS requirements that have checks are no longer marked as manual, `op.acc.6.r9` is no longer split into an `op.acc.6.9` group, and `mp.com.4` and `mp.sw.2` requirements are filed under the category of their measure
+ENS RD 311/2022 for AWS: three `op.exp.10` key policy requirements that CCN-STIC-887A leaves to manual review no longer list enclave attestation checks, `op.acc.6.r9` is no longer split into an `op.acc.6.9` group, and `mp.com.4` and `mp.sw.2` requirements are filed under the category of their measure

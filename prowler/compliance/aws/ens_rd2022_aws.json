@@ -4324,13 +4324,11 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "kms_key_enclave_attestation_not_enforced"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.exp.10.aws.cmk.7",
@@ -4350,13 +4348,11 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "kms_key_enclave_attestation_bypassable_path"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.exp.10.aws.cmk.8",
@@ -4376,13 +4372,11 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "kms_key_enclave_attestation_pcr_mismatch"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.cont.2.aws.az.1",
