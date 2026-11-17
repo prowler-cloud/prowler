@@ -3,6 +3,7 @@ import io
 import json
 import os
 import tempfile
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -5354,6 +5355,140 @@ class TestScanViewSet:
             cd = resp["Content-Disposition"]
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
+
+    def test_compliance_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_cis_1.4_aws.csv", "archived")
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"archived"
+        assert resp["Content-Disposition"].endswith('filename="scan_cis_1.4_aws.csv"')
+
+    def test_compliance_ocsf_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_dora_2022_2554.csv", "csv")
+                zipf.writestr("compliance/scan_dora_2022_2554.ocsf.json", "[]")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance-ocsf",
+                kwargs={"pk": scan.id, "name": "dora_2022_2554"},
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"[]"
+        assert resp["Content-Disposition"].endswith(
+            'filename="scan_dora_2022_2554.ocsf.json"'
+        )
+
+    def test_compliance_local_file_served_from_newest_archive_member(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/b_cis_1.4_aws.csv", (2026, 1, 1, 0, 0, 0)
+                    ),
+                    "old",
+                )
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/a_cis_1.4_aws.csv", (2026, 6, 1, 0, 0, 0)
+                    ),
+                    "new",
+                )
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"new"
+
+    @pytest.mark.parametrize("corruption", ["not_a_zip", "corrupt_member", "missing"])
+    def test_compliance_local_unreadable_archive_returns_404(
+        self, authenticated_client, scans_fixture, corruption
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            if corruption == "not_a_zip":
+                archive.write_bytes(b"not a zip")
+            elif corruption == "corrupt_member":
+                member = "compliance/scan_cis_1.4_aws.csv"
+                with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    zipf.writestr(member, "finding;" * 500)
+                raw = bytearray(archive.read_bytes())
+                raw[30 + len(member) + 2] ^= 0xFF
+                archive.write_bytes(bytes(raw))
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_local_file_missing_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     def test_cis_no_output(self, authenticated_client, scans_fixture):
         """CIS PDF endpoint must 404 when the scan has no output_location."""

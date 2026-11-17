@@ -2,7 +2,7 @@ import json
 import uuid
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import httpx
 import openai
@@ -246,6 +246,11 @@ class TestGenerateOutputs:
         self.provider_id = str(uuid.uuid4())
         self.tenant_id = str(uuid.uuid4())
 
+    @pytest.fixture(autouse=True)
+    def _never_delete_real_files(self):
+        with patch("tasks.tasks._remove_archived_files"):
+            yield
+
     @patch("tasks.tasks._cleanup_stale_tmp_output_directories")
     def test_no_findings_returns_early(self, mock_cleanup_stale_tmp_output_directories):
         with patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter:
@@ -422,6 +427,112 @@ class TestGenerateOutputs:
 
             assert result == {"upload": False}
             mock_scan_update.return_value.update.assert_called_once()
+
+    def _run_generate_outputs(self, tmp_path, upload_return, remove_error=None):
+        events = []
+        scan_dir = tmp_path / "scan"
+        compliance_dir = scan_dir / "compliance"
+        compliance_dir.mkdir(parents=True)
+        artifact = compliance_dir / "out_dora_2022_2554.ocsf.json"
+        artifact.write_text("[]")
+        compressed = str(scan_dir / "out.zip")
+
+        with (
+            patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.initialize_prowler_provider"),
+            patch("tasks.tasks.Compliance.get_bulk"),
+            patch("tasks.tasks.get_compliance_frameworks"),
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+            patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
+            patch(
+                "tasks.tasks._generate_output_directory",
+                return_value=(str(scan_dir / "out"), str(compliance_dir / "out")),
+            ),
+            patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+            patch("tasks.tasks.FindingOutput.transform_api_finding"),
+            patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
+            patch("tasks.tasks.COMPLIANCE_CLASS_MAP", {"aws": []}),
+            patch("tasks.tasks._compress_output_files", return_value=compressed),
+            patch(
+                "tasks.tasks._upload_to_s3", return_value=upload_return
+            ) as mock_upload,
+            patch("tasks.tasks._remove_archived_files") as mock_remove_archived,
+            patch("tasks.tasks.Integration.objects.filter"),
+            patch("tasks.tasks.s3_integration_task") as mock_s3_integration,
+            patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
+            patch("tasks.tasks.rmtree"),
+        ):
+            mock_filter.return_value.exists.return_value = True
+            mock_findings.return_value.order_by.return_value.iterator.return_value = [
+                [MagicMock()],
+                True,
+            ]
+            mock_s3_integration.apply_async.return_value.get.side_effect = lambda **_: (
+                events.append("s3_integration")
+            )
+
+            def remove_archived(_path):
+                events.append("remove_archived")
+                if remove_error:
+                    raise remove_error
+
+            mock_remove_archived.side_effect = remove_archived
+            generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+        self.events = events
+        self.scan_update = mock_scan_update
+        return artifact, compressed, mock_upload, mock_remove_archived
+
+    def test_generate_outputs_uploads_compliance_artifacts_gzip_encoded(self, tmp_path):
+        artifact, _, mock_upload, mock_remove_archived = self._run_generate_outputs(
+            tmp_path, "s3://bucket/out.zip"
+        )
+
+        mock_upload.assert_any_call(
+            self.tenant_id,
+            self.scan_id,
+            str(artifact),
+            f"compliance/{artifact.name}",
+            gzip_encode=True,
+        )
+        mock_remove_archived.assert_not_called()
+
+    def test_generate_outputs_without_bucket_removes_archived_files(self, tmp_path):
+        _, compressed, _, mock_remove_archived = self._run_generate_outputs(
+            tmp_path, None
+        )
+
+        mock_remove_archived.assert_called_once_with(compressed)
+
+    def test_generate_outputs_uploads_the_report_archive_unencoded(self, tmp_path):
+        _, compressed, mock_upload, _ = self._run_generate_outputs(
+            tmp_path, "s3://bucket/out.zip"
+        )
+
+        assert mock_upload.call_args_list[0] == call(
+            self.tenant_id, self.scan_id, compressed, "out.zip"
+        )
+
+    def test_generate_outputs_removes_archived_files_after_s3_integration(
+        self, tmp_path
+    ):
+        self._run_generate_outputs(tmp_path, None)
+
+        assert self.events == ["s3_integration", "remove_archived"]
+
+    def test_generate_outputs_survives_archived_files_removal_error(self, tmp_path):
+        _, compressed, _, _ = self._run_generate_outputs(
+            tmp_path, None, remove_error=OSError("disk error")
+        )
+
+        self.scan_update.return_value.update.assert_called_once_with(
+            output_location=compressed
+        )
 
     def test_generate_outputs_removes_previous_run_artifacts(self):
         """Regression for PROWLER-2266.
@@ -3189,7 +3300,7 @@ class TestPerformScanTask:
 
         events = []
 
-        def _complete_scan(tenant_id, scan_id, provider_id, checks_to_execute=None):
+        def _complete_scan(tenant_id, scan_id, provider_id, **_kwargs):
             events.append("scan")
             scan_instance = Scan.objects.get(id=scan_id)
             scan_instance.state = StateChoices.COMPLETED

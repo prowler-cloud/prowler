@@ -219,9 +219,8 @@ class OCSF(Output):
             if (
                 getattr(self, "_file_descriptor", None)
                 and not self._file_descriptor.closed
-                and self._data
             ):
-                if self._file_descriptor.tell() == 0:
+                if self._data and self._file_descriptor.tell() == 0:
                     self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
@@ -242,12 +241,13 @@ class OCSF(Output):
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 if self.close_file or self._from_cli:
-                    if self._file_descriptor.tell() != 1:
-                        self._file_descriptor.seek(
-                            self._file_descriptor.tell() - 1, os.SEEK_SET
-                        )
-                    self._file_descriptor.truncate()
-                    self._file_descriptor.write("]")
+                    if self._file_descriptor.tell() > 0:
+                        if self._file_descriptor.tell() != 1:
+                            self._file_descriptor.seek(
+                                self._file_descriptor.tell() - 1, os.SEEK_SET
+                            )
+                        self._file_descriptor.truncate()
+                        self._file_descriptor.write("]")
                     self._file_descriptor.close()
         except OSError:
             # Propagate unrecoverable I/O errors (e.g. ENOSPC) so the caller can
