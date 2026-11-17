@@ -47,6 +47,7 @@ from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
+from prowler.lib.outputs.compliance.ens.ens_m365 import M365ENS
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
@@ -132,6 +133,7 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
+        (lambda name: name.startswith("ens_"), M365ENS),
         (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
         (lambda name: name.startswith("iso27001_"), M365ISO27001),
     ],
