@@ -147,6 +147,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     accept_invitation_for_user,
+    get_findings_categories,
     get_findings_metadata_no_aggregations,
     initialize_prowler_integration,
     initialize_prowler_provider,
@@ -4351,13 +4352,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         # Fallback to finding aggregation if no ScanCategorySummary exists
         if not categories:
-            categories_set = set()
-            for categories_list in filtered_queryset.values_list(
-                "categories", flat=True
-            ):
-                if categories_list:
-                    categories_set.update(categories_list)
-            categories = sorted(categories_set)
+            categories = get_findings_categories(filtered_queryset)
 
         result = {
             "services": services,
@@ -4431,7 +4426,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
             return Response(
                 get_findings_metadata_no_aggregations(
-                    self.filter_queryset(self.get_queryset())
+                    self.filter_queryset(self.get_queryset()).filter(
+                        tenant_id=tenant_id,
+                        scan_id__in=[scan_id for scan_id, _ in raw_latest_scans_ids],
+                    )
                 )
             )
 
@@ -4481,13 +4479,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 tenant_id=tenant_id,
                 scan_id__in=latest_scans_queryset.values_list("id", flat=True),
             )
-            categories_set = set()
-            for categories_list in filtered_queryset.values_list(
-                "categories", flat=True
-            ):
-                if categories_list:
-                    categories_set.update(categories_list)
-            categories = sorted(categories_set)
+            categories = get_findings_categories(filtered_queryset)
 
         # Get groups from ScanGroupSummary for latest scans
         groups = list(

@@ -47,6 +47,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
@@ -9536,7 +9537,118 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         mock_backfill_task.assert_not_called()
 
-    def test_findings_metadata_without_summaries_skips_resources_join(
+    def test_findings_metadata_without_summaries_merges_finding_values(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        finding_1, finding_2 = findings_fixture
+        Finding.objects.filter(id=finding_1.id).update(
+            resource_services=["s3", "ec2", ""],
+            resource_regions=["us-east-1", "eu-west-1"],
+            resource_types=["bucket", ""],
+            categories=["logging", ""],
+            resource_groups="storage",
+        )
+        Finding.objects.filter(id=finding_2.id).update(
+            resource_services=None,
+            resource_regions=None,
+            resource_types=None,
+            categories=None,
+            resource_groups="IAM",
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {"filter[scan]": str(scans_fixture[0].id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["services"] == ["ec2", "s3"]
+        assert attributes["regions"] == ["eu-west-1", "us-east-1"]
+        assert attributes["resource_types"] == ["bucket"]
+        assert attributes["categories"] == ["logging"]
+        assert attributes["groups"] == ["IAM", "storage"]
+
+    def test_findings_metadata_without_summaries_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        ResourceScanSummary.objects.filter(tenant_id=tenant.id).delete()
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        with patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async"):
+            response = client.get(
+                reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["services"] == ["ec2"]
+        assert attributes["regions"] == ["us-east-1"]
+        assert attributes["resource_types"] == ["test"]
+        assert attributes["categories"] == ["data-protection"]
+        assert attributes["groups"] == ["data"]
+
+    def test_findings_metadata_latest_without_summaries_reads_only_latest_scans(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        aws_provider_pair,
+        resources_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider, _ = aws_provider_pair
+        resource1, _, resource3 = resources_fixture
+        _completed_scan_with_summaries(
+            tenant, provider, [resource3], categories=["old"], resource_group="old"
+        )
+        latest_scan = _completed_scan_with_summaries(
+            tenant,
+            provider,
+            [resource1],
+            categories=["iam"],
+            resource_group="identity",
+        )
+        Scan.objects.filter(id=latest_scan.id).update(unique_resource_count=1)
+        ResourceScanSummary.objects.filter(scan_id=latest_scan.id).delete()
+
+        with patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async"):
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["resource_types"] == [resource1.type]
+        assert attributes["categories"] == ["iam"]
+        assert attributes["groups"] == ["identity"]
+
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_findings_metadata_categories_fallback_reads_distinct_values(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        Finding.objects.filter(scan_id=finding_1.scan_id).update(
+            categories=["encryption"]
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d")},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["categories"] == ["encryption"]
+        categories_queries = [
+            query["sql"]
+            for query in queries
+            if '"findings"."categories"' in query["sql"]
+        ]
+        assert categories_queries
+        assert all("DISTINCT" in sql for sql in categories_queries)
+
+    def test_findings_metadata_without_summaries_aggregates_from_findings(
         self, authenticated_client, scans_fixture, findings_fixture
     ):
         finding_1, finding_2 = findings_fixture

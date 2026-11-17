@@ -665,10 +665,10 @@ def get_findings_metadata_no_aggregations(filtered_queryset):
         finding_categories,
         finding_group,
     ) in combinations:
-        services.update(finding_services or ())
-        regions.update(region for region in finding_regions or () if region)
-        resource_types.update(finding_types or ())
-        categories.update(finding_categories or ())
+        services.update(filter(None, finding_services or ()))
+        regions.update(filter(None, finding_regions or ()))
+        resource_types.update(filter(None, finding_types or ()))
+        categories.update(filter(None, finding_categories or ()))
         if finding_group:
             groups.add(finding_group)
 
@@ -677,13 +677,28 @@ def get_findings_metadata_no_aggregations(filtered_queryset):
         "regions": sorted(regions),
         "resource_types": sorted(resource_types),
         "categories": sorted(categories),
-        "groups": sorted(groups),
+        "groups": sorted(groups, key=str.casefold),
     }
 
     serializer = FindingMetadataSerializer(data=result)
     serializer.is_valid(raise_exception=True)
 
     return serializer.data
+
+
+def get_findings_categories(filtered_queryset) -> list[str]:
+    """Sorted categories of the findings, for scans without a category summary."""
+    category_lists = (
+        filtered_queryset.order_by().values_list("categories", flat=True).distinct()
+    )
+    return sorted(
+        {
+            category
+            for categories in category_lists
+            for category in categories or ()
+            if category
+        }
+    )
 
 
 def initialize_prowler_integration(integration: Integration) -> Jira:
