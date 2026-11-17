@@ -1,8 +1,21 @@
 "use client";
 
-import { RefreshCw, Settings } from "lucide-react";
+import {
+  KeyRound,
+  PackageSearch,
+  RefreshCw,
+  SearchX,
+  TriangleAlert,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type Ref,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 
 import {
   disconnectRegistryCredential,
@@ -11,6 +24,14 @@ import {
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
+import {
+  StatusPanel,
+  StatusPanelActions,
+  StatusPanelBody,
+  StatusPanelDescription,
+  StatusPanelIcon,
+  StatusPanelTitle,
+} from "@/components/shadcn/status-panel";
 import {
   Tabs,
   TabsContent,
@@ -40,13 +61,19 @@ import {
   type RegistryTenantArtifact,
 } from "@/types/registry";
 
-import { RegistryAccessDialog } from "./registry-access-dialog";
+import {
+  REGISTRY_KEY_STATUS,
+  RegistryAccessDialog,
+} from "./registry-access-dialog";
 import {
   RegistryArtifactCard,
   RegistryTenantArtifactCard,
 } from "./registry-artifact-card";
 import { RegistryArtifactGrid } from "./registry-artifact-grid";
-import { RegistryCredentialBanner } from "./registry-credential-banner";
+import {
+  REGISTRY_CREDENTIAL_BANNER,
+  RegistryCredentialBanner,
+} from "./registry-credential-banner";
 import {
   buildRegistryMarketplaceModel,
   REGISTRY_MARKETPLACE_SORT,
@@ -80,21 +107,136 @@ const REGISTRY_ACCESS_DIALOG_MODE = {
 type RegistryAccessDialogMode =
   (typeof REGISTRY_ACCESS_DIALOG_MODE)[keyof typeof REGISTRY_ACCESS_DIALOG_MODE];
 
-interface RetryStateProps {
-  title: string;
-  children: string;
+type RegistryStatusKind =
+  | typeof REGISTRY_BOOTSTRAP_STATE.INCOMPLETE
+  | typeof REGISTRY_BOOTSTRAP_STATE.UNAVAILABLE
+  | typeof REGISTRY_BOOTSTRAP_STATE.RECONNECT
+  | typeof REGISTRY_BOOTSTRAP_STATE.ERROR;
+
+const REGISTRY_STATUS_COPY = {
+  [REGISTRY_BOOTSTRAP_STATE.INCOMPLETE]: {
+    title: "Registry catalog is incomplete",
+    description:
+      "Complete catalog controls and metrics are unavailable until every catalog page loads. Retry to load the catalog again.",
+  },
+  [REGISTRY_BOOTSTRAP_STATE.UNAVAILABLE]: {
+    title: "Registry is unavailable",
+    description:
+      "Registry data may be stale or unavailable. Retry when the service is available.",
+  },
+  [REGISTRY_BOOTSTRAP_STATE.RECONNECT]: {
+    title: "Reconnect the Registry",
+    description:
+      "The Registry rejected the connected API key. Replace it to load the catalog again.",
+  },
+  [REGISTRY_BOOTSTRAP_STATE.ERROR]: {
+    title: "Registry could not be loaded",
+    description:
+      "An unexpected Registry error occurred. Retry to load the explorer again.",
+  },
+} as const satisfies Record<
+  RegistryStatusKind,
+  { title: string; description: string }
+>;
+
+interface RegistryStatusStateProps {
+  status: RegistryStatusKind;
+  onReplaceKey: () => void;
+  replaceKeyButtonRef: Ref<HTMLButtonElement>;
 }
 
-function RetryState({ title, children }: RetryStateProps) {
+function RegistryStatusState({
+  status,
+  onReplaceKey,
+  replaceKeyButtonRef,
+}: RegistryStatusStateProps) {
+  const { title, description } = REGISTRY_STATUS_COPY[status];
+  const isReconnect = status === REGISTRY_BOOTSTRAP_STATE.RECONNECT;
+
   return (
-    <section aria-live="polite" className="mx-auto max-w-2xl py-12 text-center">
-      <h1 className="text-xl font-semibold">{title}</h1>
-      <p className="text-text-neutral-secondary mt-3 text-sm">{children}</p>
-      <div className="mt-6">
-        <Button onClick={() => window.location.reload()}>Retry</Button>
-      </div>
-    </section>
+    <StatusPanel aria-live="polite">
+      <StatusPanelIcon>
+        {isReconnect ? (
+          <TriangleAlert className="text-text-warning-primary" />
+        ) : (
+          <RefreshCw />
+        )}
+      </StatusPanelIcon>
+      <StatusPanelBody>
+        <StatusPanelTitle>{title}</StatusPanelTitle>
+        <StatusPanelDescription>{description}</StatusPanelDescription>
+      </StatusPanelBody>
+      <StatusPanelActions>
+        {isReconnect && (
+          <Button
+            onClick={onReplaceKey}
+            ref={replaceKeyButtonRef}
+            type="button"
+          >
+            Replace key
+          </Button>
+        )}
+        <Button
+          onClick={() => window.location.reload()}
+          type="button"
+          variant={isReconnect ? "outline" : "default"}
+        >
+          Retry
+        </Button>
+      </StatusPanelActions>
+    </StatusPanel>
   );
+}
+
+interface RegistryEmptyStateProps {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+}
+
+function RegistryEmptyState({
+  icon,
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: RegistryEmptyStateProps) {
+  return (
+    <StatusPanel>
+      <StatusPanelIcon>{icon}</StatusPanelIcon>
+      <StatusPanelBody>
+        <StatusPanelTitle>{title}</StatusPanelTitle>
+        <StatusPanelDescription>{description}</StatusPanelDescription>
+      </StatusPanelBody>
+      <StatusPanelActions>
+        <Button onClick={onAction} type="button" variant="outline">
+          {actionLabel}
+        </Button>
+      </StatusPanelActions>
+    </StatusPanel>
+  );
+}
+
+// Shared by the onboarding and ready views.
+function RegistryPageIntro({ errorMessage }: { errorMessage?: string }) {
+  return (
+    <>
+      <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
+      {errorMessage && (
+        <Alert variant="error">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+    </>
+  );
+}
+
+interface RegistryRemoveTarget {
+  normalizedName: string;
+  /** Display name shown in the dialog. */
+  label: string;
 }
 
 function mutationFailureMessage(result: RegistryMutationResult) {
@@ -242,7 +384,7 @@ export function RegistryExplorer({
   }, []);
   const [accessDialogMode, setAccessDialogMode] =
     useState<RegistryAccessDialogMode>();
-  const [removeTarget, setRemoveTarget] = useState<string>();
+  const [removeTarget, setRemoveTarget] = useState<RegistryRemoveTarget>();
   const [removeError, setRemoveError] = useState<RegistryRemoveDialogError>();
   const [operationMessage, setOperationMessage] = useState<string>();
   const connectButtonRef = useRef<HTMLButtonElement>(null);
@@ -458,13 +600,17 @@ export function RegistryExplorer({
   }
 
   function openRemoveDialog(
-    normalizedName: string,
+    target: RegistryRemoveTarget,
     trigger: HTMLButtonElement | null,
   ) {
     removeTriggerRef.current = trigger;
     setRemoveError(undefined);
-    setRemoveTarget(normalizedName);
+    setRemoveTarget(target);
   }
+  const catalogRemoveTarget = (artifact: RegistryMarketplaceArtifact) => ({
+    normalizedName: artifact.normalizedName,
+    label: artifact.name ?? artifact.normalizedName,
+  });
 
   const accessDialogProps = {
     registryUrl,
@@ -488,6 +634,13 @@ export function RegistryExplorer({
     ) : accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.MANAGE ? (
       <RegistryAccessDialog
         mode="manage"
+        keyStatus={
+          state.status === REGISTRY_BOOTSTRAP_STATE.READY
+            ? REGISTRY_KEY_STATUS.CONNECTED
+            : state.status === REGISTRY_BOOTSTRAP_STATE.RECONNECT
+              ? REGISTRY_KEY_STATUS.REJECTED
+              : undefined
+        }
         onDisconnect={handleDisconnect}
         {...accessDialogProps}
       />
@@ -499,63 +652,36 @@ export function RegistryExplorer({
   ) {
     return (
       <div className="space-y-6">
-        <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
-        {!accessDialogMode && operationMessage && (
-          <Alert variant="error">
-            <AlertDescription>{operationMessage}</AlertDescription>
-          </Alert>
-        )}
+        <RegistryPageIntro
+          errorMessage={accessDialogMode ? undefined : operationMessage}
+        />
         <RegistryCredentialBanner
+          variant={
+            state.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
+              ? REGISTRY_CREDENTIAL_BANNER.VALIDATING
+              : REGISTRY_CREDENTIAL_BANNER.ONBOARDING
+          }
           connectButtonRef={connectButtonRef}
           registryUrl={registryUrl}
           onConnect={() =>
             setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.CONNECT)
           }
           tenantArtifactCount={state.tenantArtifacts.length}
-          validationPending={
-            state.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
-          }
         />
         {accessDialog}
       </div>
     );
   }
+  const openManageDialog = () =>
+    setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE);
   if (state.status !== REGISTRY_BOOTSTRAP_STATE.READY) {
-    const messages = {
-      [REGISTRY_BOOTSTRAP_STATE.INCOMPLETE]: [
-        "Registry catalog is incomplete",
-        "Complete catalog controls and metrics are unavailable until every catalog page loads. Retry to load the catalog again.",
-      ],
-      [REGISTRY_BOOTSTRAP_STATE.UNAVAILABLE]: [
-        "Registry is unavailable",
-        "Registry data may be stale or unavailable. Retry when the service is available.",
-      ],
-      [REGISTRY_BOOTSTRAP_STATE.RECONNECT]: [
-        "Reconnect Registry",
-        "Reconnect Registry before exploring artifacts.",
-      ],
-      [REGISTRY_BOOTSTRAP_STATE.ERROR]: [
-        "Registry could not be loaded",
-        "An unexpected Registry error occurred. Retry to load the explorer again.",
-      ],
-    } as const;
-    const [title, message] = messages[state.status];
     return (
       <>
-        <RetryState title={title}>{message}</RetryState>
-        {state.status === REGISTRY_BOOTSTRAP_STATE.RECONNECT && (
-          <div className="flex justify-center">
-            <Button
-              onClick={() =>
-                setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
-              }
-              ref={manageButtonRef}
-              type="button"
-            >
-              Replace key
-            </Button>
-          </div>
-        )}
+        <RegistryStatusState
+          status={state.status}
+          onReplaceKey={openManageDialog}
+          replaceKeyButtonRef={manageButtonRef}
+        />
         {accessDialog}
       </>
     );
@@ -569,31 +695,44 @@ export function RegistryExplorer({
   );
   if (!model.isComplete) {
     return (
-      <RetryState title="Registry catalog is incomplete">
-        Complete catalog controls and metrics are unavailable.
-      </RetryState>
+      <RegistryStatusState
+        status={REGISTRY_BOOTSTRAP_STATE.INCOMPLETE}
+        onReplaceKey={openManageDialog}
+        replaceKeyButtonRef={manageButtonRef}
+      />
     );
   }
+  // Registry artifacts first, then the ones that ship with Prowler.
+  const exploreCount = model.artifacts.length + model.builtinArtifacts.length;
+  const renderCatalogCard = (artifact: RegistryMarketplaceArtifact) => (
+    <li key={artifact.normalizedName}>
+      <RegistryArtifactCard
+        artifact={artifact}
+        pendingAddName={pendingAddName}
+        onAdd={() => handleAdd(artifact)}
+        onRemove={(trigger) =>
+          openRemoveDialog(catalogRemoveTarget(artifact), trigger)
+        }
+      />
+    </li>
+  );
   return (
     <div className="space-y-6">
       <h1 className="sr-only">Registry marketplace</h1>
-      <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
+      <RegistryPageIntro
+        errorMessage={accessDialogMode ? undefined : operationMessage}
+      />
       {refreshMessage && (
         <Alert variant="warning">
           <AlertDescription>{refreshMessage}</AlertDescription>
-        </Alert>
-      )}
-      {!accessDialogMode && operationMessage && (
-        <Alert variant="error">
-          <AlertDescription>{operationMessage}</AlertDescription>
         </Alert>
       )}
       <Tabs
         onValueChange={(value) => setActiveTab(value as RegistryTab)}
         value={activeTab}
       >
-        <div className="border-border-neutral-secondary flex flex-wrap items-center justify-between gap-4 border-b">
-          <div className="min-w-52 flex-1">
+        <div className="border-border-neutral-secondary flex items-center justify-between gap-2 border-b">
+          <div className="min-w-0">
             <TabsList>
               <TabsTrigger
                 adornment={
@@ -617,7 +756,7 @@ export function RegistryExplorer({
               </TabsTrigger>
             </TabsList>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               aria-label="Refresh Registry"
               aria-busy={isRefreshing}
@@ -630,20 +769,20 @@ export function RegistryExplorer({
               variant="ghost"
             >
               <RefreshCw aria-hidden />
-              {isRefreshing ? "Refreshing…" : "Refresh"}
+              <span className="hidden sm:inline">
+                {isRefreshing ? "Refreshing…" : "Refresh"}
+              </span>
             </Button>
             <Button
-              aria-label="Manage access"
-              title="Manage access"
-              onClick={() =>
-                setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
-              }
+              aria-label="Registry API key"
+              onClick={openManageDialog}
               ref={manageButtonRef}
-              size="icon"
+              size="sm"
               type="button"
               variant="ghost"
             >
-              <Settings aria-hidden />
+              <KeyRound aria-hidden />
+              <span className="hidden sm:inline">API key</span>
             </Button>
           </div>
         </div>
@@ -653,86 +792,106 @@ export function RegistryExplorer({
             onFiltersChange={setFilters}
             onSortChange={setSort}
             providers={model.providers}
-            resultsCount={model.artifacts.length}
+            resultsCount={exploreCount}
             sort={sort}
           />
-          <RegistryArtifactGrid
-            emptyMessage={
-              state.catalog.artifacts.length === 0
-                ? "No Registry artifacts are available."
-                : "No artifacts match the current filters."
-            }
-            emptyDescription={
-              state.catalog.artifacts.length === 0
-                ? "Published artifacts will appear here when the Registry catalog is available."
-                : undefined
-            }
-            emptyActionLabel={
-              state.catalog.artifacts.length === 0
-                ? "Refresh catalog"
-                : undefined
-            }
-            onReset={
-              state.catalog.artifacts.length > 0
-                ? () => setFilters({})
-                : requestRefresh
-            }
-            isEmpty={model.artifacts.length === 0}
-          >
-            {model.artifacts.map((artifact) => (
-              <li key={artifact.normalizedName}>
-                <RegistryArtifactCard
-                  artifact={artifact}
-                  pendingAddName={pendingAddName}
-                  onAdd={() => handleAdd(artifact)}
-                  onRemove={(trigger) =>
-                    openRemoveDialog(artifact.normalizedName, trigger)
-                  }
-                />
-              </li>
-            ))}
-          </RegistryArtifactGrid>
+          {state.catalog.artifacts.length === 0 ? (
+            <RegistryEmptyState
+              icon={<PackageSearch />}
+              title="No Registry artifacts are available."
+              description="Published artifacts will appear here when the Registry catalog is available."
+              actionLabel="Refresh catalog"
+              onAction={requestRefresh}
+            />
+          ) : exploreCount === 0 ? (
+            <RegistryEmptyState
+              icon={<SearchX />}
+              title="No artifacts match the current filters."
+              description="Try another search or clear your filters to explore the catalog."
+              actionLabel="Clear filters"
+              onAction={() => setFilters({})}
+            />
+          ) : (
+            <>
+              {model.artifacts.length > 0 && (
+                <RegistryArtifactGrid>
+                  {model.artifacts.map(renderCatalogCard)}
+                </RegistryArtifactGrid>
+              )}
+              {model.builtinArtifacts.length > 0 && (
+                <section
+                  aria-labelledby="registry-builtin-heading"
+                  className="space-y-3 pt-2"
+                >
+                  <h2
+                    id="registry-builtin-heading"
+                    className="text-text-neutral-secondary text-sm font-medium"
+                  >
+                    Included in Prowler
+                  </h2>
+                  <RegistryArtifactGrid>
+                    {model.builtinArtifacts.map(renderCatalogCard)}
+                  </RegistryArtifactGrid>
+                </section>
+              )}
+            </>
+          )}
         </TabsContent>
         <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.MINE}>
-          <RegistryArtifactGrid
-            emptyMessage="No artifacts in this workspace yet."
-            emptyDescription="Explore the catalog to add providers or checks to this workspace."
-            emptyActionLabel="Explore artifacts"
-            isEmpty={model.myArtifacts.length === 0}
-            onReset={() => setActiveTab(REGISTRY_TAB.EXPLORE)}
-          >
-            {model.myArtifacts.map((myArtifact) => (
-              <li key={myArtifact.normalizedName}>
-                {myArtifact.catalogArtifact ? (
-                  <RegistryArtifactCard
-                    artifact={myArtifact.catalogArtifact}
-                    pendingAddName={pendingAddName}
-                    onAdd={() => handleAdd(myArtifact.catalogArtifact!)}
-                    onRemove={(trigger) =>
-                      openRemoveDialog(myArtifact.normalizedName, trigger)
-                    }
-                  />
-                ) : (
-                  <RegistryTenantArtifactCard
-                    extendsProviderSlugs={myArtifact.extendsProviderSlugs}
-                    normalizedName={myArtifact.normalizedName}
-                    onRemove={(trigger) =>
-                      openRemoveDialog(myArtifact.normalizedName, trigger)
-                    }
-                    resolvedVersion={myArtifact.resolvedVersion}
-                  />
-                )}
-              </li>
-            ))}
-          </RegistryArtifactGrid>
+          {model.myArtifacts.length === 0 ? (
+            <RegistryEmptyState
+              icon={<PackageSearch />}
+              title="No artifacts in this workspace yet."
+              description="Explore the catalog to add providers or checks to this workspace."
+              actionLabel="Explore artifacts"
+              onAction={() => setActiveTab(REGISTRY_TAB.EXPLORE)}
+            />
+          ) : (
+            <RegistryArtifactGrid>
+              {model.myArtifacts.map((myArtifact) => (
+                <li key={myArtifact.normalizedName}>
+                  {myArtifact.catalogArtifact ? (
+                    <RegistryArtifactCard
+                      artifact={myArtifact.catalogArtifact}
+                      pendingAddName={pendingAddName}
+                      onAdd={() => handleAdd(myArtifact.catalogArtifact!)}
+                      onRemove={(trigger) =>
+                        openRemoveDialog(
+                          catalogRemoveTarget(myArtifact.catalogArtifact!),
+                          trigger,
+                        )
+                      }
+                    />
+                  ) : (
+                    <RegistryTenantArtifactCard
+                      extendsProviderSlugs={myArtifact.extendsProviderSlugs}
+                      normalizedName={myArtifact.normalizedName}
+                      onRemove={(trigger) =>
+                        openRemoveDialog(
+                          {
+                            normalizedName: myArtifact.normalizedName,
+                            label: myArtifact.normalizedName,
+                          },
+                          trigger,
+                        )
+                      }
+                      resolvedVersion={myArtifact.resolvedVersion}
+                    />
+                  )}
+                </li>
+              ))}
+            </RegistryArtifactGrid>
+          )}
         </TabsContent>
       </Tabs>
       {accessDialog}
       <RegistryRemoveDialog
-        artifactName={removeTarget}
+        artifactLabel={removeTarget?.label}
         error={removeError}
         isPending={pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE}
-        onConfirm={() => removeTarget && handleRemove(removeTarget)}
+        onConfirm={() =>
+          removeTarget && handleRemove(removeTarget.normalizedName)
+        }
         onOpenChange={(open) => {
           if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.REMOVE) {
             setRemoveError(undefined);

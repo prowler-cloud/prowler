@@ -2,10 +2,19 @@
 
 import { type FormEvent, type RefObject, useEffect, useRef } from "react";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { DialogFooter } from "@/components/shadcn/dialog";
 import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal/modal";
+
+export const REGISTRY_KEY_STATUS = {
+  CONNECTED: "connected",
+  REJECTED: "rejected",
+} as const;
+
+type RegistryKeyStatus =
+  (typeof REGISTRY_KEY_STATUS)[keyof typeof REGISTRY_KEY_STATUS];
 
 interface RegistryAccessDialogCommonProps {
   errorMessage?: string;
@@ -20,11 +29,14 @@ interface RegistryAccessDialogCommonProps {
 type ConnectRegistryAccessDialogProps = RegistryAccessDialogCommonProps & {
   mode: "connect";
   onDisconnect?: never;
+  keyStatus?: never;
 };
 
 type ManageRegistryAccessDialogProps = RegistryAccessDialogCommonProps & {
   mode: "manage";
   onDisconnect: () => Promise<void>;
+  /** What the Registry last said about the current key. */
+  keyStatus?: RegistryKeyStatus;
 };
 
 type RegistryAccessDialogProps =
@@ -35,6 +47,7 @@ export function RegistryAccessDialog({
   errorMessage,
   registryUrl,
   mode,
+  keyStatus,
   onDisconnect,
   onOpenChange,
   onSubmit,
@@ -66,7 +79,7 @@ export function RegistryAccessDialog({
 
   return (
     <Modal
-      description="Your Registry API key links this workspace to the Prowler artifact registry. It is validated asynchronously and never stored by this browser."
+      description="Use an API key from the Prowler Registry account that has access to the artifacts you need."
       onOpenAutoFocus={(event) => {
         event.preventDefault();
         keyInputRef.current?.focus();
@@ -79,9 +92,7 @@ export function RegistryAccessDialog({
       open={open}
       size="md"
       title={
-        mode === "connect"
-          ? "Connect Registry API key"
-          : "Manage Registry access"
+        mode === "connect" ? "Connect Registry API key" : "Registry API key"
       }
     >
       <form
@@ -89,9 +100,19 @@ export function RegistryAccessDialog({
         onSubmit={handleSubmit}
         ref={formRef}
       >
+        {keyStatus && (
+          <p className="text-text-neutral-secondary flex items-center gap-2 text-sm">
+            Current key
+            {keyStatus === REGISTRY_KEY_STATUS.CONNECTED ? (
+              <Badge variant="success">Connected</Badge>
+            ) : (
+              <Badge variant="error">Rejected by the Registry</Badge>
+            )}
+          </p>
+        )}
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-2 text-sm" htmlFor="registry-key">
-            <span>Registry key</span>
+            <span>Registry API key</span>
             <Input
               aria-describedby={errorMessage ? "registry-key-error" : undefined}
               autoComplete="new-password"
@@ -133,7 +154,7 @@ export function RegistryAccessDialog({
               disabled={pending}
               onClick={onDisconnect}
               type="button"
-              variant="destructive"
+              variant="outline"
             >
               Disconnect
             </Button>

@@ -5,6 +5,8 @@ import logging
 import os
 import time
 import uuid
+import zipfile
+import zlib
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
@@ -2518,6 +2520,28 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
 
         return content, filename
 
+    def _load_archived_file(self, archive_path, member_pattern):
+        """Return the bytes and filename of the newest archive member matching the pattern."""
+        not_found = Response(
+            {
+                "detail": "The scan has no reports, or the report generation task has not started yet."
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                members = [
+                    info
+                    for info in archive.infolist()
+                    if fnmatch.fnmatch(info.filename, member_pattern)
+                ]
+                if not members:
+                    return not_found
+                member = max(members, key=lambda info: (info.date_time, info.filename))
+                return archive.read(member), os.path.basename(member.filename)
+        except (OSError, zipfile.BadZipFile, zlib.error):
+            return not_found
+
     def _serve_file(self, content, filename, content_type):
         response = HttpResponse(content, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -2597,7 +2621,13 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "compliance", f"*_{name}.{file_extension}")
-            loader = self._load_file(pattern, s3=False)
+            # Scans generated before the loose copy was dropped still have it on disk.
+            if glob.glob(pattern):
+                loader = self._load_file(pattern, s3=False)
+            else:
+                loader = self._load_archived_file(
+                    scan.output_location, f"compliance/*_{name}.{file_extension}"
+                )
 
         if isinstance(loader, HttpResponseBase):
             return loader
