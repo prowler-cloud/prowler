@@ -256,7 +256,7 @@ class BedrockAgentCore(AWSService):
             )
 
     def _get_agent_runtime(self, runtime):
-        """Enrich one agent runtime with its network and authorizer configuration.
+        """Enrich one agent runtime with its network, authorizer and request header configuration.
 
         Args:
             runtime: The ``AgentCoreRuntime`` to enrich in place.
@@ -282,6 +282,9 @@ class BedrockAgentCore(AWSService):
             runtime.network_mode = runtime_info.get("networkConfiguration", {}).get(
                 "networkMode"
             )
+            runtime.request_header_allowlist = runtime_info.get(
+                "requestHeaderConfiguration", {}
+            ).get("requestHeaderAllowlist", [])
             runtime.detail_retrieved = True
         except Exception as error:
             logger.error(
@@ -618,6 +621,7 @@ class AgentCoreRuntime(BaseModel):
     custom_jwt_allowed_clients: list = []
     custom_jwt_allowed_audience: list = []
     network_mode: Optional[str] = None
+    request_header_allowlist: list = []
     # False when the Get* call failed (AccessDenied, throttle), so an absent
     # field means "unknown" rather than "not configured".
     detail_retrieved: bool = False
