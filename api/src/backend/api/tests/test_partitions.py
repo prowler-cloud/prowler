@@ -168,12 +168,23 @@ def create_finding(scan, resource, finding_id, uid):
 
 @pytest.mark.django_db
 class TestDeletePartitions:
-    @pytest.fixture
-    def expired_month(self):
-        now = datetime.now(UTC).replace(
+    @pytest.fixture(autouse=True)
+    def current_month(self, monkeypatch):
+        # The deletion cutoff and the expired month both derive from this one
+        # instant, so a test that straddles a month boundary cannot disagree.
+        month = datetime.now(UTC).replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
-        return now - relativedelta(months=3)
+        monkeypatch.setattr(
+            PostgresUUIDv7PartitioningStrategy,
+            "get_start_datetime",
+            lambda self: month,
+        )
+        return month
+
+    @pytest.fixture
+    def expired_month(self, current_month):
+        return current_month - relativedelta(months=3)
 
     @pytest.fixture
     def expired_partitions(self, expired_month):
