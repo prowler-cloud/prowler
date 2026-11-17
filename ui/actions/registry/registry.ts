@@ -356,10 +356,11 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
 
   const catalog = await readCompleteRegistryCatalog(access, credential);
   // With the Prowler Cloud key the API serves the catalog without a tenant
-  // key; without it the read fails and the tenant onboards, as before.
+  // key; without it the API asks for one and the tenant onboards, as before.
+  // Any other failure is the Registry's, and a key would not fix it.
   if (
     !isActiveRegistryCredential(credential) &&
-    catalog.status !== REGISTRY_CATALOG.COMPLETE
+    catalog.status === REGISTRY_FAILURE.ONBOARDING
   ) {
     return bootstrapReady({
       status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,

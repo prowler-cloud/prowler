@@ -495,6 +495,29 @@ describe("Registry guarded reads", () => {
     });
   });
 
+  it.each([
+    { status: 503, code: "registry_unavailable", expected: "unavailable" },
+    { status: 500, code: "registry_configuration_error", expected: "error" },
+  ])(
+    "shows a $status Registry failure to a tenant without a key instead of onboarding",
+    async ({ status, code, expected }) => {
+      // Given: a key would not fix a Registry outage or a rejected Cloud key
+      fetchMock
+        .mockResolvedValueOnce(credentialResponse(noCredential))
+        .mockResolvedValueOnce(tenantArtifactsResponse())
+        .mockResolvedValueOnce(jsonResponse({ errors: [{ code }] }, status));
+
+      // When
+      const result = await getRegistryBootstrap();
+
+      // Then
+      expect(result).toMatchObject({
+        status: "ready",
+        state: { status: expected },
+      });
+    },
+  );
+
   it("keeps a pending validation on its own state without reading the catalog", async () => {
     // Given
     fetchMock
