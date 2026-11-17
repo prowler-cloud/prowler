@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "inspector2_coverage_recently_scanned",
+  "CheckTitle": "Inspector2 covered resource was scanned within the configured number of days",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "inspector2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "security",
+  "Description": "**Amazon Inspector** coverage is evaluated for every actively monitored resource. The time since the resource was last scanned (`lastScannedAt`) is compared with the configurable `inspector2_max_days_since_last_scan` threshold (3 days by default).\n\nResources still pending their first scan are not evaluated.",
+  "Risk": "Stale scans leave **newly published CVEs** and configuration **drift** undetected. A resource that has not been rescanned for weeks can keep running exploitable packages long after a fix is available.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/inspector/latest/user/assessing-coverage.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/scanning-ecr.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the Amazon Inspector console, choose Account management and review the Last scanned at value in the Instances, Container images and Lambda functions tabs\n2. For EC2 instances, confirm the SSM Agent is healthy or, under General settings > EC2 scanning settings, set the scan mode to hybrid\n3. For ECR images, increase the Amazon ECR re-scan duration in the Amazon Inspector settings\n4. Confirm the resources are rescanned",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep continuous scanning healthy: use **hybrid** EC2 scanning so instances without a working SSM agent are still scanned, set a long ECR **rescan duration** for images in use, and investigate every resource whose last scan is older than the allowed window.",
+      "Url": "https://hub.prowler.com/check/inspector2_coverage_recently_scanned"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "inspector2_is_enabled",
+    "inspector2_coverage_scan_status_active"
+  ],
+  "Notes": ""
+}

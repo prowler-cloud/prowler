@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheckIcon, CircleXIcon } from "lucide-react";
+import { CircleCheckIcon, CircleXIcon, InfoIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { TREE_ITEM_STATUS, TreeItemStatus } from "@/types/tree";
@@ -11,11 +11,14 @@ interface TreeStatusIconProps {
 }
 
 /**
- * TreeStatusIcon component - displays success or error status for tree nodes.
+ * TreeStatusIcon component - displays success, error, or pending status for
+ * tree nodes.
  *
  * Features:
  * - CircleCheck icon for success (green)
  * - CircleX icon for error (red)
+ * - Static Info icon for pending: an item nothing is polling any more but with
+ *   no confirmed outcome, so a spinner would misrepresent it as in progress
  * - Same size as TreeSpinner for consistent layout
  */
 export function TreeStatusIcon({ status, className }: TreeStatusIconProps) {
@@ -33,6 +36,15 @@ export function TreeStatusIcon({ status, className }: TreeStatusIconProps) {
       <CircleXIcon
         className={cn("text-text-error-primary size-5 shrink-0", className)}
         aria-label="Error"
+      />
+    );
+  }
+
+  if (status === TREE_ITEM_STATUS.PENDING) {
+    return (
+      <InfoIcon
+        className={cn("text-bg-data-info size-5 shrink-0", className)}
+        aria-label="Still running"
       />
     );
   }

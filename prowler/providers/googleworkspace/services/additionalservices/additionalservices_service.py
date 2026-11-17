@@ -31,43 +31,23 @@ class AdditionalServices(GoogleWorkspaceService):
                 logger.error("Failed to build Cloud Identity service")
                 return
 
-            request = service.policies().list(
-                pageSize=100,
-                filter='setting.type.matches("groups.service_status")',
+            policies, fetch_succeeded = self._list_policies(
+                service,
+                'setting.type.matches("groups.service_status")',
+                "fetching Additional Services policies",
             )
-            fetch_succeeded = True
 
-            while request is not None:
-                try:
-                    response = request.execute()
+            for policy in self._effective_policies(policies):
+                setting = policy.get("setting", {})
+                setting_type = setting.get("type", "").removeprefix("settings/")
+                value = setting.get("value", {})
 
-                    for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
-                            continue
-
-                        setting = policy.get("setting", {})
-                        setting_type = setting.get("type", "").removeprefix("settings/")
-                        value = setting.get("value", {})
-
-                        if setting_type == "groups.service_status":
-                            self.policies.groups_service_state = value.get(
-                                "serviceState"
-                            )
-                            logger.debug(
-                                "Additional Services - Groups service state: "
-                                f"{self.policies.groups_service_state}"
-                            )
-
-                    request = service.policies().list_next(request, response)
-
-                except Exception as error:
-                    self._handle_api_error(
-                        error,
-                        "fetching Additional Services policies",
-                        self.provider.identity.customer_id,
+                if setting_type == "groups.service_status":
+                    self.policies.groups_service_state = value.get("serviceState")
+                    logger.debug(
+                        "Additional Services - Groups service state: "
+                        f"{self.policies.groups_service_state}"
                     )
-                    fetch_succeeded = False
-                    break
 
             self.policies_fetched = fetch_succeeded
 

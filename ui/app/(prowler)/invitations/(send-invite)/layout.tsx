@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 
+import { X } from "lucide-react";
 import React from "react";
 
 import { WorkflowSendInvite } from "@/components/invitations/workflow";
@@ -14,7 +15,7 @@ export default function InvitationLayout({ children }: InvitationLayoutProps) {
     <>
       <NavigationHeader
         title="Send Invitation"
-        icon="icon-park-outline:close-small"
+        icon={<X />}
         href="/invitations"
       />
       <div className="h-16" />

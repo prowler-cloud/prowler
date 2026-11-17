@@ -51,4 +51,44 @@ describe("Google OAuth callback route", () => {
     expect(body.get("promo_code")).toBe("black-hat-2026");
     expect(body.get("utm_source")).toBe("blackhat");
   });
+
+  it("redirects to sign-in with a specific error when self-registration is disabled", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      Response.json(
+        { errors: [{ code: "self_registration_disabled", status: "403" }] },
+        { status: 403 },
+      ),
+    );
+    const request = new Request(
+      "https://app.example.com/api/auth/callback/google?code=oauth-code",
+    );
+
+    // When
+    const response = await GET(request);
+
+    // Then
+    expect(response.headers.get("location")).toBe(
+      "https://app.example.com/sign-in?error=SelfRegistrationDisabled",
+    );
+    expect(signInMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps the generic failure for other token exchange errors", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      Response.json({ errors: [{ status: "400" }] }, { status: 400 }),
+    );
+    const request = new Request(
+      "https://app.example.com/api/auth/callback/google?code=oauth-code",
+    );
+
+    // When
+    const response = await GET(request);
+
+    // Then
+    expect(response.headers.get("location")).toBe(
+      "https://app.example.com/sign-in?error=AuthenticationFailed",
+    );
+  });
 });

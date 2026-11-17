@@ -12,6 +12,9 @@ import {
   SLACK_CALLBACK_PATH,
   SLACK_EXPIRED_CALLBACK_URL,
 } from "@/lib/integrations/slack-connect-status";
+import { REGISTRY_ACCESS } from "@/lib/registry/access";
+import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import { readRegistryPresentation } from "@/lib/registry/presentation";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
 import { copyAttributionParams } from "@/lib/utm";
@@ -35,6 +38,7 @@ const withSecurityHeaders = (response: NextResponse): NextResponse => {
     "Content-Security-Policy",
     getCspHeader({
       cloudEnabled: isCloud(),
+      registryImageOrigins: readRegistryPresentation().imageOrigins,
       posthogEnabled: isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog),
       posthogKey: readGatedEnv(
         "UI_POSTHOG_ENABLED",
@@ -57,7 +61,7 @@ const redirect = (url: URL): NextResponse =>
   withSecurityHeaders(NextResponse.redirect(url));
 
 // NextAuth's auth() wrapper - renamed from middleware to proxy
-export default auth((req: NextAuthRequest) => {
+export default auth(async (req: NextAuthRequest) => {
   const { pathname } = req.nextUrl;
 
   const user = req.auth?.user;
@@ -100,6 +104,14 @@ export default auth((req: NextAuthRequest) => {
     (!isCloud() ||
       !cloudBillingEnabled ||
       user?.permissions?.manage_billing !== true)
+  ) {
+    return redirect(new URL("/profile", req.url));
+  }
+
+  if (
+    (pathname === "/registry" || pathname.startsWith("/registry/")) &&
+    (await evaluateRegistryAccess(req.auth?.accessToken)).status !==
+      REGISTRY_ACCESS.ELIGIBLE
   ) {
     return redirect(new URL("/profile", req.url));
   }

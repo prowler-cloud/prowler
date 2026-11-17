@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "workers_script_preview_urls_disabled",
+  "CheckTitle": "Cloudflare Worker has Preview URLs disabled",
+  "CheckType": [],
+  "ServiceName": "workers",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Worker",
+  "ResourceGroup": "serverless",
+  "Description": "**Cloudflare Workers scripts** are assessed for **Preview URLs** by checking whether every uploaded version of the Worker is published on a public `*.workers.dev` preview hostname.",
+  "Risk": "**Preview URLs** expose each uploaded Worker version publicly.\n- **Integrity**: untested, vulnerable or outdated versions remain reachable after a fix is deployed\n- **Confidentiality**: in-progress features and debug code paths can leak data\n- **Defense evasion**: zone-level WAF and Access controls do not apply to preview hostnames",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/workers/configuration/previews/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to Workers & Pages and select the Worker\n3. Open Settings > Domains & Routes\n4. Disable Preview URLs\n5. Alternatively, set `preview_urls = false` in the Wrangler configuration and redeploy",
+      "Terraform": "```hcl\nresource \"cloudflare_workers_script_subdomain\" \"example\" {\n  account_id       = \"<ACCOUNT_ID>\"\n  script_name      = \"example-worker\"\n  enabled          = true  # keep the Worker's current workers.dev setting\n  previews_enabled = false # Critical: stops publishing every version publicly\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable **Preview URLs** on production Workers.\n- Use dedicated staging Workers protected by **Cloudflare Access** for testing\n- If previews are required, restrict them with Access policies\n- Periodically review Worker versions and remove unused ones",
+      "Url": "https://hub.prowler.com/checks/cloudflare/workers_script_preview_urls_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Scripts in accounts without a registered workers.dev subdomain are not reported."
+}

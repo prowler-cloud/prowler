@@ -278,6 +278,14 @@ describe("getLatestFindingsByResourceUid", () => {
     handleApiResponseMock.mockResolvedValue({ data: [] });
   });
 
+  it("does not substitute sample records for a real resource with the same ARN", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    await getLatestFindingsByResourceUid({
+      resourceUid: "arn:aws:s3:::acme-customer-exports",
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it("should restrict to FAIL, exclude muted findings, and apply severity/time sorting by default", async () => {
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
 

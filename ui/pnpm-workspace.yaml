@@ -18,10 +18,11 @@ overrides:
   "@react-aria/visually-hidden>react": "19.2.7"
   "@react-aria/interactions>react": "19.2.7"
   "lodash": "4.18.1"
-  # Next.js 16.3.3 requests sharp ^0.35.3; resolve 0.35.4 to fix
-  # GHSA-rgj7-g3m4-5g8c (libheif). This override controls resolution;
-  # keep it aligned with the direct dependency in package.json.
-  "sharp": "0.35.4"
+  # Next.js 16.4.1 requests sharp ^0.35.5; pinned to fix
+  # GHSA-rgj7-g3m4-5g8c (libheif) and GHSA-wq5f-xc86-pv6w (librsvg).
+  # This override controls resolution; keep it aligned with the direct
+  # dependency in package.json.
+  "sharp": "0.35.5"
   "lodash-es": "4.18.1"
   # GHSA-88fw-hqm2-52qc (CORS reflects any Origin with credentials), CVE-2026-59896
   # (hono/jsx SSR context leak) and the 4.12.34 batch: CORS ReDoS via
@@ -29,7 +30,7 @@ overrides:
   # Language middleware algorithmic DoS, Proxy Helper keeping `Connection` headers.
   # Node adapter 1.19.17 fixes serve-static path traversal via `%5C` on Windows
   # (1.19.15 was published without provenance and trips `trustPolicy: no-downgrade`).
-  "hono": "4.12.34"
+  "hono": "4.13.11"
   "@hono/node-server": "1.19.17"
   "@isaacs/brace-expansion": "5.0.1"
   "fast-xml-parser": "5.8.0"
@@ -43,7 +44,7 @@ overrides:
   # GHSA-v6wh-96g9-6wx3 (launch-editor NTLMv2 hash disclosure). Dev-only tooling
   # (vitest/@vitejs/plugin-react); consumers allow ^7 but never resolve past 7.3.2
   # without a nudge.
-  "vite@>=7 <8": "7.3.5"
+  "vite@>=7 <8": "7.3.7"
   # GHSA-96hv-2xvq-fx4p (memory exhaustion DoS from tiny fragments, high) +
   # GHSA-58qx-3vcg-4xpx (uninitialized memory disclosure), both fixed in 8.21.0.
   # Not 8.21.1: it is still inside StepSecurity's 7-day npm cooldown gate.
@@ -62,15 +63,16 @@ overrides:
   # does not float past StepSecurity's 7-day npm cooldown gate.
   "browserslist": "4.28.7"
   "caniuse-lite": "1.0.30001792"
-  "baseline-browser-mapping": "2.10.29"
+  "baseline-browser-mapping": "2.11.0"
   "minimatch@<4": "3.1.4"
   "minimatch@>=9 <10": "9.0.7"
   "minimatch@>=10": "10.2.3"
   "ajv@<7": "6.14.0"
   "ajv@>=8": "8.18.0"
   # 6.16.0 fixes the bracket-key comma array-limit bypass and DoS via an
-  # attacker-controlled isBuffer.
-  "qs": "6.16.0"
+  # attacker-controlled isBuffer; 6.16.1 fixes the comma-format stringify throw
+  # (GHSA-6pq8-jhm2-2vcw).
+  "qs": "6.16.1"
   # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
   # under `trustPolicy: no-downgrade`.
   "express-rate-limit": "8.5.1"
@@ -83,8 +85,10 @@ overrides:
   # pulled in transitively via streamdown > mermaid and posthog-js. 3.4.11 closed
   # GHSA-cmwh-pvxp-8882 (permanent ALLOWED_ATTR pollution via setConfig()); 3.4.13
   # also closes the CUSTOM_ELEMENT_HANDLING afterSanitizeElements bypass and the
-  # IN_PLACE hook removal that left a detached subtree executable.
-  "dompurify": "3.4.13"
+  # IN_PLACE hook removal that left a detached subtree executable. 3.4.17 closes
+  # GHSA-cg2g-xh64-v4q7 (SAFE_FOR_TEMPLATES bypass via split template expressions
+  # in attached shadow roots), flagged critical by `pnpm audit` on 2026-10-23.
+  "dompurify": "3.4.17"
 
   # Advisories flagged by `pnpm audit` on 2026-09-08. Every pin below is the
   # oldest patched release and was published more than 7 days before that date,
@@ -92,26 +96,33 @@ overrides:
   # brace-expansion: three DoS advisories (exponential `{}` expansion, unbounded
   # expansion length OOM, unbounded intermediate arrays bypassing the
   # CVE-2026-14257 mitigation). 1.x via eslint > minimatch, 5.x via @sentry > glob.
-  "brace-expansion@<2": "1.1.18"
-  "brace-expansion@>=5": "5.0.9"
+  # 1.1.21 / 5.0.12 close the 2026-09-29 follow-ups (GHSA-6j4f-fj2g-mc7p,
+  # GHSA-qhr7-859c-m2p7, GHSA-q2hr-2g5m-vwhr); 1.x stays on its own major for minimatch@3.
+  "brace-expansion@<2": "1.1.21"
+  "brace-expansion@>=5": "5.0.12"
   # fast-uri (via ajv): host confusion through backslash authority delimiters,
   # failed IDN canonicalization and percent-encoded scheme normalization, plus SSRF
   # via malformed IPv6 normalization and repeated hostname percent-decoding.
-  "fast-uri": "3.1.6"
+  "fast-uri": "3.1.9"
   # ip-address (via express-rate-limit): SSRF / trust-boundary bypasses from
   # leading-zero octets, CIDR suffixes and IPv4-mapped / NAT64 misclassification.
-  "ip-address": "10.3.1"
+  "ip-address": "10.7.4"
   # mermaid (via streamdown): prototype pollution in config APIs and Architecture
   # diagrams, CSS injection into sibling elements, XY Chart infinite loop and
   # radar diagram DoS.
   "mermaid": "11.16.1"
   # body-parser (via express): invalid `limit` silently disabled size enforcement.
-  "body-parser": "2.3.0"
+  "body-parser": "2.4.0"
+  # proxy-addr (via @modelcontextprotocol/sdk > express): GHSA-jqcg-44mw-7w3h
+  # (critical), a short IPv4-mapped IPv6 trust subnet trusts every client, so
+  # `req.ip` returns a spoofed X-Forwarded-For. 2.0.8 (2026-09-15) clears the
+  # 7-day cooldown gate.
+  "proxy-addr": "2.0.8"
   # @humanfs/node (via eslint): recursive copy followed symlinks outside the tree.
   "@humanfs/node": "0.16.8"
   # js-yaml: quadratic CPU in `!!omap` resolution (CVE-2026-59870 not backported
-  # to 4.3.0). Direct dep is already 4.3.1; the override lifts eslint's copy too.
-  "js-yaml": "4.3.1"
+  # to 4.3.0). Direct dep is already 4.3.2; the override lifts eslint's copy too.
+  "js-yaml": "4.3.2"
 
 # --- Level 1: Minimum Release Age ---
 # Packages must be published for at least 1 day before they can be installed.

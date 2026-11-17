@@ -23,6 +23,8 @@ export const RUNTIME_CONFIG_KEYS = [
   "reoDevClientId",
   "cloudBillingEnabled",
   "cloudEnabled",
+  "registryEnabled",
+  "selfRegistrationEnabled",
   "stripePublishableKey",
   "stripePublishableKeyV2",
 ] as const satisfies ReadonlyArray<keyof RuntimePublicConfig>;

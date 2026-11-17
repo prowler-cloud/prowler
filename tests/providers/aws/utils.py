@@ -21,6 +21,7 @@ AWS_GOV_CLOUD_PARTITION = "aws-us-gov"
 AWS_CHINA_PARTITION = "aws-cn"
 AWS_EUSC_PARTITION = "aws-eusc"
 AWS_ISO_PARTITION = "aws-iso"
+AWS_ISO_B_PARTITION = "aws-iso-b"
 
 # Root AWS Account
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -54,7 +55,9 @@ AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
 AWS_REGION_GOV_CLOUD_US_WEST_1 = "us-gov-west-1"
 
 # Iso Regions
-AWS_REGION_ISO_GLOBAL = "aws-iso-global"
+AWS_REGION_ISO_EAST_1 = "us-iso-east-1"
+AWS_REGION_ISO_WEST_1 = "us-iso-west-1"
+AWS_REGION_ISO_B_EAST_1 = "us-isob-east-1"
 
 # European Sovereign Cloud Regions
 AWS_REGION_EUSC_DE_EAST_1 = "eusc-de-east-1"

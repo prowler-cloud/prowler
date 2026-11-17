@@ -12,7 +12,7 @@ Two responsibilities:
 
 Label-injection pipeline:
 
-1. **Protect** string literals and line comments (placeholder replacement).
+1. **Protect** string literals and comments (placeholder replacement).
 2. **Split** by top-level clause keywords to track clause context.
 3. **Pass A** - inject into *labeled* node patterns in ALL segments.
 4. **Pass B** - inject into *bare* node patterns in MATCH segments only.
@@ -25,10 +25,16 @@ from rest_framework.exceptions import ValidationError
 from tasks.jobs.attack_paths.config import get_provider_label
 
 # Step 1 - String / comment protection
-# Single combined regex: strings first, then line comments
+# Single combined regex: quoted identifiers, strings, then line and block comments
 # The regex engine finds the leftmost match, so a string like 'https://prowler.com'
-# is consumed as a string before the // inside it can match as a comment
-_PROTECTED_RE = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|//[^\n]*")
+# is consumed as a string before the // inside it can match as a comment, and a
+# quote inside a backtick-quoted identifier cannot open a string
+# Neo4j ends a line comment at \r as well as \n, and an escape inside a string
+# can be followed by a newline
+_PROTECTED_RE = re.compile(
+    r"`(?:[^`]|``)*`"
+    r"|'(?:[^'\\]|\\[\s\S])*'|\"(?:[^\"\\]|\\[\s\S])*\"|//[^\n\r]*|/\*[\s\S]*?\*/"
+)
 
 # Step 2 - Clause splitting
 # `OPTIONAL MATCH` must come before `MATCH` to avoid partial matching
@@ -106,6 +112,9 @@ def inject_label(cypher: str, label: str) -> str:
     protected: list[str] = []
 
     def _save(match):
+        if match.group(0).startswith("`"):
+            # Quoted identifiers stay in place: node labels may be written this way
+            return match.group(0)
         protected.append(match.group(0))
         return f"\x00P{len(protected) - 1}\x00"
 
@@ -143,18 +152,36 @@ def inject_label(cypher: str, label: str) -> str:
 
 # Patterns that indicate SSRF or dangerous procedure calls
 # Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
+# Neo4j accepts whitespace (and therefore comments) around the dots of a
+# qualified procedure name, so `apoc . load` is `apoc.load`.
+_BLOCKED_APOC_NAMESPACES = (
+    "load",
+    "import",
+    "export",
+    "cypher",
+    "systemdb",
+    "config",
+    "periodic",
+    "do",
+    "trigger",
+    "custom",
+    # Run a Cypher string given as an argument, which this validator never sees
+    "when",
+    "case",
+    "graph",
+    "spatial",
+)
+# Neo4j decodes \uXXXX anywhere in the query text, so an escape can spell a
+# keyword or close a string literal before any of the checks below see it
+# Any \u counts unless its backslash is itself escaped: Neo4j also accepts
+# forms such as \u+004f
+_UNICODE_ESCAPE_RE = re.compile(r"(?<!\\)(?:\\\\)*\\u")
 _BLOCKED_PATTERNS = [
     re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.load\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.import\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.export\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.cypher\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.config\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.periodic\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.do\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.trigger\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.custom\b", re.IGNORECASE),
+    *(
+        re.compile(rf"\bapoc\s*\.\s*{namespace}\b", re.IGNORECASE)
+        for namespace in _BLOCKED_APOC_NAMESPACES
+    ),
 ]
 
 
@@ -162,10 +189,23 @@ def validate_custom_query(cypher: str) -> None:
     """Reject queries containing known SSRF or dangerous procedure patterns.
 
     Raises ValidationError if a blocked pattern is found.
-    String literals and comments are stripped before matching to avoid
-    false positives.
+    String literals and comments are replaced by a space before matching:
+    literals cannot trigger false positives and a comment cannot split a
+    keyword pair such as `LOAD /**/ CSV`, which Neo4j still parses as `LOAD CSV`.
+    Backtick-quoted identifiers are unquoted, so `apoc`.`load` reads as `apoc.load`.
     """
-    stripped = _PROTECTED_RE.sub("", cypher)
+
+    def _for_matching(match):
+        token = match.group(0)
+        if token.startswith("`"):
+            # Padded so the name cannot fuse with the keyword next to it
+            return f" {token[1:-1].replace('``', '`')} "
+        return " "
+
+    if _UNICODE_ESCAPE_RE.search(cypher):
+        raise ValidationError({"query": "Query contains a blocked operation"})
+
+    stripped = _PROTECTED_RE.sub(_for_matching, cypher)
     for pattern in _BLOCKED_PATTERNS:
         if pattern.search(stripped):
             raise ValidationError({"query": "Query contains a blocked operation"})

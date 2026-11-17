@@ -1439,8 +1439,20 @@ class InvitationFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     expires_at = DateFilter(field_name="expires_at", lookup_expr="date")
-    state = ChoiceFilter(choices=Invitation.State.choices)
-    state__in = ChoiceInFilter(choices=Invitation.State.choices, lookup_expr="in")
+    state = ChoiceFilter(choices=Invitation.State.choices, method="filter_state")
+    state__in = ChoiceInFilter(
+        choices=Invitation.State.choices, lookup_expr="in", method="filter_state_in"
+    )
+
+    def filter_state(self, queryset, name, value):
+        return self.filter_state_in(queryset, name, [value])
+
+    def filter_state_in(self, queryset, name, value):
+        lapsed = Invitation.lapsed_q()
+        query = Q(state__in=value) & ~lapsed
+        if Invitation.State.EXPIRED in value:
+            query |= lapsed
+        return queryset.filter(query)
 
     class Meta:
         model = Invitation

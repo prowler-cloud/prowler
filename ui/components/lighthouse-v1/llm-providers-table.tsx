@@ -1,6 +1,5 @@
 "use client";
 
-import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -9,6 +8,7 @@ import {
   getTenantConfig,
 } from "@/actions/lighthouse-v1/lighthouse";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
+import type { IconComponent } from "@/types/components";
 
 import { getAllProviders } from "./llm-provider-registry";
 
@@ -25,7 +25,7 @@ type LLMProvider = {
   provider: string;
   description: string;
   defaultModel: string;
-  icon: string;
+  icon: IconComponent;
   isConnected: boolean;
   isActive: boolean;
   isDefaultProvider: boolean;
@@ -156,7 +156,7 @@ export const LLMProvidersTable = () => {
               {/* Header */}
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <Icon icon={provider.icon} width={40} height={40} />
+                  <provider.icon aria-hidden="true" size={40} />
                   <div className="flex flex-1 flex-col">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold">

@@ -17,6 +17,23 @@ class CloudflareRateLimitRule(BaseModel):
     expression: Optional[str] = None
 
 
+def _skip_targets(action_parameters) -> list[str]:
+    """Describe what a skip rule bypasses (phases, products and rulesets)."""
+    if not action_parameters:
+        return []
+    targets = list(getattr(action_parameters, "phases", None) or [])
+    targets += list(getattr(action_parameters, "products", None) or [])
+    if getattr(action_parameters, "ruleset", None) == "current":
+        targets.append("remaining custom rules")
+    rulesets = getattr(action_parameters, "rulesets", None) or []
+    if rulesets:
+        targets.append(f"{len(rulesets)} managed ruleset(s)")
+    rules = getattr(action_parameters, "rules", None) or {}
+    if rules:
+        targets.append("specific managed rules")
+    return targets
+
+
 class CloudflareFirewallRule(BaseModel):
     """Represents a firewall rule from custom rulesets."""
 
@@ -27,6 +44,8 @@ class CloudflareFirewallRule(BaseModel):
     enabled: bool = True
     expression: Optional[str] = None
     phase: Optional[str] = None
+    # For skip rules: the phases, products or rulesets the rule bypasses.
+    skip_targets: list[str] = Field(default_factory=list)
 
     class Config:
         arbitrary_types_allowed = True
@@ -48,6 +67,8 @@ class Zone(CloudflareService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.zones: dict[str, "CloudflareZone"] = {}
+        # Zones whose firewall rules are missing or incomplete because a call failed.
+        self.firewall_rules_failed_zones: set[str] = set()
         self._list_zones()
         self.__threading_call__(self._get_zone_settings_threaded, self.zones.values())
         self.__threading_call__(self._get_zone_dnssec, self.zones.values())
@@ -246,17 +267,23 @@ class Zone(CloudflareService):
                                         enabled=getattr(rule, "enabled", True),
                                         expression=getattr(rule, "expression", None),
                                         phase=ruleset_phase,
+                                        skip_targets=_skip_targets(
+                                            getattr(rule, "action_parameters", None)
+                                        ),
                                     )
                                 )
                             except Exception as error:
+                                self.firewall_rules_failed_zones.add(zone.id)
                                 logger.error(
                                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                     except Exception as error:
+                        self.firewall_rules_failed_zones.add(zone.id)
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
+            self.firewall_rules_failed_zones.add(zone.id)
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

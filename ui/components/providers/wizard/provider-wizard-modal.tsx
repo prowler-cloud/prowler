@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Info } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { AzureOrgSetupForm } from "@/components/providers/organizations/azure-org-setup-form";
 import { GcpOrgSetupForm } from "@/components/providers/organizations/gcp-org-setup-form";
@@ -9,38 +9,36 @@ import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-s
 import { OrgSetupForm } from "@/components/providers/organizations/org-setup-form";
 import { Button } from "@/components/shadcn/button/button";
 import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
-import { Modal } from "@/components/shadcn/modal";
+import { SidePanelHostModal } from "@/components/side-panel/side-panel-host-modal";
 import { useScanScheduleCapability } from "@/hooks/use-scan-schedule-capability";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
-import { advanceActiveTour, endActiveTour } from "@/lib/tours/use-driver-tour";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_STEP,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import {
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
   ORGANIZATION_TYPE,
 } from "@/types/organizations";
-import {
-  PROVIDER_WIZARD_MODE,
-  PROVIDER_WIZARD_STEP,
-} from "@/types/provider-wizard";
+import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
+import { LighthouseConnectHelp } from "./lighthouse-connect-help";
 import {
-  getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
+  getProviderWizardSteps,
 } from "./provider-wizard-modal.utils";
 import { ConnectStep } from "./steps/connect-step";
-import { CredentialsStep } from "./steps/credentials-step";
 import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
-import { TestConnectionStep } from "./steps/test-connection-step";
 import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
-import { PROVIDER_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
-
-const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
-  0,
-  PROVIDER_WIZARD_STEP.LAUNCH,
-);
+import {
+  getActiveStepIndex,
+  ORGANIZATION_WIZARD_STEPS,
+  WizardStepper,
+} from "./wizard-stepper";
 
 interface ProviderWizardModalProps {
   open: boolean;
@@ -65,11 +63,13 @@ export function ProviderWizardModal({
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
+    connectionMethod,
     currentStep,
     docsLink,
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isDirectCredentialsEntry,
     isOrgDirectEntry,
     isProviderFlow,
     mode,
@@ -78,12 +78,14 @@ export function ProviderWizardModal({
     organizationType,
     orgCurrentStep,
     orgSetupPhase,
+    providerTypeHint,
     resolvedFooterConfig,
     setCurrentStep,
     setFooterConfig,
     setOrgCurrentStep,
     setOrgSetupPhase,
     setProviderTypeHint,
+    stepName,
     wizardVariant,
   } = useProviderWizardController({
     open,
@@ -102,56 +104,44 @@ export function ProviderWizardModal({
     isScheduleCapabilityLoading,
   } = useScanScheduleCapability(scanScheduleCapability);
   const docsDestination = getProviderWizardDocsDestination(docsLink);
+  const stepperSteps = isProviderFlow
+    ? getProviderWizardSteps(mode)
+    : ORGANIZATION_WIZARD_STEPS;
+  const stepperCurrent = isProviderFlow ? currentStep : orgCurrentStep;
+  const stepLabel =
+    stepperSteps[getActiveStepIndex(stepperCurrent, stepperSteps.length)].label;
 
   return (
-    <Modal
+    <SidePanelHostModal
       open={open}
       onOpenChange={handleDialogOpenChange}
       size="4xl"
-      className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !w-[calc(100vw-24px)] !max-w-[1192px] flex-col overflow-hidden p-4 sm:!w-[calc(100vw-40px)] sm:p-6 lg:!w-[calc(100vw-64px)] lg:p-8"
+      // cqw: widths follow the space the side panel leaves, not the viewport.
+      className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !w-[calc(100cqw-24px)] !max-w-[1192px] flex-col overflow-hidden p-4 sm:!w-[calc(100cqw-40px)] sm:p-6 lg:!w-[calc(100cqw-64px)] lg:p-8"
     >
       <DialogHeader className="gap-2 p-0">
         <DialogTitle className="text-lg font-semibold">
           {modalTitle}
         </DialogTitle>
-        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-          <Info className="size-4 shrink-0" />
-          <span>For assistance connecting a Provider visit</span>
-          <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
-            <a href={docsLink} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>{`${docsDestination} Documentation`}</span>
-            </a>
-          </Button>
-        </div>
       </DialogHeader>
 
-      {/* Anchors the add-provider tour's final step to the wizard content and
-          footer, keeping the real form controls clickable under the overlay. */}
-      <div
-        data-tour-id="add-provider-wizard-body"
-        className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8"
-      >
+      <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-          <div className="mb-4 box-border w-full shrink-0 lg:mb-0 lg:w-[328px]">
-            {isProviderFlow ? (
-              <WizardStepper
-                currentStep={currentStep}
-                steps={
-                  mode === PROVIDER_WIZARD_MODE.UPDATE
-                    ? UPDATE_MODE_WIZARD_STEPS
-                    : undefined
-                }
-              />
-            ) : (
-              <WizardStepper
-                currentStep={orgCurrentStep}
-                stepOffset={getOrganizationsStepperOffset(
-                  orgCurrentStep,
-                  orgSetupPhase,
-                )}
-              />
-            )}
+          {/* Help and progress share the left column, so the form keeps the height. */}
+          <div className="mb-4 box-border flex w-full shrink-0 flex-col gap-4 lg:mb-0 lg:w-[328px] lg:gap-8">
+            <LighthouseConnectHelp
+              docsLink={docsLink}
+              docsDestination={docsDestination}
+              providerType={
+                isProviderFlow ? providerTypeHint : organizationType
+              }
+              mode={mode}
+              stepName={stepName}
+              stepLabel={stepLabel}
+              connectionMethod={connectionMethod}
+              isOrganizationsFlow={!isProviderFlow}
+            />
+            <WizardStepper currentStep={stepperCurrent} steps={stepperSteps} />
           </div>
           <div
             aria-hidden
@@ -167,41 +157,23 @@ export function ProviderWizardModal({
                 {isProviderFlow &&
                   currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
                     <ConnectStep
-                      onNext={() => {
-                        setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
-                        // Reaching credentials is the tour's handoff point: end it so the
-                        // user continues on their own. No-op off-onboarding.
-                        endActiveTour();
-                      }}
-                      onSelectOrganizations={openOrganizationsFlow}
-                      onFooterChange={setFooterConfig}
+                      providerType={providerTypeHint}
+                      locked={isDirectCredentialsEntry}
                       onProviderTypeChange={(providerType) => {
-                        // Picking a type reveals the account-detail inputs. Advance the tour
-                        // to its wizard-body step, pinned beside the form. No-op off-onboarding.
-                        if (providerType) advanceActiveTour();
+                        // The picker re-reports the same type on re-render; signal a pick once.
+                        if (providerType && providerType !== providerTypeHint) {
+                          dispatchProviderFunnel({
+                            step: PROVIDER_FUNNEL_STEP.PROVIDER_TYPE_SELECTED,
+                            providerType,
+                          });
+                        }
                         setProviderTypeHint(providerType);
                       }}
-                    />
-                  )}
-
-                {isProviderFlow &&
-                  currentStep === PROVIDER_WIZARD_STEP.CREDENTIALS && (
-                    <CredentialsStep
-                      onNext={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
-                      onBack={() =>
-                        setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT)
-                      }
-                      onFooterChange={setFooterConfig}
-                    />
-                  )}
-
-                {isProviderFlow &&
-                  currentStep === PROVIDER_WIZARD_STEP.TEST && (
-                    <TestConnectionStep
-                      onSuccess={handleTestSuccess}
-                      onResetCredentials={() =>
-                        setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS)
-                      }
+                      // The account is saved and tested: an update closes the
+                      // wizard, an add moves on to the launch step.
+                      onConnected={handleTestSuccess}
+                      onClose={handleClose}
+                      onSelectOrganizations={openOrganizationsFlow}
                       onFooterChange={setFooterConfig}
                     />
                   )}
@@ -209,7 +181,9 @@ export function ProviderWizardModal({
                 {isProviderFlow &&
                   currentStep === PROVIDER_WIZARD_STEP.LAUNCH && (
                     <LaunchStep
-                      onBack={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
+                      onBack={() =>
+                        setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT)
+                      }
                       onClose={handleClose}
                       onFooterChange={setFooterConfig}
                       capability={resolvedScanScheduleCapability}
@@ -224,6 +198,9 @@ export function ProviderWizardModal({
                     <OrgSetupForm
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
+                      onSelectSingleAccount={
+                        isOrgDirectEntry ? undefined : backToProviderFlow
                       }
                       onClose={handleClose}
                       onNext={() => {
@@ -251,6 +228,9 @@ export function ProviderWizardModal({
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow
                       }
+                      onSelectSingleAccount={
+                        isOrgDirectEntry ? undefined : backToProviderFlow
+                      }
                       onNext={() => {
                         setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                       }}
@@ -275,6 +255,9 @@ export function ProviderWizardModal({
                     <GcpOrgSetupForm
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
+                      onSelectSingleAccount={
+                        isOrgDirectEntry ? undefined : backToProviderFlow
                       }
                       onClose={handleClose}
                       onNext={() => {
@@ -405,7 +388,11 @@ export function ProviderWizardModal({
                         : "button"
                     }
                     form={resolvedFooterConfig.actionFormId}
-                    disabled={resolvedFooterConfig.actionDisabled}
+                    disabled={
+                      resolvedFooterConfig.actionDisabled ||
+                      resolvedFooterConfig.actionLoading
+                    }
+                    aria-busy={resolvedFooterConfig.actionLoading || undefined}
                     onClick={
                       resolvedFooterConfig.actionType ===
                       WIZARD_FOOTER_ACTION_TYPE.BUTTON
@@ -413,6 +400,9 @@ export function ProviderWizardModal({
                         : undefined
                     }
                   >
+                    {resolvedFooterConfig.actionLoading && (
+                      <Loader2 aria-hidden className="animate-spin" />
+                    )}
                     {resolvedFooterConfig.actionLabel}
                   </Button>
                 )}
@@ -421,6 +411,6 @@ export function ProviderWizardModal({
           </div>
         )}
       </div>
-    </Modal>
+    </SidePanelHostModal>
   );
 }

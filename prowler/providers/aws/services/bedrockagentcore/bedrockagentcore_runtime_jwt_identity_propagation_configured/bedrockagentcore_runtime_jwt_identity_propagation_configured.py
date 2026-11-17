@@ -5,62 +5,40 @@ from prowler.providers.aws.services.bedrockagentcore.bedrockagentcore_client imp
 
 
 class bedrockagentcore_runtime_jwt_identity_propagation_configured(Check):
-    """Ensure Bedrock AgentCore runtimes are configured with custom JWT authorization and identity propagation.
+    """Ensure Bedrock AgentCore runtimes forward the end-user JWT to the agent.
 
-    - PASS: The runtime has a custom JWT authorizer configured and allows the Authorization header
-      in requestHeaderAllowlist (case-insensitive) to propagate end-user identity tokens to downstream tools.
-    - FAIL: The runtime has no custom JWT authorizer configured or does not include Authorization in its
-      requestHeaderAllowlist, relying solely on the agent execution role.
-    - MANUAL: Detail retrieval failed for a runtime or runtime listing failed in a region (e.g., AccessDenied).
+    - PASS: The runtime has a custom JWT authorizer and allows the Authorization header
+      in its request header allowlist, so the end-user token reaches the agent code.
+    - FAIL: The runtime has a custom JWT authorizer but drops the Authorization header,
+      so the agent can only act under its execution role.
+    - No finding: The runtime uses IAM (SigV4) inbound auth, whose callers are IAM
+      principals rather than end users, or its configuration could not be retrieved.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
         """Execute the check logic.
 
         Returns:
-            list[Check_Report_AWS]: A list of reports containing the PASS, FAIL, or MANUAL results.
+            A list of reports containing the result of the check.
         """
         findings = []
 
-        for region, error in sorted(
-            bedrockagentcore_client.agent_runtimes_scan_errors.items()
-        ):
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource={"region": region}
-            )
-            report.region = region
-            report.resource_id = "runtime/unknown"
-            report.resource_arn = f"arn:{bedrockagentcore_client.audited_partition}:bedrock-agentcore:{region}:{bedrockagentcore_client.audited_account}:runtime/unknown"
-            report.status = "MANUAL"
-            report.status_extended = f"Bedrock AgentCore runtimes could not be listed in region {region} ({error}); verify manually that every runtime is configured with a custom JWT authorizer and downstream identity propagation."
-            findings.append(report)
-
         for runtime in bedrockagentcore_client.agent_runtimes.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource=runtime)
-
             if not runtime.detail_retrieved:
-                report.status = "MANUAL"
-                report.status_extended = f"Bedrock AgentCore runtime {runtime.name} configuration could not be retrieved in region {runtime.region}; verify manually that it is configured with a custom JWT authorizer and downstream identity propagation."
+                continue  # unreadable: no finding, the service already logged the error
+            if not (runtime.authorizer_configuration or {}).get("customJWTAuthorizer"):
+                continue  # IAM (SigV4) auth: no end-user token to propagate
+
+            report = Check_Report_AWS(metadata=self.metadata(), resource=runtime)
+            if any(
+                header.lower() == "authorization"
+                for header in runtime.request_header_allowlist
+            ):
+                report.status = "PASS"
+                report.status_extended = f"Bedrock AgentCore runtime {runtime.name} validates end-user JWTs and forwards the Authorization header to the agent in region {runtime.region}."
             else:
-                has_jwt = bool(
-                    runtime.authorizer_configuration
-                    and runtime.authorizer_configuration.custom_jwt_authorizer
-                )
-                headers = (
-                    runtime.request_header_configuration.request_header_allowlist
-                    if runtime.request_header_configuration
-                    and runtime.request_header_configuration.request_header_allowlist
-                    else []
-                )
-                has_auth_header = any(h.lower() == "authorization" for h in headers)
-
-                if has_jwt and has_auth_header:
-                    report.status = "PASS"
-                    report.status_extended = f"Bedrock AgentCore runtime {runtime.name} is configured with a custom JWT authorizer and downstream identity propagation in region {runtime.region}."
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = f"Bedrock AgentCore runtime {runtime.name} does not have a custom JWT authorizer and downstream identity propagation configured and relies solely on the execution role in region {runtime.region}."
-
+                report.status = "FAIL"
+                report.status_extended = f"Bedrock AgentCore runtime {runtime.name} validates end-user JWTs but does not forward the Authorization header to the agent in region {runtime.region}."
             findings.append(report)
 
         return findings

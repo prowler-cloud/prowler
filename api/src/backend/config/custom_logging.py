@@ -231,6 +231,62 @@ LOGGING = {
             "level": LEVEL,
             "propagate": False,
         },
+        # Celery loggers must be declared explicitly because
+        # disable_existing_loggers=True silences any logger that exists at
+        # dictConfig time but is not named here. Without these, fatal worker
+        # errors (e.g. celery.worker CRITICAL) produce no output.
+        # "celery" must keep propagating: get_task_logger() parents task
+        # loggers under celery.task, so blocking here hides them from root.
+        "celery": {
+            "level": LEVEL,
+            "propagate": True,
+        },
+        "celery.worker": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "celery.worker.consumer": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "celery.worker.consumer.consumer": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "kombu": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "kombu.transport.redis": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "billiard": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "amqp": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        # WARNING keeps task failures but skips one "succeeded" line per task.
+        "celery.app.trace": {
+            "handlers": ["tasks_console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "celery.beat": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
     },
     # Gunicorn required configuration
     "root": {

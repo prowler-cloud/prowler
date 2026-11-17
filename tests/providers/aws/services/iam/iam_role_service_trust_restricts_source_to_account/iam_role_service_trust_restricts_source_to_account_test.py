@@ -93,6 +93,10 @@ class Test_iam_role_service_trust_restricts_source_to_account:
         """An account with no roles produces no reports at all."""
         assert len(_run([])) == 0
 
+    def test_unlisted_roles_produce_no_reports(self):
+        # iam:ListRoles denied leaves iam_client.roles as None.
+        assert len(_run(None)) == 0
+
     def test_service_linked_role_skipped(self):
         """A service-linked role is excluded even when its trust policy would FAIL.
 

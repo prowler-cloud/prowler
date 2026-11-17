@@ -6,6 +6,7 @@ from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
+from prowler.lib.outputs.utils import sanitize_csv_value
 
 
 class ComplianceOutput(Output):
@@ -72,19 +73,24 @@ class ComplianceOutput(Output):
             if (
                 getattr(self, "_file_descriptor", None)
                 and not self._file_descriptor.closed
-                and self._data
             ):
-                csv_writer = DictWriter(
-                    self._file_descriptor,
-                    fieldnames=[field.upper() for field in self._data[0].dict().keys()],
-                    delimiter=";",
-                )
-                if self._file_descriptor.tell() == 0:
-                    csv_writer.writeheader()
-                for finding in self._data:
-                    csv_writer.writerow(
-                        {k.upper(): v for k, v in finding.dict().items()}
+                if self._data:
+                    csv_writer = DictWriter(
+                        self._file_descriptor,
+                        fieldnames=[
+                            field.upper() for field in self._data[0].dict().keys()
+                        ],
+                        delimiter=";",
                     )
+                    if self._file_descriptor.tell() == 0:
+                        csv_writer.writeheader()
+                    for finding in self._data:
+                        csv_writer.writerow(
+                            {
+                                k.upper(): sanitize_csv_value(v)
+                                for k, v in finding.dict().items()
+                            }
+                        )
                 if self.close_file or self._from_cli:
                     self._file_descriptor.close()
         except Exception as error:

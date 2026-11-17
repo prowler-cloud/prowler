@@ -28,13 +28,14 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "credentials" authentication type
+3. Select AWS provider type (its connect step opens on the "Single AWS Account" tab)
+4. Select the "Static access keys" method card
+5. Fill provider details (account ID and alias)
 6. Fill static credentials (access key and secret key)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+7. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -61,63 +62,6 @@
 
 ---
 
-## Test Case: `PROVIDER-E2E-002` - Add AWS Provider with Assume Role Credentials Access Key and Secret Key
-
-**Priority:** `critical`
-
-**Tags:**
-
-- type → @e2e, @serial
-- feature → @providers
-- provider → @aws
-
-**Description/Objective:** Validates the complete flow of adding a new AWS provider using role-based authentication with Access Key and Secret Key
-
-**Preconditions:**
-
-- Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, E2E_AWS_PROVIDER_SECRET_KEY, E2E_AWS_PROVIDER_ROLE_ARN
-- Remove any existing provider with the same Account ID before starting the test
-- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
-
-### Flow Steps
-
-1. Navigate to providers page
-2. Click "Add Provider" button
-3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "role" authentication type
-6. Fill role credentials (access key, secret key, and role ARN)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
-
-### Expected Result
-
-- AWS provider successfully added with role credentials
-- Provider connection validated without launching a scan
-- User returned to Providers page
-- Provider appears in Providers table with the expected UID
-
-### Key verification points
-
-- Provider page loads correctly
-- Connect account page displays AWS option
-- Role credentials form accepts all required fields
-- Launch step appears
-- Successful return to Providers page after closing the launch step
-- Provider exists in Providers table (verified by account ID)
-- Provider UID matches the expected value
-
-### Notes
-
-- Test uses environment variables for AWS credentials and role ARN
-- Provider cleanup performed before each test to ensure clean state
-- Requires valid AWS account with role assumption permissions
-- Role ARN must be properly configured
-
----
-
 ## Test Case: `PROVIDER-E2E-003` - Add Azure Provider with Static Credentials
 
 **Priority:** `critical`
@@ -141,12 +85,14 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select Azure provider type
-4. Fill provider details (subscription ID and alias)
-5. Fill Azure credentials (client ID, client secret, tenant ID)
-6. Confirm provider connection without launching a scan
-7. Verify return to Providers page
-8. Verify provider exists in Providers table
+3. Select Azure provider type (its connect step opens right away)
+4. Stay on the "Single Azure Subscription" tab
+5. Fill provider details (subscription ID and alias)
+6. Fill Azure credentials (client ID, client secret, tenant ID)
+7. Click "Connect subscription": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -197,13 +143,15 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select M365 provider type
-4. Fill provider details (domain ID and alias)
-5. Select static credentials type
-6. Fill M365 credentials (client ID, client secret, tenant ID)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select M365 provider type (its connect step opens right away)
+4. Select the "App client secret" method card
+5. Verify the client secret fields are shown
+6. Fill provider details (domain ID and alias)
+7. Fill M365 credentials (client ID, client secret, tenant ID)
+8. Click "Connect tenant": the account and credentials are saved and the connection is tested in one step
+9. Confirm the launch step appears and close it without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -254,13 +202,15 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select M365 provider type
-4. Fill provider details (domain ID and alias)
-5. Select certificate credentials type
-6. Fill M365 certificate credentials (client ID, tenant ID, certificate content)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select M365 provider type (its connect step opens right away)
+4. Select the "App certificate" method card
+5. Verify the certificate fields are shown
+6. Fill provider details (domain ID and alias)
+7. Fill M365 certificate credentials (client ID, tenant ID, certificate content)
+8. Click "Connect tenant": the account and credentials are saved and the connection is tested in one step
+9. Confirm the launch step appears and close it without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -312,13 +262,14 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select Kubernetes provider type
-4. Fill provider details (context and alias)
-5. Verify credentials page is loaded
+3. Select Kubernetes provider type (its connect step opens right away)
+4. Fill provider details (Kubernetes context and alias)
+5. Verify the kubeconfig field is shown
 6. Fill Kubernetes credentials (kubeconfig content)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+7. Click "Connect cluster": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -332,7 +283,7 @@
 - Provider page loads correctly
 - Connect account page displays Kubernetes option
 - Provider details form accepts context and alias
-- Credentials page loads with kubeconfig content field
+- Connect step shows kubeconfig content field
 - Kubeconfig content is properly filled in the correct field
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -373,13 +324,16 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select GCP provider type
-4. Fill provider details (project ID and alias)
-5. Select service account credentials type
-6. Fill GCP service account key credentials
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select GCP provider type (its connect step opens right away)
+4. Stay on the "Single GCP Project" tab
+5. Select the "Service account key" method card
+6. Verify the service account key field is shown
+7. Fill provider details (project ID and alias)
+8. Fill GCP service account key credentials
+9. Click "Connect project": the account and credentials are saved and the connection is tested in one step
+10. Confirm the launch step appears and close it without launching a scan
+11. Verify return to Providers page
+12. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -393,7 +347,7 @@
 - Provider page loads correctly
 - Connect account page displays GCP option
 - Provider details form accepts project ID and alias
-- Service account credentials page loads with service account key field
+- Connect step shows service account key field
 - Service account key is properly filled in the correct field
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -435,13 +389,15 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select GitHub provider type
-4. Fill provider details (username and alias)
-5. Select personal access token credentials type
-6. Fill GitHub personal access token credentials
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select GitHub provider type (its connect step opens right away)
+4. Select the "Personal access token" method card
+5. Verify the token field is shown
+6. Fill provider details (username and alias)
+7. Fill GitHub personal access token credentials
+8. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+9. Confirm the launch step appears and close it without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -455,7 +411,7 @@
 - Provider page loads correctly
 - Connect account page displays GitHub option
 - Provider details form accepts username and alias
-- Personal access token credentials page loads with token field
+- Connect step shows token field
 - Personal access token is properly filled in the correct field
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -495,13 +451,15 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select GitHub provider type
-4. Fill provider details (username and alias)
-5. Select GitHub App credentials type
-6. Fill GitHub App credentials (App ID and private key)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select GitHub provider type (its connect step opens right away)
+4. Select the "GitHub App" method card
+5. Verify the App ID and private key fields are shown
+6. Fill provider details (username and alias)
+7. Fill GitHub App credentials (App ID and private key)
+8. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+9. Confirm the launch step appears and close it without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -515,7 +473,7 @@
 - Provider page loads correctly
 - Connect account page displays GitHub option
 - Provider details form accepts username and alias
-- GitHub App credentials page loads with App ID and private key fields
+- Connect step shows App ID and private key fields
 - GitHub App credentials are properly filled in the correct fields
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -556,13 +514,15 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select GitHub provider type
-4. Fill provider details (organization name and alias)
-5. Select personal access token credentials type
-6. Fill GitHub organization personal access token credentials
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select GitHub provider type (its connect step opens right away)
+4. Select the "Personal access token" method card
+5. Verify the token field is shown
+6. Fill provider details (organization name and alias)
+7. Fill GitHub organization personal access token credentials
+8. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+9. Confirm the launch step appears and close it without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -576,7 +536,7 @@
 - Provider page loads correctly
 - Connect account page displays GitHub option
 - Provider details form accepts organization name and alias
-- Personal access token credentials page loads with token field
+- Connect step shows token field
 - Organization personal access token is properly filled in the correct field
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -616,14 +576,15 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "role" authentication type
-6. Switch authentication method to "Use AWS SDK default credentials"
-7. Fill role ARN using AWS SDK credential inputs
-8. Confirm provider connection without launching a scan
-9. Verify return to Providers page
-10. Verify provider exists in Providers table
+3. Select AWS provider type (its connect step opens on the "Single AWS Account" tab)
+4. Keep the "IAM Role" method card (selected by default)
+5. Fill the alias (the account ID is read from the role ARN)
+6. Nothing to choose: the role is assumed with the host's AWS SDK default credentials
+7. Fill the role ARN
+8. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+9. Confirm the launch step appears and close it without launching a scan
+10. Verify return to Providers page
+11. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -636,8 +597,8 @@
 
 - Provider page loads correctly
 - Connect account page displays AWS option
-- Credentials form exposes AWS SDK default authentication method
-- Role ARN field accepts provided value when SDK method is selected
+- The role form asks for no credentials of its own: the AWS SDK default chain assumes the role
+- Role ARN field accepts the provided value
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by account ID)
@@ -667,7 +628,7 @@
 **Preconditions:**
 
 - Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION (optional, defaults to us-ashburn-1)
 - Remove any existing provider with the same Tenancy ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Tenancy ID not to be already registered beforehand.
 
@@ -675,13 +636,14 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select OCI provider type
-4. Fill provider details (tenancy ID and alias)
-5. Verify OCI credentials page is loaded
-6. Fill OCI credentials (user ID, fingerprint, key content)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+3. Select OCI provider type (its connect step opens right away)
+4. Fill provider details (tenancy OCID and alias)
+5. Verify the OCI credentials fields are shown
+6. Fill OCI credentials (user ID, fingerprint, key content, home region)
+7. Click "Connect tenancy": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -695,8 +657,8 @@
 - Provider page loads correctly
 - Connect account page displays OCI option
 - Provider details form accepts tenancy ID and alias
-- OCI credentials page loads
-- Credentials form accepts all required fields (user ID, fingerprint, key content)
+- Connect step shows the OCI credentials fields
+- Credentials form accepts all required fields (user ID, fingerprint, key content, home region)
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by tenancy ID)
@@ -726,7 +688,7 @@
 **Preconditions:**
 
 - Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION (optional, defaults to us-ashburn-1)
 - An OCI provider with the specified Tenancy ID must already exist (run PROVIDER-E2E-012 first)
 - This test must be run serially and never in parallel with other tests
 
@@ -736,11 +698,11 @@
 2. Verify OCI provider exists in the table
 3. Click row actions menu for the OCI provider
 4. Click "Update Credentials" option
-5. Verify update credentials page is loaded
-6. Verify OCI credentials form fields are visible (confirms providerUid is loaded)
-7. Fill OCI credentials (user ID, fingerprint, key content)
-8. Click Next to submit
-9. Verify successful navigation to test connection page
+5. Verify the wizard opens on the OCI connect step with "Cancel" and "Save and test" in the footer
+6. Verify OCI credentials form fields are visible (identity fields are hidden; the tenancy comes from the provider UID)
+7. Fill OCI credentials (user ID, fingerprint, key content, home region)
+8. Click "Save and test": the credentials are saved and the connection is tested
+9. Verify the wizard closes back on the Providers page
 
 ### Expected Result
 
@@ -748,17 +710,17 @@
 - OCI credentials form is displayed with all required fields
 - Provider UID is correctly passed to the form (hidden field populated)
 - Credentials can be updated and submitted
-- User is redirected to test connection page after successful update
+- The connection is tested on submit and the wizard closes once it passes
 
 ### Key verification points
 
 - Provider page loads correctly
 - OCI provider row is visible in providers table
 - Row actions dropdown opens and displays "Update Credentials" option
-- Update credentials page URL contains correct parameters
-- OCI credentials form displays all required fields (tenancy ID, user ID, fingerprint, key content)
+- The update opens the connect step with only the credentials fields
+- OCI credentials form displays all required fields (user ID, fingerprint, key content, home region)
 - Form submission succeeds (no silent failures due to missing provider UID)
-- Successful redirect to test connection page
+- Wizard closes on the Providers page after a passed connection test
 
 ### Notes
 
@@ -792,15 +754,16 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select AlibabaCloud provider type
-4. Fill provider details (account ID and alias)
-5. Verify AlibabaCloud credentials page is loaded
-6. Select static credentials type
-7. Verify static credentials page is loaded
+3. Select AlibabaCloud provider type (its connect step opens right away)
+4. Verify the "RAM role" and "Static access keys" method cards are shown
+5. Select the "Static access keys" method card
+6. Verify the access key fields are shown
+7. Fill provider details (account ID and alias)
 8. Fill AlibabaCloud credentials (access key ID and access key secret)
-9. Confirm provider connection without launching a scan
-10. Verify return to Providers page
-11. Verify provider exists in Providers table
+9. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+10. Confirm the launch step appears and close it without launching a scan
+11. Verify return to Providers page
+12. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -814,8 +777,8 @@
 - Provider page loads correctly
 - Connect account page displays AlibabaCloud option
 - Provider details form accepts account ID and alias
-- Credentials page loads with credential type selection
-- Static credentials page loads with access key ID and access key secret fields
+- Connect step shows the "RAM role" and "Static access keys" method cards
+- Connect step shows access key ID and access key secret fields
 - Static credentials are properly filled in the correct fields
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -854,15 +817,16 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select AlibabaCloud provider type
-4. Fill provider details (account ID and alias)
-5. Verify AlibabaCloud credentials page is loaded
-6. Select RAM Role credentials type
-7. Verify RAM Role credentials page is loaded
+3. Select AlibabaCloud provider type (its connect step opens right away)
+4. Verify the "RAM role" and "Static access keys" method cards are shown
+5. Select the "RAM role" method card
+6. Verify the RAM role fields are shown
+7. Fill provider details (account ID and alias)
 8. Fill AlibabaCloud RAM Role credentials (access key ID, access key secret, and role ARN)
-9. Confirm provider connection without launching a scan
-10. Verify return to Providers page
-11. Verify provider exists in Providers table
+9. Click "Connect account": the account and credentials are saved and the connection is tested in one step
+10. Confirm the launch step appears and close it without launching a scan
+11. Verify return to Providers page
+12. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -876,8 +840,8 @@
 - Provider page loads correctly
 - Connect account page displays AlibabaCloud option
 - Provider details form accepts account ID and alias
-- Credentials page loads with credential type selection
-- RAM Role credentials page loads with access key ID, access key secret, and role ARN fields
+- Connect step shows the "RAM role" and "Static access keys" method cards
+- Connect step shows access key ID, access key secret, and role ARN fields
 - RAM Role credentials are properly filled in the correct fields
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -919,7 +883,7 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select AWS provider type
-4. Select "Add Multiple Accounts With AWS Organizations"
+4. Select the "Full AWS Organization" tab on the AWS connect step
 5. Fill organization details (organization ID and optional name)
 6. Continue to authentication details and provide role ARN
 7. Confirm StackSet deployment checkbox and authenticate
@@ -937,7 +901,7 @@
 ### Key verification points
 
 - Connect account page displays AWS option
-- Organizations method selector is available
+- "Full AWS Organization" tab is available on the AWS connect step
 - Authentication details step loads
 - Account selection step loads
 - Accounts connected launch step appears
@@ -974,13 +938,14 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select Google Workspace provider type
+3. Select Google Workspace provider type (its connect step opens right away)
 4. Fill provider details (customer ID and alias)
-5. Verify Google Workspace credentials page is loaded
-6. Fill Google Workspace credentials (customer ID, service account JSON, delegated user email)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+5. Verify the Google Workspace credentials fields are shown
+6. Fill Google Workspace credentials (service account JSON, delegated user email; the customer ID comes from the account field)
+7. Click "Connect workspace": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -994,7 +959,7 @@
 - Provider page loads correctly
 - Connect account page displays Google Workspace option
 - Provider details form accepts customer ID (format: C[0-9a-zA-Z]+) and alias
-- Credentials page loads with customer ID, service account JSON textarea, and delegated user email fields
+- Connect step shows customer ID, service account JSON textarea, and delegated user email fields
 - Customer ID help text is visible with instructions on finding the Customer ID
 - Service account JSON field accepts multi-line formatted JSON
 - Delegated user email field validates email format
@@ -1038,13 +1003,14 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select Vercel provider type
+3. Select Vercel provider type (its connect step opens right away)
 4. Fill provider details (team ID and alias)
-5. Verify Vercel credentials page is loaded
+5. Verify the API token field is shown
 6. Fill Vercel credentials (API token)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+7. Click "Connect team": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -1058,7 +1024,7 @@
 - Provider page loads correctly
 - Connect account page displays Vercel option
 - Provider details form accepts team ID and alias
-- Credentials page loads with the API Token field
+- Connect step shows the API Token field
 - API Token is properly filled in the correct (masked) field
 - Launch step appears
 - Successful return to Providers page after closing the launch step
@@ -1097,37 +1063,86 @@
 
 1. Navigate to providers page
 2. Click "Add Provider" button
-3. Select Okta provider type
+3. Select Okta provider type (its connect step opens right away)
 4. Fill provider details (org domain and alias)
-5. Verify Okta credentials page is loaded
+5. Verify the Client ID and Private Key fields are shown
 6. Fill Okta credentials (client ID and PEM-encoded private key)
-7. Launch initial scan
-8. Verify redirect to Scans page
-9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+7. Click "Connect organization": the account and credentials are saved and the connection is tested in one step
+8. Confirm the launch step appears and close it without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
 - Okta provider successfully added with OAuth 2.0 Private Key JWT credentials
-- Initial scan launched successfully
-- User redirected to Scans page
-- Scheduled scan appears in Scans table with correct provider and scan name
+- Provider connection validated without launching a scan
+- User returned to Providers page
+- Provider appears in Providers table with the expected UID
 
 ### Key verification points
 
 - Provider page loads correctly
 - Connect account page displays Okta option
 - Provider details form accepts org domain (Okta-managed domain, e.g. acme.okta.com) and alias
-- Credentials page loads with Client ID input and Private Key textarea
+- Connect step shows Client ID input and Private Key textarea
 - Credentials are properly filled in the correct fields
-- Launch scan page appears
-- Successful redirect to Scans page after scan launch
-- Provider exists in Scans table (verified by org domain)
-- Scan name field contains "scheduled scan"
+- Launch step appears
+- Successful return to Providers page after closing the launch step
+- Provider exists in Providers table (verified by org domain)
 
 ### Notes
 
 - Test uses environment variables for Okta credentials
-- Org Domain is lowercased by the form; cleanup and scan verification use the normalized value
+- Org Domain is lowercased by the form; cleanup and the table check use the normalized value
 - Private Key is provided as base64-encoded PEM content and decoded before use (multi-line content)
 - Provider cleanup performed before each test to ensure clean state
 - Requires a valid Okta API Services app with a registered public key (JWK) matching the provided private key
+
+---
+
+## Test Case: `PROVIDER-E2E-020` - Invite a Teammate From the AWS Connect Step
+
+**Priority:** `high`
+
+**Tags:**
+
+- type → @e2e
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates that a user who cannot connect the AWS account can invite a teammate from the AWS connect step, without leaving the wizard, and gets the invitation link to share.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup): the option is only offered to users who can invite (`manage_account`)
+- No environment variables required: no provider is created
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Select the "I don't have access, invite a teammate" option
+5. Fill the teammate email and pick a role that can manage providers (the form preselects one only when the tenant has a role named exactly `admin`; the E2E tenant's is `e2e_admin`)
+6. Click "Send invitation"
+7. Verify the confirmation and the invitation link
+8. Click "Done"
+
+### Expected Result
+
+- The AWS access form is replaced by the invitation form
+- The invitation is created and the confirmation shows the invited email and the accept link
+- "Done" closes the wizard without creating a provider
+
+### Key verification points
+
+- The invite option is visible on the AWS connect step for the admin user (it is offered on every provider's connect step to users with `manage_account`)
+- "Send invitation" is enabled once a valid email is typed and a role is selected
+- Confirmation text "Invitation sent to {email}" is visible
+- The accept link contains `/invitation/accept?invitation_token=`
+- The wizard modal is closed after "Done"
+
+### Notes
+
+- Uses a unique email per run so the invitation never collides with a pending one
+- The invitation is left pending; it expires on its own after 7 days
