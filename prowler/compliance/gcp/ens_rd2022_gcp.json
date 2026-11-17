@@ -53,7 +53,7 @@
       ]
     },
     {
-      "Id": "opc.acc.1.r1.gcp.iam.2",
+      "Id": "op.acc.1.r1.gcp.iam.2",
       "Description": "Identificacion Avanzada",
       "Attributes": [
         {
@@ -104,7 +104,7 @@
       ]
     },
     {
-      "Id": "opc.acc.2.gcp.iap.1",
+      "Id": "op.acc.2.r1.gcp.iap.1",
       "Description": "Privilegios de acceso",
       "Attributes": [
         {
@@ -207,7 +207,7 @@
       ]
     },
     {
-      "Id": "opc.acc.4.gcp.iam.1",
+      "Id": "op.acc.4.gcp.iam.1",
       "Description": "Proceso de gestión de derechos de acceso",
       "Attributes": [
         {
@@ -733,7 +733,7 @@
       "Checks": []
     },
     {
-      "Id": "op.exp.6.gcp.app.1",
+      "Id": "op.exp.6.r3.gcp.app.1",
       "Description": "Lista blanca",
       "Attributes": [
         {
@@ -1174,7 +1174,7 @@
       ]
     },
     {
-      "Id": "op.mon.1.r3.gc.scc.1",
+      "Id": "op.mon.1.r3.gcp.scc.1",
       "Description": "Acciones predeterminadas",
       "Attributes": [
         {

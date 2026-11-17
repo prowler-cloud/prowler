@@ -1,0 +1,1 @@
+ENS RD 311/2022 for GCP: five requirement ids that were malformed or named another measure now follow `<measure>.gcp.<service>.<number>` (`opc.acc.1.r1.gcp.iam.2`, `opc.acc.2.gcp.iap.1`, `opc.acc.4.gcp.iam.1`, `op.exp.6.gcp.app.1` and `op.mon.1.r3.gc.scc.1`)
