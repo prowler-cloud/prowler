@@ -41,6 +41,8 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
+**Preconditions:** A tenant with no Registry key sees the "Connect your Registry API key" onboarding panel. Like the API, the fixture answers catalog reads without an active key with `409 registry_credential_not_configured`.
+
 **Flow:** Hold the credential validation task, submit the synthetic key, verify the disabled Connecting… control and key field, check for disclosure, then release the task.
 
 **Expected Result:** The `202` task stays pending until explicitly released. The task watcher then settles through an authoritative status read into the connected marketplace with a "Registry connected" toast. The key does not appear in DOM text, the page URL, request URLs, or browser storage values, including inside JSON or longer strings.

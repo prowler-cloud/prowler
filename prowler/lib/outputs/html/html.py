@@ -201,9 +201,8 @@ class HTML(Output):
             if (
                 getattr(self, "_file_descriptor", None)
                 and not self._file_descriptor.closed
-                and self._data
             ):
-                if self._file_descriptor.tell() == 0:
+                if self._data and self._file_descriptor.tell() == 0:
                     HTML.write_header(
                         self._file_descriptor,
                         provider,
@@ -214,7 +213,8 @@ class HTML(Output):
                 for finding in self._data:
                     self._file_descriptor.write(finding)
                 if self.close_file or self._from_cli:
-                    HTML.write_footer(self._file_descriptor)
+                    if self._file_descriptor.tell() > 0:
+                        HTML.write_footer(self._file_descriptor)
                     self._file_descriptor.close()
         except Exception as error:
             logger.error(

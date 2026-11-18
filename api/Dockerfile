@@ -2,7 +2,7 @@ FROM python:3.12.16-slim-trixie@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
-ARG POWERSHELL_VERSION=7.5.13
+ARG POWERSHELL_VERSION=7.6.10
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
@@ -16,8 +16,8 @@ ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
 ARG TRIVY_SHA256_AMD64=bc0fc726e017b8927a62b2d3531d7a84ee01769daf5c99ed866dced54089fdbf
 ARG TRIVY_SHA256_ARM64=ab9d51f86e6a5fb936f605faff6b593ac51bc378fff4d3e8b9d58358b9c367c3
-ARG POWERSHELL_SHA256_AMD64=e9256bfc6ac98fcbec97270e8a986577a7346a587837cc80d30595eef3c2546b
-ARG POWERSHELL_SHA256_ARM64=6a556353ccfb0a414b80322334eac29a540a398537d3cf8dcc3ecec9cd8abd66
+ARG POWERSHELL_SHA256_AMD64=e261cabc91c78a9afe8d1e5f24731ab0d38204735ab2ec94b0af55102652e10d
+ARG POWERSHELL_SHA256_ARM64=439432cdecf4418413b9a8f547e3ab4d9b40e8e4258913ec3d15fc92c67a9235
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
@@ -130,7 +130,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.13.4
+    pip install --no-cache-dir uv==0.13.7
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 

@@ -1,0 +1,851 @@
+{
+  "Framework": "ENS",
+  "Name": "ENS RD 311/2022 - Categoría Alta",
+  "Version": "RD2022",
+  "Provider": "M365",
+  "Description": "The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+  "Requirements": [
+    {
+      "Id": "op.acc.1.m365.entra.1",
+      "Description": "Identificación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Cada usuario dispone de una cuenta nominal y personal en Microsoft Entra ID, con su licencia asignada, que permite su identificación de forma única en Microsoft 365.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.1.m365.exchange.1",
+      "Description": "Identificación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Los buzones compartidos tienen el inicio de sesión bloqueado, de modo que el acceso se realiza siempre con la cuenta nominal y personal de cada usuario.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "exchange_shared_mailbox_sign_in_disabled"
+      ]
+    },
+    {
+      "Id": "op.acc.3.m365.admincenter.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Existen entre dos y cuatro administradores globales: al menos dos para poder restablecer el acceso en caso de bloqueo de una cuenta y no más de cuatro para limitar la superficie de ataque.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.3.m365.entra.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Los roles de administración se asignan adecuadamente, concediendo a cada administrador el rol menos permisivo necesario para su función en lugar del rol de administrador global.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.m365.entra.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La cuenta se bloquea durante al menos un minuto tras un máximo de diez intentos de autenticación fallidos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_password_protection_lockout_threshold_limited",
+        "entra_password_protection_lockout_duration_configured"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.m365.entra.1",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se exige el uso de contraseñas robustas a todos los usuarios y no se configuran contraseñas sin caducidad en las cuentas de los entornos de producción.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r2.m365.entra.1",
+      "Description": "Contraseña + otro factor de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se ha habilitado la autenticación multifactor (MFA) para todos los usuarios de la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_users_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r2.m365.entra.2",
+      "Description": "Contraseña + otro factor de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se exige la autenticación multifactor (MFA) a todos los usuarios con roles de administración.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_admin_users_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.m365.purview.1",
+      "Description": "Registro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se registran los intentos de acceso al sistema, con éxito y fallidos, mediante el registro de auditoría de Microsoft 365.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "purview_audit_log_search_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r8.m365.entra.1",
+      "Description": "Doble factor para acceso desde o a través de zonas no controladas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r8",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se identifican correctamente las direcciones IP y redes de origen de la organización mediante ubicaciones con nombre de confianza en el acceso condicional.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r8.m365.entra.2",
+      "Description": "Doble factor para acceso desde o a través de zonas no controladas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r8",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las directivas de acceso condicional aplican un acceso más restrictivo a los usuarios y dispositivos que se conectan desde Internet que a los que se conectan desde las redes de la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r8.m365.entra.3",
+      "Description": "Doble factor para acceso desde o a través de zonas no controladas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r8",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El acceso desde Internet, como zona no controlada, exige autenticación multifactor (MFA).",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_users_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r9.m365.entra.1",
+      "Description": "Acceso remoto",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r9",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El acceso remoto, entendido como acceso desde Internet, se limita a equipos administrados por la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r9.m365.entra.2",
+      "Description": "Acceso remoto",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r9",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El acceso remoto, entendido como acceso desde Internet, exige que el dispositivo cumpla las directivas de conformidad de la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_mdm_compliant_device_required"
+      ]
+    },
+    {
+      "Id": "op.exp.2.m365.admincenter.1",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se controlan desde el Centro de administración de Microsoft 365 los servicios y complementos disponibles para los usuarios, habilitando únicamente los necesarios.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.exchange.1",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Los usuarios no pueden instalar complementos de Outlook por su cuenta.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "exchange_roles_assignment_policy_addins_disabled"
+      ]
+    },
+    {
+      "Id": "op.exp.2.m365.entra.1",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Los usuarios no pueden conceder consentimiento a aplicaciones de terceros para acceder a los datos de la organización.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_policy_restricts_user_consent_for_apps"
+      ]
+    },
+    {
+      "Id": "op.exp.6.m365.defender.1",
+      "Description": "Protección frente a código dañino",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Las directivas antimalware del correo electrónico tienen habilitado el filtro de tipos de archivos adjuntos comunes y bloquean los tipos de archivo usados habitualmente para distribuir código dañino.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_malware_policy_comprehensive_attachments_filter_applied"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "ConfigKey": "recommended_blocked_file_types",
+          "Operator": "superset",
+          "Value": [
+            "ace",
+            "ani",
+            "apk",
+            "app",
+            "appx",
+            "arj",
+            "bat",
+            "cab",
+            "cmd",
+            "com",
+            "deb",
+            "dex",
+            "dll",
+            "docm",
+            "elf",
+            "exe",
+            "hta",
+            "img",
+            "iso",
+            "jar",
+            "jnlp",
+            "kext",
+            "lha",
+            "lib",
+            "library",
+            "lnk",
+            "lzh",
+            "macho",
+            "msc",
+            "msi",
+            "msix",
+            "msp",
+            "mst",
+            "pif",
+            "ppa",
+            "ppam",
+            "reg",
+            "rev",
+            "scf",
+            "scr",
+            "sct",
+            "sys",
+            "uif",
+            "vb",
+            "vbe",
+            "vbs",
+            "vxd",
+            "wsc",
+            "wsf",
+            "wsh",
+            "xll",
+            "xz",
+            "z"
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "op.exp.6.m365.defender.2",
+      "Description": "Protección frente a código dañino",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se comprueba periódicamente la detección de amenazas en tiempo real de Microsoft Defender para Office 365 y se genera el informe correspondiente.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.8.m365.purview.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El registro de auditoría de Microsoft 365 está activado y captura la actividad de usuarios y administradores.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "purview_audit_log_search_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.m365.exchange.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "La auditoría de buzones de Exchange Online está habilitada en la organización y en los buzones de usuario, sin buzones excluidos, de modo que la actividad de correo queda registrada.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "exchange_organization_mailbox_auditing_enabled",
+        "exchange_user_mailbox_auditing_enabled",
+        "exchange_mailbox_audit_bypass_disabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90
+        }
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.m365.purview.1",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "La consulta del registro de actividad se restringe mediante la asignación de los roles de administración adecuados.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.m365.defender.1",
+      "Description": "Vigilancia",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se han configurado directivas de alerta que notifican a los responsables del sistema las actividades relevantes de usuarios y administradores.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.si.2.m365.purview.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Se aplica cifrado adicional mediante etiquetas de confidencialidad a los sitios de SharePoint que precisan una protección especial, además del cifrado en reposo que aplica Microsoft.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.2.m365.purview.1",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se han aplicado directivas de retención a la información de Microsoft 365.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.2.m365.purview.2",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se han aplicado directivas de prevención de pérdida de datos (DLP).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.2.m365.purview.3",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se han aplicado etiquetas de confidencialidad (sensitivity labels) a la información.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.5.m365.apps.1",
+      "Description": "Limpieza de documentos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.5",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se elimina la información personal y cualquier metadato asociado a los documentos antes de compartirlos o publicarlos, mediante el Inspector de documentos de Office o herramientas de terceros.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.m365.backup.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se dispone de planes específicos de copias de seguridad de la información en los servicios de Microsoft 365 que lo admitan, conforme al modelo de responsabilidad compartida.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.1.m365.defender.1",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "El filtrado antispam del correo electrónico no puede eludirse mediante dominios permitidos, direcciones IP permitidas, listas seguras ni reglas de transporte que excluyan dominios del filtrado.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_antispam_policy_inbound_no_allowed_domains",
+        "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+        "defender_antispam_connection_filter_policy_safe_list_off",
+        "exchange_transport_rules_whitelist_disabled"
+      ]
+    },
+    {
+      "Id": "mp.s.1.m365.defender.2",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se aplican medidas antispoofing a los dominios de correo: firma DKIM habilitada y registro DMARC publicado con una política de cumplimiento.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_domain_dkim_enabled",
+        "defender_domain_dmarc_records_published"
+      ]
+    },
+    {
+      "Id": "mp.s.1.m365.defender.3",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "La directiva antiphishing está habilitada y configurada.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_antiphishing_policy_configured"
+      ]
+    },
+    {
+      "Id": "mp.s.4.m365.platform.1",
+      "Description": "Protección frente a la denegación de servicio",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se ha tenido en cuenta el sistema de defensa frente a la denegación de servicio de la plataforma de Microsoft descrito en la guía CCN-STIC-884A.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}

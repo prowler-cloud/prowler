@@ -168,8 +168,9 @@ GEMINI.md
 .github/skills
 .gemini/skills
 
-# Claude Code
+# Claude Code (settings.json holds the shared permission allowlist)
 .claude/*
+!.claude/settings.json
 
 # Docker
 docker-compose.override.yml
