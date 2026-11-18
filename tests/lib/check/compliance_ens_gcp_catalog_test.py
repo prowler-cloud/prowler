@@ -11,11 +11,6 @@ from tests.lib.check.ens_catalog_invariants import (
 
 REQUIREMENTS = load_requirements("gcp")
 
-# Id with nothing after the provider, and the measure it is filed under. CCN-STIC-888B
-# gives it no service or number, so completing it is left for the maintainers to decide
-# in #13420.
-PENDING_RENAMES = {"op.exp.4.r2.gcp": "op.exp.4.r2"}
-
 
 def test_requirements_have_attributes():
     assert not requirements_without_attributes(REQUIREMENTS)
@@ -33,7 +28,5 @@ def test_measures_are_filed_under_their_block_and_group():
     assert not misfiled_measures(REQUIREMENTS)
 
 
-def test_requirement_ids_name_their_measure_but_for_the_pending_renames():
-    assert sorted(misnamed_requirements(REQUIREMENTS, "gcp")) == sorted(
-        PENDING_RENAMES.items()
-    )
+def test_requirement_ids_name_their_measure():
+    assert not misnamed_requirements(REQUIREMENTS, "gcp")
