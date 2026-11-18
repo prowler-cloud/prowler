@@ -1,4 +1,5 @@
 import {
+  Bot,
   Code,
   CreditCard,
   Crosshair,
@@ -129,6 +130,21 @@ export function getNavigationConfig({
           icon: SquareChartGantt,
           active: pathname === "/",
         },
+        isCloudEnvironment
+          ? {
+              kind: NAVIGATION_ITEM_KIND.LINK,
+              href: "/ai-security",
+              label: "AI Security",
+              icon: Bot,
+              active: isRouteActive(pathname, "/ai-security"),
+              highlight: true,
+            }
+          : {
+              kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+              label: "AI Security",
+              icon: Bot,
+              cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.AI_SECURITY,
+            },
         ...(!isCloudEnvironment
           ? [
               {
