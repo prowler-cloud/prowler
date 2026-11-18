@@ -52,7 +52,7 @@
       ]
     },
     {
-      "Id": "op.acc.1.az.r1.eid.1",
+      "Id": "op.acc.1.r1.az.eid.1",
       "Description": "Identificacion Avanzada",
       "Attributes": [
         {
@@ -102,7 +102,7 @@
       ]
     },
     {
-      "Id": "op.acc.2.az.r1.eid.1",
+      "Id": "op.acc.2.r1.az.eid.1",
       "Description": "Privilegios de acceso",
       "Attributes": [
         {
@@ -179,7 +179,7 @@
       "Checks": []
     },
     {
-      "Id": "opc.acc.5.az.eid.1",
+      "Id": "op.acc.5.az.eid.1",
       "Description": "Mecanismo de autenticación (usuarios externos)",
       "Attributes": [
         {
@@ -672,7 +672,7 @@
       ]
     },
     {
-      "Id": "op.acc.6.r9.az",
+      "Id": "op.acc.6.r9.az.eid.1",
       "Description": "Acceso remoto",
       "Attributes": [
         {
@@ -740,7 +740,7 @@
       ]
     },
     {
-      "Id": "op.exp8.r2.az.wc.1",
+      "Id": "op.exp.8.r2.az.wc.1",
       "Description": "Sincronización del reloj del sistema",
       "Attributes": [
         {
@@ -971,7 +971,7 @@
       "Checks": []
     },
     {
-      "Id": "op.con.3.az.pd.1",
+      "Id": "op.cont.3.az.pd.1",
       "Description": "Pruebas periódicas",
       "Attributes": [
         {
@@ -1797,7 +1797,7 @@
       ]
     },
     {
-      "Id": "mp.com.4.r2..az.sa.1",
+      "Id": "mp.com.4.r2.az.sa.1",
       "Description": "Segmentación lógica avanzada",
       "Attributes": [
         {

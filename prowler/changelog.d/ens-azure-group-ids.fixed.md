@@ -1,1 +1,1 @@
-ENS RD 311/2022 for Azure: 29 requirements had a trailing space in `IdGrupoControl`, which reached the CSV, the PDF report and the UI
+ENS RD 311/2022 for Azure: 29 requirements had a trailing space in `IdGrupoControl`, which reached the CSV, the PDF report and the UI, and seven malformed requirement ids now start with the measure they are filed under and the provider (`op.acc.1.az.r1.eid.1`, `op.acc.2.az.r1.eid.1`, `opc.acc.5.az.eid.1`, `op.acc.6.r9.az`, `op.exp8.r2.az.wc.1`, `op.con.3.az.pd.1` and `mp.com.4.r2..az.sa.1`)
