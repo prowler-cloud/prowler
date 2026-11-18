@@ -3,6 +3,9 @@
 import pytest
 
 from tests.lib.check.ens_catalog_invariants import (
+    CATEGORIAS,
+    ORGANISATIONAL,
+    REINFORCEMENTS,
     execution_mode_mismatches,
     malformed_measure_ids,
     misfiled_measures,
@@ -50,12 +53,20 @@ def test_the_code_of_a_measure_is_accepted(group):
         "org.5",  # the organisational framework has four measures
         "op.acc.0",  # measures are numbered from 1
         "op.acc.6.r0",  # reinforcements are numbered from 1
+        "op.acc.6.r10",  # op.acc.6 has R1 to R9
+        "mp.sw.2.r3",  # mp.sw.2 has R1 and R2
+        "op.acc.4.r1",  # op.acc.4 has no reinforcements
     ],
 )
 def test_a_code_that_is_not_a_measure_is_reported(group):
     assert malformed_measure_ids([_requirement(group)]) == [
         (f"{group}.aws.iam.1", group)
     ]
+
+
+def test_the_reinforcements_cover_the_measures_and_the_groups_of_the_rd():
+    assert sum(len(measures) for measures in REINFORCEMENTS.values()) == 73
+    assert set(REINFORCEMENTS) == {ORGANISATIONAL, *CATEGORIAS}
 
 
 def test_a_measure_filed_under_its_block_and_group_is_accepted():
