@@ -533,6 +533,13 @@ aws:
   # trigger its monitoring). Disabled by default (scans stay fully offline).
   secrets_validate: False
 
+  # Minimum Kingfisher confidence level for reporting secret findings.
+  # "low" enables generic rules (Generic Password / Secret / API Key) that
+  # preserve keyword-based coverage; at "medium" those generic rules do not
+  # fire, which reduces false positives at the cost of some coverage.
+  # Possible values: "low", "medium", "high".
+  secrets_confidence: "low"
+
   # AWS Secrets Manager Configuration
   # aws.secretsmanager_secret_unused
   # Maximum number of days a secret can be unused
@@ -780,6 +787,20 @@ cloudflare:
   # Regex patterns to exclude from secret scanning
   secrets_ignore_patterns: []
 
+  # Validate discovered secrets by checking whether they are live against the
+  # provider APIs. WARNING: this makes outbound network calls that authenticate
+  # with the discovered secret itself; the credential is exercised against the
+  # provider and the call will appear in the audited account's logs (and may
+  # trigger its monitoring). Disabled by default (scans stay fully offline).
+  secrets_validate: False
+
+  # Minimum Kingfisher confidence level for reporting secret findings.
+  # "low" enables generic rules (Generic Password / Secret / API Key) that
+  # preserve keyword-based coverage; at "medium" those generic rules do not
+  # fire, which reduces false positives at the cost of some coverage.
+  # Possible values: "low", "medium", "high".
+  secrets_confidence: "low"
+
 # Vercel Configuration
 vercel:
   # vercel.deployment_production_uses_stable_target
@@ -897,6 +918,18 @@ openstack:
   # Regex patterns whose matches are excluded from secret scanning of
   # resource metadata.
   secrets_ignore_patterns: []
+  # Validate discovered secrets by checking whether they are live against the
+  # provider APIs. WARNING: this makes outbound network calls that authenticate
+  # with the discovered secret itself; the credential is exercised against the
+  # provider and the call will appear in the audited account's logs (and may
+  # trigger its monitoring). Disabled by default (scans stay fully offline).
+  secrets_validate: False
+  # Minimum Kingfisher confidence level for reporting secret findings.
+  # "low" enables generic rules (Generic Password / Secret / API Key) that
+  # preserve keyword-based coverage; at "medium" those generic rules do not
+  # fire, which reduces false positives at the cost of some coverage.
+  # Possible values: "low", "medium", "high".
+  secrets_confidence: "low"
 
 # E2E Networks Configuration
 e2enetworks:

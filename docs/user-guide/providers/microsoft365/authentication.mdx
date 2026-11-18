@@ -56,7 +56,8 @@ When using service principal authentication, add these **Application Permissions
 **External API Permissions:**
 
 - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. The `Global Reader` role must also be assigned to the app.
-- `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
+
+The Teams PowerShell module needs no external API permission. Teams checks use the `Global Reader` role and the Microsoft Graph `Organization.Read.All` permission, which `Directory.Read.All` already includes.
 
 <Note>
 `Directory.Read.All` can be replaced with `Domain.Read.All` for more restrictive permissions, but Entra checks related to DirectoryRoles and GetUsers will not run. If using this option, you must also add the `Organization.Read.All` permission to the application registration for authentication.
@@ -148,17 +149,7 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
    ![Global Reader Role](/images/providers/global-reader-role.png)
 
-2. **Add Teams API:**
-
-   - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**.
-
-   ![Skype and Teams Tenant Admin API](/images/providers/search-skype-teams-tenant-admin-api.png)
-
-   - Select "application_access" permission and click "Add permissions".
-
-   ![application_access Permission](/images/providers/teams-permission.png)
-
-3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
+2. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
 
    ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
 

@@ -263,6 +263,17 @@ class Test_Inspector2_Service:
         assert coverage[0].scan_status_reason == "SUCCESSFUL"
         assert coverage[0].last_scanned_at == LAST_SCANNED_AT
 
+    def test_resource_metadata_leaves_out_findings_and_coverage(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector = Inspector2(aws_provider).inspectors[0]
+        assert inspector.findings
+        assert inspector.coverage
+        # Check_Report stores `resource.dict()` as the finding's resource metadata
+        resource_metadata = inspector.dict()
+        assert "findings" not in resource_metadata
+        assert "coverage" not in resource_metadata
+        assert resource_metadata["arn"] == inspector.arn
+
     def test_list_coverage_keeps_audited_resources(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         aws_provider._audit_resources = [

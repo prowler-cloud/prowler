@@ -4,6 +4,35 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.50.0] (Prowler v5.50.0)
+
+### 🚀 Added
+
+- `bedrock_model_invocation_job_output_encrypted_with_cmk` check for AWS provider, verifying that Bedrock model invocation job S3 output is encrypted with a customer managed KMS key [(#12801)](https://github.com/prowler-cloud/prowler/pull/12801)
+- `bedrock_guardrail_iam_condition_enforcement_enabled` check for AWS provider, verifying that customer-managed and inline IAM policies allowing Bedrock model invocation require a guardrail through the `bedrock:GuardrailIdentifier` condition key [(#13065)](https://github.com/prowler-cloud/prowler/pull/13065)
+- `cloudwatch_log_group_data_protection_policy_configured` check for AWS provider [(#13085)](https://github.com/prowler-cloud/prowler/pull/13085)
+- Seven Manual requirements in the AWS AI Security Framework for Bedrock data retention, RAG authorization, and agent governance [(#13338)](https://github.com/prowler-cloud/prowler/pull/13338)
+- `secrets_confidence` config to set the minimum Kingfisher confidence level in the secret-scanning checks of the AWS, Cloudflare, and OpenStack providers [(#13362)](https://github.com/prowler-cloud/prowler/pull/13362)
+
+### 🔄 Changed
+
+- `compute_instance_encryption_with_csek_enabled` FAIL message now explains why the finding is not remediable: Google disabled CSEK encryption on July 20, 2026, and the check will be deprecated on July 20, 2027 when CSEK is removed from Compute Engine [(#12735)](https://github.com/prowler-cloud/prowler/pull/12735)
+
+### 🐞 Fixed
+
+- `network_udp_internet_access_restricted` no longer reports a false negative for NSG rules that allow Any protocol (`*`) inbound from the Internet [(#12886)](https://github.com/prowler-cloud/prowler/pull/12886)
+- `dns_dnssec_disabled` for GCP no longer evaluates private Cloud DNS zones, which cannot enable DNSSEC [(#13334)](https://github.com/prowler-cloud/prowler/pull/13334)
+
+### 🔐 Security
+
+- Kubernetes kubeconfig cluster servers pointing at loopback, private or otherwise non-public addresses rejected before the client connects [(#12961)](https://github.com/prowler-cloud/prowler/pull/12961)
+- Image registry URLs resolving to loopback, private, shared or otherwise non-public addresses rejected before any request leaves the adapter, including every destination a redirect points to [(#12974)](https://github.com/prowler-cloud/prowler/pull/12974)
+- OpenStack redirects and Keystone catalog endpoints resolving to non-public hosts rejected on every request, not only the initial `auth_url` [(#13371)](https://github.com/prowler-cloud/prowler/pull/13371)
+- dnspython to 2.9.2 in the SDK for Python 3.11 and later, patching the high severity advisory reported by the container scan; Python 3.10 stays on 2.8.0, which the 2.9 series no longer supports [(#13374)](https://github.com/prowler-cloud/prowler/pull/13374)
+- dnspython from 2.9.0 to 2.9.2 in the SDK container image, patching CVE-2026-128089 [(#13376)](https://github.com/prowler-cloud/prowler/pull/13376)
+
+---
+
 ## [5.49.0] (Prowler v5.49.0)
 
 ### 🚀 Added

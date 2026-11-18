@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.3] (Prowler v5.50.0)
+
+### 🔐 Security
+
+- dnspython from 2.9.0 to 2.9.2 in the MCP Server container image, patching CVE-2026-128089 [(#13376)](https://github.com/prowler-cloud/prowler/pull/13376)
+
+---
+
 ## [0.13.2] (Prowler v5.49.0)
 
 ### 🔐 Security

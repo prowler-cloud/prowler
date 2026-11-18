@@ -21,20 +21,20 @@ Prowler Realtime is available in Prowler Cloud for AWS providers.
 
 ## Open Realtime
 
-Select **Realtime** in the **Security** section of the sidebar. Choose the AWS account to watch with the account picker at the top of the page.
+Select **Realtime** in the **Security** section of the sidebar. Select the AWS account to watch with the account picker at the top of the page.
 
 The account header summarizes the **Status**, the **Response** mode, the **Event feed**, the **Scope** and the enforced **Compliance frameworks**. From the header:
 
 * **Configure** opens the Realtime configuration page for the account.
 * **Share status** opens a status statement with checks passing and failing, the mode, the scope and the fixes verified in the last 30 days. The statement contains no account IDs, resources or people, and is stamped with a SHA-256 hash of its content. Copy it or select **Download JSON**.
 
-### Demo data
+### Demo Data
 
 Until an account has a Realtime policy, the dashboard shows demo data from a made-up AWS account under the **You are exploring demo data** banner. Write controls are disabled on demo data. Select **Set up Realtime** to open the configuration page, or **Set up with Lighthouse AI** to set it up from a Lighthouse AI chat.
 
 A paused account keeps showing its own history, not demo data.
 
-## Dashboard tabs
+## Dashboard Tabs
 
 | Tab | What it shows |
 |-----|---------------|
@@ -50,7 +50,7 @@ A paused account keeps showing its own history, not demo data.
 Select **Configure** in the account header to open the configuration page. It has one section per setup step, in order, and a progress rail that shows which required steps are done. Each section saves on its own.
 
 <Steps>
-  <Step title="Event feed">
+  <Step title="Event Feed">
     Choose where Prowler reads the account's CloudTrail activity from:
 
     * **Real time via SQS** (recommended): EventBridge forwards risky calls to an SQS queue within seconds. Deploy the CloudFormation or Terraform template shown in the section in one region of the AWS account, copy the `QueueUrl` output of the stack, paste it into **SQS queue URL** and save. IAM and S3 account events arrive in `us-east-1`.
@@ -58,7 +58,7 @@ Select **Configure** in the account header to open the configuration page. It ha
 
     If no feed is saved, Prowler creates a CloudTrail lookup feed when you activate Realtime.
   </Step>
-  <Step title="What to enforce">
+  <Step title="What to Enforce">
     Choose how Prowler responds when a change breaks a check:
 
     * **Monitor only**: Prowler records risky changes and checks them against your compliance requirements. It never changes the account or your code.
@@ -71,7 +71,7 @@ Select **Configure** in the account header to open the configuration page. It ha
 
     Saving this section creates the policy, still inactive.
   </Step>
-  <Step title="Remediation access">
+  <Step title="Remediation Access">
     Optional. Add a remediation-only IAM role so Prowler can fix the account, and a GitHub token so Prowler can open pull requests:
 
     1. Choose an external ID of at least 8 characters.
@@ -84,7 +84,7 @@ Select **Configure** in the account header to open the configuration page. It ha
   <Step title="Alerts">
     Choose where a confirmed violation, and the result of its fix, is sent: **Send alerts to Slack**, **Send alerts by email**, or both, with a minimum severity. Slack channels come from the [Slack Integration](/user-guide/tutorials/prowler-app-slack-integration). Only email recipients who confirmed their address receive alerts.
   </Step>
-  <Step title="Cost anomalies">
+  <Step title="Cost Anomalies">
     Optional. Turn on **Detect cost anomalies for this account** to flag a service whose daily spend jumps well above its usual level. Deploy the template shown in the section once in the AWS account; it lets the ProwlerScan role read Cost Explorer (`ce:GetCostAndUsage`) and nothing else. Prowler reads Cost Explorer about every 6 hours, and AWS bills each request.
   </Step>
   <Step title="Activate">
@@ -96,7 +96,7 @@ Select **Configure** in the account header to open the configuration page. It ha
 
 The templates are also available in the Prowler repository: [CloudFormation](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/cloudformation) and [Terraform](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform).
 
-## What automatic fixes can change
+## What Automatic Fixes Can Change
 
 The remediation role allows only these fixes, on the resource named in the CloudTrail event:
 
