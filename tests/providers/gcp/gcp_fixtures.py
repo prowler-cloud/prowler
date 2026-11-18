@@ -969,9 +969,7 @@ def mock_api_subnetworks_calls(client: MagicMock):
     }
     client.subnetworks().aggregatedList_next.return_value = None
 
-    client.subnetworks().list().execute.return_value = {
-        "items": items
-    }
+    client.subnetworks().list().execute.return_value = {"items": items}
     client.subnetworks().list_next.return_value = None
 
 

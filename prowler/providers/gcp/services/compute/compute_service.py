@@ -270,9 +270,7 @@ class Compute(GCPService):
     def _get_subnetworks(self):
         for project_id in self.project_ids:
             try:
-                request = self.client.subnetworks().aggregatedList(
-                    project=project_id
-                )
+                request = self.client.subnetworks().aggregatedList(project=project_id)
                 while request is not None:
                     response = request.execute(
                         http=self.__get_AuthorizedHttp_client__(),
