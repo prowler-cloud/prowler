@@ -39,4 +39,6 @@ def test_measures_are_filed_under_their_block_and_group():
 
 
 def test_requirement_ids_name_their_measure_but_for_the_pending_renames():
-    assert dict(misnamed_requirements(REQUIREMENTS, "aws")) == PENDING_RENAMES
+    assert sorted(misnamed_requirements(REQUIREMENTS, "aws")) == sorted(
+        PENDING_RENAMES.items()
+    )
