@@ -1,3 +1,5 @@
+import re
+
 from azure.identity import AzureAuthorityHosts
 
 MICROSOFT365_CHINA_CLOUD = "https://microsoftgraph.chinacloudapi.cn"
@@ -24,7 +26,7 @@ POWERSHELL_US_GOV_CLOUD = {
 }
 
 
-def get_regions_config(region):
+def get_regions_config(region, region_endpoints=None):
     allowed_regions = {
         "M365Global": {
             "authority": None,
@@ -45,4 +47,39 @@ def get_regions_config(region):
             "powershell": POWERSHELL_US_GOV_CLOUD,
         },
     }
+    if region == "M365Custom":
+        return get_custom_region_config(region_endpoints)
     return allowed_regions[region]
+
+
+def get_custom_region_config(region_endpoints):
+    """Build the M365Custom region configuration from the operator-supplied endpoints.
+
+    Each endpoint is a host or an https:// URL, with an optional port and trailing slash.
+    """
+    hosts = {}
+    for key in ("authority_host", "graph"):
+        value = (region_endpoints or {}).get(key)
+        if not value:
+            continue
+        host = value
+        if host.lower().startswith("https://"):
+            host = host[len("https://") :]
+        host = host.removesuffix("/")
+        if not re.fullmatch(r"[A-Za-z0-9.-]+(:[0-9]+)?", host):
+            raise ValueError(
+                f"Region M365Custom endpoint {key} must be a host or an https:// URL: {value}"
+            )
+        hosts[key] = host
+    missing_endpoints = [key for key in ("authority_host", "graph") if key not in hosts]
+    if missing_endpoints:
+        raise ValueError(
+            f"Region M365Custom requires these endpoints: {', '.join(missing_endpoints)}"
+        )
+    base_url = f"https://{hosts['graph']}"
+    return {
+        # azure-identity takes the authority as a bare host, like AzureAuthorityHosts
+        "authority": hosts["authority_host"],
+        "base_url": base_url,
+        "credential_scopes": [base_url + "/.default"],
+    }

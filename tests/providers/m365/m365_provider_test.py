@@ -1,11 +1,15 @@
 import asyncio
 import base64
 import os
+from argparse import Namespace
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+from urllib.parse import urlparse
 from uuid import uuid4
 
 import httpx
 import pytest
+import requests
 from azure.core.credentials import AccessToken
 from azure.identity import (
     CertificateCredential,
@@ -24,6 +28,7 @@ from prowler.config.config import (
     default_fixer_config_file_path,
     load_and_validate_config_file,
 )
+from prowler.providers.common import provider as common_provider
 from prowler.providers.common.models import Connection
 from prowler.providers.m365.exceptions.exceptions import (
     M365BrowserAuthNoFlagError,
@@ -43,6 +48,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
     M365NotValidTenantIdError,
+    M365SetUpRegionConfigError,
     M365TenantIdAndClientIdNotBelongingToClientSecretError,
     M365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
@@ -1934,6 +1940,18 @@ class TestM365ProviderEventLoop:
         graph_client.domains.get.assert_awaited_once()
 
 
+CUSTOM_REGION_ENDPOINTS = {
+    "authority_host": "https://login.custom.cloud/",
+    "graph": "https://graph.custom.cloud/",
+}
+CUSTOM_REGION_CONFIG = M365RegionConfig(
+    name="M365Custom",
+    authority="login.custom.cloud",
+    base_url="https://graph.custom.cloud",
+    credential_scopes=["https://graph.custom.cloud/.default"],
+)
+
+
 class TestM365ProviderRegionConfig:
     """Credentials and Graph clients must use the selected region's endpoints,
     not always login.microsoftonline.com and graph.microsoft.com."""
@@ -2145,11 +2163,10 @@ class TestM365ProviderRegionConfig:
                 region_config=region_config,
             )
 
-        mock_app.assert_called_once_with(
-            client_id=CLIENT_ID,
-            client_credential=CLIENT_SECRET,
-            authority=authority,
-        )
+        mock_app.assert_called_once()
+        assert mock_app.call_args.kwargs["client_id"] == CLIENT_ID
+        assert mock_app.call_args.kwargs["client_credential"] == CLIENT_SECRET
+        assert mock_app.call_args.kwargs["authority"] == authority
         mock_app.return_value.acquire_token_for_client.assert_called_once_with(
             scopes=scopes
         )
@@ -2203,3 +2220,162 @@ class TestM365ProviderRegionConfig:
             )
 
         mock_ps.assert_called_once_with(credentials, identity, region_config)
+
+
+class TestM365ProviderCustomRegion:
+    """M365Custom takes its endpoints from the operator and never starts PowerShell."""
+
+    SP_ENV_VARS = {
+        "AZURE_CLIENT_ID": CLIENT_ID,
+        "AZURE_CLIENT_SECRET": CLIENT_SECRET,
+        "AZURE_TENANT_ID": TENANT_ID,
+    }
+
+    def test_m365_provider_custom_region(self):
+        with (
+            patch.dict(os.environ, self.SP_ENV_VARS),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(tenant_domains=[DOMAIN]),
+            ) as mock_setup_identity,
+            patch(
+                "prowler.providers.m365.m365_provider.M365PowerShell"
+            ) as mock_powershell,
+        ):
+            m365_provider = M365Provider(
+                sp_env_auth=True,
+                region="M365Custom",
+                region_endpoints=CUSTOM_REGION_ENDPOINTS,
+                config_path=default_config_file_path,
+            )
+
+        assert m365_provider.region_config == CUSTOM_REGION_CONFIG
+        assert CUSTOM_REGION_CONFIG in mock_setup_session.call_args.args
+        assert (
+            mock_setup_identity.call_args.kwargs["region_config"]
+            == CUSTOM_REGION_CONFIG
+        )
+        mock_powershell.assert_not_called()
+        assert not m365_provider.credentials
+
+    def test_test_connection_custom_region(self):
+        with (
+            patch.dict(os.environ, self.SP_ENV_VARS),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_session"),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(tenant_domains=[DOMAIN]),
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365PowerShell"
+            ) as mock_powershell,
+        ):
+            test_connection = M365Provider.test_connection(
+                sp_env_auth=True,
+                region="M365Custom",
+                region_endpoints=CUSTOM_REGION_ENDPOINTS,
+                provider_id=DOMAIN,
+            )
+
+        assert test_connection.is_connected
+        mock_powershell.assert_not_called()
+
+    def test_test_connection_custom_region_missing_endpoints(self):
+        test_connection = M365Provider.test_connection(
+            sp_env_auth=True,
+            region="M365Custom",
+            raise_on_exception=False,
+        )
+
+        assert isinstance(test_connection.error, M365SetUpRegionConfigError)
+        assert "authority_host, graph" in str(test_connection.error)
+
+    @pytest.mark.parametrize("sp_env_auth", [False, True])
+    def test_custom_region_sign_in_only_reaches_the_custom_authority(self, sp_env_auth):
+        requested_hosts = []
+
+        def record_request(_, request, **kwargs):
+            requested_hosts.append(urlparse(request.url).hostname)
+            raise requests.ConnectionError("no network in tests")
+
+        static_credentials = {
+            "tenant_id": TENANT_ID,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "certificate_content": None,
+            "certificate_path": None,
+        }
+        with (
+            patch.dict(os.environ, self.SP_ENV_VARS),
+            patch.object(requests.Session, "send", record_request),
+        ):
+            credential = M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=sp_env_auth,
+                browser_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=None,
+                m365_credentials=None if sp_env_auth else static_credentials,
+                region_config=CUSTOM_REGION_CONFIG,
+            )
+            with pytest.raises(Exception):
+                credential.get_token("https://graph.custom.cloud/.default")
+            with pytest.raises(Exception):
+                M365Provider.verify_client(
+                    TENANT_ID,
+                    CLIENT_ID,
+                    CLIENT_SECRET,
+                    None,
+                    None,
+                    region_config=CUSTOM_REGION_CONFIG,
+                )
+
+        assert requested_hosts
+        assert set(requested_hosts) == {"login.custom.cloud"}
+
+    def test_init_global_provider_passes_custom_endpoints_from_cli(self, monkeypatch):
+        captured_kwargs = {}
+
+        class FakeM365Provider:
+            def __init__(self, **kwargs):
+                captured_kwargs.update(kwargs)
+
+        arguments = Namespace(
+            provider="m365",
+            region="M365Custom",
+            m365_authority_host="login.custom.cloud",
+            m365_graph_endpoint="https://graph.custom.cloud",
+            config_file="config.yaml",
+            mutelist_file=None,
+            fixer_config="fixer_config.yaml",
+            sp_env_auth=True,
+            az_cli_auth=False,
+            browser_auth=False,
+            certificate_auth=False,
+            certificate_path=None,
+            tenant_id=None,
+            init_modules=False,
+        )
+        monkeypatch.setattr(common_provider.Provider, "_global", None)
+
+        with (
+            patch.object(
+                common_provider,
+                "import_module",
+                return_value=SimpleNamespace(M365Provider=FakeM365Provider),
+            ),
+            patch.object(
+                common_provider, "load_and_validate_config_file", return_value={}
+            ),
+        ):
+            common_provider.Provider.init_global_provider(arguments)
+
+        assert captured_kwargs["region"] == "M365Custom"
+        assert captured_kwargs["region_endpoints"] == {
+            "authority_host": "login.custom.cloud",
+            "graph": "https://graph.custom.cloud",
+        }
