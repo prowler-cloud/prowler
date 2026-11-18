@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -313,5 +313,6 @@ class Inspector(BaseModel):
     lambda_status: str
     lambda_code_status: str
     active_findings: bool = None
-    findings: Optional[list[Finding]] = None
-    coverage: Optional[list[CoveredResource]] = None
+    # Kept out of `dict()`: both lists would be stored as the resource metadata
+    findings: Optional[list[Finding]] = Field(default=None, exclude=True)
+    coverage: Optional[list[CoveredResource]] = Field(default=None, exclude=True)
