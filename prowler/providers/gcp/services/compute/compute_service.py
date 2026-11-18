@@ -270,12 +270,19 @@ class Compute(GCPService):
     def _get_subnetworks(self):
         for project_id in self.project_ids:
             try:
-                request = self.client.subnetworks().aggregatedList(project=project_id)
+                # Partial success keeps readable regions when another is unreachable
+                request = self.client.subnetworks().aggregatedList(
+                    project=project_id, returnPartialSuccess=True
+                )
                 while request is not None:
                     response = request.execute(
                         http=self.__get_AuthorizedHttp_client__(),
                         num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
+                    for unreachable in response.get("unreachables", []):
+                        logger.error(
+                            f"{project_id} -- Subnetworks scope unreachable: {unreachable}"
+                        )
                     for scope, scoped_item in response.get("items", {}).items():
                         region = scope.split("/")[-1]
                         for subnet in scoped_item.get("subnetworks", []):
