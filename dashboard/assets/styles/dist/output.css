@@ -1068,14 +1068,14 @@ video {
   /* Firefox */
 }
 
-#_dash-app-content {
+#react-entry-point {
   --tw-bg-opacity: 1;
   background-color: rgb(231 229 228 / var(--tw-bg-opacity));
 }
 
 /* Styles for the accordion in the compliance page */
 
-#_dash-app-content .accordion .accordion-header .accordion-button {
+#react-entry-point .accordion .accordion-header .accordion-button {
   display: inline-block;
   border-radius: 0.5rem;
   --tw-bg-opacity: 1;
@@ -1092,11 +1092,11 @@ video {
   transition-duration: 150ms;
 }
 
-#_dash-app-content .accordion .accordion-header .accordion-button:hover {
+#react-entry-point .accordion .accordion-header .accordion-button:hover {
   background-color: rgb(41 37 36 / 0.1);
 }
 
-#_dash-app-content .accordion .accordion-item {
+#react-entry-point .accordion .accordion-item {
   border-radius: 0.5rem;
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
@@ -1104,28 +1104,28 @@ video {
   color: rgb(41 37 36 / var(--tw-text-opacity));
 }
 
-#_dash-app-content .accordion .accordion-collapse.collapse {
+#react-entry-point .accordion .accordion-collapse.collapse {
   visibility: visible;
 }
 
-#_dash-app-content .accordion .accordion-button:not(.collapsed) {
+#react-entry-point .accordion .accordion-button:not(.collapsed) {
   --tw-bg-opacity: 1;
   background-color: rgb(231 229 228 / var(--tw-bg-opacity));
   --tw-text-opacity: 1;
   color: rgb(41 37 36 / var(--tw-text-opacity));
 }
 
-#_dash-app-content .accordion .dash-table-container {
+#react-entry-point .accordion .dash-table-container {
   display: grid;
 }
 
-#_dash-app-content .accordion table {
+#react-entry-point .accordion table {
   border-radius: 0.5rem;
 }
 
 /* Styles for thead */
 
-#_dash-app-content .accordion th {
+#react-entry-point .accordion th {
   --tw-bg-opacity: 1;
   background-color: rgb(41 37 36 / var(--tw-bg-opacity));
   padding-top: 0.25rem;
@@ -1139,7 +1139,7 @@ video {
 
 /* Styles for td */
 
-#_dash-app-content .accordion td {
+#react-entry-point .accordion td {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
   padding-top: 0.25rem;
@@ -1153,59 +1153,59 @@ video {
 
 /* Styles for table cells */
 
-#_dash-app-content .accordion table tbody thead,
-#_dash-app-content .accordion table tbody tr {
+#react-entry-point .accordion table tbody thead,
+#react-entry-point .accordion table tbody tr {
   width: 100%;
 }
 
 /* Check ID */
 
-#_dash-app-content .accordion table th:nth-child(1) {
+#react-entry-point .accordion table th:nth-child(1) {
   width: 60%;
 }
 
 /* Status */
 
-#_dash-app-content .accordion table th:nth-child(2) {
+#react-entry-point .accordion table th:nth-child(2) {
   width: 10%;
   text-align: center;
 }
 
-#_dash-app-content .accordion table td:nth-child(2) {
+#react-entry-point .accordion table td:nth-child(2) {
   text-align: center;
 }
 
 /* Region */
 
-#_dash-app-content .accordion table th:nth-child(3) {
+#react-entry-point .accordion table th:nth-child(3) {
   width: 10%;
 }
 
 /* Account ID */
 
-#_dash-app-content .accordion table th:nth-child(4) {
+#react-entry-point .accordion table th:nth-child(4) {
   width: 10%;
 }
 
 /* Resource ID */
 
-#_dash-app-content .accordion table th:nth-child(5) {
+#react-entry-point .accordion table th:nth-child(5) {
   width: 10%;
 }
 
-#_dash-app-content .compliance-data-layout,
-#_dash-app-content .accordion-body,
-#_dash-app-content .compliance-data-layout .accordion.accordion-flush {
+#react-entry-point .compliance-data-layout,
+#react-entry-point .accordion-body,
+#react-entry-point .compliance-data-layout .accordion.accordion-flush {
   display: grid;
   row-gap: 1rem;
 }
 
-#_dash-app-content .accordion-inner--child,
-#_dash-app-content .accordion-inner {
+#react-entry-point .accordion-inner--child,
+#react-entry-point .accordion-inner {
   position: relative;
 }
 
-#_dash-app-content .info-bar {
+#react-entry-point .info-bar {
   position: absolute;
   left: 50%;
   top: 0.5rem;
@@ -1215,7 +1215,7 @@ video {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-#_dash-app-content .info-bar-child {
+#react-entry-point .info-bar-child {
   position: absolute;
   right: 1.5rem;
   top: 0.5rem;
