@@ -285,6 +285,10 @@ class Compute(GCPService):
                         )
                     for scope, scoped_item in response.get("items", {}).items():
                         region = scope.split("/")[-1]
+                        if scoped_item.get("warning", {}).get("code") == "UNREACHABLE":
+                            logger.error(
+                                f"{project_id} -- Subnetworks scope unreachable: {scope}"
+                            )
                         for subnet in scoped_item.get("subnetworks", []):
                             self.subnets.append(
                                 Subnet(
