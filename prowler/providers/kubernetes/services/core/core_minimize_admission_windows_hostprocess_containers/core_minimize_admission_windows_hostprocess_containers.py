@@ -8,9 +8,7 @@ class core_minimize_admission_windows_hostprocess_containers(Check):
         for pod in core_client.pods.values():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
-            report.status_extended = (
-                f"Pod {pod.name} does not have the ability to run a Windows HostProcess."
-            )
+            report.status_extended = f"Pod {pod.name} does not have the ability to run a Windows HostProcess."
 
             contexts = [("pod security context", pod.security_context)]
             for container_type, containers in (
