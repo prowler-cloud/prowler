@@ -292,6 +292,7 @@ For Prowler Local Server deployments, several environment variables must be conf
 | `DJANGO_ALLOWED_HOSTS`    | A comma-separated list of hostnames that the Django backend will accept requests from. Include any domains used to access the Prowler API.                               | `localhost,127.0.0.1,prowler-api,mycompany.prowler`       |
 | `AUTH_URL`                | The base URL of the Prowler web UI. This is used to construct the callback URL after authentication.                                                                     | `http://mycompany.prowler`                                |
 | `SAML_SSO_CALLBACK_URL`   | The full callback URL where users are redirected after authenticating with the IdP. It is typically constructed using the `AUTH_URL`.                                       | `${AUTH_URL}/api/auth/callback/saml`                      |
+| `SAML_SP_ENTITY_ID`       | The Service Provider entity ID (Audience) sent to the IdP. It must be unique per Prowler instance, since an IdP realm allows only one client per Client ID.                  | `urn:prowler.com:sp`                                     |
 
 After modifying these variables, the Prowler API must be restarted for the changes to take effect.
 

@@ -166,6 +166,17 @@ class TestSAMLConfigurationModel:
         assert config.email_domain == "ssoexample.com"
         assert SocialApp.objects.filter(client_id="ssoexample.com").exists()
 
+    def test_synced_social_app_uses_configured_sp_entity_id(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        SAMLConfiguration.objects.using(MainRouter.admin_db).create(
+            email_domain="ssoexample.com",
+            metadata_xml=TestSAMLConfigurationModel.VALID_METADATA,
+            tenant=tenant,
+        )
+
+        social_app = SocialApp.objects.get(client_id="ssoexample.com")
+        assert social_app.settings["sp"]["entity_id"] == "urn:prowler.com:sp"
+
     def test_email_domain_with_at_symbol_fails(self, tenants_fixture):
         tenant = tenants_fixture[0]
         config = SAMLConfiguration(

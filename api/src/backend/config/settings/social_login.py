@@ -9,6 +9,14 @@ GITHUB_OAUTH_CLIENT_ID = env("SOCIAL_GITHUB_OAUTH_CLIENT_ID", default="")
 GITHUB_OAUTH_CLIENT_SECRET = env("SOCIAL_GITHUB_OAUTH_CLIENT_SECRET", default="")
 GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 
+# SAML settings
+# The Service Provider entity ID (Audience) sent to the Identity Provider.
+# It must be unique per Prowler instance: Keycloak, for example, allows only
+# one client per Client ID in a realm, so several self-hosted instances
+# sharing the default value cannot have separate IdP clients, roles, mappers
+# and access policies. Defaults to the historical value.
+SAML_SP_ENTITY_ID = env("SAML_SP_ENTITY_ID", default="urn:prowler.com:sp")
+
 # Allauth settings
 ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
@@ -67,7 +75,7 @@ SOCIALACCOUNT_PROVIDERS = {
     "saml": {
         "use_nameid_for_email": True,
         "sp": {
-            "entity_id": "urn:prowler.com:sp",
+            "entity_id": SAML_SP_ENTITY_ID,
         },
         "advanced": {
             # TODO: Validate certificates
