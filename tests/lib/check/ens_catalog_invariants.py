@@ -5,11 +5,13 @@ Every provider keeps its catalog in
 report and the UI group the requirements by the metadata of the measure they are filed
 under, so every requirement has to describe its measure the same way:
 
+- every requirement has attributes, which is where the rest of the invariants look,
 - the execution mode says whether Prowler evaluates the requirement,
 - ``IdGrupoControl`` is the code of a measure that exists in Annex II of the RD, or of
   one of its reinforcements,
 - ``Marco`` and ``Categoria`` are the block and the group of Annex II that measure
-  belongs to.
+  belongs to,
+- the requirement id starts with the code of its measure and the tag of its provider.
 """
 
 import json
@@ -22,10 +24,12 @@ COMPLIANCE_DIR = os.path.normpath(
 )
 
 # <group>.<number>, optionally followed by a reinforcement (.rN). The organisational
-# framework has no groups, so its measures are org.<number>.
+# framework has no groups, so its measures are org.<number>. The numbers are one or two
+# ASCII digits: no group has more than ten measures, nor a measure more than nine
+# reinforcements.
 MEASURE_ID = re.compile(
-    r"(?P<group>org|(?:op|mp)\.[a-z]+)\.(?P<number>[1-9]\d*)"
-    r"(?:\.r(?P<reinforcement>[1-9]\d*))?"
+    r"(?P<group>org|(?:op|mp)\.[a-z]+)\.(?P<number>[1-9][0-9]?)"
+    r"(?:\.r(?P<reinforcement>[1-9][0-9]?))?"
 )
 ORGANISATIONAL = "org"
 
@@ -102,6 +106,19 @@ def load_requirements(provider: str) -> list[dict]:
         return json.load(catalog)["Requirements"]
 
 
+def requirements_without_attributes(requirements: list[dict]) -> list[str]:
+    """Return the requirements that have no attributes.
+
+    The other invariants read the attributes of each requirement, so they have nothing
+    to say about a requirement without them.
+    """
+    return [
+        requirement["Id"]
+        for requirement in requirements
+        if not requirement["Attributes"]
+    ]
+
+
 def execution_mode_mismatches(requirements: list[dict]) -> list[tuple[str, str]]:
     """Return the requirements whose execution mode does not follow from their checks.
 
@@ -141,3 +158,19 @@ def misfiled_measures(requirements: list[dict]) -> list[tuple[str, str, str]]:
             if filed_under != (MARCOS[group.split(".")[0]], CATEGORIAS[group]):
                 misfiled.append((requirement["Id"], *filed_under))
     return misfiled
+
+
+def misnamed_requirements(requirements: list[dict], provider_tag: str) -> list[str]:
+    """Return the requirements whose id does not start with their measure and provider.
+
+    A requirement id is ``<IdGrupoControl>.<provider tag>.<suffix>``, and the suffix
+    tells apart the requirements of a measure.
+    """
+    return [
+        requirement["Id"]
+        for requirement in requirements
+        for attribute in requirement["Attributes"]
+        if not requirement["Id"].startswith(
+            f"{attribute['IdGrupoControl']}.{provider_tag}."
+        )
+    ]
