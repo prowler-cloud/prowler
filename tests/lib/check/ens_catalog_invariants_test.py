@@ -1,5 +1,7 @@
 """The invariants of the ENS catalogs report what they are meant to report."""
 
+from typing import Optional
+
 import pytest
 
 from tests.lib.check.ens_catalog_invariants import (
@@ -9,7 +11,30 @@ from tests.lib.check.ens_catalog_invariants import (
     execution_mode_mismatches,
     malformed_measure_ids,
     misfiled_measures,
+    misnamed_requirements,
+    requirements_without_attributes,
 )
+
+# Number of measures of each group in the summary table of Annex II of Real Decreto
+# 311/2022, 73 in all.
+MEASURES = {
+    "org": 4,
+    "op.pl": 5,
+    "op.acc": 6,
+    "op.exp": 10,
+    "op.ext": 4,
+    "op.nub": 1,
+    "op.cont": 4,
+    "op.mon": 3,
+    "mp.if": 7,
+    "mp.per": 4,
+    "mp.eq": 4,
+    "mp.com": 4,
+    "mp.si": 5,
+    "mp.sw": 2,
+    "mp.info": 6,
+    "mp.s": 4,
+}
 
 
 def _requirement(
@@ -18,9 +43,10 @@ def _requirement(
     categoria: str = "control de acceso",
     mode: str = "manual",
     checks: tuple = (),
+    requirement_id: Optional[str] = None,
 ) -> dict:
     return {
-        "Id": f"{group}.aws.iam.1",
+        "Id": requirement_id or f"{group}.aws.iam.1",
         "Checks": list(checks),
         "Attributes": [
             {
@@ -34,7 +60,16 @@ def _requirement(
 
 
 @pytest.mark.parametrize(
-    "group", ["op.acc.6", "op.acc.6.r9", "op.exp.10", "mp.com.4", "mp.s.4.r1", "org.4"]
+    "group",
+    [
+        "op.acc.6",
+        "op.acc.6.r9",
+        "op.exp.10",
+        "mp.com.4",
+        "mp.s.4.r1",
+        "mp.sw.2.r2",
+        "org.4",
+    ],
 )
 def test_the_code_of_a_measure_is_accepted(group):
     assert not malformed_measure_ids([_requirement(group)])
@@ -56,6 +91,8 @@ def test_the_code_of_a_measure_is_accepted(group):
         "op.acc.6.r10",  # op.acc.6 has R1 to R9
         "mp.sw.2.r3",  # mp.sw.2 has R1 and R2
         "op.acc.4.r1",  # op.acc.4 has no reinforcements
+        "op.exp.1\u0660",  # ARABIC-INDIC DIGIT ZERO, which is not an ASCII digit
+        pytest.param("op.acc.6.r" + "9" * 5000, id="reinforcement of 5000 digits"),
     ],
 )
 def test_a_code_that_is_not_a_measure_is_reported(group):
@@ -65,8 +102,16 @@ def test_a_code_that_is_not_a_measure_is_reported(group):
 
 
 def test_the_reinforcements_cover_the_measures_and_the_groups_of_the_rd():
-    assert sum(len(measures) for measures in REINFORCEMENTS.values()) == 73
+    assert {
+        group: len(measures) for group, measures in REINFORCEMENTS.items()
+    } == MEASURES
     assert set(REINFORCEMENTS) == {ORGANISATIONAL, *CATEGORIAS}
+
+
+def test_a_requirement_without_attributes_is_reported():
+    described = _requirement("op.acc.1")
+    bare = {**_requirement("op.acc.2"), "Attributes": []}
+    assert requirements_without_attributes([described, bare]) == [bare["Id"]]
 
 
 def test_a_measure_filed_under_its_block_and_group_is_accepted():
@@ -105,3 +150,27 @@ def test_a_measure_filed_under_another_block_or_group_is_reported(marco, categor
 def test_the_execution_mode_has_to_follow_from_the_checks(mode, checks, mismatches):
     requirement = _requirement("op.acc.1", mode=mode, checks=checks)
     assert execution_mode_mismatches([requirement]) == mismatches
+
+
+def test_an_id_that_starts_with_its_measure_and_provider_is_accepted():
+    requirement = _requirement("op.acc.2.r1", requirement_id="op.acc.2.r1.aws.iam.1")
+    assert not misnamed_requirements([requirement], "aws")
+
+
+@pytest.mark.parametrize(
+    "requirement_id",
+    [
+        "op.acc.2.aws.iam.1",  # lacks the reinforcement of its group
+        "op.acc.2.r10.aws.iam.1",  # another reinforcement that starts the same way
+        "op.acc.2.aws.r1.iam.1",  # reinforcement after the provider
+        "opc.acc.2.r1.aws.iam.1",  # mistyped block
+        "op.acc.2.r1..aws.iam.1",  # doubled dot
+        "op.acc.2.r1.az.iam.1",  # another provider
+        "op.acc.2.r1.aws",  # nothing after the provider
+    ],
+)
+def test_an_id_that_does_not_start_with_its_measure_and_provider_is_reported(
+    requirement_id,
+):
+    requirement = _requirement("op.acc.2.r1", requirement_id=requirement_id)
+    assert misnamed_requirements([requirement], "aws") == [requirement_id]

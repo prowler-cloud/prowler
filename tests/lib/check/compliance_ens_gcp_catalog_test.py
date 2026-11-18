@@ -5,9 +5,19 @@ from tests.lib.check.ens_catalog_invariants import (
     load_requirements,
     malformed_measure_ids,
     misfiled_measures,
+    misnamed_requirements,
+    requirements_without_attributes,
 )
 
 REQUIREMENTS = load_requirements("gcp")
+
+# Id with nothing after the provider. CCN-STIC-888B gives it no service or number, so
+# completing it is left for the maintainers to decide in #13420.
+PENDING_RENAMES = {"op.exp.4.r2.gcp"}
+
+
+def test_requirements_have_attributes():
+    assert not requirements_without_attributes(REQUIREMENTS)
 
 
 def test_execution_mode_follows_from_the_checks():
@@ -22,11 +32,5 @@ def test_measures_are_filed_under_their_block_and_group():
     assert not misfiled_measures(REQUIREMENTS)
 
 
-def test_requirement_ids_name_their_measure():
-    misnamed = [
-        requirement["Id"]
-        for requirement in REQUIREMENTS
-        for attribute in requirement["Attributes"]
-        if not f"{requirement['Id']}.".startswith(f"{attribute['IdGrupoControl']}.gcp.")
-    ]
-    assert not misnamed
+def test_requirement_ids_name_their_measure_but_for_the_pending_renames():
+    assert set(misnamed_requirements(REQUIREMENTS, "gcp")) == PENDING_RENAMES
