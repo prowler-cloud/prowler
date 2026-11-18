@@ -110,8 +110,21 @@ def test_the_reinforcements_cover_the_measures_and_the_groups_of_the_rd():
 
 def test_a_requirement_without_attributes_is_reported():
     described = _requirement("op.acc.1")
-    bare = {**_requirement("op.acc.2"), "Attributes": []}
-    assert requirements_without_attributes([described, bare]) == [bare["Id"]]
+    empty = {**_requirement("op.acc.2"), "Attributes": []}
+    missing = _requirement("op.acc.3")
+    del missing["Attributes"]
+    assert requirements_without_attributes([described, empty, missing]) == [
+        empty["Id"],
+        missing["Id"],
+    ]
+
+
+def test_the_other_invariants_have_nothing_to_say_without_attributes():
+    bare = {"Id": "op.acc.1.aws.iam.1", "Checks": []}
+    assert not execution_mode_mismatches([bare])
+    assert not malformed_measure_ids([bare])
+    assert not misfiled_measures([bare])
+    assert not misnamed_requirements([bare], "aws")
 
 
 def test_a_measure_filed_under_its_block_and_group_is_accepted():
@@ -152,8 +165,15 @@ def test_the_execution_mode_has_to_follow_from_the_checks(mode, checks, mismatch
     assert execution_mode_mismatches([requirement]) == mismatches
 
 
-def test_an_id_that_starts_with_its_measure_and_provider_is_accepted():
-    requirement = _requirement("op.acc.2.r1", requirement_id="op.acc.2.r1.aws.iam.1")
+@pytest.mark.parametrize(
+    "requirement_id",
+    [
+        "op.acc.2.r1.aws.iam.1",
+        "op.acc.2.r1.aws.1",  # the suffix may be a single part
+    ],
+)
+def test_an_id_built_from_its_measure_and_provider_is_accepted(requirement_id):
+    requirement = _requirement("op.acc.2.r1", requirement_id=requirement_id)
     assert not misnamed_requirements([requirement], "aws")
 
 
@@ -167,10 +187,15 @@ def test_an_id_that_starts_with_its_measure_and_provider_is_accepted():
         "op.acc.2.r1..aws.iam.1",  # doubled dot
         "op.acc.2.r1.az.iam.1",  # another provider
         "op.acc.2.r1.aws",  # nothing after the provider
+        "op.acc.2.r1.aws.",  # empty suffix
+        "op.acc.2.r1.aws.iam.",  # suffix that ends with a dot
+        "op.acc.2.r1.aws..1",  # suffix with an empty part
+        "op.acc.2.r1.aws.IAM.1",  # suffix in capitals
+        "op.acc.2.r1.aws.iam.1 ",  # trailing space
     ],
 )
-def test_an_id_that_does_not_start_with_its_measure_and_provider_is_reported(
-    requirement_id,
-):
+def test_an_id_not_built_from_its_measure_and_provider_is_reported(requirement_id):
     requirement = _requirement("op.acc.2.r1", requirement_id=requirement_id)
-    assert misnamed_requirements([requirement], "aws") == [requirement_id]
+    assert misnamed_requirements([requirement], "aws") == [
+        (requirement_id, "op.acc.2.r1")
+    ]

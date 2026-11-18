@@ -11,7 +11,7 @@ under, so every requirement has to describe its measure the same way:
   one of its reinforcements,
 - ``Marco`` and ``Categoria`` are the block and the group of Annex II that measure
   belongs to,
-- the requirement id starts with the code of its measure and the tag of its provider.
+- the requirement id is the code of its measure, the tag of its provider and a suffix.
 """
 
 import json
@@ -32,6 +32,10 @@ MEASURE_ID = re.compile(
     r"(?:\.r(?P<reinforcement>[1-9][0-9]?))?"
 )
 ORGANISATIONAL = "org"
+
+# What follows the measure and the provider in a requirement id: parts of lowercase
+# letters and digits separated by dots, such as ``iam.1``.
+ID_SUFFIX = r"[a-z0-9]+(?:\.[a-z0-9]+)*"
 
 # Number of reinforcements that Annex II of Real Decreto 311/2022 defines for each of
 # its 73 measures, by group and in the order of the RD: op.acc.6, the sixth measure of
@@ -106,8 +110,13 @@ def load_requirements(provider: str) -> list[dict]:
         return json.load(catalog)["Requirements"]
 
 
+def _attributes(requirement: dict) -> list[dict]:
+    """Return the attributes of a requirement, or none if it lacks them."""
+    return requirement.get("Attributes") or []
+
+
 def requirements_without_attributes(requirements: list[dict]) -> list[str]:
-    """Return the requirements that have no attributes.
+    """Return the requirements whose attributes are missing or empty.
 
     The other invariants read the attributes of each requirement, so they have nothing
     to say about a requirement without them.
@@ -115,7 +124,7 @@ def requirements_without_attributes(requirements: list[dict]) -> list[str]:
     return [
         requirement["Id"]
         for requirement in requirements
-        if not requirement["Attributes"]
+        if not _attributes(requirement)
     ]
 
 
@@ -128,7 +137,7 @@ def execution_mode_mismatches(requirements: list[dict]) -> list[tuple[str, str]]
     return [
         (requirement["Id"], attribute["ModoEjecucion"])
         for requirement in requirements
-        for attribute in requirement["Attributes"]
+        for attribute in _attributes(requirement)
         if attribute["ModoEjecucion"]
         != ("automático" if requirement["Checks"] else "manual")
     ]
@@ -139,7 +148,7 @@ def malformed_measure_ids(requirements: list[dict]) -> list[tuple[str, str]]:
     return [
         (requirement["Id"], attribute["IdGrupoControl"])
         for requirement in requirements
-        for attribute in requirement["Attributes"]
+        for attribute in _attributes(requirement)
         if measure_group(attribute["IdGrupoControl"]) is None
     ]
 
@@ -148,7 +157,7 @@ def misfiled_measures(requirements: list[dict]) -> list[tuple[str, str, str]]:
     """Return the requirements filed under a block or a group that is not their measure's."""
     misfiled = []
     for requirement in requirements:
-        for attribute in requirement["Attributes"]:
+        for attribute in _attributes(requirement):
             group = measure_group(attribute["IdGrupoControl"])
             # A code that is not a measure is reported by malformed_measure_ids, and the
             # organisational framework has no groups to be filed under.
@@ -160,17 +169,19 @@ def misfiled_measures(requirements: list[dict]) -> list[tuple[str, str, str]]:
     return misfiled
 
 
-def misnamed_requirements(requirements: list[dict], provider_tag: str) -> list[str]:
-    """Return the requirements whose id does not start with their measure and provider.
+def misnamed_requirements(
+    requirements: list[dict], provider_tag: str
+) -> list[tuple[str, str]]:
+    """Return the requirements whose id is not built from their measure and provider.
 
     A requirement id is ``<IdGrupoControl>.<provider tag>.<suffix>``, and the suffix
-    tells apart the requirements of a measure.
+    tells apart the requirements of a measure. Each requirement is returned with its
+    ``IdGrupoControl``.
     """
-    return [
-        requirement["Id"]
-        for requirement in requirements
-        for attribute in requirement["Attributes"]
-        if not requirement["Id"].startswith(
-            f"{attribute['IdGrupoControl']}.{provider_tag}."
-        )
-    ]
+    misnamed = []
+    for requirement in requirements:
+        for attribute in _attributes(requirement):
+            prefix = f"{attribute['IdGrupoControl']}.{provider_tag}."
+            if not re.fullmatch(re.escape(prefix) + ID_SUFFIX, requirement["Id"]):
+                misnamed.append((requirement["Id"], attribute["IdGrupoControl"]))
+    return misnamed
