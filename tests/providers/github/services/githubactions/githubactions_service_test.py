@@ -57,6 +57,15 @@ class TestGithubActionsService:
         result = GithubActions._extract_workflow_file_from_location(location)
         assert result == ".github/workflows/test.yml"
 
+    def test_extract_workflow_file_from_location_verbatim_path(self):
+        location = {
+            "symbolic": {
+                "key": {"Local": {"verbatim_path": ".github/workflows/test.yml"}}
+            }
+        }
+        result = GithubActions._extract_workflow_file_from_location(location)
+        assert result == ".github/workflows/test.yml"
+
     def test_extract_workflow_file_from_location_missing_key(self):
         location = {"symbolic": {}}
         result = GithubActions._extract_workflow_file_from_location(location)
@@ -351,6 +360,92 @@ class TestGithubActionsService:
             finding.workflow_url
             == "https://github.com/owner/repo/blob/main/.github/workflows/release.yml"
         )
+
+    def test_runs_ai_agent(self, tmp_path):
+        agent = tmp_path / "agent.yml"
+        agent.write_text(
+            "jobs:\n  review:\n    steps:\n"
+            "      - uses: anthropics/claude-code-action@v1\n"
+        )
+        quoted = tmp_path / "quoted.yml"
+        quoted.write_text('steps:\n  - name: x\n    uses: "openai/codex-action@v1"\n')
+        plain = tmp_path / "plain.yml"
+        plain.write_text(
+            "steps:\n  - uses: actions/checkout@v4\n"
+            "  # - uses: anthropics/claude-code-action@v1\n"
+            "  - uses: someone/anthropics/claude-code-action-fork@v1\n"
+            "  - uses: anthropics/claude-code-action-fake@v1\n"
+        )
+
+        assert GithubActions._runs_ai_agent(str(agent))
+        assert GithubActions._runs_ai_agent(str(quoted))
+        assert not GithubActions._runs_ai_agent(str(plain))
+        assert not GithubActions._runs_ai_agent(str(tmp_path / "missing.yml"))
+
+    def test_scan_repositories_flags_ai_agent_workflows(self, tmp_path):
+        workflows = tmp_path / ".github" / "workflows"
+        workflows.mkdir(parents=True)
+        (workflows / "agent.yml").write_text(
+            "steps:\n  - uses: anthropics/claude-code-action@v1\n"
+        )
+        (workflows / "ci.yml").write_text("steps:\n  - uses: actions/checkout@v4\n")
+
+        def zizmor_finding(name):
+            return {
+                "ident": "dangerous-triggers",
+                "desc": "Dangerous trigger",
+                "determinations": {"severity": "high", "confidence": "High"},
+                "locations": [
+                    {
+                        "symbolic": {
+                            "key": {
+                                "Local": {
+                                    "given_path": f"{tmp_path}/.github/workflows/{name}"
+                                }
+                            }
+                        }
+                    }
+                ],
+            }
+
+        mock_repo = MagicMock()
+        mock_repo.id = 1
+        mock_repo.name = "repo"
+        mock_repo.full_name = "owner/repo"
+        mock_repo.owner = "owner"
+        mock_repo.default_branch.name = "main"
+
+        mock_repo_module = MagicMock()
+        mock_repo_module.repository_client.repositories = {1: mock_repo}
+
+        mock_provider = MagicMock()
+        mock_provider.exclude_workflows = []
+
+        service = GithubActions.__new__(GithubActions)
+        service.findings = {}
+
+        with (
+            patch.object(service, "_clone_repository", return_value=str(tmp_path)),
+            patch.object(
+                service,
+                "_run_zizmor",
+                return_value=[zizmor_finding("agent.yml"), zizmor_finding("ci.yml")],
+            ),
+            patch.dict(
+                sys.modules,
+                {
+                    "prowler.providers.github.services.repository.repository_client": mock_repo_module,
+                },
+            ),
+            patch("shutil.rmtree"),
+        ):
+            service._scan_repositories(mock_provider)
+
+        flagged = {f.workflow_file: f.runs_ai_agent for f in service.findings[1]}
+        assert flagged == {
+            ".github/workflows/agent.yml": True,
+            ".github/workflows/ci.yml": False,
+        }
 
     def test_init_github_actions_disabled(self):
         mock_provider = MagicMock()
