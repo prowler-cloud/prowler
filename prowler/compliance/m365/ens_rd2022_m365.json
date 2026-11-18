@@ -172,6 +172,54 @@
       ]
     },
     {
+      "Id": "op.acc.6.r1.m365.entra.2",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las contraseñas de los usuarios tienen una longitud mínima de ocho caracteres, combinan tres de las cuatro categorías de caracteres (mayúsculas, minúsculas, números y símbolos) y no repiten la contraseña actual al cambiarla.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r1.m365.entra.3",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La protección de contraseñas de Microsoft Entra rechaza las contraseñas de la lista global de contraseñas prohibidas y de la lista personalizada de contraseñas prohibidas de la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_password_protection_custom_banned_list_enforced"
+      ]
+    },
+    {
       "Id": "op.acc.6.r2.m365.entra.1",
       "Description": "Contraseña + otro factor de autenticación",
       "Attributes": [
