@@ -1353,6 +1353,43 @@ def _store_running_scan_summaries(
         logger.error(f"Error storing running summaries for scan {scan_id}: {error}")
 
 
+def _store_final_scan_summaries(
+    tenant_id: str,
+    scan_id: str,
+    scan_resource_cache: set[tuple[str, str, str, str]],
+    scan_categories_cache: dict[tuple[str, str], dict[str, int]],
+) -> None:
+    """Store the complete filter values and category counters of a scan."""
+    try:
+        _store_resource_scan_summaries(tenant_id, scan_id, scan_resource_cache)
+    except Exception as filter_exception:
+        sentry_sdk.capture_exception(filter_exception)
+        logger.error(
+            f"Error storing filter values for scan {scan_id}: {filter_exception}"
+        )
+
+    try:
+        _store_scan_category_summaries(tenant_id, scan_id, scan_categories_cache)
+    except Exception as cat_exception:
+        sentry_sdk.capture_exception(cat_exception)
+        logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
+
+
+def _delete_scan_summaries(tenant_id: str, scan_id: str) -> None:
+    """Drop the partial summaries of a failed scan so readers aggregate its findings."""
+    try:
+        with rls_transaction(tenant_id):
+            ResourceScanSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).delete()
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).delete()
+    except Exception as error:
+        sentry_sdk.capture_exception(error)
+        logger.error(f"Error deleting partial summaries for scan {scan_id}: {error}")
+
+
 def perform_prowler_scan(
     tenant_id: str,
     scan_id: str,
@@ -1523,6 +1560,12 @@ def perform_prowler_scan(
                     scan_categories_cache,
                 )
 
+        # Written before the scan is saved as completed: a mute rule can
+        # reaggregate the categories of a completed scan at any time.
+        _store_final_scan_summaries(
+            tenant_id, scan_id, scan_resource_cache, scan_categories_cache
+        )
+
         scan_instance.state = StateChoices.COMPLETED
 
         # Update failed_findings_count for all resources in batches if scan completed successfully
@@ -1576,21 +1619,11 @@ def perform_prowler_scan(
                 exception = e
 
     if exception is not None:
+        if not skip_final_scan_update and (
+            scan_resource_cache or scan_categories_cache
+        ):
+            _delete_scan_summaries(tenant_id, scan_id)
         raise exception
-
-    try:
-        _store_resource_scan_summaries(tenant_id, scan_id, scan_resource_cache)
-    except Exception as filter_exception:
-        sentry_sdk.capture_exception(filter_exception)
-        logger.error(
-            f"Error storing filter values for scan {scan_id}: {filter_exception}"
-        )
-
-    try:
-        _store_scan_category_summaries(tenant_id, scan_id, scan_categories_cache)
-    except Exception as cat_exception:
-        sentry_sdk.capture_exception(cat_exception)
-        logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
 
     try:
         if scan_resource_groups_cache:
