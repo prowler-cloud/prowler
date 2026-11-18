@@ -227,6 +227,7 @@ class M365Provider(Provider):
             m365_credentials=m365_credentials,
             identity=self.identity,
             init_modules=init_modules,
+            region_config=self._region_config,
         )
 
         # Audit Config
@@ -376,6 +377,7 @@ class M365Provider(Provider):
                 authority=config["authority"],
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
+                powershell=config["powershell"],
             )
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -424,17 +426,22 @@ class M365Provider(Provider):
         m365_credentials: dict = {},
         identity: M365IdentityInfo = None,
         init_modules: bool = False,
+        region_config: M365RegionConfig = None,
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
         Args:
             sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            region_config (M365RegionConfig): The region configuration, M365Global when none is given.
 
         Returns:
             M365Credentials: Object containing the credentials for PowerShell operations.
         """
         logger.info("M365 provider: Setting up PowerShell session...")
         credentials = None
+
+        if region_config is None:
+            region_config = M365Provider.setup_region_config("M365Global")
 
         if m365_credentials:
             credentials = M365Credentials(
@@ -474,7 +481,7 @@ class M365Provider(Provider):
         if credentials:
             if identity and credentials.certificate_content:
                 identity.identity_type = "Service Principal with Certificate"
-            test_session = M365PowerShell(credentials, identity)
+            test_session = M365PowerShell(credentials, identity, region_config)
             try:
                 if init_modules:
                     initialize_m365_powershell_modules()
@@ -838,6 +845,7 @@ class M365Provider(Provider):
                 certificate_path,
                 m365_credentials,
                 identity,
+                region_config=region_config,
             )
             logger.info("M365 provider: Connection to PowerShell successful")
 

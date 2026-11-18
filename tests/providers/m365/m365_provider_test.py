@@ -119,6 +119,11 @@ class TestM365Provider:
                 authority=None,
                 base_url="https://graph.microsoft.com",
                 credential_scopes=["https://graph.microsoft.com/.default"],
+                powershell={
+                    "exchange_environment": None,
+                    "exchange_scope": "https://outlook.office365.com/.default",
+                    "teams_environment": None,
+                },
             )
             assert m365_provider.identity == M365IdentityInfo(
                 identity_id=IDENTITY_ID,
@@ -173,6 +178,11 @@ class TestM365Provider:
                 authority=None,
                 base_url="https://graph.microsoft.com",
                 credential_scopes=["https://graph.microsoft.com/.default"],
+                powershell={
+                    "exchange_environment": None,
+                    "exchange_scope": "https://outlook.office365.com/.default",
+                    "teams_environment": None,
+                },
             )
             assert m365_provider.identity == M365IdentityInfo(
                 identity_id=IDENTITY_ID,
@@ -223,6 +233,11 @@ class TestM365Provider:
                 authority=None,
                 base_url="https://graph.microsoft.com",
                 credential_scopes=["https://graph.microsoft.com/.default"],
+                powershell={
+                    "exchange_environment": None,
+                    "exchange_scope": "https://outlook.office365.com/.default",
+                    "teams_environment": None,
+                },
             )
             assert m365_provider.identity == M365IdentityInfo(
                 identity_id=IDENTITY_ID,
@@ -708,6 +723,11 @@ class TestM365Provider:
                 authority=None,
                 base_url="https://graph.microsoft.com",
                 credential_scopes=["https://graph.microsoft.com/.default"],
+                powershell={
+                    "exchange_environment": None,
+                    "exchange_scope": "https://outlook.office365.com/.default",
+                    "teams_environment": None,
+                },
             )
             assert (
                 m365_provider.identity.identity_type
@@ -2134,3 +2154,20 @@ class TestM365ProviderRegionConfig:
         build_graph_client.assert_called_once_with(
             mock_certificate_credential.return_value, region_config
         )
+
+    def test_setup_powershell_uses_region_config(self):
+        region_config = M365Provider.setup_region_config("M365USGovernment")
+        identity = M365IdentityInfo(tenant_domains=["contoso.onmicrosoft.us"])
+
+        with patch("prowler.providers.m365.m365_provider.M365PowerShell") as mock_ps:
+            credentials = M365Provider.setup_powershell(
+                m365_credentials={
+                    "client_id": CLIENT_ID,
+                    "tenant_id": TENANT_ID,
+                    "client_secret": CLIENT_SECRET,
+                },
+                identity=identity,
+                region_config=region_config,
+            )
+
+        mock_ps.assert_called_once_with(credentials, identity, region_config)

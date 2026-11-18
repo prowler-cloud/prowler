@@ -7,7 +7,7 @@ import { AppliesTo } from "/snippets/applies-to.mdx"
 <Note>
 **Government Cloud Support**
 
-Government cloud accounts or tenants (Microsoft 365 Government) are currently unsupported, but we expect to add support for them in the near future.
+Prowler CLI scans Microsoft 365 Government GCC High and Microsoft 365 operated by 21Vianet tenants with the `--region` flag, see [Region Selection](#region-selection). Microsoft 365 GCC uses the commercial endpoints and needs no flag. Microsoft 365 DoD is not available, and Prowler Cloud does not support government clouds yet.
 
 </Note>
 
@@ -144,5 +144,11 @@ Available regions:
 * **M365Global** (default): Standard commercial cloud
 * **M365China**: China-operated cloud (21Vianet)
 * **M365USGovernment**: US Government cloud (GCC High)
+
+The PowerShell checks (Exchange Online and Microsoft Teams, which also feed Entra, Defender, Purview and Admin Center checks) follow the selected region. For `M365USGovernment` and `M365China`, Prowler requests tokens from that cloud's sign-in endpoint and connects with the matching `-ExchangeEnvironmentName` (`O365USGovGCCHigh`, `O365China`) and `-TeamsEnvironmentName` (`TeamsGCCH`, `TeamsChina`) values. Nothing is sent to the commercial sign-in endpoint for those regions.
+
+<Note>
+Only the Microsoft Teams checks for `M365USGovernment` are verified against a live tenant. Exchange Online for `M365USGovernment` and everything for `M365China` are not, and Teams checks may not connect with `M365China`.
+</Note>
 
 ---
