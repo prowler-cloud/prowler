@@ -1,5 +1,3 @@
-from msgraph import GraphServiceClient
-
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
 from prowler.providers.m365.m365_provider import M365Provider
 
@@ -9,7 +7,10 @@ class M365Service:
         self,
         provider: M365Provider,
     ):
-        self.client = GraphServiceClient(credentials=provider.session)
+        self.region_config = provider.region_config
+        self.client = M365Provider.build_graph_client(
+            provider.session, provider.region_config
+        )
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
