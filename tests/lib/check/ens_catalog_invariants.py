@@ -24,30 +24,31 @@ COMPLIANCE_DIR = os.path.normpath(
 # <group>.<number>, optionally followed by a reinforcement (.rN). The organisational
 # framework has no groups, so its measures are org.<number>.
 MEASURE_ID = re.compile(
-    r"(?P<group>org|(?:op|mp)\.[a-z]+)\.(?P<number>[1-9]\d*)(?:\.r[1-9]\d*)?"
+    r"(?P<group>org|(?:op|mp)\.[a-z]+)\.(?P<number>[1-9]\d*)"
+    r"(?:\.r(?P<reinforcement>[1-9]\d*))?"
 )
 ORGANISATIONAL = "org"
 
-# Number of measures of each group in the summary table of Annex II of Real Decreto
-# 311/2022, 73 in all. The reinforcements are not listed: the RD defines them in the
-# text of each measure.
-MEASURES = {
-    "org": 4,
-    "op.pl": 5,
-    "op.acc": 6,
-    "op.exp": 10,
-    "op.ext": 4,
-    "op.nub": 1,
-    "op.cont": 4,
-    "op.mon": 3,
-    "mp.if": 7,
-    "mp.per": 4,
-    "mp.eq": 4,
-    "mp.com": 4,
-    "mp.si": 5,
-    "mp.sw": 2,
-    "mp.info": 6,
-    "mp.s": 4,
+# Number of reinforcements that Annex II of Real Decreto 311/2022 defines for each of
+# its 73 measures, by group and in the order of the RD: op.acc.6, the sixth measure of
+# op.acc, has R1 to R9, and op.acc.4 has none.
+REINFORCEMENTS = {
+    "org": (0, 1, 1, 0),
+    "op.pl": (2, 3, 0, 1, 2),
+    "op.acc": (1, 2, 3, 0, 7, 9),
+    "op.exp": (4, 0, 5, 4, 1, 5, 4, 5, 0, 2),
+    "op.ext": (0, 0, 3, 1),
+    "op.nub": (2,),
+    "op.cont": (0, 2, 0, 1),
+    "op.mon": (3, 2, 7),
+    "mp.if": (0, 0, 0, 1, 0, 0, 0),
+    "mp.per": (1, 1, 0, 0),
+    "mp.eq": (1, 1, 2, 2),
+    "mp.com": (0, 5, 5, 4),
+    "mp.si": (1, 2, 0, 0, 2),
+    "mp.sw": (5, 2),
+    "mp.info": (0, 0, 5, 1, 0, 2),
+    "mp.s": (0, 3, 2, 2),
 }
 
 # Blocks and groups of measures of Annex II of Real Decreto 311/2022, as the catalogs
@@ -75,14 +76,23 @@ CATEGORIAS = {
 def measure_group(measure_id: str) -> Optional[str]:
     """Return the group of Annex II a measure code belongs to, or None if it is not one.
 
-    The code has to be well formed and name a measure of the RD, so neither a code with
-    a mistyped group, such as ``mp.comm.4``, nor one past the last measure of its
-    group, such as ``op.acc.7``, is a measure.
+    The code has to be well formed and name a measure of the RD or one of its
+    reinforcements, so these are not measures:
+
+    - a code with a mistyped group, such as ``mp.comm.4``,
+    - one past the last measure of its group, such as ``op.acc.7``,
+    - one past the last reinforcement of its measure, such as ``op.acc.6.r10``.
     """
-    measure = MEASURE_ID.fullmatch(measure_id)
-    if measure and int(measure["number"]) <= MEASURES.get(measure["group"], 0):
-        return measure["group"]
-    return None
+    code = MEASURE_ID.fullmatch(measure_id)
+    if code is None:
+        return None
+    reinforcements = REINFORCEMENTS.get(code["group"], ())
+    number = int(code["number"])
+    if number > len(reinforcements):
+        return None
+    if int(code["reinforcement"] or 0) > reinforcements[number - 1]:
+        return None
+    return code["group"]
 
 
 def load_requirements(provider: str) -> list[dict]:
