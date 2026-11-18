@@ -296,6 +296,10 @@ For Prowler Local Server deployments, several environment variables must be conf
 
 After modifying these variables, the Prowler API must be restarted for the changes to take effect.
 
+<Note>
+`SAML_SP_ENTITY_ID` applies to SAML configurations created after the change, and to existing configurations when their IdP metadata is re-saved. Existing configurations keep the entity ID stored when they were created, so re-save the metadata before moving the IdP client to the new audience.
+</Note>
+
 ### SAML API Reference
 
 Prowler provides a REST API to manage SAML configurations programmatically.
