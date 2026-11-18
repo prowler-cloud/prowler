@@ -1620,7 +1620,7 @@ def perform_prowler_scan(
 
     if exception is not None:
         if not skip_final_scan_update and (
-            stored_scan_resources or scan_categories_cache
+            scan_resource_cache or scan_categories_cache
         ):
             _delete_scan_summaries(tenant_id, scan_id)
         raise exception

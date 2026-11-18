@@ -391,6 +391,7 @@ class TestPerformScan:
             patch(
                 "tasks.jobs.scan._save_scan_instance", side_effect=save_scan_instance
             ),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", float("inf")),
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
                 new_callable=dict,
@@ -424,6 +425,7 @@ class TestPerformScan:
 
         with (
             patch("api.db_utils.rls_transaction"),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", float("inf")),
             patch("tasks.jobs.scan.initialize_prowler_provider") as mock_provider,
             patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
             patch(
@@ -443,6 +445,38 @@ class TestPerformScan:
         assert Finding.objects.filter(scan_id=scan.id).count() == 2
         assert not ResourceScanSummary.objects.filter(scan_id=scan.id).exists()
         assert not ScanCategorySummary.objects.filter(scan_id=scan.id).exists()
+
+    def test_perform_prowler_scan_failure_after_final_summaries_drops_them(
+        self, tenants_fixture, scans_fixture, aws_provider
+    ):
+        tenant_id = str(tenants_fixture[0].id)
+        scan = scans_fixture[0]
+        finding = self._build_summary_finding(1)
+        finding.get_metadata.return_value = {"categories": []}
+
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch("tasks.jobs.scan.initialize_prowler_provider") as mock_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan._store_running_scan_summaries"),
+            patch(
+                "tasks.jobs.scan._bulk_update_resource_failed_findings_counts",
+                side_effect=RuntimeError("database went away"),
+            ),
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            mock_provider.return_value.get_regions.return_value = ["eu-west-1"]
+            mock_prowler_scan_class.return_value.scan.return_value = [(1, [finding])]
+            with pytest.raises(RuntimeError):
+                perform_prowler_scan(tenant_id, str(scan.id), str(aws_provider.id), [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.FAILED
+        assert not ResourceScanSummary.objects.filter(scan_id=scan.id).exists()
 
     @patch("tasks.jobs.scan.ProwlerScan")
     @patch(
