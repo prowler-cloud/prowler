@@ -824,6 +824,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
     { name = "httpx" },
+    { name = "opentelemetry-api" },
 ]
 
 [package.dev-dependencies]
@@ -842,6 +843,7 @@ dev = [
 requires-dist = [
     { name = "fastmcp", specifier = "==3.4.10" },
     { name = "httpx", specifier = "==0.28.1" },
+    { name = "opentelemetry-api", specifier = "==1.45.2" },
 ]
 
 [package.metadata.requires-dev]

@@ -17,7 +17,8 @@ dev = [
 [project]
 dependencies = [
   "fastmcp==3.4.10",
-  "httpx==0.28.1"
+  "httpx==0.28.1",
+  "opentelemetry-api==1.45.2"
 ]
 description = "MCP server for Prowler ecosystem"
 name = "prowler-mcp"
