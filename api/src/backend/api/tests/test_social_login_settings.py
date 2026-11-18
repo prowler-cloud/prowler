@@ -3,7 +3,7 @@ DEFAULT_SP_ENTITY_ID = "urn:prowler.com:sp"
 
 class TestSAMLSPEntityID:
     def _reimport_settings(self):
-        """Fresh import — importlib.reload() doesn't clear the module namespace,
+        """Fresh import: importlib.reload() doesn't clear the module namespace,
         so an attribute set by a prior test would leak into the unset case."""
         import sys
 
