@@ -1051,7 +1051,7 @@
       ]
     },
     {
-      "Id": "op.ext.7.aws.am.1",
+      "Id": "op.exp.7.aws.am.1",
       "Description": "Gestión de incidentes",
       "Attributes": [
         {
@@ -4075,7 +4075,7 @@
       "Checks": []
     },
     {
-      "Id": "op.exp.1.r3.aws.tag.1",
+      "Id": "op.exp.1.r4.aws.tag.1",
       "Description": "Lista de componentes software",
       "Attributes": [
         {
@@ -4099,7 +4099,7 @@
       "Checks": []
     },
     {
-      "Id": "op.exp.3.r4.aws.cfg.2",
+      "Id": "op.exp.3.r3.aws.cfg.2",
       "Description": "Copias de seguridad",
       "Attributes": [
         {
@@ -4558,7 +4558,7 @@
       "Checks": []
     },
     {
-      "Id": "mp.sw.2.r1.aws.cfgd.1",
+      "Id": "mp.sw.2.r2.aws.cfgd.1",
       "Description": "Aceptación y puesta en servicio",
       "Attributes": [
         {
