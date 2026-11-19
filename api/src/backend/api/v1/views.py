@@ -7686,8 +7686,8 @@ class MuteRuleViewSet(BaseRLSViewSet):
         queryset = MuteRule.objects.filter(tenant_id=tenant_id)
         visible_providers = self._visible_providers()
         if visible_providers is not None:
-            # A rule stays hidden while any finding it mutes is on a provider
-            # the role cannot see
+            # A rule is shown only when its findings are all on providers the role
+            # can see, and at least one of them still exists
             uid_in_rule = Func(
                 F("uid"),
                 OuterRef("finding_uids"),
@@ -7695,10 +7695,12 @@ class MuteRuleViewSet(BaseRLSViewSet):
                 template="%(expressions)s)",
                 output_field=BooleanField(),
             )
-            hidden_finding = Finding.all_objects.filter(
-                uid_in_rule, tenant_id=tenant_id
-            ).exclude(scan__provider__in=visible_providers)
-            queryset = queryset.exclude(Exists(hidden_finding))
+            rule_findings = Finding.all_objects.filter(uid_in_rule, tenant_id=tenant_id)
+            queryset = queryset.filter(
+                Exists(rule_findings.filter(scan__provider__in=visible_providers))
+            ).exclude(
+                Exists(rule_findings.exclude(scan__provider__in=visible_providers))
+            )
         return queryset.select_related("created_by")
 
     def get_serializer_context(self):

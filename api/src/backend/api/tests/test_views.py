@@ -20043,17 +20043,79 @@ class TestMuteRuleViewSet:
             }
         }
 
-        assert client.get(url).status_code == status.HTTP_404_NOT_FOUND
-        assert (
-            client.patch(
-                url,
-                data=json.dumps(patch_body),
-                content_type="application/vnd.api+json",
-            ).status_code
-            == status.HTTP_404_NOT_FOUND
+        retrieved = client.get(url)
+        patched = client.patch(
+            url,
+            data=json.dumps(patch_body),
+            content_type="application/vnd.api+json",
         )
-        assert client.delete(url).status_code == status.HTTP_404_NOT_FOUND
+        deleted = client.delete(url)
+
+        assert retrieved.status_code == status.HTTP_404_NOT_FOUND
+        assert patched.status_code == status.HTTP_404_NOT_FOUND
+        assert deleted.status_code == status.HTTP_404_NOT_FOUND
         assert MuteRule.objects.filter(id=rule.id, enabled=True).exists()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    def test_mute_rules_scoped_role_conflict_does_not_name_the_rule(
+        self,
+        mock_mute_task,
+        mute_rules_fixture,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, _ = aws_provider_pair
+        client = self._client_scoped_to(
+            own_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Overlapping rule",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert mute_rules_fixture[0].name not in response.content.decode()
+
+    def test_mute_rules_scoped_role_does_not_see_rules_without_findings(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+        create_test_user,
+    ):
+        own_provider, _ = aws_provider_pair
+        tenant = tenants_fixture[0]
+        orphan = MuteRule.objects.create(
+            tenant_id=tenant.id,
+            name="Orphan rule",
+            reason="provider deleted",
+            created_by=create_test_user,
+            finding_uids=["uid-with-no-finding"],
+        )
+        client = self._client_scoped_to(
+            own_provider, tenant, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("mute-rule-list"))
+
+        listed = {item["id"] for item in response.json()["data"]}
+        assert str(orphan.id) not in listed
+        assert listed == {str(rule.id) for rule in mute_rules_fixture}
 
     @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_scoped_role_cannot_mute_a_finding_it_cannot_read(
