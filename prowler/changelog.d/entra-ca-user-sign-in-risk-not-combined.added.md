@@ -1,0 +1,1 @@
+`entra_conditional_access_policy_user_and_sign_in_risk_not_combined` check for M365 provider, flagging Conditional Access policies that combine user risk and sign-in risk conditions in a single policy

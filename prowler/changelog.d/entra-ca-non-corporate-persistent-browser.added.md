@@ -1,0 +1,1 @@
+`entra_conditional_access_policy_non_corporate_device_persistent_browser_disabled` check for M365 provider, verifying that an enabled Conditional Access policy enforces a non-persistent browser session on non-corporate devices
