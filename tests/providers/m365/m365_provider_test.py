@@ -2332,6 +2332,7 @@ class TestM365ProviderCustomRegion:
             )
             with pytest.raises(Exception):
                 credential.get_token("https://graph.custom.cloud/.default")
+            token_hosts, requested_hosts[:] = set(requested_hosts), []
             with pytest.raises(Exception):
                 M365Provider.verify_client(
                     TENANT_ID,
@@ -2342,7 +2343,7 @@ class TestM365ProviderCustomRegion:
                     region_config=region_config,
                 )
 
-        assert requested_hosts
+        assert token_hosts == {authority_host}
         assert set(requested_hosts) == {authority_host}
 
     def test_init_global_provider_passes_custom_endpoints_from_cli(self, monkeypatch):
