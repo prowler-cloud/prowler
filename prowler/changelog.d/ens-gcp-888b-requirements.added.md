@@ -1,0 +1,1 @@
+The CCN-STIC-888B multi-factor authentication requirements `op.acc.5.gcp.iam.3` and `op.acc.5.gcp.iam.4` in the ENS RD 311/2022 compliance framework for the GCP provider, which now covers every requirement of the guide

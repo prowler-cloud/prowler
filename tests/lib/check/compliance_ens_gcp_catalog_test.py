@@ -30,3 +30,21 @@ def test_measures_are_filed_under_their_block_and_group():
 
 def test_requirement_ids_name_their_measure():
     assert not misnamed_requirements(REQUIREMENTS, "gcp")
+
+
+# Every requirement id in the summary table of CCN-STIC-888B, the CCN guide to
+# configuring GCP for the ENS (June 2025 edition).
+CCN_STIC_888B_REQUIREMENT_IDS = (
+    "op.acc.1.gcp.iam.1",
+    "op.acc.3.gcp.org.1",
+    "op.acc.3.gcp.iam.2",
+    "op.acc.5.gcp.iam.3",
+    "op.acc.5.gcp.iam.4",
+    "mp.com.2.gcp.lb.1",
+    "mp.com.4.gcp.vpc.1",
+)
+
+
+def test_covers_every_requirement_of_ccn_stic_888b():
+    catalog_ids = {requirement["Id"] for requirement in REQUIREMENTS}
+    assert sorted(set(CCN_STIC_888B_REQUIREMENT_IDS) - catalog_ids) == []
