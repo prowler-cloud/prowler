@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_vpc_endpoints_configured",
+  "CheckTitle": "VPC endpoints ensure private connectivity for AgentCore APIs",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Vpc",
+  "ResourceGroup": "network",
+  "Description": "**Amazon VPCs** that contain **Amazon Bedrock AgentCore runtimes** are evaluated for **interface VPC endpoints** to the AgentCore data plane (`bedrock-agentcore`), control plane (`bedrock-agentcore-control`), and gateway (`bedrock-agentcore.gateway`). Only endpoints in the `available` state count as private **AWS PrivateLink** connectivity in the runtime VPC.",
+  "Risk": "Without private AgentCore endpoints, runtime, control-plane and gateway API traffic exits the VPC via an internet gateway or NAT Gateway. This expands exposure to network path threats (for example DNS hijack or MITM), weakens egress isolation, and adds an internet dependency for AgentCore API access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/vpc-interface-endpoints.html",
+    "https://docs.aws.amazon.com/vpc/latest/privatelink/create-interface-endpoint.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 create-vpc-endpoint --vpc-id <VPC_ID> --service-name com.amazonaws.<REGION>.bedrock-agentcore --vpc-endpoint-type Interface --subnet-ids <SUBNET_ID> && aws ec2 create-vpc-endpoint --vpc-id <VPC_ID> --service-name com.amazonaws.<REGION>.bedrock-agentcore-control --vpc-endpoint-type Interface --subnet-ids <SUBNET_ID> && aws ec2 create-vpc-endpoint --vpc-id <VPC_ID> --service-name com.amazonaws.<REGION>.bedrock-agentcore.gateway --vpc-endpoint-type Interface --subnet-ids <SUBNET_ID>",
+      "NativeIaC": "```yaml\n# CloudFormation: create AgentCore interface VPC endpoints in the runtime VPC\nResources:\n  AgentCoreDataPlaneEndpoint:\n    Type: AWS::EC2::VPCEndpoint\n    Properties:\n      VpcId: \"<example_resource_id>\"\n      ServiceName: !Sub \"com.amazonaws.${AWS::Region}.bedrock-agentcore\"\n      VpcEndpointType: Interface\n      SubnetIds:\n        - \"<example_resource_id>\"\n  AgentCoreControlPlaneEndpoint:\n    Type: AWS::EC2::VPCEndpoint\n    Properties:\n      VpcId: \"<example_resource_id>\"\n      ServiceName: !Sub \"com.amazonaws.${AWS::Region}.bedrock-agentcore-control\"\n      VpcEndpointType: Interface\n      SubnetIds:\n        - \"<example_resource_id>\"\n  AgentCoreGatewayEndpoint:\n    Type: AWS::EC2::VPCEndpoint\n    Properties:\n      VpcId: \"<example_resource_id>\"\n      ServiceName: !Sub \"com.amazonaws.${AWS::Region}.bedrock-agentcore.gateway\"\n      VpcEndpointType: Interface\n      SubnetIds:\n        - \"<example_resource_id>\"\n```",
+      "Other": "1. In the AWS console, go to VPC > Endpoints\n2. Click Create endpoint\n3. For Service category, choose AWS services and select com.amazonaws.<region>.bedrock-agentcore\n4. Select the VPC that hosts the AgentCore runtime and at least one subnet\n5. Click Create endpoint\n6. Repeat steps 2-5 for com.amazonaws.<region>.bedrock-agentcore-control and com.amazonaws.<region>.bedrock-agentcore.gateway",
+      "Terraform": "```hcl\nresource \"aws_vpc_endpoint\" \"agentcore\" {\n  vpc_id            = \"<example_resource_id>\"\n  service_name      = \"com.amazonaws.<region>.bedrock-agentcore\"\n  vpc_endpoint_type = \"Interface\"\n  subnet_ids        = [\"<example_resource_id>\"]\n}\n\nresource \"aws_vpc_endpoint\" \"agentcore_control\" {\n  vpc_id            = \"<example_resource_id>\"\n  service_name      = \"com.amazonaws.<region>.bedrock-agentcore-control\"\n  vpc_endpoint_type = \"Interface\"\n  subnet_ids        = [\"<example_resource_id>\"]\n}\n\nresource \"aws_vpc_endpoint\" \"agentcore_gateway\" {\n  vpc_id            = \"<example_resource_id>\"\n  service_name      = \"com.amazonaws.<region>.bedrock-agentcore.gateway\"\n  vpc_endpoint_type = \"Interface\"\n  subnet_ids        = [\"<example_resource_id>\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create **interface VPC endpoints** for all AgentCore services (`bedrock-agentcore`, `bedrock-agentcore-control`, and `bedrock-agentcore.gateway`) in each VPC that hosts an AgentCore runtime.\n- Enable **private DNS** so SDK calls stay on the AWS network\n- Apply restrictive endpoint policies (**least privilege**)\n- Reduce reliance on public egress",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_vpc_endpoints_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrockagentcore_runtime_vpc_configured",
+    "bedrock_vpc_endpoints_configured"
+  ],
+  "Notes": "This check only evaluates VPCs that contain AgentCore runtimes in VPC network mode. Public-mode runtimes are skipped. Only interface VPC endpoints in the 'available' state are considered. The required services are the official AgentCore PrivateLink names: bedrock-agentcore, bedrock-agentcore-control, and bedrock-agentcore.gateway."
+}

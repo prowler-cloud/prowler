@@ -279,9 +279,11 @@ class BedrockAgentCore(AWSService):
             runtime.custom_jwt_allowed_audience = jwt_authorizer.get(
                 "allowedAudience", []
             )
-            runtime.network_mode = runtime_info.get("networkConfiguration", {}).get(
-                "networkMode"
-            )
+            network_config = runtime_info.get("networkConfiguration", {}) or {}
+            runtime.network_mode = network_config.get("networkMode")
+            runtime.subnets = (network_config.get("networkModeConfig") or {}).get(
+                "subnets", []
+            ) or []
             runtime.request_header_allowlist = runtime_info.get(
                 "requestHeaderConfiguration", {}
             ).get("requestHeaderAllowlist", [])
@@ -621,6 +623,7 @@ class AgentCoreRuntime(BaseModel):
     custom_jwt_allowed_clients: list = []
     custom_jwt_allowed_audience: list = []
     network_mode: Optional[str] = None
+    subnets: list = []
     request_header_allowlist: list = []
     # False when the Get* call failed (AccessDenied, throttle), so an absent
     # field means "unknown" rather than "not configured".
