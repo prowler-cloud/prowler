@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -176,11 +176,11 @@ def recording_list_findings(calls):
 
 
 def list_findings_call(calls, kind):
-    """The ListFindings requests of one lookup: exists, stale, kev or threat."""
+    """The ListFindings requests of one lookup: exists, oldest, kev or threat."""
 
     def kind_of(call):
         if "sortCriteria" in call:
-            return "stale"
+            return "oldest"
         if call.get("maxResults") == 1:
             return "exists"
         if "resourceType" in call["filterCriteria"]:
@@ -274,7 +274,7 @@ class Test_Inspector2_Service:
         inspector2 = Inspector2(aws_provider)
         assert inspector2.inspectors[0].active_findings
 
-    def test_list_stale_findings_keeps_the_oldest(self):
+    def test_list_oldest_finding(self):
         calls = []
         with patch(
             "botocore.client.BaseClient._make_api_call",
@@ -282,43 +282,22 @@ class Test_Inspector2_Service:
         ):
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             inspector2 = Inspector2(aws_provider)
-        stale_findings = inspector2.inspectors[0].stale_findings
-        assert len(stale_findings) == 1
-        assert stale_findings[0].arn == FINDING_ARN
-        assert stale_findings[0].first_observed_at == FIRST_OBSERVED_AT
-        assert stale_findings[0].vulnerability_id == VULNERABILITY_ID
-        assert stale_findings[0].resource_ids == [INSTANCE_ID]
-        [call] = list_findings_call(calls, "stale")
+        oldest_findings = inspector2.inspectors[0].oldest_findings
+        assert len(oldest_findings) == 1
+        assert oldest_findings[0].arn == FINDING_ARN
+        assert oldest_findings[0].first_observed_at == FIRST_OBSERVED_AT
+        assert oldest_findings[0].vulnerability_id == VULNERABILITY_ID
+        assert oldest_findings[0].resource_ids == [INSTANCE_ID]
+        [call] = list_findings_call(calls, "oldest")
         assert call["sortCriteria"] == {
             "field": "FIRST_OBSERVED_AT",
             "sortOrder": "ASC",
         }
         assert call["maxResults"] == 1
-        assert call["filterCriteria"]["findingStatus"] == [
-            {"comparison": "EQUALS", "value": "ACTIVE"}
-        ]
-        assert call["filterCriteria"]["awsAccountId"] == [
-            {"comparison": "EQUALS", "value": AWS_ACCOUNT_NUMBER}
-        ]
-        [date_filter] = call["filterCriteria"]["firstObservedAt"]
-        expected_cutoff = datetime.now(timezone.utc) - timedelta(days=192)
-        assert abs(date_filter["endInclusive"] - expected_cutoff) < timedelta(minutes=5)
-
-    def test_list_stale_findings_uses_the_configured_max_age(self):
-        calls = []
-        with patch(
-            "botocore.client.BaseClient._make_api_call",
-            new=recording_list_findings(calls),
-        ):
-            aws_provider = set_mocked_aws_provider(
-                [AWS_REGION_EU_WEST_1],
-                audit_config={"inspector2_active_finding_max_age_days": 14},
-            )
-            Inspector2(aws_provider)
-        [call] = list_findings_call(calls, "stale")
-        [date_filter] = call["filterCriteria"]["firstObservedAt"]
-        expected_cutoff = datetime.now(timezone.utc) - timedelta(days=14)
-        assert abs(date_filter["endInclusive"] - expected_cutoff) < timedelta(minutes=5)
+        assert call["filterCriteria"] == {
+            "awsAccountId": [{"comparison": "EQUALS", "value": AWS_ACCOUNT_NUMBER}],
+            "findingStatus": [{"comparison": "EQUALS", "value": "ACTIVE"}],
+        }
 
     def test_list_kev_candidates_only_reads_findings_with_an_exploit(self):
         calls = []
@@ -430,7 +409,7 @@ class Test_Inspector2_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         with with_signature_cves(VULNERABILITY_ID):
             inspector = Inspector2(aws_provider).inspectors[0]
-        lookups = ("stale_findings", "kev_candidates", "threat_findings", "coverage")
+        lookups = ("oldest_findings", "kev_candidates", "threat_findings", "coverage")
         for lookup in lookups:
             assert getattr(inspector, lookup)
         # Check_Report stores `resource.dict()` as the finding's resource metadata
@@ -504,7 +483,7 @@ class Test_Inspector2_Service:
         ):
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             inspector2 = Inspector2(aws_provider)
-        assert inspector2.inspectors[0].stale_findings is None
+        assert inspector2.inspectors[0].oldest_findings is None
         assert inspector2.inspectors[0].kev_candidates is None
         assert inspector2.inspectors[0].threat_findings is None
         assert inspector2.inspectors[0].coverage is None

@@ -18,6 +18,13 @@ class inspector2_active_findings_kev_within_due_date(Check):
         now = datetime.now(timezone.utc)
         known_exploited = inspector2_client.known_exploited_vulnerabilities
         lookup_failed = inspector2_client.vulnerability_lookup_failed
+        scope = (
+            ""
+            if inspector2_client.audit_config.get(
+                "inspector2_kev_include_findings_without_exploit", False
+            )
+            else " with a public exploit"
+        )
         for inspector in inspector2_client.inspectors:
             if inspector.status != "ENABLED":
                 continue
@@ -55,7 +62,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
             else:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Inspector2 has no active findings in region {inspector.region} for CISA "
+                    f"Inspector2 has no active findings{scope} in region {inspector.region} for CISA "
                     "Known Exploited Vulnerabilities past their remediation due date."
                 )
             findings.append(report)

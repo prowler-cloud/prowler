@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Optional
 
 from pydantic.v1 import BaseModel, Field
@@ -11,7 +11,6 @@ from prowler.providers.aws.lib.service.service import AWSService
 FINDING_DETAILS_BATCH_SIZE = 10
 # Inspector2 StringFilterList accepts at most 10 values
 VULNERABILITY_FILTER_SIZE = 10
-DEFAULT_ACTIVE_FINDING_MAX_AGE_DAYS = 192
 
 
 class Inspector2(AWSService):
@@ -27,7 +26,7 @@ class Inspector2(AWSService):
         enabled_inspectors = [
             inspector for inspector in self.inspectors if inspector.status == "ENABLED"
         ]
-        self.__threading_call__(self._list_stale_findings, enabled_inspectors)
+        self.__threading_call__(self._list_oldest_finding, enabled_inspectors)
         self.__threading_call__(self._list_kev_candidates, enabled_inspectors)
         self.__threading_call__(self._list_threat_findings, enabled_inspectors)
         self.__threading_call__(self._list_coverage, enabled_inspectors)
@@ -91,23 +90,16 @@ class Inspector2(AWSService):
             **criteria,
         }
 
-    def _list_stale_findings(self, inspector):
-        """Store the oldest active finding first observed before the allowed age."""
-        logger.info("Inspector2 - Getting the oldest stale active finding...")
+    def _list_oldest_finding(self, inspector):
+        """Store the active finding first observed the longest ago."""
+        logger.info("Inspector2 - Getting the oldest active finding...")
         try:
-            max_age_days = self.audit_config.get(
-                "inspector2_active_finding_max_age_days",
-                DEFAULT_ACTIVE_FINDING_MAX_AGE_DAYS,
-            )
-            cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
             response = self.regional_clients[inspector.region].list_findings(
-                filterCriteria=self._active_findings_filter(
-                    firstObservedAt=[{"endInclusive": cutoff}]
-                ),
+                filterCriteria=self._active_findings_filter(),
                 sortCriteria={"field": "FIRST_OBSERVED_AT", "sortOrder": "ASC"},
                 maxResults=1,
             )
-            inspector.stale_findings = [
+            inspector.oldest_findings = [
                 self._build_finding(finding) for finding in response.get("findings", [])
             ]
         except Exception as error:
@@ -403,8 +395,8 @@ class Inspector(BaseModel):
     lambda_code_status: str
     active_findings: bool = None
     # Lookups below: None means it failed; excluded from the resource metadata
-    # Only the oldest stale finding, empty when none is past the allowed age
-    stale_findings: Optional[list[Finding]] = Field(default=None, exclude=True)
+    # Only the oldest active finding, empty when there is none
+    oldest_findings: Optional[list[Finding]] = Field(default=None, exclude=True)
     # CVE id -> one active finding ARN for it
     kev_candidates: Optional[dict[str, str]] = Field(default=None, exclude=True)
     # EC2 instance id -> emerging threat CVEs with an active finding on it

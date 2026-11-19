@@ -18,7 +18,7 @@ FINDING_ARN = f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:f
 CHECK_MODULE = "prowler.providers.aws.services.inspector2.inspector2_active_findings_within_max_age.inspector2_active_findings_within_max_age"
 
 
-def build_inspector(stale_findings=None, status="ENABLED"):
+def build_inspector(oldest_findings=None, status="ENABLED"):
     return Inspector(
         id="Inspector2",
         arn=INSPECTOR_ARN,
@@ -28,7 +28,7 @@ def build_inspector(stale_findings=None, status="ENABLED"):
         ecr_status="ENABLED",
         lambda_status="ENABLED",
         lambda_code_status="ENABLED",
-        stale_findings=stale_findings,
+        oldest_findings=oldest_findings,
     )
 
 
@@ -68,11 +68,12 @@ class Test_inspector2_active_findings_within_max_age:
 
     def test_inspector_disabled(self):
         assert (
-            execute_check([build_inspector(stale_findings=[], status="DISABLED")]) == []
+            execute_check([build_inspector(oldest_findings=[], status="DISABLED")])
+            == []
         )
 
-    def test_no_stale_findings(self):
-        result = execute_check([build_inspector(stale_findings=[])])
+    def test_no_active_findings(self):
+        result = execute_check([build_inspector(oldest_findings=[])])
 
         assert len(result) == 1
         assert result[0].status == "PASS"
@@ -84,8 +85,20 @@ class Test_inspector2_active_findings_within_max_age:
         assert result[0].resource_arn == INSPECTOR_ARN
         assert result[0].region == AWS_REGION_EU_WEST_1
 
+    def test_oldest_finding_within_max_age(self):
+        result = execute_check([build_inspector(oldest_findings=[build_finding(30)])])
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    def test_finding_just_over_max_age(self):
+        result = execute_check([build_inspector(oldest_findings=[build_finding(192)])])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
     def test_stale_finding(self):
-        result = execute_check([build_inspector(stale_findings=[build_finding(400)])])
+        result = execute_check([build_inspector(oldest_findings=[build_finding(400)])])
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
@@ -96,7 +109,7 @@ class Test_inspector2_active_findings_within_max_age:
 
     def test_custom_max_age_in_message(self):
         result = execute_check(
-            [build_inspector(stale_findings=[build_finding(30)])],
+            [build_inspector(oldest_findings=[build_finding(30)])],
             audit_config={"inspector2_active_finding_max_age_days": 14},
         )
 
@@ -107,7 +120,7 @@ class Test_inspector2_active_findings_within_max_age:
         )
 
     def test_findings_not_retrieved(self):
-        result = execute_check([build_inspector(stale_findings=None)])
+        result = execute_check([build_inspector(oldest_findings=None)])
 
         assert len(result) == 1
         assert result[0].status == "MANUAL"
