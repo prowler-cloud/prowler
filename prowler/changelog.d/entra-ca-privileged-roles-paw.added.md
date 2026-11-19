@@ -1,0 +1,1 @@
+`entra_conditional_access_policy_privileged_roles_restricted_to_paw` check for M365 provider, verifying that an enabled Conditional Access policy restricts privileged roles to Privileged Access Workstations
