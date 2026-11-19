@@ -96,6 +96,31 @@
       "Checks": []
     },
     {
+      "Id": "op.acc.5.r2.m365.entra.1",
+      "Description": "Contraseña + otro factor de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se exige la autenticación multifactor (MFA) a los usuarios externos e invitados.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_mfa_enforced_for_guest_users"
+      ]
+    },
+    {
       "Id": "op.acc.6.m365.entra.1",
       "Description": "Mecanismo de autenticación (usuarios de la organización)",
       "Attributes": [
@@ -129,7 +154,32 @@
           "IdGrupoControl": "op.acc.6.r1",
           "Marco": "operacional",
           "Categoria": "control de acceso",
-          "DescripcionControl": "Se exige el uso de contraseñas robustas a todos los usuarios y no se configuran contraseñas sin caducidad en las cuentas de los entornos de producción.",
+          "DescripcionControl": "La directiva de expiración de contraseñas de la organización está configurada para que las contraseñas no expiren.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "admincenter_settings_password_never_expire"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.m365.entra.2",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las contraseñas de los usuarios tienen una longitud mínima de ocho caracteres, combinan tres de las cuatro categorías de caracteres (mayúsculas, minúsculas, números y símbolos) y no repiten la contraseña actual al cambiarla.",
           "Nivel": "alto",
           "Tipo": "refuerzo",
           "Dimensiones": [
@@ -143,6 +193,31 @@
         }
       ],
       "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r1.m365.entra.3",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La protección de contraseñas de Microsoft Entra rechaza las contraseñas de la lista global de contraseñas prohibidas y de la lista personalizada de contraseñas prohibidas de la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_password_protection_custom_banned_list_enforced"
+      ]
     },
     {
       "Id": "op.acc.6.r2.m365.entra.1",
@@ -511,6 +586,30 @@
           "Marco": "operacional",
           "Categoria": "explotación",
           "DescripcionControl": "Se comprueba periódicamente la detección de amenazas en tiempo real de Microsoft Defender para Office 365 y se genera el informe correspondiente.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.7.m365.defender.1",
+      "Description": "Gestión de incidentes",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.7",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se revisa el panel de incidentes del Centro de seguridad y se aplican las medidas necesarias para corregirlos.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
