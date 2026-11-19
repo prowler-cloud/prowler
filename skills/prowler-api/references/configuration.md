@@ -241,7 +241,7 @@ FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS = env.int("...", None)  # Optional clean
 | `SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth secret |
 | `SOCIAL_GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth client ID |
 | `SOCIAL_GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth secret |
-| `SAML_SP_ENTITY_ID` | SAML SP entity ID (Audience), defaults to `urn:prowler.com:sp`. Applies to new SAML configurations and to existing ones when their IdP metadata is re-saved |
+| `SAML_SP_ENTITY_ID` | SAML SP entity ID (Audience), defaults to `urn:prowler.com:sp`. Applies to new SAML configurations and to existing ones only when their stored IdP metadata XML changes; re-saving identical metadata does not refresh it |
 
 ---
 
