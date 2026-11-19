@@ -1227,8 +1227,9 @@ class TestImageProviderNameValidation:
             "localhost:5000/myimage:latest",
         ],
     )
-    def test_image_provider_valid_image_names(self, valid_name):
+    def test_image_provider_valid_image_names(self, valid_name, monkeypatch):
         """Test that various valid image name formats pass validation."""
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
         provider = _make_provider(images=[valid_name])
         assert valid_name in provider.images
 
@@ -1485,6 +1486,71 @@ class TestConnectionPrivateNetworkAllowlist:
             result = ImageProvider.test_connection(image="harbor.internal")
 
         assert result.is_connected is True
+
+
+class TestScanImageRegistryHostCheck:
+    ALLOWLIST_ENV = "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS"
+    SKIP_ENV = "PROWLER_SKIP_OUTBOUND_HOST_CHECK"
+
+    @pytest.fixture(autouse=True)
+    def _check_enforced(self, monkeypatch):
+        monkeypatch.delenv(self.ALLOWLIST_ENV, raising=False)
+        monkeypatch.delenv(self.SKIP_ENV, raising=False)
+
+    @staticmethod
+    def _resolves_to(address):
+        return patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            return_value=[(2, 1, 6, "", (address, 0))],
+        )
+
+    @pytest.mark.parametrize(
+        "image",
+        [
+            "postgres:5432/prowler_db/public:1",
+            "localhost:5000/app:1",
+            "localhost/app:1",
+        ],
+    )
+    def test_rejects_an_image_on_a_private_registry_host(self, image):
+        with self._resolves_to("172.22.0.2"):
+            with pytest.raises(ImageRegistryAuthError):
+                _make_provider(images=[image])
+
+    @pytest.mark.parametrize(
+        "image", ["127.0.0.1:5000/app:1", "169.254.169.254/latest/meta:1"]
+    )
+    def test_rejects_an_image_on_a_non_public_literal_address(self, image):
+        with pytest.raises(ImageRegistryAuthError):
+            _make_provider(images=[image])
+
+    def test_accepts_an_image_on_a_public_registry_host(self):
+        with self._resolves_to("140.82.121.34"):
+            provider = _make_provider(images=["ghcr.io/owner/app:1"])
+
+        assert provider.images == ["ghcr.io/owner/app:1"]
+
+    def test_does_not_resolve_docker_hub_images(self):
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo"
+        ) as getaddrinfo:
+            _make_provider(images=["alpine:3.18", "library/nginx:latest"])
+
+        getaddrinfo.assert_not_called()
+
+    def test_accepts_a_private_registry_inside_the_allowlist(self, monkeypatch):
+        monkeypatch.setenv(self.ALLOWLIST_ENV, "10.20.0.0/16")
+        with self._resolves_to("10.20.0.5"):
+            provider = _make_provider(images=["harbor.internal/app:1"])
+
+        assert provider.images == ["harbor.internal/app:1"]
+
+    def test_accepts_a_private_registry_when_the_check_is_skipped(self, monkeypatch):
+        monkeypatch.setenv(self.SKIP_ENV, "1")
+        with self._resolves_to("10.20.0.5"):
+            provider = _make_provider(images=["harbor.internal/app:1"])
+
+        assert provider.images == ["harbor.internal/app:1"]
 
 
 class TestRegistryScanErrorDegradation:
