@@ -297,7 +297,7 @@ For Prowler Local Server deployments, several environment variables must be conf
 After modifying these variables, the Prowler API must be restarted for the changes to take effect.
 
 <Note>
-`SAML_SP_ENTITY_ID` applies to SAML configurations created after the change. For existing configurations, the stored entity ID refreshes only when the stored IdP metadata XML itself changes (or the email domain changes). Re-saving identical, unchanged metadata does not refresh it, so update the stored metadata before moving the IdP client to the new audience.
+`SAML_SP_ENTITY_ID` applies to SAML configurations created after the change. For existing configurations, the stored entity ID refreshes only when the stored IdP metadata XML itself changes (or the email domain changes). Re-saving identical, unchanged metadata does not refresh it. Changing the stored metadata switches Prowler to the new entity ID at once, so if the IdP still accepts only the old client ID, SSO attempts fail until the IdP client is updated. Prepare the IdP client to accept the new audience first, or schedule a maintenance window.
 </Note>
 
 ### SAML API Reference
