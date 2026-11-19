@@ -64,6 +64,11 @@ class AKS(AzureService):
                                         "upgrade_channel",
                                         None,
                                     ),
+                                    node_os_upgrade_channel=getattr(
+                                        getattr(cluster, "auto_upgrade_profile", None),
+                                        "node_os_upgrade_channel",
+                                        None,
+                                    ),
                                     defender_enabled=bool(
                                         getattr(
                                             getattr(
@@ -137,6 +142,7 @@ class Cluster:
     rbac_enabled: bool
     location: str
     auto_upgrade_channel: Optional[str] = None
+    node_os_upgrade_channel: Optional[str] = None
     defender_enabled: bool = False
     azure_monitor_enabled: bool = False
     local_accounts_disabled: bool = False
