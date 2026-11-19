@@ -930,28 +930,46 @@ def mock_api_subnetworks_calls(client: MagicMock):
     subnetwork2_id = str(uuid4())
     subnetwork3_id = str(uuid4())
 
-    client.subnetworks().list().execute.return_value = {
-        "items": [
-            {
-                "name": "subnetwork1",
-                "id": subnetwork1_id,
-                "enableFlowLogs": True,
-                "network": "region1/network1",
+    items = [
+        {
+            "name": "subnetwork1",
+            "id": subnetwork1_id,
+            "enableFlowLogs": True,
+            "network": "region1/network1",
+        },
+        {
+            "name": "subnetwork2",
+            "id": subnetwork2_id,
+            "enableFlowLogs": False,
+            "network": "region1/network1",
+        },
+        {
+            "name": "subnetwork3",
+            "id": subnetwork3_id,
+            "enableFlowLogs": False,
+            "network": "region2/network3",
+        },
+    ]
+
+    client.subnetworks().aggregatedList().execute.return_value = {
+        "items": {
+            "regions/europe-west1-b": {
+                "subnetworks": [items[0], items[1]],
             },
-            {
-                "name": "subnetwork2",
-                "id": subnetwork2_id,
-                "enableFlowLogs": False,
-                "network": "region1/network1",
+            "regions/europe-west1-c": {
+                "subnetworks": [items[2]],
             },
-            {
-                "name": "subnetwork3",
-                "id": subnetwork3_id,
-                "enableFlowLogs": False,
-                "network": "region2/network3",
+            "regions/europe-west1-d": {
+                "warning": {
+                    "code": "NO_RESULTS_ON_PAGE",
+                    "message": "There are no results for scope 'regions/europe-west1-d' on this page.",
+                }
             },
-        ]
+        }
     }
+    client.subnetworks().aggregatedList_next.return_value = None
+
+    client.subnetworks().list().execute.return_value = {"items": items}
     client.subnetworks().list_next.return_value = None
 
 
