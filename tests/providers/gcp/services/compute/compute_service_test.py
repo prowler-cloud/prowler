@@ -155,6 +155,7 @@ class TestComputeService:
             assert compute_client.firewalls[0].allowed_rules == [{"IPProtocol": "UDP"}]
             assert compute_client.firewalls[0].source_ranges == ["30.0.0.0/16"]
             assert compute_client.firewalls[0].direction == "INGRESS"
+            assert compute_client.firewalls[0].disabled is False
             assert compute_client.firewalls[0].project_id == GCP_PROJECT_ID
 
             assert compute_client.firewalls[1].name == "firewall2"
@@ -162,6 +163,7 @@ class TestComputeService:
             assert compute_client.firewalls[1].allowed_rules == [{"IPProtocol": "TCP"}]
             assert compute_client.firewalls[1].source_ranges == ["0.0.0.0/0"]
             assert compute_client.firewalls[1].direction == "EGRESS"
+            assert compute_client.firewalls[1].disabled is False
             assert compute_client.firewalls[1].project_id == GCP_PROJECT_ID
 
             assert compute_client.firewalls[2].name == "firewall3"
@@ -169,6 +171,7 @@ class TestComputeService:
             assert compute_client.firewalls[2].allowed_rules == [{"IPProtocol": "TCP"}]
             assert compute_client.firewalls[2].source_ranges == ["10.0.15.0/24"]
             assert compute_client.firewalls[2].direction == "INGRESS"
+            assert compute_client.firewalls[2].disabled is True
             assert compute_client.firewalls[2].project_id == GCP_PROJECT_ID
 
             assert len(compute_client.load_balancers) == 5
