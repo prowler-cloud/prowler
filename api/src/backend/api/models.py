@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import defusedxml
 from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.providers import registry as social_provider_registry
 from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
@@ -2212,6 +2213,17 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         entity_id = idp_settings.get("entity_id")
 
         if entity_id:
+            # allauth stores SAML accounts under the entityID as their provider, so
+            # an entityID naming another provider would match that provider's accounts
+            reserved = {
+                provider.id.casefold()
+                for provider in social_provider_registry.get_class_list()
+            }
+            if entity_id.casefold() in reserved:
+                raise ValidationError(
+                    {"metadata_xml": "There is a problem with your metadata."}
+                )
+
             # Find any SocialApp with this entityID
             q = SocialApp.objects.filter(provider="saml", provider_id=entity_id)
 
