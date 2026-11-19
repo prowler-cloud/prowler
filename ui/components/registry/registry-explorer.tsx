@@ -46,6 +46,7 @@ import {
   credentialOutcomeMessage,
   type RegistryCredentialValidationOutcome,
 } from "@/lib/registry/credential-result";
+import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
 import { useTaskWatcherStore } from "@/store/task-watcher/store";
 import {
   REGISTRY_ARTIFACT_REMOVAL,
@@ -389,6 +390,8 @@ export function RegistryExplorer({
   const [operationMessage, setOperationMessage] = useState<string>();
   const connectButtonRef = useRef<HTMLButtonElement>(null);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
+  // Focus returns to whichever control opened the access dialog.
+  const accessDialogOpenerRef = useRef<HTMLButtonElement | null>(null);
   const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const operationGeneration = useRef(0);
   const artifactSubmission = useRef(false);
@@ -531,6 +534,9 @@ export function RegistryExplorer({
     if (generation !== operationGeneration.current) return;
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");
+    // The server page swaps the catalog for the paid-plan prompt.
+    if (result.status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED)
+      return router.refresh();
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_CREDENTIAL_ACTION.DISCONNECTED) {
@@ -540,12 +546,10 @@ export function RegistryExplorer({
       return;
     }
 
+    // Already fresh: the keyless catalog, or onboarding without the Cloud key.
+    invalidateRefresh(false);
     setAccessDialogMode(undefined);
-    setState({
-      status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
-      credential: result.credential,
-      tenantArtifacts: result.tenantArtifacts,
-    });
+    setState(result.state);
   }
 
   async function handleRemove(normalizedName: string) {
@@ -599,6 +603,19 @@ export function RegistryExplorer({
     );
   }
 
+  function openAccessDialog(
+    mode: RegistryAccessDialogMode,
+    opener: HTMLButtonElement | null,
+  ) {
+    accessDialogOpenerRef.current = opener;
+    setAccessDialogMode(mode);
+  }
+  const openConnectDialog = () =>
+    openAccessDialog(
+      REGISTRY_ACCESS_DIALOG_MODE.CONNECT,
+      connectButtonRef.current,
+    );
+
   function openRemoveDialog(
     target: RegistryRemoveTarget,
     trigger: HTMLButtonElement | null,
@@ -623,10 +640,14 @@ export function RegistryExplorer({
     onSubmit: handleCredentialSubmit,
     open: true,
     pending: pendingOperation === REGISTRY_PENDING_OPERATION.CREDENTIAL,
-    returnFocusRef:
-      accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.CONNECT
-        ? connectButtonRef
-        : manageButtonRef,
+    returnFocus: () => {
+      const opener = accessDialogOpenerRef.current;
+      // Connect or disconnect can unmount the opener; focus its replacement.
+      (opener?.isConnected
+        ? opener
+        : (manageButtonRef.current ?? connectButtonRef.current)
+      )?.focus();
+    },
   };
   const accessDialog =
     accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.CONNECT ? (
@@ -636,7 +657,11 @@ export function RegistryExplorer({
         mode="manage"
         keyStatus={
           state.status === REGISTRY_BOOTSTRAP_STATE.READY
-            ? REGISTRY_KEY_STATUS.CONNECTED
+            ? isActiveRegistryCredential(state.credential)
+              ? REGISTRY_KEY_STATUS.CONNECTED
+              : state.credential.configured
+                ? REGISTRY_KEY_STATUS.REJECTED
+                : undefined
             : state.status === REGISTRY_BOOTSTRAP_STATE.RECONNECT
               ? REGISTRY_KEY_STATUS.REJECTED
               : undefined
@@ -663,9 +688,7 @@ export function RegistryExplorer({
           }
           connectButtonRef={connectButtonRef}
           registryUrl={registryUrl}
-          onConnect={() =>
-            setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.CONNECT)
-          }
+          onConnect={openConnectDialog}
           tenantArtifactCount={state.tenantArtifacts.length}
         />
         {accessDialog}
@@ -673,7 +696,10 @@ export function RegistryExplorer({
     );
   }
   const openManageDialog = () =>
-    setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE);
+    openAccessDialog(
+      REGISTRY_ACCESS_DIALOG_MODE.MANAGE,
+      manageButtonRef.current,
+    );
   if (state.status !== REGISTRY_BOOTSTRAP_STATE.READY) {
     return (
       <>
@@ -702,6 +728,7 @@ export function RegistryExplorer({
       />
     );
   }
+  const hasActiveKey = isActiveRegistryCredential(state.credential);
   // Registry artifacts first, then the ones that ship with Prowler.
   const exploreCount = model.artifacts.length + model.builtinArtifacts.length;
   const renderCatalogCard = (artifact: RegistryMarketplaceArtifact) => (
@@ -709,6 +736,7 @@ export function RegistryExplorer({
       <RegistryArtifactCard
         artifact={artifact}
         pendingAddName={pendingAddName}
+        registryUrl={registryUrl}
         onAdd={() => handleAdd(artifact)}
         onRemove={(trigger) =>
           openRemoveDialog(catalogRemoveTarget(artifact), trigger)
@@ -726,6 +754,26 @@ export function RegistryExplorer({
         <Alert variant="warning">
           <AlertDescription>{refreshMessage}</AlertDescription>
         </Alert>
+      )}
+      {!hasActiveKey && (
+        // A stored key the Registry rejected opens Manage, like the header.
+        <RegistryCredentialBanner
+          variant={
+            state.credential.configured
+              ? REGISTRY_CREDENTIAL_BANNER.REJECTED_KEY
+              : REGISTRY_CREDENTIAL_BANNER.OPTIONAL_KEY
+          }
+          connectButtonRef={connectButtonRef}
+          registryUrl={registryUrl}
+          onConnect={() =>
+            openAccessDialog(
+              state.credential.configured
+                ? REGISTRY_ACCESS_DIALOG_MODE.MANAGE
+                : REGISTRY_ACCESS_DIALOG_MODE.CONNECT,
+              connectButtonRef.current,
+            )
+          }
+        />
       )}
       <Tabs
         onValueChange={(value) => setActiveTab(value as RegistryTab)}
@@ -775,7 +823,16 @@ export function RegistryExplorer({
             </Button>
             <Button
               aria-label="Registry API key"
-              onClick={openManageDialog}
+              // Without a stored key there is nothing to manage yet: connect one.
+              // A stored key the Registry rejected still needs Disconnect.
+              onClick={(event) =>
+                openAccessDialog(
+                  state.credential.configured
+                    ? REGISTRY_ACCESS_DIALOG_MODE.MANAGE
+                    : REGISTRY_ACCESS_DIALOG_MODE.CONNECT,
+                  event.currentTarget,
+                )
+              }
               ref={manageButtonRef}
               size="sm"
               type="button"
@@ -854,6 +911,7 @@ export function RegistryExplorer({
                     <RegistryArtifactCard
                       artifact={myArtifact.catalogArtifact}
                       pendingAddName={pendingAddName}
+                      registryUrl={registryUrl}
                       onAdd={() => handleAdd(myArtifact.catalogArtifact!)}
                       onRemove={(trigger) =>
                         openRemoveDialog(

@@ -174,14 +174,10 @@ class ec2_instance_emerging_threat_image(Check):
         reported, scanned = {}, set()
         for inspector in inspector2_client.inspectors:
             # Coverage without the findings would read as "nothing found".
-            if inspector.findings is None:
+            if inspector.threat_findings is None:
                 continue
-            for finding in inspector.findings:
-                if finding.vulnerability_id:
-                    for resource_id in finding.resource_ids:
-                        reported.setdefault(resource_id, set()).add(
-                            finding.vulnerability_id
-                        )
+            for resource_id, cves in inspector.threat_findings.items():
+                reported.setdefault(resource_id, set()).update(cves)
             for covered in inspector.coverage or []:
                 if (
                     covered.resource_type == "AWS_EC2_INSTANCE"
