@@ -8,6 +8,9 @@ import re
 import socket
 from urllib.parse import urlparse
 
+from urllib3.exceptions import LocationParseError
+from urllib3.util import parse_url
+
 from prowler.lib.logger import logger
 
 ALLOWED_PRIVATE_NETWORKS_ENV = "PROWLER_ALLOWED_PRIVATE_NETWORKS"
@@ -120,7 +123,21 @@ def extract_host(url: str) -> str:
         # The URL itself stays out of the message: a configured repository or auth
         # URL can carry credentials in its userinfo, and this message is logged
         raise OutboundURLNotAllowedError("Could not read a host from the supplied URL")
+    # urllib3, which requests and the kubernetes client dial through, ends the
+    # authority at a backslash; urlparse does not, so the two can disagree on the host
+    if _dialed_host(url) != host:
+        raise OutboundURLNotAllowedError(
+            "The supplied URL has an ambiguous host and cannot be reached"
+        )
     return host
+
+
+def _dialed_host(url: str) -> str | None:
+    try:
+        host = parse_url(url).host
+    except LocationParseError:
+        return None
+    return host.strip("[]").lower() if host else None
 
 
 def validate_outbound_host(host: str) -> None:
