@@ -43,7 +43,7 @@ The endpoints of a cloud registered in the Azure CLI are available with `az clou
 
 If a field is empty, ask the cloud's administrator for the endpoint.
 
-Each value is a host or an `https://` URL, with an optional port and trailing slash. When `--azure-logs-endpoint` is not set, checks that query Log Analytics are not evaluated.
+Each value is a host or an `https://` URL, with an optional port and trailing slash. Prowler also requests its tokens for the Azure Resource Manager and Microsoft Graph endpoints, so each endpoint must be its own token audience. Clouds whose audience differs from the endpoint, or whose authority has a path, such as Azure Stack Hub with AD FS, are not supported. When `--azure-logs-endpoint` is not set, checks that query Log Analytics are not evaluated.
 
 With `--az-cli-auth`, the token comes from the cloud the Azure CLI is signed in to, so register and select that cloud first with `az cloud register` and `az cloud set`.
 
