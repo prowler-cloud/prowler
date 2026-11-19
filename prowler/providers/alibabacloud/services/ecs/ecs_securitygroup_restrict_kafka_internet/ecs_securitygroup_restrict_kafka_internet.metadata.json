@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_kafka_internet",
+  "CheckTitle": "Security group restricts Kafka access from the internet",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "ALIYUN::ECS::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Checks that Kafka TCP port 9092 is not exposed to unrestricted IPv4 (`0.0.0.0/0`) or IPv6 (`::/0`) sources.",
+  "Risk": "Public Kafka access can expose message data and permit unauthorized production, consumption, or service disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/ecs/user-guide/add-a-security-group-rule"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --SecurityGroupRuleId <matched_security_group_rule_id>",
+      "NativeIaC": "",
+      "Other": "Inspect inbound rules in the ECS console. Locate effective Accept rules from `0.0.0.0/0` or `::/0` using TCP or ALL whose actual port range contains Kafka port `9092`. Restrict the source or range, or revoke the exact rule by SecurityGroupRuleId. Revocation using protocol/range/source must exactly match the existing rule.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Do not expose TCP port 9092 to `0.0.0.0/0` or `::/0`.",
+      "Url": "https://hub.prowler.com/check/ecs_securitygroup_restrict_kafka_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
