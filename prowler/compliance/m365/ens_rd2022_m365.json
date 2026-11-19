@@ -73,6 +73,29 @@
       "Checks": []
     },
     {
+      "Id": "op.acc.2.m365.exchange.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se han comprobado los permisos de acceso a los buzones compartidos de Exchange Online, incluidos los usuarios delegados y el permiso «Enviar como», y la configuración del tipo de cada buzón.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.acc.3.m365.admincenter.1",
       "Description": "Segregación de funciones y tareas",
       "Attributes": [
@@ -150,6 +173,52 @@
           "Marco": "operacional",
           "Categoria": "control de acceso",
           "DescripcionControl": "Se han creado niveles de permisos específicos para la organización en los sitios de SharePoint Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.3.m365.exchange.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Los roles y grupos de roles de administración de Exchange Online están asignados adecuadamente.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.4.m365.exchange.1",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se han creado o editado las directivas de asignación de roles de Exchange Online, que controlan lo que los usuarios pueden configurar en sus buzones y grupos de distribución.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -308,6 +377,32 @@
         }
       ],
       "Checks": []
+    },
+    {
+      "Id": "op.acc.6.m365.exchange.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Exchange Online tiene habilitada la autenticación moderna y se bloquea el acceso de las aplicaciones que no la usan.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "exchange_organization_modern_authentication_enabled",
+        "entra_legacy_authentication_blocked"
+      ]
     },
     {
       "Id": "op.acc.6.r1.m365.entra.1",
@@ -701,6 +796,78 @@
       "Checks": []
     },
     {
+      "Id": "op.exp.2.m365.exchange.2",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han configurado las reglas de acceso de dispositivos móviles de Exchange ActiveSync, de modo que los dispositivos no administrados por una regla o una exención personal quedan en cuarentena o bloqueados.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.exchange.3",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han creado directivas de buzón de correo para dispositivos móviles en Exchange Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.exchange.4",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han creado directivas de uso compartido en Exchange Online, que controlan cómo comparten los usuarios sus calendarios.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.exp.6.m365.defender.1",
       "Description": "Protección frente a código dañino",
       "Attributes": [
@@ -915,6 +1082,26 @@
       ]
     },
     {
+      "Id": "op.exp.8.m365.exchange.2",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se ha comprobado que la auditoría de los buzones compartidos de Exchange Online está activada.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.exp.8.r4.m365.purview.1",
       "Description": "Control de acceso",
       "Attributes": [
@@ -1080,6 +1267,26 @@
       "Checks": []
     },
     {
+      "Id": "mp.info.2.m365.exchange.1",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se han creado las reglas de flujo de correo que necesita la organización de Exchange Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "mp.info.5.m365.apps.1",
       "Description": "Limpieza de documentos",
       "Attributes": [
@@ -1128,6 +1335,66 @@
           "Marco": "medidas de protección",
           "Categoria": "protección de la información",
           "DescripcionControl": "Se ha comunicado a los usuarios cómo gestionar el control de versiones de los documentos y la papelera de reciclaje de SharePoint Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.m365.exchange.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se aplica la retención por juicio a los buzones de Exchange Online cuyo contenido debe conservarse.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.m365.exchange.2",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se controla el uso de la recuperación de elementos individuales (Single Item Recovery) en los buzones de Exchange Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.m365.exchange.3",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Las copias de seguridad del correo de los usuarios se realizan con el archivado de Exchange Online.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -1219,6 +1486,130 @@
       ],
       "Checks": [
         "defender_antiphishing_policy_configured"
+      ]
+    },
+    {
+      "Id": "mp.s.1.m365.defender.4",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se han aplicado directivas contra correo no deseado a los mensajes salientes de Exchange Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.1.m365.defender.5",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se han creado directivas de cuarentena, que definen lo que los usuarios pueden hacer con sus mensajes en cuarentena.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.1.m365.defender.6",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se revisan los mensajes de correo electrónico en cuarentena.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.1.m365.defender.7",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se han configurado directivas de Datos adjuntos seguros de Microsoft Defender para Office 365.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_safe_attachments_policy_enabled"
+      ]
+    },
+    {
+      "Id": "mp.s.1.m365.defender.8",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se han configurado directivas de Vínculos seguros de Microsoft Defender para Office 365.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
       ]
     },
     {
