@@ -6,7 +6,7 @@ from typing_extensions import override
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import M365CertificateCreationError
-from prowler.providers.m365.lib.jwt.jwt_decoder import decode_msal_token
+from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
@@ -47,6 +47,7 @@ class M365PowerShell(PowerShellSession):
         """
         super().__init__()
         self.tenant_identity = identity
+        self.oidc = bool(getattr(credentials, "oidc", False))
         self.init_credential(credentials)
 
     @override
@@ -95,9 +96,12 @@ class M365PowerShell(PowerShellSession):
         """
         Initialize PowerShell credential object for Microsoft 365 authentication.
 
-        Supports two authentication methods:
+        Supports three authentication methods:
         1. Application authentication (client_id/client_secret)
         2. Certificate authentication (certificate_content in base64/client_id)
+        3. OIDC (workload identity federation): the access tokens are obtained in
+           Python with the federated token as the client assertion, so neither a
+           secret nor the assertion is ever passed to PowerShell
 
         Args:
             credentials (M365Credentials): The credentials object containing
@@ -110,8 +114,16 @@ class M365PowerShell(PowerShellSession):
             PowerShell best practices for literal values, so its content is taken
             verbatim with no variable expansion or subexpression evaluation.
         """
+        # OIDC (workload identity federation)
+        if self.oidc:
+            self.execute(f"$clientID = '{self.sanitize(credentials.client_id)}'")
+            self.execute(f"$tenantID = '{self.sanitize(credentials.tenant_id)}'")
+            self.execute(
+                f"$graphToken = '{self.oidc_token('https://graph.microsoft.com/.default')}'"
+            )
+
         # Certificate Auth
-        if credentials.certificate_content and credentials.client_id:
+        elif credentials.certificate_content and credentials.client_id:
             # Clean certificate content for PowerShell consumption
             clean_cert_content = self.clean_certificate_content(
                 credentials.certificate_content
@@ -154,6 +166,64 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
             )
+
+    @staticmethod
+    def oidc_token(scope: str) -> str:
+        """
+        Returns an access token for `scope`, obtained with the federated token.
+
+        A JWT is base64url segments joined by dots, so it is safe inside a
+        single-quoted PowerShell string.
+
+        Args:
+            scope (str): The scope to request, e.g. "https://graph.microsoft.com/.default".
+
+        Returns:
+            str: The access token.
+        """
+        # Imported here: the provider module imports this one.
+        from prowler.providers.m365.m365_provider import M365Provider
+
+        token = M365Provider.oidc_credential().get_token(scope).token
+        if not re.fullmatch(r"[A-Za-z0-9\-_.]+", token):
+            raise ValueError("Unexpected characters in the access token")
+        return token
+
+    def test_teams_oidc_connection(self) -> bool:
+        """Test Microsoft Teams connection with OIDC-acquired tokens."""
+        try:
+            self.execute(
+                f"$teamsToken = '{self.oidc_token('48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default')}'"
+            )
+            self.execute_connect(
+                'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                f"Microsoft Teams connection failed: {e}. Please check your permissions and try again."
+            )
+            return False
+
+    def test_exchange_oidc_connection(self) -> bool:
+        """Test Exchange Online connection with an OIDC-acquired token."""
+        try:
+            token = self.oidc_token("https://outlook.office365.com/.default")
+            if "Exchange.ManageAsApp" not in decode_jwt(token).get("roles", []):
+                logger.error(
+                    "Exchange Online connection failed: Please check your permissions and try again."
+                )
+                return False
+            self.execute(f"$exchangeAccessToken = '{token}'")
+            self.execute_connect(
+                'Connect-ExchangeOnline -AccessToken $exchangeAccessToken -Organization "$tenantID"'
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                f"Exchange Online connection failed: {e}. Please check your permissions and try again."
+            )
+            return False
 
     def execute_connect(self, command: str) -> str:
         """
@@ -253,6 +323,8 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
+        if self.oidc:
+            return self.test_teams_oidc_connection()
         # Certificate Auth
         if self.execute("Write-Output $certificate") != "":
             return self.test_teams_certificate_connection()
@@ -358,6 +430,8 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
+        if self.oidc:
+            return self.test_exchange_oidc_connection()
         # Certificate Auth
         if self.execute("Write-Output $certificate") != "":
             return self.test_exchange_certificate_connection()

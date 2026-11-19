@@ -378,7 +378,7 @@ class TestM365Provider:
 
         assert exception.type == M365NoAuthenticationMethodError
         assert (
-            "M365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --certificate-auth]"
+            "M365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --certificate-auth | --oidc-auth]"
             in exception.value.args[0]
         )
 
@@ -1888,3 +1888,130 @@ class TestM365ProviderEventLoop:
         # Must not raise "There is no current event loop in thread 'MainThread'.".
         self._without_event_loop(call)
         graph_client.domains.get.assert_awaited_once()
+
+
+class TestM365ProviderOIDCAuth:
+    """OIDC (workload identity federation): a federated token, no secret or certificate."""
+
+    def test_validate_arguments_accepts_oidc_auth_alone(self):
+        M365Provider.validate_arguments(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            browser_auth=False,
+            certificate_auth=False,
+            tenant_id=None,
+            client_id=None,
+            client_secret=None,
+            certificate_content=None,
+            certificate_path=None,
+            oidc_auth=True,
+        )
+
+    def test_check_oidc_creds_env_vars_with_token(self):
+        with patch.dict(
+            os.environ,
+            {
+                "AZURE_CLIENT_ID": "client",
+                "AZURE_TENANT_ID": "tenant",
+                "AZURE_FEDERATED_TOKEN": "a.b.c",
+            },
+            clear=True,
+        ):
+            M365Provider.check_oidc_creds_env_vars()
+
+    def test_check_oidc_creds_env_vars_with_token_file(self):
+        with patch.dict(
+            os.environ,
+            {
+                "AZURE_CLIENT_ID": "client",
+                "AZURE_TENANT_ID": "tenant",
+                "AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+            },
+            clear=True,
+        ):
+            M365Provider.check_oidc_creds_env_vars()
+
+    def test_check_oidc_creds_env_vars_does_not_ask_for_a_secret(self):
+        with patch.dict(
+            os.environ,
+            {"AZURE_CLIENT_ID": "client", "AZURE_TENANT_ID": "tenant"},
+            clear=True,
+        ):
+            with pytest.raises(M365EnvironmentVariableError) as error:
+                M365Provider.check_oidc_creds_env_vars()
+
+        assert "AZURE_FEDERATED_TOKEN" in str(error.value)
+        assert "AZURE_CLIENT_SECRET" not in str(error.value)
+
+    def test_read_federated_token_prefers_the_variable(self):
+        with patch.dict(os.environ, {"AZURE_FEDERATED_TOKEN": " a.b.c\n"}, clear=True):
+            assert M365Provider.read_federated_token() == "a.b.c"
+
+    def test_read_federated_token_reads_the_file_each_time(self):
+        with (
+            patch.dict(
+                os.environ, {"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token"}, clear=True
+            ),
+            patch("builtins.open", mock_open(read_data="d.e.f\n")) as opened,
+        ):
+            assert M365Provider.read_federated_token() == "d.e.f"
+            assert M365Provider.read_federated_token() == "d.e.f"
+
+        assert opened.call_count == 2
+
+    def test_setup_session_with_oidc_auth_uses_a_client_assertion(self):
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": "client",
+                    "AZURE_TENANT_ID": "tenant",
+                    "AZURE_FEDERATED_TOKEN": "a.b.c",
+                },
+                clear=True,
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.ClientAssertionCredential"
+            ) as assertion,
+        ):
+            session = M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=None,
+                m365_credentials=None,
+                region_config=M365RegionConfig(
+                    name="M365Global",
+                    authority=None,
+                    base_url="https://graph.microsoft.com",
+                    credential_scopes=["https://graph.microsoft.com/.default"],
+                ),
+                oidc_auth=True,
+            )
+
+        assert session is assertion.return_value
+        kwargs = assertion.call_args.kwargs
+        assert kwargs["tenant_id"] == "tenant"
+        assert kwargs["client_id"] == "client"
+        assert kwargs["func"] == M365Provider.read_federated_token
+
+    def test_setup_powershell_with_oidc_auth_holds_no_secret(self):
+        identity = M365IdentityInfo(tenant_domains=["example.com"])
+        with (
+            patch.dict(
+                os.environ,
+                {"AZURE_CLIENT_ID": "client", "AZURE_TENANT_ID": "tenant"},
+                clear=True,
+            ),
+            patch("prowler.providers.m365.m365_provider.M365PowerShell") as session,
+        ):
+            credentials = M365Provider.setup_powershell(
+                identity=identity, oidc_auth=True
+            )
+
+        assert credentials.oidc is True
+        assert credentials.client_secret is None
+        assert credentials.certificate_content is None
+        session.assert_called_once_with(credentials, identity)

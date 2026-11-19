@@ -1265,3 +1265,99 @@ class Testm365PowerShell:
         assert any('$tenantDomain = "contoso.com"' in cmd for cmd in executed_commands)
 
         session.close()
+
+
+class TestM365PowerShellOIDC:
+    """OIDC: tokens come from Python; no secret or assertion reaches PowerShell."""
+
+    @staticmethod
+    def _session(mock_popen):
+        mock_popen.return_value = MagicMock()
+        credentials = M365Credentials(
+            client_id="test_client_id", tenant_id="test_tenant_id", oidc=True
+        )
+        identity = M365IdentityInfo(tenant_domains=["example.com"])
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(credentials, identity)
+        session.execute = MagicMock(return_value="")
+        return session, credentials
+
+    @patch("subprocess.Popen")
+    def test_init_credential_sets_tokens_not_secrets(self, mock_popen):
+        session, credentials = self._session(mock_popen)
+
+        with patch.object(
+            M365PowerShell, "oidc_token", return_value="graph.access.token"
+        ) as token:
+            M365PowerShell.init_credential(session, credentials)
+
+        token.assert_called_once_with("https://graph.microsoft.com/.default")
+        session.execute.assert_any_call("$clientID = 'test_client_id'")
+        session.execute.assert_any_call("$tenantID = 'test_tenant_id'")
+        session.execute.assert_any_call("$graphToken = 'graph.access.token'")
+        sent = " ".join(str(c) for c in session.execute.call_args_list)
+        assert "Client_Secret" not in sent
+        assert "clientSecret" not in sent
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_teams_connects_with_oidc_tokens(self, mock_popen):
+        session, _ = self._session(mock_popen)
+
+        with patch.object(
+            M365PowerShell, "oidc_token", return_value="teams.access.token"
+        ):
+            assert session.connect_microsoft_teams() is True
+
+        session.execute.assert_any_call("$teamsToken = 'teams.access.token'")
+        session.execute.assert_any_call(
+            'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")',
+            timeout=15,
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_exchange_connects_with_an_oidc_token(self, mock_popen):
+        session, _ = self._session(mock_popen)
+        payload = (
+            base64.urlsafe_b64encode(b'{"roles": ["Exchange.ManageAsApp"]}')
+            .decode()
+            .rstrip("=")
+        )
+        token = f"header.{payload}.signature"
+
+        with patch.object(M365PowerShell, "oidc_token", return_value=token):
+            assert session.connect_exchange_online() is True
+
+        session.execute.assert_any_call(f"$exchangeAccessToken = '{token}'")
+        session.execute.assert_any_call(
+            'Connect-ExchangeOnline -AccessToken $exchangeAccessToken -Organization "$tenantID"',
+            timeout=15,
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_exchange_without_the_permission_does_not_connect(self, mock_popen):
+        session, _ = self._session(mock_popen)
+        payload = base64.urlsafe_b64encode(b'{"roles": []}').decode().rstrip("=")
+
+        with patch.object(
+            M365PowerShell, "oidc_token", return_value=f"header.{payload}.signature"
+        ):
+            assert session.connect_exchange_online() is False
+
+        assert not any(
+            "Connect-ExchangeOnline" in str(c) for c in session.execute.call_args_list
+        )
+        session.close()
+
+    def test_oidc_token_refuses_anything_that_is_not_a_jwt(self):
+        credential = MagicMock()
+        credential.get_token.return_value.token = "x'; Remove-Item -Recurse /"
+
+        with patch(
+            "prowler.providers.m365.m365_provider.M365Provider.oidc_credential",
+            return_value=credential,
+        ):
+            with pytest.raises(ValueError):
+                M365PowerShell.oidc_token("https://graph.microsoft.com/.default")
