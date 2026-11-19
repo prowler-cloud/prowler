@@ -3,6 +3,7 @@ import io
 import json
 import os
 import tempfile
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -46,6 +47,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
@@ -5355,6 +5357,140 @@ class TestScanViewSet:
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
 
+    def test_compliance_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_cis_1.4_aws.csv", "archived")
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"archived"
+        assert resp["Content-Disposition"].endswith('filename="scan_cis_1.4_aws.csv"')
+
+    def test_compliance_ocsf_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_dora_2022_2554.csv", "csv")
+                zipf.writestr("compliance/scan_dora_2022_2554.ocsf.json", "[]")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance-ocsf",
+                kwargs={"pk": scan.id, "name": "dora_2022_2554"},
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"[]"
+        assert resp["Content-Disposition"].endswith(
+            'filename="scan_dora_2022_2554.ocsf.json"'
+        )
+
+    def test_compliance_local_file_served_from_newest_archive_member(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/b_cis_1.4_aws.csv", (2026, 1, 1, 0, 0, 0)
+                    ),
+                    "old",
+                )
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/a_cis_1.4_aws.csv", (2026, 6, 1, 0, 0, 0)
+                    ),
+                    "new",
+                )
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"new"
+
+    @pytest.mark.parametrize("corruption", ["not_a_zip", "corrupt_member", "missing"])
+    def test_compliance_local_unreadable_archive_returns_404(
+        self, authenticated_client, scans_fixture, corruption
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            if corruption == "not_a_zip":
+                archive.write_bytes(b"not a zip")
+            elif corruption == "corrupt_member":
+                member = "compliance/scan_cis_1.4_aws.csv"
+                with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    zipf.writestr(member, "finding;" * 500)
+                raw = bytearray(archive.read_bytes())
+                raw[30 + len(member) + 2] ^= 0xFF
+                archive.write_bytes(bytes(raw))
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_local_file_missing_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
     def test_cis_no_output(self, authenticated_client, scans_fixture):
         """CIS PDF endpoint must 404 when the scan has no output_location."""
         scan = scans_fixture[0]
@@ -7487,6 +7623,76 @@ class TestResourceViewSet:
         assert "partition" in response.json()["data"][0]["attributes"]
         assert "groups" in response.json()["data"][0]["attributes"]
 
+    def test_resources_list_loads_only_finding_ids_for_the_relationship(
+        self, authenticated_client, resources_fixture, findings_fixture
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-list"),
+                {"include": "provider", "filter[updated_at]": TODAY},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        related_finding_ids = {
+            finding["id"]
+            for resource in response.json()["data"]
+            for finding in resource["relationships"]["findings"]["data"]
+        }
+        assert related_finding_ids == {str(finding.id) for finding in findings_fixture}
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
+        assert '"findings"."check_metadata"' not in findings_queries[0]
+
+    def test_resources_latest_loads_only_finding_ids_for_the_relationship(
+        self, authenticated_client, latest_scan_finding
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-latest"), {"include": "provider"}
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        related_finding_ids = {
+            finding["id"]
+            for resource in response.json()["data"]
+            for finding in resource["relationships"]["findings"]["data"]
+        }
+        assert related_finding_ids == {str(latest_scan_finding.id)}
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
+        assert '"findings"."check_metadata"' not in findings_queries[0]
+
+    def test_resources_list_include_findings_loads_their_attributes_once(
+        self, authenticated_client, resources_fixture, findings_fixture
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-list"),
+                {"include": "findings", "filter[updated_at]": TODAY},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        included_findings = [
+            included
+            for included in response.json()["included"]
+            if included["type"] == "findings"
+        ]
+        assert {finding["id"] for finding in included_findings} == {
+            str(finding.id) for finding in findings_fixture
+        }
+        assert all(
+            finding["attributes"]["check_id"] == "test_check_id"
+            for finding in included_findings
+        )
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
@@ -9400,6 +9606,147 @@ class TestFindingViewSet:
             )
         assert response.status_code == status.HTTP_200_OK
         mock_backfill_task.assert_not_called()
+
+    def test_findings_metadata_without_summaries_merges_finding_values(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        finding_1, finding_2 = findings_fixture
+        Finding.objects.filter(id=finding_1.id).update(
+            resource_services=["s3", "ec2", ""],
+            resource_regions=["us-east-1", "eu-west-1"],
+            resource_types=["bucket", ""],
+            categories=["logging", ""],
+            resource_groups="storage",
+        )
+        Finding.objects.filter(id=finding_2.id).update(
+            resource_services=None,
+            resource_regions=None,
+            resource_types=None,
+            categories=None,
+            resource_groups="IAM",
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {"filter[scan]": str(scans_fixture[0].id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["services"] == ["ec2", "s3"]
+        assert attributes["regions"] == ["eu-west-1", "us-east-1"]
+        assert attributes["resource_types"] == ["bucket"]
+        assert attributes["categories"] == ["logging"]
+        assert attributes["groups"] == ["IAM", "storage"]
+
+    def test_findings_metadata_without_summaries_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        ResourceScanSummary.objects.filter(tenant_id=tenant.id).delete()
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        with patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async"):
+            response = client.get(
+                reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["services"] == ["ec2"]
+        assert attributes["regions"] == ["us-east-1"]
+        assert attributes["resource_types"] == ["test"]
+        assert attributes["categories"] == ["data-protection"]
+        assert attributes["groups"] == ["data"]
+
+    def test_findings_metadata_latest_without_summaries_reads_only_latest_scans(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        aws_provider_pair,
+        resources_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider, _ = aws_provider_pair
+        resource1, _, resource3 = resources_fixture
+        _completed_scan_with_summaries(
+            tenant, provider, [resource3], categories=["old"], resource_group="old"
+        )
+        latest_scan = _completed_scan_with_summaries(
+            tenant,
+            provider,
+            [resource1],
+            categories=["iam"],
+            resource_group="identity",
+        )
+        Scan.objects.filter(id=latest_scan.id).update(unique_resource_count=1)
+        ResourceScanSummary.objects.filter(scan_id=latest_scan.id).delete()
+
+        with patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async"):
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["resource_types"] == [resource1.type]
+        assert attributes["categories"] == ["iam"]
+        assert attributes["groups"] == ["identity"]
+
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_findings_metadata_categories_fallback_reads_distinct_values(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        Finding.objects.filter(scan_id=finding_1.scan_id).update(
+            categories=["encryption"]
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d")},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["categories"] == ["encryption"]
+        categories_queries = [
+            query["sql"]
+            for query in queries
+            if '"findings"."categories"' in query["sql"]
+        ]
+        assert categories_queries
+        assert all("DISTINCT" in sql for sql in categories_queries)
+
+    def test_findings_metadata_without_summaries_aggregates_from_findings(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        finding_1, finding_2 = findings_fixture
+        Finding.objects.filter(id=finding_1.id).update(
+            categories=["encryption", "logging"], resource_groups="storage"
+        )
+        Finding.objects.filter(id=finding_2.id).update(
+            categories=["encryption"], resource_groups="compute"
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": str(scans_fixture[0].id)},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2", "s3"}
+        assert set(attributes["regions"]) == {"eu-west-1", "us-east-1"}
+        assert set(attributes["resource_types"]) == {"prowler-test"}
+        assert attributes["categories"] == ["encryption", "logging"]
+        assert attributes["groups"] == ["compute", "storage"]
+        assert not [
+            query["sql"]
+            for query in queries
+            if "resource_finding_mappings" in query["sql"]
+        ]
 
     def test_findings_metadata_latest_backfill(
         self, authenticated_client, scans_fixture, findings_fixture

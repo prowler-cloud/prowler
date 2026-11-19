@@ -1,3 +1,4 @@
+from collections import deque
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -20,12 +21,15 @@ class Bedrock(AWSService):
         self.model_invocation_jobs_scan_errors = {}
         self.custom_models = {}
         self.custom_models_scan_errors = {}
+        self.imported_models = {}
         self.__threading_call__(self._get_model_invocation_logging_configuration)
         self.__threading_call__(self._list_guardrails)
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
         self.__threading_call__(self._list_tags_for_resource, self.guardrails.values())
         self.__threading_call__(self._list_custom_models)
         self.__threading_call__(self._get_custom_model, self.custom_models.values())
+        self.__threading_call__(self._list_imported_models)
+        self.__threading_call__(self._get_imported_model, self.imported_models.values())
         self.__threading_call__(self._list_model_invocation_jobs)
         self.__threading_call__(
             self._get_model_invocation_job, self.model_invocation_jobs.values()
@@ -322,6 +326,42 @@ class Bedrock(AWSService):
                 f"{model.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_imported_models(self, regional_client):
+        """List models imported into the audited account."""
+        logger.info("Bedrock - Listing Imported Models...")
+        try:
+            paginator = regional_client.get_paginator("list_imported_models")
+            for page in paginator.paginate():
+                for model in page.get("modelSummaries", []):
+                    model_arn = model.get("modelArn", "")
+                    if model_arn and (
+                        not self.audit_resources
+                        or is_resource_filtered(model_arn, self.audit_resources)
+                    ):
+                        self.imported_models[model_arn] = ImportedModel(
+                            name=model.get("modelName", ""),
+                            arn=model_arn,
+                            region=regional_client.region,
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_imported_model(self, model):
+        """Fetch the KMS key used to encrypt an imported model at rest."""
+        logger.info("Bedrock - Getting Imported Model...")
+        try:
+            model_info = self.regional_clients[model.region].get_imported_model(
+                modelIdentifier=model.arn
+            )
+            model.kms_key_arn = model_info.get("modelKmsKeyArn")
+            model.detail_retrieved = True
+        except Exception as error:
+            logger.error(
+                f"{model.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class LoggingConfiguration(BaseModel):
     enabled: bool = False
@@ -391,6 +431,17 @@ class CustomModel(BaseModel):
     detail_retrieved: bool = False
 
 
+class ImportedModel(BaseModel):
+    """Model representing a model imported into Amazon Bedrock."""
+
+    name: str
+    arn: str
+    region: str
+    kms_key_arn: Optional[str] = None
+    # False when GetImportedModel failed: absent key is unknown, so no finding.
+    detail_retrieved: bool = False
+
+
 class ModelInvocationJob(BaseModel):
     """Model representing a Bedrock model invocation job."""
 
@@ -419,6 +470,7 @@ class BedrockAgent(AWSService):
         self.data_sources = {}
         self.knowledge_bases_scan_errors = {}
         self.agents_scan_errors = {}
+        self.flows = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         # Detail collection runs over the COMPLETE inventory: an out-of-scope agent's role still
@@ -427,7 +479,10 @@ class BedrockAgent(AWSService):
         self.__threading_call__(self._get_agent_version_roles, self.all_agents.values())
         self.__threading_call__(self._list_prompts)
         self.__threading_call__(self._get_prompt, self.prompts.values())
+        self.__threading_call__(self._list_flows)
+        self.__threading_call__(self._get_flow, self.flows.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
+        self.__threading_call__(self._list_tags_for_resource, self.flows.values())
         self.__threading_call__(self._list_knowledge_bases)
         self.__threading_call__(self._list_data_sources, self.knowledge_bases.values())
         self.__threading_call__(self._get_data_source, self.data_sources.values())
@@ -680,6 +735,100 @@ class BedrockAgent(AWSService):
                 f"{knowledge_base.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_flows(self, regional_client):
+        """List Bedrock Flows in a region."""
+        logger.info("Bedrock Agent - Listing Flows...")
+        try:
+            paginator = regional_client.get_paginator("list_flows")
+            for page in paginator.paginate():
+                for flow in page.get("flowSummaries", []):
+                    flow_id = flow.get("id")
+                    if not flow_id:
+                        continue
+                    flow_arn = flow.get("arn") or (
+                        f"arn:{self.audited_partition}:bedrock:{regional_client.region}:{self.audited_account}:flow/{flow_id}"
+                    )
+                    if not self.audit_resources or is_resource_filtered(
+                        flow_arn, self.audit_resources
+                    ):
+                        self.flows[flow_arn] = Flow(
+                            id=flow_id,
+                            name=flow.get("name", ""),
+                            arn=flow_arn,
+                            region=regional_client.region,
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_flow(self, flow):
+        """Fetch a flow definition and retain node-level guardrail configuration.
+
+        ListFlows summaries do not carry node configuration, so a per-flow
+        GetFlow call is required. A missing definition is unknown, not an empty
+        (compliant) graph.
+        """
+        logger.info("Bedrock Agent - Getting Flow...")
+        try:
+            flow_info = self.regional_clients[flow.region].get_flow(
+                flowIdentifier=flow.id
+            )
+            definition = flow_info.get("definition")
+            if definition is None:
+                return
+            nodes = []
+            # Loop nodes carry their own nested definition, so walk those too.
+            pending_nodes = deque(definition.get("nodes", []))
+            while pending_nodes:
+                node = pending_nodes.popleft()
+                if node.get("type") == "Loop":
+                    loop = (node.get("configuration") or {}).get("loop") or {}
+                    loop_definition = loop.get("definition") or {}
+                    pending_nodes.extend(loop_definition.get("nodes", []))
+                parsed = self._flow_node_from_definition(node)
+                if parsed:
+                    nodes.append(parsed)
+            # Commit only after every node parsed, so a partial read yields no finding.
+            flow.nodes = nodes
+            flow.definition_available = True
+        except Exception as error:
+            logger.error(
+                f"{flow.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    @staticmethod
+    def _flow_node_from_definition(node: dict) -> Optional["FlowNode"]:
+        """Return an applicable Prompt or generating KnowledgeBase node, else None.
+
+        Prompt nodes always generate model output. KnowledgeBase nodes can attach
+        a guardrail only when they generate responses (RetrieveAndGenerate, which
+        requires modelId). Retrieve-only KnowledgeBase nodes are not applicable.
+        """
+        node_type = node.get("type", "")
+        node_name = node.get("name", "")
+        config = node.get("configuration") or {}
+        if node_type == "Prompt":
+            guardrail = (config.get("prompt") or {}).get("guardrailConfiguration") or {}
+            return FlowNode(
+                name=node_name,
+                type=node_type,
+                guardrail_id=guardrail.get("guardrailIdentifier") or None,
+                applicable=True,
+            )
+        if node_type == "KnowledgeBase":
+            knowledge_base = config.get("knowledgeBase") or {}
+            guardrail = knowledge_base.get("guardrailConfiguration") or {}
+            guardrail_id = guardrail.get("guardrailIdentifier") or None
+            if knowledge_base.get("modelId") or guardrail_id:
+                return FlowNode(
+                    name=node_name,
+                    type=node_type,
+                    guardrail_id=guardrail_id,
+                    applicable=True,
+                )
+        return None
+
     def _get_data_source(self, data_source):
         """Fetch the KMS key a data source's transient storage is encrypted with."""
         logger.info("Bedrock Agent - Getting Data Source...")
@@ -777,3 +926,26 @@ class KnowledgeBaseDataSource(BaseModel):
     kms_key_arn: Optional[str] = None
     # False when GetDataSource failed: absent key is unknown, not unset.
     detail_retrieved: bool = False
+
+
+class FlowNode(BaseModel):
+    """One applicable node from a Bedrock Flow definition."""
+
+    name: str
+    type: str
+    guardrail_id: Optional[str] = None
+    applicable: bool = False
+
+
+class Flow(BaseModel):
+    """Model representing an Amazon Bedrock Flow."""
+
+    id: str
+    name: str
+    arn: str
+    region: str
+    tags: Optional[list] = []
+    nodes: list[FlowNode] = []
+    # False when GetFlow failed or returned no definition: absent nodes are
+    # unknown, not an empty graph.
+    definition_available: bool = False
