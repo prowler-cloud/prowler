@@ -2008,6 +2008,38 @@ class TestM365ProviderRegionConfig:
         assert requested_hosts
         assert set(requested_hosts) == {"graph.microsoft.us"}
 
+    def test_signed_in_user_lookup_targets_the_region_graph_host(self):
+        requested = []
+
+        async def record_request(_, request):
+            requested.append((request.url.host, request.url.path))
+            return httpx.Response(
+                200,
+                json={
+                    "userPrincipalName": f"user@{DOMAIN}",
+                    "value": [{"id": TENANT_ID}],
+                },
+                request=request,
+            )
+
+        credential = MagicMock()
+        credential.get_token.return_value = AccessToken("token", 9999999999)
+        with patch.object(
+            httpx.AsyncHTTPTransport, "handle_async_request", record_request
+        ):
+            identity = M365Provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=True,
+                certificate_auth=False,
+                session=credential,
+                region_config=M365Provider.setup_region_config("M365USGovernment"),
+            )
+
+        assert {host for host, _ in requested} == {"graph.microsoft.us"}
+        assert any(path.endswith("/me") for _, path in requested)
+        assert identity.identity_id == f"user@{DOMAIN}"
+
     def test_setup_session_static_credentials_use_region_authority(self):
         with patch(
             "prowler.providers.m365.m365_provider.ClientSecretCredential"
