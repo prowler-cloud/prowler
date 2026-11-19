@@ -1366,6 +1366,380 @@ class Test_Entra_Service:
         assert merged.password_credentials[0].display_name == "app-level-secret"
         assert merged.password_credentials[0].is_active()
 
+    def test__get_app_registrations_reads_federated_identity_credentials(self):
+        """Federated identity credentials are read per application object."""
+        application = SimpleNamespace(
+            id="app-object",
+            app_id="app-client-id",
+            display_name="Deploy App",
+            password_credentials=[],
+        )
+        applications_response = SimpleNamespace(
+            value=[application], odata_next_link=None
+        )
+
+        fic = SimpleNamespace(
+            name="github-actions",
+            issuer="https://token.actions.githubusercontent.com",
+            subject="repo:acme/deploy:ref:refs/heads/main",
+            audiences=["api://AzureADTokenExchange"],
+        )
+        fic_response = SimpleNamespace(value=[fic])
+        federated_builder = SimpleNamespace(get=AsyncMock(return_value=fic_response))
+        item_builder = SimpleNamespace(federated_identity_credentials=federated_builder)
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+            by_application_id=MagicMock(return_value=item_builder),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        applications_builder.by_application_id.assert_called_once_with("app-object")
+        app = result["app-object"]
+        assert app.app_id == "app-client-id"
+        assert len(app.federated_identity_credentials) == 1
+        credential = app.federated_identity_credentials[0]
+        assert credential.name == "github-actions"
+        assert credential.issuer == "https://token.actions.githubusercontent.com"
+        assert credential.subject == "repo:acme/deploy:ref:refs/heads/main"
+        assert credential.audiences == ["api://AzureADTokenExchange"]
+
+    def test__get_app_registrations_handles_federated_credentials_error(self):
+        """A failure reading one application's federated credentials is isolated."""
+        application = SimpleNamespace(
+            id="app-object",
+            app_id="app-client-id",
+            display_name="Deploy App",
+            password_credentials=[],
+        )
+        applications_response = SimpleNamespace(
+            value=[application], odata_next_link=None
+        )
+
+        federated_builder = SimpleNamespace(
+            get=AsyncMock(side_effect=Exception("Graph error"))
+        )
+        item_builder = SimpleNamespace(federated_identity_credentials=federated_builder)
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+            by_application_id=MagicMock(return_value=item_builder),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        app = result["app-object"]
+        assert app.federated_identity_credentials == []
+        assert app.federated_identity_credentials_error is not None
+        assert (
+            "Unable to retrieve federated identity credentials"
+            in app.federated_identity_credentials_error
+        )
+
+    def test__get_app_registrations_bounds_federated_credential_concurrency(self):
+        """Federated credential reads run concurrently, but never unbounded."""
+        app_count = entra_service.FEDERATED_CREDENTIAL_FETCH_CONCURRENCY * 3
+        applications = [
+            SimpleNamespace(
+                id=f"app-object-{index}",
+                app_id=f"app-client-{index}",
+                display_name=f"App {index}",
+                password_credentials=[],
+            )
+            for index in range(app_count)
+        ]
+        applications_response = SimpleNamespace(
+            value=applications, odata_next_link=None
+        )
+
+        in_flight = 0
+        peak_in_flight = 0
+
+        async def get_federated_identity_credentials():
+            nonlocal in_flight, peak_in_flight
+            in_flight += 1
+            peak_in_flight = max(peak_in_flight, in_flight)
+            try:
+                # Yield control so every permitted read overlaps: a serial
+                # implementation would never show more than one in flight.
+                await asyncio.sleep(0)
+                await asyncio.sleep(0)
+                return SimpleNamespace(
+                    value=[
+                        SimpleNamespace(
+                            name="github-actions",
+                            issuer="https://token.actions.githubusercontent.com",
+                            subject="repo:acme/deploy:ref:refs/heads/main",
+                            audiences=["api://AzureADTokenExchange"],
+                        )
+                    ]
+                )
+            finally:
+                in_flight -= 1
+
+        def by_application_id(object_id):
+            return SimpleNamespace(
+                federated_identity_credentials=SimpleNamespace(
+                    get=get_federated_identity_credentials
+                )
+            )
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+            by_application_id=MagicMock(side_effect=by_application_id),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        assert len(result) == app_count
+        assert applications_builder.by_application_id.call_count == app_count
+        # Concurrent: more than one read overlapped.
+        assert peak_in_flight > 1
+        # Bounded: never more in flight than the configured pool size.
+        assert peak_in_flight <= entra_service.FEDERATED_CREDENTIAL_FETCH_CONCURRENCY
+        for index in range(app_count):
+            app = result[f"app-object-{index}"]
+            assert len(app.federated_identity_credentials) == 1
+            assert app.federated_identity_credentials_error is None
+
+    def test__get_app_registrations_isolates_federated_credential_failures(self):
+        """One application's failed read leaves the other applications intact."""
+        applications = [
+            SimpleNamespace(
+                id=f"app-object-{index}",
+                app_id=f"app-client-{index}",
+                display_name=f"App {index}",
+                password_credentials=[],
+            )
+            for index in range(3)
+        ]
+        applications_response = SimpleNamespace(
+            value=applications, odata_next_link=None
+        )
+
+        def by_application_id(object_id):
+            if object_id == "app-object-1":
+                get = AsyncMock(side_effect=Exception("Graph error"))
+            else:
+                get = AsyncMock(
+                    return_value=SimpleNamespace(
+                        value=[
+                            SimpleNamespace(
+                                name=f"cred-{object_id}",
+                                issuer="https://token.actions.githubusercontent.com",
+                                subject="repo:acme/deploy:ref:refs/heads/main",
+                                audiences=["api://AzureADTokenExchange"],
+                            )
+                        ]
+                    )
+                )
+            return SimpleNamespace(
+                federated_identity_credentials=SimpleNamespace(get=get)
+            )
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+            by_application_id=MagicMock(side_effect=by_application_id),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        failed = result["app-object-1"]
+        assert failed.federated_identity_credentials == []
+        assert (
+            "Unable to retrieve federated identity credentials"
+            in failed.federated_identity_credentials_error
+        )
+        for object_id in ("app-object-0", "app-object-2"):
+            app = result[object_id]
+            assert app.federated_identity_credentials_error is None
+            assert len(app.federated_identity_credentials) == 1
+            assert app.federated_identity_credentials[0].name == f"cred-{object_id}"
+
+    def test__get_app_registrations_reads_credentials_when_pagination_fails(self):
+        """Applications from the pages already read still get their credentials.
+
+        A later page failing must not leave the earlier applications with an
+        empty collection and no error, which a check cannot tell apart from an
+        application that genuinely has no federated identity credentials.
+        """
+        first_page_app = SimpleNamespace(
+            id="app-object-0",
+            app_id="app-client-0",
+            display_name="App 0",
+            password_credentials=[],
+        )
+        first_page = SimpleNamespace(
+            value=[first_page_app],
+            odata_next_link="https://graph.microsoft.com/v1.0/applications?$skiptoken=x",
+        )
+
+        fic_builder = SimpleNamespace(
+            get=AsyncMock(
+                return_value=SimpleNamespace(
+                    value=[
+                        SimpleNamespace(
+                            name="github-actions",
+                            issuer="https://token.actions.githubusercontent.com",
+                            subject="repo:acme/deploy:ref:refs/heads/main",
+                            audiences=["api://AzureADTokenExchange"],
+                        )
+                    ]
+                )
+            )
+        )
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=first_page),
+            # The second page request fails.
+            with_url=MagicMock(
+                return_value=SimpleNamespace(
+                    get=AsyncMock(side_effect=Exception("Graph error"))
+                )
+            ),
+            by_application_id=MagicMock(
+                return_value=SimpleNamespace(federated_identity_credentials=fic_builder)
+            ),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        app = result["app-object-0"]
+        assert len(app.federated_identity_credentials) == 1
+        assert app.federated_identity_credentials[0].name == "github-actions"
+        assert app.federated_identity_credentials_error is None
+
+    def test__get_app_registrations_records_error_when_pagination_and_read_fail(self):
+        """A partial inventory whose credential reads also fail records the error."""
+        first_page_app = SimpleNamespace(
+            id="app-object-0",
+            app_id="app-client-0",
+            display_name="App 0",
+            password_credentials=[],
+        )
+        first_page = SimpleNamespace(
+            value=[first_page_app],
+            odata_next_link="https://graph.microsoft.com/v1.0/applications?$skiptoken=x",
+        )
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=first_page),
+            with_url=MagicMock(
+                return_value=SimpleNamespace(
+                    get=AsyncMock(side_effect=Exception("Graph error"))
+                )
+            ),
+            by_application_id=MagicMock(
+                return_value=SimpleNamespace(
+                    federated_identity_credentials=SimpleNamespace(
+                        get=AsyncMock(side_effect=Exception("Graph error"))
+                    )
+                )
+            ),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        app = result["app-object-0"]
+        assert app.federated_identity_credentials == []
+        assert (
+            "Unable to retrieve federated identity credentials"
+            in app.federated_identity_credentials_error
+        )
+
+    def test__get_app_registrations_cancellation_skips_credential_reads(self):
+        """Cancelling during pagination does not wait for one read per application.
+
+        asyncio.CancelledError derives from BaseException, so the broad
+        ``except Exception`` does not catch it. The credential reads must
+        therefore be skipped on cancellation rather than awaited, or cancelling
+        a scan would block for as long as the application inventory is large.
+        """
+        applications = [
+            SimpleNamespace(
+                id=f"app-object-{index}",
+                app_id=f"app-client-{index}",
+                display_name=f"App {index}",
+                password_credentials=[],
+            )
+            for index in range(5)
+        ]
+        first_page = SimpleNamespace(
+            value=applications,
+            odata_next_link="https://graph.microsoft.com/v1.0/applications?$skiptoken=x",
+        )
+
+        second_page_started = asyncio.Event()
+
+        async def never_returns():
+            second_page_started.set()
+            await asyncio.Event().wait()  # pending until cancelled
+
+        by_application_id = MagicMock()
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=first_page),
+            with_url=MagicMock(
+                return_value=SimpleNamespace(get=never_returns),
+            ),
+            by_application_id=by_application_id,
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        async def run_and_cancel():
+            task = asyncio.ensure_future(
+                entra_service_instance._get_app_registrations()
+            )
+            await second_page_started.wait()
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+
+        asyncio.run(run_and_cancel())
+
+        # No credential read was issued, so cancellation did not have to wait
+        # for one request per application.
+        by_application_id.assert_not_called()
+
     def test__get_exchange_mailbox_permission_service_principals(self):
         """Service principals with Exchange Graph application roles are returned."""
         graph_sp_id = "graph-sp-id"

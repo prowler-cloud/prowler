@@ -21,6 +21,11 @@ run_hunting_query_body = importlib.import_module(
     "msgraph.generated.security.microsoft_graph_security_run_hunting_query."
     "run_hunting_query_post_request_body"
 )
+# Maximum number of in-flight ``federatedIdentityCredentials`` reads. The
+# collection is a navigation property, so it needs one request per application;
+# the pool keeps a large inventory from being a serial walk without turning it
+# into a burst that Microsoft Graph throttles request by request.
+FEDERATED_CREDENTIAL_FETCH_CONCURRENCY = 10
 # Sentinel identifiers used in Conditional Access ``conditions.users``
 # collections that do not correspond to real directory objects and must not be
 # resolved against Graph. Shared by the resolver below and the check that reads
@@ -2211,6 +2216,16 @@ OAuthAppInfo
         managed identities, so any entry in ``passwordCredentials`` is reported
         by the related check.
 
+        The ``federatedIdentityCredentials`` collection is a navigation property
+        on the application object, so it needs one request per application
+        through the dedicated endpoint. Those reads are issued after pagination
+        completes, through a bounded pool, by
+        ``_attach_federated_identity_credentials``. A failure to read one
+        application's collection is logged and recorded on that application's
+        ``federated_identity_credentials_error`` (rather than aborting the whole
+        inventory), so checks can tell a retrieval error apart from a genuinely
+        empty collection instead of treating the failure as "no credentials".
+
         Returns:
             Dict[str, AppRegistration]: Application registrations keyed by the
                 application object ID.
@@ -2256,7 +2271,6 @@ OAuthAppInfo
                         if public_client_obj
                         else []
                     )
-
                     app_registrations[object_id] = AppRegistration(
                         id=object_id,
                         app_id=app_id,
@@ -2276,7 +2290,78 @@ OAuthAppInfo
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        # After the try/except rather than inside it, and deliberately not in a
+        # ``finally``. The ``except Exception`` above does not re-raise, so this
+        # still runs when pagination failed part-way: the applications already
+        # read keep either their credentials or their own retrieval error, instead
+        # of an empty collection with no error, which is indistinguishable from
+        # "this application has no federated credentials" and is the silent pass
+        # this check exists to avoid. A ``finally`` would additionally run during
+        # cancellation -- ``asyncio.CancelledError`` derives from BaseException,
+        # so it is not caught above -- and would make cancellation wait for one
+        # request per application before propagating.
+        await self._attach_federated_identity_credentials(app_registrations)
+
         return app_registrations
+
+    async def _attach_federated_identity_credentials(
+        self, app_registrations: Dict[str, "AppRegistration"]
+    ) -> None:
+        """Read every application's federated identity credentials concurrently.
+
+        ``federatedIdentityCredentials`` is a navigation property, and the
+        documented query options on
+        ``GET /applications/{id}/federatedIdentityCredentials`` are only
+        ``$filter`` and ``$select``, so one request per application is
+        unavoidable. What is avoidable is paying the round trip serially: this
+        issues the reads through a bounded pool, mirroring the ``asyncio.gather``
+        fan-out already used for directory role members in ``_get_users``.
+
+        The pool is bounded rather than unbounded because Microsoft Graph
+        evaluates each request against its throttling limits individually, so
+        firing thousands of reads at once trades latency for HTTP 429s.
+
+        Each application keeps its own error state: a failure reading one
+        collection is logged and recorded on that application's
+        ``federated_identity_credentials_error`` without affecting the others.
+
+        Args:
+            app_registrations: Application registrations keyed by object ID,
+                mutated in place.
+        """
+        if not app_registrations:
+            return
+
+        semaphore = asyncio.Semaphore(FEDERATED_CREDENTIAL_FETCH_CONCURRENCY)
+
+        async def fetch(object_id: str) -> None:
+            app_registration = app_registrations[object_id]
+            async with semaphore:
+                try:
+                    fic_response = await self.client.applications.by_application_id(
+                        object_id
+                    ).federated_identity_credentials.get()
+                except Exception as error:
+                    app_registration.federated_identity_credentials_error = (
+                        "Unable to retrieve federated identity credentials from "
+                        f"Microsoft Graph ({error.__class__.__name__})"
+                    )
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    return
+
+            app_registration.federated_identity_credentials = [
+                FederatedIdentityCredential(
+                    name=getattr(fic, "name", "") or "",
+                    issuer=getattr(fic, "issuer", "") or "",
+                    subject=getattr(fic, "subject", "") or "",
+                    audiences=list(getattr(fic, "audiences", []) or []),
+                )
+                for fic in getattr(fic_response, "value", []) or []
+            ]
+
+        await gather(*(fetch(object_id) for object_id in list(app_registrations)))
 
     async def _resolve_directory_object_references(
         self,
@@ -3071,6 +3156,27 @@ class ServicePrincipal(BaseModel):
     app_owner_ids: List[str] = []
 
 
+class FederatedIdentityCredential(BaseModel):
+    """Model representing a federated identity credential on an app registration.
+
+    A federated identity credential establishes a trust relationship between an
+    external OpenID Connect issuer/subject pair and the application, letting that
+    external workload obtain Entra tokens without any stored secret. It has no
+    expiry, so it falls outside the expiry- and unused-secret-shaped checks.
+
+    Attributes:
+        name: The credential's unique name within the application.
+        issuer: The OIDC issuer URL of the external identity provider.
+        subject: The subject identifier the incoming external token must match.
+        audiences: The audience values accepted for the external token.
+    """
+
+    name: str = ""
+    issuer: str = ""
+    subject: str = ""
+    audiences: List[str] = []
+
+
 class AppRegistration(BaseModel):
     """Model representing a Microsoft Entra ID application registration.
 
@@ -3084,6 +3190,13 @@ class AppRegistration(BaseModel):
         spa_redirect_uris: Redirect URIs configured for the SPA platform.
         public_client_redirect_uris: Redirect URIs configured for the
             public client (mobile/desktop) platform.
+        federated_identity_credentials: List of federated identity credentials
+            (workload identity federation trusts) configured on the application.
+        federated_identity_credentials_error: Error message when the federated
+            identity credentials could not be retrieved, or ``None`` when the
+            list above is authoritative. An empty list means "known empty"; a
+            non-``None`` value means "unknown" and checks must not treat it as
+            the absence of credentials.
     """
 
     id: str
@@ -3093,6 +3206,8 @@ class AppRegistration(BaseModel):
     web_redirect_uris: List[str] = []
     spa_redirect_uris: List[str] = []
     public_client_redirect_uris: List[str] = []
+    federated_identity_credentials: List[FederatedIdentityCredential] = []
+    federated_identity_credentials_error: Optional[str] = None
 
 
 class CrossTenantTarget(BaseModel):
