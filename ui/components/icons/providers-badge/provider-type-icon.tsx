@@ -10,6 +10,7 @@ import {
 } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 import {
+  getProviderDisplayName,
   isKnownProviderType,
   type KnownProviderType,
   type ProviderType,
@@ -184,6 +185,9 @@ interface ProviderTypeIconStackProps {
   className?: string;
 }
 
+const providerName = (item: ProviderTypeIconStackItem) =>
+  item.tooltip ?? getProviderDisplayName(item.type);
+
 const FOCUSABLE_ICON_CLASS =
   "focus-visible:outline-button-primary rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2";
 
@@ -206,7 +210,7 @@ const IconWithTooltip = ({
   const icon = focusable ? (
     <span
       role="img"
-      aria-label={item.tooltip}
+      aria-label={providerName(item)}
       tabIndex={0}
       className={cn("inline-flex shrink-0", FOCUSABLE_ICON_CLASS)}
     >
@@ -242,10 +246,7 @@ export const ProviderTypeIconStack = ({
 }: ProviderTypeIconStackProps) => {
   const visible = items.slice(0, max);
   const overflow = items.slice(max);
-  const overflowLabel = overflow
-    .map((item) => item.tooltip)
-    .filter(Boolean)
-    .join(", ");
+  const overflowLabel = overflow.map(providerName).join(", ");
 
   return (
     <span className={cn("flex shrink-0 items-center gap-1", className)}>

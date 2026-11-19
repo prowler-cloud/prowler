@@ -145,6 +145,24 @@ describe("ProviderTypeIconStack", () => {
     expect(container.querySelector("[tabindex]")).not.toBeInTheDocument();
   });
 
+  it("names focusable icons by provider when an item has no tooltip", async () => {
+    render(
+      <ProviderTypeIconStack
+        focusable
+        max={1}
+        items={[
+          { key: "aws", type: "aws" },
+          { key: "gcp", type: "gcp" },
+        ]}
+      />,
+    );
+
+    expect(await screen.findByRole("img", { name: "AWS" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "1 more: Google Cloud" }),
+    ).toBeInTheDocument();
+  });
+
   it("renders known icons and the generic glyph for unknown types without crashing", async () => {
     // Regression guard for #9991: an unknown type in the stack must not throw;
     // it now renders the neutral generic glyph alongside the known badge.

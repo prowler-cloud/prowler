@@ -1,6 +1,12 @@
 "use client";
 
-import { BadgeCheck, Check, Package, ShieldCheck } from "lucide-react";
+import {
+  BadgeCheck,
+  Check,
+  ExternalLink,
+  Package,
+  ShieldCheck,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 import { ProviderTypeIconStack } from "@/components/icons/providers-badge/provider-type-icon";
@@ -13,9 +19,17 @@ import {
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
-import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import {
+  getRegistryNotInstallableMessage,
+  REGISTRY_NOT_INSTALLABLE_REASON,
+} from "@/lib/registry/installability";
 import { cn } from "@/lib/utils";
-import { getProviderDisplayName } from "@/types/providers";
+import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
 
 import {
@@ -24,6 +38,8 @@ import {
 } from "./registry-explorer.model";
 
 const MAX_PROVIDER_ICONS = 4;
+// Names are wider than logos, so fewer fit on one line.
+const MAX_PROVIDER_NAMES = 3;
 
 const PROVIDER_LIST_FORMAT = new Intl.ListFormat("en", {
   style: "long",
@@ -194,6 +210,53 @@ function RegistryExtendedProviders({ slugs }: RegistryExtendedProvidersProps) {
   );
 }
 
+interface RegistryProviderNamesProps {
+  providers: string[];
+}
+
+/** Providers without a logo, capped like the logo stack with the rest behind +N. */
+function RegistryProviderNames({ providers }: RegistryProviderNamesProps) {
+  if (providers.length === 0) return null;
+  const visible = providers.slice(0, MAX_PROVIDER_NAMES);
+  const overflow = providers.slice(MAX_PROVIDER_NAMES);
+  const overflowLabel = overflow.map(getProviderDisplayName).join(", ");
+
+  return (
+    <ul
+      aria-label="Providers"
+      className="text-text-neutral-secondary flex flex-wrap items-center gap-x-1 text-xs"
+    >
+      {visible.map((provider, index) => (
+        <li
+          key={provider}
+          className={cn(index < visible.length - 1 && "after:content-[',']")}
+        >
+          {getProviderDisplayName(provider)}
+        </li>
+      ))}
+      {overflow.length > 0 && (
+        <li>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <span
+                aria-label={`${overflow.length} more: ${overflowLabel}`}
+                className="focus-visible:outline-button-primary rounded-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
+                role="img"
+                tabIndex={0}
+              >
+                +{overflow.length}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs" side="top">
+              {overflowLabel}
+            </TooltipContent>
+          </Tooltip>
+        </li>
+      )}
+    </ul>
+  );
+}
+
 interface RegistryArtifactFactsProps {
   version: string;
   /** Set when an update is available; `version` is then the installed one. */
@@ -255,6 +318,8 @@ function RegistryArtifactFacts({
 interface RegistryArtifactCardProps {
   artifact: RegistryMarketplaceArtifact;
   pendingAddName?: string;
+  /** Base for the Registry page where access is requested. */
+  registryUrl?: string;
   onAdd: () => void;
   onRemove: (trigger: HTMLButtonElement | null) => void;
 }
@@ -262,10 +327,22 @@ interface RegistryArtifactCardProps {
 export function RegistryArtifactCard({
   artifact,
   pendingAddName,
+  registryUrl,
   onAdd,
   onRemove,
 }: RegistryArtifactCardProps) {
   const displayName = artifact.name ?? artifact.normalizedName;
+  const logoProviders = artifact.providers.filter(isKnownProviderType);
+  const namedProviders = artifact.providers.filter(
+    (provider) => !isKnownProviderType(provider),
+  );
+  const accessRequestUrl =
+    artifact.notInstallableReason ===
+      REGISTRY_NOT_INSTALLABLE_REASON.ACCESS_REQUIRED &&
+    registryUrl &&
+    artifact.accessRequestPath
+      ? new URL(artifact.accessRequestPath, registryUrl).href
+      : undefined;
   const isPackageId =
     !artifact.name ||
     normalizePackageName(artifact.name) ===
@@ -298,13 +375,15 @@ export function RegistryArtifactCard({
       )}
       <RegistryArtifactChips artifact={artifact} />
       {note}
+      {/* Kept out of the footer so it stays one line and footers line up. */}
+      <RegistryProviderNames providers={namedProviders} />
       <div className="border-border-neutral-tertiary mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
-        {artifact.providers.length > 0 && (
+        {logoProviders.length > 0 && (
           <ProviderTypeIconStack
             focusable
             max={MAX_PROVIDER_ICONS}
             size={16}
-            items={artifact.providers.map((provider) => ({
+            items={logoProviders.map((provider) => ({
               key: provider,
               type: provider,
               tooltip: getProviderDisplayName(provider),
@@ -355,6 +434,18 @@ export function RegistryArtifactCard({
                 Remove
               </Button>
             </>
+          ) : accessRequestUrl ? (
+            <Button asChild size="sm" variant="outline">
+              <a
+                aria-label={`Request access to ${displayName} in the Prowler Registry (opens in a new tab)`}
+                href={accessRequestUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Request access
+                <ExternalLink aria-hidden />
+              </a>
+            </Button>
           ) : artifact.isInstallable ? (
             <Button
               aria-label={`Add ${displayName}`}
