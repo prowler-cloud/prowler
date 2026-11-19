@@ -179,9 +179,11 @@ _UNICODE_ESCAPE_RE = re.compile(r"(?<!\\)(?:\\\\)*\\u")
 _BLOCKED_PATTERNS = [
     re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
     # The driver user can read every tenant database: USE retargets the query at
-    # another one and SHOW lists them. Only a letter or _ may precede the keyword:
-    # Neo4j reads `CYPHER 5USE` as the version followed by USE
-    re.compile(r"(?<![.$])(?<![^\W\d])(?:USE|SHOW)\b", re.IGNORECASE),
+    # another one and SHOW lists them. A property access keeps the name, including
+    # a backticked one, which the unquoting above pads to `n. use `
+    re.compile(r"(?<![.$])(?<!\.\s)\b(?:USE|SHOW)\b", re.IGNORECASE),
+    # Neo4j reads `CYPHER 5USE` as the version followed by USE, with no boundary
+    re.compile(r"(?<![.$])(?<!\.\s)\bCYPHER\b", re.IGNORECASE),
     *(
         re.compile(rf"\bapoc\s*\.\s*{namespace}\b", re.IGNORECASE)
         for namespace in _BLOCKED_APOC_NAMESPACES

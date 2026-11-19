@@ -544,6 +544,8 @@ class TestValidation:
             "SHOW PROCEDURES YIELD name RETURN name",
             "CYPHER 5USE `db-tenant-other` MATCH (n) RETURN n",
             "CYPHER 5SHOW DATABASES YIELD name RETURN name",
+            "CYPHER 25USE `db-tenant-other` MATCH (n) RETURN n",
+            "CYPHER runtime=slotted MATCH (n) RETURN n",
         ],
         ids=[
             "USE_backticked_database",
@@ -556,6 +558,8 @@ class TestValidation:
             "SHOW_PROCEDURES",
             "USE_glued_to_CYPHER_version",
             "SHOW_glued_to_CYPHER_version",
+            "USE_glued_to_two_digit_CYPHER_version",
+            "CYPHER_query_options",
         ],
     )
     def test_rejects_queries_that_leave_the_session_database(self, cypher):
@@ -570,6 +574,8 @@ class TestValidation:
             "MATCH (n:AWSAccount) RETURN n LIMIT 10",
             "MATCH (n) WHERE n.name = 'USE db-tenant-other' RETURN n",
             "MATCH (user:AWSUser) RETURN user",
+            "MATCH (n) RETURN n.`show`, n.`use`",
+            "MATCH (n) RETURN n.stage1use",
             "MATCH (a)-[r]->(b) RETURN a, r, b",
             "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
             "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
@@ -582,6 +588,8 @@ class TestValidation:
             "simple_match",
             "use_inside_string",
             "variable_starting_with_use",
+            "backticked_use_and_show_properties",
+            "identifier_ending_in_digit_and_use",
             "traversal",
             "contains_load_substring",
             "apoc_virtual_node",
