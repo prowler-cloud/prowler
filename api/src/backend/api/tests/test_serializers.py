@@ -288,6 +288,14 @@ class TestGoogleWorkspaceProviderSecret:
         assert not serializer.is_valid()
         assert "credentials_content" in serializer.errors
 
+    def test_rejects_fields_the_provider_would_read_as_arguments(self):
+        serializer = GoogleWorkspaceProviderSecret(
+            data={**self.secret(), "credentials_file": "/dev/zero"}
+        )
+
+        assert not serializer.is_valid()
+        assert "credentials_file" in str(serializer.errors)
+
 
 class TestProviderSecretFieldSchema:
     def test_oraclecloud_schema_region_is_not_deprecated(self):

@@ -2002,6 +2002,16 @@ class GoogleWorkspaceProviderSecret(serializers.Serializer):
             raise ValidationError(error.messages[0], code=error.code) from error
         return credentials_content
 
+    def validate(self, attrs):
+        # The stored secret is passed to the provider as keyword arguments
+        unknown = set(self.initial_data) - set(self.fields)
+        if unknown:
+            raise ValidationError(
+                f"Unexpected fields: {', '.join(sorted(unknown))}.",
+                code="googleworkspace-unexpected-fields",
+            )
+        return attrs
+
     class Meta:
         resource_name = "provider-secrets"
 
