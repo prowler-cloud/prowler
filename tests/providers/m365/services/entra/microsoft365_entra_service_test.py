@@ -2240,3 +2240,76 @@ class TestCrossTenantAccessDefault:
         )
 
         assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
+class TestEnterpriseAppAssignmentSettings:
+    def test_reads_assignment_settings(self):
+        service = Entra.__new__(Entra)
+        service.enterprise_apps_error = None
+        page = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id="sp-1",
+                    app_id="app-1",
+                    display_name="Contoso App",
+                    app_owner_organization_id="Tenant-1",
+                    app_role_assignment_required=False,
+                    account_enabled=False,
+                    service_principal_type="Legacy",
+                ),
+                SimpleNamespace(
+                    id="sp-2",
+                    app_id="app-2",
+                    display_name="Unknown State App",
+                    app_owner_organization_id=None,
+                    app_role_assignment_required=True,
+                    account_enabled=None,
+                    service_principal_type=None,
+                ),
+            ],
+            odata_next_link=None,
+        )
+        service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(get=AsyncMock(return_value=page))
+        )
+
+        apps = asyncio.run(service._get_enterprise_app_assignment_settings())
+
+        assert service.enterprise_apps_error is None
+        assert apps["sp-1"].app_role_assignment_required is False
+        assert apps["sp-1"].app_id == "app-1"
+        assert apps["sp-1"].account_enabled is False
+        assert apps["sp-1"].service_principal_type == "Legacy"
+        assert apps["sp-1"].app_owner_organization_id == "tenant-1"
+        # Missing Graph values stay unknown instead of defaulting to enabled.
+        assert apps["sp-2"].account_enabled is None
+        assert apps["sp-2"].service_principal_type is None
+        assert apps["sp-2"].app_owner_organization_id is None
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "enterprise_apps": ("_get_enterprise_app_assignment_settings", {}),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute
