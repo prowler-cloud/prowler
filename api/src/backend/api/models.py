@@ -2130,6 +2130,17 @@ class SAMLDomainIndex(models.Model):
         ]
 
 
+def saml_entity_id_names_social_provider(entity_id: str) -> bool:
+    """Whether an entityID equals a registered social provider id, ignoring case.
+
+    allauth stores SAML accounts under the entityID as their provider, so such an
+    entityID would match the accounts users linked through that provider.
+    """
+    return entity_id.casefold() in {
+        provider.id.casefold() for provider in social_provider_registry.get_class_list()
+    }
+
+
 class SAMLConfiguration(RowLevelSecurityProtectedModel):
     """
     Stores per-tenant SAML settings, including email domain and IdP metadata.
@@ -2213,13 +2224,7 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         entity_id = idp_settings.get("entity_id")
 
         if entity_id:
-            # allauth stores SAML accounts under the entityID as their provider, so
-            # an entityID naming another provider would match that provider's accounts
-            reserved = {
-                provider.id.casefold()
-                for provider in social_provider_registry.get_class_list()
-            }
-            if entity_id.casefold() in reserved:
+            if saml_entity_id_names_social_provider(entity_id):
                 raise ValidationError(
                     {"metadata_xml": "There is a problem with your metadata."}
                 )
