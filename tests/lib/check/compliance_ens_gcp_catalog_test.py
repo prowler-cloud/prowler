@@ -45,6 +45,6 @@ CCN_STIC_888B_REQUIREMENT_IDS = (
 )
 
 
-def test_covers_every_requirement_of_ccn_stic_888b():
+def test_covers_the_summary_table_of_ccn_stic_888b():
     catalog_ids = {requirement["Id"] for requirement in REQUIREMENTS}
     assert sorted(set(CCN_STIC_888B_REQUIREMENT_IDS) - catalog_ids) == []
