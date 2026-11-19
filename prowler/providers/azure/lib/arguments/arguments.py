@@ -1,5 +1,7 @@
 from argparse import ArgumentTypeError, Namespace
 
+from prowler.providers.azure.lib.regions.regions import AZURE_CUSTOM_CLOUD
+
 
 def init_parser(self):
     """Init the Azure Provider CLI parser"""
@@ -87,7 +89,7 @@ def validate_azure_region(region):
         "AzureChinaCloud",
         "AzureUSGovernment",
         "AzureCloud",
-        "AzureCustom",
+        AZURE_CUSTOM_CLOUD,
     ]
     if region not in regions_allowed:
         raise ArgumentTypeError(
@@ -103,7 +105,7 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
         "--azure-resource-manager-endpoint": arguments.azure_resource_manager_endpoint,
         "--azure-graph-endpoint": arguments.azure_graph_endpoint,
     }
-    if arguments.azure_region == "AzureCustom":
+    if arguments.azure_region == AZURE_CUSTOM_CLOUD:
         missing = [flag for flag, value in endpoints.items() if not value]
         if missing:
             return (
