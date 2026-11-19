@@ -534,11 +534,12 @@ class AzureProvider(Provider):
         """
         # MSAL validates an authority it does not know against the public cloud,
         # which a custom cloud may not reach
-        custom_cloud_kwargs = (
-            {"disable_instance_discovery": True}
-            if region_config.name == AZURE_CUSTOM_CLOUD
-            else {}
-        )
+        custom_cloud_kwargs = {}
+        authority = region_config.authority
+        if region_config.name == AZURE_CUSTOM_CLOUD:
+            custom_cloud_kwargs = {"disable_instance_discovery": True}
+            # azure-identity only accepts a host with a port as an https:// URL
+            authority = f"https://{authority}"
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -556,7 +557,7 @@ class AzureProvider(Provider):
                             tenant_id=azure_credentials["tenant_id"],
                             client_id=azure_credentials["client_id"],
                             client_secret=azure_credentials["client_secret"],
-                            authority=region_config.authority,
+                            authority=authority,
                             **custom_cloud_kwargs,
                         )
                         return credentials
@@ -596,7 +597,7 @@ class AzureProvider(Provider):
                             # Azure Auth using PowerShell is not supported
                             exclude_powershell_credential=True,
                             # set Authority of a Microsoft Entra endpoint
-                            authority=region_config.authority,
+                            authority=authority,
                             **custom_cloud_kwargs,
                         )
                     except ClientAuthenticationError as error:
@@ -633,7 +634,7 @@ class AzureProvider(Provider):
             try:
                 credentials = InteractiveBrowserCredential(
                     tenant_id=tenant_id,
-                    authority=region_config.authority,
+                    authority=authority,
                     **custom_cloud_kwargs,
                 )
             except Exception as error:

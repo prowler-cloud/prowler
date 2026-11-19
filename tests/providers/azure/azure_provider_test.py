@@ -1217,9 +1217,15 @@ class TestAzureProviderCustomCloud:
             assert kwargs["credential_scopes"] == self.REGION_CONFIG.credential_scopes
 
     @pytest.mark.parametrize("sp_env_auth", [False, True])
+    @pytest.mark.parametrize(
+        "authority_host", ["login.example.com", "login.example.com:8443"]
+    )
     def test_setup_session_custom_skips_public_instance_discovery(
-        self, sp_env_auth, monkeypatch
+        self, authority_host, sp_env_auth, monkeypatch
     ):
+        region_config = AzureProvider.setup_region_config(
+            "AzureCustom", {**self.REGION_ENDPOINTS, "authority_host": authority_host}
+        )
         tenant_id = str(uuid4())
         azure_credentials = {
             "tenant_id": tenant_id,
@@ -1248,12 +1254,12 @@ class TestAzureProviderCustomCloud:
                 False,
                 tenant_id,
                 None if sp_env_auth else azure_credentials,
-                self.REGION_CONFIG,
+                region_config,
             )
             with pytest.raises(ClientAuthenticationError):
-                credentials.get_token(*self.REGION_CONFIG.credential_scopes)
+                credentials.get_token(*region_config.credential_scopes)
 
-        assert requested_urls[0].startswith(f"https://login.example.com/{tenant_id}/")
+        assert requested_urls[0].startswith(f"https://{authority_host}/{tenant_id}/")
 
     def test_setup_session_custom_browser_auth_disables_instance_discovery(self):
         tenant_id = str(uuid4())
