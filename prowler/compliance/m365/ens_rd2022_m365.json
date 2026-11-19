@@ -73,6 +73,29 @@
       "Checks": []
     },
     {
+      "Id": "op.acc.2.m365.teams.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se han comprobado los niveles de permisos de los equipos y canales de Microsoft Teams: propietarios y miembros.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.acc.2.m365.exchange.1",
       "Description": "Requisitos de acceso",
       "Attributes": [
@@ -173,6 +196,52 @@
           "Marco": "operacional",
           "Categoria": "control de acceso",
           "DescripcionControl": "Se han creado niveles de permisos específicos para la organización en los sitios de SharePoint Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.3.m365.teams.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Cuando la organización delega la administración del servicio, los roles de administración de Microsoft Teams están asignados adecuadamente.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.4.m365.teams.1",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se han revisado los permisos específicos de cada uno de los usuarios de los equipos creados en Microsoft Teams.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -796,6 +865,250 @@
       "Checks": []
     },
     {
+      "Id": "op.exp.2.m365.teams.1",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El acceso externo de Microsoft Teams está restringido mediante una lista de dominios externos autorizados o bloqueados, que se mantiene actualizada.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.2",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Los usuarios de Microsoft Teams no pueden comunicarse con cuentas de Teams no administradas por una organización.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "teams_unmanaged_communication_disabled"
+      ]
+    },
+    {
+      "Id": "op.exp.2.m365.teams.3",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "El acceso de invitados de Microsoft Teams está desactivado, salvo que sea necesario para la organización.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.4",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "En Microsoft Teams solo están habilitados los servicios de almacenamiento en la nube de terceros aprobados y controlados por la organización.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "teams_external_file_sharing_restricted"
+      ]
+    },
+    {
+      "Id": "op.exp.2.m365.teams.5",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Los canales compartidos de Microsoft Teams están deshabilitados.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.6",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han revisado las directivas de equipos y canales de Microsoft Teams, que controlan el descubrimiento de equipos privados, la creación de canales privados y compartidos y la participación de usuarios externos en canales compartidos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.7",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han revisado las directivas de mensajería de Microsoft Teams.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.8",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han revisado las directivas de permisos y de configuración de aplicaciones de Microsoft Teams: solo están habilitadas las aplicaciones probadas y autorizadas por la organización y no se permite la carga de aplicaciones personalizadas.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.9",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han revisado las directivas de reunión de Microsoft Teams.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.2.m365.teams.10",
+      "Description": "Configuración de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se han revisado las directivas de dispositivos de Microsoft Teams.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.exp.2.m365.exchange.2",
       "Description": "Configuración de seguridad",
       "Attributes": [
@@ -1335,6 +1648,26 @@
           "Marco": "medidas de protección",
           "Categoria": "protección de la información",
           "DescripcionControl": "Se ha comunicado a los usuarios cómo gestionar el control de versiones de los documentos y la papelera de reciclaje de SharePoint Online.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.m365.teams.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se ha comprobado el archivado o la eliminación de los equipos de Microsoft Teams que ya no se utilizan.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
