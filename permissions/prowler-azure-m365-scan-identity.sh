@@ -43,6 +43,7 @@ SKIP_CUSTOM_ROLE=0
 CLIENT_SECRET=0
 USE_EXISTING_APP=0
 CERTIFICATE=""
+CERTIFICATE_END_DATE=""
 APP_NAME="Prowler Scan"
 SUBSCRIPTIONS=()
 MANAGEMENT_GROUP=""
@@ -65,9 +66,10 @@ usage() {
 Usage: prowler-azure-m365-scan-identity.sh [--azure] [--m365] [options] [--apply]
 
 Creates the app registration Prowler scans with, in the tenant and cloud your
-Azure CLI is signed in to. The identity cannot change any resource. With
-ProwlerRole (Azure) it can also read Function App keys and App Service app
-settings, which may contain secrets; use --skip-custom-role to leave that out.
+Azure CLI is signed in to. Every role and permission it gets is read-only.
+With ProwlerRole (Azure) it can also read Function App keys and App Service
+app settings: these may contain secrets that allow changes to those apps. Use
+--skip-custom-role to leave that out.
 Without --apply nothing is changed: the commands are only printed (dry run).
 
 What to set up (at least one, both allowed):
@@ -175,6 +177,12 @@ if [ -n "$CERTIFICATE" ]; then
   [ -r "$CERTIFICATE" ] || die "Cannot read the certificate file: $CERTIFICATE"
   grep -q -e "BEGIN CERTIFICATE" "$CERTIFICATE" || die "$CERTIFICATE is not a PEM certificate."
   ! grep -q -e "PRIVATE KEY" "$CERTIFICATE" || die "$CERTIFICATE contains a private key. Pass the public certificate only."
+  command -v openssl >/dev/null 2>&1 || die "--certificate needs openssl, to read the certificate's expiry date."
+  # Without --end-date the Azure CLI caps the credential at one year, whatever the certificate says.
+  cert_end=$(openssl x509 -in "$CERTIFICATE" -noout -enddate | cut -d= -f2) && [ -n "$cert_end" ] ||
+    die "Could not read the expiry date of $CERTIFICATE. Is it a PEM certificate?"
+  # BSD date (macOS) first, GNU date (Linux, Cloud Shell) second.
+  CERTIFICATE_END_DATE=$(date -u -j -f "%b %e %T %Y %Z" "$cert_end" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "$cert_end" +%Y-%m-%dT%H:%M:%SZ)
 fi
 
 SCOPES=()
@@ -245,7 +253,9 @@ found=$(az ad app list --filter "displayName eq '$APP_NAME'" --query "[].appId" 
 case "$(printf '%s' "$found" | grep -c . || true)" in
   0)
     say "  [create] App registration, single tenant, no redirect URI, no permissions yet."
-    run az ad app create --display-name "$APP_NAME" --sign-in-audience AzureADMyOrg --query appId -o tsv
+    # A plain Graph POST always creates; "az ad app create" would update an app that took the name meanwhile.
+    run az rest --method post --url "$GRAPH_URL/v1.0/applications" \
+      --body "{\"displayName\":\"$APP_NAME\",\"signInAudience\":\"AzureADMyOrg\"}" --query appId -o tsv
     [ -z "$OUT" ] || APP_ID="$OUT"
     APP_IS_NEW=1
     ;;
@@ -396,16 +406,17 @@ if [ "$DO_AZURE" -eq 1 ]; then
     expected=$(printf '%s\n' "${CUSTOM_ROLE_ACTIONS[@]}" | normalize)
     missing=""
     for scope in "${SCOPES[@]}"; do
-      # Line 1: the role's ID. Line 2: every action and data action it grants.
+      # Line 1: the role's ID. Line 2: every action it grants. Line 3: every action it excludes.
       role=$(az role definition list --name "$CUSTOM_ROLE" --custom-role-only true --scope "$scope" \
-        --query "[0].[name, join(' ', permissions[].[actions, dataActions][][])]" -o tsv)
+        --query "[0].[name, join(' ', permissions[].[actions, dataActions][][]), join(' ', permissions[].[notActions, notDataActions][][])]" -o tsv)
       if [ -z "$role" ]; then
         missing="$missing $scope"
         continue
       fi
       custom_role_id=$(printf '%s\n' "$role" | sed -n 1p)
       # Never assign a role called ProwlerRole that grants something else.
-      [ "$(printf '%s\n' "$role" | sed -n 2p | normalize)" = "$expected" ] ||
+      [ "$(printf '%s\n' "$role" | sed -n 2p | normalize)" = "$expected" ] &&
+        [ -z "$(printf '%s\n' "$role" | sed -n 3p | tr -d '[:space:]')" ] ||
         die "A custom role named $CUSTOM_ROLE exists on $scope but its permissions are not the ones in permissions/prowler-azure-custom-role.json. Review it before continuing."
       say "  [exists] Custom role $CUSTOM_ROLE, assignable on $scope"
     done
@@ -415,7 +426,7 @@ if [ "$DO_AZURE" -eq 1 ]; then
     if [ -z "$custom_role_id" ]; then
       scopes_json=$(printf '"%s",' "${SCOPES[@]}")
       actions_json=$(printf '"%s",' "${CUSTOM_ROLE_ACTIONS[@]}")
-      say "  [create] Custom role $CUSTOM_ROLE: reads Function App host keys and App Service app settings and connection strings (may contain secrets). It cannot modify resources."
+      say "  [create] Custom role $CUSTOM_ROLE: reads Function App host keys and App Service app settings and connection strings (may contain secrets that allow changes to those apps)."
       NEEDS="Creating a custom role needs Owner or User Access Administrator on the scope. It also fails when a role named $CUSTOM_ROLE already exists elsewhere in the tenant: add this scope to that role's assignable scopes instead."
       run az role definition create --query name -o tsv --role-definition \
         "{\"Name\":\"$CUSTOM_ROLE\",\"IsCustom\":true,\"Description\":\"$CUSTOM_ROLE_DESCRIPTION\",\"AssignableScopes\":[${scopes_json%,}],\"Actions\":[${actions_json%,}]}"
@@ -427,7 +438,10 @@ if [ "$DO_AZURE" -eq 1 ]; then
 
   for scope in "${SCOPES[@]}"; do
     assign_role "$BUILTIN_ROLE" "$BUILTIN_ROLE" "$scope"
-    [ "$SKIP_CUSTOM_ROLE" -eq 1 ] || assign_role "$CUSTOM_ROLE" "$custom_role_id" "$scope"
+    # A bare role ID is resolved against the default subscription, so qualify it with the scope.
+    role_ref="$scope/providers/Microsoft.Authorization/roleDefinitions/$custom_role_id"
+    [ "$custom_role_id" != "$CUSTOM_ROLE" ] || role_ref="$CUSTOM_ROLE"
+    [ "$SKIP_CUSTOM_ROLE" -eq 1 ] || assign_role "$CUSTOM_ROLE" "$role_ref" "$scope"
   done
 fi
 
@@ -449,12 +463,8 @@ if [ -n "$CERTIFICATE" ] || [ "$CLIENT_SECRET" -eq 1 ]; then
     say "           A client secret cannot be shown again. To replace the credential,"
     say "           delete it (az ad app credential delete) and run the script again."
   elif [ -n "$CERTIFICATE" ]; then
-    # Without --end-date the Azure CLI caps the credential at one year, whatever the certificate says.
-    cert_end=$(openssl x509 -in "$CERTIFICATE" -noout -enddate | cut -d= -f2) ||
-      die "Could not read the expiry date of $CERTIFICATE. Is it a PEM certificate?"
-    end_date=$(date -u -j -f "%b %e %T %Y %Z" "$cert_end" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "$cert_end" +%Y-%m-%dT%H:%M:%SZ)
-    say "  [add]    Public certificate $CERTIFICATE, valid until $end_date (existing credentials are kept)."
-    run az ad app credential reset --id "$APP_ID" --append --display-name "$CREDENTIAL_NAME" --cert "@$CERTIFICATE" --end-date "$end_date" -o none
+    say "  [add]    Public certificate $CERTIFICATE, valid until $CERTIFICATE_END_DATE (existing credentials are kept)."
+    run az ad app credential reset --id "$APP_ID" --append --display-name "$CREDENTIAL_NAME" --cert "@$CERTIFICATE" --end-date "$CERTIFICATE_END_DATE" -o none
   else
     # BSD date (macOS) first, GNU date (Linux, Cloud Shell) second.
     end_date=$(date -u -v+"$SECRET_DAYS"d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "+$SECRET_DAYS days" +%Y-%m-%dT%H:%M:%SZ)

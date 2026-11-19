@@ -94,7 +94,7 @@ The script is a single Bash file that only calls the Azure CLI. It uses the clou
 - The `Exchange.ManageAsApp` permission from `Office 365 Exchange Online` and the `Global Reader` directory role, both required by the PowerShell checks. Use `--graph-only` to leave both out; only checks that work through Microsoft Graph will run.
 - Optionally, a credential: the public certificate passed with `--certificate` (recommended), or a client secret with `--client-secret`. The client secret is printed once on the terminal and stored nowhere else, and expires after 180 days.
 
-The identity cannot change any setting. To leave a permission out, delete it from the list at the top of the script.
+Every role and permission the identity gets is read-only. To leave a permission out, delete it from the list at the top of the script.
 
 <Warning>
 `Exchange.ManageAsApp` is not itself a read permission: it only lets the application sign in to Exchange Online. What the application can do there is bounded by its directory role, `Global Reader`. `Global Reader` is a privileged role that reads every setting in Microsoft Entra ID and Microsoft 365 and cannot change anything.
@@ -137,6 +137,8 @@ The person running the script needs the Privileged Role Administrator or Global 
 The script is safe to run again: anything that already exists is reported as `[exists]` and left unchanged. When an application registration with the same name already exists, the script shows how many owners and credentials it has and stops; to continue, for example on a second run, add `--use-existing-app`. If a permission does not exist in the signed-in cloud, or the tenant has no Exchange Online, the script skips it and repeats the warning at the end of the output. To use one identity for Microsoft 365 and Azure, pass `--m365` and `--azure` together.
 
 #### Removing What the Script Created
+
+Delete the application registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an application that other workloads use, remove only the permissions, the `Global Reader` assignment and the `prowler-scan` credential, and leave the application in place.
 
 To remove the application registration, its service principal, its credentials, its permissions and its `Global Reader` assignment:
 

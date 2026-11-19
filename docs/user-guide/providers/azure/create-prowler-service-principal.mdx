@@ -77,10 +77,10 @@ The script is a single Bash file that only calls the Azure CLI. It uses the clou
 - The `Reader` and `ProwlerRole` role assignments on each subscription, or on one management group, passed as a flag.
 - Optionally, a client secret (`--client-secret`), printed once on the terminal and stored nowhere else. It expires after 180 days.
 
-The identity cannot change any resource. To leave a permission out, delete it from the list at the top of the script.
+Every role and permission the identity gets is read-only. To leave a permission out, delete it from the list at the top of the script.
 
 <Warning>
-`ProwlerRole` lets the identity read values that may contain secrets. `Microsoft.Web/sites/host/listkeys/action` returns the host and master keys of Function Apps. `Microsoft.Web/sites/config/list/Action` returns the app settings and connection strings, in clear text, of every App Service app in the scope. Neither action can modify a resource. Use `--skip-custom-role` to leave the role out; the [checks requiring `ProwlerRole`](/user-guide/providers/azure/authentication#checks-requiring-prowlerrole) will not run.
+`ProwlerRole` lets the identity read values that may contain secrets. `Microsoft.Web/sites/host/listkeys/action` returns the host and master keys of Function Apps. `Microsoft.Web/sites/config/list/Action` returns the app settings and connection strings, in clear text, of every App Service app in the scope. Neither action modifies a resource, but a Function App master key or a connection string read this way can be used to change that app or its data. Use `--skip-custom-role` to leave the role out; the [checks requiring `ProwlerRole`](/user-guide/providers/azure/authentication#checks-requiring-prowlerrole) will not run.
 </Warning>
 
 ### Required Roles
@@ -125,6 +125,8 @@ The person running the script needs:
 The script is safe to run again: anything that already exists is reported as `[exists]` and left unchanged. When an app registration with the same name already exists, the script shows how many owners and credentials it has and stops; to continue, for example on a second run, add `--use-existing-app`. To use one identity for Azure and Microsoft 365, pass `--azure` and `--m365` together.
 
 ### Removing What the Script Created
+
+Delete the app registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an app that other workloads use, remove only the role assignments and the `prowler-scan` credential, and leave the app in place.
 
 1. To remove the role assignments, run the following command for each subscription or management group:
 
