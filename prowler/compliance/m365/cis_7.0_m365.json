@@ -2349,7 +2349,9 @@
     {
       "Id": "5.3.1",
       "Description": "Microsoft Entra Privileged Identity Management (PIM) provides just-in-time (JIT) activation workflows for privileged Entra ID and Microsoft 365 roles, enabling time- bound access with approval and justification requirements. Rather than holding permanent role assignments, users are made eligible for a role and must explicitly activate it when needed. PIM supports requiring multi-factor authentication at activation, mandatory justification, approval workflows, and configurable activation durations.",
-      "Checks": [],
+      "Checks": [
+        "entra_pim_tier0_roles_no_permanent_active_assignments"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
