@@ -1,0 +1,1 @@
+Inspector2 service no longer lists every active finding of the account; Amazon Inspector now filters and sorts them server-side, so scans of accounts with a large volume of findings no longer stall on it
