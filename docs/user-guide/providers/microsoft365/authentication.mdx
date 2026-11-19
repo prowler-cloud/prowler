@@ -100,7 +100,7 @@ The identity cannot change any setting. To leave a permission out, delete it fro
 `Exchange.ManageAsApp` is not itself a read permission: it only lets the application sign in to Exchange Online. What the application can do there is bounded by its directory role, `Global Reader`. `Global Reader` is a privileged role that reads every setting in Microsoft Entra ID and Microsoft 365 and cannot change anything.
 </Warning>
 
-The person running the script needs the Privileged Role Administrator or Global Administrator role in Microsoft Entra ID.
+The person running the script needs the Privileged Role Administrator or Global Administrator role in Microsoft Entra ID. If users cannot register applications in the tenant, they also need Application Developer or Cloud Application Administrator.
 
 #### Running the Script
 

@@ -49,6 +49,7 @@ MANAGEMENT_GROUP=""
 
 # State
 APP_ID="<appId>"
+APP_IS_NEW=0
 SP_ID="<servicePrincipalObjectId>"
 SP_IS_NEW=1
 ROLE_IS_NEW=0
@@ -103,6 +104,8 @@ Identity:
 Roles the person running it needs:
   Microsoft Entra ID       Privileged Role Administrator (or Global Administrator),
                            to grant application permissions and assign Global Reader.
+                           Also Application Developer (or Cloud Application
+                           Administrator) if users cannot register applications.
   Azure (--azure)          Owner or User Access Administrator on each scope.
 EOF
 }
@@ -244,6 +247,7 @@ case "$(printf '%s' "$found" | grep -c . || true)" in
     say "  [create] App registration, single tenant, no redirect URI, no permissions yet."
     run az ad app create --display-name "$APP_NAME" --sign-in-audience AzureADMyOrg --query appId -o tsv
     [ -z "$OUT" ] || APP_ID="$OUT"
+    APP_IS_NEW=1
     ;;
   1)
     # An existing app: whoever owns it or holds one of its credentials gains what is granted below.
@@ -289,7 +293,8 @@ grant_app_roles() {
     return 0
   fi
   roles=$(az ad sp show --id "$api_sp" --query "appRoles[?contains(allowedMemberTypes,'Application')].[value,id]" -o tsv)
-  if [ "$APP_ID" != "<appId>" ]; then
+  # A new app may not be readable yet (Entra replication) and declares nothing anyway.
+  if [ "$APP_ID" != "<appId>" ] && [ "$APP_IS_NEW" -eq 0 ]; then
     declared=$(az ad app show --id "$APP_ID" --query "requiredResourceAccess[?resourceAppId=='$api'].resourceAccess[].id" -o tsv)
   fi
 
@@ -432,7 +437,7 @@ if [ -n "$CERTIFICATE" ] || [ "$CLIENT_SECRET" -eq 1 ]; then
   say "== Credential"
   NEEDS="Adding a credential needs ownership of the app registration or the Cloud Application Administrator role."
   expires=""
-  if [ "$APP_ID" != "<appId>" ]; then
+  if [ "$APP_ID" != "<appId>" ] && [ "$APP_IS_NEW" -eq 0 ]; then
     expires=$(az ad app show --id "$APP_ID" --query "[passwordCredentials, keyCredentials][] | [?displayName=='$CREDENTIAL_NAME'].endDateTime | [0]" -o tsv)
   fi
   if [ -n "$expires" ]; then
@@ -444,8 +449,12 @@ if [ -n "$CERTIFICATE" ] || [ "$CLIENT_SECRET" -eq 1 ]; then
     say "           A client secret cannot be shown again. To replace the credential,"
     say "           delete it (az ad app credential delete) and run the script again."
   elif [ -n "$CERTIFICATE" ]; then
-    say "  [add]    Public certificate $CERTIFICATE (existing credentials are kept)."
-    run az ad app credential reset --id "$APP_ID" --append --display-name "$CREDENTIAL_NAME" --cert "@$CERTIFICATE" -o none
+    # Without --end-date the Azure CLI caps the credential at one year, whatever the certificate says.
+    cert_end=$(openssl x509 -in "$CERTIFICATE" -noout -enddate | cut -d= -f2) ||
+      die "Could not read the expiry date of $CERTIFICATE. Is it a PEM certificate?"
+    end_date=$(date -u -j -f "%b %e %T %Y %Z" "$cert_end" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "$cert_end" +%Y-%m-%dT%H:%M:%SZ)
+    say "  [add]    Public certificate $CERTIFICATE, valid until $end_date (existing credentials are kept)."
+    run az ad app credential reset --id "$APP_ID" --append --display-name "$CREDENTIAL_NAME" --cert "@$CERTIFICATE" --end-date "$end_date" -o none
   else
     # BSD date (macOS) first, GNU date (Linux, Cloud Shell) second.
     end_date=$(date -u -v+"$SECRET_DAYS"d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "+$SECRET_DAYS days" +%Y-%m-%dT%H:%M:%SZ)
