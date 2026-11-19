@@ -438,9 +438,15 @@ if [ "$DO_AZURE" -eq 1 ]; then
 
   for scope in "${SCOPES[@]}"; do
     assign_role "$BUILTIN_ROLE" "$BUILTIN_ROLE" "$scope"
-    # A bare role ID is resolved against the default subscription, so qualify it with the scope.
-    role_ref="$scope/providers/Microsoft.Authorization/roleDefinitions/$custom_role_id"
-    [ "$custom_role_id" != "$CUSTOM_ROLE" ] || role_ref="$CUSTOM_ROLE"
+    # The Azure CLI resolves a bare role ID against the default subscription: qualify it for a
+    # subscription scope, and pass the name for a management group, which it resolves at that scope.
+    role_ref="$CUSTOM_ROLE"
+    case "$scope" in
+      /subscriptions/*)
+        [ "$custom_role_id" = "$CUSTOM_ROLE" ] ||
+          role_ref="$scope/providers/Microsoft.Authorization/roleDefinitions/$custom_role_id"
+        ;;
+    esac
     [ "$SKIP_CUSTOM_ROLE" -eq 1 ] || assign_role "$CUSTOM_ROLE" "$role_ref" "$scope"
   done
 fi

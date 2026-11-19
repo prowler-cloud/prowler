@@ -138,7 +138,7 @@ The script is safe to run again: anything that already exists is reported as `[e
 
 #### Removing What the Script Created
 
-Delete the application registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an application that other workloads use, remove only the permissions, the `Global Reader` assignment and the `prowler-scan` credential, and leave the application in place.
+Delete the application registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an application that other workloads use, remove only what the script added and leave the application in place: the Microsoft Graph and Exchange application permissions (and their admin consent), the `Global Reader` assignment and the `prowler-scan` credential.
 
 To remove the application registration, its service principal, its credentials, its permissions and its `Global Reader` assignment:
 
