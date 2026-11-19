@@ -84,6 +84,37 @@ export const lighthouseFindingContextItemSchema =
     severityCounts: lighthouseFindingSeverityCountsSchema.optional(),
   });
 
+// One attack path: its findings go by id so the agent can read each of them.
+export const lighthouseIssueContextItemSchema =
+  lighthouseContextItemBaseSchema.extend({
+    kind: z.literal(LIGHTHOUSE_CONTEXT_KIND.ISSUE),
+    issueId: boundedStringSchema,
+    title: boundedStringSchema.optional(),
+    pattern: boundedStringSchema.optional(),
+    verdict: boundedStringSchema.optional(),
+    severity: boundedStringSchema.optional(),
+    attackerStart: boundedStringSchema.optional(),
+    outcome: boundedStringSchema.optional(),
+    suggestedFix: boundedStringSchema.optional(),
+    providerUid: boundedStringSchema.optional(),
+    scanId: boundedStringSchema.optional(),
+    findingsCount: boundedCountSchema.optional(),
+    legs: z
+      .record(boundedStringSchema, boundedStringSchema)
+      .refine(
+        (legs) =>
+          Object.keys(legs).length <= LIGHTHOUSE_CONTEXT_LIMIT.ISSUE_LEGS,
+        {
+          error: `Issue legs may contain at most ${LIGHTHOUSE_CONTEXT_LIMIT.ISSUE_LEGS} entries.`,
+        },
+      )
+      .optional(),
+    findingIds: z
+      .array(boundedStringSchema)
+      .max(LIGHTHOUSE_CONTEXT_LIMIT.ISSUE_FINDING_IDS)
+      .optional(),
+  });
+
 export const lighthouseResourceContextItemSchema =
   lighthouseContextItemBaseSchema.extend({
     kind: z.literal(LIGHTHOUSE_CONTEXT_KIND.RESOURCE),
@@ -188,6 +219,7 @@ export const lighthouseAlertContextItemSchema =
 export const lighthouseContextItemSchema = z.discriminatedUnion("kind", [
   lighthousePageContextItemSchema,
   lighthouseFindingContextItemSchema,
+  lighthouseIssueContextItemSchema,
   lighthouseResourceContextItemSchema,
   lighthouseComplianceContextItemSchema,
   lighthouseAttackPathContextItemSchema,

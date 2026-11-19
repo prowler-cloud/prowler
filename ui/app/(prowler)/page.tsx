@@ -121,7 +121,8 @@ export default async function Home({
         </div>
       </div>
 
-      <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {/* One row shared evenly by however many filters render, from tablet up. */}
+      <div className="mb-6 flex flex-col gap-6 md:flex-row md:*:min-w-0 md:*:flex-1">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>

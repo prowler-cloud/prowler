@@ -1,4 +1,4 @@
-import { Tag } from "lucide-react";
+import { Info, Tag } from "lucide-react";
 import { Suspense } from "react";
 
 import {
@@ -11,6 +11,8 @@ import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { AutoRefresh } from "@/components/scans/auto-refresh";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
@@ -23,7 +25,12 @@ import {
   FINDINGS_PREVIEW_ROW_LIMIT,
   isFindingsPreviewLocked,
 } from "@/lib/findings-access";
-import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import {
+  getEarlyFindingScanFilters,
+  getScanFilterIds,
+  isScanSettled,
+  resolveFindingScanDateFilters,
+} from "@/lib/findings-scan-filters";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
@@ -31,15 +38,17 @@ import { SearchParamsProps } from "@/types/components";
 import { FindingsFiltersSection } from "./_components/findings-filters-section";
 import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton";
 import { FindingsSamplePreview } from "./_components/findings-sample-preview";
+import { shouldShowFindingsSample } from "./_lib/should-show-findings-sample";
 
 export default async function Findings({
   searchParams,
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
-  // Sample data replaces the page (and its paywall) until the first scan completes.
+  // Sample data replaces the page (and its paywall) until the running first
+  // scan has stored findings, then the early findings view takes over.
   const preview = await getSamplePreviewState();
-  if (preview.active) {
+  if (preview.active && (await shouldShowFindingsSample(preview))) {
     return (
       <ContentLayout title="Findings" icon={<Tag />}>
         <FindingsSamplePreview
@@ -55,24 +64,51 @@ export default async function Findings({
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // The page shell awaits only what both the filters and the table depend on:
-  // the completed scans (scan filter) and the scan date range.
-  const [scansData, filtersWithScanDates] = await Promise.all([
+  // the completed scans (scan filter), the running ones (early findings) and
+  // the scan date range.
+  const [scansData, executingScansData] = await Promise.all([
     getScans({
       pageSize: 50,
       filters: { "filter[state]": "completed" },
       fields: {
-        scans: "name,state,unique_resource_count,completed_at,provider",
+        scans:
+          "name,state,unique_resource_count,started_at,completed_at,provider",
       },
     }),
-    resolveFindingScanDateFilters({
-      filters,
-      scans: [],
-      loadScan: async (scanId: string) => {
-        const response = await getScan(scanId);
-        return response?.data;
-      },
-    }),
+    // The scans action throws on 5xx: without running scans the page falls
+    // back to the latest view instead of failing.
+    getScans({
+      pageSize: 50,
+      filters: { "filter[state]": "executing" },
+      fields: { scans: "progress,started_at,completed_at" },
+    }).catch(() => undefined),
   ]);
+  const executingScans: ScanProps[] = executingScansData?.data ?? [];
+  const now = Date.now();
+  const allCompletedScans: ScanProps[] = scansData?.data ?? [];
+  const justCompletedScans = allCompletedScans.filter(
+    (scan) => !isScanSettled(scan.attributes.completed_at, now),
+  );
+  const earlyScans = [...executingScans, ...justCompletedScans];
+  const earlyFilters = getEarlyFindingScanFilters(
+    filters,
+    justCompletedScans.length < allCompletedScans.length,
+    earlyScans.map((scan) => scan.id),
+  );
+  const isEarlyView = earlyFilters !== filters;
+  // A scan picked by the user (e.g. "View Early Findings") may still be running too.
+  const pickedScanIds = getScanFilterIds(filters);
+  const runningScans = isEarlyView
+    ? executingScans
+    : executingScans.filter((scan) => pickedScanIds.includes(scan.id));
+  const filtersWithScanDates = await resolveFindingScanDateFilters({
+    filters: earlyFilters,
+    scans: earlyScans,
+    loadScan: async (scanId: string) => {
+      const response = await getScan(scanId);
+      return response?.data;
+    },
+  });
   const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
 
@@ -86,6 +122,21 @@ export default async function Findings({
   return (
     <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
+        {(isEarlyView || runningScans.length > 0) && (
+          <>
+            <AutoRefresh hasExecutingScan />
+            <Alert variant="info" className="mb-6">
+              <Info className="size-4" />
+              <AlertDescription>
+                {runningScans.length > 0
+                  ? `${isEarlyView ? "Your first scan" : "This scan"} is running (${Math.min(
+                      ...runningScans.map((scan) => scan.attributes.progress),
+                    )}% done). These are the findings found so far, and the page updates on its own as more come in.`
+                  : "Your first scan just finished. The full view, with every filter, is getting ready and loads on its own in a moment."}
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
         <div className="mb-6">
           <Suspense fallback={<FindingsFiltersSkeleton />}>
             <FindingsFiltersSection

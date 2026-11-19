@@ -12,6 +12,10 @@ import {
 import { realtimeCostAnomalySchema } from "@/app/(prowler)/realtime/_lib/policy-schema";
 import { costSummary } from "@/app/(prowler)/realtime/_lib/setup";
 import {
+  COST_CLOUDFORMATION,
+  COST_TERRAFORM,
+} from "@/app/(prowler)/realtime/_lib/templates";
+import {
   REALTIME_COST_DELTA_RANGE,
   REALTIME_COST_RATIO_RANGE,
   type RealtimePolicy,
@@ -29,6 +33,7 @@ import { toast } from "@/components/shadcn/toast";
 
 import { ConfigSectionCard, SectionFooter } from "./config-section-card";
 import { reportSaveFailure, type SectionBaseProps } from "./section-props";
+import { TemplateGuide } from "./template-guide";
 
 const COST_FIELDS = [
   "cost_anomaly_enabled",
@@ -122,12 +127,22 @@ function CostForm({
           )}
         />
         {enabled && (
-          <Alert variant="warning">
-            <AlertDescription>
-              AWS bills each Cost Explorer request. Prowler reads it about every
-              6 hours.
-            </AlertDescription>
-          </Alert>
+          <>
+            <Alert variant="warning">
+              <AlertDescription>
+                AWS bills each Cost Explorer request. Prowler reads it about
+                every 6 hours.
+              </AlertDescription>
+            </Alert>
+            <TemplateGuide
+              cloudformation={COST_CLOUDFORMATION}
+              terraform={COST_TERRAFORM}
+              steps={[
+                "Deploy the template once in this AWS account. It lets the ProwlerScan role read Cost Explorer (ce:GetCostAndUsage) and nothing else. If your scan role has another name, set ProwlerScanRoleName (prowler_scan_role_name in Terraform) to it.",
+                "Save below. Costs show up after Prowler's next Cost Explorer read.",
+              ]}
+            />
+          </>
         )}
         <div className="grid gap-4 md:grid-cols-2">
           <Controller

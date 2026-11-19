@@ -1,5 +1,7 @@
 import { type ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+
 interface OverviewGridProps {
   threatScore: ReactNode;
   // Cloud-only widgets: the page leaves them out where they do not apply.
@@ -31,11 +33,31 @@ export function OverviewGrid({
 }: OverviewGridProps) {
   return (
     <>
-      <div className="flex flex-col gap-6 lg:flex-row lg:flex-wrap lg:items-stretch">
+      {/* The grid owns every card width, so no row ever leaves a hole: two
+          even columns on tablets, then every card in one row. Narrow cards
+          take 5 parts to the wide cards' 7, never under the 17rem the
+          ThreatScore gauge needs. */}
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 sm:grid-cols-2",
+          exploitability
+            ? "@min-[72rem]:grid-cols-[minmax(17rem,5fr)_minmax(17rem,5fr)_minmax(0,7fr)_minmax(0,7fr)]"
+            : "lg:grid-cols-[minmax(17rem,5fr)_minmax(0,7fr)_minmax(0,7fr)]",
+        )}
+      >
         {threatScore}
         {exploitability}
         {checkFindings}
-        {riskSeverity}
+        {/* Without Exploitability three cards share two columns: Risk Severity
+            takes the full row, as a bar chart reads well wide. */}
+        <div
+          className={cn(
+            "grid min-w-0",
+            !exploitability && "sm:col-span-2 lg:col-span-1",
+          )}
+        >
+          {riskSeverity}
+        </div>
       </div>
 
       <div className="mt-6">{resourcesInventory}</div>

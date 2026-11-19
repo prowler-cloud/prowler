@@ -22,6 +22,7 @@ import type {
   lighthouseContextSourceSchema,
   lighthouseContextTransportSchema,
   lighthouseFindingContextItemSchema,
+  lighthouseIssueContextItemSchema,
   lighthousePageContextItemSchema,
   lighthouseProviderContextItemSchema,
   lighthouseResourceContextItemSchema,
@@ -76,6 +77,9 @@ export type LighthousePageContextItem = z.infer<
 >;
 export type LighthouseFindingContextItem = z.infer<
   typeof lighthouseFindingContextItemSchema
+>;
+export type LighthouseIssueContextItem = z.infer<
+  typeof lighthouseIssueContextItemSchema
 >;
 export type LighthouseResourceContextItem = z.infer<
   typeof lighthouseResourceContextItemSchema

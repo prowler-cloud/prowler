@@ -4,6 +4,46 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.50.0] (Prowler v5.50.0)
+
+### 🐞 Fixed
+
+- Edit user form no longer sends the email when it was not changed [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+---
+
+## [1.49.0] (Prowler v5.49.0)
+
+### 🔄 Changed
+
+- Sentry browser and server SDK setup no longer passes the deprecated `profilesSampleRate` option, which had no effect without a profiling integration [(#13119)](https://github.com/prowler-cloud/prowler/pull/13119)
+
+### 🔐 Security
+
+- zlib to 1.4-r0 in the UI container image, patching CVE-2026-4738 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+
+---
+
+## [1.48.0] (Prowler v5.48.0)
+
+### 🚀 Added
+
+- Findings page shows the findings of a running first scan as they arrive, plus a "View Early Findings" action on executing scans [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔄 Changed
+
+- NATO D32 compliance icon now uses the official NATO/OTAN logo [(#13278)](https://github.com/prowler-cloud/prowler/pull/13278)
+
+### 🐞 Fixed
+
+- Cross-provider compliance view shows the per-provider breakdown for frameworks without a dedicated UI mapper instead of "No per-provider breakdown is available" [(#13261)](https://github.com/prowler-cloud/prowler/pull/13261)
+
+### 🔐 Security
+
+- `zod` to 4.6.6, `js-yaml` to 4.3.2 and `vitest` to 4.1.11, plus transitive `hono`, `vite`, `brace-expansion`, `fast-uri`, `ip-address`, `body-parser`, `qs` and `baseline-browser-mapping` to patched versions, resolving 33 npm audit advisories (9 high, 21 moderate, 3 low) [(#13249)](https://github.com/prowler-cloud/prowler/pull/13249)
+
+---
+
 ## [1.47.0] (Prowler v5.47.0)
 
 ### 🚀 Added

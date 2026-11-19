@@ -4,6 +4,62 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.51.0] (Prowler v5.50.0)
+
+### 🔄 Changed
+
+- `PATCH /api/v1/users/{id}` accepts `email` and `password` changes only from the user themselves [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+### 🐞 Fixed
+
+- Sessions started through SAML SSO or with an API key stay in the organization that issued them: they only see and manage that organization, `POST /api/v1/tokens/switch` does not move them to another one and rejects API keys, and users who belong to several organizations cannot change the account password or email or delete the account from such a session [(#13381)](https://github.com/prowler-cloud/prowler/pull/13381)
+
+### 🔐 Security
+
+- Compliance PDF reports escape the values of the cover page information table, so markup in a provider alias or UID is printed as text and no longer makes the report worker fetch an image URL [(#13378)](https://github.com/prowler-cloud/prowler/pull/13378)
+- Lighthouse OpenAI-compatible base URL validation rejects IPv4-compatible (`::a.b.c.d`) and IPv4-translated (`::ffff:0:a.b.c.d`) IPv6 literals, which were classified as public even when the embedded IPv4 address was private or link-local [(#13379)](https://github.com/prowler-cloud/prowler/pull/13379)
+- Attack Paths custom queries are validated with backtick-quoted identifiers unquoted, reject `\u` escapes and block `apoc.when`, `apoc.case`, `apoc.graph` and `apoc.spatial`, and the tokenizer follows Neo4j on line comments ended by a carriage return and on escaped newlines in strings, so a blocked operation can no longer be hidden behind quoting, escapes or comments, or passed as a nested query string [(#13380)](https://github.com/prowler-cloud/prowler/pull/13380)
+
+---
+
+## [1.50.0] (Prowler v5.49.0)
+
+### 🔄 Changed
+
+- `regex` constraint raised to 2026.5.9 to match the pin the Prowler SDK requires [(#13330)](https://github.com/prowler-cloud/prowler/pull/13330)
+
+### 🔐 Security
+
+- `pyjwt` from 2.14.0 to 2.15.0, patching CVE-2026-101918 and CVE-2026-102275 [(#13297)](https://github.com/prowler-cloud/prowler/pull/13297)
+- zlib1g to 1:1.3.dfsg+really1.3.1-1+deb13u1 and Trivy from 0.76.1 to 0.76.2 in the API container image, patching CVE-2026-76844, CVE-2026-85091 and CVE-2026-78661 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+- PowerShell from 7.5.13 to 7.6.10 (.NET runtime 10.0.15), uv from 0.13.4 to 0.13.7 and multidict, opentelemetry and setuptools in the API container image, patching CVE-2026-109475, CVE-2026-104874, CVE-2026-114603, CVE-2026-59890 and the rustls advisories in uv [(#13342)](https://github.com/prowler-cloud/prowler/pull/13342)
+
+---
+
+## [1.49.0] (Prowler v5.48.0)
+
+### 🔄 Changed
+
+- `jsonschema` 4.26.0 for SDK schema validation, picked up through the SDK dependency [(#13274)](https://github.com/prowler-cloud/prowler/pull/13274)
+
+### 🐞 Fixed
+
+- Findings partitions now tile exactly instead of leaving a sub-millisecond gap at each window boundary, where findings landed in the default partition and were never aged out [(#12766)](https://github.com/prowler-cloud/prowler/pull/12766)
+- Finding groups show the check title instead of the check ID while a tenant's first scan is running [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔐 Security
+
+- Python base image from 3.12.15 to 3.12.16 in the API container image, patching CVE-2026-115557 [(#13215)](https://github.com/prowler-cloud/prowler/pull/13215)
+- pyasn1 to 0.6.5, patching the ASN.1 decoding denial of service advisories [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- PowerShell from 7.5.12 to 7.5.13 in the API container image, bundling .NET runtime 9.0.22 [(#13253)](https://github.com/prowler-cloud/prowler/pull/13253)
+- h2 from 4.3.0 to 4.4.1 and werkzeug from 3.1.7 to 3.1.9, patching the duplicate Host header request smuggling and the Windows device name bypass in safe_join, plus pylint 4.0.9 and filelock 4.2.1 in the development dependencies [(#13257)](https://github.com/prowler-cloud/prowler/pull/13257)
+- `POST /api/v1/tokens/github` and `POST /api/v1/tokens/google` only accept an OAuth authorization code, rejecting caller-supplied `access_token` and `id_token` values issued to other OAuth clients [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- oauthlib from 4.0.0 to 4.0.1 in the API container image, patching the OAuth device flow bearer token disclosure [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- GCP `service_account` provider secrets require a key with `"type": "service_account"` and a Google `token_uri`, rejecting `external_account` and other credential types or custom token endpoints that could read worker files or reach internal URLs [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- apt and libapt-pkg7.0 3.0.4 in the API container image [(#13268)](https://github.com/prowler-cloud/prowler/pull/13268)
+
+---
+
 ## [1.48.0] (Prowler v5.47.0)
 
 ### 🔐 Security

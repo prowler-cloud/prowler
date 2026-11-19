@@ -265,7 +265,7 @@ function EnforcementForm({
 
         <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Field>
-            <FieldLabel>Enforced frameworks</FieldLabel>
+            <FieldLabel>Enforced compliance frameworks</FieldLabel>
             <Controller
               control={form.control}
               name="frameworks"
@@ -276,7 +276,7 @@ function EnforcementForm({
                 >
                   <MultiSelectTrigger
                     size="sm"
-                    aria-label="Enforced frameworks"
+                    aria-label="Enforced compliance frameworks"
                     disabled={!canManage}
                   >
                     <MultiSelectValue placeholder="Every check" />
@@ -426,11 +426,11 @@ function EnforcementForm({
               <Textarea
                 id="enforcement-deny"
                 rows={3}
-                placeholder="rds_instance_no_public_access"
                 {...form.register("deny_checks")}
               />
               <span className="text-text-neutral-tertiary text-xs">
-                One per line, or separated by commas.
+                One per line, or separated by commas. For example:
+                rds_instance_no_public_access.
               </span>
             </Field>
             <Field>
@@ -439,11 +439,11 @@ function EnforcementForm({
               </FieldLabel>
               <Input
                 id="enforcement-regions"
-                placeholder="eu-west-1, us-east-1"
                 {...form.register("allow_regions")}
               />
               <span className="text-text-neutral-tertiary text-xs">
-                Empty means every region.
+                Separated by commas, for example: eu-west-1, us-east-1. Empty
+                means every region.
               </span>
             </Field>
           </CollapsibleContent>
@@ -475,12 +475,11 @@ function EnforcementForm({
                 </FieldLabel>
                 <Input
                   id="enforcement-path"
-                  placeholder="infra/terraform"
                   aria-invalid={Boolean(errors.iac_path)}
                   {...form.register("iac_path")}
                 />
                 <span className="text-text-neutral-tertiary text-xs">
-                  Relative to the repository root.
+                  Relative to the repository root, for example: infra/terraform.
                 </span>
                 {errors.iac_path && (
                   <FieldError>{errors.iac_path.message}</FieldError>

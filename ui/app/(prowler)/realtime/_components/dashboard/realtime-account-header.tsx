@@ -148,7 +148,7 @@ export function RealtimeAccountHeader({
               </StatusItem>
             )}
             {policy && (
-              <StatusItem label="Frameworks">
+              <StatusItem label="Compliance frameworks">
                 {frameworkNames.length ? (
                   frameworkNames.map((name) => (
                     <Badge key={name} variant="tag">
