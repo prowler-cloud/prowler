@@ -90,19 +90,21 @@ class SNS(AWSService):
                     paginator = regional_client.get_paginator(
                         "list_subscriptions_by_topic"
                     )
-                    subscriptions: list[Subscription] = [
-                        Subscription(
-                            id=(parts := sub["SubscriptionArn"].split(":"))[-1],
-                            arn=sub["SubscriptionArn"],
-                            owner=sub["Owner"],
-                            protocol=sub["Protocol"],
-                            endpoint=sub["Endpoint"],
-                            region=parts[3] if len(parts) > 3 else "unknown",
+                    # Filled page by page, so a failed later page keeps the
+                    # subscriptions already read.
+                    topic.subscriptions = []
+                    for page in paginator.paginate(TopicArn=topic.arn):
+                        topic.subscriptions.extend(
+                            Subscription(
+                                id=(parts := sub["SubscriptionArn"].split(":"))[-1],
+                                arn=sub["SubscriptionArn"],
+                                owner=sub["Owner"],
+                                protocol=sub["Protocol"],
+                                endpoint=sub["Endpoint"],
+                                region=parts[3] if len(parts) > 3 else "unknown",
+                            )
+                            for sub in page["Subscriptions"]
                         )
-                        for page in paginator.paginate(TopicArn=topic.arn)
-                        for sub in page["Subscriptions"]
-                    ]
-                    topic.subscriptions = subscriptions
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
