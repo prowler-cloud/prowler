@@ -6,6 +6,7 @@ from argparse import ArgumentTypeError
 from os import getenv
 from uuid import UUID
 
+from azure.core.credentials import TokenCredential
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
     CertificateCredential,
@@ -412,7 +413,7 @@ class M365Provider(Provider):
 
     @staticmethod
     def build_graph_client(
-        credentials, region_config: M365RegionConfig = None
+        credentials: TokenCredential, region_config: M365RegionConfig = None
     ) -> GraphServiceClient:
         """
         Builds a Microsoft Graph client for the region's Graph endpoint, M365Global when no region is given.
