@@ -1,6 +1,7 @@
 from prowler.lib.check.compliance_models import (
     ASDEssentialEight_Requirement_Attribute,
     AWS_Well_Architected_Requirement_Attribute,
+    C5Germany_Requirement_Attribute,
     CCC_Requirement_Attribute,
     CIS_Requirement_Attribute,
     Compliance,
@@ -1344,6 +1345,44 @@ OKTA_IDAAS_STIG_OKTA = Compliance(
                     CCI=["CCI-000205"],
                     CheckText="Verify the password policy enforces a minimum length of 15 characters.",
                     FixText="From the Admin Console set the minimum password length to 15 characters.",
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+C5_AWS = Compliance(
+    Framework="C5",
+    Name="Cloud Computing Compliance Criteria Catalogue C5",
+    Version="2025",
+    Provider="AWS",
+    Description="The C5 criteria catalogue specifies minimum requirements for secure cloud computing.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="OIS-04.01B",
+            Description="Conflicting tasks and responsibilities are separated based on a risk assessment.",
+            Attributes=[
+                C5Germany_Requirement_Attribute(
+                    Section="Organisation of Information Security (OIS)",
+                    SubSection="OIS-04 Separation of Duties",
+                    Type="Basic",
+                    AboutCriteria="The separation of duties covers the administration of roles and the approval of access.",
+                    ComplementaryCriteria="",
+                )
+            ],
+            Checks=["service_test_check_id"],
+        ),
+        Compliance_Requirement(
+            Id="OIS-01.01B",
+            Description="The cloud service provider operates an information security management system (ISMS).",
+            Attributes=[
+                C5Germany_Requirement_Attribute(
+                    Section="Organisation of Information Security (OIS)",
+                    SubSection="OIS-01 Information Security Management System (ISMS)",
+                    Type="Basic",
+                    AboutCriteria="The auditor evaluates whether the documentation meets the requirements of ISO/IEC 27001.",
+                    ComplementaryCriteria="",
                 )
             ],
             Checks=[],

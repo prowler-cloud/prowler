@@ -13,14 +13,11 @@ from api.models import (
     Membership,
     Processor,
     Provider,
-    Resource,
     Role,
     UserRoleRelationship,
 )
 from api.v1.serializers import FindingMetadataSerializer, KubernetesProviderSecret
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
-from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
@@ -645,51 +642,63 @@ def accept_invitation_for_user(
 
 
 # ToRemove after removing the fallback mechanism in /findings/metadata
-def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
-    filtered_ids = filtered_queryset.order_by().values("id")
+def get_findings_metadata_no_aggregations(filtered_queryset):
+    """Build the findings metadata from the values each finding already carries."""
+    services, regions, resource_types, categories, groups = (set() for _ in range(5))
 
-    relevant_resources = Resource.all_objects.filter(
-        tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
-    ).only("service", "region", "type")
-
-    aggregation = relevant_resources.aggregate(
-        services=ArrayAgg("service", flat=True),
-        regions=ArrayAgg("region", flat=True),
-        resource_types=ArrayAgg("type", flat=True),
-    )
-
-    services = sorted(set(aggregation["services"] or []))
-    regions = sorted({region for region in aggregation["regions"] or [] if region})
-    resource_types = sorted(set(aggregation["resource_types"] or []))
-
-    # Aggregate categories from findings
-    categories_set = set()
-    for categories_list in filtered_queryset.values_list("categories", flat=True):
-        if categories_list:
-            categories_set.update(categories_list)
-    categories = sorted(categories_set)
-
-    # Aggregate groups from findings
-    groups = list(
-        filtered_queryset.exclude(resource_groups__isnull=True)
-        .exclude(resource_groups__exact="")
-        .values_list("resource_groups", flat=True)
+    # One pass over the findings: the distinct combinations are few, the findings are not
+    combinations = (
+        filtered_queryset.order_by()
+        .values_list(
+            "resource_services",
+            "resource_regions",
+            "resource_types",
+            "categories",
+            "resource_groups",
+        )
         .distinct()
-        .order_by("resource_groups")
     )
+    for (
+        finding_services,
+        finding_regions,
+        finding_types,
+        finding_categories,
+        finding_group,
+    ) in combinations:
+        services.update(filter(None, finding_services or ()))
+        regions.update(filter(None, finding_regions or ()))
+        resource_types.update(filter(None, finding_types or ()))
+        categories.update(filter(None, finding_categories or ()))
+        if finding_group:
+            groups.add(finding_group)
 
     result = {
-        "services": services,
-        "regions": regions,
-        "resource_types": resource_types,
-        "categories": categories,
-        "groups": groups,
+        "services": sorted(services),
+        "regions": sorted(regions),
+        "resource_types": sorted(resource_types),
+        "categories": sorted(categories),
+        "groups": sorted(groups, key=str.casefold),
     }
 
     serializer = FindingMetadataSerializer(data=result)
     serializer.is_valid(raise_exception=True)
 
     return serializer.data
+
+
+def get_findings_categories(filtered_queryset) -> list[str]:
+    """Sorted categories of the findings, for scans without a category summary."""
+    category_lists = (
+        filtered_queryset.order_by().values_list("categories", flat=True).distinct()
+    )
+    return sorted(
+        {
+            category
+            for categories in category_lists
+            for category in categories or ()
+            if category
+        }
+    )
 
 
 def initialize_prowler_integration(integration: Integration) -> Jira:

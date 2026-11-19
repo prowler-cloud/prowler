@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, type RefObject, useEffect, useRef } from "react";
+import { type FormEvent, useEffect, useRef } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -23,7 +23,8 @@ interface RegistryAccessDialogCommonProps {
   onSubmit: (key: string) => Promise<void>;
   open: boolean;
   pending: boolean;
-  returnFocusRef: RefObject<HTMLButtonElement | null>;
+  /** Focuses the control that should receive focus when the dialog closes. */
+  returnFocus: () => void;
 }
 
 type ConnectRegistryAccessDialogProps = RegistryAccessDialogCommonProps & {
@@ -53,7 +54,7 @@ export function RegistryAccessDialog({
   onSubmit,
   open,
   pending,
-  returnFocusRef,
+  returnFocus,
 }: RegistryAccessDialogProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
@@ -86,7 +87,7 @@ export function RegistryAccessDialog({
       }}
       onCloseAutoFocus={(event) => {
         event.preventDefault();
-        returnFocusRef.current?.focus();
+        returnFocus();
       }}
       onOpenChange={onOpenChange}
       open={open}

@@ -71,7 +71,7 @@ describe("Registry card install verdict", () => {
         artifact={{
           ...checksArtifact,
           isInstallable: false,
-          notInstallableReason: "checks_target_is_not_builtin",
+          notInstallableReason: "artifact_targets_no_provider",
         }}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
@@ -81,8 +81,45 @@ describe("Registry card install verdict", () => {
     // Then
     await expect
       .element(
+        screen.getByText("It ships checks but names no provider to extend."),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: /Add/ }))
+      .not.toBeInTheDocument();
+  });
+
+  it("links an artifact that needs approved access to its Registry bundle", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...checksArtifact,
+          isInstallable: false,
+          notInstallableReason: "access_required",
+          accessRequestPath: "/bundles/vcf-bundle",
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+        registryUrl="https://registry.example.com/"
+      />,
+    );
+
+    // Then: the link takes the action slot and the note says why.
+    const link = screen.getByRole("link", {
+      name: "Request access to Acme AWS checks in the Prowler Registry (opens in a new tab)",
+    });
+    await expect
+      .element(link)
+      .toHaveAttribute(
+        "href",
+        "https://registry.example.com/bundles/vcf-bundle",
+      );
+    await expect.element(link).toHaveTextContent("Request access");
+    await expect
+      .element(
         screen.getByText(
-          "Its checks are written for a provider this deployment does not ship.",
+          "Needs approved access in the Prowler Registry. Once approved, it installs with that account's Registry API key.",
         ),
       )
       .toBeVisible();
@@ -203,14 +240,14 @@ describe("Registry card metadata layout", () => {
     // Given
     const screen = await render(
       <RegistryArtifactCard
-        artifact={{ ...artifact, providers: ["aws", "gcp", "template"] }}
+        artifact={{ ...artifact, providers: ["aws", "gcp"] }}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
       />,
     );
 
     // When / Then: each visible provider uses its own display name.
-    for (const name of ["AWS", "Google Cloud", "Template"]) {
+    for (const name of ["AWS", "Google Cloud"]) {
       const logo = screen.getByRole("img", { name, exact: true });
       await logo.hover();
       await expect.element(screen.getByRole("tooltip")).toHaveTextContent(name);
@@ -231,6 +268,72 @@ describe("Registry card metadata layout", () => {
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent("Google Cloud");
+  });
+
+  it("names Registry providers in text, since they have no logo of their own", async () => {
+    // Given: an artifact covering a built-in and two providers without a logo
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          providers: ["aws", "template", "local-template"],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then: the built-in keeps its logo, the others read without hovering
+    await expect
+      .element(screen.getByRole("img", { name: "AWS", exact: true }))
+      .toBeVisible();
+    for (const name of ["Template", "Local Template"]) {
+      await expect
+        .element(screen.getByText(name, { exact: true }))
+        .toBeVisible();
+    }
+  });
+
+  it("shows three Registry provider names and lists the rest behind +N", async () => {
+    // Given: a built-in and six providers without a logo
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          providers: [
+            "aws",
+            "openai",
+            "chatgpt",
+            "vcf",
+            "snowflake",
+            "datadog",
+            "salesforce",
+          ],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then: three names read as text and one +3 holds the rest
+    const names = screen.getByRole("list", { name: "Providers" });
+    expect(
+      names
+        .getByRole("listitem")
+        .elements()
+        .map((item) => item.textContent),
+    ).toEqual(["Openai", "Chatgpt", "Vcf", "+3"]);
+
+    // When: keyboard users reach the overflow
+    const more = screen.getByRole("img", {
+      name: "3 more: Snowflake, Datadog, Salesforce",
+    });
+    (more.element() as HTMLElement).focus();
+
+    // Then
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Snowflake, Datadog, Salesforce");
   });
 
   it.each([

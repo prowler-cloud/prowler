@@ -36,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Runtimes that use IAM (SigV4) inbound authorization produce no finding, because their callers are IAM principals rather than end users. A runtime whose detail could not be retrieved also produces no finding. PASS confirms the token reaches the agent; whether the agent code passes it on to downstream tools cannot be verified from the control plane."
+  "Notes": "Runtimes that use IAM (SigV4) inbound authorization produce no finding, because their callers are IAM principals rather than end users. PASS confirms the token reaches the agent; whether the agent code passes it on to downstream tools cannot be verified from the control plane."
 }
