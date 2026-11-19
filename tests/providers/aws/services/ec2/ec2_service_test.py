@@ -265,6 +265,8 @@ class Test_EC2_Service:
         ec2.instances = [FakeInstance(image_id) for image_id in instance_image_ids]
         ec2.images = []
         ec2.images_by_id = {}
+        ec2.instance_images_by_id = {}
+        ec2.image_lookup_failures = set()
         ec2.audit_resources = []
         ec2.audited_partition = "aws"
         ec2.audited_account = AWS_ACCOUNT_NUMBER
@@ -279,6 +281,90 @@ class Test_EC2_Service:
         assert missing_image_id not in ec2.images_by_id
         assert set(ec2.images_by_id) == set(valid_image_ids)
         assert {image.owner for image in ec2.images} == {"amazon"}
+
+    @staticmethod
+    def _images_by_id_service(instance_image_ids, describe_images):
+        """An EC2 service built by hand around a fake ``describe_images``."""
+
+        class FakeInstance:
+            def __init__(self, image_id):
+                self.region = AWS_REGION_US_EAST_1
+                self.image_id = image_id
+
+        class FakeEC2Client:
+            region = AWS_REGION_US_EAST_1
+
+        client = FakeEC2Client()
+        client.describe_images = describe_images
+        ec2 = EC2.__new__(EC2)
+        ec2.instances = [FakeInstance(image_id) for image_id in instance_image_ids]
+        ec2.images = []
+        ec2.images_by_id = {}
+        ec2.instance_images_by_id = {}
+        ec2.image_lookup_failures = set()
+        ec2.audit_resources = []
+        ec2.audited_partition = "aws"
+        ec2.audited_account = AWS_ACCOUNT_NUMBER
+        ec2._describe_images(client)
+        return ec2
+
+    def test_describe_images_by_id_isolates_an_unavailable_ami(self):
+        unavailable = "ami-0000-unavailable"
+        valid = ["ami-0001", "ami-0002", "ami-0003"]
+
+        def describe_images(**kwargs):
+            if kwargs.get("Owners") == ["self"]:
+                return {"Images": []}
+            if unavailable in kwargs["ImageIds"]:
+                raise ClientError(
+                    {"Error": {"Code": "InvalidAMIID.Unavailable", "Message": "gone"}},
+                    "DescribeImages",
+                )
+            return {
+                "Images": [
+                    {"ImageId": i, "Public": True, "ImageOwnerAlias": "amazon"}
+                    for i in kwargs["ImageIds"]
+                ]
+            }
+
+        ec2 = self._images_by_id_service(valid + [unavailable], describe_images)
+
+        assert set(ec2.images_by_id) == set(valid)
+        assert ec2.image_lookup_failures == set()
+
+    def test_describe_images_by_id_records_a_denied_lookup(self):
+        image_ids = ["ami-0001", "ami-0002"]
+
+        def describe_images(**kwargs):
+            if kwargs.get("Owners") == ["self"]:
+                return {"Images": []}
+            raise ClientError(
+                {"Error": {"Code": "UnauthorizedOperation", "Message": "denied"}},
+                "DescribeImages",
+            )
+
+        ec2 = self._images_by_id_service(image_ids, describe_images)
+
+        assert ec2.image_lookup_failures == set(image_ids)
+        assert ec2.instance_images_by_id == {}
+
+    def test_describe_images_by_id_labels_this_accounts_ami_as_self(self):
+        def describe_images(**kwargs):
+            if kwargs.get("Owners") == ["self"]:
+                return {"Images": []}
+            return {
+                "Images": [
+                    {
+                        "ImageId": "ami-own",
+                        "Public": False,
+                        "OwnerId": AWS_ACCOUNT_NUMBER,
+                    }
+                ]
+            }
+
+        ec2 = self._images_by_id_service(["ami-own"], describe_images)
+
+        assert ec2.instance_images_by_id["ami-own"].owner == "self"
 
     def test_describe_images_ignores_non_amazon_public_images_returned_by_image_id(
         self,
@@ -319,6 +405,8 @@ class Test_EC2_Service:
         ]
         ec2.images = []
         ec2.images_by_id = {}
+        ec2.instance_images_by_id = {}
+        ec2.image_lookup_failures = set()
         ec2.audit_resources = []
         ec2.audited_partition = "aws"
         ec2.audited_account = AWS_ACCOUNT_NUMBER
@@ -327,6 +415,9 @@ class Test_EC2_Service:
 
         assert ec2.images == []
         assert ec2.images_by_id == {}
+        # Kept apart, for the provenance of the instances that run them.
+        assert set(ec2.instance_images_by_id) == {marketplace_image_id, vendor_image_id}
+        assert {i.owner for i in ec2.instance_images_by_id.values()} == {"third_party"}
 
     # Test EC2 Describe Instances
     @mock.patch(

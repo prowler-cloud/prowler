@@ -4,6 +4,66 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.50.0] (Prowler v5.50.0)
+
+### 🚀 Added
+
+- `bedrock_model_invocation_job_output_encrypted_with_cmk` check for AWS provider, verifying that Bedrock model invocation job S3 output is encrypted with a customer managed KMS key [(#12801)](https://github.com/prowler-cloud/prowler/pull/12801)
+- `bedrock_guardrail_iam_condition_enforcement_enabled` check for AWS provider, verifying that customer-managed and inline IAM policies allowing Bedrock model invocation require a guardrail through the `bedrock:GuardrailIdentifier` condition key [(#13065)](https://github.com/prowler-cloud/prowler/pull/13065)
+- `cloudwatch_log_group_data_protection_policy_configured` check for AWS provider [(#13085)](https://github.com/prowler-cloud/prowler/pull/13085)
+- Seven Manual requirements in the AWS AI Security Framework for Bedrock data retention, RAG authorization, and agent governance [(#13338)](https://github.com/prowler-cloud/prowler/pull/13338)
+- `secrets_confidence` config to set the minimum Kingfisher confidence level in the secret-scanning checks of the AWS, Cloudflare, and OpenStack providers [(#13362)](https://github.com/prowler-cloud/prowler/pull/13362)
+
+### 🔄 Changed
+
+- `compute_instance_encryption_with_csek_enabled` FAIL message now explains why the finding is not remediable: Google disabled CSEK encryption on July 20, 2026, and the check will be deprecated on July 20, 2027 when CSEK is removed from Compute Engine [(#12735)](https://github.com/prowler-cloud/prowler/pull/12735)
+
+### 🐞 Fixed
+
+- `network_udp_internet_access_restricted` no longer reports a false negative for NSG rules that allow Any protocol (`*`) inbound from the Internet [(#12886)](https://github.com/prowler-cloud/prowler/pull/12886)
+- `dns_dnssec_disabled` for GCP no longer evaluates private Cloud DNS zones, which cannot enable DNSSEC [(#13334)](https://github.com/prowler-cloud/prowler/pull/13334)
+
+### 🔐 Security
+
+- Kubernetes kubeconfig cluster servers pointing at loopback, private or otherwise non-public addresses rejected before the client connects [(#12961)](https://github.com/prowler-cloud/prowler/pull/12961)
+- Image registry URLs resolving to loopback, private, shared or otherwise non-public addresses rejected before any request leaves the adapter, including every destination a redirect points to [(#12974)](https://github.com/prowler-cloud/prowler/pull/12974)
+- OpenStack redirects and Keystone catalog endpoints resolving to non-public hosts rejected on every request, not only the initial `auth_url` [(#13371)](https://github.com/prowler-cloud/prowler/pull/13371)
+- dnspython to 2.9.2 in the SDK for Python 3.11 and later, patching the high severity advisory reported by the container scan; Python 3.10 stays on 2.8.0, which the 2.9 series no longer supports [(#13374)](https://github.com/prowler-cloud/prowler/pull/13374)
+- dnspython from 2.9.0 to 2.9.2 in the SDK container image, patching CVE-2026-128089 [(#13376)](https://github.com/prowler-cloud/prowler/pull/13376)
+
+---
+
+## [5.49.0] (Prowler v5.49.0)
+
+### 🚀 Added
+
+- `oam_sink_not_publicly_accessible` check for AWS provider, reporting CloudWatch Observability Access Manager sinks whose resource policy lets any AWS account link to them [(#12562)](https://github.com/prowler-cloud/prowler/pull/12562)
+- `organizations_security_services_delegated_admin_not_management_account` check for AWS provider, verifying that security services with trusted access in the organization have a delegated administrator instead of being administered from the management account [(#12565)](https://github.com/prowler-cloud/prowler/pull/12565)
+- Threat signatures (`prowler/lib/threats`): emerging vulnerabilities described as data (affected image publishers, names and per-branch version ranges proven by examples, exposed ports, impact and remediation), supplied per scan under `threat_signatures` for AWS, Azure and GCP [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- Developer guide for writing an emerging threat signature, with a signature template [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- `Check_Report.raw`, a structured payload a check can attach to its finding raw result [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- `ec2_instance_emerging_threat_image`, `vm_emerging_threat_image` and `compute_instance_emerging_threat_image` checks for AWS, Azure and GCP, matching compute instances against threat signatures [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- Image provenance for compute instances: owner and name of third-party AMIs in the EC2 service, the full image reference of Azure VMs, and the boot disk source image of GCP instances [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+
+### 🐞 Fixed
+
+- Organization condition parsing for AWS resource policy checks accepts `aws:PrincipalOrgPaths` and `ForAnyValue` operators as restrictive, and no longer treats a wildcard organization ID inside a list as restrictive [(#12562)](https://github.com/prowler-cloud/prowler/pull/12562)
+- `organizations_delegated_administrators` no longer reports PASS when an untrusted delegated administrator is listed before a trusted one [(#12565)](https://github.com/prowler-cloud/prowler/pull/12565)
+- `organizations_delegated_administrators` no longer reports PASS when delegated administrators cannot be listed because of throttling or service errors [(#12565)](https://github.com/prowler-cloud/prowler/pull/12565)
+- `compute_loadbalancer_logging_enabled` no longer reports FAIL for load balancers whose URL map default service is a global backend bucket, which has no `logConfig` and always logs requests [(#12904)](https://github.com/prowler-cloud/prowler/pull/12904)
+- CloudFormation scan role now grants `lambda:GetLayerVersion`, and its StackSet role `amplify:ListApps` and `amplify:ListBranches`, so `awslambda_layer_no_secrets_in_content` and `amplify_app_no_secrets_in_environment` can scan accounts onboarded with it [(#12923)](https://github.com/prowler-cloud/prowler/pull/12923)
+- False positives for secure non-PQ FIPS TLS policies in `elbv2_insecure_ssl_ciphers` [(#13292)](https://github.com/prowler-cloud/prowler/pull/13292)
+- GCP Cloud Storage buckets are still listed and evaluated when the IAM policy of one bucket cannot be read; `cloudstorage_bucket_public_access` reports that bucket as `MANUAL` [(#13333)](https://github.com/prowler-cloud/prowler/pull/13333)
+- `vm_emerging_threat_image` no longer misses VMs whose marketplace offer, SKU or gallery image name was given in a different case than the threat signature's `name_regex` [(#13336)](https://github.com/prowler-cloud/prowler/pull/13336)
+
+### 🔐 Security
+
+- `pyjwt` from 2.14.0 to 2.15.0, patching CVE-2026-101918 and CVE-2026-102275 [(#13297)](https://github.com/prowler-cloud/prowler/pull/13297)
+- zlib1g to 1:1.3.dfsg+really1.3.1-1+deb13u1 and Trivy from 0.76.1 to 0.76.2 in the SDK container image, patching CVE-2026-76844, CVE-2026-85091 and CVE-2026-78661 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+- PowerShell from 7.5.13 to 7.6.10 (.NET runtime 10.0.15), uv from 0.13.4 to 0.13.7 and joserfc, multidict, opentelemetry and setuptools in the SDK container image, patching CVE-2026-109475, CVE-2026-104874, CVE-2026-114603, CVE-2026-119284, CVE-2026-59890 and the rustls advisories in uv [(#13342)](https://github.com/prowler-cloud/prowler/pull/13342)
+
+---
+
 ## [5.48.0] (Prowler v5.48.0)
 
 ### 🚀 Added

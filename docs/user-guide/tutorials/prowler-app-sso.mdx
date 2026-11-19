@@ -267,6 +267,17 @@ This method is useful when users bookmark Prowler or navigate directly to the ap
 
 ---
 
+### Sessions Started with SSO
+
+A session started with SAML SSO belongs to the organization whose identity provider signed the user in. From that session:
+
+- Only that organization can be viewed or managed. Switching to another organization, or creating a new one, is not available; sign in to the other organization directly.
+- Users who belong to more than one organization cannot change the account password or email, or delete the account, because those are shared with their other organizations. Users who belong only to the organization they signed in to are not restricted.
+
+Sessions started with a password are not affected. API keys follow the same rules as SSO sessions, because each key belongs to one organization, and a key cannot be exchanged for a session token.
+
+Sessions that were already open before upgrading to a version with this behaviour keep working as before until they expire. To apply it immediately, have users sign in again.
+
 ## Developer and Administrator Guide
 
 This section provides technical details for developers and administrators of Prowler Local Server instances.

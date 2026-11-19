@@ -5,6 +5,8 @@ import logging
 import os
 import time
 import uuid
+import zipfile
+import zlib
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
@@ -19,6 +21,11 @@ from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    session_bound_tenant_id,
+    session_reaches_other_tenants,
+)
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     COMPLIANCE_WARMED,
@@ -140,6 +147,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     accept_invitation_for_user,
+    get_findings_categories,
     get_findings_metadata_no_aggregations,
     initialize_prowler_integration,
     initialize_prowler_provider,
@@ -1032,7 +1040,8 @@ class TenantFinishACSView(FinishACSView):
         )
 
         serializer = TokenSocialLoginSerializer(
-            data={"email": user.email, "tenant_id": str(tenant.id)}
+            data={"email": user.email, "tenant_id": str(tenant.id)},
+            context={SSO_TENANT_CLAIM: str(tenant.id)},
         )
         serializer.is_valid(raise_exception=True)
 
@@ -1072,7 +1081,12 @@ class TenantFinishACSView(FinishACSView):
     partial_update=extend_schema(
         tags=["User"],
         summary="Update user information",
-        description="Partially update information about a user.",
+        description=(
+            "Partially update information about a user. Users with the "
+            "`manage_users` permission can update the profile fields of other "
+            "users in the tenant, but credentials (`password` and `email`) can "
+            "only be changed by the user themselves."
+        ),
     ),
     destroy=extend_schema(
         tags=["User"],
@@ -1164,6 +1178,10 @@ class UserViewSet(BaseUserViewset):
                 raise ValidationError(
                     "Only users with manage users permission can update other users."
                 )
+            # Email and password belong to the user, not to this tenant.
+            self._reject_credential_changes_for_other_user(user, request.data)
+        elif session_reaches_other_tenants(request):
+            self._reject_credential_changes_from_bound_session(user, request.data)
 
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -1174,9 +1192,48 @@ class UserViewSet(BaseUserViewset):
 
         return Response(serializer.data)
 
+    @staticmethod
+    def _reject_credential_changes_for_other_user(user, data):
+        errors = {}
+        if "password" in data:
+            errors["password"] = "Only the user themselves can change their password."
+        new_email = data.get("email")
+        # Re-sending the current email (e.g. from an edit form) is not a change.
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = "Only the user themselves can change their email."
+        if errors:
+            raise ValidationError(errors)
+
+    @staticmethod
+    def _reject_credential_changes_from_bound_session(user, data):
+        # Email and password are shared by every tenant the user belongs to.
+        errors = {}
+        if "password" in data:
+            errors["password"] = (
+                "This session is limited to one organization and cannot change a "
+                "password shared with your other organizations."
+            )
+        new_email = data.get("email")
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = (
+                "This session is limited to one organization and cannot change an "
+                "email shared with your other organizations."
+            )
+        if errors:
+            raise ValidationError(errors)
+
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
+        if session_reaches_other_tenants(request):
+            raise ValidationError(
+                "This session is limited to one organization and cannot delete an "
+                "account that belongs to other organizations."
+            )
 
         user = self.get_object()
         user.delete(using=MainRouter.admin_db)
@@ -1386,6 +1443,15 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def _tenants_reachable_from(request):
+    """Tenants of the user that the current session is allowed to act on."""
+    queryset = Tenant.objects.filter(membership__user=request.user)
+    bound_tenant_id = session_bound_tenant_id(request)
+    if bound_tenant_id:
+        queryset = queryset.filter(id=bound_tenant_id)
+    return queryset
+
+
 @extend_schema_view(
     list=extend_schema(
         tags=["Tenant"],
@@ -1438,10 +1504,14 @@ class TenantViewSet(BaseTenantViewset):
             self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
-        queryset = Tenant.objects.filter(membership__user=self.request.user)
+        queryset = _tenants_reachable_from(self.request)
         return queryset.prefetch_related("memberships")
 
     def create(self, request, *args, **kwargs):
+        if session_bound_tenant_id(request):
+            raise ValidationError(
+                "This session is limited to one organization and cannot create another."
+            )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tenant = Tenant.objects.using(MainRouter.admin_db).create(
@@ -1568,7 +1638,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     def get_tenant(self):
         tenant_id = self.kwargs.get("tenant_pk")
         return get_object_or_404(
-            Tenant.objects.filter(membership__user=self.request.user),
+            _tenants_reachable_from(self.request),
             id=tenant_id,
         )
 
@@ -2451,6 +2521,28 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
 
         return content, filename
 
+    def _load_archived_file(self, archive_path, member_pattern):
+        """Return the bytes and filename of the newest archive member matching the pattern."""
+        not_found = Response(
+            {
+                "detail": "The scan has no reports, or the report generation task has not started yet."
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                members = [
+                    info
+                    for info in archive.infolist()
+                    if fnmatch.fnmatch(info.filename, member_pattern)
+                ]
+                if not members:
+                    return not_found
+                member = max(members, key=lambda info: (info.date_time, info.filename))
+                return archive.read(member), os.path.basename(member.filename)
+        except (OSError, zipfile.BadZipFile, zlib.error):
+            return not_found
+
     def _serve_file(self, content, filename, content_type):
         response = HttpResponse(content, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -2530,7 +2622,13 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "compliance", f"*_{name}.{file_extension}")
-            loader = self._load_file(pattern, s3=False)
+            # Scans generated before the loose copy was dropped still have it on disk.
+            if glob.glob(pattern):
+                loader = self._load_file(pattern, s3=False)
+            else:
+                loader = self._load_archived_file(
+                    scan.output_location, f"compliance/*_{name}.{file_extension}"
+                )
 
         if isinstance(loader, HttpResponseBase):
             return loader
@@ -3471,9 +3569,13 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
     def _get_findings_prefetch(self):
-        findings_queryset = Finding.all_objects.defer("scan", "resources").filter(
-            tenant_id=self.request.tenant_id
-        )
+        findings_queryset = Finding.all_objects.filter(tenant_id=self.request.tenant_id)
+        include_param = self.request.query_params.get("include", "")
+        if "findings" in include_param.split(","):
+            findings_queryset = findings_queryset.defer("scan", "resources")
+        else:
+            # The relationship only serializes the finding ids
+            findings_queryset = findings_queryset.only("id")
         return [Prefetch("findings", queryset=findings_queryset)]
 
     def get_serializer_class(self):
@@ -4209,9 +4311,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
                 )
-            return Response(
-                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
-            )
+            return Response(get_findings_metadata_no_aggregations(filtered_queryset))
 
         if service_filter := query_params.get("filter[service]") or query_params.get(
             "filter[service__in]"
@@ -4256,13 +4356,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         # Fallback to finding aggregation if no ScanCategorySummary exists
         if not categories:
-            categories_set = set()
-            for categories_list in filtered_queryset.values_list(
-                "categories", flat=True
-            ):
-                if categories_list:
-                    categories_set.update(categories_list)
-            categories = sorted(categories_set)
+            categories = get_findings_categories(filtered_queryset)
 
         result = {
             "services": services,
@@ -4336,7 +4430,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
             return Response(
                 get_findings_metadata_no_aggregations(
-                    tenant_id, self.filter_queryset(self.get_queryset())
+                    self.filter_queryset(self.get_queryset()).filter(
+                        tenant_id=tenant_id,
+                        scan_id__in=[scan_id for scan_id, _ in raw_latest_scans_ids],
+                    )
                 )
             )
 
@@ -4386,13 +4483,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 tenant_id=tenant_id,
                 scan_id__in=latest_scans_queryset.values_list("id", flat=True),
             )
-            categories_set = set()
-            for categories_list in filtered_queryset.values_list(
-                "categories", flat=True
-            ):
-                if categories_list:
-                    categories_set.update(categories_list)
-            categories = sorted(categories_set)
+            categories = get_findings_categories(filtered_queryset)
 
         # Get groups from ScanGroupSummary for latest scans
         groups = list(

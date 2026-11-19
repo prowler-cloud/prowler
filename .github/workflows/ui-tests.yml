@@ -69,7 +69,7 @@ jobs:
             ui/CHANGELOG.md
             ui/changelog.d/**
             ui/README.md
-            ui/AGENTS.md
+            ui/**/AGENTS.md
 
       - name: Get changed source files for targeted tests
         id: changed-source
@@ -138,6 +138,10 @@ jobs:
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
+
+      - name: Run knip (unused files, exports and dependencies)
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run lint:knip
 
       - name: Run pnpm audit
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -31,7 +31,10 @@ export class RegistryPage extends BasePage {
     });
     this.exploreTab = page.getByRole("tab", { name: /All/ });
     this.myArtifactsTab = page.getByRole("tab", { name: /My artifacts/ });
-    this.registryKeyInput = page.getByLabel("Registry key");
+    // The header button shares this name, so look inside the dialog.
+    this.registryKeyInput = page
+      .getByRole("dialog")
+      .getByLabel("Registry API key");
     this.registryLink = page.getByRole("link", { name: "Registry" });
     this.searchInput = page.getByLabel("Search artifacts");
     this.refreshButton = page.getByRole("button", { name: "Refresh Registry" });
@@ -98,6 +101,12 @@ export class RegistryPage extends BasePage {
   }
 
   async verifyOnboarding(): Promise<void> {
+    // The catalog's connect callout shares the button and link below.
+    await expect(
+      this.page.getByRole("heading", {
+        name: "Connect your Registry API key",
+      }),
+    ).toBeVisible();
     await expect(this.connectButton).toBeVisible();
     await expect(
       this.page.getByRole("link", {
@@ -109,7 +118,7 @@ export class RegistryPage extends BasePage {
   async verifyMarketplaceReady(): Promise<void> {
     await expect(this.exploreTab).toBeVisible();
     await expect(
-      this.page.getByRole("button", { name: "Manage access" }),
+      this.page.getByRole("button", { name: "Registry API key" }),
     ).toBeVisible();
   }
 
@@ -185,7 +194,9 @@ export class RegistryPage extends BasePage {
   async verifyBuiltInArtifactHasNoAdd(name: string): Promise<void> {
     const card = this.artifactCardFor(name);
 
-    await expect(card.getByRole("status", { name: "Built in" })).toBeVisible();
+    await expect(
+      card.getByText("Included in Prowler", { exact: true }),
+    ).toBeVisible();
     await expect(
       card.getByRole("button", { name: `Add ${name}` }),
     ).toBeHidden();
@@ -208,7 +219,9 @@ export class RegistryPage extends BasePage {
     await expect(
       this.page.getByRole("button", { name: "Cancel" }),
     ).toBeFocused();
-    await this.page.getByRole("button", { name: "Confirm Remove" }).click();
+    await this.page
+      .getByRole("button", { name: "Remove", exact: true })
+      .click();
     await expect(
       this.page.getByText("Artifact removed", { exact: true }),
     ).toBeVisible();

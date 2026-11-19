@@ -52,8 +52,9 @@ export function RegistryToolbar({
     Number(Boolean(filters.capabilities?.length)) +
     Number(Boolean(filters.search));
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <div className="w-full sm:w-64">
+    // Below sm: a two-column grid; from sm up: one wrapping row.
+    <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:gap-4">
+      <div className="col-span-2 sm:w-64">
         <SearchInput
           aria-label="Search artifacts"
           placeholder="Search artifacts..."
@@ -64,7 +65,7 @@ export function RegistryToolbar({
           onClear={() => onFiltersChange({ ...filters, search: undefined })}
         />
       </div>
-      <div className="w-full sm:w-56">
+      <div className="min-w-0 sm:w-56">
         <MultiSelect
           values={filters.providers ?? []}
           onValuesChange={(values) =>
@@ -95,7 +96,7 @@ export function RegistryToolbar({
           </MultiSelectContent>
         </MultiSelect>
       </div>
-      <div className="w-full sm:w-52">
+      <div className="min-w-0 sm:w-52">
         <MultiSelect
           values={filters.capabilities ?? []}
           onValuesChange={(values) =>
@@ -117,7 +118,13 @@ export function RegistryToolbar({
           </MultiSelectContent>
         </MultiSelect>
       </div>
-      <div className="w-full sm:w-48">
+      <p
+        aria-live="polite"
+        className="text-text-neutral-secondary text-sm sm:order-last sm:ml-auto"
+      >
+        {resultsCount} artifact{resultsCount === 1 ? "" : "s"}
+      </p>
+      <div className="min-w-0 sm:w-48">
         <Select
           value={sort}
           onValueChange={(value) =>
@@ -137,20 +144,18 @@ export function RegistryToolbar({
           </SelectContent>
         </Select>
       </div>
-      <ClearFiltersButton
-        ariaLabel="Clear filters"
-        showCount
-        pendingCount={activeCount}
-        onClear={() => {
-          onFiltersChange({});
-        }}
-      />
-      <p
-        aria-live="polite"
-        className="text-text-neutral-secondary ml-auto text-sm"
-      >
-        {resultsCount} artifact{resultsCount === 1 ? "" : "s"}
-      </p>
+      {activeCount > 0 && (
+        <div className="col-span-2">
+          <ClearFiltersButton
+            ariaLabel="Clear filters"
+            showCount
+            pendingCount={activeCount}
+            onClear={() => {
+              onFiltersChange({});
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

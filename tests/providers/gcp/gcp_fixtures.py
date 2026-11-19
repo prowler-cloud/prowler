@@ -1036,6 +1036,11 @@ def mock_api_urlMaps_calls(client: MagicMock):
                 "id": url_map2_id,
                 "defaultService": "service2",
             },
+            {
+                "name": "url_map_bucket",
+                "id": str(uuid4()),
+                "defaultService": f"https://www.googleapis.com/compute/v1/projects/{GCP_PROJECT_ID}/global/backendBuckets/bucket1",
+            },
         ]
     }
     client.urlMaps().list_next.return_value = None
@@ -1087,6 +1092,7 @@ def mock_api_managedZones_calls(client: MagicMock):
                 "name": "managed_zone2",
                 "id": managed_zone2_id,
                 "dnssecConfig": {"state": "off", "defaultKeySpecs": []},
+                "visibility": "private",
             },
         ]
     }

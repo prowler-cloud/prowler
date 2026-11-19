@@ -5,6 +5,8 @@
 - Start here for cross-project norms. Prowler is a monorepo with several components.
 - Each component has an `AGENTS.md` file with specific guidelines (e.g., `api/AGENTS.md`, `ui/AGENTS.md`).
 - Component docs override this file when guidance conflicts.
+- Some feature folders carry their own `AGENTS.md` (e.g. `ui/app/(prowler)/lighthouse/AGENTS.md`); read it before changing that feature.
+- Code reviews (human, Claude or `/code-review`) follow [`REVIEW.md`](REVIEW.md).
 
 ## Available Skills
 
@@ -16,6 +18,7 @@ Use these skills for detailed patterns on-demand:
 |-------|-------------|-----|
 | `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
 | `react-19` | No useMemo/useCallback, React Compiler | [SKILL.md](skills/react-19/SKILL.md) |
+| `no-use-effect` | Derive state, handlers, server data; no direct useEffect | [SKILL.md](skills/no-use-effect/SKILL.md) |
 | `nextjs-16` | App Router, Server Actions, proxy.ts, streaming | [SKILL.md](skills/nextjs-16/SKILL.md) |
 | `tailwind-4` | cn() utility, no var() in className | [SKILL.md](skills/tailwind-4/SKILL.md) |
 | `playwright` | Page Object Model, MCP workflow, selectors | [SKILL.md](skills/playwright/SKILL.md) |
@@ -40,6 +43,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-test-sdk` | SDK testing (pytest + moto) | [SKILL.md](skills/prowler-test-sdk/SKILL.md) |
 | `prowler-test-api` | API testing (pytest-django + RLS) | [SKILL.md](skills/prowler-test-api/SKILL.md) |
 | `prowler-test-ui` | E2E testing (Playwright) | [SKILL.md](skills/prowler-test-ui/SKILL.md) |
+| `prowler-ui-browser-review` | Browser sign-off for user-visible UI changes | [SKILL.md](skills/prowler-ui-browser-review/SKILL.md) |
 | `prowler-test-mcp` | MCP server testing (pytest + FastMCP Client) | [SKILL.md](skills/prowler-test-mcp/SKILL.md) |
 | `prowler-compliance` | Compliance framework structure | [SKILL.md](skills/prowler-compliance/SKILL.md) |
 | `prowler-compliance-review` | Review compliance framework PRs | [SKILL.md](skills/prowler-compliance-review/SKILL.md) |
@@ -73,6 +77,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Adding new providers | `prowler-provider` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Adding services to existing providers | `prowler-provider` |
+| Adding, changing or reviewing a React effect | `no-use-effect` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-16` |
 | Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
@@ -120,6 +125,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Reviewing Prowler UI components | `prowler-ui` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Running makemigrations or pgmakemigrations | `django-migration-psql` |
+| Syncing React state with props, URL params or loaded data | `no-use-effect` |
 | Syncing compliance framework with upstream catalog | `prowler-compliance` |
 | Testing MCP tools or models | `prowler-test-mcp` |
 | Testing RLS tenant isolation | `prowler-test-api` |
@@ -134,6 +140,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Using Zustand stores | `zustand-5` |
+| Verifying a user-visible UI change in the browser | `prowler-ui-browser-review` |
 | Working on MCP server tools | `prowler-mcp` |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui` |
 | Working on task | `tdd` |

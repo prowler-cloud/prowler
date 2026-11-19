@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FileText, Settings, ShieldCheck } from "lucide-react";
+import { FileText, Radar, Settings, ShieldCheck } from "lucide-react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -192,5 +192,44 @@ describe("SidebarNavigation", () => {
       "rel",
       "noopener noreferrer",
     );
+  });
+
+  it("opens the Cloud upgrade from a top-level Cloud feature instead of linking", async () => {
+    // Given
+    const user = userEvent.setup();
+    const returnFocusElement = document.createElement("button");
+    const onSelect = vi.fn(() => returnFocusElement);
+    render(
+      <SidebarNavigation
+        sections={[
+          {
+            label: "SECURITY",
+            items: [
+              {
+                kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+                label: "Realtime",
+                icon: Radar,
+                cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REALTIME,
+              },
+            ],
+          },
+        ]}
+        onSelect={onSelect}
+      />,
+    );
+    const realtime = screen.getByRole("button", { name: /realtime/i });
+
+    // When
+    await user.click(realtime);
+
+    // Then
+    expect(openCloudUpgradeMock).toHaveBeenCalledWith(
+      CLOUD_UPGRADE_FEATURE.REALTIME,
+      returnFocusElement,
+    );
+    expect(realtime).toHaveTextContent("Cloud");
+    expect(
+      screen.queryByRole("link", { name: /realtime/i }),
+    ).not.toBeInTheDocument();
   });
 });
