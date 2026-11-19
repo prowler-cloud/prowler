@@ -810,6 +810,125 @@ describe("RegistryExplorer", () => {
         .toHaveAttribute("href", "https://registry.internal.test/");
     });
 
+    it("connects, not manages, a key when the catalog loads without one", async () => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            credential: onboardingState.credential,
+          }}
+          registryUrl="https://registry.internal.test/"
+        />,
+      );
+
+      // Then: an inline callout sits above the catalog.
+      await expect
+        .element(
+          screen.getByText(
+            "Artifacts open to every workspace install without a key. Connect a Registry API key to add the ones that need approved access.",
+          ),
+        )
+        .toBeVisible();
+      expect(cardFor("AWS guard")).toBeTruthy();
+
+      // When
+      const keyButton = screen.getByRole("button", {
+        name: "Registry API key",
+      });
+      await keyButton.click();
+
+      // Then
+      await expect
+        .element(
+          screen.getByRole("dialog", { name: "Connect Registry API key" }),
+        )
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Disconnect" }))
+        .not.toBeInTheDocument();
+
+      // When
+      await userEvent.keyboard("{Escape}");
+
+      // Then
+      await expect.element(keyButton).toHaveFocus();
+    });
+
+    it("manages, not connects, a stored key the Registry rejected", async () => {
+      // Given: the catalog loads without a valid tenant key, but one is stored
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            credential: {
+              configured: true,
+              isValid: false,
+              scopes: [],
+              validationPending: false,
+            },
+          }}
+        />,
+      );
+
+      // When
+      await screen.getByRole("button", { name: "Registry API key" }).click();
+
+      // Then: the stored key can be replaced or disconnected
+      const dialog = screen.getByRole("dialog", { name: "Registry API key" });
+      await expect
+        .element(dialog.getByText("Rejected by the Registry"))
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Disconnect" }))
+        .toBeVisible();
+    });
+
+    it("asks to replace, not connect, a stored key the Registry rejected", async () => {
+      // Given: the catalog loads without a valid tenant key, but one is stored
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            credential: {
+              configured: true,
+              isValid: false,
+              scopes: [],
+              validationPending: false,
+            },
+          }}
+        />,
+      );
+
+      // Then: the callout names the rejected key instead of asking for one
+      await expect
+        .element(
+          screen.getByText(
+            "The Registry rejected this workspace's API key. Replace it to add the artifacts that need approved access.",
+          ),
+        )
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Connect API key" }))
+        .not.toBeInTheDocument();
+
+      // When
+      const replaceButton = screen.getByRole("button", { name: "Replace key" });
+      await replaceButton.click();
+
+      // Then: the same dialog the header button opens
+      const dialog = screen.getByRole("dialog", { name: "Registry API key" });
+      await expect
+        .element(dialog.getByText("Rejected by the Registry"))
+        .toBeVisible();
+
+      // When
+      await userEvent.keyboard("{Escape}");
+
+      // Then
+      await expect.element(replaceButton).toHaveFocus();
+    });
+
     it("lets a replacement key supersede a pending validation from the banner", async () => {
       // Given: a validation that never settled must not dead-end the user
       submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
@@ -830,6 +949,14 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).toContain(
         "Validating your Registry API key",
       );
+      // aria-busy would hold back the live region's announcement for good.
+      const validatingPanel = Array.from(
+        document.querySelectorAll('[aria-live="polite"]'),
+      ).find((element) =>
+        element.textContent?.includes("Validating your Registry API key"),
+      );
+      expect(validatingPanel).toBeTruthy();
+      expect(validatingPanel?.hasAttribute("aria-busy")).toBe(false);
       await expect
         .element(screen.getByRole("button", { name: "Use a different key" }))
         .toBeEnabled();
@@ -872,6 +999,28 @@ describe("RegistryExplorer", () => {
 
     // Then
     await expect.element(connectButton).toHaveFocus();
+  });
+
+  it("returns focus to the API key button when connecting replaces the banner", async () => {
+    // Given
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: readyState.credential,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await registryKeyInput().fill("registry-test-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: the banner that opened the dialog is gone; focus lands on its replacement
+    await expect
+      .element(screen.getByRole("button", { name: "Registry API key" }))
+      .toHaveFocus();
   });
 
   it("presents the connect dialog with help link and cancel action", async () => {
@@ -1335,8 +1484,7 @@ describe("RegistryExplorer", () => {
     // When: retry succeeds without reopening the dialog.
     disconnectRegistryCredentialMock.mockResolvedValueOnce({
       status: "disconnected",
-      credential: onboardingState.credential,
-      tenantArtifacts: readyState.tenantArtifacts,
+      state: onboardingState,
     });
     await screen.getByRole("button", { name: "Disconnect" }).click();
 
@@ -1346,12 +1494,52 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
-  it("returns to the credential banner after disconnecting Registry access", async () => {
-    // Given
+  it("shows the keyless catalog after disconnecting when it stays readable without a key", async () => {
+    // Given: with the Prowler Cloud key the catalog reads without a tenant key
+    const keylessArtifact = {
+      ...readyState.catalog.artifacts[0],
+      normalizedName: "keyless-guard",
+      name: "Keyless guard",
+    };
     disconnectRegistryCredentialMock.mockResolvedValue({
       status: "disconnected",
-      credential: onboardingState.credential,
-      tenantArtifacts: readyState.tenantArtifacts,
+      state: {
+        ...readyState,
+        credential: onboardingState.credential,
+        catalog: {
+          status: "complete",
+          artifacts: [...readyState.catalog.artifacts, keylessArtifact],
+        },
+      },
+    });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    const keyButton = screen.getByRole("button", { name: "Registry API key" });
+
+    // When
+    await keyButton.click();
+    await screen.getByRole("button", { name: "Disconnect" }).click();
+
+    // Then: the keyless catalog replaces the old one and focus stays on the key button
+    await expect.element(screen.getByText("Keyless guard")).toBeVisible();
+    await expect
+      .element(
+        screen.getByText(
+          "Artifacts open to every workspace install without a key. Connect a Registry API key to add the ones that need approved access.",
+        ),
+      )
+      .toBeVisible();
+    await expect.element(keyButton).toHaveFocus();
+    expect(refreshRegistryCollectionsMock).not.toHaveBeenCalled();
+  });
+
+  it("goes straight to the credential banner after disconnecting Registry access", async () => {
+    // Given: without the Prowler Cloud key the catalog needs a tenant key
+    disconnectRegistryCredentialMock.mockResolvedValue({
+      status: "disconnected",
+      state: {
+        ...onboardingState,
+        tenantArtifacts: readyState.tenantArtifacts,
+      },
     });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
@@ -1359,12 +1547,56 @@ describe("RegistryExplorer", () => {
     await screen.getByRole("button", { name: "Registry API key" }).click();
     await screen.getByRole("button", { name: "Disconnect" }).click();
 
-    // Then
+    // Then: no stale catalog waits for a refresh, and focus lands on Connect
     await expect
-      .poll(() => document.body.textContent)
-      .toContain("Connect your Registry API key");
+      .element(
+        screen.getByRole("heading", { name: "Connect your Registry API key" }),
+      )
+      .toBeVisible();
     expect(document.body.textContent).toContain(
       "The 2 artifacts already in this workspace stay installed.",
+    );
+    await expect
+      .element(screen.getByRole("button", { name: "Connect API key" }))
+      .toHaveFocus();
+    expect(refreshRegistryCollectionsMock).not.toHaveBeenCalled();
+  });
+
+  it("moves focus to Connect API key after disconnecting from the Reconnect panel", async () => {
+    // Given
+    disconnectRegistryCredentialMock.mockResolvedValue({
+      status: "disconnected",
+      state: onboardingState,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={{ status: "reconnect" }} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Replace key" }).click();
+    await screen.getByRole("button", { name: "Disconnect" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("button", { name: "Connect API key" }))
+      .toHaveFocus();
+  });
+
+  it("re-renders the page when disconnecting finds a lapsed subscription", async () => {
+    // Given
+    disconnectRegistryCredentialMock.mockResolvedValue({
+      status: "subscription_required",
+    });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+
+    // When
+    await screen.getByRole("button", { name: "Registry API key" }).click();
+    await screen.getByRole("button", { name: "Disconnect" }).click();
+
+    // Then: the server page swaps in the paid-plan prompt
+    await expect.poll(() => registryRouter.refresh).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).not.toContain(
+      "Registry access could not be disconnected",
     );
   });
 
@@ -1629,8 +1861,8 @@ describe("RegistryExplorer", () => {
         .toBeVisible();
     });
 
-    it("names four providers as focusable icons and the rest in the overflow", async () => {
-      // Given: six providers alternating known and dynamic types
+    it("shows four built-in logos, names the rest of them in the overflow and the dynamic ones in text", async () => {
+      // Given: six built-in providers interleaved with two dynamic types
       const blendedArtifact = {
         ...readyState.catalog.artifacts[2],
         normalizedName: "blended-guard",
@@ -1641,9 +1873,11 @@ describe("RegistryExplorer", () => {
           "aws",
           "template",
           "azure",
-          "custom-scan",
           "gcp",
-          "local_thing",
+          "custom-scan",
+          "kubernetes",
+          "m365",
+          "github",
         ],
       };
 
@@ -1658,8 +1892,8 @@ describe("RegistryExplorer", () => {
         />,
       );
 
-      // Then: the first four are focusable icons, whatever their kind.
-      for (const name of ["AWS", "Template", "Azure", "Custom Scan"]) {
+      // Then: the first four built-ins are focusable logos.
+      for (const name of ["AWS", "Azure", "Google Cloud", "Kubernetes"]) {
         await expect
           .element(screen.getByRole("img", { name, exact: true }))
           .toHaveAttribute("tabindex", "0");
@@ -1668,11 +1902,18 @@ describe("RegistryExplorer", () => {
       await expect
         .element(
           screen.getByRole("img", {
-            name: "2 more: Google Cloud, Local Thing",
+            name: "2 more: Microsoft 365, GitHub",
           }),
         )
         .toHaveAttribute("tabindex", "0");
-      expect(cardFor("Blended guard").textContent).not.toContain("6 providers");
+      // Dynamic types have no logo of their own, so they read as text.
+      const card = page.elementLocator(cardFor("Blended guard"));
+      for (const name of ["Template", "Custom Scan"]) {
+        await expect
+          .element(card.getByText(name, { exact: true }))
+          .toBeVisible();
+      }
+      expect(cardFor("Blended guard").textContent).not.toContain("8 providers");
     });
 
     it("shows a chip per capability, preserves zero counts, and hides missing values", async () => {

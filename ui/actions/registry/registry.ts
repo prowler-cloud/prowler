@@ -334,7 +334,12 @@ function bootstrapFailure(
 export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  return readRegistryBootstrap(access);
+}
 
+async function readRegistryBootstrap(
+  access: string,
+): Promise<RegistryBootstrapResult> {
   const credentialRead = await readRegistryCredential(access);
   if (credentialRead.status !== REGISTRY_CREDENTIAL_READ.STATUS) {
     return bootstrapFailure(credentialRead);
@@ -346,17 +351,28 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
 
   const { credential } = credentialRead;
   const { tenantArtifacts } = tenantArtifactsRead;
-  if (!isActiveRegistryCredential(credential)) {
+  if (credential.validationPending) {
     return bootstrapReady({
-      status: credential.validationPending
-        ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
-        : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
+      status: REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING,
       credential,
       tenantArtifacts,
     });
   }
 
   const catalog = await readCompleteRegistryCatalog(access, credential);
+  // With the Prowler Cloud key the API serves the catalog without a tenant
+  // key; without it the API asks for one and the tenant onboards, as before.
+  // Any other failure is the Registry's, and a key would not fix it.
+  if (
+    !isActiveRegistryCredential(credential) &&
+    catalog.status === REGISTRY_FAILURE.ONBOARDING
+  ) {
+    return bootstrapReady({
+      status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
+      credential,
+      tenantArtifacts,
+    });
+  }
   if (
     catalog.status === REGISTRY_FAILURE.ACCESS_DENIED ||
     catalog.status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED
@@ -609,15 +625,11 @@ export async function disconnectRegistryCredential(): Promise<RegistryCredential
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
 
-  const credential = await readRegistryCredential(access);
-  const tenantArtifacts = await readRegistryTenantArtifacts(access);
-  if (credential.status !== REGISTRY_CREDENTIAL_READ.STATUS) return credential;
-  if (tenantArtifacts.status !== "ready") return tenantArtifacts;
   if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };
 
-  return {
-    status: REGISTRY_CREDENTIAL_ACTION.DISCONNECTED,
-    credential: credential.credential,
-    tenantArtifacts: tenantArtifacts.tenantArtifacts,
-  };
+  // The page a reload would show: the keyless catalog, or onboarding.
+  const next = await readRegistryBootstrap(access);
+  return next.status === REGISTRY_BOOTSTRAP_STATE.READY
+    ? { status: REGISTRY_CREDENTIAL_ACTION.DISCONNECTED, state: next.state }
+    : next;
 }
