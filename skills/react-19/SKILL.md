@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1"
+  version: "1.2"
   scope: [root, ui]
   auto_invoke: "Writing React components"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -14,7 +14,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## No Manual Memoization (REQUIRED)
 
-Prowler UI enables the React Compiler (`reactCompiler: true` in `ui/next.config.js`), so manual memoization is unnecessary.
+Prowler UI enables the React Compiler (`reactCompiler: true` in `ui/next.config.js`), so manual memoization is unnecessary. Lint rejects `memo`, `useMemo`, `useCallback` and default or namespace `react` imports, and runs the `react-hooks` compiler rules. For effects, follow `no-use-effect`.
 
 ```typescript
 // ✅ React Compiler handles optimization automatically
@@ -118,6 +118,22 @@ function Form() {
 ```
 
 Most Prowler forms use `react-hook-form` + `zodResolver` and call the server action from `handleSubmit` instead (see `prowler-ui`).
+
+## react-hook-form Under the Compiler
+
+The compiler caches blocks keyed on the stable `form` object. A `form.formState.<field>` read inside a cached expression never updates (a submit button stayed disabled this way), and `form.watch()` makes the compiler skip the whole component:
+
+```typescript
+// ❌ Stale value or a skipped component
+const mode = form.watch("mode");
+const options = { canSubmit: form.formState.isValid };
+
+// ✅ Subscribe through hooks
+const mode = useWatch({ control: form.control, name: "mode" });
+const { isValid, isSubmitting } = useFormState({ control: form.control });
+```
+
+`react-hooks/incompatible-library` reports `watch()` (and TanStack's `useReactTable`); stale `formState` reads have no lint rule. Unit tests (jsdom) do not compile with the React Compiler, so cover this in a `*.integration.test.tsx`.
 
 ## ref as Prop (No forwardRef)
 

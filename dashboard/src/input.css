@@ -30,90 +30,90 @@
   }
 }
 
-#_dash-app-content {
+#react-entry-point {
   @apply bg-prowler-stone-500;
 }
 
 /* Styles for the accordion in the compliance page */
-#_dash-app-content .accordion .accordion-header .accordion-button {
+#react-entry-point .accordion .accordion-header .accordion-button {
   @apply text-prowler-stone-900 inline-block px-4 text-xs font-bold uppercase transition-all rounded-lg bg-prowler-stone-300 hover:bg-prowler-stone-900/10;
 }
 
-#_dash-app-content .accordion .accordion-item {
+#react-entry-point .accordion .accordion-item {
   @apply text-prowler-stone-900 bg-prowler-white rounded-lg;
 }
 
-#_dash-app-content .accordion .accordion-collapse.collapse {
+#react-entry-point .accordion .accordion-collapse.collapse {
   @apply visible
 }
 
-#_dash-app-content .accordion .accordion-button:not(.collapsed) {
+#react-entry-point .accordion .accordion-button:not(.collapsed) {
   @apply text-prowler-stone-900 bg-prowler-stone-500;
 }
 
-#_dash-app-content .accordion .dash-table-container {
+#react-entry-point .accordion .dash-table-container {
   @apply grid;
 }
 
-#_dash-app-content .accordion table {
+#react-entry-point .accordion table {
   @apply rounded-lg;
 }
 /* Styles for thead */
-#_dash-app-content .accordion th {
+#react-entry-point .accordion th {
   @apply text-prowler-white text-left bg-prowler-stone-900 text-xs py-1 font-bold;
 }
 
 /* Styles for td */
-#_dash-app-content .accordion td {
+#react-entry-point .accordion td {
   @apply text-prowler-stone-900 text-left bg-prowler-white text-xs py-1 font-light;
 }
 
 /* Styles for table cells */
-#_dash-app-content .accordion table tbody thead,
-#_dash-app-content .accordion table tbody tr {
+#react-entry-point .accordion table tbody thead,
+#react-entry-point .accordion table tbody tr {
   @apply w-full;
 }
 
 /* Check ID */
-#_dash-app-content .accordion table th:nth-child(1) {
+#react-entry-point .accordion table th:nth-child(1) {
   @apply w-[60%];
 }
 /* Status */
-#_dash-app-content .accordion table th:nth-child(2) {
+#react-entry-point .accordion table th:nth-child(2) {
   @apply w-[10%] text-center;
 }
-#_dash-app-content .accordion table td:nth-child(2) {
+#react-entry-point .accordion table td:nth-child(2) {
   @apply text-center;
 }
 /* Region */
-#_dash-app-content .accordion table th:nth-child(3) {
+#react-entry-point .accordion table th:nth-child(3) {
   @apply w-[10%];
 }
 /* Account ID */
-#_dash-app-content .accordion table th:nth-child(4) {
+#react-entry-point .accordion table th:nth-child(4) {
   @apply w-[10%];
 }
 /* Resource ID */
-#_dash-app-content .accordion table th:nth-child(5) {
+#react-entry-point .accordion table th:nth-child(5) {
   @apply w-[10%];
 }
 
-#_dash-app-content .compliance-data-layout,
-#_dash-app-content .accordion-body,
-#_dash-app-content .compliance-data-layout .accordion.accordion-flush {
+#react-entry-point .compliance-data-layout,
+#react-entry-point .accordion-body,
+#react-entry-point .compliance-data-layout .accordion.accordion-flush {
   @apply grid gap-y-4;
 }
 
-#_dash-app-content .accordion-inner--child,
-#_dash-app-content .accordion-inner {
+#react-entry-point .accordion-inner--child,
+#react-entry-point .accordion-inner {
   @apply relative;
 }
 
-#_dash-app-content .info-bar {
+#react-entry-point .info-bar {
   @apply absolute left-1/2 transform -translate-x-1/2 top-2 h-8 z-50;
 }
 
-#_dash-app-content .info-bar-child {
+#react-entry-point .info-bar-child {
   @apply absolute right-6 top-2 w-auto h-8 z-50;
 }
 

@@ -278,6 +278,31 @@ describe("Registry marketplace model", () => {
     );
   });
 
+  it("returns built-ins apart from Registry artifacts, sorted the same way", () => {
+    // Given
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("zeta-builtin", { isBuiltin: true, totalDownloads: 1 }),
+        artifact("beta", { totalDownloads: 2 }),
+        artifact("alpha-builtin", { isBuiltin: true, totalDownloads: 7 }),
+        artifact("alpha", { totalDownloads: 3 }),
+      ],
+    };
+
+    // When
+    const model = buildRegistryMarketplaceModel(catalog, [], {}, "downloads");
+
+    // Then
+    if (!model.isComplete) throw new Error("expected complete model");
+    expect(model.artifacts.map(({ normalizedName }) => normalizedName)).toEqual(
+      ["alpha", "beta"],
+    );
+    expect(
+      model.builtinArtifacts.map(({ normalizedName }) => normalizedName),
+    ).toEqual(["alpha-builtin", "zeta-builtin"]);
+  });
+
   it("keeps incomplete catalogs out of complete-only controls and selectors", () => {
     // Given
 

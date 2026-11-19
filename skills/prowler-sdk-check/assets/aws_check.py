@@ -1,5 +1,5 @@
-# Example: AWS S3 bucket object versioning check (PASS / FAIL / MANUAL)
-# Source: prowler/providers/aws/services/s3/s3_bucket_object_versioning/s3_bucket_object_versioning.py
+# Example: AWS S3 bucket object versioning check (PASS / FAIL / no finding)
+# Based on: prowler/providers/aws/services/s3/s3_bucket_object_versioning/s3_bucket_object_versioning.py
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
@@ -10,23 +10,22 @@ class s3_bucket_object_versioning(Check):
 
     - PASS: Versioning is enabled.
     - FAIL: Versioning is disabled.
-    - MANUAL: The versioning configuration could not be retrieved (missing
-      permissions), so the status cannot be asserted.
+    - No finding: The versioning configuration could not be retrieved (missing
+      permissions). Never MANUAL; the service already logged the error.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
         """Evaluate versioning for every audited bucket.
 
         Returns:
-            list[Check_Report_AWS]: One report per bucket.
+            list[Check_Report_AWS]: One report per bucket whose versioning could be read.
         """
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             if not bucket.versioning_retrieved:
-                report.status = "MANUAL"
-                report.status_extended = f"Cannot evaluate versioning for S3 Bucket {bucket.name}: the versioning configuration could not be retrieved. Verify that the scanning credentials are allowed to call s3:GetBucketVersioning."
-            elif bucket.versioning:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
+            if bucket.versioning:
                 report.status = "PASS"
                 report.status_extended = (
                     f"S3 Bucket {bucket.name} has versioning enabled."

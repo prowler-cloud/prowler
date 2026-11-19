@@ -131,7 +131,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | GCP | 110 | 20 | 22 | 12 | Official | UI, API, CLI |
 | Kubernetes | 92 | 7 | 11 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
-| M365 | 144 | 10 | 9 | 10 | Official | UI, API, CLI |
+| M365 | 144 | 10 | 10 | 10 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
 | Cloudflare | 43 | 5 | 3 | 9 | Official | UI, API, CLI |

@@ -4,6 +4,24 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.51.0] (Prowler v5.50.0)
+
+### 🔄 Changed
+
+- `PATCH /api/v1/users/{id}` accepts `email` and `password` changes only from the user themselves [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+### 🐞 Fixed
+
+- Sessions started through SAML SSO or with an API key stay in the organization that issued them: they only see and manage that organization, `POST /api/v1/tokens/switch` does not move them to another one and rejects API keys, and users who belong to several organizations cannot change the account password or email or delete the account from such a session [(#13381)](https://github.com/prowler-cloud/prowler/pull/13381)
+
+### 🔐 Security
+
+- Compliance PDF reports escape the values of the cover page information table, so markup in a provider alias or UID is printed as text and no longer makes the report worker fetch an image URL [(#13378)](https://github.com/prowler-cloud/prowler/pull/13378)
+- Lighthouse OpenAI-compatible base URL validation rejects IPv4-compatible (`::a.b.c.d`) and IPv4-translated (`::ffff:0:a.b.c.d`) IPv6 literals, which were classified as public even when the embedded IPv4 address was private or link-local [(#13379)](https://github.com/prowler-cloud/prowler/pull/13379)
+- Attack Paths custom queries are validated with backtick-quoted identifiers unquoted, reject `\u` escapes and block `apoc.when`, `apoc.case`, `apoc.graph` and `apoc.spatial`, and the tokenizer follows Neo4j on line comments ended by a carriage return and on escaped newlines in strings, so a blocked operation can no longer be hidden behind quoting, escapes or comments, or passed as a nested query string [(#13380)](https://github.com/prowler-cloud/prowler/pull/13380)
+
+---
+
 ## [1.50.0] (Prowler v5.49.0)
 
 ### 🔄 Changed
