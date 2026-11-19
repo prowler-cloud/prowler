@@ -127,11 +127,13 @@ def extract_host(url: str) -> str:
         raise OutboundURLNotAllowedError("Could not read a host from the supplied URL")
     # urllib3, which requests and the kubernetes client dial through, ends the
     # authority at a backslash; urlparse does not, so the two can disagree on the host
-    if _dialed_host(url) not in (host, _idna_form(host)):
+    dialed = _dialed_host(url)
+    if dialed not in (host, _idna_form(host)):
         raise OutboundURLNotAllowedError(
             "The supplied URL has an ambiguous host and cannot be reached"
         )
-    return host
+    # The dialed form: getaddrinfo would encode a Unicode host with the stdlib codec
+    return dialed
 
 
 def _dialed_host(url: str) -> str | None:

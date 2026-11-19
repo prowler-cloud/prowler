@@ -261,13 +261,19 @@ class TestExtractHost:
     @pytest.mark.parametrize(
         "url, expected",
         [
-            ("https://münchen.de:8443/v3", "münchen.de"),
-            ("https://straße.de/", "straße.de"),
-            ("https://例え.jp/", "例え.jp"),
+            ("https://münchen.de:8443/v3", "xn--mnchen-3ya.de"),
+            ("https://straße.de/", "xn--strae-oqa.de"),
+            ("https://例え.jp/", "xn--r8jz45g.jp"),
         ],
     )
-    def test_reads_an_internationalised_host(self, url, expected):
+    def test_reads_an_internationalised_host_in_its_dialed_form(self, url, expected):
         assert extract_host(url) == expected
+
+    def test_resolves_the_internationalised_host_the_client_dials(self):
+        with _resolves_to("93.184.215.14") as getaddrinfo:
+            validate_outbound_url("https://straße.de/")
+
+        assert getaddrinfo.call_args[0][0] == "xn--strae-oqa.de"
 
     def test_ignores_surrounding_whitespace(self):
         assert extract_host("  https://example.com/  ") == "example.com"
