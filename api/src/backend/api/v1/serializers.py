@@ -4,6 +4,11 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 import yaml
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    is_api_key_session,
+    session_bound_tenant_id,
+)
 from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
@@ -60,8 +65,12 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    validate_gcp_service_account_key,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from config.custom_logging import BackendLogger
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -153,7 +162,9 @@ class StateEnumSerializerField(serializers.ChoiceField):
 # Tokens
 
 
-def generate_tokens(user: User, tenant_id: str) -> dict:
+def generate_tokens(
+    user: User, tenant_id: str, sso_tenant_id: str | None = None
+) -> dict:
     try:
         refresh = RefreshToken.for_user(user)
     except InvalidKeyError:
@@ -170,6 +181,8 @@ def generate_tokens(user: User, tenant_id: str) -> dict:
     # Post-process the tokens
     # Set the tenant_id
     refresh["tenant_id"] = tenant_id
+    if sso_tenant_id:
+        refresh[SSO_TENANT_CLAIM] = sso_tenant_id
 
     # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
     # way to set the nbf claim
@@ -208,7 +221,9 @@ class BaseTokenSerializer(TokenObtainPairSerializer):
                 raise ValidationError("User has no memberships.")
             tenant_id = str(first_membership.tenant_id)
 
-        return generate_tokens(user, tenant_id)
+        return generate_tokens(
+            user, tenant_id, sso_tenant_id=self.context.get(SSO_TENANT_CLAIM)
+        )
 
 
 class TokenSerializer(BaseTokenSerializer):
@@ -254,6 +269,29 @@ class TokenSocialLoginSerializer(BaseTokenSerializer):
 
     def validate(self, attrs):
         return super().custom_validate(attrs, social=True)
+
+
+class AuthorizationCodeSocialLoginSerializer(SocialLoginSerializer):
+    """Social login that only accepts an OAuth authorization code.
+
+    A caller-supplied access_token or id_token may have been issued to any
+    OAuth client, so trusting it lets anyone holding such a token for a victim
+    sign in as them. Exchanging the code with Prowler's own client secret
+    guarantees the token was issued to Prowler.
+    """
+
+    def validate(self, attrs):
+        if attrs.get("access_token") or attrs.get("id_token"):
+            raise serializers.ValidationError(
+                "Only the OAuth authorization code flow is supported.",
+                code="social-login-token-not-allowed",
+            )
+        if not attrs.get("code"):
+            raise serializers.ValidationError(
+                "An OAuth authorization code is required.",
+                code="social-login-code-required",
+            )
+        return super().validate(attrs)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -320,11 +358,25 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
         if not user.is_authenticated:
             raise ValidationError("Invalid or expired token.")
 
+        if is_api_key_session(request):
+            raise ValidationError(
+                "API keys cannot be exchanged for a session token.",
+                code="session-bound-to-tenant",
+            )
+
         tenant_id = str(attrs.get("tenant_id"))
         if not user.is_member_of_tenant(tenant_id):
             raise ValidationError("Tenant does not exist or user is not a member.")
 
-        return generate_tokens(user, tenant_id)
+        bound_tenant_id = session_bound_tenant_id(request)
+        if bound_tenant_id and bound_tenant_id != tenant_id:
+            raise ValidationError(
+                "This session can only access the organization it signed in to. "
+                "Sign in again to switch to another organization.",
+                code="session-bound-to-tenant",
+            )
+
+        return generate_tokens(user, tenant_id, sso_tenant_id=bound_tenant_id)
 
 
 # Users
@@ -1920,6 +1972,13 @@ class GCPProviderSecret(serializers.Serializer):
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
+
+    def validate_service_account_key(self, service_account_key):
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return service_account_key
 
     class Meta:
         resource_name = "provider-secrets"

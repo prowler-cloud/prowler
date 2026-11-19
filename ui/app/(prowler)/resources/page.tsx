@@ -22,7 +22,10 @@ import {
   hasDateOrScanFilter,
   replaceFieldKey,
 } from "@/lib";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { ResourceProps, SearchParamsProps } from "@/types";
+
+import { ResourcesSamplePreview } from "./_components/resources-sample-preview";
 
 export default async function Resources({
   searchParams,
@@ -30,6 +33,20 @@ export default async function Resources({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
+
+  // No completed scan yet: the demo account stands in for the tenant's resources.
+  const preview = await getSamplePreviewState();
+  if (preview.active) {
+    return (
+      <ContentLayout title="Resources" icon={<Warehouse />}>
+        <ResourcesSamplePreview
+          state={preview}
+          searchParams={resolvedSearchParams}
+        />
+      </ContentLayout>
+    );
+  }
+
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
   const outputFilters = replaceFieldKey(filters, "inserted_at", "updated_at");

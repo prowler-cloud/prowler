@@ -1,0 +1,1 @@
+Scan outputs no longer keep an uncompressed copy of the files already inside the report ZIP: without an output bucket only the ZIP stays on disk and compliance downloads are served from it, and in the output bucket compliance files are stored with `Content-Encoding: gzip`

@@ -524,12 +524,6 @@ vi.mock("../finding-triage-cells", () => ({
     ) : (
       <span>-</span>
     ),
-  FindingTriageStatusBadge: ({ triage }: { triage: { label: string } }) => (
-    <div>
-      <span>Triage:</span>
-      <span>{triage.label}</span>
-    </div>
-  ),
 }));
 
 vi.mock("./resource-detail-skeleton", () => ({
@@ -710,6 +704,89 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     expect(viewResourceLink).not.toHaveAttribute("aria-label");
     const srOnlyLabel = viewResourceLink.querySelector(".sr-only");
     expect(srOnlyLabel).toHaveTextContent("View Resource");
+  });
+});
+
+describe("ResourceDetailDrawerContent — sample data", () => {
+  it("does not navigate to compliance details for a nonexistent sample scan", async () => {
+    // Given
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          id: "sample-finding-s3_bucket_public_access-1",
+          resourceId: "sample-resource-s3_bucket-1",
+          scan: {
+            id: "sample-scan",
+            name: "Sample scan",
+            trigger: "manual",
+            state: "completed",
+            uniqueResourceCount: 24,
+            progress: 100,
+            duration: 742,
+            startedAt: "2026-10-28T09:12:00Z",
+            completedAt: "2026-10-28T09:12:00Z",
+            insertedAt: "2026-10-28T09:12:00Z",
+            scheduledAt: null,
+          },
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const link = screen.queryByRole("button", {
+      name: "Open PCI-DSS 4.0 compliance details",
+    });
+    if (link) await user.click(link);
+
+    // Then
+    expect(mockWindowOpen).not.toHaveBeenCalled();
+  });
+
+  it("should not link sample resources to pages or consoles that lack them", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          id: "sample-finding-s3_bucket_public_access-1",
+          resourceId: "sample-resource-s3_bucket-1",
+          resourceUid: "arn:aws:s3:::acme-customer-exports",
+          providerType: "aws",
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: "View Resource" }),
+    ).not.toBeInTheDocument();
+    const hrefs = Array.from(container.querySelectorAll("a")).map((link) =>
+      link.getAttribute("href"),
+    );
+    expect(hrefs.filter((href) => href?.includes("aws.amazon.com"))).toEqual(
+      [],
+    );
   });
 });
 

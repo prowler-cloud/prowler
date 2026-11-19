@@ -142,6 +142,9 @@ class VirtualMachines(AzureService):
                                     "id",
                                     None,
                                 ),
+                                image=self._get_image_details(
+                                    getattr(storage_profile, "image_reference", None)
+                                ),
                                 linux_configuration=linux_configuration,
                             )
                         }
@@ -152,6 +155,28 @@ class VirtualMachines(AzureService):
                 )
 
         return virtual_machines
+
+    @staticmethod
+    def _get_image_details(image_reference) -> Optional["VirtualMachineImage"]:
+        """Every name Azure reports for the image a VM was created from."""
+        if image_reference is None:
+            return None
+        fields = {
+            "id": getattr(image_reference, "id", None),
+            "publisher": getattr(image_reference, "publisher", None),
+            "offer": getattr(image_reference, "offer", None),
+            "sku": getattr(image_reference, "sku", None),
+            "version": getattr(image_reference, "exact_version", None)
+            or getattr(image_reference, "version", None),
+            "shared_gallery_image_id": getattr(
+                image_reference, "shared_gallery_image_id", None
+            ),
+            "community_gallery_image_id": getattr(
+                image_reference, "community_gallery_image_id", None
+            ),
+        }
+        fields = {k: v for k, v in fields.items() if isinstance(v, str) and v}
+        return VirtualMachineImage(**fields) if fields else None
 
     def _get_disks(self):
         logger.info("VirtualMachines - Getting disks...")
@@ -349,6 +374,44 @@ class LinuxConfiguration(BaseModel):
     disable_password_authentication: bool
 
 
+class VirtualMachineImage(BaseModel):
+    """The image a VM was created from: a marketplace reference or a gallery or custom image id."""
+
+    id: Optional[str] = None
+    publisher: Optional[str] = None
+    offer: Optional[str] = None
+    sku: Optional[str] = None
+    version: Optional[str] = None
+    shared_gallery_image_id: Optional[str] = None
+    community_gallery_image_id: Optional[str] = None
+
+    @property
+    def names(self) -> list[str]:
+        """Every name worth matching: the image name in each id, then offer/SKU.
+
+        Only the image segment of an id is a name. The whole id would let a
+        pattern match the subscription, resource group or gallery instead.
+        """
+        names = []
+        for image_id in (
+            self.id,
+            self.shared_gallery_image_id,
+            self.community_gallery_image_id,
+        ):
+            if image_id:
+                parts = [part for part in image_id.split("/") if part]
+                # .../images/<definition-or-name>[/versions/<version>]; the last
+                # "images" segment, since a gallery may itself be named so.
+                keys = [
+                    i for i, part in enumerate(parts[:-1]) if part.lower() == "images"
+                ]
+                if keys:
+                    names.append(parts[keys[-1] + 1])
+        if self.offer or self.sku:
+            names.append("-".join(p for p in (self.offer, self.sku, self.version) if p))
+        return names
+
+
 class VirtualMachine(BaseModel):
     resource_id: str
     resource_name: str
@@ -358,6 +421,7 @@ class VirtualMachine(BaseModel):
     storage_profile: Optional[StorageProfile] = None
     vm_size: Optional[str] = None
     image_reference: Optional[str] = None
+    image: Optional[VirtualMachineImage] = None
     linux_configuration: Optional[LinuxConfiguration] = None
 
 

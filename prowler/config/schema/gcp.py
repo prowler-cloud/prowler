@@ -6,6 +6,7 @@ from pydantic import AfterValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.validators import make_dotted_version_validator
+from prowler.lib.threats.models import ThreatSignatureList
 
 _validate_php_branch = make_dotted_version_validator(2, 2)
 
@@ -15,6 +16,16 @@ class GCPProviderConfig(ProviderConfigBase):
         default=None,
         max_length=512,
         description="API key for Shodan lookups on GCP public IPs.",
+    )
+
+    # --- Emerging threats -------------------------------------------------
+    threat_signatures: Optional[ThreatSignatureList] = Field(
+        default=None,
+        description=(
+            "Emerging threats to match compute instances against, in addition to "
+            "the signatures Prowler ships. A signature with the id of a built-in "
+            "one replaces it. See prowler/lib/threats/models.py for the format."
+        ),
     )
     mig_min_zones: Optional[int] = Field(
         default=None,

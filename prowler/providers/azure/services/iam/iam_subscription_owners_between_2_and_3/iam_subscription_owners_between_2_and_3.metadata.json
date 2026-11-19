@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "iam_subscription_owners_between_2_and_3",
+  "CheckTitle": "Subscription has between 2 and 3 principals assigned the Owner role",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.resources/subscriptions",
+  "ResourceGroup": "IAM",
+  "Description": "**Azure subscriptions** are evaluated for the number of principals holding the **Owner** role, whether assigned on the subscription or inherited from a management group. Users, groups, service principals and managed identities each count as one principal.",
+  "Risk": "**Too many owners** widen the set of identities that can change any resource, grant access or delete workloads, so one compromised account gains full control.\n\n**A single owner** is a single point of failure: if that account is lost or disabled, nobody can manage access or respond to incidents.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/best-practices",
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#owner",
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-remove"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az role assignment create --assignee <principal_id_or_upn> --role Owner --scope /subscriptions/<subscription_id>",
+      "NativeIaC": "",
+      "Other": "1. In the Azure portal, open Subscriptions and select the subscription\n2. Go to Access control (IAM) > Role assignments and filter by Role = Owner\n3. If more than 3 principals are listed, select the extra direct assignments (Scope: This resource) and remove them\n4. Remove extra inherited assignments where they are granted: click the link next to (Inherited) in the Scope column and remove the assignment at that management group or root scope\n5. If fewer than 2 are listed, click Add > Add role assignment and assign Owner to a second administrator or group",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep **2 to 3 standing owners** per subscription so access can always be recovered without concentrating full control:\n- Grant day-to-day work through narrower roles such as Contributor\n- Use **PIM** for just-in-time Owner elevation\n- Review Owner assignments and group membership regularly",
+      "Url": "https://hub.prowler.com/check/iam_subscription_owners_between_2_and_3"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Counts unique principals with an active Owner assignment on the subscription or inherited from a management group or the root scope, and reports the direct and inherited split. PIM-eligible assignments are not counted."
+}
