@@ -542,6 +542,8 @@ class TestValidation:
             "USE graph.byName('db-tenant-other') MATCH (n) RETURN n",
             "SHOW DATABASES YIELD name RETURN name",
             "SHOW PROCEDURES YIELD name RETURN name",
+            "CYPHER 5USE `db-tenant-other` MATCH (n) RETURN n",
+            "CYPHER 5SHOW DATABASES YIELD name RETURN name",
         ],
         ids=[
             "USE_backticked_database",
@@ -552,6 +554,8 @@ class TestValidation:
             "USE_graph_byName",
             "SHOW_DATABASES",
             "SHOW_PROCEDURES",
+            "USE_glued_to_CYPHER_version",
+            "SHOW_glued_to_CYPHER_version",
         ],
     )
     def test_rejects_queries_that_leave_the_session_database(self, cypher):
