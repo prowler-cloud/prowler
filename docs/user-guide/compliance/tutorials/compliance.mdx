@@ -81,7 +81,7 @@ When the selected scan includes Prowler ThreatScore data, a dedicated card appea
 
 <img src="/images/compliance/prowler-app-compliance-threatscore-card.png" alt="Prowler ThreatScore badge on the Compliance overview showing the overall score and per-pillar bars" width="900" />
 
-Selecting the card opens the ThreatScore framework detail page, covered in [Working With the Framework Detail Page](#working-with-the-framework-detail-page).
+Selecting the card opens the ThreatScore framework detail page, covered in [Working with the Framework Detail Page](#working-with-the-framework-detail-page).
 
 For a complete explanation of the methodology, formula, and weighting, see [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore).
 
@@ -103,7 +103,7 @@ Select any card to open the framework detail page.
 Score color coding follows three thresholds: red for severely low compliance, amber for partial compliance, and green for healthy posture. Hover over the score for the exact percentage.
 </Note>
 
-### Tracking Frameworks With the Compliance Watchlist
+### Tracking Frameworks with the Compliance Watchlist
 
 <VersionBadge version="5.38.0" />
 
@@ -125,7 +125,7 @@ Every framework card carries a pin button in its top-right corner. Select the pi
 Universal frameworks (CSA CCM, CIS Controls, DORA) are a single watchlist entry. Pinning one of them from any surface shows it as pinned on the others.
 </Note>
 
-#### Filtering With the Watchlist
+#### Filtering with the Watchlist
 
 Two controls sit above the tabs, because both tabs read the same watchlist:
 
@@ -146,7 +146,7 @@ The **Compliance Watchlist** card on the Overview page lists exactly the pinned 
 In Prowler Local Server, where the watchlist is not available, the card keeps its previous behavior and ranks every framework with scan data.
 </Note>
 
-### Working With the Framework Detail Page
+### Working with the Framework Detail Page
 
 The detail page provides everything needed to evaluate a single framework: aggregate metrics, top failure sections, and a requirement-by-requirement view.
 
@@ -176,7 +176,7 @@ Select a requirement to open the detail panel and review the failing checks, the
 
 <img src="/images/compliance/prowler-app-compliance-requirements-accordion.png" alt="Expanded CIS requirement showing description, rationale, remediation procedure, audit procedure, profile and assessment tags, references, and the underlying check" width="900" />
 
-##### Frameworks With Custom Detail Layouts
+##### Frameworks with Custom Detail Layouts
 
 Several frameworks include enriched detail panels that highlight fields specific to the standard:
 
@@ -209,7 +209,7 @@ The cap is configurable per deployment via the `DJANGO_PDF_MAX_FINDINGS_PER_CHEC
 Only **failed** findings are rendered in the detail section. PASS findings for the same check are excluded at query time. The PDF surfaces what needs attention, and the CSV/JSON exports surface everything for forensic review.
 </Note>
 
-#### Downloading From the Detail Page
+#### Downloading from the Detail Page
 
 Inside any framework detail page, the **CSV** and **PDF** buttons in the header trigger the same downloads as the overview dropdown. The PDF button only appears for frameworks that support it.
 
