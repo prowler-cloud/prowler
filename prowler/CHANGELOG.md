@@ -4,6 +4,52 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.51.0] (Prowler v5.51.0)
+
+### 🚀 Added
+
+- `bedrock_imported_model_encrypted_with_cmk` check for AWS Bedrock imported models using customer-managed KMS keys [(#12668)](https://github.com/prowler-cloud/prowler/pull/12668)
+- `bedrockagentcore_runtime_jwt_identity_propagation_configured` check for AWS provider, verifying Amazon Bedrock AgentCore runtimes with a custom JWT authorizer forward the end-user `Authorization` header to the agent [(#12762)](https://github.com/prowler-cloud/prowler/pull/12762)
+- `bedrock_flow_guardrail_enabled` check for AWS provider, verifying Amazon Bedrock Flows apply a guardrail to applicable prompt and knowledge base nodes [(#12772)](https://github.com/prowler-cloud/prowler/pull/12772)
+- ENS RD 311/2022 compliance framework for the M365 provider, with a dedicated CSV output formatter [(#13394)](https://github.com/prowler-cloud/prowler/pull/13394)
+- SharePoint Online requirements from the CCN-STIC-885B guide in the ENS RD 311/2022 compliance framework for the M365 provider [(#13408)](https://github.com/prowler-cloud/prowler/pull/13408)
+- Microsoft Teams requirements from the CCN-STIC-885D guide in the ENS RD 311/2022 compliance framework for the M365 provider [(#13409)](https://github.com/prowler-cloud/prowler/pull/13409)
+- Exchange Online requirements from the CCN-STIC-885C guide in the ENS RD 311/2022 compliance framework for the M365 provider [(#13411)](https://github.com/prowler-cloud/prowler/pull/13411)
+
+### 🔄 Changed
+
+- ENS RD 311/2022 compliance framework for the M365 provider now follows the May 2024 edition of the CCN-STIC-885A guide: passwords that never expire, strong passwords and the banned-password list, MFA for external users and incident management [(#13413)](https://github.com/prowler-cloud/prowler/pull/13413)
+- `inspector2_active_findings_no_known_exploited_vulnerabilities` and `inspector2_active_findings_kev_within_due_date` now evaluate only active findings with a public exploit by default; set `inspector2_kev_include_findings_without_exploit` to `true` to evaluate every active finding [(#13435)](https://github.com/prowler-cloud/prowler/pull/13435)
+- `inspector2_active_findings_within_max_age` reports the age of the oldest stale finding without the number of stale findings [(#13435)](https://github.com/prowler-cloud/prowler/pull/13435)
+
+### 🐞 Fixed
+
+- `cloudtrail_s3_dataevents_read_enabled` and `cloudtrail_s3_dataevents_write_enabled` no longer pass on an advanced event selector whose `readOnly` field excludes the event type the check is for [(#13144)](https://github.com/prowler-cloud/prowler/pull/13144)
+- `network_default_security_list_restricts_traffic` now tests ingress sources against the VCN CIDR blocks by network containment instead of string prefix, so broader ranges such as `10.0.0.0/8` fail and subnets inside the VCN pass [(#13267)](https://github.com/prowler-cloud/prowler/pull/13267)
+- `compute_firewall_ssh_access_from_the_internet_allowed` and `compute_firewall_rdp_access_from_the_internet_allowed` checks no longer report disabled firewall rules as exposing SSH or RDP to the internet [(#13296)](https://github.com/prowler-cloud/prowler/pull/13296)
+- AWS Backup selections are now queried only in the matching Region, preventing cross-Region lookup failures and incomplete backup protection inventories in multi-Region scans [(#13341)](https://github.com/prowler-cloud/prowler/pull/13341)
+- The `apigatewayv2_api_access_logging_enabled` check reports an independent access logging finding for each stage [(#13347)](https://github.com/prowler-cloud/prowler/pull/13347)
+- `iam_policy_allows_privilege_escalation` and `iam_inline_policy_allows_privilege_escalation` no longer report every policy as PASS: the retired `codestar:CreateProject` combination is removed and an unknown action now skips only its own combination [(#13363)](https://github.com/prowler-cloud/prowler/pull/13363)
+- AWS SES scans collect email identities across all pages returned by `ListEmailIdentities` [(#13367)](https://github.com/prowler-cloud/prowler/pull/13367)
+- GCP Compute subnetworks are now discovered with `subnetworks().aggregatedList`, so subnets in every region are scanned, and `addresses` pagination no longer uses the `subnetworks` client [(#13390)](https://github.com/prowler-cloud/prowler/pull/13390)
+- Output writers no longer leave the file open and incomplete when the last streamed batch has no rows, which truncated CSV outputs and left OCSF and HTML outputs unterminated [(#13396)](https://github.com/prowler-cloud/prowler/pull/13396)
+- `bedrockagentcore_runtime_vpc_configured`, `bedrockagentcore_full_access_policy_attached` and `bedrockagentcore_payments_process_payment_role_separation` no longer report MANUAL findings when Bedrock AgentCore runtimes, IAM roles or role policies cannot be read; those resources now produce no finding [(#13401)](https://github.com/prowler-cloud/prowler/pull/13401)
+- Compliance CSV outputs no longer repeat every manual requirement once per batch when a writer streams the findings in batches, as the API does [(#13402)](https://github.com/prowler-cloud/prowler/pull/13402)
+- Inspector2 resource metadata no longer includes every active finding and covered resource of the Region, which made the stored resource grow to hundreds of megabytes on accounts with many findings [(#13406)](https://github.com/prowler-cloud/prowler/pull/13406)
+- Vercel preview, production, and Skew Protection checks read project protection settings from the Vercel API response [(#13414)](https://github.com/prowler-cloud/prowler/pull/13414)
+- ENS RD 311/2022 for AWS: three `op.exp.10` key policy requirements that CCN-STIC-887A leaves to manual review no longer list enclave attestation checks, `op.acc.6.r9` is no longer split into an `op.acc.6.9` group, `mp.com.4` and `mp.sw.2` requirements are filed under the category of their measure, and four requirement ids are renamed to name the measure they are filed under: `op.ext.7.aws.am.1` to `op.exp.7.aws.am.1`, `op.exp.1.r3.aws.tag.1` to `op.exp.1.r4.aws.tag.1`, `op.exp.3.r4.aws.cfg.2` to `op.exp.3.r3.aws.cfg.2` and `mp.sw.2.r1.aws.cfgd.1` to `mp.sw.2.r2.aws.cfgd.1` [(#13417)](https://github.com/prowler-cloud/prowler/pull/13417)
+- ENS RD 311/2022 for Azure: 29 requirements had a trailing space in `IdGrupoControl`, which reached the CSV, the PDF report and the UI, and seven malformed requirement ids are renamed to start with the measure they are filed under and the provider: `op.acc.1.az.r1.eid.1` to `op.acc.1.r1.az.eid.1`, `op.acc.2.az.r1.eid.1` to `op.acc.2.r1.az.eid.1`, `opc.acc.5.az.eid.1` to `op.acc.5.az.eid.1`, `op.acc.6.r9.az` to `op.acc.6.r9.az.eid.1`, `op.exp8.r2.az.wc.1` to `op.exp.8.r2.az.wc.1`, `op.con.3.az.pd.1` to `op.cont.3.az.pd.1` and `mp.com.4.r2..az.sa.1` to `mp.com.4.r2.az.sa.1` [(#13419)](https://github.com/prowler-cloud/prowler/pull/13419)
+- ENS RD 311/2022 for GCP: six requirement ids that were malformed or named another measure are renamed to follow `<measure>.gcp.<service>.<number>`: `opc.acc.1.r1.gcp.iam.2` to `op.acc.1.r1.gcp.iam.2`, `opc.acc.2.gcp.iap.1` to `op.acc.2.r1.gcp.iap.1`, `opc.acc.4.gcp.iam.1` to `op.acc.4.gcp.iam.1`, `op.exp.4.r2.gcp` to `op.exp.4.r2.gcp.ci.1`, `op.exp.6.gcp.app.1` to `op.exp.6.r3.gcp.app.1` and `op.mon.1.r3.gc.scc.1` to `op.mon.1.r3.gcp.scc.1` [(#13421)](https://github.com/prowler-cloud/prowler/pull/13421)
+- Local dashboard compliance sections no longer go blank after being expanded, nor lose their styles, when Dash does not render its dev tools UI [(#13430)](https://github.com/prowler-cloud/prowler/pull/13430)
+- Inspector2 service no longer lists every active finding of the account; Amazon Inspector now filters and sorts them server-side, so scans of accounts with a large volume of findings no longer stall on it [(#13435)](https://github.com/prowler-cloud/prowler/pull/13435)
+- The `core_minimize_privileged_containers` check now detects privileged init and ephemeral containers [(#13436)](https://github.com/prowler-cloud/prowler/pull/13436)
+
+### 🔐 Security
+
+- `opentelemetry-api` and `opentelemetry-sdk` 1.45.2 to close an open security advisory [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
 ## [5.50.0] (Prowler v5.50.0)
 
 ### 🚀 Added

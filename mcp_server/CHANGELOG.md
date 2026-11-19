@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.4] (Prowler v5.51.0)
+
+### 🔐 Security
+
+- `opentelemetry-api` 1.45.2 to close an open security advisory [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
 ## [0.13.3] (Prowler v5.50.0)
 
 ### 🔐 Security

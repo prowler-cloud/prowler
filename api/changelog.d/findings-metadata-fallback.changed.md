@@ -1,1 +1,0 @@
-`/findings/metadata` and `/findings/metadata/latest` answer from the values stored on each finding when a scan has no summaries yet, without joining resources, and the latest variant only reads the latest scans

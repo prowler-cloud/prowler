@@ -1,1 +1,0 @@
-Next.js 16.4.5, Vitest 4.1.12 and patched pins for `hono`, `@hono/node-server`, `fast-xml-parser`, `zod`, `@modelcontextprotocol/sdk`, `smol-toml`, `source-map-js`, `postcss-selector-parser` and `@ai-sdk/provider-utils` to close open security advisories

@@ -1,1 +1,0 @@
-`bedrockagentcore_runtime_vpc_configured`, `bedrockagentcore_full_access_policy_attached` and `bedrockagentcore_payments_process_payment_role_separation` no longer report MANUAL findings when Bedrock AgentCore runtimes, IAM roles or role policies cannot be read; those resources now produce no finding

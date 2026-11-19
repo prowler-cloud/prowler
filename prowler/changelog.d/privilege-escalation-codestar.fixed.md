@@ -1,1 +1,0 @@
-`iam_policy_allows_privilege_escalation` and `iam_inline_policy_allows_privilege_escalation` no longer report every policy as PASS: the retired `codestar:CreateProject` combination is removed and an unknown action now skips only its own combination

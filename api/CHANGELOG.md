@@ -4,6 +4,30 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.52.0] (Prowler v5.51.0)
+
+### 🚀 Added
+
+- ENS RD2022 PDF compliance report for Microsoft 365 scans, generated from the new `ens_rd2022_m365` framework [(#13394)](https://github.com/prowler-cloud/prowler/pull/13394)
+
+### 🔄 Changed
+
+- Scan outputs no longer keep an uncompressed copy of the files already inside the report ZIP: without an output bucket only the ZIP stays on disk and compliance downloads are served from it, and in the output bucket compliance files are stored with `Content-Encoding: gzip` [(#13396)](https://github.com/prowler-cloud/prowler/pull/13396)
+- `/findings/metadata` and `/findings/metadata/latest` answer from the values stored on each finding when a scan has no summaries yet, without joining resources, and the latest variant only reads the latest scans [(#13399)](https://github.com/prowler-cloud/prowler/pull/13399)
+- `/resources` and `/resources/latest` load only the finding ids needed for the `findings` relationship instead of every finding row, unless `include=findings` is requested [(#13407)](https://github.com/prowler-cloud/prowler/pull/13407)
+- Scans store their resource and category summaries while they run instead of only when they finish, so `/findings/metadata` answers from the summary tables for a scan in progress [(#13410)](https://github.com/prowler-cloud/prowler/pull/13410)
+
+### 🐞 Fixed
+
+- ENS PDF report gives the execution mode badge of automated requirements its own colour; the mode was compared without its accent, so they got the colour of manual requirements [(#13423)](https://github.com/prowler-cloud/prowler/pull/13423)
+- Failed scans no longer keep partial filter values in `/findings/metadata`, and a completed scan's category counters are stored before it is marked as completed [(#13429)](https://github.com/prowler-cloud/prowler/pull/13429)
+
+### 🔐 Security
+
+- `opentelemetry-api` and `opentelemetry-sdk` 1.45.2 to close an open security advisory [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
 ## [1.51.0] (Prowler v5.50.0)
 
 ### 🔄 Changed
