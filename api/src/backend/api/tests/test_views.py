@@ -20090,6 +20090,63 @@ class TestMuteRuleViewSet:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert mute_rules_fixture[0].name not in response.content.decode()
 
+    def test_mute_rules_scoped_role_cannot_touch_a_rule_spanning_another_provider(
+        self,
+        findings_fixture,
+        scans_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+        create_test_user,
+    ):
+        own_provider, _ = aws_provider_pair
+        tenant = tenants_fixture[0]
+        other_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="other_provider_finding_uid",
+            scan=scans_fixture[1],
+            status=Status.FAIL,
+            severity=Severity.critical,
+            impact=Severity.critical,
+            check_id="test_check_id",
+            check_metadata={"CheckId": "test_check_id"},
+            raw_result={},
+        )
+        mixed = MuteRule.objects.create(
+            tenant_id=tenant.id,
+            name="Mixed rule",
+            reason="spans two providers",
+            created_by=create_test_user,
+            finding_uids=[findings_fixture[0].uid, other_finding.uid],
+        )
+        client = self._client_scoped_to(
+            own_provider, tenant, authenticated_client_for_tenant_factory
+        )
+        url = reverse("mute-rule-detail", kwargs={"pk": mixed.id})
+
+        listed = client.get(reverse("mute-rule-list"))
+        retrieved = client.get(url)
+        patched = client.patch(
+            url,
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "mute-rules",
+                        "id": str(mixed.id),
+                        "attributes": {"enabled": False},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+        deleted = client.delete(url)
+
+        assert str(mixed.id) not in {item["id"] for item in listed.json()["data"]}
+        assert retrieved.status_code == status.HTTP_404_NOT_FOUND
+        assert patched.status_code == status.HTTP_404_NOT_FOUND
+        assert deleted.status_code == status.HTTP_404_NOT_FOUND
+        assert MuteRule.objects.filter(id=mixed.id, enabled=True).exists()
+
     def test_mute_rules_scoped_role_does_not_see_rules_without_findings(
         self,
         mute_rules_fixture,
