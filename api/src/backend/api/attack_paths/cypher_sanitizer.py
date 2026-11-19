@@ -178,6 +178,9 @@ _BLOCKED_APOC_NAMESPACES = (
 _UNICODE_ESCAPE_RE = re.compile(r"(?<!\\)(?:\\\\)*\\u")
 _BLOCKED_PATTERNS = [
     re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
+    # The driver user can read every tenant database: USE retargets the query at
+    # another one and SHOW lists them
+    re.compile(r"(?<![.$])\b(?:USE|SHOW)\b", re.IGNORECASE),
     *(
         re.compile(rf"\bapoc\s*\.\s*{namespace}\b", re.IGNORECASE)
         for namespace in _BLOCKED_APOC_NAMESPACES

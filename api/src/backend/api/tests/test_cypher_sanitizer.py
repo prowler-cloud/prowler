@@ -534,7 +534,38 @@ class TestValidation:
     @pytest.mark.parametrize(
         "cypher",
         [
+            "USE `db-tenant-other` MATCH (n) RETURN n",
+            "use `db-tenant-other` MATCH (n) RETURN n",
+            "USE/**/`db-tenant-other` MATCH (n) RETURN n",
+            "CALL { USE `db-tenant-other` MATCH (n) RETURN n } RETURN n",
+            "MATCH (n) RETURN n UNION USE `db-tenant-other` MATCH (n) RETURN n",
+            "USE graph.byName('db-tenant-other') MATCH (n) RETURN n",
+            "SHOW DATABASES YIELD name RETURN name",
+            "SHOW PROCEDURES YIELD name RETURN name",
+        ],
+        ids=[
+            "USE_backticked_database",
+            "USE_lowercase",
+            "USE_glued_by_comment",
+            "USE_inside_CALL_subquery",
+            "USE_after_UNION",
+            "USE_graph_byName",
+            "SHOW_DATABASES",
+            "SHOW_PROCEDURES",
+        ],
+    )
+    def test_rejects_queries_that_leave_the_session_database(self, cypher):
+        with pytest.raises(ValidationError) as exc:
+            validate_custom_query(cypher)
+
+        assert "blocked operation" in str(exc.value.detail)
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
             "MATCH (n:AWSAccount) RETURN n LIMIT 10",
+            "MATCH (n) WHERE n.name = 'USE db-tenant-other' RETURN n",
+            "MATCH (user:AWSUser) RETURN user",
             "MATCH (a)-[r]->(b) RETURN a, r, b",
             "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
             "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
@@ -545,6 +576,8 @@ class TestValidation:
         ],
         ids=[
             "simple_match",
+            "use_inside_string",
+            "variable_starting_with_use",
             "traversal",
             "contains_load_substring",
             "apoc_virtual_node",
