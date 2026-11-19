@@ -49,6 +49,7 @@ describe("getNavigationConfig", () => {
     ]);
     expect(sections[0]?.items.map((item) => item.label)).toEqual([
       "Overview",
+      "AI Security",
       "Lighthouse AI",
     ]);
     expect(sections[1]?.items.map((item) => item.label)).toEqual([
@@ -191,7 +192,10 @@ describe("getNavigationConfig", () => {
     }
 
     // Then
-    expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
+    expect(sections[0]?.items.map((item) => item.label)).toEqual([
+      "Overview",
+      "AI Security",
+    ]);
     expect(sections[1]?.items[0]).toMatchObject({
       label: "Exploitability issues",
       href: "/issues",
