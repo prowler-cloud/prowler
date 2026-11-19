@@ -22,7 +22,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
             if inspector.status != "ENABLED":
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=inspector)
-            if inspector.findings is None:
+            if inspector.kev_candidates is None:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Inspector2 findings could not be retrieved in region {inspector.region}; "
@@ -30,11 +30,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
                 )
                 findings.append(report)
                 continue
-            vulnerability_ids = {
-                finding.vulnerability_id
-                for finding in inspector.findings
-                if finding.vulnerability_id
-            }
+            vulnerability_ids = inspector.kev_candidates.keys()
             overdue = sorted(
                 f"{vulnerability_id} (due {known_exploited[vulnerability_id].date_due.date().isoformat()})"
                 for vulnerability_id in known_exploited.keys() & vulnerability_ids

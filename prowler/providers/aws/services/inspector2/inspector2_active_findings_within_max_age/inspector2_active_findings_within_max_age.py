@@ -1,8 +1,11 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.inspector2.inspector2_client import (
     inspector2_client,
+)
+from prowler.providers.aws.services.inspector2.inspector2_service import (
+    DEFAULT_ACTIVE_FINDING_MAX_AGE_DAYS,
 )
 
 
@@ -13,15 +16,15 @@ class inspector2_active_findings_within_max_age(Check):
         """Report, per Region, whether any active finding is older than the allowed days."""
         findings = []
         max_age_days = inspector2_client.audit_config.get(
-            "inspector2_active_finding_max_age_days", 192
+            "inspector2_active_finding_max_age_days",
+            DEFAULT_ACTIVE_FINDING_MAX_AGE_DAYS,
         )
-        max_age = timedelta(days=max_age_days)
         now = datetime.now(timezone.utc)
         for inspector in inspector2_client.inspectors:
             if inspector.status != "ENABLED":
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=inspector)
-            if inspector.findings is None:
+            if inspector.stale_findings is None:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Inspector2 findings could not be retrieved in region {inspector.region}; "
@@ -29,17 +32,13 @@ class inspector2_active_findings_within_max_age(Check):
                 )
                 findings.append(report)
                 continue
-            stale_ages = [
-                now - finding.first_observed_at
-                for finding in inspector.findings
-                if finding.first_observed_at
-                and now - finding.first_observed_at > max_age
-            ]
-            if stale_ages:
+            if inspector.stale_findings:
+                oldest = inspector.stale_findings[0]
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Inspector2 has {len(stale_ages)} active findings in region {inspector.region} "
-                    f"first observed more than {max_age_days} days ago, the oldest {max(stale_ages).days} days ago."
+                    f"Inspector2 has active findings in region {inspector.region} "
+                    f"first observed more than {max_age_days} days ago, the oldest "
+                    f"{(now - oldest.first_observed_at).days} days ago."
                 )
             else:
                 report.status = "PASS"

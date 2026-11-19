@@ -379,6 +379,10 @@ class AWSProviderConfig(ProviderConfigBase):
         le=365,
         description="Days an Inspector2 finding can stay active since first observed. Range: 1..365.",
     )
+    inspector2_kev_include_findings_without_exploit: Optional[bool] = Field(
+        default=None,
+        description="Check every active Inspector2 finding against the CISA KEV catalog, not only the ones with a public exploit.",
+    )
 
     # --- Trusted Advisor --------------------------------------------------
     verify_premium_support_plans: Optional[bool] = None

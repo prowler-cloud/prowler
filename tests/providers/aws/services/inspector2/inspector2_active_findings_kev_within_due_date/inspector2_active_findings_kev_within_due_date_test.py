@@ -30,7 +30,11 @@ def build_inspector(findings=None, status="ENABLED"):
         ecr_status="ENABLED",
         lambda_status="ENABLED",
         lambda_code_status="ENABLED",
-        findings=findings,
+        kev_candidates=(
+            None
+            if findings is None
+            else {finding.vulnerability_id: finding.arn for finding in findings}
+        ),
     )
 
 
