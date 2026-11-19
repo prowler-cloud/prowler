@@ -258,6 +258,24 @@ class TestExtractHost:
     def test_reads_a_bracketed_ipv6_host(self):
         assert extract_host("https://[2606:4700::1111]:443/v1") == "2606:4700::1111"
 
+    @pytest.mark.parametrize(
+        "url, expected",
+        [
+            ("https://münchen.de:8443/v3", "münchen.de"),
+            ("https://straße.de/", "straße.de"),
+            ("https://例え.jp/", "例え.jp"),
+        ],
+    )
+    def test_reads_an_internationalised_host(self, url, expected):
+        assert extract_host(url) == expected
+
+    def test_ignores_surrounding_whitespace(self):
+        assert extract_host("  https://example.com/  ") == "example.com"
+
+    def test_rejects_a_url_the_http_client_cannot_parse(self):
+        with pytest.raises(OutboundURLNotAllowedError, match="ambiguous host"):
+            extract_host("https://example.com:99999/")
+
 
 class TestValidateOutboundURL:
     def test_rejects_a_disallowed_scheme(self):
