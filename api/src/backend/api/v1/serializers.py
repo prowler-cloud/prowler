@@ -4388,6 +4388,9 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
         # Check that all findings exist and belong to this tenant
         findings = Finding.all_objects.filter(tenant_id=tenant_id, id__in=value)
+        visible_providers = self.context.get("visible_providers")
+        if visible_providers is not None:
+            findings = findings.filter(scan__provider__in=visible_providers)
         found_ids = set(findings.values_list("id", flat=True))
         provided_ids = set(value)
 

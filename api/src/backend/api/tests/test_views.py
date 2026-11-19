@@ -40,6 +40,7 @@ from api.models import (
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -19973,6 +19974,156 @@ class TestMuteRuleViewSet:
         data = response.json()["data"]
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
+
+    @staticmethod
+    def _client_scoped_to(provider, tenant, factory):
+        user = User.objects.create_user(
+            name=f"scoped-{uuid4()}",
+            email=f"scoped-{uuid4()}@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        role = Role.objects.create(
+            name=f"scoped-{uuid4()}",
+            tenant_id=tenant.id,
+            manage_scans=True,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        group = ProviderGroup.objects.create(
+            name=f"group-{uuid4()}", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id, role=role, provider_group=group
+        )
+        return factory(user, tenant)
+
+    def test_mute_rules_scoped_role_sees_only_rules_on_its_providers(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, other_provider = aws_provider_pair
+        tenant = tenants_fixture[0]
+        factory = authenticated_client_for_tenant_factory
+        own_client = self._client_scoped_to(own_provider, tenant, factory)
+        other_client = self._client_scoped_to(other_provider, tenant, factory)
+
+        own = own_client.get(reverse("mute-rule-list"))
+        other = other_client.get(reverse("mute-rule-list"))
+
+        assert len(own.json()["data"]) == len(mute_rules_fixture)
+        assert other.json()["data"] == []
+
+    def test_mute_rules_scoped_role_cannot_touch_rules_outside_its_providers(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        _, other_provider = aws_provider_pair
+        client = self._client_scoped_to(
+            other_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        rule = mute_rules_fixture[0]
+        url = reverse("mute-rule-detail", kwargs={"pk": rule.id})
+        patch_body = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(rule.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        assert client.get(url).status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            client.patch(
+                url,
+                data=json.dumps(patch_body),
+                content_type="application/vnd.api+json",
+            ).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
+        assert client.delete(url).status_code == status.HTTP_404_NOT_FOUND
+        assert MuteRule.objects.filter(id=rule.id, enabled=True).exists()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    def test_mute_rules_scoped_role_cannot_mute_a_finding_it_cannot_read(
+        self,
+        mock_mute_task,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        _, other_provider = aws_provider_pair
+        client = self._client_scoped_to(
+            other_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Hide another team",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert findings_fixture[0].uid not in response.content.decode()
+        assert not MuteRule.objects.filter(name="Hide another team").exists()
+        mock_mute_task.assert_not_called()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
+    def test_mute_rules_scoped_role_can_mute_its_own_finding(
+        self,
+        _mock_on_commit,
+        mock_mute_task,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, _ = aws_provider_pair
+        client = self._client_scoped_to(
+            own_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Own exception",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_mute_task.assert_called_once()
 
     @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
