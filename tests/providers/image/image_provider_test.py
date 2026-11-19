@@ -952,6 +952,10 @@ class TestTestRegistryConnection:
 
 
 class TestTrivyAuthIntegration:
+    @pytest.fixture(autouse=True)
+    def _no_registry_dns(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+
     @patch("subprocess.run")
     def test_run_scan_passes_trivy_env_with_credentials(self, mock_subprocess):
         """Test that run_scan() passes TRIVY_USERNAME/PASSWORD via env when credentials are set."""
@@ -1554,6 +1558,10 @@ class TestScanImageRegistryHostCheck:
 
 
 class TestRegistryScanErrorDegradation:
+    @pytest.fixture(autouse=True)
+    def _no_registry_dns(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+
     @patch("subprocess.run")
     def test_registry_discovered_image_scan_error_is_skipped(self, mock_subprocess):
         provider = _make_provider(images=["reg.io/chart:1.0", "alpine:3.18"])
