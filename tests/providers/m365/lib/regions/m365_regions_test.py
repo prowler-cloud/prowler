@@ -59,6 +59,7 @@ class Test_m365_regions:
             ("login.custom.cloud", "graph.custom.cloud"),
             ("https://login.custom.cloud", "https://graph.custom.cloud"),
             ("https://login.custom.cloud/", "https://graph.custom.cloud/"),
+            (" login.custom.cloud ", " https://graph.custom.cloud "),
             ("HTTPS://login.custom.cloud", "Https://graph.custom.cloud/"),
         ],
     )
@@ -118,7 +119,6 @@ class Test_m365_regions:
             "graph.custom.cloud/v1.0",
             "https://graph.custom.cloud//",
             "graph.custom .cloud",
-            " graph.custom.cloud",
             "https://",
             "graph.custom.cloud:port",
         ],

@@ -62,7 +62,7 @@ def get_custom_region_config(region_endpoints):
         value = (region_endpoints or {}).get(key)
         if not value:
             continue
-        host = value
+        host = value.strip()
         if host.lower().startswith("https://"):
             host = host[len("https://") :]
         host = host.removesuffix("/")
