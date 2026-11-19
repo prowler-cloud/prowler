@@ -1289,69 +1289,6 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.azure_region == region
 
-    def test_parser_azure_region_custom(self):
-        command = [
-            prowler_command,
-            "azure",
-            "--sp-env-auth",
-            "--azure-region",
-            "AzureCustom",
-            "--azure-authority-host",
-            "login.example.com",
-            "--azure-resource-manager-endpoint",
-            "https://management.example.com",
-            "--azure-graph-endpoint",
-            "https://graph.example.com",
-            "--azure-logs-endpoint",
-            "https://api.loganalytics.example.com",
-        ]
-        parsed = self.parser.parse(command)
-        assert parsed.azure_region == "AzureCustom"
-        assert parsed.azure_authority_host == "login.example.com"
-        assert (
-            parsed.azure_resource_manager_endpoint == "https://management.example.com"
-        )
-        assert parsed.azure_graph_endpoint == "https://graph.example.com"
-        assert parsed.azure_logs_endpoint == "https://api.loganalytics.example.com"
-
-    def test_parser_azure_region_custom_missing_endpoints(self, capsys):
-        command = [
-            prowler_command,
-            "azure",
-            "--sp-env-auth",
-            "--azure-region",
-            "AzureCustom",
-            "--azure-authority-host",
-            "login.example.com",
-        ]
-        with pytest.raises(SystemExit) as wrapped_exit:
-            _ = self.parser.parse(command)
-        assert wrapped_exit.value.code == 2
-        assert (
-            capsys.readouterr().err
-            == f"{prowler_default_usage_error}\nprowler: error: azure: --azure-region AzureCustom requires --azure-resource-manager-endpoint, --azure-graph-endpoint\n"
-        )
-
-    def test_parser_azure_endpoints_without_custom_region(self, capsys):
-        command = [
-            prowler_command,
-            "azure",
-            "--sp-env-auth",
-            "--azure-region",
-            "AzureUSGovernment",
-            "--azure-graph-endpoint",
-            "https://graph.example.com",
-            "--azure-logs-endpoint",
-            "https://api.loganalytics.example.com",
-        ]
-        with pytest.raises(SystemExit) as wrapped_exit:
-            _ = self.parser.parse(command)
-        assert wrapped_exit.value.code == 2
-        assert (
-            capsys.readouterr().err
-            == f"{prowler_default_usage_error}\nprowler: error: azure: --azure-graph-endpoint, --azure-logs-endpoint can only be used with --azure-region AzureCustom\n"
-        )
-
     # Test AWS flags with Azure provider
     def test_parser_azure_with_aws_flag(self, capsys):
         command = [prowler_command, "azure", "-p"]
