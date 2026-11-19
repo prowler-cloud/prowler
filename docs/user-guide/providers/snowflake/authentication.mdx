@@ -1,0 +1,125 @@
+---
+title: "Snowflake Authentication in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.40.0" />
+
+Prowler for Snowflake authenticates with an **RSA key pair** rather than a password. The private key and its passphrase are read **exclusively** from environment variables, so the credential is never exposed in shell history or process listings.
+
+## Required Permissions
+
+Prowler needs read-only access to Snowflake's own metadata. Two grants are required:
+
+| Grant | Description |
+|-------|-------------|
+| `IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE` | Read access to the `SNOWFLAKE.ACCOUNT_USAGE` views |
+| `USAGE ON WAREHOUSE <warehouse>` | A warehouse to run the metadata queries on |
+
+<Note>
+This grant exposes Snowflake's `ACCOUNT_USAGE` schema only. It does not grant access to any table in your own databases.
+</Note>
+
+---
+
+## Set up the service user
+
+### Step 1: Generate a key pair
+
+Run this on a machine you trust. The private key is the whole credential.
+
+```bash
+# Private key
+openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out prowler_key.p8 -nocrypt
+
+# Public key
+openssl rsa -in prowler_key.p8 -pubout -out prowler_key.pub
+```
+
+To protect the key with a passphrase, drop `-nocrypt` and use `-v2 aes-256-cbc` instead.
+
+### Step 2: Create the role and user
+
+```sql
+USE ROLE ACCOUNTADMIN;
+
+CREATE ROLE IF NOT EXISTS PROWLER_RO;
+
+CREATE USER IF NOT EXISTS PROWLER_SVC
+    DEFAULT_ROLE = PROWLER_RO
+    TYPE         = SERVICE
+    COMMENT      = 'Prowler read-only security scanner';
+
+GRANT ROLE PROWLER_RO TO USER PROWLER_SVC;
+```
+
+<Note>
+`TYPE = SERVICE` creates a user that has no password and cannot sign in interactively.
+</Note>
+
+### Step 3: Register the public key and grant read access
+
+```sql
+ALTER USER PROWLER_SVC SET RSA_PUBLIC_KEY = '<contents of prowler_key.pub>';
+
+GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE PROWLER_RO;
+GRANT USAGE ON WAREHOUSE <warehouse_name> TO ROLE PROWLER_RO;
+```
+
+Paste the key body without the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----` lines.
+
+---
+
+## Configure Prowler
+
+```bash
+export SNOWFLAKE_ACCOUNT="myorg-myaccount"
+export SNOWFLAKE_USER="PROWLER_SVC"
+export SNOWFLAKE_PRIVATE_KEY_PATH="/path/to/prowler_key.p8"
+export SNOWFLAKE_ROLE="PROWLER_RO"
+export SNOWFLAKE_WAREHOUSE="<warehouse_name>"
+
+# Only if the key is encrypted. Read it rather than typing it, so the passphrase
+# does not land in the shell history file.
+read -rs SNOWFLAKE_PRIVATE_KEY_PASSPHRASE && export SNOWFLAKE_PRIVATE_KEY_PASSPHRASE
+```
+
+<Note>
+Using an environment variable keeps the passphrase off the command line and out of the
+process list, but a value typed into an `export` is still written to the shell history
+file. Read it with a silent prompt as above, or inject it from a secret manager.
+</Note>
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SNOWFLAKE_ACCOUNT` | Yes | Account identifier, e.g. `myorg-myaccount`. A full `https://<account>.snowflakecomputing.com` URL is also accepted |
+| `SNOWFLAKE_USER` | Yes | The user to authenticate as |
+| `SNOWFLAKE_PRIVATE_KEY_PATH` | Yes | Path to the PEM private key. `SNOWFLAKE_PRIVATE_KEY` may hold the key content instead |
+| `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE` | No | Required only for an encrypted key |
+| `SNOWFLAKE_ROLE` | No | Defaults to the user's default role |
+| `SNOWFLAKE_WAREHOUSE` | No | Defaults to the user's default warehouse |
+
+The non-secret values may also be passed as flags: `--account`, `--user`, `--private-key-path`, `--role` and `--warehouse`. The private key and passphrase have no flags by design.
+
+---
+
+## Troubleshooting
+
+### `Snowflake rejected the key-pair JWT`
+
+The public key registered on the user does not match the private key Prowler is signing with. Compare the fingerprints:
+
+```sql
+DESC USER PROWLER_SVC;
+```
+
+The `RSA_PUBLIC_KEY_FP` property must equal the fingerprint Prowler reports in the error. This mismatch is the cause of most failed first connections.
+
+### `The Snowflake role cannot read the ACCOUNT_USAGE schema`
+
+The role is missing `IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE`. Grant it as shown in Step 3.
+
+### `The private key could not be parsed`
+
+Supply the full PEM block. An encrypted key also needs `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`. Snowflake key-pair authentication requires an RSA key; other key types are rejected.
