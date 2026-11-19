@@ -37,5 +37,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "A gateway whose WAF GetWebACLForResource call fails produces no finding."
+  "Notes": "A failed ListGateways in a region emits a regional MANUAL finding. A gateway whose WAF GetWebACLForResource call fails emits a MANUAL finding. Verified gateways in successfully listed regions still receive PASS or FAIL."
 }

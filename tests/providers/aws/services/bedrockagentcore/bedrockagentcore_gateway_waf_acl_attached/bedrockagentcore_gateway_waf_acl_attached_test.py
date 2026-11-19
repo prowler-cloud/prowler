@@ -79,13 +79,30 @@ class Test_bedrockagentcore_gateway_waf_acl_attached:
         assert result[0].resource_arn == GATEWAY_ARN
         assert result[0].region == AWS_REGION_US_EAST_1
 
-    def test_failed_web_acl_lookup_has_no_finding(self):
-        assert _run([_gateway(web_acl_retrieved=False)]) == []
+    def test_failed_web_acl_lookup_is_manual(self):
+        result = _run([_gateway(web_acl_retrieved=False)])
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_id == GATEWAY_ID
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert (
+            "could not have its WAF association retrieved" in result[0].status_extended
+        )
 
-    def test_unlisted_region_has_no_finding(self):
+    def test_unlisted_region_is_manual_and_keeps_verified_findings(self):
         result = _run(
             [_gateway(WEB_ACL_ARN)],
             scan_errors={AWS_REGION_EU_WEST_1: "AccessDeniedException"},
         )
-        assert [finding.status for finding in result] == ["PASS"]
-        assert result[0].region == AWS_REGION_US_EAST_1
+        assert [finding.status for finding in result] == ["MANUAL", "PASS"]
+        manual, passed = result
+        assert manual.region == AWS_REGION_EU_WEST_1
+        assert manual.resource_id == "gateway/unknown"
+        assert (
+            manual.resource_arn
+            == f"arn:aws:bedrock-agentcore:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:gateway/unknown"
+        )
+        assert "Could not list AgentCore gateways" in manual.status_extended
+        assert "AccessDeniedException" in manual.status_extended
+        assert passed.region == AWS_REGION_US_EAST_1
+        assert passed.resource_id == GATEWAY_ID
