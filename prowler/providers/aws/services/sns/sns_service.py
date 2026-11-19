@@ -87,8 +87,8 @@ class SNS(AWSService):
             for topic in self.topics:
                 try:
                     regional_client = self.regional_clients[topic.region]
-                    response = regional_client.list_subscriptions_by_topic(
-                        TopicArn=topic.arn
+                    paginator = regional_client.get_paginator(
+                        "list_subscriptions_by_topic"
                     )
                     subscriptions: list[Subscription] = [
                         Subscription(
@@ -99,7 +99,8 @@ class SNS(AWSService):
                             endpoint=sub["Endpoint"],
                             region=parts[3] if len(parts) > 3 else "unknown",
                         )
-                        for sub in response["Subscriptions"]
+                        for page in paginator.paginate(TopicArn=topic.arn)
+                        for sub in page["Subscriptions"]
                     ]
                     topic.subscriptions = subscriptions
                 except Exception as error:
