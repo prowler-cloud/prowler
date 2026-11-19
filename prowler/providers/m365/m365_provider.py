@@ -404,6 +404,8 @@ class M365Provider(Provider):
         """Returns the azure-identity credential arguments for the region."""
         credential_kwargs = {"authority": region_config.authority}
         if region_config.name == "M365Custom":
+            # azure-identity only accepts a host with a port as an https:// URL
+            credential_kwargs["authority"] = f"https://{region_config.authority}"
             # MSAL validates an authority host it does not know against the commercial cloud
             credential_kwargs["disable_instance_discovery"] = True
         return credential_kwargs

@@ -2294,11 +2294,19 @@ class TestM365ProviderCustomRegion:
         assert "authority_host, graph" in str(test_connection.error)
 
     @pytest.mark.parametrize("sp_env_auth", [False, True])
-    def test_custom_region_sign_in_only_reaches_the_custom_authority(self, sp_env_auth):
+    @pytest.mark.parametrize(
+        "authority_host", ["login.custom.cloud", "login.custom.cloud:8443"]
+    )
+    def test_custom_region_sign_in_only_reaches_the_custom_authority(
+        self, authority_host, sp_env_auth
+    ):
+        region_config = M365Provider.setup_region_config(
+            "M365Custom", {**CUSTOM_REGION_ENDPOINTS, "authority_host": authority_host}
+        )
         requested_hosts = []
 
         def record_request(_, request, **kwargs):
-            requested_hosts.append(urlparse(request.url).hostname)
+            requested_hosts.append(urlparse(request.url).netloc)
             raise requests.ConnectionError("no network in tests")
 
         static_credentials = {
@@ -2320,7 +2328,7 @@ class TestM365ProviderCustomRegion:
                 certificate_path=None,
                 tenant_id=None,
                 m365_credentials=None if sp_env_auth else static_credentials,
-                region_config=CUSTOM_REGION_CONFIG,
+                region_config=region_config,
             )
             with pytest.raises(Exception):
                 credential.get_token("https://graph.custom.cloud/.default")
@@ -2331,11 +2339,11 @@ class TestM365ProviderCustomRegion:
                     CLIENT_SECRET,
                     None,
                     None,
-                    region_config=CUSTOM_REGION_CONFIG,
+                    region_config=region_config,
                 )
 
         assert requested_hosts
-        assert set(requested_hosts) == {"login.custom.cloud"}
+        assert set(requested_hosts) == {authority_host}
 
     def test_init_global_provider_passes_custom_endpoints_from_cli(self, monkeypatch):
         captured_kwargs = {}
