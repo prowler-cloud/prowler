@@ -46,6 +46,9 @@ services:
   ui:
     image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
     restart: unless-stopped
+    environment:
+      # No default is shipped: abort `docker compose up` instead of crash-looping the UI
+      - AUTH_SECRET=${AUTH_SECRET:?generate it with openssl rand -base64 32 and set it in .env}
     env_file:
       - path: .env
         required: false
@@ -75,7 +78,7 @@ services:
       - path: .env
         required: false
     ports:
-      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
       interval: 5s
@@ -92,7 +95,7 @@ services:
       - path: .env
         required: false
     ports:
-      - "${VALKEY_PORT:-6379}:6379"
+      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'valkey-cli ping'"]
       interval: 10s
@@ -125,7 +128,7 @@ services:
       # Networking
       - "dbms.connector.bolt.listen_address=${NEO4J_DBMS_CONNECTOR_BOLT_LISTEN_ADDRESS:-0.0.0.0:7687}"
     ports:
-      - ${NEO4J_PORT:-7687}:7687
+      - "127.0.0.1:${NEO4J_PORT:-7687}:7687"
     healthcheck:
         test: ["CMD", "wget", "--no-verbose", "http://localhost:7474"]
         interval: 10s
@@ -141,6 +144,7 @@ services:
       - path: .env
         required: false
     volumes:
+      - ./_data/api:/home/prowler/.config/prowler-api
       - "output:/tmp/prowler_api_output"
     depends_on:
       api:
@@ -159,6 +163,8 @@ services:
     env_file:
       - path: ./.env
         required: false
+    volumes:
+      - ./_data/api:/home/prowler/.config/prowler-api
     depends_on:
       api:
         condition: service_healthy

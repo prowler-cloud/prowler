@@ -86,7 +86,7 @@ Before installing the Helm chart, you must create a Kubernetes Secret containing
      NEO4J_AUTH: "neo4j/[prowler-password]"
    ```
 
-   > **Note:** You can use the [example secrets file](./examples/minimal-installation/secrets.yaml) as a template, but **always replace the placeholder values with your own secure keys** before applying.
+   > **Note:** You can use the [example secrets file](./examples/minimal-installation/secrets.yaml) as a template, but **always replace the placeholder values with your own secure keys** before applying. Earlier revisions of that example shipped working values; the API refuses to start with any key that was published in this repository, so a deployment still using one must generate a new one.
 
 3. **Apply the secret to your cluster:**
 
