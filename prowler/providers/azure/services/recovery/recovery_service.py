@@ -52,10 +52,8 @@ class Recovery(AzureService):
         """
         logger.info("Recovery - Getting Recovery Services vaults...")
         vaults_dict: dict[str, dict[str, BackupVault]] = {}
-        subscription_id = "unknown"
-        try:
-            vaults_dict: dict[str, dict[str, BackupVault]] = {}
-            for subscription_id, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
+            try:
                 vaults_list = self.list_with_rg_scope(
                     subscription_id,
                     client.vaults.list_by_subscription_id,
@@ -70,12 +68,12 @@ class Recovery(AzureService):
                         location=vault.location,
                     )
                     vaults_dict[subscription_id][vault_obj.id] = vault_obj
-        except Exception as error:
-            logger.error(
-                f"Subscription ID: {subscription_id} -- "
-                f"{error.__class__.__name__}"
-                f"[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"Subscription ID: {subscription_id} -- "
+                    f"{error.__class__.__name__}"
+                    f"[{error.__traceback__.tb_lineno}]: {error}"
+                )
         return vaults_dict
 
 
