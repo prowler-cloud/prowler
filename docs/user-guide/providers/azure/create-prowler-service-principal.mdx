@@ -126,7 +126,7 @@ The script is safe to run again: anything that already exists is reported as `[e
 
 ### Removing What the Script Created
 
-Delete the app registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an app that other workloads use, remove only what the script added and leave the app in place: the role assignments, the three Microsoft Graph application permissions (and their admin consent) and the `prowler-scan` credential.
+Delete the app registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an app that other workloads use, remove only what the script added and leave the app in place: the role assignments, the three Microsoft Graph application permissions (and their admin consent) and the `prowler-scan` credential. If the script also ran with `--m365`, remove the Microsoft 365 permissions and the `Global Reader` assignment too, as described in [Removing What the Script Created](/user-guide/providers/microsoft365/authentication#removing-what-the-script-created) in the Microsoft 365 guide.
 
 1. To remove the role assignments, run the following command for each subscription or management group:
 
