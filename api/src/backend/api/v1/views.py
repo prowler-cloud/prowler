@@ -281,6 +281,7 @@ from django.db.models import (
     Exists,
     ExpressionWrapper,
     F,
+    Func,
     IntegerField,
     Max,
     Min,
@@ -7676,9 +7677,36 @@ class MuteRuleViewSet(BaseRLSViewSet):
     ]
     required_permissions = [Permissions.MANAGE_SCANS]
 
+    def _visible_providers(self):
+        role = self.user_role
+        return None if role.unlimited_visibility else get_providers(role)
+
     def get_queryset(self):
-        queryset = MuteRule.objects.filter(tenant_id=self.request.tenant_id)
+        tenant_id = self.request.tenant_id
+        queryset = MuteRule.objects.filter(tenant_id=tenant_id)
+        visible_providers = self._visible_providers()
+        if visible_providers is not None:
+            # A rule is shown only when its findings are all on providers the role
+            # can see, and at least one of them still exists
+            uid_in_rule = Func(
+                F("uid"),
+                OuterRef("finding_uids"),
+                arg_joiner=" = ANY(",
+                template="%(expressions)s)",
+                output_field=BooleanField(),
+            )
+            rule_findings = Finding.all_objects.filter(uid_in_rule, tenant_id=tenant_id)
+            queryset = queryset.filter(
+                Exists(rule_findings.filter(scan__provider__in=visible_providers))
+            ).exclude(
+                Exists(rule_findings.exclude(scan__provider__in=visible_providers))
+            )
         return queryset.select_related("created_by")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["visible_providers"] = self._visible_providers()
+        return context
 
     def get_serializer_class(self):
         if self.action == "create":
