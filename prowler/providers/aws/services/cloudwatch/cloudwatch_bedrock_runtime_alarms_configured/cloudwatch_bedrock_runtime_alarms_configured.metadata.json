@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_bedrock_runtime_alarms_configured",
+  "CheckTitle": "CloudWatch alarms cover Amazon Bedrock runtime metrics",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
+  "Description": "**CloudWatch alarms** should exist on the **AWS/Bedrock** metric namespace in every region where Amazon Bedrock is in use, so abuse, denial-of-wallet, sustained throttling, or content-filter spikes are detected.",
+  "Risk": "Without an alarm on Bedrock runtime metrics, unusually high invocation volume, sustained throttling, or a spike in content-filter blocks can go unnoticed, allowing cost abuse (A), runaway spend, or an ongoing attack against deployed models to continue undetected.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-cw.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudwatch put-metric-alarm --alarm-name bedrock-runtime-invocation-throttles --namespace AWS/Bedrock --metric-name InvocationThrottles --statistic Sum --period 300 --evaluation-periods 1 --threshold 1 --comparison-operator GreaterThanOrEqualToThreshold --alarm-actions <sns-topic-arn>",
+      "NativeIaC": "```yaml\n# CloudFormation: Alarm on Bedrock runtime throttling\nResources:\n  BedrockRuntimeThrottleAlarm:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      AlarmName: bedrock-runtime-invocation-throttles\n      Namespace: AWS/Bedrock  # Critical: targets the Bedrock runtime namespace\n      MetricName: InvocationThrottles\n      Statistic: Sum\n      Period: 300\n      EvaluationPeriods: 1\n      Threshold: 1\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      AlarmActions:\n        - <sns_topic_arn>  # Critical: alarm must have an enabled action\n```",
+      "Other": "1. In the AWS Console, go to CloudWatch > Alarms > Create alarm\n2. Select a metric under the AWS/Bedrock namespace (e.g. Invocations, InvocationThrottles, or a content-filter metric)\n3. Configure a threshold appropriate for the workload (e.g. sustained throttling or an abnormal invocation spike)\n4. Under Actions, attach an SNS topic or other action, and ensure the alarm actions are enabled\n5. Create the alarm; repeat in every region where Bedrock models are invoked\n",
+      "Terraform": "```hcl\n# Alarm on Bedrock runtime throttling\nresource \"aws_cloudwatch_metric_alarm\" \"bedrock_runtime_throttles\" {\n  alarm_name          = \"bedrock-runtime-invocation-throttles\"\n  namespace           = \"AWS/Bedrock\"\n  metric_name         = \"InvocationThrottles\"\n  statistic           = \"Sum\"\n  period              = 300\n  evaluation_periods  = 1\n  threshold           = 1\n  comparison_operator = \"GreaterThanOrEqualToThreshold\"\n  alarm_actions       = [<sns_topic_arn>]\n  actions_enabled     = true\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create an enabled CloudWatch alarm on the AWS/Bedrock namespace in every region where Bedrock models are invoked, and route it to a responder so abuse, throttling, or content-filter spikes are detected promptly.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_bedrock_runtime_alarms_configured"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_guardrails_configured"
+  ],
+  "Notes": "Evaluated as one regional posture result, only in regions with existing Bedrock resources (guardrails, custom models, agents, knowledge bases, prompts, or model invocation logging), since AWS/Bedrock runtime metrics have no listable resource of their own. Matches alarms that reference the AWS/Bedrock namespace either directly or through a metric-math component metric; alarms whose actions are disabled do not count as coverage."
+}
