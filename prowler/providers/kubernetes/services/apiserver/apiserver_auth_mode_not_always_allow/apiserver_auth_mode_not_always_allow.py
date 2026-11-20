@@ -11,17 +11,48 @@ class apiserver_auth_mode_not_always_allow(Check):
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = f"API Server authorization mode is not set to AlwaysAllow in pod {pod.name}."
+            # Scan every container for --authorization-config first: the
+            # mode-based verdict below stops at the first container that
+            # looks like AlwaysAllow, which would otherwise skip a later
+            # API server container carrying this flag.
+            authorization_config = any(
+                command == "--authorization-config"
+                or command.startswith("--authorization-config=")
+                for container in pod.containers.values()
+                for command in container.command or []
+            )
             always_allow_in_auth_mode = True
-            for container in pod.containers.values():
-                always_allow_in_auth_mode = True
-                for command in container.command:
-                    if command.startswith("--authorization-mode"):
-                        if "AlwaysAllow" not in (command.split("=")[1]):
-                            always_allow_in_auth_mode = False
+            if not authorization_config:
+                for container in pod.containers.values():
+                    always_allow_in_auth_mode = True
+                    commands = container.command or []
+                    for index, command in enumerate(commands):
+                        if command == "--authorization-mode":
+                            # Space-separated form: the value is the next token.
+                            value = (
+                                commands[index + 1] if index + 1 < len(commands) else ""
+                            )
+                        elif command.startswith("--authorization-mode="):
+                            value = command.partition("=")[2]
+                        else:
+                            continue
+                        if "AlwaysAllow" in value:
+                            # Fail as soon as any value carries AlwaysAllow.
+                            always_allow_in_auth_mode = True
                             break
-                if always_allow_in_auth_mode:
-                    break
-            if always_allow_in_auth_mode:
+                        # Do not stop at a safe value: repeated flags
+                        # accumulate (pflag StringSlice), so a later flag
+                        # may still carry AlwaysAllow.
+                        always_allow_in_auth_mode = False
+                    if always_allow_in_auth_mode:
+                        break
+            if authorization_config:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"API Server authorization is configured through --authorization-config in pod {pod.name}; "
+                    "the referenced configuration file was not inspected."
+                )
+            elif always_allow_in_auth_mode:
                 report.status = "FAIL"
                 report.status_extended = f"API Server authorization mode is set to AlwaysAllow in pod {pod.name}."
             findings.append(report)
