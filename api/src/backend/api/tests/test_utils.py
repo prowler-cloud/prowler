@@ -6,6 +6,7 @@ from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Provider, ProviderSecret
 from api.utils import (
+    STORED_SECRET_NOT_SUPPORTED_ERROR,
     get_prowler_provider_kwargs,
     initialize_prowler_provider,
     merge_dicts,
@@ -319,6 +320,22 @@ class TestDeclaredProviderSecret:
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             **self.GCP_STATIC, provider_id="uid", raise_on_exception=False
         )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_connection_test_fails_for_a_stored_secret_no_serializer_accepts(
+        self, mock_return_prowler_provider
+    ):
+        provider = self._provider(
+            Provider.ProviderChoices.CLOUDFLARE.value,
+            ProviderSecret.TypeChoices.STATIC,
+            {"config_path": "/proc/self/environ"},
+        )
+
+        connection = prowler_provider_connection_test(provider)
+
+        assert connection.is_connected is False
+        assert str(connection.error) == STORED_SECRET_NOT_SUPPORTED_ERROR
+        mock_return_prowler_provider.return_value.test_connection.assert_not_called()
 
     def test_role_secret_keeps_every_declared_field(self):
         secret = {

@@ -31,6 +31,11 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 logger = logging.getLogger(__name__)
 
+STORED_SECRET_NOT_SUPPORTED_ERROR = (
+    "The stored credentials do not match a supported credential type for this "
+    "provider. Update the provider credentials."
+)
+
 if TYPE_CHECKING:
     from prowler.providers.alibabacloud.alibabacloud_provider import (
         AlibabacloudProvider,
@@ -428,6 +433,12 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         prowler_provider_kwargs = declared_provider_secret(provider)
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
+    except ValidationError:
+        # A stored secret no serializer accepts is a failed connection, not a task error.
+        return Connection(
+            is_connected=False,
+            error=Exception(STORED_SECRET_NOT_SUPPORTED_ERROR),
+        )
 
     if provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         # A rejected stored kubeconfig is a failed connection, not a task error.
