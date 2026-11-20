@@ -1420,11 +1420,13 @@ class Test_Parser:
         expected_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
+            "AzureBleuCloud",
             "AzureCloud",
         ]
         input_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
+            "AzureBleuCloud",
             "AzureCloud",
         ]
         for region in input_regions:
@@ -1434,6 +1436,7 @@ class Test_Parser:
         expected_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
+            "AzureBleuCloud",
             "AzureCloud",
         ]
         invalid_region = "non-valid-region"
