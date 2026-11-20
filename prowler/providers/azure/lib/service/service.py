@@ -111,6 +111,11 @@ class AzureService:
                     {identity.tenant_domain: service(request_adapter=request_adapter)}
                 )
             elif "LogsQueryClient" in str(service):
+                if not region_config.logs_endpoint:
+                    logger.warning(
+                        f"Region {region_config.name} has no Log Analytics endpoint, checks that query Log Analytics are not evaluated."
+                    )
+                    return clients
                 for subscription_id, display_name in identity.subscriptions.items():
                     clients.update(
                         {

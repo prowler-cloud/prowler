@@ -107,6 +107,26 @@ class TestAzureServiceSovereignClouds:
 
         logs_service.assert_called_once_with(credential=session, endpoint=logs_endpoint)
 
+    def test_set_clients_logs_without_endpoint_creates_no_clients(self, caplog):
+        logs_service = MagicMock()
+        logs_service.__str__ = MagicMock(return_value="LogsQueryClient")
+        region_config = AzureRegionConfig(name="AzureCustom", logs_endpoint=None)
+        identity, session = _identity_and_session()
+
+        with patch.object(AzureService, "__init__", return_value=None):
+            service = AzureService.__new__(AzureService)
+
+        with caplog.at_level("WARNING"):
+            clients = service.__set_clients__(
+                identity, session, logs_service, region_config
+            )
+
+        assert clients == {}
+        logs_service.assert_not_called()
+        assert caplog.messages == [
+            "Region AzureCustom has no Log Analytics endpoint, checks that query Log Analytics are not evaluated."
+        ]
+
 
 class TestAzureServiceRegionConfig:
     def test_init_keeps_provider_region_config(self):

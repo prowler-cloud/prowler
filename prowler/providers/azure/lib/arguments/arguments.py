@@ -1,4 +1,6 @@
-from argparse import ArgumentTypeError
+from argparse import ArgumentTypeError, Namespace
+
+from prowler.providers.azure.lib.regions.regions import AZURE_CUSTOM_CLOUD
 
 
 def init_parser(self):
@@ -51,7 +53,23 @@ def init_parser(self):
         nargs="?",
         default="AzureCloud",
         type=validate_azure_region,
-        help="Azure region from `az cloud list --output table`, by default AzureCloud",
+        help="Azure region from `az cloud list --output table`, by default AzureCloud. Use AzureCustom with the endpoint arguments below for any other cloud",
+    )
+    azure_regions_subparser.add_argument(
+        "--azure-authority-host",
+        help="Microsoft Entra authority host of the cloud, required with --azure-region AzureCustom",
+    )
+    azure_regions_subparser.add_argument(
+        "--azure-resource-manager-endpoint",
+        help="Azure Resource Manager endpoint of the cloud, required with --azure-region AzureCustom",
+    )
+    azure_regions_subparser.add_argument(
+        "--azure-graph-endpoint",
+        help="Microsoft Graph endpoint of the cloud, required with --azure-region AzureCustom",
+    )
+    azure_regions_subparser.add_argument(
+        "--azure-logs-endpoint",
+        help="Log Analytics endpoint of the cloud, optional with --azure-region AzureCustom. Without it, checks that query Log Analytics are not evaluated",
     )
     # Resource Groups
     azure_rg_subparser = azure_parser.add_argument_group("Resource Groups")
@@ -71,9 +89,35 @@ def validate_azure_region(region):
         "AzureChinaCloud",
         "AzureUSGovernment",
         "AzureCloud",
+        AZURE_CUSTOM_CLOUD,
     ]
     if region not in regions_allowed:
         raise ArgumentTypeError(
             f"Region {region} not allowed, allowed regions are {' '.join(regions_allowed)}"
         )
     return region
+
+
+def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
+    """validate_arguments returns (True, "") if the custom cloud endpoint arguments can be used with the region"""
+    endpoints = {
+        "--azure-authority-host": arguments.azure_authority_host,
+        "--azure-resource-manager-endpoint": arguments.azure_resource_manager_endpoint,
+        "--azure-graph-endpoint": arguments.azure_graph_endpoint,
+    }
+    if arguments.azure_region == AZURE_CUSTOM_CLOUD:
+        missing = [flag for flag, value in endpoints.items() if not value]
+        if missing:
+            return (
+                False,
+                f"--azure-region AzureCustom requires {', '.join(missing)}",
+            )
+    else:
+        endpoints["--azure-logs-endpoint"] = arguments.azure_logs_endpoint
+        used = [flag for flag, value in endpoints.items() if value]
+        if used:
+            return (
+                False,
+                f"{', '.join(used)} can only be used with --azure-region AzureCustom",
+            )
+    return (True, "")

@@ -2,6 +2,8 @@
 title: 'Using Non-Default Azure Regions'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Microsoft offers cloud environments that comply with regional regulations. These clouds are available for use based on your requirements. By default, Prowler utilizes the commercial `AzureCloud` environment. (To list all available Azure clouds, use `az cloud list --output table`).
 
 As of this documentation's publication, the following Azure clouds are available:
@@ -15,3 +17,36 @@ To change the default cloud, include the flag `--azure-region`. For example:
 ```console
 prowler azure --az-cli-auth --azure-region AzureChinaCloud
 ```
+
+## Scanning a Custom Azure Cloud
+
+<VersionBadge version="5.52.0" />
+
+To scan an Azure cloud that is not in the list above, such as a private, sovereign or air-gapped cloud, use the `AzureCustom` region and provide the endpoints of that cloud. These flags are for Prowler CLI:
+
+```console
+prowler azure --sp-env-auth --azure-region AzureCustom \
+  --azure-authority-host login.example.com \
+  --azure-resource-manager-endpoint https://management.example.com \
+  --azure-graph-endpoint https://graph.example.com \
+  --azure-logs-endpoint https://api.loganalytics.example.com
+```
+
+The endpoints of a cloud registered in the Azure CLI are available with `az cloud show --name <cloud-name> --query endpoints`:
+
+| Flag | Required | Azure CLI Endpoint |
+|------|----------|--------------------|
+| `--azure-authority-host` | Yes | `activeDirectory` |
+| `--azure-resource-manager-endpoint` | Yes | `resourceManager` |
+| `--azure-graph-endpoint` | Yes | `microsoftGraphResourceId` |
+| `--azure-logs-endpoint` | No | `logAnalyticsResourceId` |
+
+If a field is empty, ask the cloud's administrator for the endpoint.
+
+Each value is a host or an `https://` URL, with an optional port and trailing slash. Prowler also requests its tokens for the Azure Resource Manager and Microsoft Graph endpoints, so each endpoint must be its own token audience. Clouds whose audience differs from the endpoint, or whose authority has a path, such as Azure Stack Hub with AD FS, are not supported. When `--azure-logs-endpoint` is not set, checks that query Log Analytics are not evaluated.
+
+With `--az-cli-auth`, the token comes from the cloud the Azure CLI is signed in to, so register and select that cloud first with `az cloud register` and `az cloud set`.
+
+<Note>
+The endpoint flags are only valid together with `--azure-region AzureCustom`.
+</Note>

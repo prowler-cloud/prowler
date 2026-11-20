@@ -56,7 +56,10 @@ from prowler.providers.azure.exceptions.exceptions import (
 )
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
-from prowler.providers.azure.lib.regions.regions import get_regions_config
+from prowler.providers.azure.lib.regions.regions import (
+    AZURE_CUSTOM_CLOUD,
+    get_regions_config,
+)
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
@@ -126,6 +129,7 @@ class AzureProvider(Provider):
         client_id: str = None,
         client_secret: str = None,
         resource_groups: list = [],
+        region_endpoints: dict = None,
     ):
         """
         Initializes the Azure provider.
@@ -146,6 +150,7 @@ class AzureProvider(Provider):
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
             resource_groups (list): List of resource group names.
+            region_endpoints (dict): Endpoints of the cloud when region is AzureCustom.
 
         Returns:
             None
@@ -210,6 +215,17 @@ class AzureProvider(Provider):
                 ...     managed_identity_auth=False,
                 ...     region="AzureUSGovernment",
                 ... )
+              For a cloud Prowler has no built-in entry for, use the AzureCustom region and pass its endpoints. The logs endpoint is optional.
+                >>> AzureProvider(
+                ...     sp_env_auth=True,
+                ...     region="AzureCustom",
+                ...     region_endpoints={
+                ...         "authority_host": "login.example.com",
+                ...         "resource_manager": "https://management.example.com",
+                ...         "graph": "https://graph.example.com",
+                ...         "logs": "https://api.loganalytics.example.com",
+                ...     },
+                ... )
             - Subscriptions: Prowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
               Prowler also allows you to specify the subscriptions you want to scan by passing a list of subscription IDs.
                 >>> AzureProvider(
@@ -245,7 +261,7 @@ class AzureProvider(Provider):
         )
 
         logger.info("Checking if region is different than default one")
-        self._region_config = self.setup_region_config(region)
+        self._region_config = self.setup_region_config(region, region_endpoints)
 
         # Get the dict from the static credentials
         azure_credentials = None
@@ -410,12 +426,14 @@ class AzureProvider(Provider):
                 )
 
     @staticmethod
-    def setup_region_config(region):
+    def setup_region_config(region, region_endpoints: dict = None):
         """
         Sets up the region configuration for the Azure provider.
 
         Args:
             region (str): The name of the region.
+            region_endpoints (dict): Endpoints of the cloud when region is AzureCustom:
+                authority_host, resource_manager and graph are required, logs is optional.
 
         Returns:
             AzureRegionConfig: The region configuration object.
@@ -423,7 +441,7 @@ class AzureProvider(Provider):
         """
         try:
             validate_azure_region(region)
-            config = get_regions_config(region)
+            config = get_regions_config(region, region_endpoints)
 
             return AzureRegionConfig(
                 name=region,
@@ -514,6 +532,14 @@ class AzureProvider(Provider):
             Exception: If failed to retrieve Azure credentials.
 
         """
+        # MSAL validates an authority it does not know against the public cloud,
+        # which a custom cloud may not reach
+        custom_cloud_kwargs = {}
+        authority = region_config.authority
+        if region_config.name == AZURE_CUSTOM_CLOUD:
+            custom_cloud_kwargs = {"disable_instance_discovery": True}
+            # azure-identity only accepts a host with a port as an https:// URL
+            authority = f"https://{authority}"
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
@@ -531,7 +557,8 @@ class AzureProvider(Provider):
                             tenant_id=azure_credentials["tenant_id"],
                             client_id=azure_credentials["client_id"],
                             client_secret=azure_credentials["client_secret"],
-                            authority=region_config.authority,
+                            authority=authority,
+                            **custom_cloud_kwargs,
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -570,7 +597,8 @@ class AzureProvider(Provider):
                             # Azure Auth using PowerShell is not supported
                             exclude_powershell_credential=True,
                             # set Authority of a Microsoft Entra endpoint
-                            authority=region_config.authority,
+                            authority=authority,
+                            **custom_cloud_kwargs,
                         )
                     except ClientAuthenticationError as error:
                         logger.error(
@@ -606,7 +634,8 @@ class AzureProvider(Provider):
             try:
                 credentials = InteractiveBrowserCredential(
                     tenant_id=tenant_id,
-                    authority=region_config.authority,
+                    authority=authority,
+                    **custom_cloud_kwargs,
                 )
             except Exception as error:
                 logger.critical(
@@ -633,6 +662,7 @@ class AzureProvider(Provider):
         client_id=None,
         client_secret=None,
         provider_id=None,
+        region_endpoints=None,
     ) -> Connection:
         """Test connection to Azure subscription.
 
@@ -649,6 +679,7 @@ class AzureProvider(Provider):
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
             provider_id (str): The provider ID, in this case it's the Azure subscription ID.
+            region_endpoints (dict): Endpoints of the cloud when region is AzureCustom.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
@@ -681,7 +712,7 @@ class AzureProvider(Provider):
                 client_id,
                 client_secret,
             )
-            region_config = AzureProvider.setup_region_config(region)
+            region_config = AzureProvider.setup_region_config(region, region_endpoints)
 
             # Get the dict from the static credentials
             azure_credentials = None

@@ -22,7 +22,7 @@ class AzureRegionConfig(BaseModel):
     credential_scopes: list = ["https://management.azure.com/.default"]
     graph_host: str = "https://graph.microsoft.com"
     graph_scope: str = "https://graph.microsoft.com/.default"
-    logs_endpoint: str = "https://api.loganalytics.io"
+    logs_endpoint: Optional[str] = "https://api.loganalytics.io"
 
 
 class AzureSubscription(BaseModel):
