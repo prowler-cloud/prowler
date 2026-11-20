@@ -4,7 +4,8 @@ Format (draft-inadarei-api-health-check-06).
 Liveness reports only process status. Readiness verifies that PostgreSQL,
 Valkey and the attack-paths graph store (Neo4j or Neptune, per
 ``ATTACK_PATHS_SINK_DATABASE``) are reachable and returns per-dependency
-detail when any of them is unreachable.
+detail when any of them is unreachable. It also verifies active consumers
+for the deployment's required Celery queues.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import suppress
 from datetime import UTC, datetime
@@ -23,6 +24,7 @@ from config.version import API_VERSION, RELEASE_ID
 from django.conf import settings
 from django.db import connections
 from drf_spectacular.utils import extend_schema
+from kombu import Producer
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -41,6 +43,14 @@ STATUS_WARN = "warn"
 
 # Short socket timeout so a stuck Valkey cannot stall the probe.
 VALKEY_PROBE_TIMEOUT_SECONDS = 2
+
+# The reply timeout does not bound broker connection setup or DNS resolution.
+# Bound the entire operation separately, with only one outstanding inspection
+# per process, even when the underlying connection outlives the request budget.
+WORKER_REPLY_TIMEOUT_SECONDS = 2
+WORKER_PROBE_TIMEOUT_SECONDS = 3
+_worker_probe_slot = threading.BoundedSemaphore(1)
+
 
 # Probe-scoped budget for the graph database.
 # ``Driver.verify_connectivity()`` takes no timeout; its only bound is the
@@ -131,6 +141,100 @@ def _probe_valkey() -> None:
             client.close()
 
 
+class _WorkerProbeProducer(Producer):
+    """Publish a health inspection once, without Kombu's retry wrapper."""
+
+    def publish(self, *args, **kwargs):
+        """Override the mailbox's retry default for this producer only."""
+        kwargs["retry"] = False
+        return super().publish(*args, **kwargs)
+
+
+class _WorkerProbeProducerPool:
+    """Supply disposable producers using only the probe's connection."""
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def acquire(self):
+        """Provide the context manager expected by the control mailbox."""
+        return _WorkerProbeProducer(self.connection, auto_declare=False)
+
+
+def _check_worker_queues(required_queues: set[str]) -> None:
+    """Require an active consumer for every queue used by this deployment."""
+    from config.celery import celery_app
+
+    # Use a dedicated, short-lived connection without changing task-publishing
+    # retries, timeouts, TLS configuration or the application's connection pool.
+    with celery_app.connection_for_read(
+        connect_timeout=WORKER_REPLY_TIMEOUT_SECONDS,
+        transport_options={
+            "socket_connect_timeout": WORKER_REPLY_TIMEOUT_SECONDS,
+            "socket_timeout": WORKER_REPLY_TIMEOUT_SECONDS,
+            "max_retries": 0,
+        },
+    ) as connection:
+        connection.ensure_connection(max_retries=0)
+        # Binding copies the mailbox. Replace only that copy's producer pool:
+        # the default pool would publish through a separate, retrying connection.
+        mailbox = celery_app.control.mailbox(connection)
+        mailbox.producer_pool = _WorkerProbeProducerPool(connection)
+        replies = mailbox.multi_call(
+            "active_queues", timeout=WORKER_REPLY_TIMEOUT_SECONDS
+        )
+
+    consumed_queues = {
+        queue.get("name")
+        for reply in replies or []
+        if isinstance(reply, dict)
+        for queues in reply.values()
+        if isinstance(queues, list)
+        for queue in queues
+        if isinstance(queue, dict) and isinstance(queue.get("name"), str)
+    }
+    missing = required_queues - consumed_queues
+    if missing:
+        raise RuntimeError(
+            f"No active consumer for queues: {', '.join(sorted(missing))}"
+        )
+
+
+def _probe_workers() -> None:
+    """Bound consumer inspection and prevent timed-out checks from piling up."""
+    required_queues = set(settings.HEALTHCHECK_WORKER_QUEUES)
+    if not required_queues:
+        raise RuntimeError("No worker queues configured for readiness")
+    if not _worker_probe_slot.acquire(blocking=False):
+        raise RuntimeError("A previous worker readiness probe is still running")
+
+    future: Future[None] = Future()
+
+    def inspect_queues():
+        """Deliver the probe result and release its slot on every exit path."""
+        try:
+            future.set_result(_check_worker_queues(required_queues))
+        except BaseException as exc:
+            future.set_exception(exc)
+        finally:
+            _worker_probe_slot.release()
+
+    # A running DNS lookup cannot be cancelled by Future.cancel(). A daemon
+    # thread preserves the request budget without holding process shutdown open.
+    thread = threading.Thread(
+        target=inspect_queues, name="health-worker-probe", daemon=True
+    )
+    try:
+        thread.start()
+    except Exception:
+        _worker_probe_slot.release()
+        raise
+    thread.join(timeout=WORKER_PROBE_TIMEOUT_SECONDS)
+    if thread.is_alive():
+        raise TimeoutError(f"worker probe exceeded {WORKER_PROBE_TIMEOUT_SECONDS}s")
+    future.result()
+
+
 def _graph_db_component_id() -> str:
     """Return the active graph database name for the ``componentId`` field."""
     return settings.ATTACK_PATHS_SINK_DATABASE.strip().lower()
@@ -190,6 +294,7 @@ def _base_payload(overall_status: str) -> dict[str, Any]:
 
 
 def _readiness_payload() -> tuple[dict[str, Any], int]:
+    """Cache dependency status, including coverage by active task consumers."""
     global _readiness_cache
 
     # Lock-free fast path: a stale snapshot still satisfies the freshness
@@ -217,6 +322,7 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
         valkey_result, valkey_ms = _measure("valkey", _probe_valkey)
         graph_db_result, graph_db_ms = _measure(graph_db_component_id, _probe_graph_db)
 
+        workers_result, workers_ms = _measure("celery", _probe_workers)
         entries = [
             _build_check_entry("postgres", "datastore", postgres_result, postgres_ms),
             _build_check_entry("valkey", "datastore", valkey_result, valkey_ms),
@@ -224,6 +330,9 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
                 graph_db_component_id, "datastore", graph_db_result, graph_db_ms
             ),
         ]
+        entries.append(
+            _build_check_entry("celery", "component", workers_result, workers_ms)
+        )
         overall = _aggregate_status(entries)
 
         payload = _base_payload(overall)
@@ -231,6 +340,7 @@ def _readiness_payload() -> tuple[dict[str, Any], int]:
             "postgres:responseTime": [entries[0]],
             "valkey:responseTime": [entries[1]],
             "graphdb:responseTime": [entries[2]],
+            "celery:responseTime": [entries[3]],
         }
 
         http_status = (
@@ -273,9 +383,9 @@ class ReadinessView(APIView):
     """Readiness probe.
 
     Returns 200 when PostgreSQL, Valkey and the attack-paths graph store
-    all respond, or 503 with per-dependency detail when any of them is
-    unreachable. Per-IP throttle plus the short in-process result cache cap
-    the real dependency hits regardless of inbound traffic shape.
+    respond and all required queues have active consumers. Otherwise returns
+    503 with per-dependency status. Per-IP throttle plus the short in-process
+    result cache cap the real dependency hits regardless of inbound traffic shape.
     """
 
     authentication_classes: list = []

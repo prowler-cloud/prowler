@@ -68,6 +68,7 @@ class TestLivenessEndpoint:
             patch("api.health._probe_postgres") as mock_pg,
             patch("api.health._probe_valkey") as mock_vk,
             patch("api.health._probe_graph_db") as mock_neo,
+            patch("api.health._probe_workers") as mock_workers,
         ):
             response = api_client.get(reverse("health-live"))
 
@@ -75,8 +76,17 @@ class TestLivenessEndpoint:
         mock_pg.assert_not_called()
         mock_vk.assert_not_called()
         mock_neo.assert_not_called()
+        mock_workers.assert_not_called()
 
 
+@pytest.fixture
+def available_workers():
+    """Keep datastore and response-format tests independent of real workers."""
+    with patch("api.health._probe_workers") as probe:
+        yield probe
+
+
+@pytest.mark.usefixtures("available_workers")
 class TestReadinessEndpoint:
     @staticmethod
     def _patch_probes():
@@ -87,6 +97,7 @@ class TestReadinessEndpoint:
         )
 
     def test_returns_200_and_pass_when_all_dependencies_healthy(self, api_client):
+        """Report each healthy dependency with its public component metadata."""
         with (
             patch("api.health._probe_postgres"),
             patch("api.health._probe_valkey"),
@@ -108,13 +119,16 @@ class TestReadinessEndpoint:
             "postgres:responseTime",
             "valkey:responseTime",
             "graphdb:responseTime",
+            "celery:responseTime",
         }
         for key in body["checks"]:
             entries = body["checks"][key]
             assert isinstance(entries, list) and len(entries) == 1
             entry = entries[0]
             assert entry["status"] == "pass"
-            assert entry["componentType"] == "datastore"
+            assert entry["componentType"] == (
+                "component" if key == "celery:responseTime" else "datastore"
+            )
             assert entry["observedUnit"] == "ms"
             assert isinstance(entry["observedValue"], (int, float))
             assert entry["observedValue"] >= 0
@@ -194,10 +208,14 @@ class TestReadinessEndpoint:
         assert "output" not in graph_db_entry
 
     def test_reports_all_failures_simultaneously(self, api_client):
+        """Report a failed readiness result when every dependency is down."""
         with (
             patch("api.health._probe_postgres", side_effect=RuntimeError("pg down")),
             patch("api.health._probe_valkey", side_effect=RuntimeError("vk down")),
             patch("api.health._probe_graph_db", side_effect=RuntimeError("neo down")),
+            patch(
+                "api.health._probe_workers", side_effect=RuntimeError("workers down")
+            ),
         ):
             response = api_client.get(reverse("health-ready"))
 
@@ -208,6 +226,7 @@ class TestReadinessEndpoint:
             "postgres:responseTime",
             "valkey:responseTime",
             "graphdb:responseTime",
+            "celery:responseTime",
         ):
             entry = body["checks"][key][0]
             assert entry["status"] == "fail"
@@ -254,6 +273,7 @@ class TestReadinessEndpoint:
         assert response.status_code == status.HTTP_200_OK
 
 
+@pytest.mark.usefixtures("available_workers")
 class TestReadinessCache:
     """In-process cache caps the rate at which real probes hit the deps."""
 
@@ -313,6 +333,7 @@ class TestReadinessCache:
         assert pg.call_count == 1
 
 
+@pytest.mark.usefixtures("available_workers")
 class TestRateLimiting:
     """The endpoints are unauthenticated and exposed; per-IP throttle caps
     naive single-source floods."""
@@ -481,3 +502,328 @@ class TestStatusAggregation:
     def test_fail_when_any_check_fails(self):
         entries = [{"status": "pass"}, {"status": "warn"}, {"status": "fail"}]
         assert health._aggregate_status(entries) == "fail"
+
+
+@pytest.fixture
+def worker_inspector():
+    """Mock only the broker boundary while exercising the readiness probe."""
+    with (
+        patch("config.celery.celery_app.connection_for_read") as connection,
+        patch("config.celery.celery_app.control.mailbox") as inspector,
+    ):
+        yield inspector.return_value, connection.return_value.__enter__.return_value
+
+
+@pytest.fixture
+def healthy_datastores():
+    """Keep worker tests independent of PostgreSQL and graph availability."""
+    with (
+        patch("api.health._probe_postgres"),
+        patch("api.health._probe_valkey"),
+        patch("api.health._probe_graph_db"),
+    ):
+        yield
+
+
+@pytest.mark.usefixtures("healthy_datastores")
+class TestWorkerReadiness:
+    @pytest.mark.parametrize(
+        "queues",
+        [
+            None,
+            {},
+            {"worker": []},
+            {"worker": [{"name": "unrelated"}]},
+            {"worker": [{"name": "celery"}]},
+            {"worker": [{"name": "scans"}]},
+            {"worker": {"error": "not available"}},
+        ],
+    )
+    def test_missing_consumers_make_api_unready(
+        self, api_client, settings, worker_inspector, queues
+    ):
+        """Broker availability alone must not make an API with stranded jobs ready."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery", "scans"]
+        inspector, _ = worker_inspector
+        inspector.multi_call.return_value = [queues]
+
+        response = api_client.get(reverse("health-ready"))
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.json()["status"] == "fail"
+        assert response.json()["checks"]["celery:responseTime"][0]["status"] == "fail"
+
+    @pytest.mark.parametrize(
+        "replies",
+        [
+            [{"worker": [{"name": "celery"}, {"name": "scans"}]}],
+            [{"general": [{"name": "celery"}]}, {"scanner": [{"name": "scans"}]}],
+            [
+                {"replacement": [{"name": "celery"}, {"name": "scans"}]},
+                {"extra": []},
+            ],
+        ],
+    )
+    def test_consumers_can_be_split_across_workers(
+        self, api_client, settings, worker_inspector, replies
+    ):
+        """Require collective coverage without requiring every worker to answer."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery", "scans"]
+        inspector, _ = worker_inspector
+        inspector.multi_call.return_value = replies
+
+        response = api_client.get(reverse("health-ready"))
+
+        assert response.status_code == status.HTTP_200_OK
+        entry = response.json()["checks"]["celery:responseTime"][0]
+        assert entry["status"] == "pass"
+        assert entry["componentType"] == "component"
+        assert entry["componentId"] == "celery"
+
+    def test_broker_failure_is_reported_without_private_details(
+        self, api_client, settings, worker_inspector
+    ):
+        """Return generic dependency status rather than broker addresses or credentials."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
+        inspector, connection = worker_inspector
+        connection.ensure_connection.side_effect = ConnectionError(
+            "redis://private-user:private-password@broker.internal:6379/0"
+        )
+
+        response = api_client.get(reverse("health-ready"))
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        inspector.multi_call.assert_not_called()
+        for secret in ("private-user", "private-password", "broker.internal", "6379"):
+            assert secret not in response.content.decode()
+
+    def test_empty_required_queues_fail_closed(
+        self, api_client, settings, worker_inspector
+    ):
+        """A misconfigured empty queue list must not silently disable the check."""
+        settings.HEALTHCHECK_WORKER_QUEUES = []
+        inspector, _ = worker_inspector
+
+        assert api_client.get(reverse("health-ready")).status_code == 503
+        inspector.multi_call.assert_not_called()
+
+    def test_recovers_after_consumers_return_and_cache_expires(
+        self, api_client, settings, worker_inspector
+    ):
+        """Cache a failure briefly, then observe restored queue consumption."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
+        inspector, _ = worker_inspector
+        inspector.multi_call.side_effect = [None, [{"worker": [{"name": "celery"}]}]]
+
+        assert api_client.get(reverse("health-ready")).status_code == 503
+        assert api_client.get(reverse("health-ready")).status_code == 503
+        assert inspector.multi_call.call_count == 1
+        cached_at, payload, http_status = health._readiness_cache
+        health._readiness_cache = (
+            cached_at - health.READINESS_CACHE_TTL_SECONDS - 1,
+            payload,
+            http_status,
+        )
+
+        assert api_client.get(reverse("health-ready")).status_code == 200
+        assert inspector.multi_call.call_count == 2
+
+    def test_liveness_does_not_inspect_workers(self, api_client, worker_inspector):
+        """A worker outage must not cause API liveness failures or restarts."""
+        inspector, _ = worker_inspector
+        inspector.multi_call.side_effect = ConnectionError("unreachable")
+
+        assert api_client.get(reverse("health-live")).status_code == 200
+        inspector.multi_call.assert_not_called()
+
+    def test_inspection_disables_connection_retries(
+        self, api_client, settings, worker_inspector
+    ):
+        """Keep health connection failures separate from task-publishing retries."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
+        inspector, connection = worker_inspector
+        inspector.multi_call.return_value = [{"worker": [{"name": "celery"}]}]
+
+        assert api_client.get(reverse("health-ready")).status_code == 200
+        connection.ensure_connection.assert_called_once_with(max_retries=0)
+
+    def test_response_omits_worker_and_missing_queue_names(
+        self, api_client, settings, worker_inspector
+    ):
+        """Expose dependency status without disclosing internal worker topology."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["private-jobs"]
+        inspector, _ = worker_inspector
+        inspector.multi_call.return_value = [
+            {"worker@private-host": [{"name": "celery"}]}
+        ]
+
+        response = api_client.get(reverse("health-ready"))
+
+        assert response.status_code == 503
+        assert "private-jobs" not in response.content.decode()
+        assert "private-host" not in response.content.decode()
+
+    def test_stalled_inspection_is_bounded_and_does_not_accumulate(
+        self, api_client, settings, worker_inspector
+    ):
+        """Time out slow broker calls and allow only one unfinished inspection."""
+        import threading
+        import time
+
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
+        inspector, _ = worker_inspector
+        release = threading.Event()
+        started = threading.Event()
+
+        def stalled(*_args, **_kwargs):
+            """Hold one inspection until the test explicitly releases it."""
+            started.set()
+            release.wait(timeout=5)
+            return [{"worker": [{"name": "celery"}]}]
+
+        inspector.multi_call.side_effect = stalled
+        try:
+            with patch("api.health.WORKER_PROBE_TIMEOUT_SECONDS", 0.1):
+                before = time.monotonic()
+                assert api_client.get(reverse("health-ready")).status_code == 503
+                assert time.monotonic() - before < 1
+                assert started.is_set()
+
+                for _ in range(3):
+                    health._readiness_cache = None
+                    before = time.monotonic()
+                    assert api_client.get(reverse("health-ready")).status_code == 503
+                    assert time.monotonic() - before < 1
+                assert inspector.multi_call.call_count == 1
+                assert api_client.get(reverse("health-live")).status_code == 200
+        finally:
+            release.set()
+            # Wait for the outstanding probe before restoring the broker mock.
+            assert health._worker_probe_slot.acquire(timeout=5)
+            health._worker_probe_slot.release()
+
+        inspector.multi_call.side_effect = None
+        inspector.multi_call.return_value = [{"worker": [{"name": "celery"}]}]
+        health._readiness_cache = None
+        assert api_client.get(reverse("health-ready")).status_code == 200
+
+    def test_inspection_publish_failure_is_not_retried(self):
+        """Exercise real Celery/Kombu publication and fail on any retry wrapper."""
+        from celery import Celery, current_app
+        from kombu import Connection, Producer
+
+        previous_app = current_app._get_current_object()
+        app = Celery(
+            "health-publication-test", broker="memory://", set_as_current=False
+        )
+        try:
+            with (
+                patch("config.celery.celery_app", app),
+                patch.object(
+                    Connection,
+                    "ensure",
+                    side_effect=AssertionError("publication retries are enabled"),
+                ) as ensure,
+                patch.object(
+                    Producer, "_publish", side_effect=OSError("broker disconnected")
+                ) as publish,
+                pytest.raises(OSError, match="broker disconnected"),
+            ):
+                health._check_worker_queues({"celery"})
+            ensure.assert_not_called()
+            publish.assert_called_once()
+            assert publish.call_args.args[-2] is False
+        finally:
+            app.close()
+        assert current_app._get_current_object() is previous_app
+
+    @pytest.mark.parametrize("startup_delay", [0, 0.2])
+    def test_stalled_dns_probe_does_not_delay_process_exit(
+        self, startup_delay, monkeypatch
+    ):
+        """A timed-out DNS lookup must not hold the interpreter open at shutdown."""
+        import os
+        import subprocess
+        import sys
+        import textwrap
+
+        monkeypatch.setenv("CELERY_BROKER_READ_URL", "memory://")
+
+        code = textwrap.dedent(
+            """
+            import socket
+            import sys
+            import threading
+            import time
+            from unittest.mock import patch
+
+            import django
+            django.setup()
+            from api import health
+            from django.conf import settings
+
+            settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
+            stalled = threading.Event()
+            started = threading.Event()
+            original_inspection = health._check_worker_queues
+
+            def delayed_inspection(queues):
+                time.sleep(float(sys.argv[1]))
+                return original_inspection(queues)
+
+            def blocked_dns(*args, **kwargs):
+                started.set()
+                stalled.wait(60)
+
+            with (
+                patch.object(socket, "getaddrinfo", blocked_dns),
+                patch.object(health, "_check_worker_queues", delayed_inspection),
+                patch.object(health, "WORKER_PROBE_TIMEOUT_SECONDS", 0.1),
+            ):
+                try:
+                    health._probe_workers()
+                except TimeoutError:
+                    assert started.wait(timeout=5)
+                    print("PROBE_TIMED_OUT", flush=True)
+                else:
+                    raise AssertionError("Expected the DNS probe to time out")
+            """
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", code, str(startup_delay)],
+            env={**os.environ, "CELERY_BROKER_READ_URL": "redis://localhost:6379/0"},
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=True,
+        )
+        assert "PROBE_TIMED_OUT" in result.stdout
+
+    def test_inspection_does_not_use_or_modify_task_producer_pool(self):
+        """Publish through the probe connection without touching task producers."""
+        from celery import Celery, current_app
+        from kombu.pidbox import Mailbox
+
+        previous_app = current_app._get_current_object()
+        app = Celery("health-producer-test", broker="memory://", set_as_current=False)
+        original_pool = app.control.mailbox.producer_pool
+        original_retry = app.conf.task_publish_retry
+        try:
+            with (
+                patch("config.celery.celery_app", app),
+                patch.object(
+                    original_pool,
+                    "acquire",
+                    side_effect=AssertionError("task producer pool was used"),
+                ) as acquire,
+                patch.object(
+                    Mailbox, "_collect", return_value=[{"worker": [{"name": "celery"}]}]
+                ),
+            ):
+                health._check_worker_queues({"celery"})
+            acquire.assert_not_called()
+            assert app.control.mailbox.producer_pool is original_pool
+            assert app.conf.task_publish_retry == original_retry
+        finally:
+            app.close()
+        assert current_app._get_current_object() is previous_app
