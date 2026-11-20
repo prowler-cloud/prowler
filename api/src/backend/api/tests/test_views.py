@@ -3614,7 +3614,7 @@ current-context: test-context
                 Provider.ProviderChoices.GOOGLEWORKSPACE.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
-                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789", "token_uri": "https://oauth2.googleapis.com/token"}',
                     "delegated_user": "admin@example.com",
                 },
             ),

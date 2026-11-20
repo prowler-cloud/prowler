@@ -1988,6 +1988,30 @@ class GoogleWorkspaceProviderSecret(serializers.Serializer):
     credentials_content = serializers.CharField()
     delegated_user = serializers.EmailField()
 
+    def validate_credentials_content(self, credentials_content):
+        try:
+            service_account_key = json.loads(credentials_content)
+        except json.JSONDecodeError as error:
+            raise ValidationError(
+                "The credentials content must be a valid JSON service account key.",
+                code="googleworkspace-invalid-service-account-key",
+            ) from error
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return credentials_content
+
+    def validate(self, attrs):
+        # The stored secret is passed to the provider as keyword arguments
+        unknown = set(self.initial_data) - set(self.fields)
+        if unknown:
+            raise ValidationError(
+                f"Unexpected fields: {', '.join(sorted(unknown))}.",
+                code="googleworkspace-unexpected-fields",
+            )
+        return attrs
+
     class Meta:
         resource_name = "provider-secrets"
 
