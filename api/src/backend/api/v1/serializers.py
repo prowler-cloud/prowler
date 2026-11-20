@@ -1988,6 +1988,30 @@ class GoogleWorkspaceProviderSecret(serializers.Serializer):
     credentials_content = serializers.CharField()
     delegated_user = serializers.EmailField()
 
+    def validate_credentials_content(self, credentials_content):
+        try:
+            service_account_key = json.loads(credentials_content)
+        except json.JSONDecodeError as error:
+            raise ValidationError(
+                "The credentials content must be a valid JSON service account key.",
+                code="googleworkspace-invalid-service-account-key",
+            ) from error
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return credentials_content
+
+    def validate(self, attrs):
+        # The stored secret is passed to the provider as keyword arguments
+        unknown = set(self.initial_data) - set(self.fields)
+        if unknown:
+            raise ValidationError(
+                f"Unexpected fields: {', '.join(sorted(unknown))}.",
+                code="googleworkspace-unexpected-fields",
+            )
+        return attrs
+
     class Meta:
         resource_name = "provider-secrets"
 
@@ -4388,6 +4412,9 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
         # Check that all findings exist and belong to this tenant
         findings = Finding.all_objects.filter(tenant_id=tenant_id, id__in=value)
+        visible_providers = self.context.get("visible_providers")
+        if visible_providers is not None:
+            findings = findings.filter(scan__provider__in=visible_providers)
         found_ids = set(findings.values_list("id", flat=True))
         provided_ids = set(value)
 
@@ -4416,11 +4443,15 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
         # Check for overlaps with existing enabled rules
         existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, enabled=True)
 
+        # A scoped role may not be able to see the conflicting rule, so its name
+        # is only shown to roles with unlimited visibility
+        rule_names_visible = self.context.get("visible_providers") is None
         for rule in existing_rules:
             overlap = set(finding_uids) & set(rule.finding_uids)
             if overlap:
+                by_rule = f" by rule '{rule.name}'" if rule_names_visible else ""
                 raise ConflictException(
-                    detail=f"The following finding UIDs are already muted by rule '{rule.name}': {overlap}"
+                    detail=f"The following finding UIDs are already muted{by_rule}: {overlap}"
                 )
 
         # Store finding_uids in validated_data for create

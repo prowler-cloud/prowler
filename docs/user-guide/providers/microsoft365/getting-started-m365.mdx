@@ -174,4 +174,10 @@ With `--az-cli-auth`, the token comes from whichever cloud the `az` CLI is signe
 With `M365Custom`, the checks that rely on the Exchange Online and Microsoft Teams PowerShell modules are skipped, because those modules need environment values that are only known for the built-in regions. The Microsoft Graph checks run against the supplied endpoints.
 </Note>
 
+The PowerShell checks (Exchange Online and Microsoft Teams, which also feed Entra, Defender, Purview and Admin Center checks) follow the selected region. For `M365USGovernment` and `M365China`, Prowler requests tokens from that cloud's sign-in endpoint and connects with the matching `-ExchangeEnvironmentName` (`O365USGovGCCHigh`, `O365China`) and `-TeamsEnvironmentName` (`TeamsGCCH`, `TeamsChina`) values. Nothing is sent to the commercial sign-in endpoint for those regions.
+
+<Note>
+Only the Microsoft Teams checks for `M365USGovernment` are verified against a live tenant. Exchange Online for `M365USGovernment` and everything for `M365China` are not, and Teams checks may not connect with `M365China`.
+</Note>
+
 ---

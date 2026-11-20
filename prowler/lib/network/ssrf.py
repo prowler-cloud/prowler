@@ -8,6 +8,10 @@ import re
 import socket
 from urllib.parse import urlparse
 
+import idna
+from urllib3.exceptions import LocationParseError
+from urllib3.util import parse_url
+
 from prowler.lib.logger import logger
 
 ALLOWED_PRIVATE_NETWORKS_ENV = "PROWLER_ALLOWED_PRIVATE_NETWORKS"
@@ -115,12 +119,37 @@ def extract_host(url: str) -> str:
     scp_like = _SCP_LIKE_REMOTE.match(url)
     if scp_like and "://" not in url:
         return scp_like.group("host")
+    url = url.strip()
     host = urlparse(url).hostname
     if not host:
         # The URL itself stays out of the message: a configured repository or auth
         # URL can carry credentials in its userinfo, and this message is logged
         raise OutboundURLNotAllowedError("Could not read a host from the supplied URL")
-    return host
+    # urllib3, which requests and the kubernetes client dial through, ends the
+    # authority at a backslash; urlparse does not, so the two can disagree on the host
+    dialed = _dialed_host(url)
+    if dialed not in (host, _idna_form(host)):
+        raise OutboundURLNotAllowedError(
+            "The supplied URL has an ambiguous host and cannot be reached"
+        )
+    # The dialed form: getaddrinfo would encode a Unicode host with the stdlib codec
+    return dialed
+
+
+def _dialed_host(url: str) -> str | None:
+    try:
+        host = parse_url(url).host
+    except LocationParseError:
+        return None
+    return host.strip("[]").lower() if host else None
+
+
+def _idna_form(host: str) -> str:
+    # The encoder urllib3 applies to http(s) hosts; the stdlib codec differs (ß)
+    try:
+        return idna.encode(host, uts46=True).decode("ascii")
+    except idna.IDNAError:
+        return host
 
 
 def validate_outbound_host(host: str) -> None:
