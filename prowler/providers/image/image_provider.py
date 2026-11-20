@@ -18,6 +18,8 @@ from prowler.config.config import (
 )
 from prowler.lib.check.models import CheckReportImage
 from prowler.lib.logger import logger
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
     resolve_vulnerability_reference_urls,
@@ -26,6 +28,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidAllowedNetworksError,
     ImageInvalidConfigScannerError,
     ImageInvalidFilterError,
     ImageInvalidNameError,
@@ -46,6 +49,11 @@ from prowler.providers.image.lib.arguments.arguments import (
     IMAGE_CONFIG_SCANNERS_CHOICES,
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
+)
+from prowler.providers.image.lib.registry.base import (
+    ALLOWED_PRIVATE_NETWORKS_ENV,
+    _outbound_check_skipped,
+    _parse_allowed_private_networks,
 )
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import create_registry_adapter
@@ -768,8 +776,40 @@ class ImageProvider(Provider):
         return env
 
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
-        """Execute Trivy command with optional progress bar."""
+        """Execute Trivy, routed through the outbound proxy unless the check is skipped."""
         env = self._build_trivy_env()
+        if _outbound_check_skipped():
+            return self._run_trivy(command, image, env)
+        try:
+            proxy = TrivyOutboundProxy(
+                env,
+                allowed_networks=_parse_allowed_private_networks(
+                    env.get(ALLOWED_PRIVATE_NETWORKS_ENV)
+                ),
+                allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
+            )
+            proxy.start()
+        except (
+            ImageInvalidAllowedNetworksError,
+            OutboundURLNotAllowedError,
+            OSError,
+        ) as error:
+            # the scan loop only re-raises ImageScanError; anything else would
+            # report the image as scanned with no findings
+            raise ImageScanError(
+                file=__file__,
+                original_exception=error,
+                message=f"Could not start the outbound proxy for Trivy: {error}",
+            )
+        try:
+            return self._run_trivy(command, image, proxy.route(env))
+        finally:
+            proxy.stop()
+
+    def _run_trivy(
+        self, command: list, image: str, env: dict
+    ) -> subprocess.CompletedProcess:
+        """Run the Trivy subprocess with an optional progress bar."""
         try:
             if sys.stdout.isatty():
                 with alive_bar(
