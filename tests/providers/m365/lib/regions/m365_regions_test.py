@@ -20,16 +20,31 @@ class Test_m365_regions:
                 "authority": None,
                 "base_url": MICROSOFT365_GENERIC_CLOUD,
                 "credential_scopes": [MICROSOFT365_GENERIC_CLOUD + "/.default"],
+                "powershell": {
+                    "exchange_environment": None,
+                    "exchange_scope": "https://outlook.office365.com/.default",
+                    "teams_environment": None,
+                },
             },
             "M365China": {
                 "authority": AzureAuthorityHosts.AZURE_CHINA,
                 "base_url": MICROSOFT365_CHINA_CLOUD,
                 "credential_scopes": [MICROSOFT365_CHINA_CLOUD + "/.default"],
+                "powershell": {
+                    "exchange_environment": "O365China",
+                    "exchange_scope": "https://partner.outlook.cn/.default",
+                    "teams_environment": "TeamsChina",
+                },
             },
             "M365USGovernment": {
                 "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
                 "base_url": MICROSOFT365_US_GOV_CLOUD,
                 "credential_scopes": [MICROSOFT365_US_GOV_CLOUD + "/.default"],
+                "powershell": {
+                    "exchange_environment": "O365USGovGCCHigh",
+                    "exchange_scope": "https://outlook.office365.us/.default",
+                    "teams_environment": "TeamsGCCH",
+                },
             },
         }
 
