@@ -79,6 +79,10 @@ declare global {
       SOCIAL_GITHUB_OAUTH_CLIENT_ID?: string;
       SOCIAL_GITHUB_OAUTH_CLIENT_SECRET?: string;
       SOCIAL_GITHUB_OAUTH_CALLBACK_URL?: string;
+      SOCIAL_MICROSOFT_OAUTH_CLIENT_ID?: string;
+      SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET?: string;
+      SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL?: string;
+      SOCIAL_MICROSOFT_OAUTH_TENANT?: string;
 
       // Feature integrations
       PROWLER_MCP_SERVER_URL?: string;
