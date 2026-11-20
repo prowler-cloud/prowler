@@ -1,4 +1,5 @@
 import http.server
+import ipaddress
 import socket
 import socketserver
 import threading
@@ -7,11 +8,10 @@ from unittest import mock
 import pytest
 import requests
 
-from prowler.providers.image.exceptions.exceptions import ImageScanError
-from prowler.providers.image.lib.outbound_proxy import TrivyOutboundProxy
-from prowler.providers.image.lib.registry.base import ALLOWED_PRIVATE_NETWORKS_ENV
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 
-LOOPBACK_ALLOWED = {ALLOWED_PRIVATE_NETWORKS_ENV: "127.0.0.1/32"}
+LOOPBACK = (ipaddress.ip_network("127.0.0.1/32"),)
 
 
 class _Ok(http.server.BaseHTTPRequestHandler):
@@ -100,7 +100,7 @@ class TestTrivyOutboundProxy:
     def test_forwards_a_plain_http_request_to_an_allowlisted_address(
         self, http_upstream
     ):
-        with TrivyOutboundProxy(LOOPBACK_ALLOWED) as proxy:
+        with TrivyOutboundProxy({}, allowed_networks=LOOPBACK) as proxy:
             response = _get(f"http://127.0.0.1:{http_upstream}/v2/", proxy)
 
         assert response.status_code == 200
@@ -142,7 +142,7 @@ class TestTrivyOutboundProxy:
         assert reply.startswith(b"HTTP/1.1 403 ")
 
     def test_tunnels_to_an_allowlisted_address(self, echo_upstream):
-        with TrivyOutboundProxy(LOOPBACK_ALLOWED) as proxy:
+        with TrivyOutboundProxy({}, allowed_networks=LOOPBACK) as proxy:
             reply, echoed = _connect(proxy, f"127.0.0.1:{echo_upstream}")
 
         assert reply.startswith(b"HTTP/1.1 200 ")
@@ -158,7 +158,7 @@ class TestTrivyOutboundProxy:
 
         with _resolves({"registry.example": "127.0.0.1"}):
             with mock.patch.object(socket, "create_connection", side_effect=spy):
-                with TrivyOutboundProxy(LOOPBACK_ALLOWED) as proxy:
+                with TrivyOutboundProxy({}, allowed_networks=LOOPBACK) as proxy:
                     _connect(proxy, f"registry.example:{echo_upstream}")
 
         assert ("127.0.0.1", echo_upstream) in dialed
@@ -249,11 +249,10 @@ class TestTrivyOutboundProxyOperatorProxy:
 
     def test_dials_directly_a_host_listed_in_the_operator_no_proxy(self, echo_upstream):
         environ = {
-            **LOOPBACK_ALLOWED,
             "HTTPS_PROXY": "http://127.0.0.1:9",
             "NO_PROXY": "127.0.0.1",
         }
-        with TrivyOutboundProxy(environ) as proxy:
+        with TrivyOutboundProxy(environ, allowed_networks=LOOPBACK) as proxy:
             reply, echoed = _connect(proxy, f"127.0.0.1:{echo_upstream}")
 
         assert reply.startswith(b"HTTP/1.1 200 ")
@@ -269,7 +268,7 @@ class TestTrivyOutboundProxyOperatorProxy:
         "proxy_url", ["socks5://proxy.example:1080", "https://proxy.example:3128"]
     )
     def test_refuses_an_operator_proxy_it_cannot_speak(self, proxy_url):
-        with pytest.raises(ImageScanError, match="only an http:// proxy"):
+        with pytest.raises(OutboundURLNotAllowedError, match="only an http:// proxy"):
             TrivyOutboundProxy({"HTTPS_PROXY": proxy_url})
 
 

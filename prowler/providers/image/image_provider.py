@@ -18,6 +18,8 @@ from prowler.config.config import (
 )
 from prowler.lib.check.models import CheckReportImage
 from prowler.lib.logger import logger
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
     resolve_vulnerability_reference_urls,
@@ -48,8 +50,11 @@ from prowler.providers.image.lib.arguments.arguments import (
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
 )
-from prowler.providers.image.lib.outbound_proxy import TrivyOutboundProxy
-from prowler.providers.image.lib.registry.base import _outbound_check_skipped
+from prowler.providers.image.lib.registry.base import (
+    ALLOWED_PRIVATE_NETWORKS_ENV,
+    _outbound_check_skipped,
+    _parse_allowed_private_networks,
+)
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import create_registry_adapter
 
@@ -776,8 +781,18 @@ class ImageProvider(Provider):
         if _outbound_check_skipped():
             return self._run_trivy(command, image, env)
         try:
-            proxy = TrivyOutboundProxy(env)
-        except (ImageInvalidAllowedNetworksError, OSError) as error:
+            proxy = TrivyOutboundProxy(
+                env,
+                allowed_networks=_parse_allowed_private_networks(
+                    env.get(ALLOWED_PRIVATE_NETWORKS_ENV)
+                ),
+                allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
+            )
+        except (
+            ImageInvalidAllowedNetworksError,
+            OutboundURLNotAllowedError,
+            OSError,
+        ) as error:
             # the scan loop only re-raises ImageScanError; anything else would
             # report the image as scanned with no findings
             raise ImageScanError(

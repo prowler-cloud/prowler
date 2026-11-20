@@ -12,12 +12,7 @@ from urllib.parse import SplitResult, unquote, urlsplit
 from urllib.request import proxy_bypass_environment
 
 from prowler.lib.logger import logger
-from prowler.lib.network.ssrf import _ip_is_non_public
-from prowler.providers.image.exceptions.exceptions import ImageScanError
-from prowler.providers.image.lib.registry.base import (
-    ALLOWED_PRIVATE_NETWORKS_ENV,
-    _parse_allowed_private_networks,
-)
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError, _ip_is_non_public
 
 PROXY_ENV_VARS = ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy")
 NO_PROXY_ENV_VARS = ("NO_PROXY", "no_proxy")
@@ -200,12 +195,9 @@ def _operator_proxy(raw: str | None) -> SplitResult | None:
         return None
     proxy = urlsplit(raw if "://" in raw else f"http://{raw}")
     if proxy.scheme != "http" or not proxy.hostname:
-        raise ImageScanError(
-            file=__file__,
-            message=(
-                "Image scans with the outbound host check enabled support only an "
-                "http:// proxy in HTTP_PROXY and HTTPS_PROXY"
-            ),
+        raise OutboundURLNotAllowedError(
+            "With the outbound host check enabled, Trivy scans support only an "
+            "http:// proxy in HTTP_PROXY and HTTPS_PROXY"
         )
     return proxy
 
@@ -213,10 +205,11 @@ def _operator_proxy(raw: str | None) -> SplitResult | None:
 class _GuardServer(socketserver.ThreadingTCPServer):
     daemon_threads = True
 
-    def __init__(self, environ: dict) -> None:
-        self.allowed_networks = _parse_allowed_private_networks(
-            environ.get(ALLOWED_PRIVATE_NETWORKS_ENV)
-        )
+    def __init__(
+        self, environ: dict, allowed_networks: tuple, allowlist_env: str
+    ) -> None:
+        self.allowed_networks = allowed_networks
+        self.allowlist_env = allowlist_env
         self.upstream_proxies = {
             scheme: _operator_proxy(
                 environ.get(f"{scheme.upper()}_PROXY") or environ.get(f"{scheme}_proxy")
@@ -249,8 +242,8 @@ class _GuardServer(socketserver.ThreadingTCPServer):
                 raise _Refused(
                     403,
                     f"Host {host!r} resolves to non-public address {address}. "
-                    f"To scan a registry on a private network, list the trusted "
-                    f"ranges in {ALLOWED_PRIVATE_NETWORKS_ENV}.",
+                    f"To reach a private network, list the trusted ranges in "
+                    f"{self.allowlist_env}.",
                 )
         return addresses
 
@@ -302,8 +295,10 @@ class TrivyOutboundProxy:
     is asked to reach.
     """
 
-    def __init__(self, environ: dict) -> None:
-        self._server = _GuardServer(environ)
+    def __init__(
+        self, environ: dict, allowed_networks: tuple = (), allowlist_env: str = ""
+    ) -> None:
+        self._server = _GuardServer(environ, allowed_networks, allowlist_env)
         self._thread = threading.Thread(
             target=self._server.serve_forever, name="trivy-outbound-proxy", daemon=True
         )
