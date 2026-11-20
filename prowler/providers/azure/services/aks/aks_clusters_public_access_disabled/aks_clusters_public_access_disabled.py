@@ -16,11 +16,16 @@ class aks_clusters_public_access_disabled(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Public access to nodes is enabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'"
 
-                if cluster.private_fqdn:
-                    for agent_pool in cluster.agent_pool_profiles:
-                        if not getattr(agent_pool, "enable_node_public_ip", False):
-                            report.status = "PASS"
-                            report.status_extended = f"Public access to nodes is disabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'"
+                if (
+                    cluster.private_fqdn
+                    and cluster.agent_pool_profiles
+                    and all(
+                        not getattr(agent_pool, "enable_node_public_ip", False)
+                        for agent_pool in cluster.agent_pool_profiles
+                    )
+                ):
+                    report.status = "PASS"
+                    report.status_extended = f"Public access to nodes is disabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'"
 
                 findings.append(report)
 
