@@ -15,6 +15,9 @@ orig = botocore.client.BaseClient._make_api_call
 
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListFindings":
+        criteria = kwarg["FindingCriteria"]["Criterion"]
+        if "7" not in criteria["severity"]["Eq"]:
+            return {"FindingIds": []}
         return {
             "FindingIds": [
                 "f1",
