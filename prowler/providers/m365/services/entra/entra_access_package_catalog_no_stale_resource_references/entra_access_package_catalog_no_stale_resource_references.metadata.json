@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_access_package_catalog_no_stale_resource_references",
+  "CheckTitle": "Access package catalog enforces valid resource references to prevent stale access grants",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Each entitlement management **access package catalog** should reference only groups and applications that still exist in the directory, and every app role granted by its access packages should be present and enabled on the corresponding service principal.",
+  "Risk": "Stale catalog references cause access packages to silently grant access that is **never provisioned**, so the access inventory used by governance, access reviews, and auditors no longer matches reality. A removed app role or group that is later re-created can become grantable again without re-review.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/id-governance/entitlement-management-overview",
+    "https://learn.microsoft.com/entra/id-governance/entitlement-management-catalog-create",
+    "https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-resources",
+    "https://maester.dev/docs/tests/MT.1106",
+    "https://maester.dev/docs/tests/MT.1107"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **ID Governance** > **Entitlement management** > **Catalogs**\n3. Select the catalog with stale references\n4. Under **Resources**, remove any resource that references a deleted group or service principal\n5. For stale app roles: go to **Access packages** > select the package > **Resource roles**, remove the stale role and add the correct one\n6. Alternatively, restore the deleted group or service principal from **Deleted items** if removed by mistake (within 30 days)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review entitlement management catalogs to remove resources that reference deleted directory objects. Keep catalogs aligned with the current directory state to ensure access packages grant the intended access.",
+      "Url": "https://hub.prowler.com/check/entra_access_package_catalog_no_stale_resource_references"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires Microsoft Entra ID P2 or Entra ID Governance license and the EntitlementManagement.Read.All permission. SharePoint Online resources (originSystem SharePointOnline) are not evaluated because application permissions cannot read them (documented Microsoft limitation). Only HTTP 404 responses are treated as deleted; non-404 errors are reported as MANUAL."
+}
