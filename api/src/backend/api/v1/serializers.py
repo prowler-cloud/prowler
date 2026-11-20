@@ -1823,75 +1823,94 @@ def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
     return True
 
 
+def provider_secret_serializer_class(
+    provider_type: str, secret_type: str, secret: dict
+) -> type[serializers.Serializer]:
+    """Serializer that validates a secret of this provider and secret type."""
+    if secret_type == ProviderSecret.TypeChoices.STATIC:
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            return AwsProviderSecret
+        elif provider_type == Provider.ProviderChoices.AZURE.value:
+            return AzureProviderSecret
+        elif provider_type == Provider.ProviderChoices.GCP.value:
+            return GCPProviderSecret
+        elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+            return GoogleWorkspaceProviderSecret
+        elif provider_type == Provider.ProviderChoices.OKTA.value:
+            return OktaProviderSecret
+        elif provider_type == Provider.ProviderChoices.GITHUB.value:
+            return GithubProviderSecret
+        elif provider_type == Provider.ProviderChoices.IAC.value:
+            return IacProviderSecret
+        elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
+            return KubernetesProviderSecret
+        elif provider_type == Provider.ProviderChoices.M365.value:
+            return M365ProviderSecret
+        elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
+            return OracleCloudProviderSecret
+        elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
+            return MongoDBAtlasProviderSecret
+        elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+            return AlibabaCloudProviderSecret
+        elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
+            if "api_token" in secret:
+                return CloudflareTokenProviderSecret
+            elif "api_key" in secret and "api_email" in secret:
+                return CloudflareApiKeyProviderSecret
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "secret": "Cloudflare credentials must include either 'api_token' "
+                        "or both 'api_key' and 'api_email'."
+                    }
+                )
+        elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
+            return OpenStackCloudsYamlProviderSecret
+        elif provider_type == Provider.ProviderChoices.IMAGE.value:
+            return ImageProviderSecret
+        elif provider_type == Provider.ProviderChoices.VERCEL.value:
+            return VercelProviderSecret
+        else:
+            raise serializers.ValidationError(
+                {"provider": f"Provider type not supported {provider_type}"}
+            )
+    elif secret_type == ProviderSecret.TypeChoices.ROLE:
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            return AWSRoleAssumptionProviderSecret
+        elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+            return AlibabaCloudRoleAssumptionProviderSecret
+        else:
+            raise serializers.ValidationError(
+                {
+                    "secret_type": f"Role assumption not supported for provider type: {provider_type}"
+                }
+            )
+    elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
+        return GCPServiceAccountProviderSecret
+    else:
+        raise serializers.ValidationError(
+            {"secret_type": f"Secret type not supported: {secret_type}"}
+        )
+
+
+def declared_secret_fields(provider_type: str, secret_type: str, secret: dict) -> dict:
+    """The secret limited to the fields its serializer declares."""
+    # the stored secret is passed to the provider as keyword arguments, so an
+    # undeclared field would reach parameters such as file paths
+    fields = provider_secret_serializer_class(
+        provider_type, secret_type, secret
+    )().fields
+    return {key: value for key, value in secret.items() if key in fields}
+
+
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
     def validate_secret_based_on_provider(
         provider_type: str, secret_type: ProviderSecret.TypeChoices, secret: dict
     ):
-        if secret_type == ProviderSecret.TypeChoices.STATIC:
-            if provider_type == Provider.ProviderChoices.AWS.value:
-                serializer = AwsProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.AZURE.value:
-                serializer = AzureProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GCP.value:
-                serializer = GCPProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
-                serializer = GoogleWorkspaceProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OKTA.value:
-                serializer = OktaProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GITHUB.value:
-                serializer = GithubProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.IAC.value:
-                serializer = IacProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
-                serializer = KubernetesProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.M365.value:
-                serializer = M365ProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
-                serializer = OracleCloudProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
-                serializer = MongoDBAtlasProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
-                serializer = AlibabaCloudProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
-                if "api_token" in secret:
-                    serializer = CloudflareTokenProviderSecret(data=secret)
-                elif "api_key" in secret and "api_email" in secret:
-                    serializer = CloudflareApiKeyProviderSecret(data=secret)
-                else:
-                    raise serializers.ValidationError(
-                        {
-                            "secret": "Cloudflare credentials must include either 'api_token' "
-                            "or both 'api_key' and 'api_email'."
-                        }
-                    )
-            elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
-                serializer = OpenStackCloudsYamlProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.IMAGE.value:
-                serializer = ImageProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.VERCEL.value:
-                serializer = VercelProviderSecret(data=secret)
-            else:
-                raise serializers.ValidationError(
-                    {"provider": f"Provider type not supported {provider_type}"}
-                )
-        elif secret_type == ProviderSecret.TypeChoices.ROLE:
-            if provider_type == Provider.ProviderChoices.AWS.value:
-                serializer = AWSRoleAssumptionProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
-                serializer = AlibabaCloudRoleAssumptionProviderSecret(data=secret)
-            else:
-                raise serializers.ValidationError(
-                    {
-                        "secret_type": f"Role assumption not supported for provider type: {provider_type}"
-                    }
-                )
-        elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
-            serializer = GCPServiceAccountProviderSecret(data=secret)
-        else:
-            raise serializers.ValidationError(
-                {"secret_type": f"Secret type not supported: {secret_type}"}
-            )
+        serializer = provider_secret_serializer_class(
+            provider_type, secret_type, secret
+        )(data=secret)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as validation_error:
@@ -2261,6 +2280,10 @@ class ProviderSecretCreateSerializer(
         )
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        else:
+            validated_attrs["secret"] = declared_secret_fields(
+                provider.provider, secret_type, secret
+            )
         return validated_attrs
 
 
@@ -2297,6 +2320,10 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         )
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        else:
+            validated_attrs["secret"] = declared_secret_fields(
+                provider.provider, secret_type, secret
+            )
         return validated_attrs
 
 
