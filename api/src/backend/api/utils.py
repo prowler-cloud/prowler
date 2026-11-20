@@ -314,9 +314,14 @@ def get_prowler_provider_kwargs(
     return prowler_provider_kwargs
 
 
+def _without_oraclecloud_key_file(secret: dict) -> dict:
+    """Copy of an OCI secret without key_file, a worker path stored before it was refused."""
+    return {key: value for key, value in secret.items() if key != "key_file"}
+
+
 def _normalize_oraclecloud_provider_kwargs(secret: dict) -> dict:
     """Normalize external OCI secret fields into SDK provider kwargs."""
-    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs = _without_oraclecloud_key_file(secret)
     home_region = _oraclecloud_home_region(prowler_provider_kwargs.pop("region", None))
     if home_region:
         prowler_provider_kwargs["home_region"] = home_region
@@ -335,17 +340,14 @@ def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
     """Normalize external OCI secret fields into test_connection kwargs."""
     from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
-    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs = _without_oraclecloud_key_file(secret)
     home_region = _oraclecloud_home_region(prowler_provider_kwargs.pop("region", None))
 
     if (
         prowler_provider_kwargs.get("user")
         and prowler_provider_kwargs.get("fingerprint")
         and prowler_provider_kwargs.get("tenancy")
-        and (
-            prowler_provider_kwargs.get("key_content")
-            or prowler_provider_kwargs.get("key_file")
-        )
+        and prowler_provider_kwargs.get("key_content")
     ):
         # Identity calls only succeed in a region the tenancy is subscribed to.
         prowler_provider_kwargs["region"] = (

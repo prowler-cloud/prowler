@@ -226,6 +226,28 @@ class TestInitializeProwlerProvider:
         )
 
     @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_ignores_a_stored_key_file(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_file": "/proc/self/environ",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
+    @patch("api.utils.return_prowler_provider")
     def test_initialize_oraclecloud_provider_without_region_omits_scan_filter(
         self, mock_return_prowler_provider
     ):
@@ -285,6 +307,31 @@ class TestProwlerProviderConnectionTest:
             key_content="fake-base64-key-content",
             tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
             region=OraclecloudProvider._bootstrap_region,
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_ignores_a_stored_key_file(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_file": "/proc/self/environ",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
             provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
             raise_on_exception=False,
         )
