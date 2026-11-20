@@ -21,7 +21,10 @@ class sqlserver_auditing_retention_90_days(Check):
                     if has_failed:
                         break
                     if policy.state == "Enabled":
-                        if policy.retention_days <= 90:
+                        if policy.retention_days == 0:
+                            report.status = "PASS"
+                            report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has unlimited auditing retention."
+                        elif policy.retention_days <= 90:
                             report.status = "FAIL"
                             report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has auditing retention less than 91 days."
                             has_failed = True
