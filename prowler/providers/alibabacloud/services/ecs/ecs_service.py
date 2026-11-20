@@ -173,6 +173,9 @@ class ECS(AlibabaCloudService):
                                                     "source_cidr_ip": getattr(
                                                         rule, "source_cidr_ip", ""
                                                     ),
+                                                    "ipv6_source_cidr_ip": getattr(
+                                                        rule, "ipv6_source_cidr_ip", ""
+                                                    ),
                                                     "ip_protocol": getattr(
                                                         rule, "ip_protocol", ""
                                                     ),

@@ -1,8 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ecs.ecs_client import ecs_client
 from prowler.providers.alibabacloud.services.ecs.lib.security_groups import (
-    is_public_cidr,
     port_in_range,
+    rule_source_is_public,
 )
 
 
@@ -35,8 +35,7 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
                     continue
 
                 # Check if source is public (0.0.0.0/0)
-                source_cidr = ingress_rule.get("source_cidr_ip", "")
-                if not is_public_cidr(source_cidr):
+                if not rule_source_is_public(ingress_rule):
                     continue
 
                 # Check if port range includes RDP port
