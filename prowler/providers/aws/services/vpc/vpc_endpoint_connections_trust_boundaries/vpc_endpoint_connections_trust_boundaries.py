@@ -9,7 +9,10 @@ class vpc_endpoint_connections_trust_boundaries(Check):
     def execute(self):
         findings = []
         # Get trusted account_ids from prowler.config.yaml
-        trusted_account_ids = vpc_client.audit_config.get("trusted_account_ids", [])
+        # Copy the list so the audited account is not appended to the shared config
+        trusted_account_ids = list(
+            vpc_client.audit_config.get("trusted_account_ids", [])
+        )
         # Always include the same account as trusted
         trusted_account_ids.append(vpc_client.audited_account)
         for endpoint in vpc_client.vpc_endpoints:
@@ -33,14 +36,11 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         )
 
                         if "Condition" in statement:
-                            for account_id in trusted_account_ids:
-                                if is_condition_block_restrictive(
-                                    statement["Condition"], account_id
-                                ):
-                                    access_from_trusted_accounts = True
-                                else:
-                                    access_from_trusted_accounts = False
-                                    break
+                            access_from_trusted_accounts = (
+                                is_condition_block_restrictive(
+                                    statement["Condition"], trusted_account_ids
+                                )
+                            )
 
                         if not access_from_trusted_accounts:
                             report.status = "FAIL"
@@ -70,14 +70,11 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             if principal_arn == "*":
                                 access_from_trusted_accounts = False
                                 if "Condition" in statement:
-                                    for account_id in trusted_account_ids:
-                                        if is_condition_block_restrictive(
-                                            statement["Condition"], account_id
-                                        ):
-                                            access_from_trusted_accounts = True
-                                        else:
-                                            access_from_trusted_accounts = False
-                                            break
+                                    access_from_trusted_accounts = (
+                                        is_condition_block_restrictive(
+                                            statement["Condition"], trusted_account_ids
+                                        )
+                                    )
 
                                 if not access_from_trusted_accounts:
                                     report.status = "FAIL"
@@ -102,14 +99,11 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     access_from_trusted_accounts = False
 
                                 if "Condition" in statement:
-                                    for account_id in trusted_account_ids:
-                                        if is_condition_block_restrictive(
-                                            statement["Condition"], account_id
-                                        ):
-                                            access_from_trusted_accounts = True
-                                        else:
-                                            access_from_trusted_accounts = False
-                                            break
+                                    access_from_trusted_accounts = (
+                                        is_condition_block_restrictive(
+                                            statement["Condition"], trusted_account_ids
+                                        )
+                                    )
 
                                 if not access_from_trusted_accounts:
                                     report.status = "FAIL"
