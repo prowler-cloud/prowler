@@ -1566,7 +1566,9 @@
     {
       "Id": "4.2",
       "Description": "Ensure that ‘Enable Infrastructure Encryption’ for Each Storage Account in Azure Storage is Set to ‘enabled’",
-      "Checks": [],
+      "Checks": [
+        "storage_infrastructure_encryption_is_enabled"
+      ],
       "Attributes": [
         {
           "Section": "4 Storage Accounts",
@@ -1587,7 +1589,7 @@
       "Id": "4.3",
       "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
       "Checks": [
-        "storage_infrastructure_encryption_is_enabled"
+        "storage_key_rotation_90_days"
       ],
       "Attributes": [
         {
@@ -1864,7 +1866,9 @@
     {
       "Id": "4.16",
       "Description": "Ensure 'Cross Tenant Replication' is not enabled",
-      "Checks": [],
+      "Checks": [
+        "storage_cross_tenant_replication_disabled"
+      ],
       "Attributes": [
         {
           "Section": "4 Storage Accounts",
@@ -1884,7 +1888,9 @@
     {
       "Id": "4.17",
       "Description": "Ensure that 'Allow Blob Anonymous Access' is set to 'Disabled'",
-      "Checks": [],
+      "Checks": [
+        "storage_blob_public_access_level_is_disabled"
+      ],
       "Attributes": [
         {
           "Section": "4 Storage Accounts",

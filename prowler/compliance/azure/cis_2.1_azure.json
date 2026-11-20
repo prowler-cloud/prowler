@@ -1300,7 +1300,9 @@
     {
       "Id": "3.3",
       "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
-      "Checks": [],
+      "Checks": [
+        "storage_key_rotation_90_days"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",
@@ -1576,7 +1578,9 @@
     {
       "Id": "3.16",
       "Description": "Ensure 'Cross Tenant Replication' is not enabled",
-      "Checks": [],
+      "Checks": [
+        "storage_cross_tenant_replication_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",
@@ -1596,7 +1600,9 @@
     {
       "Id": "3.17",
       "Description": "Ensure that `Allow Blob Anonymous Access` is set to `Disabled`",
-      "Checks": [],
+      "Checks": [
+        "storage_blob_public_access_level_is_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",

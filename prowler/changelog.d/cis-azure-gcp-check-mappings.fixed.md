@@ -1,0 +1,1 @@
+CIS Azure "Enable key rotation reminders" maps `storage_key_rotation_90_days` in every version (3.0 to 6.0 used `storage_infrastructure_encryption_is_enabled`), and the CIS Azure infrastructure encryption, cross tenant replication, blob anonymous access and Databricks public network access requirements, plus CIS GCP Cloud DNS logging, map their existing checks

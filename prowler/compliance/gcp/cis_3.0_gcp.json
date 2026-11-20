@@ -614,7 +614,9 @@
     {
       "Id": "2.12",
       "Description": "Ensure That Cloud DNS Logging Is Enabled for All VPC Networks",
-      "Checks": [],
+      "Checks": [
+        "compute_network_dns_logging_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Logging and Monitoring",

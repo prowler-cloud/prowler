@@ -2953,7 +2953,7 @@
       "Id": "10.3.1.1",
       "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
       "Checks": [
-        "storage_infrastructure_encryption_is_enabled"
+        "storage_key_rotation_90_days"
       ],
       "Attributes": [
         {
