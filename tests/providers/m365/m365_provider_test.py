@@ -4,6 +4,7 @@ import os
 from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 from uuid import uuid4
 
+import httpx
 import pytest
 from azure.core.credentials import AccessToken
 from azure.identity import (
@@ -12,6 +13,11 @@ from azure.identity import (
     DefaultAzureCredential,
     InteractiveBrowserCredential,
 )
+from kiota_authentication_azure.azure_identity_authentication_provider import (
+    AzureIdentityAuthenticationProvider,
+)
+from kiota_http.middleware.options import UrlReplaceHandlerOption
+from msgraph_core import GraphClientFactory
 
 from prowler.config.config import (
     default_config_file_path,
@@ -1233,6 +1239,7 @@ class TestM365Provider:
                 certificate_data=base64.b64decode(
                     base64.b64encode(b"fake_certificate").decode("utf-8")
                 ),
+                authority=None,
             )
 
     def test_setup_session_certificate_auth_client_authentication_error(self):
@@ -1321,6 +1328,7 @@ class TestM365Provider:
                 tenant_id=TENANT_ID,
                 client_id=CLIENT_ID,
                 certificate_data=base64.b64decode(certificate_content),
+                authority=None,
             )
 
     def test_setup_powershell_certificate_auth_missing_env_vars(self):
@@ -1510,7 +1518,12 @@ class TestM365Provider:
             assert result["client_id"] == CLIENT_ID
             assert result["certificate_content"] == certificate_content
             mock_verify.assert_called_once_with(
-                TENANT_ID, CLIENT_ID, None, certificate_content, None
+                TENANT_ID,
+                CLIENT_ID,
+                None,
+                certificate_content,
+                None,
+                region_config=None,
             )
 
     @patch("builtins.open", mock_open(read_data=b"fake_certificate_data"))
@@ -1533,11 +1546,16 @@ class TestM365Provider:
             assert result["client_id"] == CLIENT_ID
             assert result["certificate_path"] == certificate_path
             mock_verify.assert_called_once_with(
-                TENANT_ID, CLIENT_ID, None, b"fake_certificate_data", certificate_path
+                TENANT_ID,
+                CLIENT_ID,
+                None,
+                b"fake_certificate_data",
+                certificate_path,
+                region_config=None,
             )
 
     @patch("prowler.providers.m365.m365_provider.asyncio.run")
-    @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
+    @patch("prowler.providers.m365.m365_provider.M365Provider.build_graph_client")
     @patch("prowler.providers.m365.m365_provider.CertificateCredential")
     def test_verify_client_certificate_content_success(
         self, mock_cert_cred, mock_graph, mock_asyncio_run
@@ -1560,7 +1578,9 @@ class TestM365Provider:
         )
 
         mock_cert_cred.assert_called_once()
-        mock_graph.assert_called_once_with(credentials=mock_credential)
+        mock_graph.assert_called_once_with(
+            mock_credential, M365Provider.setup_region_config("M365Global")
+        )
 
     @patch("prowler.providers.m365.m365_provider.asyncio.run")
     @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
@@ -1589,7 +1609,7 @@ class TestM365Provider:
 
     @patch("builtins.open", mock_open(read_data=b"fake_certificate_data"))
     @patch("prowler.providers.m365.m365_provider.asyncio.run")
-    @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
+    @patch("prowler.providers.m365.m365_provider.M365Provider.build_graph_client")
     @patch("prowler.providers.m365.m365_provider.CertificateCredential")
     def test_verify_client_certificate_path_success(
         self, mock_cert_cred, mock_graph, mock_asyncio_run
@@ -1610,7 +1630,9 @@ class TestM365Provider:
         M365Provider.verify_client(TENANT_ID, CLIENT_ID, None, None, certificate_path)
 
         mock_cert_cred.assert_called_once()
-        mock_graph.assert_called_once_with(credentials=mock_credential)
+        mock_graph.assert_called_once_with(
+            mock_credential, M365Provider.setup_region_config("M365Global")
+        )
 
     @patch("builtins.open", mock_open(read_data=b"fake_certificate_data"))
     @patch("prowler.providers.m365.m365_provider.asyncio.run")
@@ -1666,7 +1688,7 @@ class TestM365Provider:
                 certificate_path=certificate_path,
                 tenant_id=None,
                 m365_credentials=None,
-                region_config=MagicMock(),
+                region_config=M365RegionConfig(),
             )
 
             assert result == mock_credential
@@ -1674,6 +1696,7 @@ class TestM365Provider:
                 tenant_id=TENANT_ID,
                 client_id=CLIENT_ID,
                 certificate_data=mock_cert_data,
+                authority=None,
             )
 
     def test_setup_session_certificate_auth_with_static_credentials_certificate_path(
@@ -1708,7 +1731,7 @@ class TestM365Provider:
                 certificate_path=None,
                 tenant_id=None,
                 m365_credentials=m365_credentials,
-                region_config=MagicMock(),
+                region_config=M365RegionConfig(),
             )
 
             assert result == mock_credential
@@ -1716,6 +1739,7 @@ class TestM365Provider:
                 tenant_id=TENANT_ID,
                 client_id=CLIENT_ID,
                 certificate_data=mock_cert_data,
+                authority=None,
             )
 
     def test_check_certificate_creds_env_vars_with_certificate_content_success(self):
@@ -1888,3 +1912,257 @@ class TestM365ProviderEventLoop:
         # Must not raise "There is no current event loop in thread 'MainThread'.".
         self._without_event_loop(call)
         graph_client.domains.get.assert_awaited_once()
+
+
+class TestM365ProviderRegionConfig:
+    """Credentials and Graph clients must use the selected region's endpoints,
+    not always login.microsoftonline.com and graph.microsoft.com."""
+
+    @pytest.mark.parametrize(
+        "region_config, graph_host",
+        [
+            (None, "https://graph.microsoft.com"),
+            (
+                M365Provider.setup_region_config("M365USGovernment"),
+                "https://graph.microsoft.us",
+            ),
+            (
+                M365Provider.setup_region_config("M365China"),
+                "https://microsoftgraph.chinacloudapi.cn",
+            ),
+        ],
+    )
+    def test_build_graph_client_targets_the_region_graph_host(
+        self, region_config, graph_host
+    ):
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.AzureIdentityAuthenticationProvider",
+                wraps=AzureIdentityAuthenticationProvider,
+            ) as auth_provider,
+            patch.object(
+                GraphClientFactory,
+                "create_with_default_middleware",
+                wraps=GraphClientFactory.create_with_default_middleware,
+            ) as create_http_client,
+        ):
+            client = M365Provider.build_graph_client(MagicMock(), region_config)
+
+        assert client.request_adapter.base_url == f"{graph_host}/v1.0/"
+        assert auth_provider.call_args.kwargs["scopes"] == [f"{graph_host}/.default"]
+        # Without msgraph's default options client.me requests /users/me-token-to-replace
+        url_replace_option = create_http_client.call_args.kwargs["options"][
+            UrlReplaceHandlerOption.get_key()
+        ]
+        assert url_replace_option.replacement_pairs == {
+            "/users/me-token-to-replace": "/me"
+        }
+
+    @pytest.mark.parametrize("entry_point", ["provider", "test_connection"])
+    def test_region_graph_host_receives_every_graph_request(self, entry_point):
+        requested_hosts = []
+
+        async def record_request(_, request):
+            requested_hosts.append(request.url.host)
+            return httpx.Response(
+                200,
+                json={"value": [{"id": DOMAIN, "isDefault": True}]},
+                request=request,
+            )
+
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.ClientSecretCredential"
+            ) as mock_credential,
+            patch(
+                "prowler.providers.m365.m365_provider.ConfidentialClientApplication"
+            ) as mock_app,
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+            patch.object(
+                httpx.AsyncHTTPTransport, "handle_async_request", record_request
+            ),
+        ):
+            mock_credential.return_value.get_token.return_value = AccessToken(
+                "token", 9999999999
+            )
+            mock_app.return_value.acquire_token_for_client.return_value = {
+                "access_token": "token"
+            }
+            if entry_point == "provider":
+                M365Provider(
+                    tenant_id=TENANT_ID,
+                    client_id=CLIENT_ID,
+                    client_secret=CLIENT_SECRET,
+                    region="M365USGovernment",
+                    config_path=default_config_file_path,
+                )
+            else:
+                M365Provider.test_connection(
+                    tenant_id=TENANT_ID,
+                    client_id=CLIENT_ID,
+                    client_secret=CLIENT_SECRET,
+                    region="M365USGovernment",
+                    provider_id=DOMAIN,
+                )
+
+        assert requested_hosts
+        assert set(requested_hosts) == {"graph.microsoft.us"}
+
+    def test_signed_in_user_lookup_targets_the_region_graph_host(self):
+        requested = []
+
+        async def record_request(_, request):
+            requested.append((request.url.host, request.url.path))
+            return httpx.Response(
+                200,
+                json={
+                    "userPrincipalName": f"user@{DOMAIN}",
+                    "value": [{"id": TENANT_ID}],
+                },
+                request=request,
+            )
+
+        credential = MagicMock()
+        credential.get_token.return_value = AccessToken("token", 9999999999)
+        with patch.object(
+            httpx.AsyncHTTPTransport, "handle_async_request", record_request
+        ):
+            identity = M365Provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=True,
+                certificate_auth=False,
+                session=credential,
+                region_config=M365Provider.setup_region_config("M365USGovernment"),
+            )
+
+        assert {host for host, _ in requested} == {"graph.microsoft.us"}
+        assert any(path.endswith("/me") for _, path in requested)
+        assert identity.identity_id == f"user@{DOMAIN}"
+
+    def test_setup_session_static_credentials_use_region_authority(self):
+        with patch(
+            "prowler.providers.m365.m365_provider.ClientSecretCredential"
+        ) as mock_client_secret_credential:
+            M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=None,
+                m365_credentials={
+                    "tenant_id": TENANT_ID,
+                    "client_id": CLIENT_ID,
+                    "client_secret": CLIENT_SECRET,
+                    "certificate_content": None,
+                    "certificate_path": None,
+                },
+                region_config=M365Provider.setup_region_config("M365USGovernment"),
+            )
+
+        mock_client_secret_credential.assert_called_once_with(
+            tenant_id=TENANT_ID,
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            authority="login.microsoftonline.us",
+        )
+
+    def test_setup_session_browser_auth_uses_region_authority(self):
+        with patch(
+            "prowler.providers.m365.m365_provider.InteractiveBrowserCredential"
+        ) as mock_browser_credential:
+            M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=True,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=TENANT_ID,
+                m365_credentials=None,
+                region_config=M365Provider.setup_region_config("M365USGovernment"),
+            )
+
+        mock_browser_credential.assert_called_once_with(
+            tenant_id=TENANT_ID, authority="login.microsoftonline.us"
+        )
+
+    @pytest.mark.parametrize(
+        "region_config, authority, scopes",
+        [
+            (
+                None,
+                f"https://login.microsoftonline.com/{TENANT_ID}",
+                ["https://graph.microsoft.com/.default"],
+            ),
+            (
+                M365Provider.setup_region_config("M365USGovernment"),
+                f"https://login.microsoftonline.us/{TENANT_ID}",
+                ["https://graph.microsoft.us/.default"],
+            ),
+            (
+                M365Provider.setup_region_config("M365China"),
+                f"https://login.chinacloudapi.cn/{TENANT_ID}",
+                ["https://microsoftgraph.chinacloudapi.cn/.default"],
+            ),
+        ],
+    )
+    def test_verify_client_client_secret_uses_region_endpoints(
+        self, region_config, authority, scopes
+    ):
+        with patch(
+            "prowler.providers.m365.m365_provider.ConfidentialClientApplication"
+        ) as mock_app:
+            mock_app.return_value.acquire_token_for_client.return_value = {
+                "access_token": "token"
+            }
+            M365Provider.verify_client(
+                TENANT_ID,
+                CLIENT_ID,
+                CLIENT_SECRET,
+                None,
+                None,
+                region_config=region_config,
+            )
+
+        mock_app.assert_called_once_with(
+            client_id=CLIENT_ID,
+            client_credential=CLIENT_SECRET,
+            authority=authority,
+        )
+        mock_app.return_value.acquire_token_for_client.assert_called_once_with(
+            scopes=scopes
+        )
+
+    def test_verify_client_certificate_uses_region_endpoints(self):
+        region_config = M365Provider.setup_region_config("M365USGovernment")
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(
+            return_value=MagicMock(value=[MagicMock()])
+        )
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.CertificateCredential"
+            ) as mock_certificate_credential,
+            patch.object(
+                M365Provider, "build_graph_client", return_value=graph_client
+            ) as build_graph_client,
+        ):
+            M365Provider.verify_client(
+                TENANT_ID,
+                CLIENT_ID,
+                None,
+                base64.b64encode(b"fake_certificate").decode("utf-8"),
+                None,
+                region_config=region_config,
+            )
+
+        mock_certificate_credential.assert_called_once_with(
+            client_id=CLIENT_ID,
+            tenant_id=TENANT_ID,
+            certificate_data=b"fake_certificate",
+            authority="login.microsoftonline.us",
+        )
+        build_graph_client.assert_called_once_with(
+            mock_certificate_credential.return_value, region_config
+        )
