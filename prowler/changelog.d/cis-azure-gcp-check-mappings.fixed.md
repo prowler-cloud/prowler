@@ -1,0 +1,1 @@
+CIS Azure 3.0 to 6.0 "Enable key rotation reminders" maps `storage_key_rotation_90_days` instead of `storage_infrastructure_encryption_is_enabled`, and CIS Azure 2.0, 2.1, 3.0, 5.0 and CIS GCP 3.0 to 5.0 requirements map existing checks they were missing

@@ -1277,7 +1277,9 @@
     {
       "Id": "3.3",
       "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
-      "Checks": [],
+      "Checks": [
+        "storage_key_rotation_90_days"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",
