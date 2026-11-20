@@ -138,7 +138,7 @@ jobs:
               "iam": ["bedrock", "bedrockagentcore", "cloudtrail", "cloudwatch", "codebuild"],
               "kafka": ["firehose"],
               "kinesis": ["firehose"],
-              "kms": ["kafka"],
+              "kms": ["bedrockagentcore", "kafka"],
               "organizations": ["iam", "servicecatalog"],
               "route53": ["shield"],
               "s3": ["bedrock", "cloudfront", "cloudtrail", "macie"],
