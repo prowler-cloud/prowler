@@ -18,6 +18,8 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
 | `provider` | yes | — | Cloud provider to scan (`aws`, `azure`, `gcp`, `github`, `kubernetes`, `iac`, `cloudflare`, etc.) |
 | `image-tag` | no | `stable` | Docker image tag — `stable` (latest release), `latest` (master, not stable), or `<x.y.z>` (pinned). See [available tags](https://hub.docker.com/r/prowlercloud/prowler/tags). |
 | `output-formats` | no | `json-ocsf` | Output format(s) for scan results. Space-separated (e.g. `sarif json-ocsf`) |
+| `artifact-name` | no | `prowler-<provider>` | Name of the uploaded scan results artifact. An omitted or empty value uses the default |
+| `scan-name` | no | `""` | Display name appended to the scan summary heading. An omitted or empty value keeps the existing heading |
 | `push-to-cloud` | no | `false` | Push findings to [Prowler Cloud](/user-guide/tutorials/prowler-import-findings). When `true`, `PROWLER_CLOUD_API_KEY` is auto-forwarded |
 | `flags` | no | `""` | Additional CLI flags (e.g. `--severity critical high`). Values with spaces can be quoted: `--resource-tag 'Environment=My Server'` |
 | `extra-env` | no | `""` | Space-, newline-, or comma-separated list of env var **names** to forward to the container (see [Authentication](#authentication)) |
@@ -256,10 +258,23 @@ Create a Cloudflare API Token with the `Account Settings:Read`, `Zone:Read`, `Zo
 
 Scan results are written to `output/` in the workspace and uploaded as artifacts named `prowler-<provider>` with 30-day retention.
 
+To override the artifact name, set `artifact-name` (for example, `artifact-name: prowler-iac-production`). Use a unique name for each scan when running multiple scans for the same provider in one workflow run. The step summary shows the selected artifact name. An omitted or empty value keeps the default.
+
 When `upload-sarif` is enabled, SARIF results are also uploaded to GitHub Code Scanning and appear on the repository's **Security → Code scanning** tab, filtered by the branch that ran the scan.
 
 ### Step Summary
 
 The action writes a summary to the run page with a per-severity breakdown of failing checks, artifact and Code Scanning links, and (when `push-to-cloud: false`) a pointer to [Prowler Cloud](https://cloud.prowler.com) for continuous monitoring.
+
+To distinguish matrix scans, set `scan-name` to a readable label. For example, use these inputs in a job with `account` and `region` matrix values:
+
+```yaml
+with:
+  provider: aws
+  artifact-name: prowler-aws-${{ matrix.account }}-${{ matrix.region }}
+  scan-name: ${{ matrix.account }} / ${{ matrix.region }}
+```
+
+For an account label of `production` and a region of `eu-central-1`, the heading becomes `Prowler AWS Scan Summary · production / eu-central-1`. An omitted or empty `scan-name` keeps the existing heading. This label does not change the artifact name.
 
 <img src="/images/github-action/scan-summary.png" alt="GitHub Actions run page showing the Prowler IaC Scan Summary with failing and passing counts, severity breakdown, scan log link, artifact link, and GitHub Code Security link" width="1400" />
