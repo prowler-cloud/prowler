@@ -26,6 +26,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidAllowedNetworksError,
     ImageInvalidConfigScannerError,
     ImageInvalidFilterError,
     ImageInvalidNameError,
@@ -47,6 +48,8 @@ from prowler.providers.image.lib.arguments.arguments import (
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
 )
+from prowler.providers.image.lib.outbound_proxy import TrivyOutboundProxy
+from prowler.providers.image.lib.registry.base import _outbound_check_skipped
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import create_registry_adapter
 
@@ -768,8 +771,27 @@ class ImageProvider(Provider):
         return env
 
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
-        """Execute Trivy command with optional progress bar."""
+        """Execute Trivy, routed through the outbound proxy unless the check is skipped."""
         env = self._build_trivy_env()
+        if _outbound_check_skipped():
+            return self._run_trivy(command, image, env)
+        try:
+            proxy = TrivyOutboundProxy(env)
+        except (ImageInvalidAllowedNetworksError, OSError) as error:
+            # the scan loop only re-raises ImageScanError; anything else would
+            # report the image as scanned with no findings
+            raise ImageScanError(
+                file=__file__,
+                original_exception=error,
+                message=f"Could not start the outbound proxy for Trivy: {error}",
+            )
+        with proxy:
+            return self._run_trivy(command, image, proxy.route(env))
+
+    def _run_trivy(
+        self, command: list, image: str, env: dict
+    ) -> subprocess.CompletedProcess:
+        """Run the Trivy subprocess with an optional progress bar."""
         try:
             if sys.stdout.isatty():
                 with alive_bar(
