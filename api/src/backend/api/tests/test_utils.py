@@ -379,6 +379,14 @@ class TestSecretFieldHelpers:
             == secret
         )
 
+    def test_a_known_provider_secret_without_a_serializer_shape_is_refused(self):
+        with pytest.raises(ValidationError):
+            declared_secret_fields(
+                Provider.ProviderChoices.CLOUDFLARE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {"config_path": "/proc/self/environ"},
+            )
+
     def test_validated_fields_limit_the_stored_secret(self):
         assert validated_secret_fields(
             {"client_id": "a", "credentials_file": "/etc/passwd"}, {"client_id": "a"}

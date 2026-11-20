@@ -1898,14 +1898,13 @@ def declared_secret_fields(provider_type: str, secret_type: str, secret: dict) -
     """The secret limited to the fields its serializer declares."""
     # the stored secret is passed to the provider as keyword arguments, so an
     # undeclared field would reach parameters such as file paths
-    try:
-        serializer_class = provider_secret_serializer_class(
-            provider_type, secret_type, secret
-        )
-    except serializers.ValidationError:
+    if provider_type not in Provider.ProviderChoices.values:
         # a provider type without a serializer here validates its own secret
         return dict(secret)
-    fields = serializer_class().fields
+    # a known provider whose stored secret no longer matches a serializer raises
+    fields = provider_secret_serializer_class(
+        provider_type, secret_type, secret
+    )().fields
     return {key: value for key, value in secret.items() if key in fields}
 
 
