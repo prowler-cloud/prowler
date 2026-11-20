@@ -500,6 +500,62 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
+    @pytest.mark.parametrize(
+        "first_policy,second_policy",
+        [
+            (test_policy_restricted_source_arn, test_policy_not_restricted),
+            (test_policy_not_restricted, test_policy_restricted_source_arn),
+        ],
+        ids=["restricted-first", "public-first"],
+    )
+    def test_topic_public_with_mixed_policy_statements(
+        self, first_policy, second_policy
+    ):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": first_policy["Statement"] + second_policy["Statement"],
+        }
+        sns_client = mock.MagicMock(
+            audited_account=AWS_ACCOUNT_NUMBER,
+            topics=[
+                Topic(
+                    arn=topic_arn,
+                    name=topic_name,
+                    policy=policy,
+                    region=AWS_REGION_EU_WEST_1,
+                )
+            ],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=None,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sns.sns_service.SNS",
+                new=mock.MagicMock,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible.sns_client",
+                new=sns_client,
+            ),
+        ):
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+                sns_topics_not_publicly_accessible,
+            )
+
+            result = sns_topics_not_publicly_accessible().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            f"SNS topic {topic_name} is public because its policy allows public access."
+        )
+        assert result[0].resource_id == topic_name
+        assert result[0].resource_arn == topic_arn
+        assert result[0].region == AWS_REGION_EU_WEST_1
+
     def test_topic_public_with_invalid_source_arn(self):
         sns_client = mock.MagicMock
         sns_client.audited_account = AWS_ACCOUNT_NUMBER
