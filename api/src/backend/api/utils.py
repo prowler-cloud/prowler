@@ -205,6 +205,14 @@ def _validate_kubernetes_secret(secret: dict) -> None:
     ).is_valid(raise_exception=True)
 
 
+def _googleworkspace_credentials(secret: dict) -> dict:
+    """Only the stored key and delegated user: the provider also reads file paths."""
+    return {
+        "credentials_content": secret.get("credentials_content"),
+        "delegated_user": secret.get("delegated_user"),
+    }
+
+
 def get_prowler_provider_kwargs(
     provider: Provider, mutelist_processor: Processor | None = None
 ) -> dict:
@@ -271,6 +279,8 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "okta_org_domain": provider.uid,
         }
+    elif provider.provider == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+        prowler_provider_kwargs = _googleworkspace_credentials(prowler_provider_kwargs)
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         # Detect whether uid is a registry URL (e.g. "docker.io/andoniaf") or
         # a concrete image reference (e.g. "docker.io/andoniaf/myimage:latest").
@@ -463,6 +473,12 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         )
         return prowler_provider.test_connection(
             **oraclecloud_kwargs,
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
+    elif provider.provider == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+        return prowler_provider.test_connection(
+            **_googleworkspace_credentials(prowler_provider_kwargs),
             provider_id=provider.uid,
             raise_on_exception=False,
         )

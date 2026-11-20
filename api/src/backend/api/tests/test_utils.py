@@ -447,8 +447,46 @@ class TestProwlerProviderConnectionTest:
             raise_on_exception=False,
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_googleworkspace_drops_extra_keys(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "C0123abcd"
+        provider.provider = Provider.ProviderChoices.GOOGLEWORKSPACE.value
+        provider.secret.secret = {
+            "credentials_content": '{"type": "service_account"}',
+            "delegated_user": "admin@example.com",
+            "credentials_file": "/etc/passwd",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            credentials_content='{"type": "service_account"}',
+            delegated_user="admin@example.com",
+            provider_id="C0123abcd",
+            raise_on_exception=False,
+        )
+
 
 class TestGetProwlerProviderKwargs:
+    def test_get_prowler_provider_kwargs_googleworkspace_drops_extra_keys(self):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.GOOGLEWORKSPACE.value
+        provider.uid = "C0123abcd"
+        provider.secret.secret = {
+            "credentials_content": "{}",
+            "delegated_user": "admin@example.com",
+            "credentials_file": "/dev/zero",
+            "config_path": "/etc/passwd",
+        }
+
+        assert get_prowler_provider_kwargs(provider) == {
+            "credentials_content": "{}",
+            "delegated_user": "admin@example.com",
+        }
+
     @pytest.mark.parametrize(
         "provider_type, expected_extra_kwargs",
         [
@@ -463,10 +501,6 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.GCP.value,
                 {"project_ids": ["provider_uid"]},
-            ),
-            (
-                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
-                {},
             ),
             (
                 Provider.ProviderChoices.M365.value,

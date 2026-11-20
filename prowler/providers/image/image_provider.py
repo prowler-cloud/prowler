@@ -195,6 +195,7 @@ class ImageProvider(Provider):
         if not self._listing_only:
             for image in self.images:
                 self._validate_image_name(image)
+            self._validate_registry_hosts()
 
             if not self.images:
                 raise ImageNoImagesProvidedError(
@@ -358,6 +359,19 @@ class ImageProvider(Provider):
                 return value[len(prefix) :]
         return value
 
+    def _validate_registry_hosts(self) -> None:
+        """Apply the registry outbound check to every host an image is pulled from."""
+        # Discovered images come from a registry the adapter has already checked
+        hosts = {
+            self._extract_registry(image)
+            for image in self.images
+            if image not in self._registry_discovered
+        }
+        hosts -= {None, "docker.io", "registry-1.docker.io"}
+        for host in sorted(hosts):
+            adapter = create_registry_adapter(registry_url=host)
+            adapter._validate_outbound_url(f"https://{host}/v2/", enforce_origin=False)
+
     @staticmethod
     def _extract_registry(image: str) -> str | None:
         """Extract registry hostname from an image reference.
@@ -366,7 +380,9 @@ class ImageProvider(Provider):
         """
         image = ImageProvider._strip_scheme(image)
         parts = image.split("/")
-        if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
+        if len(parts) >= 2 and (
+            "." in parts[0] or ":" in parts[0] or parts[0] == "localhost"
+        ):
             return parts[0]
         return None
 
