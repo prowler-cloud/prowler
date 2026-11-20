@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
 from json import dumps
 from uuid import uuid4
 
 import botocore
 from boto3 import client
+from botocore.stub import Stubber
 from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
@@ -1036,3 +1038,44 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.entities_attached_to_cloudshell_policy["Users"] == [user_name]
         assert iam.entities_attached_to_cloudshell_policy["Groups"] == [group_name]
         assert iam.entities_attached_to_cloudshell_policy["Roles"] == [role_name]
+
+    @mock_aws
+    def test_list_server_certificates_includes_later_pages(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        def certificate(name):
+            return {
+                "Path": "/",
+                "ServerCertificateName": name,
+                "ServerCertificateId": f"ASCA{name.upper():0<16}",
+                "Arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:server-certificate/{name}",
+                "Expiration": datetime(2020, 1, 1, tzinfo=timezone.utc),
+            }
+
+        # ListServerCertificates returns 100 certificates per call by default.
+        with Stubber(iam.client) as stubber:
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [certificate("first")],
+                    "IsTruncated": True,
+                    "Marker": "second-page",
+                },
+                {},
+            )
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [certificate("later")],
+                    "IsTruncated": False,
+                },
+                {"Marker": "second-page"},
+            )
+            server_certificates = iam._list_server_certificates()
+            stubber.assert_no_pending_responses()
+
+        assert [certificate.name for certificate in server_certificates] == [
+            "first",
+            "later",
+        ]

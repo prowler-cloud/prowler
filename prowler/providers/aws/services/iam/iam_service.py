@@ -845,20 +845,20 @@ class IAM(AWSService):
         logger.info("IAM - List Server Certificates...")
         server_certificates = []
         try:
-            for certificate in self.client.list_server_certificates()[
-                "ServerCertificateMetadataList"
-            ]:
-                if not self.audit_resources or (
-                    is_resource_filtered(certificate["Arn"], self.audit_resources)
-                ):
-                    server_certificates.append(
-                        Certificate(
-                            name=certificate["ServerCertificateName"],
-                            id=certificate["ServerCertificateId"],
-                            arn=certificate["Arn"],
-                            expiration=certificate["Expiration"],
+            paginator = self.client.get_paginator("list_server_certificates")
+            for page in paginator.paginate():
+                for certificate in page["ServerCertificateMetadataList"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(certificate["Arn"], self.audit_resources)
+                    ):
+                        server_certificates.append(
+                            Certificate(
+                                name=certificate["ServerCertificateName"],
+                                id=certificate["ServerCertificateId"],
+                                arn=certificate["Arn"],
+                                expiration=certificate["Expiration"],
+                            )
                         )
-                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
