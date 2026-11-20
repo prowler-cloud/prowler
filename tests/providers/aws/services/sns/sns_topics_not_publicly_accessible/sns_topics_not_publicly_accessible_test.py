@@ -167,15 +167,17 @@ test_policy_unrestricted_source_arn_multi_wildcard = {
 }
 
 
-def generate_policy_restricted_on_sns_endpoint(endpoint: str) -> Dict[str, Any]:
+def generate_policy_restricted_on_sns_endpoint(
+    endpoint: str | list[str], condition_operator: str = "StringEquals"
+) -> Dict[str, Any]:
     return {
         "Statement": [
             {
                 "Effect": "Allow",
                 "Principal": {"AWS": "*"},
-                "Action": ["sns:Publish"],
+                "Action": ["sns:Subscribe"],
                 "Resource": f"arn:aws:sns:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{topic_name}",
-                "Condition": {"StringEquals": {"SNS:Endpoint": endpoint}},
+                "Condition": {condition_operator: {"SNS:Endpoint": endpoint}},
             }
         ]
     }
@@ -501,15 +503,35 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].resource_tags == []
 
     @pytest.mark.parametrize(
-        "first_policy,second_policy",
+        "first_policy,second_policy,expected_status,expected_status_extended",
         [
-            (test_policy_restricted_source_arn, test_policy_not_restricted),
-            (test_policy_not_restricted, test_policy_restricted_source_arn),
+            pytest.param(
+                test_policy_restricted_source_arn,
+                test_policy_not_restricted,
+                "FAIL",
+                "is public because its policy allows public access.",
+                id="restricted-first",
+            ),
+            pytest.param(
+                test_policy_not_restricted,
+                test_policy_restricted_source_arn,
+                "FAIL",
+                "is public because its policy allows public access.",
+                id="public-first",
+            ),
+            pytest.param(
+                test_policy_restricted_source_arn,
+                generate_policy_restricted_on_sns_endpoint(
+                    ["a@example.com", "b@example.com"], condition_operator="StringLike"
+                ),
+                "PASS",
+                "is not public because its policy only allows access from an endpoint.",
+                id="restricted-endpoint-list",
+            ),
         ],
-        ids=["restricted-first", "public-first"],
     )
-    def test_topic_public_with_mixed_policy_statements(
-        self, first_policy, second_policy
+    def test_topic_with_mixed_policy_statements(
+        self, first_policy, second_policy, expected_status, expected_status_extended
     ):
         policy = {
             "Version": "2012-10-17",
@@ -548,9 +570,10 @@ class Test_sns_topics_not_publicly_accessible:
             result = sns_topics_not_publicly_accessible().execute()
 
         assert len(result) == 1
-        assert result[0].status == "FAIL"
-        assert result[0].status_extended == (
-            f"SNS topic {topic_name} is public because its policy allows public access."
+        assert result[0].status == expected_status
+        assert (
+            result[0].status_extended
+            == f"SNS topic {topic_name} {expected_status_extended}"
         )
         assert result[0].resource_id == topic_name
         assert result[0].resource_arn == topic_arn
