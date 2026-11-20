@@ -1,0 +1,1 @@
+`op.acc.1.gcp.iam.1` and `mp.com.2.gcp.lb.1` in ENS RD 311/2022 for GCP are manual instead of passing on Essential Contacts and load balancer logging, which verify neither corporate credentials nor SSL policies

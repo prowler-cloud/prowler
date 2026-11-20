@@ -20,13 +20,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "iam_organization_essential_contacts_configured"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.acc.1.r1.gcp.iam.1",
@@ -155,7 +153,7 @@
       ]
     },
     {
-      "Id": "op.acc.3.gcp.iam.1",
+      "Id": "op.acc.3.gcp.iam.2",
       "Description": "Cuentas de servicio",
       "Attributes": [
         {
@@ -231,6 +229,52 @@
         "iam_sa_no_administrative_privileges",
         "gke_cluster_no_default_service_account"
       ]
+    },
+    {
+      "Id": "op.acc.5.gcp.iam.3",
+      "Description": "Mecanismo de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá activar el doble factor de autenticación para todas las cuentas que no sean cuentas de servicio.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.5.gcp.iam.4",
+      "Description": "Mecanismo de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Para las cuentas de administrador se deberá activar el factor de autenticación más fuerte: llaves de seguridad, que son llaves físicas que se utilizan para acceder a las cuentas de administrador de la organización de Google.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.acc.6.gcp.ip.1",
@@ -1441,13 +1485,11 @@
           "Dimensiones": [
             "confidencialidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "compute_loadbalancer_logging_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "mp.com.2.r1.gcp.scc.1",
