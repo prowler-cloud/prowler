@@ -1,6 +1,6 @@
 import re
-from dataclasses import dataclass
-from typing import Callable, Iterable, List, Optional
+from dataclasses import dataclass, field
+from typing import Callable, Iterable, List, Optional, Union
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network import NetworkManagementClient
@@ -64,6 +64,10 @@ class Network(AzureService):
                                     destination_port_range=getattr(
                                         rule, "destination_port_range", ""
                                     ),
+                                    destination_port_ranges=getattr(
+                                        rule, "destination_port_ranges", None
+                                    )
+                                    or [],
                                     protocol=getattr(rule, "protocol", ""),
                                     source_address_prefix=getattr(
                                         rule, "source_address_prefix", ""
@@ -423,6 +427,35 @@ class SecurityRule:
     source_address_prefix: Optional[str]
     access: Optional[str]
     direction: Optional[str]
+    destination_port_ranges: List[str] = field(default_factory=list)
+
+
+def security_rule_allows_port(
+    rule: Union[SecurityRule, network_models.SecurityRule], port: int
+) -> bool:
+    """Return whether a security rule's destination ports include port.
+
+    Azure keeps a single port, range or "*" in destination_port_range, and
+    several of them in destination_port_ranges, leaving the other one empty.
+    Both are read so this works for SecurityRule and the Azure SDK model.
+    """
+    port_ranges = list(getattr(rule, "destination_port_ranges", None) or [])
+    if getattr(rule, "destination_port_range", None):
+        port_ranges.append(rule.destination_port_range)
+    for port_range in port_ranges:
+        port_range = port_range.strip()
+        if port_range == "*":
+            return True
+        try:
+            if "-" in port_range:
+                start, end = port_range.split("-", 1)
+                if int(start) <= port <= int(end):
+                    return True
+            elif int(port_range) == port:
+                return True
+        except ValueError:
+            continue
+    return False
 
 
 @dataclass

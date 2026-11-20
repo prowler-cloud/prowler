@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network import models as azure_network_models
 from azure.mgmt.network.models import (
@@ -8,6 +9,7 @@ from azure.mgmt.network.models import (
     FlowLog,
     SubResource,
 )
+from azure.mgmt.network.models import SecurityRule as AzureSecurityRule
 
 from prowler.providers.azure.services.network.network_service import (
     ApplicationGateway,
@@ -16,8 +18,10 @@ from prowler.providers.azure.services.network.network_service import (
     NetworkWatcher,
     PublicIp,
     SecurityGroup,
+    SecurityRule,
     VirtualNetwork,
     WafPolicy,
+    security_rule_allows_port,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -1597,3 +1601,43 @@ class Test_Network_get_application_gateways:
 
         assert result == {AZURE_SUBSCRIPTION_ID: {}}
         assert network.application_gateways_lookup_failed == set()
+
+
+class Test_security_rule_allows_port:
+    @pytest.mark.parametrize(
+        "port_range, port_ranges, port, expected",
+        [
+            ("3389", None, 3389, True),
+            ("3388", None, 3389, False),
+            ("3000-4000", None, 3389, True),
+            ("1-1000", None, 3389, False),
+            ("*", None, 3389, True),
+            (None, ["22", "3389"], 3389, True),
+            (None, ["22", "3389"], 22, True),
+            (None, ["3000-4000"], 3389, True),
+            (None, ["80", "443"], 3389, False),
+            ("", [], 3389, False),
+            (None, None, 3389, False),
+            ("not-a-port", None, 3389, False),
+        ],
+    )
+    def test_azure_sdk_rule(self, port_range, port_ranges, port, expected):
+        rule = AzureSecurityRule(
+            destination_port_range=port_range,
+            destination_port_ranges=port_ranges,
+        )
+        assert security_rule_allows_port(rule, port) is expected
+
+    def test_prowler_security_rule(self):
+        rule = SecurityRule(
+            id="rule-id",
+            name="allow-mgmt",
+            destination_port_range=None,
+            protocol="Tcp",
+            source_address_prefix="Internet",
+            access="Allow",
+            direction="Inbound",
+            destination_port_ranges=["22", "3389"],
+        )
+        assert security_rule_allows_port(rule, 3389)
+        assert not security_rule_allows_port(rule, 80)
