@@ -31,8 +31,10 @@ class AISearch(AzureService):
                                 location=aisearch_service.location,
                                 public_network_access=(
                                     False
-                                    if aisearch_service.public_network_access
-                                    == "Disabled"
+                                    if (
+                                        aisearch_service.public_network_access or ""
+                                    ).lower()
+                                    == "disabled"
                                     else True
                                 ),
                             )

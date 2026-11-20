@@ -1,5 +1,8 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+from azure.mgmt.search.models import PublicNetworkAccess, SearchService
+
 from prowler.providers.azure.services.aisearch.aisearch_service import (
     AISearch,
     AISearchService,
@@ -180,3 +183,40 @@ class Test_AISearch_Service_get_aisearch_services:
         mock_client.services.list_by_resource_group.assert_called_once_with(
             resource_group_name="RG"
         )
+
+
+@pytest.mark.parametrize(
+    "network_access, expected_public_access",
+    [
+        ("disabled", False),
+        (PublicNetworkAccess.DISABLED, False),
+        ("Disabled", False),
+        ("enabled", True),
+        (PublicNetworkAccess.ENABLED, True),
+        (None, True),
+    ],
+)
+def test_aisearch_collects_sdk_public_network_access(
+    network_access, expected_public_access
+):
+    service = SearchService.deserialize(
+        {
+            "id": AISEARCH_SERVICE_ID,
+            "name": "search1",
+            "location": "westeurope",
+            "properties": {"publicNetworkAccess": network_access},
+        }
+    )
+    mock_client = MagicMock()
+    mock_client.services.list_by_subscription.return_value = [service]
+    with patch.object(AISearch, "_get_aisearch_services", return_value={}):
+        aisearch = AISearch(set_mocked_azure_provider())
+    aisearch.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+    aisearch.resource_groups = None
+
+    result = aisearch._get_aisearch_services()
+
+    assert (
+        result[AZURE_SUBSCRIPTION_ID][AISEARCH_SERVICE_ID].public_network_access
+        is expected_public_access
+    )
