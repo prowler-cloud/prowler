@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import botocore
 from boto3 import client
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.sns.sns_service import SNS
@@ -137,3 +138,83 @@ class Test_SNS_Service:
         assert sns.topics[0].subscriptions[1].protocol == "https"
         assert sns.topics[0].subscriptions[0].endpoint == "http://www.endpoint.com"
         assert sns.topics[0].subscriptions[1].endpoint == "https://www.endpoint.com"
+
+    @mock_aws
+    def test_list_subscriptions_by_topic_includes_later_pages(self):
+        sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
+        topic_arn = sns_client.create_topic(Name=topic_name)["TopicArn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
+        regional_client = sns.regional_clients[AWS_REGION_EU_WEST_1]
+
+        def subscription(number, protocol, endpoint):
+            return {
+                "SubscriptionArn": f"{topic_arn}:{number}",
+                "Owner": AWS_ACCOUNT_NUMBER,
+                "Protocol": protocol,
+                "Endpoint": endpoint,
+                "TopicArn": topic_arn,
+            }
+
+        # ListSubscriptionsByTopic returns at most 100 subscriptions per call.
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_subscriptions_by_topic",
+                {
+                    "Subscriptions": [
+                        subscription(1, "https", "https://first.example")
+                    ],
+                    "NextToken": "second-page",
+                },
+                {"TopicArn": topic_arn},
+            )
+            stubber.add_response(
+                "list_subscriptions_by_topic",
+                {"Subscriptions": [subscription(2, "http", "http://later.example")]},
+                {"TopicArn": topic_arn, "NextToken": "second-page"},
+            )
+            sns._list_subscriptions_by_topic()
+            stubber.assert_no_pending_responses()
+
+        assert [
+            subscription.endpoint for subscription in sns.topics[0].subscriptions
+        ] == ["https://first.example", "http://later.example"]
+
+    @mock_aws
+    def test_list_subscriptions_by_topic_keeps_pages_read_before_an_error(self):
+        sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
+        topic_arn = sns_client.create_topic(Name=topic_name)["TopicArn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
+        regional_client = sns.regional_clients[AWS_REGION_EU_WEST_1]
+
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_subscriptions_by_topic",
+                {
+                    "Subscriptions": [
+                        {
+                            "SubscriptionArn": f"{topic_arn}:1",
+                            "Owner": AWS_ACCOUNT_NUMBER,
+                            "Protocol": "http",
+                            "Endpoint": "http://first.example",
+                            "TopicArn": topic_arn,
+                        }
+                    ],
+                    "NextToken": "second-page",
+                },
+                {"TopicArn": topic_arn},
+            )
+            stubber.add_client_error(
+                "list_subscriptions_by_topic",
+                service_error_code="Throttling",
+                expected_params={"TopicArn": topic_arn, "NextToken": "second-page"},
+            )
+            sns._list_subscriptions_by_topic()
+            stubber.assert_no_pending_responses()
+
+        assert [
+            subscription.endpoint for subscription in sns.topics[0].subscriptions
+        ] == ["http://first.example"]
