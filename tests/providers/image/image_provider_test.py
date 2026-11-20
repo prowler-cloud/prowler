@@ -713,6 +713,54 @@ class TestImageProviderRegistryAuth:
         assert env["TRIVY_USERNAME"] == "myuser"
         assert env["TRIVY_PASSWORD"] == "mypass"
 
+    @patch("subprocess.run")
+    def test_execute_trivy_routes_trivy_through_the_outbound_proxy(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        monkeypatch.setenv("HTTPS_PROXY", "http://operator-proxy:3128")
+        monkeypatch.setenv("NO_PROXY", "169.254.169.254")
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        env = mock_subprocess.call_args.kwargs["env"]
+        for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+            assert env[key].startswith("http://127.0.0.1:")
+        assert "NO_PROXY" not in env
+
+    @patch("subprocess.run")
+    def test_execute_trivy_leaves_the_environment_alone_when_the_check_is_skipped(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+        monkeypatch.setenv("HTTPS_PROXY", "http://operator-proxy:3128")
+        monkeypatch.setenv("NO_PROXY", "169.254.169.254")
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        env = mock_subprocess.call_args.kwargs["env"]
+        assert env["HTTPS_PROXY"] == "http://operator-proxy:3128"
+        assert env["NO_PROXY"] == "169.254.169.254"
+
+    @patch("subprocess.run")
+    def test_execute_trivy_fails_the_scan_when_the_proxy_cannot_start(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        monkeypatch.setenv(
+            "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS", "not-a-network"
+        )
+        provider = _make_provider()
+
+        with pytest.raises(ImageScanError, match="outbound proxy"):
+            provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        mock_subprocess.assert_not_called()
+
     @patch("prowler.providers.image.image_provider.create_registry_adapter")
     def test_test_connection_with_basic_auth(self, mock_factory):
         """Test test_connection passes credentials to the registry adapter."""

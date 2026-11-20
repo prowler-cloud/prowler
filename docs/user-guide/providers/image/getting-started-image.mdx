@@ -353,6 +353,8 @@ The value is a comma-separated list of IPs and CIDRs. A resolved address inside 
 
 The scan runs in the worker, not the API, so the variable has to reach the worker. With Docker Compose set it in the root `.env`; with Helm add it under `api.djangoConfig`, which is rendered into the API ConfigMap that the worker inherits through `envFrom`. The other providers use `PROWLER_ALLOWED_PRIVATE_NETWORKS`.
 
+The same check applies to the image pull. Trivy runs behind a local proxy that resolves the hosts Trivy reaches through it, including the hosts a registry redirects to, its token endpoints and layer URLs, and refuses any host that resolves to a non-public address outside the allowlist. Loopback connections do not go through the proxy. `NO_PROXY` is not passed to Trivy. When `HTTPS_PROXY` or `HTTP_PROXY` is set for the worker, the local proxy forwards the vetted connections through it, so the registry hostname must still resolve inside the worker.
+
 #### Supported Registries
 
 Registry Scan Mode supports the following registry types:
