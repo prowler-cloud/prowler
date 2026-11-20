@@ -136,6 +136,9 @@ class Storage(AzureService):
                         container_delete_retention_policy = getattr(
                             properties, "container_delete_retention_policy", None
                         )
+                        delete_retention_policy = getattr(
+                            properties, "delete_retention_policy", None
+                        )
                         versioning_enabled = getattr(
                             properties, "is_versioning_enabled", False
                         )
@@ -155,6 +158,15 @@ class Storage(AzureService):
                                     container_delete_retention_policy, "days", 0
                                 )
                                 or 0,
+                            ),
+                            delete_retention_policy=DeleteRetentionPolicy(
+                                enabled=getattr(
+                                    delete_retention_policy,
+                                    "enabled",
+                                    False,
+                                )
+                                or False,
+                                days=getattr(delete_retention_policy, "days", 0) or 0,
                             ),
                             versioning_enabled=versioning_enabled,
                         )
@@ -273,6 +285,7 @@ class BlobProperties(BaseModel):
     name: str
     type: str
     container_delete_retention_policy: DeleteRetentionPolicy
+    delete_retention_policy: Optional[DeleteRetentionPolicy] = None
     default_service_version: Optional[str] = None
     versioning_enabled: Optional[bool] = None
 
