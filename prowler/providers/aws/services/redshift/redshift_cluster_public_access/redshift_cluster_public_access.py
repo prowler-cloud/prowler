@@ -32,7 +32,10 @@ class redshift_cluster_public_access(Check):
                                 sg_arn
                             ].ingress_rules:
                                 if check_security_group(
-                                    ingress_rule, "tcp", any_address=True
+                                    ingress_rule,
+                                    "tcp",
+                                    any_address=True,
+                                    all_ports=True,
                                 ):
                                     report.status = "FAIL"
                                     report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible and it is exposed to the Internet by security group ({sg_id}) in a public subnet."

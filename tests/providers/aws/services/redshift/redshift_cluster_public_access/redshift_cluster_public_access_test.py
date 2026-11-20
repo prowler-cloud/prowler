@@ -1,6 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
+import pytest
+
 from prowler.providers.aws.services.redshift.redshift_service import Cluster
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -242,7 +244,60 @@ class Test_redshift_cluster_public_access:
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
 
-    def test_cluster_with_public_vpc_sgs(self):
+    @pytest.mark.parametrize(
+        ("ingress_rule", "expected_status"),
+        [
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5439,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                },
+                "FAIL",
+            ),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5439,
+                    "IpRanges": [],
+                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}],
+                },
+                "FAIL",
+            ),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5439,
+                    "IpRanges": [{"CidrIp": "10.0.0.0/8"}],
+                    "Ipv6Ranges": [],
+                },
+                "PASS",
+            ),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5440,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                },
+                "FAIL",
+            ),
+            (
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                },
+                "FAIL",
+            ),
+        ],
+    )
+    def test_cluster_with_public_vpc_sgs(self, ingress_rule, expected_status):
         redshift_client = mock.MagicMock
         redshift_client.audited_partition = "aws"
         redshift_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -265,16 +320,7 @@ class Test_redshift_cluster_public_access:
         ec2_client.security_groups = {
             f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/sg-123456": mock.MagicMock(
                 id="sg-123456",
-                ingress_rules=[
-                    {
-                        "IpProtocol": "-1",
-                        "IpRanges": [
-                            {
-                                "CidrIp": "0.0.0.0/0",
-                            },
-                        ],
-                    }
-                ],
+                ingress_rules=[ingress_rule],
             )
         }
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -302,10 +348,12 @@ class Test_redshift_cluster_public_access:
 
                 check = redshift_cluster_public_access()
                 result = check.execute()
-                assert result[0].status == "FAIL"
-                assert (
-                    result[0].status_extended
-                    == f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible and it is exposed to the Internet by security group (sg-123456) in a public subnet."
+                assert result[0].status == expected_status
+                expected_status_extended = (
+                    f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible and it is exposed to the Internet by security group (sg-123456) in a public subnet."
+                    if expected_status == "FAIL"
+                    else f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible in a public subnet but is not publicly exposed."
                 )
+                assert result[0].status_extended == expected_status_extended
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
