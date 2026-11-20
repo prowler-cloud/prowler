@@ -309,7 +309,7 @@ class Pricing(BaseModel):
     resource_id: str
     resource_name: str
     pricing_tier: str
-    free_trial_remaining_time: timedelta
+    free_trial_remaining_time: Optional[timedelta] = None
     extensions: Dict[str, bool] = {}
 
 
