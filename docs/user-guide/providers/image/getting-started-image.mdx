@@ -343,13 +343,13 @@ On-premises registries live on private networks by definition.
 
 **Prowler CLI scans them with no extra configuration.** On the CLI the operator supplies the registry themselves, so there is nothing to defend against and the check below does not apply.
 
-**Prowler App rejects a registry URL that resolves to a non-public address**, as an SSRF defense. The check covers the registry URL supplied for the scan as well as the URLs the registry itself returns — token endpoints and pagination links. There the registry arrives from a tenant and the worker must not be used to reach the internal network it runs in. To scan an on-premises registry from Prowler App, declare the trusted ranges explicitly:
+**Prowler App rejects a registry URL that resolves to a non-public address**, as an SSRF defense. The check covers the registry URL supplied for the scan as well as the URLs the registry itself returns — token endpoints and pagination links. It also covers the registry host of every image reference passed for a scan, such as `10.0.0.5:5000/app:1.0` or `localhost/app:1.0`, which Prowler App rejects before the scan starts. Docker Hub references are not checked. There the registry arrives from a tenant and the worker must not be used to reach the internal network it runs in. To scan an on-premises registry from Prowler App, declare the trusted ranges explicitly:
 
 ```bash
 PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS="192.168.65.254/32,10.20.0.0/16"
 ```
 
-The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. The variable applies to registry enumeration and to the connection test. Malformed entries fail at startup, and a non-empty allowlist is logged as a relaxed security control. The URL scheme is always restricted to `http` and `https`, and the same-origin rule on registry-provided URLs always applies, neither of which the allowlist relaxes.
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. The variable applies to registry enumeration, to the connection test, and to the registry hosts of image references. Malformed entries fail at startup, and a non-empty allowlist is logged as a relaxed security control. The URL scheme is always restricted to `http` and `https`, and the same-origin rule on registry-provided URLs always applies, neither of which the allowlist relaxes.
 
 The scan runs in the worker, not the API, so the variable has to reach the worker. With Docker Compose set it in the root `.env`; with Helm add it under `api.djangoConfig`, which is rendered into the API ConfigMap that the worker inherits through `envFrom`. The other providers use `PROWLER_ALLOWED_PRIVATE_NETWORKS`.
 
