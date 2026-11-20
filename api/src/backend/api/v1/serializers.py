@@ -2094,20 +2094,25 @@ class OCIHomeRegionField(serializers.Field):
 class OracleCloudProviderSecret(serializers.Serializer):
     user = serializers.CharField()
     fingerprint = serializers.CharField()
-    key_file = serializers.CharField(required=False)
-    key_content = serializers.CharField(required=False)
+    key_content = serializers.CharField()
     tenancy = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
     region = OCIHomeRegionField(required=False, allow_null=True)
 
+    def to_internal_value(self, data):
+        # a path is read on the worker, where no tenant can have placed a key
+        if isinstance(data, dict) and "key_file" in data:
+            raise serializers.ValidationError(
+                {
+                    "key_file": "key_file is not supported. Provide the private key "
+                    "in key_content (base64 encoded)."
+                }
+            )
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
         if not attrs.get("region"):
             attrs.pop("region", None)
-
-        if "key_file" not in attrs and "key_content" not in attrs:
-            raise serializers.ValidationError(
-                {"key_file": "Either key_file or key_content must be provided."}
-            )
 
         return attrs
 

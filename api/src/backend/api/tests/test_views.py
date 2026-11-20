@@ -3512,17 +3512,6 @@ current-context: test-context
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
                 },
             ),
-            # OCI with API key credentials (with key_file)
-            (
-                Provider.ProviderChoices.ORACLECLOUD.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
-                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_file": "/path/to/oci_api_key.pem",
-                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                },
-            ),
             # OCI with API key credentials (with passphrase)
             (
                 Provider.ProviderChoices.ORACLECLOUD.value,
@@ -3688,6 +3677,32 @@ current-context: test-context
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+
+    @pytest.mark.parametrize(
+        "key_fields",
+        [
+            {"key_file": "/proc/self/environ"},
+            {"key_file": "/proc/self/environ", "key_content": "dGVzdC1rZXk="},
+        ],
+    )
+    def test_provider_secrets_create_oraclecloud_rejects_key_file(
+        self, authenticated_client, oraclecloud_provider, key_fields
+    ):
+        secret = {
+            key: value
+            for key, value in self._oraclecloud_secret().items()
+            if key != "key_content"
+        }
+
+        response = self._create_oraclecloud_secret(
+            authenticated_client, oraclecloud_provider, {**secret, **key_fields}
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/key_file"
+        )
+        assert not ProviderSecret.objects.exists()
 
     def test_provider_secrets_create_oraclecloud_without_region_stores_no_region(
         self,
