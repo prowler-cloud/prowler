@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "auth_email_confirmation_required",
+  "CheckTitle": "Supabase Auth requires email confirmation for new sign-ups",
+  "CheckType": [],
+  "ServiceName": "auth",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase Auth** is assessed for **email auto-confirmation**. When enabled, any sign-up is immediately active without proving control of the mailbox.",
+  "Risk": "Unverified sign-ups let attackers **claim other people's email addresses**, create unlimited throwaway accounts and reach `authenticated` row level security policies without owning a real identity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/auth/auth-email"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Sign In / Providers > Email\n3. Enable Confirm email",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  auth = jsonencode({\n    mailer_autoconfirm = false\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Require confirmed email addresses; if a frictionless flow is needed, gate sensitive policies on `email_confirmed_at`.",
+      "Url": "https://hub.prowler.com/check/auth_email_confirmation_required"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

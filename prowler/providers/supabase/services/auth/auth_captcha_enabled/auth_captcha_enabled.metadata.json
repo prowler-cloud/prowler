@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "auth_captcha_enabled",
+  "CheckTitle": "Supabase Auth protects sign-up and sign-in with CAPTCHA",
+  "CheckType": [],
+  "ServiceName": "auth",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase Auth** is assessed for **CAPTCHA protection** (hCaptcha or Turnstile) on sign-up, sign-in, magic link and password recovery requests.",
+  "Risk": "Auth endpoints are public and keyed only by the anon key, so bots can **mass register accounts**, run credential stuffing and drive up email and SMS costs without a human challenge.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/auth/auth-captcha"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Attack Protection\n3. Enable Captcha protection and configure the hCaptcha or Turnstile secret\n4. Add the captcha token to client sign-up and sign-in calls",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  auth = jsonencode({\n    security_captcha_enabled  = true\n    security_captcha_provider = \"turnstile\"\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable CAPTCHA on Auth endpoints that accept anonymous traffic and keep rate limits tight.",
+      "Url": "https://hub.prowler.com/check/auth_captcha_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
