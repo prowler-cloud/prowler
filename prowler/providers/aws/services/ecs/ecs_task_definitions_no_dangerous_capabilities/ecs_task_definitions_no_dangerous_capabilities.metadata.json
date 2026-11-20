@@ -1,0 +1,39 @@
+{
+    "Provider": "aws",
+    "CheckID": "ecs_task_definitions_no_dangerous_capabilities",
+    "CheckTitle": "ECS task definitions do not add dangerous Linux capabilities",
+    "CheckType": [
+        "Software and Configuration Checks/AWS Security Best Practices",
+        "TTPs/Privilege Escalation"
+    ],
+    "ServiceName": "ecs",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "AwsEcsTaskDefinition",
+    "ResourceGroup": "container",
+    "Description": "Checks whether ECS task definitions explicitly add the SYS_ADMIN or ALL Linux capabilities to containers.",
+    "Risk": "Dangerous Linux capabilities can weaken container isolation and increase the impact of a container compromise.",
+    "RelatedUrl": "",
+    "AdditionalURLs": [
+        "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definition_security"
+    ],
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "NativeIaC": "",
+            "Other": "Create a new ECS task definition revision and remove SYS_ADMIN or ALL from linuxParameters.capabilities.add unless explicitly required.",
+            "Terraform": ""
+        },
+        "Recommendation": {
+            "Text": "Apply the principle of least privilege. Avoid adding SYS_ADMIN or ALL capabilities to ECS containers unless strictly necessary.",
+            "Url": "https://hub.prowler.com/check/ecs_task_definitions_no_dangerous_capabilities"
+        }
+    },
+    "Categories": [
+        "container-security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}
