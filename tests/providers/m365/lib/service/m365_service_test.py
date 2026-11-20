@@ -10,9 +10,14 @@ class Test_M365Service:
         region_config = M365Provider.setup_region_config("M365USGovernment")
         provider = set_mocked_m365_provider(azure_region_config=region_config)
 
-        with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+        with patch(
+            "prowler.providers.m365.lib.service.service.M365PowerShell"
+        ) as powershell:
             service = M365Service(provider)
 
+        powershell.assert_called_once_with(
+            provider.credentials, provider.identity, region_config
+        )
         assert service.region_config == region_config
         assert (
             service.client.request_adapter.base_url
