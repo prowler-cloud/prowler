@@ -623,6 +623,120 @@ class Test_Repository_BranchProtectionRulesets:
         assert repos[1].default_branch.dismiss_stale_reviews is True
         assert repos[1].default_branch.dismiss_stale_reviews_source == "classic"
 
+    def test_process_repository_unreadable_protection_on_protected_branch_is_unknown(
+        self,
+    ):
+        # GitHub answers 404 from the protection endpoint both when the branch
+        # is unprotected and when the caller lacks Administration: read. The
+        # branch endpoint already said the branch is protected, so the
+        # protection state is unknown and must not fall through as the
+        # insecure defaults (which would make every branch-protection check
+        # FAIL for a non-admin token).
+        repo = self._build_repo(branch_protected=True)
+        repo.get_branch.return_value.get_protection.side_effect = GithubException(
+            404, {"message": "Not Found"}
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        branch = repos[1].default_branch
+        assert branch.protected is None
+        assert branch.require_pull_request is None
+        assert branch.approval_count is None
+        assert branch.required_linear_history is None
+        assert branch.allow_force_pushes is None
+        assert branch.branch_deletion is None
+        assert branch.require_code_owner_reviews is None
+        assert branch.require_signed_commits is None
+        assert branch.status_checks is None
+        assert branch.enforce_admins is None
+        assert branch.conversation_resolution is None
+        assert branch.dismiss_stale_reviews is None
+        assert branch.protected_source is None
+        assert branch.require_pull_request_source is None
+        assert branch.approval_count_source is None
+        assert branch.required_linear_history_source is None
+        assert branch.allow_force_pushes_source is None
+        assert branch.branch_deletion_source is None
+        assert branch.require_code_owner_reviews_source is None
+        assert branch.require_signed_commits_source is None
+        assert branch.status_checks_source is None
+        assert branch.enforce_admins_source is None
+        assert branch.conversation_resolution_source is None
+        assert branch.dismiss_stale_reviews_source is None
+
+    def test_process_repository_unreadable_required_signatures_on_protected_branch_is_unknown(
+        self,
+    ):
+        # The required-signatures endpoint needs the same Administration: read
+        # permission, so a 404 there on a protected branch also leaves the
+        # protection state unknown instead of reporting the insecure defaults.
+        repo = self._build_repo(branch_protected=True)
+        repo.get_branch.return_value.get_required_signatures.side_effect = (
+            GithubException(404, {"message": "Not Found"})
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        branch = repos[1].default_branch
+        assert branch.protected is None
+        assert branch.require_pull_request is None
+        assert branch.approval_count is None
+        assert branch.required_linear_history is None
+        assert branch.allow_force_pushes is None
+        assert branch.branch_deletion is None
+        assert branch.require_code_owner_reviews is None
+        assert branch.require_signed_commits is None
+        assert branch.status_checks is None
+        assert branch.enforce_admins is None
+        assert branch.conversation_resolution is None
+        assert branch.dismiss_stale_reviews is None
+
+    def test_process_repository_missing_branch_keeps_not_protected_defaults(self):
+        # A 404 from get_branch means the branch itself is missing (empty
+        # repository), so the "not protected" defaults still apply.
+        repo = self._build_repo(branch_protected=False)
+        repo.get_branch.side_effect = GithubException(404, {"message": "Not Found"})
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        branch = repos[1].default_branch
+        assert branch.protected is False
+        assert branch.require_pull_request is False
+        assert branch.approval_count == 0
+        assert branch.required_linear_history is False
+        assert branch.allow_force_pushes is True
+        assert branch.branch_deletion is True
+        assert branch.require_code_owner_reviews is False
+        assert branch.require_signed_commits is False
+        assert branch.status_checks is False
+        assert branch.enforce_admins is False
+        assert branch.conversation_resolution is False
+        assert branch.dismiss_stale_reviews is False
+
+    def test_process_repository_branch_not_protected_message_keeps_defaults(self):
+        # A 404 that says the branch is not protected means GitHub really has
+        # no protection to report, so the defaults still apply even though the
+        # branch endpoint had reported the branch as protected.
+        repo = self._build_repo(branch_protected=True)
+        repo.get_branch.return_value.get_protection.side_effect = GithubException(
+            404, {"message": "Branch not protected"}
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        branch = repos[1].default_branch
+        assert branch.protected is False
+        assert branch.require_pull_request is False
+        assert branch.approval_count == 0
+        assert branch.allow_force_pushes is True
+        assert branch.branch_deletion is True
+        assert branch.require_signed_commits is False
+
     def test_process_repository_uses_active_ruleset_for_default_branch(self):
         repo = self._build_repo(
             branch_protected=False,
