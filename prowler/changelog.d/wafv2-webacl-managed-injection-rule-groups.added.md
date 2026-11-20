@@ -1,0 +1,1 @@
+`wafv2_webacl_managed_injection_rule_groups_enabled` check for AWS provider, verifying that WAFv2 Web ACLs enforce the AWS managed `AWSManagedRulesSQLiRuleSet` and `AWSManagedRulesKnownBadInputsRuleSet` rule groups instead of overriding them to Count
