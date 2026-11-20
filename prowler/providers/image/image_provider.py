@@ -788,6 +788,7 @@ class ImageProvider(Provider):
                 ),
                 allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
             )
+            proxy.start()
         except (
             ImageInvalidAllowedNetworksError,
             OutboundURLNotAllowedError,
@@ -800,8 +801,10 @@ class ImageProvider(Provider):
                 original_exception=error,
                 message=f"Could not start the outbound proxy for Trivy: {error}",
             )
-        with proxy:
+        try:
             return self._run_trivy(command, image, proxy.route(env))
+        finally:
+            proxy.stop()
 
     def _run_trivy(
         self, command: list, image: str, env: dict

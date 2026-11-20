@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import ipaddress
 import select
 import socket
 import socketserver
 import threading
 from urllib.parse import SplitResult, unquote, urlsplit
-from urllib.request import proxy_bypass_environment
 
 from prowler.lib.logger import logger
 from prowler.lib.network.ssrf import OutboundURLNotAllowedError, _ip_is_non_public
@@ -61,6 +61,38 @@ def _header_items(lines: list[bytes]) -> list[tuple[str, str]]:
     return items
 
 
+def _authority(address: str, port: int) -> str:
+    return f"[{address}]:{port}" if ":" in address else f"{address}:{port}"
+
+
+def _no_proxy_matches(no_proxy: str, host: str, port: int) -> bool:
+    """Whether host:port is excluded from the operator proxy, as Go matches NO_PROXY."""
+    try:
+        literal = ipaddress.ip_address(host)
+    except ValueError:
+        literal = None
+    for entry in (item.strip().lower() for item in no_proxy.split(",")):
+        if not entry:
+            continue
+        if entry == "*":
+            return True
+        try:
+            network = ipaddress.ip_network(entry, strict=False)
+        except ValueError:
+            pass
+        else:
+            if literal and literal.version == network.version and literal in network:
+                return True
+            continue
+        name, _, entry_port = entry.partition(":")
+        if entry_port and entry_port != str(port):
+            continue
+        name = name.lstrip("*").lstrip(".")
+        if name and (host.lower() == name or host.lower().endswith(f".{name}")):
+            return True
+    return False
+
+
 def _relay(client: socket.socket, upstream: socket.socket) -> None:
     peers = {client: upstream, upstream: client}
     while True:
@@ -76,6 +108,17 @@ def _relay(client: socket.socket, upstream: socket.socket) -> None:
 
 class _Handler(socketserver.StreamRequestHandler):
     server: _GuardServer
+    timeout = _IDLE_TIMEOUT
+
+    def setup(self) -> None:
+        super().setup()
+        self.server.track(self.connection)
+
+    def finish(self) -> None:
+        try:
+            super().finish()
+        finally:
+            self.server.untrack(self.connection)
 
     def handle(self) -> None:
         try:
@@ -115,10 +158,11 @@ class _Handler(socketserver.StreamRequestHandler):
         if not parts.hostname or not parts.port:
             raise _Refused(400, "CONNECT needs host:port")
         upstream = self.server.dial("https", parts.hostname, parts.port)
-        with upstream.socket:
+        with self.server.holding(upstream.socket):
             if upstream.via_proxy:
+                pinned = _authority(upstream.address, parts.port)
                 upstream.socket.sendall(
-                    f"CONNECT {authority} HTTP/1.1\r\nHost: {authority}\r\n".encode()
+                    f"CONNECT {pinned} HTTP/1.1\r\nHost: {pinned}\r\n".encode()
                     + upstream.proxy_auth_header
                     + b"\r\n"
                 )
@@ -143,18 +187,24 @@ class _Handler(socketserver.StreamRequestHandler):
             0,
         )
 
-        upstream = self.server.dial("http", parts.hostname, parts.port or 80)
-        with upstream.socket:
-            request_target = target
-            if not upstream.via_proxy:
-                request_target = parts.path or "/"
-                if parts.query:
-                    request_target += f"?{parts.query}"
+        port = parts.port or 80
+        upstream = self.server.dial("http", parts.hostname, port)
+        with self.server.holding(upstream.socket):
+            request_target = parts.path or "/"
+            if parts.query:
+                request_target += f"?{parts.query}"
+            if upstream.via_proxy:
+                # the vetted address, not the name the operator's proxy would resolve
+                request_target = (
+                    f"http://{_authority(upstream.address, port)}{request_target}"
+                )
             kept = "".join(
                 f"{name}: {value}\r\n"
                 for name, value in headers
                 if name.lower() not in _HOP_BY_HOP
             )
+            if not any(name.lower() == "host" for name, _ in headers):
+                kept += f"Host: {parts.netloc.rpartition('@')[2]}\r\n"
             upstream.socket.sendall(
                 f"{method} {request_target} HTTP/1.1\r\n{kept}".encode("latin-1")
                 + upstream.proxy_auth_header
@@ -183,9 +233,14 @@ class _Handler(socketserver.StreamRequestHandler):
 
 class _Upstream:
     def __init__(
-        self, sock: socket.socket, via_proxy: bool, proxy_auth_header: bytes = b""
+        self,
+        sock: socket.socket,
+        address: str,
+        via_proxy: bool,
+        proxy_auth_header: bytes = b"",
     ) -> None:
         self.socket = sock
+        self.address = address
         self.via_proxy = via_proxy
         self.proxy_auth_header = proxy_auth_header
 
@@ -193,12 +248,18 @@ class _Upstream:
 def _operator_proxy(raw: str | None) -> SplitResult | None:
     if not raw:
         return None
-    proxy = urlsplit(raw if "://" in raw else f"http://{raw}")
+    unsupported = OutboundURLNotAllowedError(
+        "With the outbound host check enabled, Trivy scans support only a valid "
+        "http:// proxy URL in HTTP_PROXY and HTTPS_PROXY"
+    )
+    try:
+        proxy = urlsplit(raw if "://" in raw else f"http://{raw}")
+        proxy.port  # raises on a malformed port
+    except ValueError as error:
+        # the URL can carry the proxy credentials, so it stays out of the message
+        raise unsupported from error
     if proxy.scheme != "http" or not proxy.hostname:
-        raise OutboundURLNotAllowedError(
-            "With the outbound host check enabled, Trivy scans support only an "
-            "http:// proxy in HTTP_PROXY and HTTPS_PROXY"
-        )
+        raise unsupported
     return proxy
 
 
@@ -217,7 +278,35 @@ class _GuardServer(socketserver.ThreadingTCPServer):
             for scheme in ("http", "https")
         }
         self.no_proxy = environ.get("NO_PROXY") or environ.get("no_proxy") or ""
+        self._open_sockets: set = set()
+        self._open_sockets_lock = threading.Lock()
         super().__init__(("127.0.0.1", 0), _Handler)
+
+    def track(self, sock: socket.socket) -> None:
+        with self._open_sockets_lock:
+            self._open_sockets.add(sock)
+
+    def untrack(self, sock: socket.socket) -> None:
+        with self._open_sockets_lock:
+            self._open_sockets.discard(sock)
+
+    @contextlib.contextmanager
+    def holding(self, sock: socket.socket):
+        try:
+            yield sock
+        finally:
+            sock.close()
+            self.untrack(sock)
+
+    def close_open_sockets(self) -> None:
+        """Unblock handlers still relaying once the subprocess is done."""
+        with self._open_sockets_lock:
+            open_sockets = list(self._open_sockets)
+        for sock in open_sockets:
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
 
     def _allowlisted(self, address: str) -> bool:
         parsed = ipaddress.ip_address(address)
@@ -252,8 +341,7 @@ class _GuardServer(socketserver.ThreadingTCPServer):
         addresses = self.vetted_addresses(host)
 
         proxy = self.upstream_proxies.get(scheme)
-        if proxy and not proxy_bypass_environment(host, {"no": self.no_proxy}):
-            # the operator's proxy resolves host again; only the vetting above is ours
+        if proxy and not _no_proxy_matches(self.no_proxy, host, port):
             auth = b""
             if proxy.username:
                 credentials = (
@@ -270,8 +358,9 @@ class _GuardServer(socketserver.ThreadingTCPServer):
                 )
             except OSError as error:
                 raise _Refused(502, f"Could not reach the configured proxy: {error}")
-            sock.settimeout(None)
-            return _Upstream(sock, via_proxy=True, proxy_auth_header=auth)
+            sock.settimeout(_IDLE_TIMEOUT)
+            self.track(sock)
+            return _Upstream(sock, addresses[0], via_proxy=True, proxy_auth_header=auth)
 
         last_error = None
         for address in addresses:
@@ -282,8 +371,9 @@ class _GuardServer(socketserver.ThreadingTCPServer):
             except OSError as error:
                 last_error = error
                 continue
-            sock.settimeout(None)
-            return _Upstream(sock, via_proxy=False)
+            sock.settimeout(_IDLE_TIMEOUT)
+            self.track(sock)
+            return _Upstream(sock, address, via_proxy=False)
         raise _Refused(502, f"Could not connect to {host!r}: {last_error}")
 
 
@@ -319,10 +409,25 @@ class TrivyOutboundProxy:
             routed[key] = self.url
         return routed
 
+    def start(self) -> None:
+        """Serve in a background thread; the listener is closed if that fails."""
+        try:
+            self._thread.start()
+        except RuntimeError as error:
+            self._server.server_close()
+            raise OSError(
+                f"Could not start the outbound proxy thread: {error}"
+            ) from error
+
+    def stop(self) -> None:
+        if self._thread.is_alive():
+            self._server.shutdown()
+        self._server.server_close()
+        self._server.close_open_sockets()
+
     def __enter__(self) -> TrivyOutboundProxy:
-        self._thread.start()
+        self.start()
         return self
 
     def __exit__(self, *_) -> None:
-        self._server.shutdown()
-        self._server.server_close()
+        self.stop()

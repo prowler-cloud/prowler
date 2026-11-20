@@ -8,7 +8,7 @@ from unittest import mock
 import pytest
 import requests
 
-from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy, _no_proxy_matches
 from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 
 LOOPBACK = (ipaddress.ip_network("127.0.0.1/32"),)
@@ -244,7 +244,7 @@ class TestTrivyOutboundProxyOperatorProxy:
         assert response.text == "via-op!"
         assert response.headers["Connection"] == "close"
         head = _FakeOperatorHttpProxy.seen[0]
-        assert head[0] == b"GET http://8.8.8.8/v2/ HTTP/1.1\r\n"
+        assert head[0] == b"GET http://8.8.8.8:80/v2/ HTTP/1.1\r\n"
         assert b"Connection: close\r\n" in head
 
     def test_dials_directly_a_host_listed_in_the_operator_no_proxy(self, echo_upstream):
@@ -268,7 +268,7 @@ class TestTrivyOutboundProxyOperatorProxy:
         "proxy_url", ["socks5://proxy.example:1080", "https://proxy.example:3128"]
     )
     def test_refuses_an_operator_proxy_it_cannot_speak(self, proxy_url):
-        with pytest.raises(OutboundURLNotAllowedError, match="only an http:// proxy"):
+        with pytest.raises(OutboundURLNotAllowedError, match="valid http:// proxy URL"):
             TrivyOutboundProxy({"HTTPS_PROXY": proxy_url})
 
 
@@ -289,3 +289,106 @@ class TestTrivyOutboundProxyMalformedRequests:
             reply, _ = _connect(proxy, "8.8.8.8")
 
         assert reply.startswith(b"HTTP/1.1 400 ")
+
+
+class _DaemonTCPServer(socketserver.ThreadingTCPServer):
+    daemon_threads = True
+
+
+class _Silent(socketserver.BaseRequestHandler):
+    def handle(self):
+        self.request.recv(1024)
+        threading.Event().wait(30)
+
+
+class TestTrivyOutboundProxyPinning:
+    def test_tunnels_through_the_operator_proxy_to_the_vetted_address(self):
+        _FakeOperatorProxy.seen = []
+        operator = _serve(
+            socketserver.ThreadingTCPServer(("127.0.0.1", 0), _FakeOperatorProxy)
+        )
+        environ = {"HTTPS_PROXY": f"http://127.0.0.1:{operator.server_address[1]}"}
+        try:
+            with _resolves({"registry.example": "8.8.8.8"}):
+                with TrivyOutboundProxy(environ) as proxy:
+                    _connect(proxy, "registry.example:443")
+        finally:
+            operator.shutdown()
+            operator.server_close()
+
+        assert _FakeOperatorProxy.seen[0][0].startswith(b"CONNECT 8.8.8.8:443 ")
+
+    def test_forwards_through_the_operator_proxy_to_the_vetted_address(self):
+        _FakeOperatorHttpProxy.seen = []
+        operator = _serve(
+            socketserver.ThreadingTCPServer(("127.0.0.1", 0), _FakeOperatorHttpProxy)
+        )
+        environ = {"HTTP_PROXY": f"http://127.0.0.1:{operator.server_address[1]}"}
+        try:
+            with _resolves({"registry.example": "8.8.8.8"}):
+                with TrivyOutboundProxy(environ) as proxy:
+                    _get("http://registry.example:5000/v2/", proxy)
+        finally:
+            operator.shutdown()
+            operator.server_close()
+
+        head = _FakeOperatorHttpProxy.seen[0]
+        assert head[0] == b"GET http://8.8.8.8:5000/v2/ HTTP/1.1\r\n"
+        assert b"Host: registry.example:5000\r\n" in head
+
+
+class TestTrivyOutboundProxyLifecycle:
+    @pytest.mark.parametrize("proxy_url", ["http://[::1", "http://proxy.example:99999"])
+    def test_refuses_a_malformed_operator_proxy_without_echoing_it(self, proxy_url):
+        with pytest.raises(OutboundURLNotAllowedError) as refusal:
+            TrivyOutboundProxy({"HTTPS_PROXY": proxy_url})
+
+        assert proxy_url not in str(refusal.value)
+
+    def test_stop_releases_a_handler_stuck_on_a_silent_upstream(self):
+        silent = _serve(_DaemonTCPServer(("127.0.0.1", 0), _Silent))
+        proxy = TrivyOutboundProxy({}, allowed_networks=LOOPBACK)
+        proxy.start()
+        host, port = proxy.url.removeprefix("http://").split(":")
+        try:
+            with socket.create_connection((host, int(port)), timeout=5) as client:
+                client.sendall(
+                    f"GET http://127.0.0.1:{silent.server_address[1]}/ HTTP/1.1\r\n\r\n".encode()
+                )
+                threading.Event().wait(0.3)
+                proxy.stop()
+                assert client.recv(1024) == b""
+        finally:
+            silent.shutdown()
+            silent.server_close()
+
+    def test_closes_the_listener_when_the_thread_cannot_start(self):
+        proxy = TrivyOutboundProxy({})
+        with mock.patch.object(
+            proxy._thread, "start", side_effect=RuntimeError("can't start new thread")
+        ):
+            with pytest.raises(OSError, match="outbound proxy thread"):
+                proxy.start()
+
+        assert proxy._server.socket.fileno() == -1
+
+
+class TestNoProxyMatching:
+    @pytest.mark.parametrize(
+        "no_proxy, host, port, expected",
+        [
+            ("10.0.0.0/8", "10.20.0.5", 5000, True),
+            ("10.0.0.0/8", "registry.internal", 5000, False),
+            ("10.20.0.5", "10.20.0.5", 443, True),
+            ("registry.internal:5000", "registry.internal", 5000, True),
+            ("registry.internal:5000", "registry.internal", 443, False),
+            (".example.com", "registry.example.com", 443, True),
+            ("example.com", "registry.example.com", 443, True),
+            ("*.example.com", "registry.example.com", 443, True),
+            ("example.com", "badexample.com", 443, False),
+            ("*", "anything.example", 443, True),
+            ("", "registry.example.com", 443, False),
+        ],
+    )
+    def test_matches_like_go(self, no_proxy, host, port, expected):
+        assert _no_proxy_matches(no_proxy, host, port) is expected

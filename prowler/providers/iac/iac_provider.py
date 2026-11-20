@@ -487,13 +487,13 @@ class IacProvider(Provider):
                 allowed_networks=allowed_private_networks(),
                 allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
             )
+            proxy.start()
         except (OutboundURLNotAllowedError, OSError) as error:
             raise IacScanError(
                 file=__file__,
                 original_exception=error,
                 message=f"Could not start the outbound proxy for Trivy: {error}",
             ) from error
-        proxy.__enter__()
         # a scanned repository picks the Terraform module sources Trivy downloads,
         # so Trivy gets neither the worker's cloud credentials nor git over ssh
         isolated = {
@@ -674,7 +674,7 @@ class IacProvider(Provider):
             raise IacScanError(file=__file__, original_exception=error) from error
         finally:
             if proxy:
-                proxy.__exit__()
+                proxy.stop()
 
     def print_credentials(self):
         if self.scan_repository_url:
