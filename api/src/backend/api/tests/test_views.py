@@ -3625,6 +3625,17 @@ current-context: test-context
                     "registry_password": "pass",
                 },
             ),
+            # Image registry credentials with the scan filters the UI sends
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "registry_username": "user",
+                    "registry_password": "pass",
+                    "image_filter": "^prod/",
+                    "tag_filter": "^v[0-9]+",
+                },
+            ),
             # Okta with inline private key credentials
             (
                 Provider.ProviderChoices.OKTA.value,
@@ -3677,6 +3688,78 @@ current-context: test-context
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+        if provider_type != Provider.ProviderChoices.ORACLECLOUD.value:
+            assert provider_secret.secret == secret_data
+
+    @staticmethod
+    def _secret_payload(attributes, provider=None, secret_id=None):
+        data = {"type": "provider-secrets", "attributes": attributes}
+        if provider is not None:
+            data["relationships"] = {
+                "provider": {"data": {"type": "providers", "id": str(provider.id)}}
+            }
+        if secret_id is not None:
+            data["id"] = str(secret_id)
+        return json.dumps({"data": data})
+
+    def test_provider_secrets_create_drops_undeclared_fields(
+        self, authenticated_client, provider_factory
+    ):
+        provider = provider_factory(Provider.ProviderChoices.GCP.value)
+        declared = {
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "refresh_token": "refresh-token",
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=self._secret_payload(
+                {
+                    "name": "GCP",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        **declared,
+                        "credentials_file": "/etc/passwd",
+                        "config_path": "/proc/self/environ",
+                    },
+                },
+                provider=provider,
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ProviderSecret.objects.get().secret == declared
+
+    def test_provider_secrets_update_drops_undeclared_fields(
+        self, authenticated_client, provider_factory
+    ):
+        provider = provider_factory(Provider.ProviderChoices.AWS.value)
+        declared = {
+            "aws_access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "aws_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        }
+        provider_secret = ProviderSecret.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            name="AWS",
+            secret_type=ProviderSecret.TypeChoices.STATIC,
+            secret=declared,
+        )
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=self._secret_payload(
+                {"secret": {**declared, "profile": "worker-profile"}},
+                secret_id=provider_secret.id,
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret == declared
 
     @pytest.mark.parametrize(
         "key_fields",

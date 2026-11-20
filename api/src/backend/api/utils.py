@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -16,13 +17,24 @@ from api.models import (
     Role,
     UserRoleRelationship,
 )
-from api.v1.serializers import FindingMetadataSerializer, KubernetesProviderSecret
+from api.v1.serializers import (
+    FindingMetadataSerializer,
+    KubernetesProviderSecret,
+    declared_secret_fields,
+)
 from django.db import transaction
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
 from rest_framework.exceptions import NotFound, ValidationError
+
+logger = logging.getLogger(__name__)
+
+STORED_SECRET_NOT_SUPPORTED_ERROR = (
+    "The stored credentials do not match a supported credential type for this "
+    "provider. Update the provider credentials."
+)
 
 if TYPE_CHECKING:
     from prowler.providers.alibabacloud.alibabacloud_provider import (
@@ -213,6 +225,22 @@ def _googleworkspace_credentials(secret: dict) -> dict:
     }
 
 
+def declared_provider_secret(provider: Provider) -> dict:
+    """The provider's stored secret without fields its serializer does not declare."""
+    secret = provider.secret.secret
+    declared = declared_secret_fields(
+        provider.provider, provider.secret.secret_type, secret
+    )
+    # secrets stored before the write path dropped undeclared fields may still hold them
+    ignored = sorted(set(secret) - set(declared))
+    if ignored:
+        logger.warning(
+            f"Ignoring undeclared fields in the secret of provider {provider.id}: "
+            + ", ".join(ignored)
+        )
+    return declared
+
+
 def get_prowler_provider_kwargs(
     provider: Provider, mutelist_processor: Processor | None = None
 ) -> dict:
@@ -225,7 +253,7 @@ def get_prowler_provider_kwargs(
     Returns:
         dict: The provider kwargs for the corresponding provider class.
     """
-    prowler_provider_kwargs = provider.secret.secret
+    prowler_provider_kwargs = declared_provider_secret(provider)
     if provider.provider == Provider.ProviderChoices.AZURE.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,
@@ -251,10 +279,9 @@ def get_prowler_provider_kwargs(
         prowler_provider_kwargs = {
             "scan_repository_url": provider.uid,
         }
-        if "access_token" in provider.secret.secret:
-            prowler_provider_kwargs["oauth_app_token"] = provider.secret.secret[
-                "access_token"
-            ]
+        secret = declared_provider_secret(provider)
+        if "access_token" in secret:
+            prowler_provider_kwargs["oauth_app_token"] = secret["access_token"]
     elif provider.provider == Provider.ProviderChoices.MONGODBATLAS.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,
@@ -405,9 +432,15 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     prowler_provider = return_prowler_provider(provider)
 
     try:
-        prowler_provider_kwargs = provider.secret.secret
+        prowler_provider_kwargs = declared_provider_secret(provider)
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
+    except ValidationError:
+        # A stored secret no serializer accepts is a failed connection, not a task error.
+        return Connection(
+            is_connected=False,
+            error=Exception(STORED_SECRET_NOT_SUPPORTED_ERROR),
+        )
 
     if provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         # A rejected stored kubeconfig is a failed connection, not a task error.
@@ -523,7 +556,7 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
         credentials = (
             integration.credentials
             if integration.credentials
-            else provider_relationship.provider.secret.secret
+            else declared_provider_secret(provider_relationship.provider)
         )
         connection = SecurityHub.test_connection(
             aws_account_id=provider_relationship.provider.uid,
