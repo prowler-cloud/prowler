@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 
 import yaml
@@ -1897,10 +1898,22 @@ def declared_secret_fields(provider_type: str, secret_type: str, secret: dict) -
     """The secret limited to the fields its serializer declares."""
     # the stored secret is passed to the provider as keyword arguments, so an
     # undeclared field would reach parameters such as file paths
-    fields = provider_secret_serializer_class(
-        provider_type, secret_type, secret
-    )().fields
+    try:
+        serializer_class = provider_secret_serializer_class(
+            provider_type, secret_type, secret
+        )
+    except serializers.ValidationError:
+        # a provider type without a serializer here validates its own secret
+        return dict(secret)
+    fields = serializer_class().fields
     return {key: value for key, value in secret.items() if key in fields}
+
+
+def validated_secret_fields(secret: dict, validated_secret) -> dict:
+    """The secret as sent, limited to the fields its serializer validated."""
+    if not isinstance(validated_secret, Mapping):
+        return secret
+    return {key: value for key, value in secret.items() if key in validated_secret}
 
 
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
@@ -2161,6 +2174,12 @@ class ImageProviderSecret(serializers.Serializer):
     registry_username = serializers.CharField(required=False)
     registry_password = serializers.CharField(required=False)
     registry_token = serializers.CharField(required=False)
+    image_filter = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    tag_filter = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2281,8 +2300,8 @@ class ProviderSecretCreateSerializer(
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
         else:
-            validated_attrs["secret"] = declared_secret_fields(
-                provider.provider, secret_type, secret
+            validated_attrs["secret"] = validated_secret_fields(
+                secret, validated_secret
             )
         return validated_attrs
 
@@ -2321,8 +2340,8 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
         else:
-            validated_attrs["secret"] = declared_secret_fields(
-                provider.provider, secret_type, secret
+            validated_attrs["secret"] = validated_secret_fields(
+                secret, validated_secret
             )
         return validated_attrs
 

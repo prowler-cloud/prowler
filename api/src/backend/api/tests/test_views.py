@@ -3636,6 +3636,17 @@ current-context: test-context
                     "registry_password": "pass",
                 },
             ),
+            # Image registry credentials with the scan filters the UI sends
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "registry_username": "user",
+                    "registry_password": "pass",
+                    "image_filter": "^prod/",
+                    "tag_filter": "^v[0-9]+",
+                },
+            ),
             # Okta with inline private key credentials
             (
                 Provider.ProviderChoices.OKTA.value,

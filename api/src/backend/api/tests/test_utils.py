@@ -17,6 +17,7 @@ from api.utils import (
 from api.v1.serializers import (
     KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
     declared_secret_fields,
+    validated_secret_fields,
 )
 from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
@@ -348,6 +349,45 @@ class TestDeclaredProviderSecret:
             "scan_repository_url": "https://github.com/org/repo",
             "oauth_app_token": "token",
         }
+
+
+class TestSecretFieldHelpers:
+    def test_image_scan_filters_reach_the_provider(self):
+        secret = {
+            "registry_username": "user",
+            "registry_password": "pass",
+            "image_filter": "^prod/",
+            "tag_filter": "^v[0-9]+",
+        }
+
+        assert (
+            declared_secret_fields(
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                secret,
+            )
+            == secret
+        )
+
+    def test_a_provider_type_without_a_serializer_keeps_its_secret(self):
+        secret = {"token": "value", "endpoint": "https://example.com"}
+
+        assert (
+            declared_secret_fields(
+                "registry-plugin", ProviderSecret.TypeChoices.STATIC, secret
+            )
+            == secret
+        )
+
+    def test_validated_fields_limit_the_stored_secret(self):
+        assert validated_secret_fields(
+            {"client_id": "a", "credentials_file": "/etc/passwd"}, {"client_id": "a"}
+        ) == {"client_id": "a"}
+
+    def test_a_secret_validated_elsewhere_is_stored_as_sent(self):
+        secret = {"token": "value"}
+
+        assert validated_secret_fields(secret, None) == secret
 
 
 class TestProwlerProviderConnectionTest:
