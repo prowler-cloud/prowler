@@ -16,6 +16,7 @@ from azure.identity import (
     ClientSecretCredential,
     DefaultAzureCredential,
     InteractiveBrowserCredential,
+    WorkloadIdentityCredential,
 )
 from kiota_authentication_azure.azure_identity_authentication_provider import (
     AzureIdentityAuthenticationProvider,
@@ -2345,6 +2346,34 @@ class TestM365ProviderCustomRegion:
 
         assert token_hosts == {authority_host}
         assert set(requested_hosts) == {authority_host}
+
+    def test_az_cli_auth_ignores_workload_identity_environment(
+        self, monkeypatch, tmp_path
+    ):
+        token_file = tmp_path / "federated-token"
+        token_file.write_text("token")
+        monkeypatch.setenv("AZURE_CLIENT_ID", CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", TENANT_ID)
+        monkeypatch.setenv("AZURE_FEDERATED_TOKEN_FILE", str(token_file))
+        monkeypatch.setenv("AZURE_AUTHORITY_HOST", "https://login.microsoftonline.com")
+
+        credential = M365Provider.setup_session(
+            az_cli_auth=True,
+            sp_env_auth=False,
+            browser_auth=False,
+            certificate_auth=False,
+            certificate_path=None,
+            tenant_id=None,
+            m365_credentials=None,
+            region_config=M365Provider.setup_region_config(
+                "M365Custom", CUSTOM_REGION_ENDPOINTS
+            ),
+        )
+
+        assert not any(
+            isinstance(chained, WorkloadIdentityCredential)
+            for chained in credential.credentials
+        )
 
     def test_init_global_provider_passes_custom_endpoints_from_cli(self, monkeypatch):
         captured_kwargs = {}

@@ -686,6 +686,8 @@ class M365Provider(Provider):
                             exclude_shared_token_cache_credential=True,
                             # M365 Auth using PowerShell is not supported
                             exclude_powershell_credential=True,
+                            # Workload identity ignores the authority below and would sign in to AZURE_AUTHORITY_HOST
+                            exclude_workload_identity_credential=True,
                             # set Authority of a Microsoft Entra endpoint
                             **credential_kwargs,
                         )

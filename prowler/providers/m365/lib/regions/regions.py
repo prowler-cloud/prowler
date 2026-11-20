@@ -26,7 +26,7 @@ POWERSHELL_US_GOV_CLOUD = {
 }
 
 
-def get_regions_config(region, region_endpoints=None):
+def get_regions_config(region: str, region_endpoints: dict | None = None) -> dict:
     allowed_regions = {
         "M365Global": {
             "authority": None,
@@ -52,7 +52,7 @@ def get_regions_config(region, region_endpoints=None):
     return allowed_regions[region]
 
 
-def get_custom_region_config(region_endpoints):
+def get_custom_region_config(region_endpoints: dict | None) -> dict:
     """Build the M365Custom region configuration from the operator-supplied endpoints.
 
     Each endpoint is a host or an https:// URL, with an optional port and trailing slash.
