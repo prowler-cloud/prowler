@@ -162,22 +162,30 @@ class Glue(AWSService):
             )
 
     def _search_tables(self, regional_client):
+        """Collect all table pages, retaining resource filters and earlier results."""
         logger.info("Glue - Search Tables...")
         try:
-            for table in regional_client.search_tables()["TableList"]:
-                arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:table/{table['DatabaseName']}/{table['Name']}"
-                if not self.audit_resources or (
-                    is_resource_filtered(arn, self.audit_resources)
-                ):
-                    self.tables.append(
-                        Table(
-                            arn=arn,
-                            name=table["Name"],
-                            database=table["DatabaseName"],
-                            catalog=table["CatalogId"],
-                            region=regional_client.region,
+            request_args = {}
+            while True:
+                response = regional_client.search_tables(**request_args)
+                for table in response["TableList"]:
+                    arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:table/{table['DatabaseName']}/{table['Name']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.tables.append(
+                            Table(
+                                arn=arn,
+                                name=table["Name"],
+                                database=table["DatabaseName"],
+                                catalog=table["CatalogId"],
+                                region=regional_client.region,
+                            )
                         )
-                    )
+                next_token = response.get("NextToken")
+                if not next_token:
+                    break
+                request_args["NextToken"] = next_token
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -226,24 +234,32 @@ class Glue(AWSService):
             )
 
     def _get_ml_transforms(self, regional_client):
+        """Collect all transform pages without discarding earlier API results."""
         logger.info("Glue - Getting ML Transforms...")
         try:
-            transforms = regional_client.get_ml_transforms()["Transforms"]
-            for transform in transforms:
-                ml_transform_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['TransformId']}"
-                if not self.audit_resources or is_resource_filtered(
-                    ml_transform_arn, self.audit_resources
-                ):
-                    self.ml_transforms[ml_transform_arn] = MLTransform(
-                        arn=ml_transform_arn,
-                        id=transform["TransformId"],
-                        name=transform["Name"],
-                        user_data_encryption=transform.get("TransformEncryption", {})
-                        .get("MlUserDataEncryption", {})
-                        .get("MlUserDataEncryptionMode", "DISABLED"),
-                        region=regional_client.region,
-                    )
-
+            request_args = {}
+            while True:
+                response = regional_client.get_ml_transforms(**request_args)
+                for transform in response["Transforms"]:
+                    ml_transform_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['TransformId']}"
+                    if not self.audit_resources or is_resource_filtered(
+                        ml_transform_arn, self.audit_resources
+                    ):
+                        self.ml_transforms[ml_transform_arn] = MLTransform(
+                            arn=ml_transform_arn,
+                            id=transform["TransformId"],
+                            name=transform["Name"],
+                            user_data_encryption=transform.get(
+                                "TransformEncryption", {}
+                            )
+                            .get("MlUserDataEncryption", {})
+                            .get("MlUserDataEncryptionMode", "DISABLED"),
+                            region=regional_client.region,
+                        )
+                next_token = response.get("NextToken")
+                if not next_token:
+                    break
+                request_args["NextToken"] = next_token
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
