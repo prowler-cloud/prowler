@@ -55,6 +55,9 @@ class CloudSQL(GCPService):
                                 cmek_key_name=instance.get(
                                     "diskEncryptionConfiguration", {}
                                 ).get("kmsKeyName"),
+                                deletion_protection_enabled=settings.get(
+                                    "deletionProtectionEnabled", False
+                                ),
                                 project_id=project_id,
                             )
                         )
@@ -82,4 +85,5 @@ class Instance(BaseModel):
     availability_type: str = "ZONAL"
     instance_type: str = "CLOUD_SQL_INSTANCE"
     cmek_key_name: Optional[str] = None
+    deletion_protection_enabled: bool = False
     project_id: str
