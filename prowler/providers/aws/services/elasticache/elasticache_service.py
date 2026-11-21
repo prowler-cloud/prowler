@@ -22,34 +22,36 @@ class ElastiCache(AWSService):
         # Memcached Clusters and Redis Nodes
         logger.info("Elasticache - Describing Cache Clusters...")
         try:
-            for cache_cluster in regional_client.describe_cache_clusters()[
-                "CacheClusters"
-            ]:
-                try:
-                    cluster_arn = cache_cluster["ARN"]
-                    if not self.audit_resources or (
-                        is_resource_filtered(cluster_arn, self.audit_resources)
-                    ):
-                        self.clusters[cluster_arn] = Cluster(
-                            id=cache_cluster["CacheClusterId"],
-                            arn=cluster_arn,
-                            region=regional_client.region,
-                            engine=cache_cluster["Engine"],
-                            cache_subnet_group_id=cache_cluster.get(
-                                "CacheSubnetGroupName", None
-                            ),
-                            auto_minor_version_upgrade=cache_cluster.get(
-                                "AutoMinorVersionUpgrade", False
-                            ),
-                            engine_version=cache_cluster.get("EngineVersion", "0.0"),
-                            auth_token_enabled=cache_cluster.get(
-                                "AuthTokenEnabled", False
-                            ),
+            paginator = regional_client.get_paginator("describe_cache_clusters")
+            for page in paginator.paginate():
+                for cache_cluster in page["CacheClusters"]:
+                    try:
+                        cluster_arn = cache_cluster["ARN"]
+                        if not self.audit_resources or (
+                            is_resource_filtered(cluster_arn, self.audit_resources)
+                        ):
+                            self.clusters[cluster_arn] = Cluster(
+                                id=cache_cluster["CacheClusterId"],
+                                arn=cluster_arn,
+                                region=regional_client.region,
+                                engine=cache_cluster["Engine"],
+                                cache_subnet_group_id=cache_cluster.get(
+                                    "CacheSubnetGroupName", None
+                                ),
+                                auto_minor_version_upgrade=cache_cluster.get(
+                                    "AutoMinorVersionUpgrade", False
+                                ),
+                                engine_version=cache_cluster.get(
+                                    "EngineVersion", "0.0"
+                                ),
+                                auth_token_enabled=cache_cluster.get(
+                                    "AuthTokenEnabled", False
+                                ),
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -86,49 +88,53 @@ class ElastiCache(AWSService):
         # Redis Clusters
         logger.info("Elasticache - Describing Replication Groups...")
         try:
-            for repl_group in regional_client.describe_replication_groups()[
-                "ReplicationGroups"
-            ]:
-                try:
-                    replication_arn = repl_group["ARN"]
-                    if not self.audit_resources or (
-                        is_resource_filtered(replication_arn, self.audit_resources)
-                    ):
-                        # Get first cluster version as they all have the same unless an upgrade is being made
-                        member_clusters = repl_group.get("MemberClusters", [])
-                        engine_version = "0.0"
-                        if member_clusters:
-                            cluster_arn = f"arn:{self.audited_partition}:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
-                            engine_version = self.clusters[cluster_arn].engine_version
+            paginator = regional_client.get_paginator("describe_replication_groups")
+            for page in paginator.paginate():
+                for repl_group in page["ReplicationGroups"]:
+                    try:
+                        replication_arn = repl_group["ARN"]
+                        if not self.audit_resources or (
+                            is_resource_filtered(replication_arn, self.audit_resources)
+                        ):
+                            # Get first cluster version as they all have the same unless an upgrade is being made
+                            member_clusters = repl_group.get("MemberClusters", [])
+                            engine_version = "0.0"
+                            if member_clusters:
+                                cluster_arn = f"arn:{self.audited_partition}:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
+                                engine_version = self.clusters[
+                                    cluster_arn
+                                ].engine_version
 
-                        self.replication_groups[replication_arn] = ReplicationGroup(
-                            id=repl_group["ReplicationGroupId"],
-                            arn=replication_arn,
-                            region=regional_client.region,
-                            status=repl_group["Status"],
-                            snapshot_retention=repl_group.get(
-                                "SnapshotRetentionLimit", 0
-                            ),
-                            encrypted=repl_group.get("AtRestEncryptionEnabled", False),
-                            transit_encryption=repl_group.get(
-                                "TransitEncryptionEnabled", False
-                            ),
-                            multi_az=repl_group.get("MultiAZ", "disabled"),
-                            auto_minor_version_upgrade=repl_group.get(
-                                "AutoMinorVersionUpgrade", False
-                            ),
-                            automatic_failover=repl_group.get(
-                                "AutomaticFailover", "disabled"
-                            ),
-                            auth_token_enabled=repl_group.get(
-                                "AuthTokenEnabled", False
-                            ),
-                            engine_version=engine_version,
+                            self.replication_groups[replication_arn] = ReplicationGroup(
+                                id=repl_group["ReplicationGroupId"],
+                                arn=replication_arn,
+                                region=regional_client.region,
+                                status=repl_group["Status"],
+                                snapshot_retention=repl_group.get(
+                                    "SnapshotRetentionLimit", 0
+                                ),
+                                encrypted=repl_group.get(
+                                    "AtRestEncryptionEnabled", False
+                                ),
+                                transit_encryption=repl_group.get(
+                                    "TransitEncryptionEnabled", False
+                                ),
+                                multi_az=repl_group.get("MultiAZ", "disabled"),
+                                auto_minor_version_upgrade=repl_group.get(
+                                    "AutoMinorVersionUpgrade", False
+                                ),
+                                automatic_failover=repl_group.get(
+                                    "AutomaticFailover", "disabled"
+                                ),
+                                auth_token_enabled=repl_group.get(
+                                    "AuthTokenEnabled", False
+                                ),
+                                engine_version=engine_version,
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
