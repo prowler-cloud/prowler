@@ -4,6 +4,7 @@ from unittest.mock import patch
 import botocore
 import botocore.exceptions
 from boto3 import client
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.s3.s3_service import S3, S3Control
@@ -94,6 +95,55 @@ class Test_S3_Service:
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
         assert not s3.buckets[bucket_arn].object_lock
+
+    @mock_aws
+    def test_list_buckets_includes_later_pages(self):
+        aws_provider = set_mocked_aws_provider([])
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
+        s3 = object.__new__(S3)
+        s3.client = s3_client
+        s3.audited_partition = "aws"
+        s3.audit_resources = []
+        s3.regions_with_buckets = []
+        s3.buckets = {}
+        s3.audited_canonical_id = ""
+
+        with Stubber(s3_client) as stubber:
+            stubber.add_response(
+                "list_buckets",
+                {
+                    "Owner": {"ID": "owner-id"},
+                    "Buckets": [
+                        {
+                            "Name": "first-page-bucket",
+                            "BucketRegion": AWS_REGION_US_EAST_1,
+                        }
+                    ],
+                    "ContinuationToken": "second-page",
+                },
+                {"MaxBuckets": 1000},
+            )
+            stubber.add_response(
+                "list_buckets",
+                {
+                    "Owner": {"ID": "owner-id"},
+                    "Buckets": [
+                        {
+                            "Name": "second-page-bucket",
+                            "BucketRegion": AWS_REGION_US_EAST_1,
+                        }
+                    ],
+                },
+                {"MaxBuckets": 1000, "ContinuationToken": "second-page"},
+            )
+
+            s3._list_buckets(aws_provider)
+
+        assert set(s3.buckets) == {
+            "arn:aws:s3:::first-page-bucket",
+            "arn:aws:s3:::second-page-bucket",
+        }
+        assert s3.audited_canonical_id == "owner-id"
 
     # Test S3 Get Bucket Versioning
     @mock_aws
