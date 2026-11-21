@@ -20,13 +20,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "app_ensure_auth_is_set_up"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.acc.1.az.eid.2",
@@ -48,6 +46,7 @@
         }
       ],
       "Checks": [
+        "app_ensure_auth_is_set_up",
         "app_register_with_identity"
       ]
     },
@@ -99,6 +98,31 @@
         "entra_policy_default_users_cannot_create_security_groups",
         "entra_policy_ensure_default_user_cannot_create_tenants",
         "iam_subscription_roles_owner_custom_not_created"
+      ]
+    },
+    {
+      "Id": "op.acc.2.az.ca.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá configurar el requisito de acceso mediante roles RBAC y el acceso condicional, delimitando zonas geográficas o rangos de IP.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_trusted_named_locations_exists"
       ]
     },
     {
@@ -156,6 +180,29 @@
       ]
     },
     {
+      "Id": "op.acc.3.az.rbac.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberán diseñar, crear y aplicar los roles a los grupos de usuarios, empleando los roles Propietario, Colaborador, Lector y Administrador de acceso de usuario.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "op.acc.3.r1.az.eid.1",
       "Description": "Segregación rigurosa",
       "Attributes": [
@@ -203,6 +250,29 @@
         "entra_policy_guest_users_access_restrictions",
         "entra_policy_guest_invite_only_for_admin_roles"
       ]
+    },
+    {
+      "Id": "op.acc.5.az.eid.2",
+      "Description": "Mecanismo de autenticación (usuarios externos)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá habilitar la autenticación multifactor (MFA) para los usuarios externos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.acc.5.r2.az.eid.1",
@@ -330,6 +400,32 @@
       ],
       "Checks": [
         "entra_conditional_access_policy_require_mfa_for_management_api"
+      ]
+    },
+    {
+      "Id": "op.acc.6.az.eid.2",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá habilitar la autenticación multifactor (MFA) para los usuarios de la organización.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_privileged_user_has_mfa",
+        "entra_non_privileged_user_has_mfa"
       ]
     },
     {
@@ -713,9 +809,28 @@
         }
       ],
       "Checks": [
-        "entra_trusted_named_locations_exists",
         "monitor_diagnostic_setting_with_appropriate_categories"
       ]
+    },
+    {
+      "Id": "op.exp.8.az.eid.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se deberá comprobar que los registros de auditoría y de inicio de sesión de Microsoft Entra ID están activados y capturando eventos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.exp.8.r1.az.sa.1",
@@ -978,19 +1093,17 @@
           "IdGrupoControl": "op.cont.3",
           "Marco": "operacional",
           "Categoria": "continuidad del servicio",
-          "DescripcionControl": "Habilitar las pruebas periodicas para los servicios de GCP",
+          "DescripcionControl": "Se deberá realizar una conmutación por error de las máquinas virtuales para probar su recuperación.",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático",
+          "ModoEjecucion": "manual",
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "sqlserver_va_periodic_recurring_scans_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.mon.1.az.nw.1",
@@ -1018,6 +1131,30 @@
         "entra_security_defaults_enabled",
         "network_watcher_enabled"
       ]
+    },
+    {
+      "Id": "op.mon.1.az.eid.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberá configurar Microsoft Entra ID Protection, creando directivas de riesgo de inicio de sesión para los usuarios de Microsoft Entra ID.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.mon.1.r1.az.nf.1",
@@ -1096,6 +1233,30 @@
       "Checks": [
         "monitor_diagnostic_setting_with_appropriate_categories"
       ]
+    },
+    {
+      "Id": "op.mon.2.az.ma.1",
+      "Description": "Sistema de métricas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.2",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberá configurar Azure Monitor, creando alertas para los servicios de producción.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.mon.2.r1.az.ma.1",
@@ -1192,7 +1353,7 @@
           "IdGrupoControl": "op.mon.3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
-          "DescripcionControl": "Auditoría delos registros de los servicios de GCP con la suficiente retención para la vigilancia de la información",
+          "DescripcionControl": "Auditoría de los registros de los servicios de Azure con la suficiente retención para la vigilancia de la información",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -1212,6 +1373,54 @@
         "postgresql_flexible_server_log_retention_days_greater_3",
         "network_flow_log_more_than_90_days"
       ]
+    },
+    {
+      "Id": "op.mon.3.az.def.1",
+      "Description": "Vigilancia",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberán habilitar los planes de pago de Microsoft Defender for Cloud para los recursos más utilizados.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.az.sent.1",
+      "Description": "Vigilancia",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberá configurar Microsoft Sentinel.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.mon.3.r1.az.ev.1",
@@ -1343,7 +1552,8 @@
       ],
       "Checks": [
         "sqlserver_va_scan_reports_configured",
-        "sqlserver_vulnerability_assessment_enabled"
+        "sqlserver_vulnerability_assessment_enabled",
+        "sqlserver_va_periodic_recurring_scans_enabled"
       ]
     },
     {
@@ -1505,6 +1715,26 @@
         "network_watcher_enabled",
         "network_udp_internet_access_restricted"
       ]
+    },
+    {
+      "Id": "mp.com.2.az.vpn.1",
+      "Description": "Protección de la confidencialidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se deberá desplegar el servicio de VPN de sitio a sitio o ExpressRoute.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "mp.com.3.az.nw.1",
@@ -1977,6 +2207,28 @@
       ],
       "Checks": [
         "network_http_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.s.4.az.ddos.1",
+      "Description": "Protección frente a denegación de servicio",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Se deberá configurar la protección contra DDoS en las redes virtuales expuestas a posibles ataques externos.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_vnet_ddos_protection_enabled"
       ]
     },
     {
