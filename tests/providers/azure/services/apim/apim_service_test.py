@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest import TestCase, mock
 from unittest.mock import MagicMock, patch
 
+import pytest
 from azure.mgmt.loganalytics.models import Workspace
 from azure.mgmt.monitor.models import DiagnosticSettingsResource
 from azure.monitor.query import LogsQueryResult
@@ -489,3 +490,77 @@ class Test_APIM_get_instances:
         mock_client.api_management_service.list_by_resource_group.assert_called_once_with(
             resource_group_name="RG"
         )
+
+
+@pytest.mark.parametrize(
+    "category, category_group, enabled, workspace_id, expected",
+    [
+        (None, "allLogs", True, WORKSPACE_ID, WORKSPACE_ID),
+        (None, "allLogs", False, WORKSPACE_ID, None),
+        (None, "audit", True, WORKSPACE_ID, None),
+        ("GatewayLogs", None, True, WORKSPACE_ID, WORKSPACE_ID),
+        ("GatewayLogs", None, False, WORKSPACE_ID, None),
+        ("WebSocketConnectionLogs", None, True, WORKSPACE_ID, None),
+        (None, "allLogs", True, None, None),
+    ],
+)
+def test_apim_workspace_diagnostic_categories(
+    category, category_group, enabled, workspace_id, expected
+):
+    """Resolve gateway log workspaces from Azure diagnostic category settings."""
+    provider = set_mocked_azure_provider()
+    with patch(
+        "prowler.providers.common.provider.Provider.get_global_provider",
+        return_value=provider,
+    ):
+        from prowler.providers.azure.services.apim.apim_service import APIM
+        from prowler.providers.azure.services.monitor.monitor_service import (
+            DiagnosticSetting,
+            LogSettings,
+        )
+
+        with (
+            patch.object(APIM, "_get_instances", return_value={}),
+            patch(
+                "prowler.providers.azure.services.apim.apim_service.monitor_client"
+            ) as monitor,
+        ):
+            apim = APIM(provider)
+            sdk_setting = DiagnosticSettingsResource.deserialize(
+                {
+                    "properties": {
+                        "workspaceId": workspace_id,
+                        "logs": [
+                            {
+                                "category": category,
+                                "categoryGroup": category_group,
+                                "enabled": enabled,
+                            }
+                        ],
+                    }
+                }
+            )
+            # Match Monitor.diagnostic_settings_with_uri's collected model.
+            monitor.diagnostic_settings_with_uri.return_value = [
+                DiagnosticSetting(
+                    id="diagnostic-setting",
+                    name="diagnostic-setting",
+                    storage_account_id=None,
+                    storage_account_name=None,
+                    workspace_id=sdk_setting.workspace_id,
+                    logs=[
+                        LogSettings(
+                            category=log.category,
+                            category_group=log.category_group,
+                            enabled=log.enabled,
+                        )
+                        for log in sdk_setting.logs
+                    ],
+                )
+            ]
+            assert (
+                apim._get_log_analytics_workspace_id(
+                    APIM_INSTANCE_ID, AZURE_SUBSCRIPTION_ID
+                )
+                == expected
+            )
