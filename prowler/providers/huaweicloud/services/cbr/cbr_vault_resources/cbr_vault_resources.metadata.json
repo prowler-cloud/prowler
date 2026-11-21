@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cbr_vault_resources",
+  "CheckTitle": "CBR vaults have resources associated",
+  "CheckType": [],
+  "ServiceName": "cbr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CBR::Vault",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that CBR vaults have resources associated for backup protection.",
+  "Risk": "A CBR vault without associated resources does not provide backup protection, leaving resources vulnerable to data loss.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cbr/cbr_03_0030.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Backup and Recovery.\n3. Select the vault.\n4. Associate resources (servers, disks, or file systems) with the vault.\n5. Verify that backups are being created for the associated resources.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Associate resources with CBR vaults to ensure backup protection.",
+      "Url": "https://hub.prowler.com/check/cbr_vault_resources"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if CBR vaults have at least one resource associated."
+}
