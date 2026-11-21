@@ -118,21 +118,24 @@ class CognitoIDP(AWSService):
         try:
             for user_pool in self.user_pools.values():
                 try:
-                    user_pool_clients = self.regional_clients[
+                    user_pool_clients_paginator = self.regional_clients[
                         user_pool.region
-                    ].list_user_pool_clients(UserPoolId=user_pool.id)
-                    for user_pool_client in user_pool_clients["UserPoolClients"]:
-                        user_pool_client_arn = (
-                            f"{user_pool.arn}/client/{user_pool_client['ClientId']}"
-                        )
-                        self.user_pools[user_pool.arn].user_pool_clients[
-                            user_pool_client["ClientId"]
-                        ] = UserPoolClient(
-                            id=user_pool_client["ClientId"],
-                            name=user_pool_client["ClientName"],
-                            arn=user_pool_client_arn,
-                            region=user_pool.region,
-                        )
+                    ].get_paginator("list_user_pool_clients")
+                    for page in user_pool_clients_paginator.paginate(
+                        UserPoolId=user_pool.id
+                    ):
+                        for user_pool_client in page["UserPoolClients"]:
+                            user_pool_client_arn = (
+                                f"{user_pool.arn}/client/{user_pool_client['ClientId']}"
+                            )
+                            self.user_pools[user_pool.arn].user_pool_clients[
+                                user_pool_client["ClientId"]
+                            ] = UserPoolClient(
+                                id=user_pool_client["ClientId"],
+                                name=user_pool_client["ClientName"],
+                                arn=user_pool_client_arn,
+                                region=user_pool.region,
+                            )
                 except Exception as error:
                     logger.error(
                         f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
