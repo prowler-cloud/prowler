@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_domain_encrypted_with_cmk",
+  "CheckTitle": "SageMaker domains encrypt their volumes with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon SageMaker Domains** are assessed for **at-rest encryption** of their attached EFS and EBS volumes using a **customer-managed KMS key**. The finding reflects whether a `KmsKeyId` is set on the domain, so that notebooks and user data stored in the domain volumes are encrypted with a key the account owner controls.",
+  "Risk": "A domain without `KmsKeyId` falls back to the **AWS managed key**, which cannot carry a custom key policy and whose **rotation**, **access** and **lifecycle** are outside the account owner's control. Notebook content and user data on the domain volumes then cannot be independently revoked, and grants to that data cannot be audited or restricted through a key policy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/encryption-at-rest-studio.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeDomain.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-domain --domain-name <domain_name> --auth-mode SSO --vpc-id <vpc_id> --subnet-ids <subnet_id> --default-user-settings ExecutionRole=<role_arn> --kms-key-id <kms_key_id>",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker Domain encrypted with a customer-managed KMS key\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::Domain\n    Properties:\n      DomainName: <example_domain_name>\n      AuthMode: SSO\n      VpcId: <example_vpc_id>\n      SubnetIds:\n        - <example_subnet_id>\n      KmsKeyId: <example_resource_id>  # Critical: encrypts the domain EFS and EBS volumes with a customer-managed key\n      DefaultUserSettings:\n        ExecutionRole: <example_role_arn>\n```",
+      "Other": "The KMS key of a SageMaker Domain is set at creation and cannot be changed afterwards. To remediate:\n1. Create a customer-managed KMS key with a least-privilege key policy and rotation enabled\n2. Create a new SageMaker Domain specifying that key as the KMS key\n3. Migrate user profiles and notebook content to the new domain\n4. Delete the original domain once the migration is verified",
+      "Terraform": "```hcl\n# SageMaker Domain encrypted with a customer-managed KMS key\nresource \"aws_sagemaker_domain\" \"<example_resource_name>\" {\n  domain_name = \"<example_domain_name>\"\n  auth_mode   = \"SSO\"\n  vpc_id      = \"<example_vpc_id>\"\n  subnet_ids  = [\"<example_subnet_id>\"]\n  kms_key_id  = \"<example_resource_arn>\" # Critical: encrypts the domain EFS and EBS volumes with a customer-managed key\n\n  default_user_settings {\n    execution_role = \"<example_role_arn>\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `KmsKeyId` on every SageMaker Domain at creation, using a **customer-managed KMS key** with a least-privilege key policy and **rotation** enabled. The key cannot be changed after the domain is created, so domains on the AWS managed key must be recreated and their user profiles migrated.",
+      "Url": "https://hub.prowler.com/check/sagemaker_domain_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "sagemaker_endpoint_config_kms_encryption_enabled",
+    "sagemaker_notebook_instance_encryption_enabled"
+  ],
+  "Notes": ""
+}
