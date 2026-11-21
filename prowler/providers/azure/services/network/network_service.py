@@ -461,12 +461,31 @@ class VirtualNetwork:
             self.subnets = []
 
 
+class SslPolicy(BaseModel):
+    """SSL policy of an Application Gateway or of one of its SSL profiles."""
+
+    policy_type: Optional[str] = None
+    policy_name: Optional[str] = None
+    min_protocol_version: Optional[str] = None
+    disabled_ssl_protocols: List[str] = []
+
+
+class SslProfile(BaseModel):
+    """Application Gateway SSL profile that at least one listener uses."""
+
+    name: str
+    ssl_policy: Optional[SslPolicy] = None
+
+
 class ApplicationGateway(BaseModel):
     """Application Gateway settings used by the network checks."""
 
     id: str
     name: str
     location: str
+    ssl_policy: Optional[SslPolicy] = None
+    default_ssl_policy_name: Optional[str] = None
+    listener_ssl_profiles: List[SslProfile] = []
     firewall_policy_id: Optional[str] = None
     firewall_policy_enabled: Optional[bool] = None
     waf_configuration_enabled: bool = False
@@ -540,7 +559,65 @@ def build_application_gateway(
         ),
         waf_configuration_enabled=bool(getattr(waf_configuration, "enabled", False)),
         http2_enabled=bool(getattr(application_gateway, "enable_http2", False)),
+        ssl_policy=build_ssl_policy(getattr(application_gateway, "ssl_policy", None)),
+        default_ssl_policy_name=getattr(
+            application_gateway, "default_predefined_ssl_policy", None
+        ),
+        listener_ssl_profiles=get_listener_ssl_profiles(application_gateway),
     )
+
+
+def build_ssl_policy(
+    ssl_policy: Optional[network_models.ApplicationGatewaySslPolicy],
+) -> Optional[SslPolicy]:
+    """Convert an Azure SDK SSL policy into an SslPolicy model.
+
+    Args:
+        ssl_policy: ApplicationGatewaySslPolicy from the Azure SDK, or None.
+
+    Returns:
+        The SslPolicy model, or None when no policy is set.
+    """
+    if ssl_policy is None:
+        return None
+    return SslPolicy(
+        policy_type=getattr(ssl_policy, "policy_type", None),
+        policy_name=getattr(ssl_policy, "policy_name", None),
+        min_protocol_version=getattr(ssl_policy, "min_protocol_version", None),
+        disabled_ssl_protocols=list(
+            getattr(ssl_policy, "disabled_ssl_protocols", None) or []
+        ),
+    )
+
+
+def get_listener_ssl_profiles(
+    application_gateway: network_models.ApplicationGateway,
+) -> List[SslProfile]:
+    """Return the SSL profiles of a gateway that at least one listener uses.
+
+    Args:
+        application_gateway: ApplicationGateway from the Azure SDK.
+
+    Returns:
+        A list of SslProfile models. Profiles no listener uses have no effect,
+        so they are left out. A profile without a name is named after the
+        last segment of its ID.
+    """
+    listeners = list(getattr(application_gateway, "http_listeners", None) or [])
+    listeners += list(getattr(application_gateway, "listeners", None) or [])
+    profile_ids_in_use = {
+        listener.ssl_profile.id.casefold()
+        for listener in listeners
+        if getattr(getattr(listener, "ssl_profile", None), "id", None)
+    }
+    return [
+        SslProfile(
+            name=profile.name or profile.id.rsplit("/", 1)[-1],
+            ssl_policy=build_ssl_policy(getattr(profile, "ssl_policy", None)),
+        )
+        for profile in getattr(application_gateway, "ssl_profiles", None) or []
+        if (getattr(profile, "id", None) or "").casefold() in profile_ids_in_use
+    ]
 
 
 def build_waf_policy(
