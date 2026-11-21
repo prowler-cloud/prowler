@@ -44,51 +44,56 @@ class S3(AWSService):
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
         try:
-            list_buckets = self.client.list_buckets()
-            self.audited_canonical_id = list_buckets["Owner"]["ID"]
-            for bucket in list_buckets["Buckets"]:
-                try:
-                    bucket_region = self.client.get_bucket_location(
-                        Bucket=bucket["Name"]
-                    )["LocationConstraint"]
-                    if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
-                        bucket_region = "eu-west-1"
-                    if not bucket_region:  # If None, bucket_region is us-east-1
-                        bucket_region = "us-east-1"
-                    # Arn
-                    arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(arn, self.audit_resources)
-                    ):
-                        self.regions_with_buckets.append(bucket_region)
-                        # Check if there are filter regions
-                        # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
-                        if provider.identity.audited_regions:
-                            if bucket_region in provider.identity.audited_regions:
+            list_buckets_paginator = self.client.get_paginator("list_buckets")
+            for page in list_buckets_paginator.paginate(
+                PaginationConfig={"PageSize": 1000}
+            ):
+                self.audited_canonical_id = page["Owner"]["ID"]
+                for bucket in page["Buckets"]:
+                    try:
+                        bucket_region = bucket.get("BucketRegion")
+                        if not bucket_region:
+                            bucket_region = self.client.get_bucket_location(
+                                Bucket=bucket["Name"]
+                            )["LocationConstraint"]
+                        if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
+                            bucket_region = "eu-west-1"
+                        if not bucket_region:  # If None, bucket_region is us-east-1
+                            bucket_region = "us-east-1"
+                        # Arn
+                        arn = f"arn:{self.audited_partition}:s3:::{bucket['Name']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(arn, self.audit_resources)
+                        ):
+                            self.regions_with_buckets.append(bucket_region)
+                            # Check if there are filter regions
+                            # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
+                            if provider.identity.audited_regions:
+                                if bucket_region in provider.identity.audited_regions:
+                                    self.buckets[arn] = Bucket(
+                                        arn=arn,
+                                        name=bucket["Name"],
+                                        region=bucket_region,
+                                    )
+                            else:
                                 self.buckets[arn] = Bucket(
                                     arn=arn,
                                     name=bucket["Name"],
                                     region=bucket_region,
                                 )
-                        else:
-                            self.buckets[arn] = Bucket(
-                                arn=arn,
-                                name=bucket["Name"],
-                                region=bucket_region,
+                    except ClientError as error:
+                        if error.response["Error"]["Code"] == "NoSuchBucket":
+                            logger.warning(
+                                f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchBucket":
-                        logger.warning(
-                            f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    else:
+                        else:
+                            logger.error(
+                                f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                    except Exception as error:
                         logger.error(
                             f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
         except ClientError as error:
             if error.response["Error"]["Code"] == "NotSignedUp":
                 logger.warning(
