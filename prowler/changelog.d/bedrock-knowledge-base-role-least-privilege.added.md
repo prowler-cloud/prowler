@@ -1,0 +1,1 @@
+`bedrock_knowledge_base_role_least_privilege` check for AWS provider, verifying that Bedrock Knowledge Base service roles do not grant `bedrock:*` or other Bedrock action wildcards and scope Bedrock actions to the knowledge base resources they need
