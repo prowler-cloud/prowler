@@ -503,6 +503,15 @@ class Test_APIM_get_instances:
         ("WebSocketConnectionLogs", None, True, WORKSPACE_ID, None),
         (None, "allLogs", True, None, None),
     ],
+    ids=[
+        "alllogs-enabled",
+        "alllogs-disabled",
+        "unrelated-category-group",
+        "gatewaylogs-enabled",
+        "gatewaylogs-disabled",
+        "unrelated-category",
+        "missing-workspace",
+    ],
 )
 def test_apim_workspace_diagnostic_categories(
     category, category_group, enabled, workspace_id, expected
