@@ -24,7 +24,10 @@ class Neptune(AWSService):
     def _describe_clusters(self, regional_client):
         logger.info("Neptune - Describing DB Clusters...")
         try:
-            for cluster in regional_client.describe_db_clusters(
+            describe_db_clusters_paginator = regional_client.get_paginator(
+                "describe_db_clusters"
+            )
+            for page in describe_db_clusters_paginator.paginate(
                 Filters=[
                     {
                         "Name": "engine",
@@ -33,26 +36,37 @@ class Neptune(AWSService):
                         ],
                     },
                 ],
-            )["DBClusters"]:
-                cluster_arn = cluster["DBClusterArn"]
-                if not self.audit_resources or (
-                    is_resource_filtered(cluster_arn, self.audit_resources)
-                ):
-                    self.clusters[cluster_arn] = Cluster(
-                        arn=cluster_arn,
-                        name=cluster["DBClusterIdentifier"],
-                        id=cluster["DbClusterResourceId"],
-                        backup_retention_period=cluster.get("BackupRetentionPeriod", 0),
-                        encrypted=cluster.get("StorageEncrypted", False),
-                        kms_key=cluster.get("KmsKeyId", ""),
-                        cloudwatch_logs=cluster.get("EnabledCloudwatchLogsExports", []),
-                        multi_az=cluster["MultiAZ"],
-                        iam_auth=cluster.get("IAMDatabaseAuthenticationEnabled", False),
-                        deletion_protection=cluster.get("DeletionProtection", False),
-                        copy_tags_to_snapshot=cluster.get("CopyTagsToSnapshot", False),
-                        db_subnet_group_id=cluster["DBSubnetGroup"],
-                        region=regional_client.region,
-                    )
+            ):
+                for cluster in page["DBClusters"]:
+                    cluster_arn = cluster["DBClusterArn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(cluster_arn, self.audit_resources)
+                    ):
+                        self.clusters[cluster_arn] = Cluster(
+                            arn=cluster_arn,
+                            name=cluster["DBClusterIdentifier"],
+                            id=cluster["DbClusterResourceId"],
+                            backup_retention_period=cluster.get(
+                                "BackupRetentionPeriod", 0
+                            ),
+                            encrypted=cluster.get("StorageEncrypted", False),
+                            kms_key=cluster.get("KmsKeyId", ""),
+                            cloudwatch_logs=cluster.get(
+                                "EnabledCloudwatchLogsExports", []
+                            ),
+                            multi_az=cluster["MultiAZ"],
+                            iam_auth=cluster.get(
+                                "IAMDatabaseAuthenticationEnabled", False
+                            ),
+                            deletion_protection=cluster.get(
+                                "DeletionProtection", False
+                            ),
+                            copy_tags_to_snapshot=cluster.get(
+                                "CopyTagsToSnapshot", False
+                            ),
+                            db_subnet_group_id=cluster["DBSubnetGroup"],
+                            region=regional_client.region,
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
