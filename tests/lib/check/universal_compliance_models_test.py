@@ -946,6 +946,68 @@ class TestCyberEssentialsFramework:
                 assert req.attributes["AssessmentStatus"] == "Manual"
 
 
+class TestOwaspLlmTop10Framework:
+    """Schema and content checks for the OWASP Top 10 for LLM Applications 2025 framework."""
+
+    @staticmethod
+    def _repo_path(*parts):
+        return os.path.normpath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", *parts)
+        )
+
+    def _load(self):
+        return load_compliance_framework_universal(
+            self._repo_path("prowler", "compliance", "owasp_llm_top_10_2025.json")
+        )
+
+    def test_loads_and_supports_cloud_providers(self):
+        fw = self._load()
+        assert fw is not None
+        assert fw.framework == "OWASP-LLM-Top-10"
+        assert fw.version == "2025"
+        assert fw.get_providers() == ["aws", "azure", "gcp"]
+
+    def test_every_requirement_lists_every_provider(self):
+        fw = self._load()
+        for req in fw.requirements:
+            assert set(req.checks) == {"aws", "azure", "gcp"}, req.id
+
+    def test_covers_all_ten_risks(self):
+        fw = self._load()
+        risks = {req.attributes["Section"] for req in fw.requirements}
+        assert len(risks) == 10
+        assert {risk.split(":")[0] for risk in risks} == {
+            f"LLM{n:02d}" for n in range(1, 11)
+        }
+
+    def test_requirement_ids_are_unique(self):
+        fw = self._load()
+        ids = [req.id for req in fw.requirements]
+        assert len(ids) == len(set(ids))
+
+    def test_requirement_ids_match_their_risk(self):
+        fw = self._load()
+        for req in fw.requirements:
+            assert req.attributes["Section"].startswith(req.id.split("-")[0])
+
+    def test_mapped_checks_exist(self):
+        fw = self._load()
+        for provider in fw.get_providers():
+            services = self._repo_path("prowler", "providers", provider, "services")
+            existing = {
+                filename.removesuffix(".metadata.json")
+                for _, _, files in os.walk(services)
+                for filename in files
+                if filename.endswith(".metadata.json")
+            }
+            mapped = {
+                check
+                for req in fw.requirements
+                for check in req.checks.get(provider, [])
+            }
+            assert mapped <= existing, f"{provider}: {sorted(mapped - existing)}"
+
+
 class TestBackwardCompat:
     """Ensure Compliance.get_bulk still returns Compliance objects."""
 
