@@ -972,6 +972,10 @@ class TestOwaspLlmTop10Framework:
         for req in fw.requirements:
             assert set(req.checks) == {"aws", "azure", "gcp"}, req.id
 
+    def test_includes_every_requirement(self):
+        fw = self._load()
+        assert len(fw.requirements) == 85
+
     def test_covers_all_ten_risks(self):
         fw = self._load()
         risks = {req.attributes["Section"] for req in fw.requirements}
