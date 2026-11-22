@@ -218,3 +218,96 @@ class Test_SNS_Service:
         assert [
             subscription.endpoint for subscription in sns.topics[0].subscriptions
         ] == ["http://first.example"]
+
+    @mock_aws
+    def test_list_subscriptions_by_topic_reads_the_next_topic_after_a_failure(self):
+        sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
+        sns_client.create_topic(Name="first-topic")
+        sns_client.create_topic(Name="second-topic")
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
+        regional_client = sns.regional_clients[AWS_REGION_EU_WEST_1]
+        failing, readable = sns.topics
+
+        with Stubber(regional_client) as stubber:
+            stubber.add_client_error(
+                "list_subscriptions_by_topic",
+                service_error_code="AuthorizationError",
+                expected_params={"TopicArn": failing.arn},
+            )
+            stubber.add_response(
+                "list_subscriptions_by_topic",
+                {
+                    "Subscriptions": [
+                        {
+                            "SubscriptionArn": f"{readable.arn}:1",
+                            "Owner": AWS_ACCOUNT_NUMBER,
+                            "Protocol": "https",
+                            "Endpoint": "https://readable.example",
+                            "TopicArn": readable.arn,
+                        }
+                    ]
+                },
+                {"TopicArn": readable.arn},
+            )
+            sns._list_subscriptions_by_topic()
+            stubber.assert_no_pending_responses()
+
+        assert failing.subscriptions == []
+        assert [subscription.endpoint for subscription in readable.subscriptions] == [
+            "https://readable.example"
+        ]
+
+    @mock_aws
+    def test_list_subscriptions_by_topic_keeps_pending_confirmations(self):
+        sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
+        topic_arn = sns_client.create_topic(Name=topic_name)["TopicArn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
+        regional_client = sns.regional_clients[AWS_REGION_EU_WEST_1]
+
+        # A subscription awaiting confirmation reports "PendingConfirmation"
+        # instead of an ARN, so its region cannot be read from it.
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_subscriptions_by_topic",
+                {
+                    "Subscriptions": [
+                        {
+                            "SubscriptionArn": f"{topic_arn}:1",
+                            "Owner": AWS_ACCOUNT_NUMBER,
+                            "Protocol": "https",
+                            "Endpoint": "https://confirmed.example",
+                            "TopicArn": topic_arn,
+                        }
+                    ],
+                    "NextToken": "second-page",
+                },
+                {"TopicArn": topic_arn},
+            )
+            stubber.add_response(
+                "list_subscriptions_by_topic",
+                {
+                    "Subscriptions": [
+                        {
+                            "SubscriptionArn": "PendingConfirmation",
+                            "Owner": AWS_ACCOUNT_NUMBER,
+                            "Protocol": "email",
+                            "Endpoint": "security@example.com",
+                            "TopicArn": topic_arn,
+                        }
+                    ]
+                },
+                {"TopicArn": topic_arn, "NextToken": "second-page"},
+            )
+            sns._list_subscriptions_by_topic()
+            stubber.assert_no_pending_responses()
+
+        confirmed, pending = sns.topics[0].subscriptions
+        assert confirmed.region == AWS_REGION_EU_WEST_1
+        assert pending.arn == "PendingConfirmation"
+        assert pending.id == "PendingConfirmation"
+        assert pending.region == "unknown"
+        assert pending.endpoint == "security@example.com"
