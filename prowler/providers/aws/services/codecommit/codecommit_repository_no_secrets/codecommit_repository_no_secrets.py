@@ -51,6 +51,8 @@ class codecommit_repository_no_secrets(Check):
             codecommit_client.audit_config.get("secrets_ignore_files", []) or []
         )
         validate = codecommit_client.audit_config.get("secrets_validate", False)
+
+        confidence = codecommit_client.audit_config.get("secrets_confidence", "low")
         repositories = (
             list(codecommit_client.repositories.values())
             if codecommit_client.repositories
@@ -91,7 +93,10 @@ class codecommit_repository_no_secrets(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.51.0"
+version = "1.53.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -237,7 +237,7 @@ constraint-dependencies = [
   "djangorestframework==3.18.3",
   "djangorestframework-jsonapi==7.0.2",
   "djangorestframework-simplejwt==5.5.1",
-  "dnspython==2.9.0",
+  "dnspython==2.9.2",
   "docker==7.1.0",
   "dogpile-cache==1.5.0",
   "dparse==0.6.4",
@@ -341,9 +341,9 @@ constraint-dependencies = [
   "oci==2.184.1",
   "openai==1.109.1",
   "openstacksdk==4.2.0",
-  "opentelemetry-api==1.45.1",
-  "opentelemetry-sdk==1.45.1",
-  "opentelemetry-semantic-conventions==0.66b1",
+  "opentelemetry-api==1.45.2",
+  "opentelemetry-sdk==1.45.2",
+  "opentelemetry-semantic-conventions==0.66b2",
   "os-service-types==1.8.2",
   "packageurl-python==0.17.6",
   "packaging==26.0",

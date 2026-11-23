@@ -9,20 +9,21 @@
   "Severity": "high",
   "ResourceType": "Pod",
   "ResourceGroup": "container",
-  "Description": "**Kubernetes Pods** are evaluated for containers configured with `securityContext.privileged: true`, indicating execution in **privileged mode**.",
+  "Description": "**Kubernetes Pods** are evaluated for regular, init, and ephemeral containers configured with `securityContext.privileged: true`.",
   "Risk": "**Privileged containers** can control the host and bypass isolation, enabling:\n- Secret theft (confidentiality)\n- Workload/node tampering (integrity)\n- Service disruption (availability)\nCompromise of one pod can drive lateral movement across the cluster.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
     "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/",
     "https://kubernetes.io/docs/setup/best-practices/enforcing-pod-security-standards/",
-    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+    "https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Open your Kubernetes UI (e.g., cloud provider console or Dashboard)\n2. Navigate to the failing workload (Deployment/StatefulSet/DaemonSet) or Pod and choose Edit YAML/Manifest\n3. Set securityContext.privileged: false for each affected container:\n   - For controllers: spec.template.spec.containers[].securityContext.privileged: false\n   - For standalone Pods: spec.containers[].securityContext.privileged: false\n4. Save changes (controllers will roll out new Pods). If it is a standalone Pod, delete and recreate it to apply the change",
+      "Other": "1. For a regular or init container, open the owning workload's Pod template or the standalone Pod manifest.\n2. Set `securityContext.privileged: false` in the affected `containers` or `initContainers` entry. Roll out the workload or recreate the standalone Pod to apply the change.\n3. For an ephemeral container, plan a safe Pod replacement. An ephemeral container's security context is immutable once it has been added. Configure future ephemeral containers without privileged mode.",
       "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata { name = \"<example_resource_name>\" }\n  spec {\n    container {\n      name  = \"<example_resource_name>\"\n      image = \"<IMAGE>\"\n      security_context {\n        privileged = false # Critical: disables privileged mode to pass the check\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {

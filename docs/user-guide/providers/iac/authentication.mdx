@@ -1,5 +1,6 @@
 ---
 title: "IaC Authentication in Prowler"
+description: "Authenticate remote repository scans in the Prowler IaC provider with a GitHub token or Git URL, and allow private repository hosts in Prowler App."
 ---
 
 Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Trivy](https://trivy.dev/). This provider supports a wide range of IaC frameworks and requires no cloud authentication for local scans.
@@ -36,3 +37,5 @@ api:
 ```
 
 Setting it only on the API container has no effect. The same variable applies to the Kubernetes and OpenStack providers. The Image provider has its own, `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS`.
+
+The check also applies to the Terraform modules Trivy downloads while scanning the repository. In Prowler App, Trivy runs behind a local proxy that refuses module sources resolving to a non-public address outside the allowlist, fetches git modules only over `http` and `https`, and does not receive the cloud credentials of the worker, so `s3::` and `gcs::` module sources are not authenticated. Modules from public registries and public git hosts keep working. When `HTTPS_PROXY` or `HTTP_PROXY` is set for the worker, it must be an `http://` proxy URL, and any other scheme or a malformed URL fails the scan with an error; the local proxy forwards the vetted connections through it to the address it checked.

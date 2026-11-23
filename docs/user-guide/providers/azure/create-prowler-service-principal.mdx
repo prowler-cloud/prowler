@@ -1,6 +1,9 @@
 ---
 title: 'Creating a Prowler Service Principal Application'
+description: "Create the Service Principal Prowler uses to scan Azure from the Azure Portal, the Azure CLI, or an optional script, then assign its permissions."
 ---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
 To enable Prowler to assume an identity for scanning with the required privileges, a Service Principal must be created. This Service Principal authenticates against Azure and retrieves necessary metadata for checks.
 
@@ -58,6 +61,93 @@ To create a Service Principal using the Azure CLI, follow these steps:
       ```
 
 3. Save the values of `appId`, `password` and `tenant`, as they will be used as credentials in Prowler.
+
+## Creating the Service Principal and Its Permissions With a Script (Optional)
+
+<VersionBadge version="5.52.0" />
+
+As an alternative to the manual steps on this page and in [Required Permissions](/user-guide/providers/azure/authentication#required-permissions), the Prowler repository includes a script that creates the Service Principal and assigns every permission in one run: [`permissions/prowler-azure-m365-scan-identity.sh`](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-m365-scan-identity.sh).
+
+The script is a single Bash file that only calls the Azure CLI. It uses the cloud and tenant the Azure CLI is signed in to; no endpoint is hardcoded. An administrator of the tenant runs it; Prowler never receives administrator access.
+
+### What the Script Creates
+
+- An app registration (single tenant) and its Service Principal, named "Prowler Scan" unless `--app-name` is set.
+- The Microsoft Graph application permissions `AuditLog.Read.All`, `Directory.Read.All` and `Policy.Read.All`, with admin consent granted.
+- The `ProwlerRole` custom role from [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json), unless it already exists or `--skip-custom-role` is set.
+- The `Reader` and `ProwlerRole` role assignments on each subscription, or on one management group, passed as a flag.
+- Optionally, a client secret (`--client-secret`), printed once on the terminal and stored nowhere else. It expires after 180 days.
+
+Every role and permission the identity gets is read-only. To leave a permission out, delete it from the list at the top of the script.
+
+<Warning>
+`ProwlerRole` lets the identity read values that may contain secrets. `Microsoft.Web/sites/host/listkeys/action` returns the host and master keys of Function Apps. `Microsoft.Web/sites/config/list/Action` returns the app settings and connection strings, in clear text, of every App Service app in the scope. Neither action modifies a resource, but a Function App master key or a connection string read this way can be used to change that app or its data. Use `--skip-custom-role` to leave the role out; the [checks requiring `ProwlerRole`](/user-guide/providers/azure/authentication#checks-requiring-prowlerrole) will not run.
+</Warning>
+
+### Required Roles
+
+The person running the script needs:
+
+- **Microsoft Entra ID:** Privileged Role Administrator or Global Administrator, to grant the Microsoft Graph application permissions. If users cannot register applications in the tenant, also Application Developer or Cloud Application Administrator.
+- **Azure:** Owner or User Access Administrator on each subscription or on the management group, to create the custom role and assign roles.
+
+### Running the Script
+
+1. Download the script from the repository and read it. Every command that changes something goes through one function, `run`, which prints the command before running it.
+
+2. For a cloud other than Azure commercial, select it in the Azure CLI first:
+
+    ```console
+    az cloud set --name AzureUSGovernment
+    ```
+
+    Then sign in to the tenant:
+
+    ```console
+    az login
+    ```
+
+3. To see what the script would do, run it without `--apply`. This is a dry run: it prints every command and changes nothing.
+
+    ```console
+    bash prowler-azure-m365-scan-identity.sh --azure --subscription <subscription-id> --client-secret
+    ```
+
+    To cover several subscriptions, repeat `--subscription`. To cover every subscription under a management group, use `--management-group <management-group-id>` instead.
+
+4. To create the identity, run the same command with `--apply`:
+
+    ```console
+    bash prowler-azure-m365-scan-identity.sh --azure --subscription <subscription-id> --client-secret --apply
+    ```
+
+5. Copy the Tenant ID, Client ID and client secret from the output. The client secret is shown only once. Wait about a minute before the first scan: a new app registration and its credential take a moment to become usable for sign-in.
+
+The script is safe to run again: anything that already exists is reported as `[exists]` and left unchanged. When an app registration with the same name already exists, the script shows how many owners and credentials it has and stops; to continue, for example on a second run, add `--use-existing-app`. To use one identity for Azure and Microsoft 365, pass `--azure` and `--m365` together.
+
+### Removing What the Script Created
+
+Delete the app registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an app that other workloads use, remove only what the script added and leave the app in place: the role assignments, the three Microsoft Graph application permissions (and their admin consent) and the `prowler-scan` credential. If the script also ran with `--m365`, remove the Microsoft 365 permissions and the `Global Reader` assignment too, as described in [Removing What the Script Created](/user-guide/providers/microsoft365/authentication#removing-what-the-script-created) in the Microsoft 365 guide.
+
+1. To remove the role assignments, run the following command for each subscription or management group:
+
+    ```console
+    az role assignment delete --assignee <client-id> --scope /subscriptions/<subscription-id>
+    ```
+
+2. To remove the app registration, its Service Principal, its credentials and its Microsoft Graph permissions:
+
+    ```console
+    az ad app delete --id <client-id>
+    ```
+
+    The deleted app registration stays in "Deleted applications" in Microsoft Entra ID for 30 days, where it can be restored or deleted permanently.
+
+3. To remove the custom role, when no other identity uses it:
+
+    ```console
+    az role definition delete --name ProwlerRole --scope /subscriptions/<subscription-id>
+    ```
 
 ## Assigning Proper Permissions
 

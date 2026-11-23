@@ -114,7 +114,7 @@ jobs:
             ui/CHANGELOG.md
             ui/changelog.d/**
             ui/README.md
-            ui/AGENTS.md
+            ui/**/AGENTS.md
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'

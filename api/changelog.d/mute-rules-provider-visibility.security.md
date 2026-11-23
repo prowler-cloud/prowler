@@ -1,0 +1,1 @@
+Mute rules scoped to the providers a role can see: roles without unlimited visibility can no longer list, change or delete rules covering findings on other providers, or create rules for findings they cannot read

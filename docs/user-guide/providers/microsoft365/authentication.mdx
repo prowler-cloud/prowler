@@ -1,6 +1,9 @@
 ---
 title: "Microsoft 365 Authentication in Prowler"
+description: "Authenticate Prowler with Microsoft 365 using certificate, client secret, Azure CLI, or browser login, and set up permissions and PowerShell modules."
 ---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler for Microsoft 365 supports multiple authentication types across Prowler Cloud and Prowler CLI.
 
@@ -56,7 +59,8 @@ When using service principal authentication, add these **Application Permissions
 **External API Permissions:**
 
 - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. The `Global Reader` role must also be assigned to the app.
-- `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
+
+The Teams PowerShell module needs no external API permission. Teams checks use the `Global Reader` role and the Microsoft Graph `Organization.Read.All` permission, which `Directory.Read.All` already includes.
 
 <Note>
 `Directory.Read.All` can be replaced with `Domain.Read.All` for more restrictive permissions, but Entra checks related to DirectoryRoles and GetUsers will not run. If using this option, you must also add the `Organization.Read.All` permission to the application registration for authentication.
@@ -75,6 +79,77 @@ When using browser authentication, permissions are delegated to the user, so the
 Browser and Azure CLI authentication methods limit scanning capabilities to checks that operate through Microsoft Graph API. Checks requiring PowerShell modules will not execute, as they need application-level permissions that cannot be delegated through browser authentication.
 
 </Warning>
+
+### Automated Setup With a Script (Optional)
+
+<VersionBadge version="5.52.0" />
+
+As an alternative to the manual steps in [Step-by-Step Permission Assignment](#step-by-step-permission-assignment), the Prowler repository includes a script that creates the application registration and assigns every permission in one run: [`permissions/prowler-azure-m365-scan-identity.sh`](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-m365-scan-identity.sh).
+
+The script is a single Bash file that only calls the Azure CLI. It uses the cloud and tenant the Azure CLI is signed in to; no endpoint is hardcoded, and each permission is looked up by name in that cloud. An administrator of the tenant runs it; Prowler never receives administrator access.
+
+#### What the Script Creates
+
+- An application registration (single tenant) and its service principal, named "Prowler Scan" unless `--app-name` is set.
+- The Microsoft Graph application permissions listed in [Application Permissions for App-Only Authentication](#application-permissions-for-app-only-authentication), with admin consent granted.
+- The `Exchange.ManageAsApp` permission from `Office 365 Exchange Online` and the `Global Reader` directory role, both required by the PowerShell checks. Use `--graph-only` to leave both out; only checks that work through Microsoft Graph will run.
+- Optionally, a credential: the public certificate passed with `--certificate` (recommended), or a client secret with `--client-secret`. The client secret is printed once on the terminal and stored nowhere else, and expires after 180 days.
+
+Every role and permission the identity gets is read-only. To leave a permission out, delete it from the list at the top of the script.
+
+<Warning>
+`Exchange.ManageAsApp` is not itself a read permission: it only lets the application sign in to Exchange Online. What the application can do there is bounded by its directory role, `Global Reader`. `Global Reader` is a privileged role that reads every setting in Microsoft Entra ID and Microsoft 365 and cannot change anything.
+</Warning>
+
+The person running the script needs the Privileged Role Administrator or Global Administrator role in Microsoft Entra ID. If users cannot register applications in the tenant, they also need Application Developer or Cloud Application Administrator.
+
+#### Running the Script
+
+1. Download the script from the repository and read it. Every command that changes something goes through one function, `run`, which prints the command before running it.
+
+2. For a cloud other than the commercial one, select it in the Azure CLI first:
+
+    ```console
+    az cloud set --name AzureUSGovernment
+    ```
+
+    Then sign in to the tenant:
+
+    ```console
+    az login --allow-no-subscriptions
+    ```
+
+3. For certificate authentication, create the certificate as described in [Generate the Certificate](#generate-the-certificate). Only the public `prowlerm365.cer` file is passed to the script; the private key stays on the local machine.
+
+4. To see what the script would do, run it without `--apply`. This is a dry run: it prints every command and changes nothing.
+
+    ```console
+    bash prowler-azure-m365-scan-identity.sh --m365 --certificate prowlerm365.cer
+    ```
+
+5. To create the identity, run the same command with `--apply`:
+
+    ```console
+    bash prowler-azure-m365-scan-identity.sh --m365 --certificate prowlerm365.cer --apply
+    ```
+
+6. Copy the Tenant ID and Client ID from the output. Wait about a minute before the first scan: a new application registration and its credential take a moment to become usable for sign-in.
+
+The script is safe to run again: anything that already exists is reported as `[exists]` and left unchanged. When an application registration with the same name already exists, the script shows how many owners and credentials it has and stops; to continue, for example on a second run, add `--use-existing-app`. If a permission does not exist in the signed-in cloud, or the tenant has no Exchange Online, the script skips it and repeats the warning at the end of the output. To use one identity for Microsoft 365 and Azure, pass `--m365` and `--azure` together.
+
+#### Removing What the Script Created
+
+Delete the application registration only if it was created for Prowler. If the script ran with `--use-existing-app` on an application that other workloads use, remove only what the script added and leave the application in place: the Microsoft Graph and Exchange application permissions (and their admin consent), the `Global Reader` assignment and the `prowler-scan` credential.
+
+If the script also ran with `--azure`, remove the Azure role assignments it created as well, following [Removing What the Script Created](/user-guide/providers/azure/create-prowler-service-principal#removing-what-the-script-created) in the Azure guide. Deleting the application does not remove them, and on a shared application leave any assignment that existed before the script ran.
+
+To remove the application registration, its service principal, its credentials, its permissions and its `Global Reader` assignment:
+
+```console
+az ad app delete --id <client-id>
+```
+
+The deleted application registration stays in "Deleted applications" in Microsoft Entra ID for 30 days, where it can be restored or deleted permanently.
 
 ### Step-by-Step Permission Assignment
 
@@ -148,17 +223,7 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
    ![Global Reader Role](/images/providers/global-reader-role.png)
 
-2. **Add Teams API:**
-
-   - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**.
-
-   ![Skype and Teams Tenant Admin API](/images/providers/search-skype-teams-tenant-admin-api.png)
-
-   - Select "application_access" permission and click "Add permissions".
-
-   ![application_access Permission](/images/providers/teams-permission.png)
-
-3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
+2. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
 
    ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
 

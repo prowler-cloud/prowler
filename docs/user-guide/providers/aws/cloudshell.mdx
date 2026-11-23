@@ -1,21 +1,28 @@
 ---
 title: 'Installing Prowler in AWS CloudShell'
+description: "Install Prowler CLI in AWS CloudShell with uv to get a supported Python version, download scan output files, or clone Prowler from GitHub instead."
 ---
 
-## Following the Migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023
+## Installing Prowler CLI in AWS CloudShell
 
-AWS CloudShell has migrated from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html). With this transition, Python 3.9 is now included by default in AL2023, eliminating the need for manual compilation.
+AWS CloudShell runs on Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), which ships Python 3.9 as the system interpreter. Prowler CLI requires Python 3.10 or later, so the system Python cannot install current releases.
 
-To install Prowler v4 in AWS CloudShell, follow the standard installation method using pip:
+To install Prowler CLI in AWS CloudShell, use [uv](https://docs.astral.sh/uv/), which downloads a supported Python version without changing the system interpreter:
 
 ```shell
 sudo bash
 adduser prowler
 su prowler
-pip install prowler
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+uv tool install --python 3.12 prowler
 cd /tmp
 prowler aws
 ```
+
+The dedicated `prowler` user keeps the installation out of the AWS CloudShell home directory, which is limited to 1 GB of storage. The installation is removed when the AWS CloudShell session ends, so repeat these steps in each new session.
+
+To upgrade Prowler CLI within the same session, run `uv tool upgrade prowler`.
 
 ## Downloading Files from AWS CloudShell
 
@@ -23,7 +30,7 @@ To download results from AWS CloudShell:
 
 - Select Actions → Download File.
 
-- Specify the full file path of each file you wish to download. For example, downloading a CSV file would require providing its complete path, as in: `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+- Specify the full file path of each file you wish to download. For example, downloading a CSV file would require providing its complete path, as in: `/tmp/output/prowler-output-123456789012-20221220191331.csv`
 
 ## Cloning Prowler from GitHub
 
@@ -37,7 +44,8 @@ adduser prowler
 su prowler
 git clone https://github.com/prowler-cloud/prowler.git
 cd prowler
-pip install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
 mkdir /tmp/uv-cache
 UV_CACHE_DIR=/tmp/uv-cache uv sync
 source .venv/bin/activate

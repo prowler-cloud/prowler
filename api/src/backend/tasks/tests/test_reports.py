@@ -1404,7 +1404,7 @@ class TestGenerateComplianceReportsOptimized:
     ):
         """Cleanup must run when all generated (supported) reports are uploaded."""
         mock_scan_summary_filter.return_value.exists.return_value = True
-        mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="kubernetes")
         mock_get_bulk.return_value = {}
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = (
@@ -1455,7 +1455,7 @@ class TestGenerateComplianceReportsOptimized:
     ):
         """Cleanup must not run when a generated report upload fails."""
         mock_scan_summary_filter.return_value.exists.return_value = True
-        mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="kubernetes")
         mock_get_bulk.return_value = {}
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = (
@@ -1479,6 +1479,53 @@ class TestGenerateComplianceReportsOptimized:
         mock_generate_output_dir.assert_called_once()
         mock_threatscore.assert_called_once()
         mock_rmtree.assert_not_called()
+
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_m365_generates_ens_report(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_generate_output_dir,
+        mock_ens,
+        mock_upload_to_s3,
+        mock_rmtree,
+    ):
+        """M365 has an ENS RD2022 catalog, so its ENS PDF is generated and uploaded."""
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
+        mock_get_bulk.return_value = {}
+        mock_aggregate_stats.return_value = {}
+        mock_generate_output_dir.return_value = (
+            "/tmp/tenant/scan/ens/prowler-output-provider-20240101000000"
+        )
+        mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/ens/report.pdf"
+
+        result = generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=False,
+            generate_ens=True,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=False,
+        )
+
+        assert result["ens"] == {
+            "upload": True,
+            "path": "s3://bucket/tenant/scan/ens/report.pdf",
+        }
+        mock_ens.assert_called_once()
+        assert mock_ens.call_args.kwargs["compliance_id"] == "ens_rd2022_m365"
 
 
 @pytest.mark.django_db

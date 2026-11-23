@@ -106,11 +106,8 @@ def inspector_with(
             vulnerability_known=lambda _: known,
             inspectors=[
                 SimpleNamespace(
-                    findings=(
-                        [
-                            SimpleNamespace(vulnerability_id=cve, resource_ids=[target])
-                            for cve in cves
-                        ]
+                    threat_findings=(
+                        ({target: set(cves)} if cves else {})
                         if findings_loaded
                         else None
                     ),
