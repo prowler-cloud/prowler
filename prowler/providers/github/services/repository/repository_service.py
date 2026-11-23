@@ -761,8 +761,8 @@ class Repository(GithubService):
                 ):
                     approval_count_source = "ruleset_not_active"
 
-            secret_scanning_enabled = False
             # GitHub omits security_and_analysis when the token cannot read it
+            secret_scanning_enabled = None
             secret_scanning_push_protection_enabled = None
             dependabot_alerts_enabled = False
             try:

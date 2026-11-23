@@ -2,6 +2,17 @@ from types import SimpleNamespace
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
+from azure.mgmt.recoveryservicesbackup.activestamp.models import (
+    AzureIaaSVMProtectionPolicy,
+    AzureVmWorkloadProtectionPolicy,
+    DailyRetentionSchedule,
+    LongTermRetentionPolicy,
+    ProtectionPolicyResource,
+    RetentionDuration,
+    SimpleRetentionPolicy,
+    SubProtectionPolicy,
+)
+
 from prowler.providers.azure.services.recovery.recovery_service import (
     BackupVault,
     Recovery,
@@ -195,3 +206,68 @@ class Test_RecoveryBackup_Service:
         assert list(backup_policies) == [POLICY_ID]
         assert backup_policies[POLICY_ID].name == "ShortPolicy"
         assert backup_policies[POLICY_ID].retention_days == 7
+
+    def test_get_backup_policy_retention_days_workload_policy_uses_full_sub_policy(
+        self,
+    ):
+        policy = ProtectionPolicyResource(
+            properties=AzureVmWorkloadProtectionPolicy(
+                work_load_type="SQLDataBase",
+                sub_protection_policy=[
+                    SubProtectionPolicy(
+                        policy_type="Log",
+                        retention_policy=SimpleRetentionPolicy(
+                            retention_duration=RetentionDuration(
+                                count=15, duration_type="Days"
+                            )
+                        ),
+                    ),
+                    SubProtectionPolicy(
+                        policy_type="Full",
+                        retention_policy=LongTermRetentionPolicy(
+                            daily_schedule=DailyRetentionSchedule(
+                                retention_duration=RetentionDuration(
+                                    count=30, duration_type="Days"
+                                )
+                            )
+                        ),
+                    ),
+                ],
+            )
+        )
+
+        assert RecoveryBackup._get_backup_policy_retention_days(policy) == 30
+
+    def test_get_backup_policy_retention_days_workload_policy_without_full(self):
+        policy = ProtectionPolicyResource(
+            properties=AzureVmWorkloadProtectionPolicy(
+                work_load_type="SQLDataBase",
+                sub_protection_policy=[
+                    SubProtectionPolicy(
+                        policy_type="Log",
+                        retention_policy=SimpleRetentionPolicy(
+                            retention_duration=RetentionDuration(
+                                count=15, duration_type="Days"
+                            )
+                        ),
+                    )
+                ],
+            )
+        )
+
+        assert RecoveryBackup._get_backup_policy_retention_days(policy) is None
+
+    def test_get_backup_policy_retention_days_iaas_vm_policy(self):
+        policy = ProtectionPolicyResource(
+            properties=AzureIaaSVMProtectionPolicy(
+                retention_policy=LongTermRetentionPolicy(
+                    daily_schedule=DailyRetentionSchedule(
+                        retention_duration=RetentionDuration(
+                            count=7, duration_type="Days"
+                        )
+                    )
+                )
+            )
+        )
+
+        assert RecoveryBackup._get_backup_policy_retention_days(policy) == 7

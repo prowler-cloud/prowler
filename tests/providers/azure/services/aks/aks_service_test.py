@@ -22,6 +22,7 @@ def mock_aks_get_clusters(_):
                 location="westeurope",
                 rbac_enabled=True,
                 node_os_upgrade_channel="NodeImage",
+                kms_cmk_encryption_enabled=True,
             )
         }
     }
@@ -73,6 +74,9 @@ class Test_AKS_Service:
             aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].node_os_upgrade_channel
             == "NodeImage"
         )
+        assert aks.clusters[AZURE_SUBSCRIPTION_ID][
+            "cluster_id-1"
+        ].kms_cmk_encryption_enabled
 
 
 class Test_AKS_get_clusters:
@@ -88,6 +92,9 @@ class Test_AKS_get_clusters:
         mock_cluster.agent_pool_profiles = []
         mock_cluster.enable_rbac = False
         mock_cluster.auto_upgrade_profile.node_os_upgrade_channel = "SecurityPatch"
+        mock_cluster.security_profile = MagicMock()
+        mock_cluster.security_profile.azure_key_vault_kms = MagicMock()
+        mock_cluster.security_profile.azure_key_vault_kms.enabled = False
 
         mock_client = MagicMock()
         mock_client.managed_clusters.list.return_value = [mock_cluster]
@@ -110,6 +117,10 @@ class Test_AKS_get_clusters:
         assert (
             result[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].node_os_upgrade_channel
             == "SecurityPatch"
+        )
+        assert (
+            result[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].kms_cmk_encryption_enabled
+            is False
         )
 
     def test_get_clusters_with_resource_group(self):

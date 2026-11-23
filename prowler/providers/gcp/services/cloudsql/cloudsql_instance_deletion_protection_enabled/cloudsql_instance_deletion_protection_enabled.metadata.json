@@ -1,0 +1,37 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_deletion_protection_enabled",
+  "CheckTitle": "Cloud SQL instance has deletion protection enabled",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "ResourceGroup": "database",
+  "Description": "**Cloud SQL instances** and **read replicas** are checked for **deletion protection** (`settings.deletionProtectionEnabled`). While it is on, a request to delete the instance from the API, `gcloud`, the console or Terraform fails until the setting is turned off. A read replica does not inherit the setting from its primary.",
+  "Risk": "Without **deletion protection**, a single delete request from a compromised identity, a faulty script or a Terraform change removes the instance and its data. This harms **availability** and can cause permanent **data loss** when no usable backup exists outside the instance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cloud.google.com/sql/docs/mysql/deletion-protection",
+    "https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/sql_database_instance"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --deletion-protection",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Click the instance name, then click Edit\n3. Under Customize your instance, expand Show configuration options\n4. Expand Data Protection and select Prevent instance deletion\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_id>\"\n  database_version = \"POSTGRES_15\"\n  region           = \"<REGION>\"\n\n  settings {\n    tier                        = \"db-custom-1-3840\"\n    deletion_protection_enabled = true # Critical: blocks deletion from every surface, unlike the Terraform-only deletion_protection argument\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **deletion protection** on every Cloud SQL instance and read replica that holds data you need. Limit `cloudsql.instances.update` and `cloudsql.instances.delete` to the few identities that manage instance lifecycle (**least privilege**), and keep **automated backups** on as a second safeguard.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_deletion_protection_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

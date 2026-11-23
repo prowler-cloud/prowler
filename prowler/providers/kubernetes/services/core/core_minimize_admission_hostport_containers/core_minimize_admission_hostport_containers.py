@@ -3,15 +3,24 @@ from prowler.providers.kubernetes.services.core.core_client import core_client
 
 
 class core_minimize_admission_hostport_containers(Check):
+    """Detect Pods whose regular or init containers use HostPorts."""
+
     def execute(self) -> Check_Report_Kubernetes:
+        """Report FAIL when a regular or init container has a nonzero HostPort."""
         findings = []
         for pod in core_client.pods.values():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = f"Pod {pod.name} does not use HostPorts."
 
-            for container in pod.containers.values():
-                if container.ports and "host_port" in str(container.ports):
+            for container in (
+                *pod.containers.values(),
+                *(pod.init_containers or {}).values(),
+            ):
+                if any(
+                    port.get("hostPort") not in (None, 0)
+                    for port in container.ports or []
+                ):
                     report.status = "FAIL"
                     report.status_extended = (
                         f"Pod {pod.name} uses HostPorts in container {container.name}."
