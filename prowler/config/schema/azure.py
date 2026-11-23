@@ -10,6 +10,7 @@ from pydantic import AfterValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.validators import make_dotted_version_validator
+from prowler.lib.threats.models import ThreatSignatureList
 
 # Accept "8.2", "3.12", "17" style version strings. Used by App Service
 # language version fields where the upstream APIs accept either MAJOR or
@@ -25,6 +26,16 @@ class AzureProviderConfig(ProviderConfigBase):
         description="API key for Shodan lookups on Azure public IPs.",
     )
 
+    # --- Emerging threats -------------------------------------------------
+    threat_signatures: Optional[ThreatSignatureList] = Field(
+        default=None,
+        description=(
+            "Emerging threats to match compute instances against, in addition to "
+            "the signatures Prowler ships. A signature with the id of a built-in "
+            "one replaces it. See prowler/lib/threats/models.py for the format."
+        ),
+    )
+
     # --- Defender --------------------------------------------------------
     defender_attack_path_minimal_risk_level: Optional[
         Literal["Low", "Medium", "High", "Critical"]
@@ -36,7 +47,7 @@ class AzureProviderConfig(ProviderConfigBase):
     # --- App Service ----------------------------------------------------
     php_latest_version: Annotated[
         Optional[str], AfterValidator(_validate_dotted_version)
-    ] = Field(default=None, description='PHP minimum acceptable version, e.g. "8.2".')
+    ] = Field(default=None, description='PHP minimum acceptable version, e.g. "8.5".')
     python_latest_version: Annotated[
         Optional[str], AfterValidator(_validate_dotted_version)
     ] = Field(

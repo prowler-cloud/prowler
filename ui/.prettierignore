@@ -11,6 +11,7 @@ esm/
 CHANGELOG.md
 
 # Generated files
+eslint-suppressions.json
 next-env.d.ts
 public/mockServiceWorker.js
 

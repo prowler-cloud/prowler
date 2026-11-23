@@ -4,6 +4,8 @@ import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
+import { useCloudUpgradeStore } from "@/store";
+import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDINGS_ROW_TYPE,
   type FindingGroupRow,
@@ -42,16 +44,18 @@ vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     data,
     toolbarRightContent,
-    getRowAttributes,
+    getRowCanSelect,
     onRowSelectionChange,
     renderAfterRow,
+    previewLock,
   }: {
     data?: Array<{ checkId?: string }>;
     toolbarRightContent?: ReactNode;
-    getRowAttributes?: (row: {
+    getRowCanSelect?: (row: {
       index: number;
       original: { checkId?: string };
-    }) => Record<string, string | undefined>;
+    }) => boolean;
+    previewLock?: { visibleRowCount: number; overlay: ReactNode };
     onRowSelectionChange?: (
       updater: (previous: Record<string, boolean>) => Record<string, boolean>,
     ) => void;
@@ -62,13 +66,23 @@ vi.mock("@/components/shadcn/table", () => ({
   }) => (
     <div>
       <div data-testid="table-toolbar-right">{toolbarRightContent}</div>
+      {previewLock && (
+        <div
+          data-testid="preview-lock"
+          data-visible={previewLock.visibleRowCount}
+        >
+          {previewLock.overlay}
+        </div>
+      )}
       <table>
         <tbody>
           {(data ?? []).map((original, index) => (
             <Fragment key={original.checkId ?? index}>
               <tr
                 data-testid={`row-${index}`}
-                {...getRowAttributes?.({ index, original })}
+                data-can-select={String(
+                  getRowCanSelect?.({ index, original }) ?? true,
+                )}
               >
                 <td>{original.checkId}</td>
                 <td>
@@ -114,11 +128,6 @@ vi.mock("@/components/lighthouse/context-contributor", () => ({
       {JSON.stringify(item)}
     </output>
   ),
-}));
-
-vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: () => <div data-testid="onboarding-trigger" />,
-  PageReady: () => <div data-testid="page-ready" />,
 }));
 
 vi.mock("@/components/filters/custom-checkbox-muted-findings", () => ({
@@ -267,51 +276,6 @@ describe("FindingsGroupTable", () => {
     ).toBeInTheDocument();
   });
 
-  it("mounts the tour only when finding groups exist", () => {
-    // Given / When
-    const { rerender } = render(
-      <FindingsGroupTable
-        data={[]}
-        resolvedFilters={{}}
-        hasHistoricalData={false}
-      />,
-    );
-
-    // Then
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
-
-    // When
-    rerender(
-      <FindingsGroupTable
-        data={[makeGroup("check-a")]}
-        resolvedFilters={{}}
-        hasHistoricalData={false}
-      />,
-    );
-
-    // Then
-    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
-  });
-
-  it("anchors the finding-group tour to the first row only", () => {
-    // Given / When
-    render(
-      <FindingsGroupTable
-        data={[makeGroup("check-a"), makeGroup("check-b")]}
-        resolvedFilters={{}}
-        hasHistoricalData={false}
-      />,
-    );
-
-    // Then
-    expect(screen.getByTestId("row-0")).toHaveAttribute(
-      "data-tour-id",
-      "explore-findings-group",
-    );
-    expect(screen.getByTestId("row-1")).not.toHaveAttribute("data-tour-id");
-  });
-
   it("opens a drillable group from the expanded deep link", () => {
     // Given / When
     render(
@@ -419,6 +383,111 @@ describe("FindingsGroupTable", () => {
       filters: { "filter[severity]": "high" },
       hasDateOrScanFilter: false,
       resourceSearch: undefined,
+    });
+  });
+
+  describe("when the table is locked to a preview", () => {
+    const lockedGroups = [
+      makeGroup("check-a"),
+      makeGroup("check-b"),
+      makeGroup("check-c"),
+    ];
+
+    beforeEach(() => {
+      useCloudUpgradeStore.getState().closeCloudUpgrade();
+    });
+
+    it("floats the unlock prompt over the table and keeps locked groups unselectable", () => {
+      // Given / When
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          metadata={{
+            pagination: { page: 1, pages: 1, count: 40 },
+            version: "v1",
+          }}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          previewRowLimit={2}
+        />,
+      );
+
+      // Then
+      expect(screen.getByTestId("preview-lock")).toHaveAttribute(
+        "data-visible",
+        "2",
+      );
+      expect(
+        screen.getByRole("button", { name: "Unlock All Findings" }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("row-1")).toHaveAttribute(
+        "data-can-select",
+        "true",
+      );
+      expect(screen.getByTestId("row-2")).toHaveAttribute(
+        "data-can-select",
+        "false",
+      );
+    });
+
+    it("still opens an expanded deep link inside the preview", () => {
+      // Given / When
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-b"
+          previewRowLimit={2}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Select finding-1" }),
+      ).toBeInTheDocument();
+    });
+
+    it("ignores an expanded deep link that points past the preview", () => {
+      // Given / When
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-c"
+          previewRowLimit={2}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("answers a drill-down past the preview with the upgrade prompt", async () => {
+      // Given
+      const user = userEvent.setup();
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          previewRowLimit={2}
+        />,
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Expand check-c" }));
+
+      // Then
+      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+        PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW,
+      );
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
     });
   });
 });

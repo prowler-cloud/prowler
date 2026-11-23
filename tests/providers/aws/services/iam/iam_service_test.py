@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
 from json import dumps
 from uuid import uuid4
 
 import botocore
 from boto3 import client
+from botocore.stub import Stubber
 from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
@@ -72,6 +74,16 @@ def mock_make_api_call(self, operation_name, kwargs):
         }
 
     return make_api_call(self, operation_name, kwargs)
+
+
+def server_certificate_metadata(name):
+    return {
+        "Path": "/",
+        "ServerCertificateName": name,
+        "ServerCertificateId": f"ASCA{name.upper():0<16}",
+        "Arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:server-certificate/{name}",
+        "Expiration": datetime(2020, 1, 1, tzinfo=timezone.utc),
+    }
 
 
 # Patch every AWS call using Boto3
@@ -1036,3 +1048,104 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.entities_attached_to_cloudshell_policy["Users"] == [user_name]
         assert iam.entities_attached_to_cloudshell_policy["Groups"] == [group_name]
         assert iam.entities_attached_to_cloudshell_policy["Roles"] == [role_name]
+
+    @mock_aws
+    def test_list_server_certificates_includes_later_pages(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        # ListServerCertificates returns 100 certificates per call by default.
+        with Stubber(iam.client) as stubber:
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [
+                        server_certificate_metadata("first")
+                    ],
+                    "IsTruncated": True,
+                    "Marker": "second-page",
+                },
+                {},
+            )
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [
+                        server_certificate_metadata("later")
+                    ],
+                    "IsTruncated": False,
+                },
+                {"Marker": "second-page"},
+            )
+            server_certificates = iam._list_server_certificates()
+            stubber.assert_no_pending_responses()
+
+        assert [certificate.name for certificate in server_certificates] == [
+            "first",
+            "later",
+        ]
+
+    @mock_aws
+    def test_list_server_certificates_keeps_pages_read_before_an_error(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        with Stubber(iam.client) as stubber:
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [
+                        server_certificate_metadata("first")
+                    ],
+                    "IsTruncated": True,
+                    "Marker": "second-page",
+                },
+                {},
+            )
+            stubber.add_client_error(
+                "list_server_certificates",
+                service_error_code="Throttling",
+                expected_params={"Marker": "second-page"},
+            )
+            server_certificates = iam._list_server_certificates()
+            stubber.assert_no_pending_responses()
+
+        assert [certificate.name for certificate in server_certificates] == ["first"]
+
+    @mock_aws
+    def test_list_server_certificates_filters_audited_resources_on_every_page(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+        audited = server_certificate_metadata("audited")
+        iam.audit_resources = [audited["Arn"]]
+
+        with Stubber(iam.client) as stubber:
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [
+                        server_certificate_metadata("not-audited")
+                    ],
+                    "IsTruncated": True,
+                    "Marker": "second-page",
+                },
+                {},
+            )
+            stubber.add_response(
+                "list_server_certificates",
+                {
+                    "ServerCertificateMetadataList": [
+                        server_certificate_metadata("other"),
+                        audited,
+                    ],
+                    "IsTruncated": False,
+                },
+                {"Marker": "second-page"},
+            )
+            server_certificates = iam._list_server_certificates()
+            stubber.assert_no_pending_responses()
+
+        assert [certificate.arn for certificate in server_certificates] == [
+            audited["Arn"]
+        ]
+        assert server_certificates[0].expiration == audited["Expiration"]

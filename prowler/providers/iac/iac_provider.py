@@ -17,6 +17,14 @@ from prowler.config.config import (
 )
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.ssrf import (
+    ALLOWED_PRIVATE_NETWORKS_ENV,
+    OutboundURLNotAllowedError,
+    allowed_private_networks,
+    outbound_check_skipped,
+    validate_outbound_url,
+)
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
     build_finding_reference_url,
@@ -31,6 +39,36 @@ from prowler.providers.iac.exceptions.exceptions import (
     IacScanError,
     IacTrivyNotFoundError,
 )
+from prowler.providers.iac.lib.git_transport import (
+    ALLOWED_SCHEMES,
+    effective_url,
+    git_config,
+    guarded_pool_manager,
+    ls_remote,
+    proxy_base_url,
+)
+
+_TRIVY_INHERITED_ENV = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "TMPDIR",
+        "TMP",
+        "TEMP",
+        "LANG",
+        "LC_ALL",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "XDG_CACHE_HOME",
+        "XDG_DATA_HOME",
+    }
+)
+_TRIVY_GIT_ENV = {
+    "GIT_ALLOW_PROTOCOL": "http:https",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GIT_CONFIG_NOSYSTEM": "1",
+    "GIT_CONFIG_GLOBAL": "/dev/null",
+}
 
 
 class IacProvider(Provider):
@@ -326,6 +364,11 @@ class IacProvider(Provider):
         Returns:
             tuple[str, str]: (temporary_directory, branch_name)
         """
+        # one config for both: git rewrites the URL again inside porcelain, and the
+        # guard must judge the same destination dulwich will connect to
+        config = git_config()
+        target = effective_url(config, repository_url)
+        validate_outbound_url(target, allowed_schemes=ALLOWED_SCHEMES)
         try:
             original_url = repository_url
 
@@ -341,6 +384,7 @@ class IacProvider(Provider):
                 )
 
             temporary_directory = tempfile.mkdtemp()
+            pool_manager = guarded_pool_manager(config, proxy_base_url(target))
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
@@ -360,7 +404,11 @@ class IacProvider(Provider):
                         try:
                             bar.title = f"-> Cloning {original_url}..."
                             porcelain.clone(
-                                repository_url, temporary_directory, depth=1
+                                repository_url,
+                                temporary_directory,
+                                depth=1,
+                                config=config,
+                                pool_manager=pool_manager,
                             )
                             bar.title = "-> Repository cloned successfully!"
                         except Exception as clone_error:
@@ -369,12 +417,24 @@ class IacProvider(Provider):
                 else:
                     # No TTY, just clone without progress bar
                     logger.info(f"Cloning {original_url}...")
-                    porcelain.clone(repository_url, temporary_directory, depth=1)
+                    porcelain.clone(
+                        repository_url,
+                        temporary_directory,
+                        depth=1,
+                        config=config,
+                        pool_manager=pool_manager,
+                    )
                     logger.info("Repository cloned successfully!")
             except (AttributeError, OSError):
                 # Fallback if isatty() check fails
                 logger.info(f"Cloning {original_url}...")
-                porcelain.clone(repository_url, temporary_directory, depth=1)
+                porcelain.clone(
+                    repository_url,
+                    temporary_directory,
+                    depth=1,
+                    config=config,
+                    pool_manager=pool_manager,
+                )
                 logger.info("Repository cloned successfully!")
 
             # Detect the branch name from the cloned repository
@@ -382,11 +442,14 @@ class IacProvider(Provider):
 
             return temporary_directory, branch_name
         except Exception as error:
+            # the authenticated URL embeds the token, and ProwlerException puts
+            # original_exception into its str(), which the API returns verbatim
             logger.critical(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno}"
             )
             raise IacRepositoryCloneError(
-                file=__file__, original_exception=error
+                file=__file__,
+                message=f"Unable to clone the repository to scan ({error.__class__.__name__})",
             ) from error
 
     def run(self) -> List[CheckReportIAC]:
@@ -413,9 +476,38 @@ class IacProvider(Provider):
 
         return reports
 
+    @staticmethod
+    def _trivy_environment() -> tuple[dict | None, TrivyOutboundProxy | None]:
+        """Trivy's environment and, when the outbound check is enforced, its proxy."""
+        if outbound_check_skipped():
+            return None, None
+        try:
+            proxy = TrivyOutboundProxy(
+                dict(environ),
+                allowed_networks=allowed_private_networks(),
+                allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
+            )
+            proxy.start()
+        except (OutboundURLNotAllowedError, OSError) as error:
+            raise IacScanError(
+                file=__file__,
+                original_exception=error,
+                message=f"Could not start the outbound proxy for Trivy: {error}",
+            ) from error
+        # a scanned repository picks the Terraform module sources Trivy downloads,
+        # so Trivy gets neither the worker's cloud credentials nor git over ssh
+        isolated = {
+            key: value
+            for key, value in environ.items()
+            if key in _TRIVY_INHERITED_ENV or key.startswith("TRIVY_")
+        }
+        isolated.update(_TRIVY_GIT_ENV)
+        return proxy.route(isolated), proxy
+
     def run_scan(
         self, directory: str, scanners: list[str], exclude_path: list[str]
     ) -> Generator[List[CheckReportIAC], None, None]:
+        env, proxy = self._trivy_environment()
         try:
             logger.info(f"Running IaC scan on {directory} ...")
             trivy_command = [
@@ -450,6 +542,7 @@ class IacProvider(Provider):
                                 trivy_command,
                                 capture_output=True,
                                 text=True,
+                                env=env,
                             )
                             bar.title = "-> Scan completed!"
                         except Exception as error:
@@ -462,6 +555,7 @@ class IacProvider(Provider):
                         trivy_command,
                         capture_output=True,
                         text=True,
+                        env=env,
                     )
                     logger.info("Trivy scan completed!")
             except (AttributeError, OSError):
@@ -471,6 +565,7 @@ class IacProvider(Provider):
                     trivy_command,
                     capture_output=True,
                     text=True,
+                    env=env,
                 )
                 logger.info("Trivy scan completed!")
             # Log Trivy's stderr output with preserved log levels
@@ -577,6 +672,9 @@ class IacProvider(Provider):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
             raise IacScanError(file=__file__, original_exception=error) from error
+        finally:
+            if proxy:
+                proxy.stop()
 
     def print_credentials(self):
         if self.scan_repository_url:
@@ -652,6 +750,17 @@ class IacProvider(Provider):
                     is_connected=False, error="Repository URL is required"
                 )
 
+            try:
+                validate_outbound_url(
+                    scan_repository_url, allowed_schemes=ALLOWED_SCHEMES
+                )
+            except OutboundURLNotAllowedError as error:
+                logger.warning(f"Rejected IaC repository URL: {error}")
+                return Connection(
+                    is_connected=False,
+                    error="Repository URL is not an allowed destination.",
+                )
+
             # Try to clone the repository to test the connection
             with tempfile.TemporaryDirectory():
                 try:
@@ -670,13 +779,19 @@ class IacProvider(Provider):
                         # Public repository
                         auth_url = scan_repository_url
 
-                    # Use dulwich to test the connection
-                    porcelain.ls_remote(auth_url)
+                    # not porcelain.ls_remote: it cannot be given the pool manager
+                    # that validates redirect destinations
+                    ls_remote(auth_url)
 
                     return Connection(is_connected=True)
 
                 except Exception as e:
+                    # A hostile remote can echo the Authorization header back in a git
+                    # ERR packet that dulwich copies into the exception text
                     error_msg = str(e)
+                    logger.error(
+                        f"IaC repository connection test failed: {e.__class__.__name__}"
+                    )
                     if "authentication" in error_msg.lower() or "401" in error_msg:
                         return Connection(
                             is_connected=False,
@@ -690,13 +805,14 @@ class IacProvider(Provider):
                     else:
                         return Connection(
                             is_connected=False,
-                            error=f"Failed to connect to repository: {error_msg}",
+                            error="Failed to connect to repository.",
                         )
 
         except Exception as error:
             if raise_on_exception:
                 raise
+            logger.error(f"Unexpected error testing IaC repository connection: {error}")
             return Connection(
                 is_connected=False,
-                error=f"Unexpected error testing connection: {str(error)}",
+                error="Unexpected error testing connection.",
             )

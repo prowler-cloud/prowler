@@ -14,6 +14,7 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.utils import sanitize_csv_value
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.arn.models import get_arn_resource_type
 
@@ -293,7 +294,7 @@ def create_output(resources: list, provider: AwsProvider, args):
                 header = data.keys()
                 csv_writer.writerow(header)
                 count += 1
-            csv_writer.writerow(data.values())
+            csv_writer.writerow([sanitize_csv_value(v) for v in data.values()])
 
         csv_file.close()
         print(

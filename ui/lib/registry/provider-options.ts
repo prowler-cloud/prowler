@@ -12,6 +12,8 @@ export interface RegistryProviderOption {
 }
 
 export const REGISTRY_PROVIDER_DISCOVERY = {
+  SUBSCRIPTION_REQUIRED: "subscription_required",
+  ONBOARDING: "onboarding",
   READY: "ready",
   ACCESS_DENIED: "access_denied",
   /** Access could not be evaluated: keep Registry hidden but retryable. */
@@ -20,6 +22,8 @@ export const REGISTRY_PROVIDER_DISCOVERY = {
 } as const;
 
 export type RegistryProviderDiscoveryResult =
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.ONBOARDING }
   | {
       status: typeof REGISTRY_PROVIDER_DISCOVERY.READY;
       options: RegistryProviderOption[];

@@ -9,6 +9,7 @@ export type RegistryEndpoint =
   (typeof REGISTRY_ENDPOINT)[keyof typeof REGISTRY_ENDPOINT];
 
 export const REGISTRY_FAILURE = {
+  SUBSCRIPTION_REQUIRED: "subscription_required",
   ACCESS_DENIED: "access_denied",
   ONBOARDING: "onboarding",
   RECONNECT: "reconnect",
@@ -17,6 +18,7 @@ export const REGISTRY_FAILURE = {
 } as const;
 
 export type RegistryFailureResult =
+  | { status: typeof REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED }
   | { status: typeof REGISTRY_FAILURE.ACCESS_DENIED }
   | { status: typeof REGISTRY_FAILURE.ONBOARDING }
   | { status: typeof REGISTRY_FAILURE.RECONNECT }
@@ -40,6 +42,7 @@ export type RegistryCredentialSubmissionResult = RegistryTaskSubmissionResult;
 export interface RegistryArtifactTaskResult {
   installed: boolean;
   error: string | null;
+  code?: string | null;
 }
 
 export interface RegistryAddArtifactInput {
@@ -123,6 +126,8 @@ export interface RegistryCatalogArtifact {
   isInstallable: boolean;
   /** Stable API code; new codes can appear without a UI release. */
   notInstallableReason?: string;
+  /** Registry page where access to it is requested (a bundle, else the package). */
+  accessRequestPath?: string;
   checkCount?: number;
   complianceCount?: number;
   versionCount: number;
@@ -190,8 +195,7 @@ export type RegistryCredentialActionResult =
     }
   | {
       status: typeof REGISTRY_CREDENTIAL_ACTION.DISCONNECTED;
-      credential: RegistryCredentialStatus;
-      tenantArtifacts: RegistryTenantArtifact[];
+      state: RegistryBootstrapState;
     }
   | {
       status:
@@ -300,4 +304,5 @@ export type RegistryBootstrapResult =
       status: typeof REGISTRY_BOOTSTRAP_STATE.READY;
       state: RegistryBootstrapState;
     }
-  | { status: typeof REGISTRY_FAILURE.ACCESS_DENIED };
+  | { status: typeof REGISTRY_FAILURE.ACCESS_DENIED }
+  | { status: typeof REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED };
