@@ -6,6 +6,29 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class TestObsBucketAclEveryoneAccess:
+    def test_no_resources(self):
+        obs_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.obs.obs_bucket_acl_everyone_access.obs_bucket_acl_everyone_access.obs_client",
+                new=obs_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.obs.obs_bucket_acl_everyone_access.obs_bucket_acl_everyone_access import (
+                obs_bucket_acl_everyone_access,
+            )
+
+            obs_client.buckets = []
+            obs_client.audited_account = "123456789012"
+
+            result = obs_bucket_acl_everyone_access().execute()
+            assert len(result) == 0
+
     def test_bucket_acl_private_passes(self):
         obs_client = mock.MagicMock()
 

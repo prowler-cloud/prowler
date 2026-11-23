@@ -6,6 +6,29 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class TestObsBucketCorsWildcardOrigin:
+    def test_no_resources(self):
+        obs_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.obs.obs_bucket_cors_wildcard_origin.obs_bucket_cors_wildcard_origin.obs_client",
+                new=obs_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.obs.obs_bucket_cors_wildcard_origin.obs_bucket_cors_wildcard_origin import (
+                obs_bucket_cors_wildcard_origin,
+            )
+
+            obs_client.buckets = []
+            obs_client.audited_account = "123456789012"
+
+            result = obs_bucket_cors_wildcard_origin().execute()
+            assert len(result) == 0
+
     def test_bucket_restricted_cors_passes(self):
         obs_client = mock.MagicMock()
 

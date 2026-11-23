@@ -155,6 +155,7 @@ class TestOBSService:
         )
 
         def metadata(request):
+            assert request.origin == "https://prowler.com"
             if request.bucket_name == "hardened":
                 return SimpleNamespace(
                     x_obs_az_redundancy="3az",

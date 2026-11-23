@@ -161,7 +161,10 @@ class OBS(HuaweiCloudService):
         try:
             response = self._call_with_retries(
                 bucket_client.get_bucket_metadata,
-                GetBucketMetadataRequest(bucket_name=bucket_name),
+                GetBucketMetadataRequest(
+                    bucket_name=bucket_name,
+                    origin="https://prowler.com",
+                ),
             )
             raw_az = getattr(response, "x_obs_az_redundancy", None)
             raw_cors = getattr(response, "access_control_allow_origin", None)
