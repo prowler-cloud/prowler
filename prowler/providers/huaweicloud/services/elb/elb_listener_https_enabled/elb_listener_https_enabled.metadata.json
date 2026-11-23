@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "elb_listener_https_enabled",
+  "CheckTitle": "ELB HTTP/HTTPS listener uses HTTPS",
+  "CheckType": [],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Huawei Cloud Elastic Load Balance (ELB)** application listeners use **HTTPS** (`HTTPS` or `TERMINATED_HTTPS`) rather than unencrypted **HTTP**.",
+  "Risk": "Plaintext **HTTP** listeners transmit requests, session tokens, and sensitive payloads unencrypted, exposing traffic to eavesdropping and man-in-the-middle attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_jt_000001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Elastic Load Balance (ELB)** > **Load Balancers**.\n3. Select the load balancer and go to the **Listeners** tab.\n4. Replace plaintext **HTTP** listeners with **HTTPS** listeners (or configure HTTP-to-HTTPS redirection).",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use **HTTPS** listeners on ELB load balancers and redirect any HTTP traffic to HTTPS.",
+      "Url": "https://hub.prowler.com/check/elb_listener_https_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

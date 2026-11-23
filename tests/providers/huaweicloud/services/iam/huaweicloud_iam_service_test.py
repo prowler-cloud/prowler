@@ -154,3 +154,24 @@ class TestIAMService:
         assert iam.password_policy.minimum_password_length == 8
         assert len(iam.mfa_devices) == 1
         assert iam.operation_protection.enabled is True
+
+    def test_list_access_keys_parses_credentials(self):
+        client = _build_client()
+        client.list_permanent_access_keys.return_value = SimpleNamespace(
+            credentials=[
+                SimpleNamespace(
+                    access="AK123",
+                    user_id="user-1",
+                    status="active",
+                    create_time="2026-01-01T00:00:00.000000Z",
+                )
+            ]
+        )
+
+        iam = IAM(_provider_with_client(client))
+
+        assert len(iam.access_keys) == 1
+        assert iam.access_keys[0].access == "AK123"
+        assert iam.access_keys[0].user_id == "user-1"
+        assert iam.access_keys[0].status == "active"
+        assert iam.access_keys[0].create_time == "2026-01-01T00:00:00.000000Z"

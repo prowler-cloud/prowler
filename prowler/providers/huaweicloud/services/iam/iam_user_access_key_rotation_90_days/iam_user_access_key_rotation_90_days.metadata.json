@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "iam_user_access_key_rotation_90_days",
+  "CheckTitle": "IAM user active access keys are rotated within 90 days",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Huawei Cloud IAM** permanent access keys (`AK/SK`) that are **active** should be rotated at least every **90 days**.",
+  "Risk": "Long-lived permanent access keys increase the window of exposure if credentials are leaked or compromised, enabling unauthorized programmatic access to cloud resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_02_0003.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Identity and Access Management (IAM)** > **Users**.\n3. Select the target user and open **Security Settings** > **Access Keys**.\n4. Create a new access key, update dependent applications, and disable/delete the old access key.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Rotate active IAM permanent access keys every **90 days** or migrate workloads to temporary security credentials / IAM agencies.",
+      "Url": "https://hub.prowler.com/check/iam_user_access_key_rotation_90_days"
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

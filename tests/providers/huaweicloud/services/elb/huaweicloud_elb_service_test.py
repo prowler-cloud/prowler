@@ -100,3 +100,31 @@ class TestELBService:
 
         # Errors are logged and swallowed; no partial/garbage resources.
         assert elb.load_balancers == []
+
+    def test_list_listeners_parses_listeners(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_load_balancers.return_value = SimpleNamespace(
+            loadbalancers=[]
+        )
+        regional_client.list_listeners.return_value = SimpleNamespace(
+            listeners=[
+                SimpleNamespace(
+                    id="lis-1",
+                    name="https-lis",
+                    protocol="HTTPS",
+                    protocol_port=443,
+                    tls_ciphers_policy="tls-1-2-strict",
+                )
+            ]
+        )
+
+        elb = ELB(_provider_with_client(regional_client))
+
+        assert len(elb.listeners) == 1
+        lis = elb.listeners[0]
+        assert lis.id == "lis-1"
+        assert lis.name == "https-lis"
+        assert lis.protocol == "HTTPS"
+        assert lis.protocol_port == 443
+        assert lis.tls_ciphers_policy == "tls-1-2-strict"
+        assert lis.region == REGION

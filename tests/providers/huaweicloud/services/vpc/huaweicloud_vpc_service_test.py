@@ -160,6 +160,36 @@ class TestVPCService:
         assert parsed_rule.description == ""
         assert parsed_rule.direction == ""
 
+    def test_list_flow_logs_parses_flow_logs(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[]
+        )
+        regional_client.list_flow_logs.return_value = SimpleNamespace(
+            flow_logs=[
+                SimpleNamespace(
+                    id="fl-1",
+                    name="vpc-fl",
+                    resource_type="vpc",
+                    resource_id="vpc-1",
+                    status="ACTIVE",
+                    admin_state=True,
+                )
+            ]
+        )
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        assert len(vpc_service.flow_logs) == 1
+        fl = vpc_service.flow_logs[0]
+        assert fl.id == "fl-1"
+        assert fl.resource_type == "vpc"
+        assert fl.resource_id == "vpc-1"
+        assert fl.status == "ACTIVE"
+        assert fl.admin_state is True
+        assert fl.region == REGION
+
     def test_list_security_groups_empty(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])

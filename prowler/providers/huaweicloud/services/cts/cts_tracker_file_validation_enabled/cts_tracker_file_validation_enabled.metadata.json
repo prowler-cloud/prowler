@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cts_tracker_file_validation_enabled",
+  "CheckTitle": "CTS tracker has log file integrity validation enabled",
+  "CheckType": [],
+  "ServiceName": "cts",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "**Huawei Cloud Trace Service (CTS)** trackers have **log file integrity validation** enabled to detect tampering or deletion of trace files stored in OBS.",
+  "Risk": "Without **log file integrity validation**, an attacker or rogue administrator who gains access to the OBS bucket could modify or delete audit trace files undetected, compromising **forensic investigation** and **non-repudiation**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0008.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Cloud Trace Service (CTS)** > **Tracker List**.\n3. Click **Configure** on the target tracker.\n4. Enable **Trace File Verification**.\n5. Click **OK**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **log file integrity validation** on all CTS trackers so trace files transferred to OBS can be verified against SHA-256 digest files.",
+      "Url": "https://hub.prowler.com/check/cts_tracker_file_validation_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

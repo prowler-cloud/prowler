@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "vpc_flow_logs_enabled",
+  "CheckTitle": "VPC has flow logs enabled",
+  "CheckType": [],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Huawei Cloud Virtual Private Cloud (VPC)** has **VPC Flow Logs** enabled to capture accepted and rejected IP traffic across network interfaces.",
+  "Risk": "Without **VPC Flow Logs**, network intrusions, lateral movement, and anomalous outbound connections cannot be investigated or detected effectively.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-vpc/vpc_flow_log_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Virtual Private Cloud (VPC)** > **Flow Logs**.\n3. Click **Create Flow Log**.\n4. Select **VPC** as the resource type, choose the target VPC, and bind an **LTS log group and stream**.\n5. Click **OK**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **VPC Flow Logs** on all VPCs and stream traffic metadata to **LTS** for security monitoring and forensics.",
+      "Url": "https://hub.prowler.com/check/vpc_flow_logs_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -89,3 +89,29 @@ class TestRDSService:
 
         # Errors are logged and swallowed; no partial/garbage resources.
         assert rds.instances == []
+
+    def test_list_instances_parses_ssl_and_ha(self):
+        ha_ssl_instance = SimpleNamespace(
+            id="rds-ha",
+            name="ha-db",
+            status="ACTIVE",
+            public_ips=[],
+            backup_strategy=None,
+            datastore=None,
+            enable_ssl=True,
+            type="Ha",
+            ha=SimpleNamespace(mode="ha"),
+            disk_encryption_id="",
+        )
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_instances.return_value = SimpleNamespace(
+            instances=[ha_ssl_instance]
+        )
+
+        rds = RDS(_provider_with_client(regional_client))
+
+        assert len(rds.instances) == 1
+        inst = rds.instances[0]
+        assert inst.enable_ssl is True
+        assert inst.instance_type == "Ha"
+        assert inst.ha_mode == "ha"

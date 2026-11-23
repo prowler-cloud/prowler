@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "elb_listener_secure_tls_policy",
+  "CheckTitle": "ELB HTTPS listener enforces TLS 1.2 or higher",
+  "CheckType": [],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Huawei Cloud Elastic Load Balance (ELB)** HTTPS listeners use a modern **TLS security policy** enforcing **TLS 1.2 or TLS 1.3** (`tls-1-2`, `tls-1-2-strict`, `tls-1-2-fs`, `tls-1-3`) and disable deprecated **TLS 1.0 / 1.1**.",
+  "Risk": "Deprecated **TLS 1.0** and **TLS 1.1** protocols contain known cryptographic weaknesses and are non-compliant with modern security standards.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_jt_000001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Elastic Load Balance (ELB)** > **Load Balancers**.\n3. Select the load balancer and edit the target **HTTPS** listener.\n4. Set **TLS Security Policy** to **tls-1-2-strict**, **tls-1-2-fs-with-1-3**, or **tls-1-3**.\n5. Save the configuration.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure ELB HTTPS listeners with a **TLS 1.2+** security policy and disable TLS 1.0 and TLS 1.1.",
+      "Url": "https://hub.prowler.com/check/elb_listener_secure_tls_policy"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

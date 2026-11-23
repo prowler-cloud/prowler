@@ -20,12 +20,14 @@ class IAM(HuaweiCloudService):
         self.password_policy = PasswordPolicy()
         self.users: List[IAMUser] = []
         self.mfa_devices: List[MFADevice] = []
+        self.access_keys: List[AccessKey] = []
         self.domain_id = provider.identity.domain_id if provider.identity else ""
         self.operation_protection = OperationProtection(account_id=self.domain_id)
 
         self._get_password_policy()
         self._list_users()
         self._list_mfa_devices()
+        self._list_access_keys()
         self._get_operation_protection()
 
     def _get_password_policy(self):
@@ -187,6 +189,39 @@ class IAM(HuaweiCloudService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_access_keys(self):
+        """List all permanent access keys in the domain."""
+        if not self.client:
+            return
+
+        region = self.region
+        client = self.client
+        logger.info(f"IAM - Listing Access Keys from {region}...")
+
+        try:
+            from huaweicloudsdkiam.v3 import ListPermanentAccessKeysRequest
+
+            request = ListPermanentAccessKeysRequest()
+            response = self._call_with_retries(
+                client.list_permanent_access_keys, request
+            )
+
+            if response and getattr(response, "credentials", None):
+                for cred in response.credentials:
+                    self.access_keys.append(
+                        AccessKey(
+                            access=getattr(cred, "access", None) or "",
+                            user_id=getattr(cred, "user_id", None) or "",
+                            status=getattr(cred, "status", None) or "",
+                            create_time=getattr(cred, "create_time", None),
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class PasswordPolicy(HuaweiCloudBaseModel):
     """IAM Password Policy model."""
@@ -222,3 +257,12 @@ class OperationProtection(HuaweiCloudBaseModel):
 
     account_id: str = ""
     enabled: bool = False
+
+
+class AccessKey(HuaweiCloudBaseModel):
+    """IAM permanent access key model."""
+
+    access: str
+    user_id: str = ""
+    status: str = ""
+    create_time: Optional[str] = None
