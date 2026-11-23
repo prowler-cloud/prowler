@@ -257,8 +257,9 @@ def test_selection_exclusions_through_collectors_and_checks(kind, scenario):
         check_module = import_module(
             f"prowler.providers.aws.services.{service}.{check_name}.{check_name}"
         )
-        with patch.object(check_module, "backup_client", backup), patch.object(
-            check_module, f"{service}_client", resource_client
+        with (
+            patch.object(check_module, "backup_client", backup),
+            patch.object(check_module, f"{service}_client", resource_client),
         ):
             findings = getattr(check_module, check_name)().execute()
 
