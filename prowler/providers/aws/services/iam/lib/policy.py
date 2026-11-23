@@ -815,46 +815,41 @@ def is_condition_block_restrictive_organization(
     """
     is_condition_valid = False
 
+    # ForAnyValue is false when the key is absent, so it still excludes principals outside any
+    # organization. ForAllValues is true on an absent key and is deliberately not accepted.
+    valid_condition_operators = (
+        "StringEquals",
+        "StringLike",
+        "ForAnyValue:StringEquals",
+        "ForAnyValue:StringLike",
+    )
     # The conditions must be defined in lowercase since the context key names are not case-sensitive.
     # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
-    valid_condition_options = {
-        "StringEquals": [
-            "aws:principalorgid",
-        ],
-        "StringLike": [
-            "aws:principalorgid",
-        ],
-    }
+    valid_condition_keys = ("aws:principalorgid", "aws:principalorgpaths")
 
-    for condition_operator, condition_operator_key in valid_condition_options.items():
+    def names_one_organization(key: str, value) -> bool:
+        if not isinstance(value, str):
+            return False
+        if key == "aws:principalorgpaths":
+            # The organization ID must be literal; wildcards only make sense below it
+            return bool(re.match(r"o-[a-z0-9]{10,32}/", value))
+        return "*" not in value
+
+    for condition_operator in valid_condition_operators:
         if condition_operator in condition_statement:
-            for value in condition_operator_key:
-                # We need to transform the condition_statement into lowercase
-                condition_statement[condition_operator] = {
-                    k.lower(): v
-                    for k, v in condition_statement[condition_operator].items()
-                }
-
-                if value in condition_statement[condition_operator]:
-                    # values are a list
-                    if isinstance(
-                        condition_statement[condition_operator][value],
-                        list,
+            # We need to transform the condition_statement into lowercase
+            condition_statement[condition_operator] = {
+                k.lower(): v for k, v in condition_statement[condition_operator].items()
+            }
+            for key in valid_condition_keys:
+                if key in condition_statement[condition_operator]:
+                    values = condition_statement[condition_operator][key]
+                    values = values if isinstance(values, list) else [values]
+                    if values and all(
+                        names_one_organization(key, value) for value in values
                     ):
                         is_condition_valid = True
-                        for item in condition_statement[condition_operator][value]:
-                            if item == "*":
-                                is_condition_valid = False
-                                break
-
-                    # value is a string
-                    elif isinstance(
-                        condition_statement[condition_operator][value],
-                        str,
-                    ):
-                        if "*" not in condition_statement[condition_operator][value]:
-                            is_condition_valid = True
 
     return is_condition_valid
 

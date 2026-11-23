@@ -19,6 +19,8 @@ class ec2_instance_secrets_user_data(Check):
             "secrets_ignore_patterns", []
         )
         validate = ec2_client.audit_config.get("secrets_validate", False)
+
+        confidence = ec2_client.audit_config.get("secrets_confidence", "low")
         instances = list(ec2_client.instances)
 
         # Collect the decoded User Data of each non-terminated instance and scan
@@ -56,7 +58,10 @@ class ec2_instance_secrets_user_data(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

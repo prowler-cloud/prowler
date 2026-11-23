@@ -1,6 +1,8 @@
 import argparse
 from unittest.mock import MagicMock
 
+import pytest
+
 from prowler.providers.m365.lib.arguments import arguments
 
 
@@ -116,13 +118,15 @@ class TestM365Arguments:
         arguments.init_parser(mock_m365_args)
 
         # Verify region arguments were added to regions group
-        assert self.mock_regions_group.add_argument.call_count == 1
+        assert self.mock_regions_group.add_argument.call_count == 3
 
-        # Check that region argument is present
+        # Check that region arguments are present
         calls = self.mock_regions_group.add_argument.call_args_list
         region_args = [call[0][0] for call in calls]
 
         assert "--region" in region_args
+        assert "--m365-authority-host" in region_args
+        assert "--m365-graph-endpoint" in region_args
 
     def test_az_cli_auth_argument_configuration(self):
         """Test that az-cli-auth argument is configured correctly"""
@@ -290,6 +294,7 @@ class TestM365Arguments:
             "M365Global",
             "M365China",
             "M365USGovernment",
+            "M365Custom",
         ]
         assert "Microsoft 365 region" in kwargs["help"]
         assert "M365Global" in kwargs["help"]
@@ -593,3 +598,83 @@ class TestM365ArgumentsIntegration:
         assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is False
         assert args.browser_auth is False
+
+    def test_real_argument_parsing_custom_region(self):
+        """Test parsing arguments with the custom region and its endpoints"""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+        common_parser = argparse.ArgumentParser(add_help=False)
+
+        mock_m365_args = MagicMock()
+        mock_m365_args.subparsers = subparsers
+        mock_m365_args.common_providers_parser = common_parser
+
+        arguments.init_parser(mock_m365_args)
+
+        args = parser.parse_args(
+            [
+                "m365",
+                "--sp-env-auth",
+                "--region",
+                "M365Custom",
+                "--m365-authority-host",
+                "login.custom.cloud",
+                "--m365-graph-endpoint",
+                "https://graph.custom.cloud",
+            ]
+        )
+
+        assert args.region == "M365Custom"
+        assert args.m365_authority_host == "login.custom.cloud"
+        assert args.m365_graph_endpoint == "https://graph.custom.cloud"
+        assert arguments.validate_arguments(args) == (True, "")
+
+
+class TestM365ValidateArguments:
+    @pytest.mark.parametrize(
+        "authority_host, graph_endpoint, missing",
+        [
+            (None, None, "--m365-authority-host, --m365-graph-endpoint"),
+            ("login.custom.cloud", None, "--m365-graph-endpoint"),
+            (None, "graph.custom.cloud", "--m365-authority-host"),
+        ],
+    )
+    def test_custom_region_requires_both_endpoints(
+        self, authority_host, graph_endpoint, missing
+    ):
+        args = argparse.Namespace(
+            region="M365Custom",
+            m365_authority_host=authority_host,
+            m365_graph_endpoint=graph_endpoint,
+        )
+
+        assert arguments.validate_arguments(args) == (
+            False,
+            f"--region M365Custom requires {missing}",
+        )
+
+    @pytest.mark.parametrize(
+        "authority_host, graph_endpoint, used",
+        [
+            ("login.custom.cloud", None, "--m365-authority-host"),
+            (None, "graph.custom.cloud", "--m365-graph-endpoint"),
+            (
+                "login.custom.cloud",
+                "graph.custom.cloud",
+                "--m365-authority-host, --m365-graph-endpoint",
+            ),
+        ],
+    )
+    def test_custom_endpoints_require_custom_region(
+        self, authority_host, graph_endpoint, used
+    ):
+        args = argparse.Namespace(
+            region="M365USGovernment",
+            m365_authority_host=authority_host,
+            m365_graph_endpoint=graph_endpoint,
+        )
+
+        assert arguments.validate_arguments(args) == (
+            False,
+            f"{used} can only be used with --region M365Custom",
+        )

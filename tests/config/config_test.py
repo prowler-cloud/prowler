@@ -153,6 +153,7 @@ config_aws = {
     "ecr_repository_vulnerability_minimum_severity": "MEDIUM",
     "inspector2_max_days_since_last_scan": 3,
     "inspector2_active_finding_max_age_days": 192,
+    "inspector2_kev_include_findings_without_exploit": False,
     "verify_premium_support_plans": True,
     "threat_detection_privilege_escalation_threshold": 0.2,
     "threat_detection_privilege_escalation_minutes": 1440,

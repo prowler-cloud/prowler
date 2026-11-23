@@ -17,6 +17,7 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.googleworkspace.exceptions.exceptions import (
     GoogleWorkspaceImpersonationError,
     GoogleWorkspaceInsufficientScopesError,
@@ -291,6 +292,7 @@ class GoogleworkspaceProvider(Provider):
                     message="Invalid JSON in credentials content",
                 )
             try:
+                GcpProvider.validate_service_account_key(credentials_data)
                 credentials = service_account.Credentials.from_service_account_info(
                     credentials_data,
                     scopes=GoogleworkspaceProvider.SCOPES,
@@ -343,6 +345,7 @@ class GoogleworkspaceProvider(Provider):
                         message="Invalid JSON in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
                     )
                 try:
+                    GcpProvider.validate_service_account_key(credentials_data)
                     credentials = service_account.Credentials.from_service_account_info(
                         credentials_data,
                         scopes=GoogleworkspaceProvider.SCOPES,

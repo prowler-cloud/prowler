@@ -68,11 +68,10 @@ class s3_bucket_object_versioning(Check):
     def execute(self) -> list[Check_Report_AWS]:
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             if not bucket.versioning_retrieved:
-                report.status = "MANUAL"
-                report.status_extended = f"Cannot evaluate versioning for S3 Bucket {bucket.name}: the versioning configuration could not be retrieved. Verify that the scanning credentials are allowed to call s3:GetBucketVersioning."
-            elif bucket.versioning:
+                continue  # unreadable: no finding, the service already logged the error
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
+            if bucket.versioning:
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} has versioning enabled."
             else:
@@ -106,22 +105,18 @@ class s3_bucket_object_versioning(Check):
 |--------|------|
 | `PASS` | Resource is compliant |
 | `FAIL` | An insecure condition was actually detected |
-| `MANUAL` | Human verification needed, or the data could not be retrieved |
+
+Never emit `MANUAL` from a check, including when data could not be retrieved. If the check cannot decide PASS or FAIL, it emits no finding for that resource.
 
 ### Permission / availability errors are NOT findings
 
 Never `FAIL` because an API call failed (missing permission or scope, API not enabled, feature not licensed). The service must expose the failure distinctly from an empty result (`None` instead of `[]`, a `*_retrieved` / `*_unavailable` flag, an `*_error` attribute or a `*_lookup_failed` set). A `404`/not-found usually means "not configured" and IS a legitimate `FAIL`; a definitively disabled API is a legitimate `FAIL` only when enabling that API is the audited control (e.g. GCP Access Approval).
 
-When a whole dataset is missing, emit ONE account/tenant/project-level `MANUAL` finding naming the required permission, and leave `Severity` untouched:
+Nor are they `PASS` or `MANUAL`. When data is missing, the check emits no finding: skip the resource, or return an empty list when the whole dataset is missing. The service layer already logs the error, so the user sees the missing permission there:
 
 ```python
 if {service}_client.{data} is None:
-    report = CheckReport{Provider}(metadata=self.metadata(), resource={})
-    report.resource_name = "<Tenant-level resource>"
-    report.resource_id = "<stable-id>"
-    report.status = "MANUAL"
-    report.status_extended = "Cannot evaluate <requirement>: <data> could not be retrieved. Verify that <permission> is granted to the scanning identity."
-    return [report]
+    return []  # unreadable: no finding, never PASS/FAIL/MANUAL
 ```
 
 ## Metadata
@@ -195,7 +190,7 @@ uv run pytest -n auto tests/providers/{provider}/services/{service}/{check_name}
 ## Before Opening the PR
 
 - [ ] Metadata validates (command above) and the Hub URL is `https://hub.prowler.com/check/{check_name}`
-- [ ] Tests cover PASS, FAIL, no resources and, if applicable, MANUAL (`prowler-test-sdk`)
+- [ ] Tests cover PASS, FAIL, no resources and, if applicable, unreadable data yielding no finding (`prowler-test-sdk`)
 - [ ] AWS: if the check imports another service's client, update the `dependents` table in `.github/workflows/sdk-tests.yml` and in `docs/developer-guide/unit-testing.mdx`
 - [ ] Changelog fragment in `prowler/changelog.d/` (`prowler-changelog` skill), not a direct `CHANGELOG.md` edit
 - [ ] Compliance mapping if the check covers a framework requirement (`prowler-compliance` skill)

@@ -4,8 +4,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Integration, Invitation, Provider
+from api.models import Integration, Invitation, Provider, ProviderSecret
 from api.utils import (
+    STORED_SECRET_NOT_SUPPORTED_ERROR,
     get_prowler_provider_kwargs,
     initialize_prowler_provider,
     merge_dicts,
@@ -14,7 +15,11 @@ from api.utils import (
     return_prowler_provider,
     validate_invitation,
 )
-from api.v1.serializers import KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
+from api.v1.serializers import (
+    KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+    declared_secret_fields,
+    validated_secret_fields,
+)
 from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
@@ -35,6 +40,17 @@ from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 from prowler.providers.vercel.vercel_provider import VercelProvider
 from rest_framework.exceptions import NotFound, ValidationError
+
+
+@pytest.fixture(autouse=True)
+def stored_secret_passes_through():
+    """These tests build MagicMock providers; the field filter has its own tests."""
+    with patch(
+        "api.utils.declared_secret_fields",
+        side_effect=lambda provider_type, secret_type, secret: dict(secret),
+    ) as filter_mock:
+        yield filter_mock
+
 
 VALID_KUBECONFIG = """\
 apiVersion: v1
@@ -226,6 +242,28 @@ class TestInitializeProwlerProvider:
         )
 
     @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_ignores_a_stored_key_file(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_file": "/proc/self/environ",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
+    @patch("api.utils.return_prowler_provider")
     def test_initialize_oraclecloud_provider_without_region_omits_scan_filter(
         self, mock_return_prowler_provider
     ):
@@ -247,6 +285,156 @@ class TestInitializeProwlerProvider:
             key_content="fake-base64-key-content",
             tenancy="ocid1.tenancy.oc1..fake",
         )
+
+
+class TestDeclaredProviderSecret:
+    GCP_STATIC = {
+        "client_id": "client-id",
+        "client_secret": "client-secret",
+        "refresh_token": "refresh-token",
+    }
+
+    @pytest.fixture(autouse=True)
+    def real_field_filter(self, stored_secret_passes_through):
+        stored_secret_passes_through.side_effect = declared_secret_fields
+
+    @staticmethod
+    def _provider(provider_type, secret_type, secret, uid="uid"):
+        provider = MagicMock()
+        provider.provider = provider_type
+        provider.uid = uid
+        provider.secret.secret_type = secret_type
+        provider.secret.secret = secret
+        return provider
+
+    def test_scan_kwargs_drop_undeclared_fields_of_a_stored_secret(self):
+        provider = self._provider(
+            Provider.ProviderChoices.GCP.value,
+            ProviderSecret.TypeChoices.STATIC,
+            {
+                **self.GCP_STATIC,
+                "credentials_file": "/var/run/worker-key.json",
+                "config_path": "/proc/self/environ",
+            },
+            uid="my-project",
+        )
+
+        with patch("api.utils.logger") as logged:
+            kwargs = get_prowler_provider_kwargs(provider)
+
+        assert kwargs == {**self.GCP_STATIC, "project_ids": ["my-project"]}
+        warning = logged.warning.call_args.args[0]
+        assert warning.endswith("config_path, credentials_file")
+        assert "/proc/self/environ" not in warning
+
+    @patch("api.utils.return_prowler_provider")
+    def test_connection_test_drops_undeclared_fields(
+        self, mock_return_prowler_provider
+    ):
+        provider = self._provider(
+            Provider.ProviderChoices.GCP.value,
+            ProviderSecret.TypeChoices.STATIC,
+            {**self.GCP_STATIC, "credentials_file": "/var/run/worker-key.json"},
+        )
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            **self.GCP_STATIC, provider_id="uid", raise_on_exception=False
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_connection_test_fails_for_a_stored_secret_no_serializer_accepts(
+        self, mock_return_prowler_provider
+    ):
+        provider = self._provider(
+            Provider.ProviderChoices.CLOUDFLARE.value,
+            ProviderSecret.TypeChoices.STATIC,
+            {"config_path": "/proc/self/environ"},
+        )
+
+        connection = prowler_provider_connection_test(provider)
+
+        assert connection.is_connected is False
+        assert str(connection.error) == STORED_SECRET_NOT_SUPPORTED_ERROR
+        mock_return_prowler_provider.return_value.test_connection.assert_not_called()
+
+    def test_role_secret_keeps_every_declared_field(self):
+        secret = {
+            "role_arn": "arn:aws:iam::123456789012:role/ProwlerScan",
+            "external_id": "external-id",
+            "role_session_name": "prowler",
+            "session_duration": 3600,
+        }
+        provider = self._provider(
+            Provider.ProviderChoices.AWS.value, ProviderSecret.TypeChoices.ROLE, secret
+        )
+
+        assert get_prowler_provider_kwargs(provider) == secret
+
+    def test_iac_access_token_still_reaches_the_provider(self):
+        provider = self._provider(
+            Provider.ProviderChoices.IAC.value,
+            ProviderSecret.TypeChoices.STATIC,
+            {
+                "repository_url": "https://github.com/org/repo",
+                "access_token": "token",
+                "credentials_file": "/etc/passwd",
+            },
+            uid="https://github.com/org/repo",
+        )
+
+        assert get_prowler_provider_kwargs(provider) == {
+            "scan_repository_url": "https://github.com/org/repo",
+            "oauth_app_token": "token",
+        }
+
+
+class TestSecretFieldHelpers:
+    def test_image_scan_filters_reach_the_provider(self):
+        secret = {
+            "registry_username": "user",
+            "registry_password": "pass",
+            "image_filter": "^prod/",
+            "tag_filter": "^v[0-9]+",
+        }
+
+        assert (
+            declared_secret_fields(
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                secret,
+            )
+            == secret
+        )
+
+    def test_a_provider_type_without_a_serializer_keeps_its_secret(self):
+        secret = {"token": "value", "endpoint": "https://example.com"}
+
+        assert (
+            declared_secret_fields(
+                "registry-plugin", ProviderSecret.TypeChoices.STATIC, secret
+            )
+            == secret
+        )
+
+    def test_a_known_provider_secret_without_a_serializer_shape_is_refused(self):
+        with pytest.raises(ValidationError):
+            declared_secret_fields(
+                Provider.ProviderChoices.CLOUDFLARE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {"config_path": "/proc/self/environ"},
+            )
+
+    def test_validated_fields_limit_the_stored_secret(self):
+        assert validated_secret_fields(
+            {"client_id": "a", "credentials_file": "/etc/passwd"}, {"client_id": "a"}
+        ) == {"client_id": "a"}
+
+    def test_a_secret_validated_elsewhere_is_stored_as_sent(self):
+        secret = {"token": "value"}
+
+        assert validated_secret_fields(secret, None) == secret
 
 
 class TestProwlerProviderConnectionTest:
@@ -285,6 +473,31 @@ class TestProwlerProviderConnectionTest:
             key_content="fake-base64-key-content",
             tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
             region=OraclecloudProvider._bootstrap_region,
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_ignores_a_stored_key_file(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_file": "/proc/self/environ",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
             provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
             raise_on_exception=False,
         )
@@ -447,8 +660,46 @@ class TestProwlerProviderConnectionTest:
             raise_on_exception=False,
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_googleworkspace_drops_extra_keys(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "C0123abcd"
+        provider.provider = Provider.ProviderChoices.GOOGLEWORKSPACE.value
+        provider.secret.secret = {
+            "credentials_content": '{"type": "service_account"}',
+            "delegated_user": "admin@example.com",
+            "credentials_file": "/etc/passwd",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            credentials_content='{"type": "service_account"}',
+            delegated_user="admin@example.com",
+            provider_id="C0123abcd",
+            raise_on_exception=False,
+        )
+
 
 class TestGetProwlerProviderKwargs:
+    def test_get_prowler_provider_kwargs_googleworkspace_drops_extra_keys(self):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.GOOGLEWORKSPACE.value
+        provider.uid = "C0123abcd"
+        provider.secret.secret = {
+            "credentials_content": "{}",
+            "delegated_user": "admin@example.com",
+            "credentials_file": "/dev/zero",
+            "config_path": "/etc/passwd",
+        }
+
+        assert get_prowler_provider_kwargs(provider) == {
+            "credentials_content": "{}",
+            "delegated_user": "admin@example.com",
+        }
+
     @pytest.mark.parametrize(
         "provider_type, expected_extra_kwargs",
         [
@@ -463,10 +714,6 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.GCP.value,
                 {"project_ids": ["provider_uid"]},
-            ),
-            (
-                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
-                {},
             ),
             (
                 Provider.ProviderChoices.M365.value,

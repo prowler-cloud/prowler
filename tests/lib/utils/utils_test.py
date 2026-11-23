@@ -202,6 +202,8 @@ class Test_utils_validate_ip_address:
 
 
 class Test_detect_secrets_scan_batch:
+    generic_value = "Tr0ub4dor3xKq9vLmZ"
+
     def test_batch_returns_findings_per_key(self):
         results = detect_secrets_scan_batch(
             {
@@ -250,6 +252,17 @@ class Test_detect_secrets_scan_batch:
         payloads = {f"k{i}": f'password = "S3cr3tV4lu3xy{i}z"' for i in range(5)}
         results = detect_secrets_scan_batch(payloads, chunk_size=2)
         assert sorted(results.keys()) == ["k0", "k1", "k2", "k3", "k4"]
+
+    def test_batch_confidence_threshold_filters_generic_rules(self):
+        payloads = {"a": f'password = "{self.generic_value}"'}
+        assert "a" in detect_secrets_scan_batch(payloads, confidence="low")
+        assert detect_secrets_scan_batch(payloads, confidence="medium") == {}
+
+    def test_batch_none_confidence_falls_back_to_default(self):
+        results = detect_secrets_scan_batch(
+            {"a": f'password = "{self.generic_value}"'}, confidence=None
+        )
+        assert results["a"][0]["type"] == "Generic Password"
 
     def test_batch_empty_payloads(self):
         assert detect_secrets_scan_batch({}) == {}

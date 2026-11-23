@@ -83,6 +83,7 @@ class TestAzureProvider:
             )
             assert azure_provider.audit_config == {
                 "shodan_api_key": None,
+                "threat_signatures": [],
                 "php_latest_version": "8.5",
                 "python_latest_version": "3.12",
                 "java_latest_version": "17",
