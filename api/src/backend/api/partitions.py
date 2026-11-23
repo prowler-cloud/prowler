@@ -73,6 +73,39 @@ class PostgresUUIDv7RangePartition(PostgresRangePartition):
                 ),
             )
 
+    def delete(
+        self,
+        model,
+        schema_editor,
+    ) -> None:
+        quote = schema_editor.quote_name
+        table = quote(schema_editor.create_partition_table_name(model, self.name()))
+
+        # resource_finding_mappings holds a foreign key to every findings
+        # partition, which blocks a plain DROP TABLE. The matching mappings
+        # partition goes first, then the findings partition is detached, which
+        # releases the key, and dropped. The mappings plan runs after the
+        # findings one, so its drop has to tolerate a table that is already gone.
+        # Each branch bounds its lock wait, so a busy table makes the plan fail
+        # and roll back instead of holding up requests behind a queued lock.
+        if issubclass(model, Finding):
+            mappings_table = quote(
+                schema_editor.create_partition_table_name(
+                    ResourceFindingMapping, self.name()
+                )
+            )
+            schema_editor.execute("SET LOCAL lock_timeout = '5s'")
+            schema_editor.execute(f"DROP TABLE IF EXISTS {mappings_table}")
+            schema_editor.execute(
+                f"ALTER TABLE {quote(model._meta.db_table)} DETACH PARTITION {table}"
+            )
+            schema_editor.execute(f"DROP TABLE {table}")
+        elif issubclass(model, ResourceFindingMapping):
+            schema_editor.execute("SET LOCAL lock_timeout = '5s'")
+            schema_editor.execute(f"DROP TABLE IF EXISTS {table}")
+        else:
+            super().delete(model, schema_editor)
+
 
 class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
     def __init__(
