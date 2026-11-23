@@ -309,22 +309,24 @@ class UniversalComplianceOutput:
             if (
                 getattr(self, "_file_descriptor", None)
                 and not self._file_descriptor.closed
-                and self._data
             ):
-                csv_writer = DictWriter(
-                    self._file_descriptor,
-                    fieldnames=[field.upper() for field in self._data[0].dict().keys()],
-                    delimiter=";",
-                )
-                if self._file_descriptor.tell() == 0:
-                    csv_writer.writeheader()
-                for row in self._data:
-                    csv_writer.writerow(
-                        {
-                            k.upper(): sanitize_csv_value(v)
-                            for k, v in row.dict().items()
-                        }
+                if self._data:
+                    csv_writer = DictWriter(
+                        self._file_descriptor,
+                        fieldnames=[
+                            field.upper() for field in self._data[0].dict().keys()
+                        ],
+                        delimiter=";",
                     )
+                    if self._file_descriptor.tell() == 0:
+                        csv_writer.writeheader()
+                    for row in self._data:
+                        csv_writer.writerow(
+                            {
+                                k.upper(): sanitize_csv_value(v)
+                                for k, v in row.dict().items()
+                            }
+                        )
                 if self.close_file or self._from_cli:
                     self._file_descriptor.close()
         except Exception as error:

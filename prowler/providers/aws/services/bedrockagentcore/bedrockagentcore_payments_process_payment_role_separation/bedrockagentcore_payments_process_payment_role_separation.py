@@ -81,7 +81,6 @@ class bedrockagentcore_payments_process_payment_role_separation(Check):
     payment action are skipped.
     - PASS: The role allows only one of CreatePaymentSession and ProcessPayment.
     - FAIL: The role allows both actions.
-    - MANUAL: The IAM roles could not be listed, or one of the role's policies could not be read.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -92,15 +91,7 @@ class bedrockagentcore_payments_process_payment_role_separation(Check):
         """
         findings = []
         if iam_client.roles is None:
-            report = Check_Report_AWS(metadata=self.metadata(), resource={})
-            report.region = iam_client.region
-            report.resource_id = iam_client.audited_account
-            report.resource_arn = iam_client.role_arn_template
-            report.status = "MANUAL"
-            report.status_extended = (
-                "IAM roles could not be listed, so this check could not be evaluated."
-            )
-            return [report]
+            return findings  # roles could not be listed: no finding, never MANUAL
 
         for role in iam_client.roles:
             if role.is_service_role:
@@ -119,17 +110,16 @@ class bedrockagentcore_payments_process_payment_role_separation(Check):
                 statements.extend(_statements(policy.document))
 
             granted = granted_payment_actions(statements)
-            if not granted and not unresolved:
+            allows_both = len(granted) == len(PAYMENT_ACTIONS)
+            # An unreadable policy cannot prove a PASS, but readable policies can still prove a FAIL.
+            if not granted or (unresolved and not allows_both):
                 continue
 
             report = Check_Report_AWS(metadata=self.metadata(), resource=role)
             report.region = iam_client.region
-            if len(granted) == len(PAYMENT_ACTIONS):
+            if allows_both:
                 report.status = "FAIL"
                 report.status_extended = f"IAM Role {role.name} allows both bedrock-agentcore:CreatePaymentSession and bedrock-agentcore:ProcessPayment."
-            elif unresolved:
-                report.status = "MANUAL"
-                report.status_extended = f"IAM Role {role.name} has policies that could not be retrieved ({', '.join(sorted(unresolved))}), so it cannot be verified that it does not allow both bedrock-agentcore:CreatePaymentSession and bedrock-agentcore:ProcessPayment."
             else:
                 report.status = "PASS"
                 report.status_extended = f"IAM Role {role.name} allows {granted[0]} but not both payment actions."

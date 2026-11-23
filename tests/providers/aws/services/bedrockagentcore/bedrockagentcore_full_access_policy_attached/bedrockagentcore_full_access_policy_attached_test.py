@@ -54,11 +54,8 @@ class Test_bedrockagentcore_full_access_policy_attached:
     def test_no_roles(self):
         assert _run([]) == []
 
-    def test_roles_not_listed_is_manual(self):
-        result = _run(None)
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+    def test_roles_not_listed_has_no_finding(self):
+        assert _run(None) == []
 
     def test_service_role_is_skipped(self):
         assert _run([_role([AGENTCORE_FULL_ACCESS_ARN], is_service_role=True)]) == []

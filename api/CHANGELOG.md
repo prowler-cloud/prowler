@@ -4,6 +4,48 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.52.0] (Prowler v5.51.0)
+
+### 🚀 Added
+
+- ENS RD2022 PDF compliance report for Microsoft 365 scans, generated from the new `ens_rd2022_m365` framework [(#13394)](https://github.com/prowler-cloud/prowler/pull/13394)
+
+### 🔄 Changed
+
+- Scan outputs no longer keep an uncompressed copy of the files already inside the report ZIP: without an output bucket only the ZIP stays on disk and compliance downloads are served from it, and in the output bucket compliance files are stored with `Content-Encoding: gzip` [(#13396)](https://github.com/prowler-cloud/prowler/pull/13396)
+- `/findings/metadata` and `/findings/metadata/latest` answer from the values stored on each finding when a scan has no summaries yet, without joining resources, and the latest variant only reads the latest scans [(#13399)](https://github.com/prowler-cloud/prowler/pull/13399)
+- `/resources` and `/resources/latest` load only the finding ids needed for the `findings` relationship instead of every finding row, unless `include=findings` is requested [(#13407)](https://github.com/prowler-cloud/prowler/pull/13407)
+- Scans store their resource and category summaries while they run instead of only when they finish, so `/findings/metadata` answers from the summary tables for a scan in progress [(#13410)](https://github.com/prowler-cloud/prowler/pull/13410)
+
+### 🐞 Fixed
+
+- ENS PDF report gives the execution mode badge of automated requirements its own colour; the mode was compared without its accent, so they got the colour of manual requirements [(#13423)](https://github.com/prowler-cloud/prowler/pull/13423)
+- Failed scans no longer keep partial filter values in `/findings/metadata`, and a completed scan's category counters are stored before it is marked as completed [(#13429)](https://github.com/prowler-cloud/prowler/pull/13429)
+
+### 🔐 Security
+
+- `opentelemetry-api` and `opentelemetry-sdk` 1.45.2 to close an open security advisory [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
+## [1.51.0] (Prowler v5.50.0)
+
+### 🔄 Changed
+
+- `PATCH /api/v1/users/{id}` accepts `email` and `password` changes only from the user themselves [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+### 🐞 Fixed
+
+- Sessions started through SAML SSO or with an API key stay in the organization that issued them: they only see and manage that organization, `POST /api/v1/tokens/switch` does not move them to another one and rejects API keys, and users who belong to several organizations cannot change the account password or email or delete the account from such a session [(#13381)](https://github.com/prowler-cloud/prowler/pull/13381)
+
+### 🔐 Security
+
+- Compliance PDF reports escape the values of the cover page information table, so markup in a provider alias or UID is printed as text and no longer makes the report worker fetch an image URL [(#13378)](https://github.com/prowler-cloud/prowler/pull/13378)
+- Lighthouse OpenAI-compatible base URL validation rejects IPv4-compatible (`::a.b.c.d`) and IPv4-translated (`::ffff:0:a.b.c.d`) IPv6 literals, which were classified as public even when the embedded IPv4 address was private or link-local [(#13379)](https://github.com/prowler-cloud/prowler/pull/13379)
+- Attack Paths custom queries are validated with backtick-quoted identifiers unquoted, reject `\u` escapes and block `apoc.when`, `apoc.case`, `apoc.graph` and `apoc.spatial`, and the tokenizer follows Neo4j on line comments ended by a carriage return and on escaped newlines in strings, so a blocked operation can no longer be hidden behind quoting, escapes or comments, or passed as a nested query string [(#13380)](https://github.com/prowler-cloud/prowler/pull/13380)
+
+---
+
 ## [1.50.0] (Prowler v5.49.0)
 
 ### 🔄 Changed

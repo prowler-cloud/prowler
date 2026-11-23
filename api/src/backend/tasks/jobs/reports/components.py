@@ -392,7 +392,7 @@ def create_info_table(
     table_data = []
     for label, value in rows:
         if normal_style and isinstance(value, str) and len(value) > 50:
-            value = Paragraph(value, normal_style)
+            value = Paragraph(escape_html(value), normal_style)
         table_data.append([label, value])
 
     table = Table(table_data, colWidths=[label_width, value_width])

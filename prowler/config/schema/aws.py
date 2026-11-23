@@ -379,6 +379,10 @@ class AWSProviderConfig(ProviderConfigBase):
         le=365,
         description="Days an Inspector2 finding can stay active since first observed. Range: 1..365.",
     )
+    inspector2_kev_include_findings_without_exploit: Optional[bool] = Field(
+        default=None,
+        description="Check every active Inspector2 finding against the CISA KEV catalog, not only the ones with a public exploit.",
+    )
 
     # --- Trusted Advisor --------------------------------------------------
     verify_premium_support_plans: Optional[bool] = None
@@ -508,6 +512,13 @@ class AWSProviderConfig(ProviderConfigBase):
             "Validate discovered secrets against the provider APIs (live check). "
             "Makes outbound network calls that authenticate with the discovered "
             "secret. Disabled by default."
+        ),
+    )
+    secrets_confidence: Optional[Literal["low", "medium", "high"]] = Field(
+        default=None,
+        description=(
+            "Minimum Kingfisher confidence level for reporting secret findings. "
+            "Possible values: low, medium, high. Default: low."
         ),
     )
     max_days_secret_unused: Optional[int] = Field(
