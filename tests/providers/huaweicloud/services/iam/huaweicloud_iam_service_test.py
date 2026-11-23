@@ -156,12 +156,14 @@ class TestIAMService:
         assert iam.operation_protection.enabled is True
 
     def test_list_access_keys_parses_credentials(self):
-        client = _build_client()
+        client = _build_client(
+            users=[SimpleNamespace(id="target-user-2", name="bob", enabled=True)]
+        )
         client.list_permanent_access_keys.return_value = SimpleNamespace(
             credentials=[
                 SimpleNamespace(
                     access="AK123",
-                    user_id="user-1",
+                    user_id="target-user-2",
                     status="active",
                     create_time="2026-01-01T00:00:00.000000Z",
                 )
@@ -170,8 +172,24 @@ class TestIAMService:
 
         iam = IAM(_provider_with_client(client))
 
+        assert iam.access_keys_collected is True
+        assert (
+            client.list_permanent_access_keys.call_args.args[0].user_id
+            == "target-user-2"
+        )
         assert len(iam.access_keys) == 1
         assert iam.access_keys[0].access == "AK123"
-        assert iam.access_keys[0].user_id == "user-1"
+        assert iam.access_keys[0].user_id == "target-user-2"
         assert iam.access_keys[0].status == "active"
         assert iam.access_keys[0].create_time == "2026-01-01T00:00:00.000000Z"
+
+    def test_list_access_keys_error_sets_collected_false(self):
+        client = _build_client(
+            users=[SimpleNamespace(id="user-1", name="alice", enabled=True)]
+        )
+        client.list_permanent_access_keys.side_effect = Exception("boom")
+
+        iam = IAM(_provider_with_client(client))
+
+        assert iam.access_keys_collected is False
+        assert iam.access_keys == []

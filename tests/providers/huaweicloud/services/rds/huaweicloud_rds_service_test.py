@@ -101,6 +101,10 @@ class TestRDSService:
             enable_ssl=True,
             type="Ha",
             ha=SimpleNamespace(mode="ha"),
+            nodes=[
+                SimpleNamespace(role="master", availability_zone="cn-north-4a"),
+                SimpleNamespace(role="slave", availability_zone="cn-north-4b"),
+            ],
             disk_encryption_id="",
         )
         regional_client = mock.MagicMock(region=REGION)
@@ -115,3 +119,4 @@ class TestRDSService:
         assert inst.enable_ssl is True
         assert inst.instance_type == "Ha"
         assert inst.ha_mode == "ha"
+        assert inst.availability_zones == ["cn-north-4a", "cn-north-4b"]

@@ -189,6 +189,20 @@ class TestVPCService:
         assert fl.status == "ACTIVE"
         assert fl.admin_state is True
         assert fl.region == REGION
+        assert vpc_service.flow_logs_failed_regions == set()
+
+    def test_list_flow_logs_error_tracks_failed_region(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[]
+        )
+        regional_client.list_flow_logs.side_effect = Exception("flow logs failed")
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        assert vpc_service.flow_logs == []
+        assert REGION in vpc_service.flow_logs_failed_regions
 
     def test_list_security_groups_empty(self):
         regional_client = mock.MagicMock(region=REGION)

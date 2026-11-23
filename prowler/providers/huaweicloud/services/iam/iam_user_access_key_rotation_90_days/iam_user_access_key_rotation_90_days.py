@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from prowler.lib.check.models import Check, CheckReportHuaweiCloud
 from prowler.providers.huaweicloud.services.iam.iam_client import iam_client
@@ -24,7 +24,8 @@ class iam_user_access_key_rotation_90_days(Check):
             except ValueError:
                 continue
 
-            age_days = (now - created_at).days
+            age = now - created_at
+            age_days = age.days
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=key)
             report.region = iam_client.region
             report.resource_id = key.access
@@ -33,7 +34,7 @@ class iam_user_access_key_rotation_90_days(Check):
                 f"huaweicloud:iam::{iam_client.audited_account}:access-key/{key.access}"
             )
 
-            if age_days <= 90:
+            if age <= timedelta(days=90):
                 report.status = "PASS"
                 report.status_extended = (
                     f"IAM access key {key.access} for user {key.user_id} "

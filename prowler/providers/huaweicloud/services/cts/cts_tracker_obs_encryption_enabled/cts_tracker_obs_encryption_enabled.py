@@ -9,6 +9,8 @@ class cts_tracker_obs_encryption_enabled(Check):
         findings = []
 
         for tracker in cts_client.trackers:
+            if tracker.tracker_type != "system":
+                continue
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=tracker)
             report.region = tracker.region
             report.resource_id = tracker.id

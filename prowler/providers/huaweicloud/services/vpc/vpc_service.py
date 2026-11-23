@@ -20,6 +20,7 @@ class VPC(HuaweiCloudService):
         self.vpcs = {}
         self.security_groups = {}
         self.flow_logs: List[FlowLog] = []
+        self.flow_logs_failed_regions: set[str] = set()
 
         self.__threading_call__(self._list_vpcs)
         self.__threading_call__(self._list_security_groups)
@@ -148,11 +149,19 @@ class VPC(HuaweiCloudService):
         try:
             from huaweicloudsdkvpc.v2 import ListFlowLogsRequest
 
-            request = ListFlowLogsRequest()
-            response = self._call_with_retries(regional_client.list_flow_logs, request)
+            limit = 2000
+            marker = None
 
-            if response and getattr(response, "flow_logs", None):
-                for fl_data in response.flow_logs:
+            while True:
+                request = ListFlowLogsRequest(limit=limit, marker=marker)
+                response = self._call_with_retries(
+                    regional_client.list_flow_logs, request
+                )
+                flow_logs = (
+                    getattr(response, "flow_logs", None) or [] if response else []
+                )
+
+                for fl_data in flow_logs:
                     self.flow_logs.append(
                         FlowLog(
                             id=getattr(fl_data, "id", None) or "",
@@ -165,7 +174,14 @@ class VPC(HuaweiCloudService):
                         )
                     )
 
+                if len(flow_logs) < limit:
+                    break
+                marker = getattr(flow_logs[-1], "id", None)
+                if not marker:
+                    break
+
         except Exception as error:
+            self.flow_logs_failed_regions.add(region)
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

@@ -13,7 +13,7 @@
   "Risk": "Without **LTS integration**, security teams cannot perform real-time alerting or fast log querying on CTS management events, delaying detection of unauthorized API activity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0008.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0002.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Without **log file integrity validation**, an attacker or rogue administrator who gains access to the OBS bucket could modify or delete audit trace files undetected, compromising **forensic investigation** and **non-repudiation**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0008.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0002.html",
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0014.html"
   ],
   "Remediation": {
     "Code": {

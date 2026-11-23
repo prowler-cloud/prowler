@@ -8,6 +8,9 @@ class iam_user_multiple_access_keys(Check):
     """Check if IAM users have at most one active permanent access key."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        if not getattr(iam_client, "access_keys_collected", True):
+            return []
+
         findings = []
         active_counts = Counter(
             key.user_id

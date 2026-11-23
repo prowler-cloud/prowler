@@ -9,15 +9,15 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "**Huawei Cloud Virtual Private Cloud (VPC)** has **VPC Flow Logs** enabled to capture accepted and rejected IP traffic across network interfaces.",
-  "Risk": "Without **VPC Flow Logs**, network intrusions, lateral movement, and anomalous outbound connections cannot be investigated or detected effectively.",
+  "Description": "**Huawei Cloud Virtual Private Cloud (VPC)** has **VPC Flow Logs** enabled to record IP traffic metadata for network interfaces in the VPC.",
+  "Risk": "Without **VPC Flow Logs**, network intrusions, lateral movement, and anomalous connections cannot be investigated or detected effectively.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-vpc/vpc_flow_log_0001.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud VPC CreateFlowLog --flow_log.resource_type=\"vpc\" --flow_log.resource_id=\"<vpc-id>\" --flow_log.traffic_type=\"all\" --flow_log.log_group_id=\"<lts-group-id>\" --flow_log.log_topic_id=\"<lts-stream-id>\"",
       "NativeIaC": "",
       "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Virtual Private Cloud (VPC)** > **Flow Logs**.\n3. Click **Create Flow Log**.\n4. Select **VPC** as the resource type, choose the target VPC, and bind an **LTS log group and stream**.\n5. Click **OK**.",
       "Terraform": ""

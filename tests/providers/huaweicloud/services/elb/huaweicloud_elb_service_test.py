@@ -114,8 +114,13 @@ class TestELBService:
                     protocol="HTTPS",
                     protocol_port=443,
                     tls_ciphers_policy="tls-1-2-strict",
+                    security_policy_id="sp-1",
                 )
-            ]
+            ],
+            page_info=SimpleNamespace(next_marker=None),
+        )
+        regional_client.show_security_policy.return_value = SimpleNamespace(
+            security_policy=SimpleNamespace(protocols=["TLSv1.2", "TLSv1.3"])
         )
 
         elb = ELB(_provider_with_client(regional_client))
@@ -127,4 +132,6 @@ class TestELBService:
         assert lis.protocol == "HTTPS"
         assert lis.protocol_port == 443
         assert lis.tls_ciphers_policy == "tls-1-2-strict"
+        assert lis.security_policy_id == "sp-1"
+        assert lis.security_policy_protocols == ["TLSv1.2", "TLSv1.3"]
         assert lis.region == REGION

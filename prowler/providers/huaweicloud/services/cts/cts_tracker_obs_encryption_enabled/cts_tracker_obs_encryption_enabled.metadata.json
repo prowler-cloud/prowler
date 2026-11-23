@@ -13,7 +13,7 @@
   "Risk": "Unencrypted **CTS trace files** in OBS may expose sensitive API call metadata, resource identifiers, and operational activity if the storage bucket or underlying media is compromised.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0008.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0002.html"
   ],
   "Remediation": {
     "Code": {

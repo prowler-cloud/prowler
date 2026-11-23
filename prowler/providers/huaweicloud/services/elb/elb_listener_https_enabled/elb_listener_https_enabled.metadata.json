@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Elastic Load Balance (ELB)** > **Load Balancers**.\n3. Select the load balancer and go to the **Listeners** tab.\n4. Replace plaintext **HTTP** listeners with **HTTPS** listeners (or configure HTTP-to-HTTPS redirection).",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Elastic Load Balance (ELB)** > **Load Balancers**.\n3. Select the load balancer and go to the **Listeners** tab.\n4. Replace plaintext **HTTP** listeners with **HTTPS** listeners.",
       "Terraform": ""
     },
     "Recommendation": {

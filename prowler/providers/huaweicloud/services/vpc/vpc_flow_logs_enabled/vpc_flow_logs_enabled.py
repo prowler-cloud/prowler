@@ -15,7 +15,10 @@ class vpc_flow_logs_enabled(Check):
             and fl.admin_state
         }
 
+        failed_regions = getattr(vpc_client, "flow_logs_failed_regions", set())
         for vpc in vpc_client.vpcs.values():
+            if vpc.region in failed_regions:
+                continue
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=vpc)
             report.region = vpc.region
             report.resource_id = vpc.id

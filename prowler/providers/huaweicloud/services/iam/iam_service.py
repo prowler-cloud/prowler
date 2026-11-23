@@ -21,6 +21,7 @@ class IAM(HuaweiCloudService):
         self.users: List[IAMUser] = []
         self.mfa_devices: List[MFADevice] = []
         self.access_keys: List[AccessKey] = []
+        self.access_keys_collected: bool = False
         self.domain_id = provider.identity.domain_id if provider.identity else ""
         self.operation_protection = OperationProtection(account_id=self.domain_id)
 
@@ -190,7 +191,7 @@ class IAM(HuaweiCloudService):
             )
 
     def _list_access_keys(self):
-        """List all permanent access keys in the domain."""
+        """List permanent access keys for each audited IAM user."""
         if not self.client:
             return
 
@@ -201,23 +202,27 @@ class IAM(HuaweiCloudService):
         try:
             from huaweicloudsdkiam.v3 import ListPermanentAccessKeysRequest
 
-            request = ListPermanentAccessKeysRequest()
-            response = self._call_with_retries(
-                client.list_permanent_access_keys, request
-            )
+            for user in self.users:
+                request = ListPermanentAccessKeysRequest(user_id=user.id)
+                response = self._call_with_retries(
+                    client.list_permanent_access_keys, request
+                )
 
-            if response and getattr(response, "credentials", None):
-                for cred in response.credentials:
-                    self.access_keys.append(
-                        AccessKey(
-                            access=getattr(cred, "access", None) or "",
-                            user_id=getattr(cred, "user_id", None) or "",
-                            status=getattr(cred, "status", None) or "",
-                            create_time=getattr(cred, "create_time", None),
+                if response and getattr(response, "credentials", None):
+                    for cred in response.credentials:
+                        self.access_keys.append(
+                            AccessKey(
+                                access=getattr(cred, "access", None) or "",
+                                user_id=getattr(cred, "user_id", None) or user.id,
+                                status=getattr(cred, "status", None) or "",
+                                create_time=getattr(cred, "create_time", None),
+                            )
                         )
-                    )
+
+            self.access_keys_collected = True
 
         except Exception as error:
+            self.access_keys_collected = False
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

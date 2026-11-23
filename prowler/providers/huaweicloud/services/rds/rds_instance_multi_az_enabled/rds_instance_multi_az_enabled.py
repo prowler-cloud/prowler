@@ -21,11 +21,18 @@ class rds_instance_multi_az_enabled(Check):
                 instance.instance_type.lower() == "ha"
                 or instance.ha_mode.lower() == "ha"
             )
-            if is_ha:
+            is_multi_az = is_ha and len(instance.availability_zones) >= 2
+            if is_multi_az:
                 report.status = "PASS"
                 report.status_extended = (
                     f"RDS instance {instance.name} ({instance.id}) "
-                    f"has high availability (Primary/Standby) enabled."
+                    f"has high availability (Primary/Standby) enabled across multiple AZs."
+                )
+            elif is_ha:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"RDS instance {instance.name} ({instance.id}) "
+                    f"is Primary/Standby but deployed in a single availability zone."
                 )
             else:
                 report.status = "FAIL"

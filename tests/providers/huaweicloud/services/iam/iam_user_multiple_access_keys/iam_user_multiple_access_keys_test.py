@@ -25,6 +25,33 @@ class TestIAMUserMultipleAccessKeys:
 
             iam_client.users = []
             iam_client.access_keys = []
+            iam_client.access_keys_collected = True
+            iam_client.audited_account = "123456789012"
+
+            result = iam_user_multiple_access_keys().execute()
+            assert len(result) == 0
+
+    def test_access_keys_not_collected_skips(self):
+        iam_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.iam.iam_user_multiple_access_keys.iam_user_multiple_access_keys.iam_client",
+                new=iam_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
+            from prowler.providers.huaweicloud.services.iam.iam_user_multiple_access_keys.iam_user_multiple_access_keys import (
+                iam_user_multiple_access_keys,
+            )
+
+            iam_client.users = [IAMUser(id="user-1", name="alice")]
+            iam_client.access_keys = []
+            iam_client.access_keys_collected = False
             iam_client.audited_account = "123456789012"
 
             result = iam_user_multiple_access_keys().execute()

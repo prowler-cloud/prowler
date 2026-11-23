@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
@@ -76,13 +76,40 @@ class ELB(HuaweiCloudService):
         logger.info(f"ELB - Listing Listeners in {region}...")
 
         try:
-            from huaweicloudsdkelb.v3 import ListListenersRequest
+            from huaweicloudsdkelb.v3 import (
+                ListListenersRequest,
+                ShowSecurityPolicyRequest,
+            )
 
-            request = ListListenersRequest()
-            response = self._call_with_retries(regional_client.list_listeners, request)
+            policy_cache = {}
+            limit = 2000
+            marker = None
 
-            if response and getattr(response, "listeners", None):
-                for lis_data in response.listeners:
+            while True:
+                request = ListListenersRequest(limit=limit, marker=marker)
+                response = self._call_with_retries(
+                    regional_client.list_listeners, request
+                )
+                listeners = (
+                    getattr(response, "listeners", None) or [] if response else []
+                )
+
+                for lis_data in listeners:
+                    security_policy_id = (
+                        getattr(lis_data, "security_policy_id", None) or ""
+                    )
+                    security_policy_protocols = None
+                    if security_policy_id:
+                        if security_policy_id not in policy_cache:
+                            policy_cache[security_policy_id] = (
+                                self._get_security_policy_protocols(
+                                    regional_client,
+                                    security_policy_id,
+                                    ShowSecurityPolicyRequest,
+                                )
+                            )
+                        security_policy_protocols = policy_cache[security_policy_id]
+
                     self.listeners.append(
                         Listener(
                             id=getattr(lis_data, "id", None) or "",
@@ -92,14 +119,44 @@ class ELB(HuaweiCloudService):
                             tls_ciphers_policy=(
                                 getattr(lis_data, "tls_ciphers_policy", None) or ""
                             ),
+                            security_policy_id=security_policy_id,
+                            security_policy_protocols=security_policy_protocols,
                             region=region,
                         )
                     )
+
+                page_info = getattr(response, "page_info", None) if response else None
+                next_marker = (
+                    getattr(page_info, "next_marker", None) if page_info else None
+                )
+                if not next_marker or len(listeners) < limit:
+                    break
+                marker = next_marker
 
         except Exception as error:
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _get_security_policy_protocols(
+        self, regional_client, security_policy_id: str, request_cls
+    ) -> Optional[List[str]]:
+        """Return configured TLS protocols for a custom ELB security policy, or None on error."""
+        try:
+            response = self._call_with_retries(
+                regional_client.show_security_policy,
+                request_cls(security_policy_id=security_policy_id),
+            )
+            policy = getattr(response, "security_policy", None) if response else None
+            if policy is None:
+                return None
+            return list(getattr(policy, "protocols", None) or [])
+        except Exception as error:
+            region = getattr(regional_client, "region", "unknown")
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
 
 class LoadBalancer(HuaweiCloudBaseModel):
@@ -121,4 +178,6 @@ class Listener(HuaweiCloudBaseModel):
     protocol: str = ""
     protocol_port: int = 0
     tls_ciphers_policy: str = ""
+    security_policy_id: str = ""
+    security_policy_protocols: Optional[List[str]] = None
     region: str = ""

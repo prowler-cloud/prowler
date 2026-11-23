@@ -51,9 +51,17 @@ class TestCTSTrackerObsEncryptionEnabled:
                 Tracker(
                     id="tracker-1",
                     name="system",
+                    tracker_type="system",
                     region="cn-north-4",
                     is_support_trace_files_encryption=True,
-                )
+                ),
+                Tracker(
+                    id="tracker-data",
+                    name="data-tracker",
+                    tracker_type="data",
+                    region="cn-north-4",
+                    is_support_trace_files_encryption=False,
+                ),
             ]
             cts_client.audited_account = "123456789012"
 
@@ -85,6 +93,7 @@ class TestCTSTrackerObsEncryptionEnabled:
                 Tracker(
                     id="tracker-2",
                     name="system",
+                    tracker_type="system",
                     region="cn-north-4",
                     is_support_trace_files_encryption=False,
                 )
