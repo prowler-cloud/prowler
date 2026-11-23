@@ -2,11 +2,15 @@ import inspect
 from abc import ABC
 from typing import TYPE_CHECKING
 
+from mcp.types import ToolAnnotations
+
 if TYPE_CHECKING:
     from fastmcp import FastMCP
 
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIClient
+
+READ_ONLY_PREFIXES = ("get_", "list_", "search_")
 
 
 class BaseTool(ABC):
@@ -24,6 +28,10 @@ class BaseTool(ABC):
     Attributes:
         _api_client: Singleton instance of ProwlerAPIClient for API requests
         _logger: Logger instance for structured logging
+        read_only_tools: Tools that change nothing although their name does not
+            start with one of READ_ONLY_PREFIXES
+        destructive_tools: Tools that remove, replace or hide data although their
+            name does not start with "delete_"
 
     Example:
         class FindingsTools(BaseTool):
@@ -36,6 +44,9 @@ class BaseTool(ABC):
                 response = await self.api_client.get("/findings")
                 return response
     """
+
+    read_only_tools: frozenset[str] = frozenset()
+    destructive_tools: frozenset[str] = frozenset()
 
     def __init__(self):
         """Initialize the tool.
@@ -93,10 +104,24 @@ class BaseTool(ABC):
 
             # Check if the method is a coroutine function (async)
             if inspect.iscoroutinefunction(method):
-                mcp.tool(method)
+                mcp.tool(method, annotations=self._annotations_for(name))
                 registered_count += 1
                 self.logger.debug(f"Auto-registered tool: {name}")
 
         self.logger.info(
             f"Auto-registered {registered_count} tools from {self.__class__.__name__}"
+        )
+
+    def _annotations_for(self, name: str) -> ToolAnnotations:
+        """Return the MCP hints a client reads to decide whether to ask the user.
+
+        Every tool states both hints: left out, the MCP spec treats a tool as
+        destructive, so a client could not tell a listing from a deletion.
+        """
+        if name.startswith(READ_ONLY_PREFIXES) or name in self.read_only_tools:
+            return ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+        return ToolAnnotations(
+            readOnlyHint=False,
+            destructiveHint=name.startswith("delete_")
+            or name in self.destructive_tools,
         )

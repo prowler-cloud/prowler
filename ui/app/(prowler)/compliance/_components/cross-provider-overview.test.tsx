@@ -100,12 +100,14 @@ const withCatalog = (
   eligibleProviderTypes: string[] = ["aws", "azure"],
   canManage = true,
   unavailable = false,
+  incomplete = false,
 ) =>
   vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
     entries,
     eligibleProviderTypes,
     canManage,
     unavailable,
+    incomplete,
   });
 
 const successResult = (complianceId: string): CrossProviderOverviewResult => ({
@@ -219,6 +221,28 @@ describe("CrossProviderOverview", () => {
       UNIVERSAL_FRAMEWORKS.length - 1,
     );
     expect(screen.getByText(/Could not load DORA/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the frameworks it could list when a catalog page failed", async () => {
+    // Given: one catalog page timed out, the rest were read
+    withCatalog(catalogEntries(), ["aws", "azure"], true, false, true);
+    vi.mocked(getCrossProviderComplianceOverview).mockImplementation(
+      async ({ complianceId }) => successResult(complianceId),
+    );
+
+    // When
+    await renderOverview();
+
+    // Then
+    expect(screen.getAllByTestId("framework-card")).toHaveLength(
+      UNIVERSAL_FRAMEWORKS.length,
+    );
+    expect(
+      screen.getByText(/Some compliance frameworks could not be listed/),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText(CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE),
     ).not.toBeInTheDocument();

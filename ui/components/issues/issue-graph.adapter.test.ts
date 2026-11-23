@@ -4,9 +4,9 @@ import {
   buildIssueGraph,
   GRAPH_RESOURCE_LIMIT,
 } from "@/components/issues/issue-graph.adapter";
-import { IssueAttributes } from "@/types/issues";
+import { IssueAttributes, LegState } from "@/types/issues";
 
-const leg = (state: string, evidence: string[] = []) => ({
+const leg = (state: LegState, evidence: string[] = []) => ({
   state,
   text: "",
   evidence,
@@ -31,6 +31,55 @@ const ids = (view: ReturnType<typeof buildIssueGraph>) =>
   view.nodes.map((n) => n.id);
 
 describe("buildIssueGraph", () => {
+  it("draws the internet reaching the resources the reachability leg cites", () => {
+    // Given - a path that starts on the internet; only bucket a is cited.
+    const view = buildIssueGraph(issue({ attacker_start: "internet" }), [
+      "arn:aws:s3:::a",
+      "arn:aws:s3:::b",
+    ]);
+
+    // Then - one Internet node, as Attack Paths draws it, and one edge.
+    expect(view.nodes).toContainEqual(
+      expect.objectContaining({ id: "internet", labels: ["Internet"] }),
+    );
+    expect(view.edges.filter((edge) => edge.source === "internet")).toEqual([
+      expect.objectContaining({
+        target: "resource:arn:aws:s3:::a",
+        type: "CAN_ACCESS",
+      }),
+    ]);
+  });
+
+  it("does not claim the internet reaches a path that does not start there", () => {
+    expect(ids(buildIssueGraph(issue(), ["arn:aws:s3:::a"]))).not.toContain(
+      "internet",
+    );
+    // Nor one that starts there but is not shown to be reachable, nor one
+    // whose leg cites no drawn resource: the leg alone is aggregate.
+    expect(
+      ids(
+        buildIssueGraph(
+          issue({
+            attacker_start: "internet",
+            legs: { ...issue().legs, reachability: leg("unknown") },
+          }),
+          ["arn:aws:s3:::a"],
+        ),
+      ),
+    ).not.toContain("internet");
+    expect(
+      ids(
+        buildIssueGraph(
+          issue({
+            attacker_start: "internet",
+            legs: { ...issue().legs, reachability: leg("yes") },
+          }),
+          ["arn:aws:s3:::a"],
+        ),
+      ),
+    ).not.toContain("internet");
+  });
+
   it("draws folded findings absent from leg evidence with their real severity", () => {
     // Given - only the instance is cited, but both security groups also have findings.
     const resources = ["instance", "security-group-ssh", "security-group-rdp"];
@@ -38,9 +87,11 @@ describe("buildIssueGraph", () => {
     assessedIssue.legs.reachability.evidence = ["ssh · instance"];
     const findings = resources.map((resourceUid, index) => ({
       id: `finding-${index}`,
+      uid: `finding-uid-${index}`,
       checkId: index === 2 ? "rdp" : "ssh",
       checkTitle: index === 2 ? "RDP exposed" : "SSH exposed",
       severity: index === 0 ? ("critical" as const) : ("high" as const),
+      triageStatus: "open" as const,
       resourceUid,
     }));
 
@@ -78,9 +129,11 @@ describe("buildIssueGraph", () => {
     const view = buildIssueGraph(assessedIssue, resources, [
       {
         id: "folded",
+        uid: "folded-uid",
         checkId: "ssh",
         checkTitle: "SSH exposed",
         severity: "critical",
+        triageStatus: "open",
         resourceUid,
       },
     ]);
@@ -120,7 +173,7 @@ describe("buildIssueGraph", () => {
     });
   });
 
-  it.each(["yes", "no", "partial", "unknown"])(
+  it.each<LegState>(["yes", "no", "partial", "unknown"])(
     "does not infer per-resource Internet reachability from aggregate %s",
     (state) => {
       const view = buildIssueGraph(

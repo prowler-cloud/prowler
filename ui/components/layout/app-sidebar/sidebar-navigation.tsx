@@ -27,8 +27,10 @@ import {
   type NavigationChildLink,
   type NavigationCloudUpgrade,
   type NavigationCollapsible,
+  type NavigationItem,
   type NavigationLink,
   type NavigationSection,
+  type NavigationTopLevelCloudUpgrade,
 } from "./types";
 
 interface SidebarNavigationProps {
@@ -43,6 +45,11 @@ interface NavigationLinkProps {
 
 interface NavigationCollapsibleProps {
   item: NavigationCollapsible;
+  onSelect?: AppSidebarSelectionHandler;
+}
+
+interface NavigationItemProps {
+  item: NavigationItem;
   onSelect?: AppSidebarSelectionHandler;
 }
 
@@ -103,6 +110,33 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
       <TooltipTrigger asChild>{link}</TooltipTrigger>
       <TooltipContent side="right">{item.tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+function TopLevelCloudUpgrade({
+  item,
+  onSelect,
+}: {
+  item: NavigationTopLevelCloudUpgrade;
+  onSelect?: AppSidebarSelectionHandler;
+}) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
+  const Icon = item.icon;
+
+  return (
+    <NavigationButton
+      onClick={() => {
+        openCloudUpgrade(item.cloudUpgradeFeature, onSelect?.() ?? undefined);
+      }}
+    >
+      <Icon aria-hidden="true" className="size-[18px] shrink-0" />
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <Badge variant="cloud" size="sm">
+        Cloud
+      </Badge>
+    </NavigationButton>
   );
 }
 
@@ -168,6 +202,24 @@ function LinkChild({
       </Link>
     </NavigationButton>
   );
+}
+
+function TopLevelItem({ item, onSelect }: NavigationItemProps) {
+  if (item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE) {
+    return (
+      <CollapsibleNavigationItem
+        key={getCollapsibleActivationKey(item)}
+        item={item}
+        onSelect={onSelect}
+      />
+    );
+  }
+
+  if (item.kind === NAVIGATION_ITEM_KIND.CLOUD_UPGRADE) {
+    return <TopLevelCloudUpgrade item={item} onSelect={onSelect} />;
+  }
+
+  return <TopLevelLink item={item} onSelect={onSelect} />;
 }
 
 function NavigationChildItem({ item, onSelect }: NavigationChildProps) {
@@ -252,15 +304,7 @@ function NavigationSectionList({
       <ul className="space-y-1">
         {section.items.map((item) => (
           <li key={item.label}>
-            {item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE ? (
-              <CollapsibleNavigationItem
-                key={getCollapsibleActivationKey(item)}
-                item={item}
-                onSelect={onSelect}
-              />
-            ) : (
-              <TopLevelLink item={item} onSelect={onSelect} />
-            )}
+            <TopLevelItem item={item} onSelect={onSelect} />
           </li>
         ))}
       </ul>

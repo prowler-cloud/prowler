@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,13 +12,11 @@ import type { ProvidersTableRow } from "@/types/providers-table";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const {
-  onboardingTriggerSpy,
   providersAccountsTableSpy,
   refreshMock,
   replaceMock,
   searchParamsValue,
 } = vi.hoisted(() => ({
-  onboardingTriggerSpy: vi.fn(),
   providersAccountsTableSpy: vi.fn(),
   refreshMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -32,14 +30,6 @@ vi.mock("next/navigation", () => ({
     replace: replaceMock,
   }),
   useSearchParams: () => new URLSearchParams(searchParamsValue.current),
-}));
-
-vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: (props: { startAtTarget?: string }) => {
-    onboardingTriggerSpy(props);
-    return null;
-  },
-  PageReady: () => null,
 }));
 
 vi.mock("@/components/providers/table", () => ({
@@ -160,7 +150,8 @@ describe("ProvidersAccountsView", () => {
     window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.restoreAllMocks();
     providersAccountsTableSpy.mockClear();
-    onboardingTriggerSpy.mockClear();
+    replaceMock.mockClear();
+    refreshMock.mockClear();
     searchParamsValue.current = "";
     window.history.replaceState({}, "", "/");
   });
@@ -299,6 +290,128 @@ describe("ProvidersAccountsView", () => {
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
+  it("sends a new tenant to the sample Overview when the first-run wizard closes", async () => {
+    // Given: the first-run redirect opened the wizard while the sample is shown.
+    searchParamsValue.current = "addProvider=true&addProviderSource=first_run";
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then: an empty Providers page shows nothing; the Overview shows the sample.
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("sends the tenant to the sample Overview after launching a scan from the sidebar CTA", async () => {
+    // Given: the sidebar Launch Scan CTA opened the wizard, which closes after the launch.
+    searchParamsValue.current =
+      "addProvider=true&addProviderSource=sidebar_cta";
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("sends a new tenant to the sample Overview when the empty-state wizard closes", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("keeps the user on Providers when a row action wizard closes", async () => {
+    // Given: a row action opens the wizard to edit an existing provider.
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+    const { onOpenProviderWizard } = providersAccountsTableSpy.mock
+      .lastCall![0] as {
+      onOpenProviderWizard: () => void;
+    };
+
+    // When
+    act(() => onOpenProviderWizard());
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the tenant to the sample Overview when the page-button wizard closes", async () => {
+    // Given: a provider exists but no scan has completed yet.
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Provider" }));
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
   it("signals which control opened the wizard", async () => {
     // Given
     const user = userEvent.setup();
@@ -395,45 +508,6 @@ describe("ProvidersAccountsView", () => {
 
     // Then
     expect(funnelSignals).toEqual([{ step: "wizard_opened", source: "url" }]);
-  });
-
-  it("starts the tour at the provider-type step when the wizard is already open", () => {
-    // Given
-    searchParamsValue.current = "addProvider=true&onboarding=add-provider";
-
-    // When
-    render(
-      <ProvidersAccountsView
-        isCloud
-        filters={filters}
-        metadata={metadata}
-        providers={providers}
-        rows={rows}
-      />,
-    );
-
-    // Then: the welcome and "open the wizard" steps have nothing left to ask for.
-    expect(onboardingTriggerSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ startAtTarget: "provider-type" }),
-    );
-  });
-
-  it("lets the tour start from its first step while the wizard is closed", () => {
-    // Given / When
-    render(
-      <ProvidersAccountsView
-        isCloud
-        filters={filters}
-        metadata={metadata}
-        providers={providers}
-        rows={rows}
-      />,
-    );
-
-    // Then
-    expect(onboardingTriggerSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ startAtTarget: undefined }),
-    );
   });
 
   it("keeps filters and table visible when providers are disconnected", () => {

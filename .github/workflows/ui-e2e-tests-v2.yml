@@ -39,7 +39,10 @@ jobs:
       github.repository == 'prowler-cloud/prowler' &&
       (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
-    runs-on: ubuntu-latest
+    # ubuntu-latest is moving to 26.04 (rollout began October 19, 2026; completion
+    # targeted for November 19, 2026), where `playwright install` refuses to install
+    # Chromium for the pinned Playwright. Stay on 24.04 until the suite upgrades.
+    runs-on: ubuntu-24.04
     env:
       AUTH_SECRET: "fallback-ci-secret-for-testing"
       AUTH_TRUST_HOST: true
@@ -98,12 +101,12 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
@@ -219,7 +222,7 @@ jobs:
           echo "E2E prerequisite preflight passed."
 
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1
+        uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
         with:
           cluster_name: kind
 
@@ -232,6 +235,18 @@ jobs:
         run: |
           yq -i '.networks.kind.external = true' docker-compose.yml
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
+
+      # The kubeconfig points at kind-control-plane on the private kind network, which the
+      # Kubernetes provider rejects unless the network is declared as trusted. The host
+      # resolves to both an IPv4 and an IPv6 address, so trust every subnet of the network.
+      - name: Allow the kind network for the Kubernetes provider
+        run: |
+          set -o pipefail
+          kind_subnets=$(docker network inspect kind --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}' |
+            tr ' ' '\n' | grep . | paste -sd, -)
+          echo "Trusted private networks: ${kind_subnets}"
+          sed -i '/^PROWLER_ALLOWED_PRIVATE_NETWORKS=/d' .env
+          echo "PROWLER_ALLOWED_PRIVATE_NETWORKS=${kind_subnets}" >> .env
 
       - name: Fix API data directory permissions
         run: docker run --rm -v "$(pwd)/_data/api:/data" alpine chown -R 1000:1000 /data
@@ -248,13 +263,38 @@ jobs:
         #
         # The image installs the SDK from git@master (api/uv.lock), so a PR changing BOTH the SDK
         # and the API would run against the OLD SDK and crash on startup. Overlay the checkout's
-        # SDK source so both run together. New SDK dependencies still need an api/uv.lock bump.
+        # SDK source so both run together, and install the SDK dependencies the locked SDK does
+        # not have yet (e.g. `regex` for prowler/lib/threats), or every scan fails on import
+        # until api/uv.lock is bumped. Packages the API already pins are left as they are.
         run: |
+          set -o pipefail
           docker build -t prowlercloud/prowler-api:pr-base ./api
-          docker build -t prowlercloud/prowler-api:latest -f - prowler <<'DOCKERFILE'
+          missing_sdk_deps=$(
+            python3 -c 'import tomllib; print("\n".join(tomllib.load(open("pyproject.toml", "rb"))["project"]["dependencies"]))' |
+              docker run --rm -i --entrypoint /home/prowler/.venv/bin/python prowlercloud/prowler-api:pr-base -c '
+          import importlib.metadata as metadata, sys
+          from packaging.requirements import Requirement
+          for line in filter(None, map(str.strip, sys.stdin)):
+              req = Requirement(line)
+              if req.marker and not req.marker.evaluate():
+                  continue
+              try:
+                  metadata.version(req.name)
+              except metadata.PackageNotFoundError:
+                  extras = "[" + ",".join(sorted(req.extras)) + "]" if req.extras else ""
+                  print(req.name + extras + str(req.specifier))
+          ' | tr '\n' ' '
+          )
+          echo "SDK dependencies missing from api/uv.lock: ${missing_sdk_deps:-none}"
+          docker build --build-arg "SDK_MISSING_DEPS=${missing_sdk_deps}" \
+            -t prowlercloud/prowler-api:latest -f - prowler <<'DOCKERFILE'
           FROM prowlercloud/prowler-api:pr-base
+          ARG SDK_MISSING_DEPS
           RUN rm -rf /home/prowler/.venv/lib/python3.12/site-packages/prowler
           COPY --chown=prowler:prowler . /home/prowler/.venv/lib/python3.12/site-packages/prowler
+          RUN if [ -n "$SDK_MISSING_DEPS" ]; then \
+                uv pip install --python /home/prowler/.venv/bin/python $SDK_MISSING_DEPS && rm -rf ~/.cache/uv; \
+              fi
           DOCKERFILE
 
       - name: Start API services
@@ -291,7 +331,7 @@ jobs:
           '
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version-file: "ui/.nvmrc"
 
@@ -305,7 +345,7 @@ jobs:
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
       - name: Setup pnpm and Next.js cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: |
             ${{ env.STORE_PATH }}
@@ -325,7 +365,7 @@ jobs:
         run: pnpm run build
 
       - name: Cache Playwright browsers
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -391,13 +431,25 @@ jobs:
         working-directory: ./ui
         run: pnpm run test:e2e:registry
 
-      - name: Upload test reports
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      # Artifacts of this public repo are downloadable and the specs type real
+      # credentials into forms, so failure page snapshots go to the log, where
+      # GitHub masks secret values, instead of an artifact.
+      - name: Print Playwright failure snapshots
         if: failure()
-        with:
-          name: playwright-report
-          path: ui/playwright-report/
-          retention-days: 7
+        run: |
+          find /tmp/playwright-tests -name error-context.md -print0 2>/dev/null |
+            while IFS= read -r -d '' file; do
+              echo "::group::${file#/tmp/playwright-tests/}"
+              cat "$file"
+              echo "::endgroup::"
+            done
+
+      # A worker that crashes on import, a scan that fails as soon as it starts,
+      # or a connection test that never resolves only shows up here. Dump the
+      # whole run: a tail misses failures from the first specs.
+      - name: Dump API service logs
+        if: failure()
+        run: docker compose logs --no-color --timestamps api worker worker-beat || true
 
       - name: Cleanup services
         if: always()
@@ -417,7 +469,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
@@ -439,7 +491,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 

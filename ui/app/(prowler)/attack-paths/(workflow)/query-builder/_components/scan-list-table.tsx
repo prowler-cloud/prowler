@@ -27,6 +27,9 @@ import { ScanStatusBadge } from "./scan-status-badge";
 
 interface ScanListTableProps {
   scans: AttackPathScan[];
+  /** Overrides the `scanId` search param, e.g. for the sample scan. */
+  selectedScanId?: string;
+  readOnly?: boolean;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -100,8 +103,10 @@ const buildMetadata = (
 
 const getColumns = ({
   selectedScanId,
+  readOnly,
 }: {
   selectedScanId: string | null;
+  readOnly: boolean;
 }): ColumnDef<AttackPathScan>[] => [
   {
     id: "select",
@@ -115,10 +120,11 @@ const getColumns = ({
         <RadioGroupItem
           value={row.original.id}
           checked={isSelected}
-          disabled={!canSelect}
+          disabled={readOnly || !canSelect}
           className={cn(
             "size-5",
-            canSelect &&
+            !readOnly &&
+              canSelect &&
               !isSelected &&
               "border-text-neutral-secondary cursor-pointer",
             !canSelect && "disabled:opacity-70",
@@ -227,12 +233,16 @@ const getColumns = ({
  * Table displaying AWS account Attack Paths scans
  * Shows scan metadata and allows selection of completed scans
  */
-export const ScanListTable = ({ scans }: ScanListTableProps) => {
+export const ScanListTable = ({
+  scans,
+  selectedScanId: selectedScanIdOverride,
+  readOnly = false,
+}: ScanListTableProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const selectedScanId = searchParams.get("scanId");
+  const selectedScanId = selectedScanIdOverride ?? searchParams.get("scanId");
   const pageSize = parsePageParam(
     searchParams.get("scanPageSize"),
     DEFAULT_PAGE_SIZE,
@@ -278,25 +288,31 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
 
   return (
     <RadioGroup
+      disabled={readOnly}
       value={selectedScanId ?? ""}
       onValueChange={handleSelectScan}
       className="gap-0"
     >
       <DataTable
-        columns={getColumns({ selectedScanId })}
+        columns={getColumns({ selectedScanId, readOnly })}
         data={paginatedScans}
-        metadata={buildMetadata(scans.length, currentPage, totalPages)}
+        metadata={
+          readOnly
+            ? undefined
+            : buildMetadata(scans.length, currentPage, totalPages)
+        }
         controlledPage={currentPage}
         controlledPageSize={pageSize}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
-        onRowClick={(row) => {
-          if (row.original.attributes.graph_data_ready) {
-            handleSelectScan(row.original.id);
-          }
-        }}
-        getRowAttributes={(row) =>
-          row.index === 0 ? { "data-tour-id": "attack-paths-scan-list" } : {}
+        onRowClick={
+          readOnly
+            ? undefined
+            : (row) => {
+                if (row.original.attributes.graph_data_ready) {
+                  handleSelectScan(row.original.id);
+                }
+              }
         }
         enableRowSelection
         rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}

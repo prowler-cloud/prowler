@@ -8,11 +8,7 @@ export default function AttackPathsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ContentLayout
-      title="Attack Paths"
-      icon={<GitBranch />}
-      onboardingAction={{ flowId: "attack-paths" }}
-    >
+    <ContentLayout title="Attack Paths" icon={<GitBranch />}>
       {children}
     </ContentLayout>
   );

@@ -18,6 +18,8 @@ class stepfunctions_statemachine_no_secrets_in_definition(Check):
             "secrets_ignore_patterns", []
         )
         validate = stepfunctions_client.audit_config.get("secrets_validate", False)
+
+        confidence = stepfunctions_client.audit_config.get("secrets_confidence", "low")
         state_machines = list(stepfunctions_client.state_machines.values())
 
         # Collect one payload per state machine (its definition) and scan them
@@ -30,7 +32,10 @@ class stepfunctions_statemachine_no_secrets_in_definition(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

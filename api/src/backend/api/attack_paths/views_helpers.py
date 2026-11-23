@@ -200,7 +200,10 @@ def execute_custom_query(
         return _truncate_graph(serialized)
 
     except graph_database.ClientStatementException as exc:
-        raise ValidationError({"query": exc.message})
+        # The database message can quote values the query read, which would
+        # bypass the provider filter applied to the returned graph
+        logger.warning(f"Custom cypher query rejected by the database: {exc.code}")
+        raise ValidationError({"query": f"The query is not valid ({exc.code})"})
 
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
