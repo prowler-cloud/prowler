@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Creating Zod schemas"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -19,16 +19,26 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 z.string().email()
 z.string().uuid()
 z.string().url()
-z.string().nonempty()
-z.object({ name: z.string() }).required_error("Required")
+z.string({ required_error: "Required", invalid_type_error: "Not a string" })
+z.string().min(1, { message: "Required" })
+schema.merge(other)
+z.object({...}).strict()
+z.ZodIssueCode.custom
 
 // ✅ Zod 4 (NEW)
 z.email()
 z.uuid()
 z.url()
-z.string().min(1)
-z.object({ name: z.string() }, { error: "Required" })
+z.string({ error: "Required" })          // single `error` param (string or function)
+z.string().min(1, { error: "Required" }) // `message` still works but is deprecated
+schema.extend(other.shape)
+z.strictObject({...})
+"custom"                                  // issue code literal in ctx.addIssue
 ```
+
+`z.ZodIssueCode.custom` still compiles in Zod 4 (deprecated) and is used in `ui/types/formSchemas.ts` and `ui/types/integrations.ts`; use `code: "custom"` in new code.
+
+Prowler UI schemas live in `ui/types/formSchemas.ts`, `ui/types/authFormSchema.ts`, `ui/types/integrations.ts` and next to the feature that uses them.
 
 ## Basic Schemas
 
@@ -129,10 +139,10 @@ const trimmedString = z.preprocess(
 const passwordSchema = z.string()
   .min(8)
   .refine(val => /[A-Z]/.test(val), {
-    message: "Must contain uppercase letter",
+    error: "Must contain uppercase letter",
   })
   .refine(val => /[0-9]/.test(val), {
-    message: "Must contain number",
+    error: "Must contain number",
   });
 
 // With superRefine for multiple errors
@@ -142,7 +152,7 @@ const formSchema = z.object({
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       message: "Passwords don't match",
       path: ["confirmPassword"],
     });

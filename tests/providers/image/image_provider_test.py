@@ -713,6 +713,54 @@ class TestImageProviderRegistryAuth:
         assert env["TRIVY_USERNAME"] == "myuser"
         assert env["TRIVY_PASSWORD"] == "mypass"
 
+    @patch("subprocess.run")
+    def test_execute_trivy_routes_trivy_through_the_outbound_proxy(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        monkeypatch.setenv("HTTPS_PROXY", "http://operator-proxy:3128")
+        monkeypatch.setenv("NO_PROXY", "169.254.169.254")
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        env = mock_subprocess.call_args.kwargs["env"]
+        for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+            assert env[key].startswith("http://127.0.0.1:")
+        assert "NO_PROXY" not in env
+
+    @patch("subprocess.run")
+    def test_execute_trivy_leaves_the_environment_alone_when_the_check_is_skipped(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+        monkeypatch.setenv("HTTPS_PROXY", "http://operator-proxy:3128")
+        monkeypatch.setenv("NO_PROXY", "169.254.169.254")
+        provider = _make_provider()
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
+
+        provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        env = mock_subprocess.call_args.kwargs["env"]
+        assert env["HTTPS_PROXY"] == "http://operator-proxy:3128"
+        assert env["NO_PROXY"] == "169.254.169.254"
+
+    @patch("subprocess.run")
+    def test_execute_trivy_fails_the_scan_when_the_proxy_cannot_start(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        monkeypatch.setenv(
+            "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS", "not-a-network"
+        )
+        provider = _make_provider()
+
+        with pytest.raises(ImageScanError, match="outbound proxy"):
+            provider._execute_trivy(["trivy", "image", "alpine:3.18"], "alpine:3.18")
+
+        mock_subprocess.assert_not_called()
+
     @patch("prowler.providers.image.image_provider.create_registry_adapter")
     def test_test_connection_with_basic_auth(self, mock_factory):
         """Test test_connection passes credentials to the registry adapter."""
@@ -952,6 +1000,10 @@ class TestTestRegistryConnection:
 
 
 class TestTrivyAuthIntegration:
+    @pytest.fixture(autouse=True)
+    def _no_registry_dns(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+
     @patch("subprocess.run")
     def test_run_scan_passes_trivy_env_with_credentials(self, mock_subprocess):
         """Test that run_scan() passes TRIVY_USERNAME/PASSWORD via env when credentials are set."""
@@ -1227,8 +1279,9 @@ class TestImageProviderNameValidation:
             "localhost:5000/myimage:latest",
         ],
     )
-    def test_image_provider_valid_image_names(self, valid_name):
+    def test_image_provider_valid_image_names(self, valid_name, monkeypatch):
         """Test that various valid image name formats pass validation."""
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
         provider = _make_provider(images=[valid_name])
         assert valid_name in provider.images
 
@@ -1487,7 +1540,76 @@ class TestConnectionPrivateNetworkAllowlist:
         assert result.is_connected is True
 
 
+class TestScanImageRegistryHostCheck:
+    ALLOWLIST_ENV = "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS"
+    SKIP_ENV = "PROWLER_SKIP_OUTBOUND_HOST_CHECK"
+
+    @pytest.fixture(autouse=True)
+    def _check_enforced(self, monkeypatch):
+        monkeypatch.delenv(self.ALLOWLIST_ENV, raising=False)
+        monkeypatch.delenv(self.SKIP_ENV, raising=False)
+
+    @staticmethod
+    def _resolves_to(address):
+        return patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            return_value=[(2, 1, 6, "", (address, 0))],
+        )
+
+    @pytest.mark.parametrize(
+        "image",
+        [
+            "postgres:5432/prowler_db/public:1",
+            "localhost:5000/app:1",
+            "localhost/app:1",
+        ],
+    )
+    def test_rejects_an_image_on_a_private_registry_host(self, image):
+        with self._resolves_to("172.22.0.2"):
+            with pytest.raises(ImageRegistryAuthError):
+                _make_provider(images=[image])
+
+    @pytest.mark.parametrize(
+        "image", ["127.0.0.1:5000/app:1", "169.254.169.254/latest/meta:1"]
+    )
+    def test_rejects_an_image_on_a_non_public_literal_address(self, image):
+        with pytest.raises(ImageRegistryAuthError):
+            _make_provider(images=[image])
+
+    def test_accepts_an_image_on_a_public_registry_host(self):
+        with self._resolves_to("140.82.121.34"):
+            provider = _make_provider(images=["ghcr.io/owner/app:1"])
+
+        assert provider.images == ["ghcr.io/owner/app:1"]
+
+    def test_does_not_resolve_docker_hub_images(self):
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo"
+        ) as getaddrinfo:
+            _make_provider(images=["alpine:3.18", "library/nginx:latest"])
+
+        getaddrinfo.assert_not_called()
+
+    def test_accepts_a_private_registry_inside_the_allowlist(self, monkeypatch):
+        monkeypatch.setenv(self.ALLOWLIST_ENV, "10.20.0.0/16")
+        with self._resolves_to("10.20.0.5"):
+            provider = _make_provider(images=["harbor.internal/app:1"])
+
+        assert provider.images == ["harbor.internal/app:1"]
+
+    def test_accepts_a_private_registry_when_the_check_is_skipped(self, monkeypatch):
+        monkeypatch.setenv(self.SKIP_ENV, "1")
+        with self._resolves_to("10.20.0.5"):
+            provider = _make_provider(images=["harbor.internal/app:1"])
+
+        assert provider.images == ["harbor.internal/app:1"]
+
+
 class TestRegistryScanErrorDegradation:
+    @pytest.fixture(autouse=True)
+    def _no_registry_dns(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+
     @patch("subprocess.run")
     def test_registry_discovered_image_scan_error_is_skipped(self, mock_subprocess):
         provider = _make_provider(images=["reg.io/chart:1.0", "alpine:3.18"])

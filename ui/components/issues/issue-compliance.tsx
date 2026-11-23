@@ -10,6 +10,7 @@ import {
 } from "@/components/compliance/compliance-framework-chip";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import { IssueFinding } from "@/types/issues";
 
@@ -103,7 +104,7 @@ export const IssueCompliance = ({
     (state.partial || truncated || checks.size > COMPLIANCE_LOOKUP_LIMIT);
 
   const open = (framework: FindingComplianceFramework) => {
-    if (!scanId) return;
+    if (!scanId || isSampleId(scanId)) return;
     window.open(
       buildComplianceDetailHref({
         complianceId: framework.complianceId,
@@ -150,7 +151,7 @@ export const IssueCompliance = ({
                 <ComplianceFrameworkChip
                   key={framework.complianceId}
                   framework={framework}
-                  isNavigable={Boolean(scanId)}
+                  isNavigable={Boolean(scanId) && !isSampleId(scanId)}
                   onOpen={open}
                 />
               ))}

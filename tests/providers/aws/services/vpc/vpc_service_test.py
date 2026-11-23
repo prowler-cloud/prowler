@@ -54,6 +54,43 @@ def mock_make_api_call_endpoint_services(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def mock_make_api_call_endpoint_services_policy_support(self, operation_name, kwarg):
+    """Mock that returns VPC endpoint services from mixed owners with
+    supported, unsupported, and missing VpcEndpointPolicySupported values."""
+    if operation_name == "DescribeVpcEndpointServices":
+        return {
+            "ServiceDetails": [
+                {
+                    "ServiceId": "vpce-svc-owned123",
+                    "ServiceName": "com.amazonaws.vpce.us-east-1.vpce-svc-owned123",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": AWS_ACCOUNT_NUMBER,
+                    "VpcEndpointPolicySupported": True,
+                    "Tags": [],
+                },
+                {
+                    "ServiceId": "vpce-svc-amazon456",
+                    "ServiceName": "com.amazonaws.us-east-1.email-smtp",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": "amazon",
+                    "VpcEndpointPolicySupported": False,
+                    "Tags": [],
+                },
+                {
+                    "ServiceId": "vpce-svc-thirdparty789",
+                    "ServiceName": "com.amazonaws.vpce.us-east-1.vpce-svc-thirdparty789",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": THIRD_PARTY_ACCOUNT,
+                    "Tags": [],
+                },
+            ],
+            "ServiceNames": [],
+        }
+    if operation_name == "DescribeVpcEndpointServicePermissions":
+        return {"AllowedPrincipals": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
 def mock_make_api_call_endpoint_services_access_denied(self, operation_name, kwarg):
     """Mock where DescribeVpcEndpointServicePermissions raises AccessDenied."""
     if operation_name == "DescribeVpcEndpointServices":
@@ -702,3 +739,39 @@ class Test_VPC_Service:
         assert vpc.vpc_endpoint_services[0].id == "vpce-svc-owned123"
         # allowed_principals must remain empty when service is not found
         assert vpc.vpc_endpoint_services[0].allowed_principals == []
+
+    # Test VPC Endpoint Services records policy support for every service owner
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_services_policy_support,
+    )
+    def test_describe_vpc_endpoint_services_records_policy_support(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        # Policy support is recorded for every service, regardless of owner
+        assert (
+            vpc.vpc_endpoint_policy_supported[
+                "com.amazonaws.vpce.us-east-1.vpce-svc-owned123"
+            ]
+            is True
+        )
+        assert (
+            vpc.vpc_endpoint_policy_supported["com.amazonaws.us-east-1.email-smtp"]
+            is False
+        )
+        # A missing VpcEndpointPolicySupported field is stored as None (unknown),
+        # never as False, so the check still evaluates the endpoint
+        assert (
+            "com.amazonaws.vpce.us-east-1.vpce-svc-thirdparty789"
+            in vpc.vpc_endpoint_policy_supported
+        )
+        assert (
+            vpc.vpc_endpoint_policy_supported[
+                "com.amazonaws.vpce.us-east-1.vpce-svc-thirdparty789"
+            ]
+            is None
+        )
+        # Only the service owned by the audited account is collected for auditing
+        assert len(vpc.vpc_endpoint_services) == 1
+        assert vpc.vpc_endpoint_services[0].id == "vpce-svc-owned123"
