@@ -4,6 +4,74 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.51.0] (Prowler v5.51.0)
+
+### 🔐 Security
+
+- Next.js 16.4.5, Vitest 4.1.12 and patched pins for `hono`, `@hono/node-server`, `fast-xml-parser`, `zod`, `@modelcontextprotocol/sdk`, `smol-toml`, `source-map-js`, `postcss-selector-parser` and `@ai-sdk/provider-utils` to close open security advisories [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
+## [1.50.0] (Prowler v5.50.0)
+
+### 🐞 Fixed
+
+- Edit user form no longer sends the email when it was not changed [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+---
+
+## [1.49.0] (Prowler v5.49.0)
+
+### 🔄 Changed
+
+- Sentry browser and server SDK setup no longer passes the deprecated `profilesSampleRate` option, which had no effect without a profiling integration [(#13119)](https://github.com/prowler-cloud/prowler/pull/13119)
+
+### 🔐 Security
+
+- zlib to 1.4-r0 in the UI container image, patching CVE-2026-4738 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+
+---
+
+## [1.48.0] (Prowler v5.48.0)
+
+### 🚀 Added
+
+- Findings page shows the findings of a running first scan as they arrive, plus a "View Early Findings" action on executing scans [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+
+### 🔄 Changed
+
+- NATO D32 compliance icon now uses the official NATO/OTAN logo [(#13278)](https://github.com/prowler-cloud/prowler/pull/13278)
+
+### 🐞 Fixed
+
+- Cross-provider compliance view shows the per-provider breakdown for frameworks without a dedicated UI mapper instead of "No per-provider breakdown is available" [(#13261)](https://github.com/prowler-cloud/prowler/pull/13261)
+
+### 🔐 Security
+
+- `zod` to 4.6.6, `js-yaml` to 4.3.2 and `vitest` to 4.1.11, plus transitive `hono`, `vite`, `brace-expansion`, `fast-uri`, `ip-address`, `body-parser`, `qs` and `baseline-browser-mapping` to patched versions, resolving 33 npm audit advisories (9 high, 21 moderate, 3 low) [(#13249)](https://github.com/prowler-cloud/prowler/pull/13249)
+
+---
+
+## [1.47.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- Icon for the NATO D32 compliance framework on the compliance cards [(#13174)](https://github.com/prowler-cloud/prowler/pull/13174)
+
+### 🔄 Changed
+
+- Invitations page uses `Status` instead of `State` in the filter, table column and invitation details, and the Invitations and Roles filters show capitalized options [(#13175)](https://github.com/prowler-cloud/prowler/pull/13175)
+- Product tours and the guided onboarding sequence are no longer shown; new tenants still land on the add-provider wizard [(#13176)](https://github.com/prowler-cloud/prowler/pull/13176)
+- Add provider wizard connects every provider in one step, saving the account and credentials and testing the connection together, with teammate invitations for every provider and Lighthouse AI help beside the steps [(#13181)](https://github.com/prowler-cloud/prowler/pull/13181)
+
+### 🐞 Fixed
+
+- User avatar requesting the current page as an image on every load, which rendered each page twice [(#13177)](https://github.com/prowler-cloud/prowler/pull/13177)
+- Lighthouse AI reply blanking out for a frame when the response finishes streaming, which made the whole text blink and reappear [(#13180)](https://github.com/prowler-cloud/prowler/pull/13180)
+- Compliance cross-provider tab no longer blanks out when a single catalog page or framework fails to load; it shows the frameworks that loaded with a warning instead [(#13183)](https://github.com/prowler-cloud/prowler/pull/13183)
+
+---
+
 ## [1.46.0] (Prowler v5.46.0)
 
 ### 🚀 Added

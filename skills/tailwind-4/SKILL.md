@@ -6,11 +6,21 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Working with Tailwind classes"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
+
+## Tailwind 4 Setup (CSS-first, no tailwind.config)
+
+- Config lives in CSS: `ui/styles/globals.css` starts with `@import "tailwindcss";` plus `@plugin`, `@source`, `@custom-variant`, `@theme`, `@utility`.
+- PostCSS plugin is `@tailwindcss/postcss` (`ui/postcss.config.js`). There is no `tailwind.config.*`; do not create one.
+- Design tokens are declared in `@theme` (`--color-bg-neutral-primary: ...`) and become utilities (`bg-bg-neutral-primary`, `text-text-neutral-secondary`, `border-border-neutral-secondary`).
+- Dark mode is class-based: `@custom-variant dark (&:where(.dark, .dark *));` (toggled by `next-themes`).
+- New utilities use `@utility name { ... }`, not `@layer utilities` + `@apply` hacks.
+
+**Prowler UI:** use the semantic token utilities above. Raw palette classes (`bg-slate-800`, `bg-blue-500`) appear below only as generic Tailwind examples; in `ui/` they are not allowed (see `prowler-ui` Design System Discipline).
 
 ## Styling Decision Tree
 
@@ -31,10 +41,12 @@ Library can't use class?→ style prop with var() constants
 <div className="bg-[var(--color-primary)]" />
 <div className="text-[var(--text-color)]" />
 
-// ✅ ALWAYS: Use Tailwind semantic classes
-<div className="bg-primary" />
-<div className="text-slate-400" />
+// ✅ ALWAYS: Use theme token utilities
+<div className="bg-button-primary" />
+<div className="text-text-neutral-secondary" />
 ```
+
+Tailwind 4 also accepts the `bg-(--token)` shorthand for CSS variables; it is still an escape hatch. If a token is used repeatedly, it belongs in `@theme`.
 
 ### Never Use Hex Colors
 
@@ -43,15 +55,17 @@ Library can't use class?→ style prop with var() constants
 <p className="text-[#ffffff]" />
 <div className="bg-[#1e293b]" />
 
-// ✅ ALWAYS: Use Tailwind color classes
-<p className="text-white" />
-<div className="bg-slate-800" />
+// ✅ ALWAYS: Use theme color utilities
+<p className="text-text-neutral-primary" />
+<div className="bg-bg-neutral-secondary" />
 ```
 
 ## The cn() Utility
 
+Already defined in `ui/lib/utils.ts` (built on `extendTailwindMerge` so custom token classes merge correctly); import it with `import { cn } from "@/lib/utils";`. Never redefine it. Simplified shape:
+
 ```typescript
-import { clsx } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -93,16 +107,15 @@ When libraries don't accept className (like Recharts):
 
 ```typescript
 // ✅ Constants with var() - ONLY for library props
+// Prefer existing shared maps first, e.g. SEVERITY_COLORS in ui/types/severities.ts
 const CHART_COLORS = {
-  primary: "var(--color-primary)",
-  secondary: "var(--color-secondary)",
-  text: "var(--color-text)",
-  gridLine: "var(--color-border)",
+  emptyState: "var(--border-neutral-tertiary)",
+  critical: "var(--color-bg-data-critical)",
 };
 
 // Usage with Recharts (can't use className)
-<XAxis tick={{ fill: CHART_COLORS.text }} />
-<CartesianGrid stroke={CHART_COLORS.gridLine} />
+<Cell fill={CHART_COLORS.critical} />
+<CartesianGrid stroke={CHART_COLORS.emptyState} />
 ```
 
 ## Dynamic Values

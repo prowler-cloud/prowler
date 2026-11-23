@@ -3,7 +3,7 @@ import type {
   FindingTriageManualStatus,
   FindingTriageStatus,
 } from "@/types/findings-triage";
-import type { IssueTriageNote } from "@/types/issues";
+import type { IssueFinding, IssueTriageNote } from "@/types/issues";
 import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
 import type { ResourceProps } from "@/types/resources";
 import type { UserAttributes, UserData } from "@/types/users";
@@ -47,6 +47,17 @@ export interface IssueTriageNoteResource
 export interface IssueTriageNotesDocument
   extends JsonApiDocument<IssueTriageNoteResource[]> {
   included?: JsonApiResource<Partial<Pick<UserAttributes, "name" | "email">>>[];
+}
+
+/** What the issue panel draws: resources, a capped findings preview and the scan it came from. */
+export interface IssueEvidence {
+  resources: string[];
+  /** Undefined when the findings could not be loaded. */
+  findings: IssueFinding[] | undefined;
+  /** The issue has more unique findings than the preview holds. */
+  findingsTruncated: boolean;
+  scanId?: string;
+  providerId?: string;
 }
 
 export type IssueWriteResult =

@@ -15,6 +15,10 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/shadcn/dropdown";
 import { getSkillsForSurface } from "@/lib/lighthouse/skills/registry";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import {
@@ -25,6 +29,7 @@ import {
 import {
   LIGHTHOUSE_SKILL_SURFACE,
   type LighthouseSkillDefinition,
+  type LighthouseSkillSurface,
 } from "@/types/lighthouse-skills";
 
 // Launching from a table row bypasses the context-contribution store: the row
@@ -45,7 +50,10 @@ export function useLighthouseSkillLaunch() {
   return (
     skill: LighthouseSkillDefinition,
     findingItem: LighthouseFindingContextItem,
-  ) => launchPanelSkill(skill, buildRowEnvelope(findingItem));
+  ) => {
+    if (isSampleId(findingItem.id)) return;
+    launchPanelSkill(skill, buildRowEnvelope(findingItem));
+  };
 }
 
 // Free-text sibling of useLighthouseSkillLaunch: starts a fresh Lighthouse
@@ -54,6 +62,7 @@ export function useLighthousePromptLaunch() {
   const openSidePanel = useSidePanelStore((state) => state.openPanel);
 
   return (text: string, findingItem: LighthouseFindingContextItem) => {
+    if (isSampleId(findingItem.id)) return;
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
     void import("@/app/(prowler)/lighthouse/_lib/panel-chat-store").then(
       ({ requestPanelChatMessage }) =>
@@ -64,9 +73,14 @@ export function useLighthousePromptLaunch() {
 
 // The one skills-menu catalog split, shared by every surface: the first
 // enabled skill leads as RECOMMENDED, the rest follow in catalog order.
-const MENU_SKILLS = getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING);
-const RECOMMENDED_SKILL = MENU_SKILLS.find((skill) => skill.enabled);
-const REST_SKILLS = MENU_SKILLS.filter((skill) => skill !== RECOMMENDED_SKILL);
+function splitMenuSkills(surface: LighthouseSkillSurface) {
+  const skills = getSkillsForSurface(surface);
+  const recommended = skills.find((skill) => skill.enabled);
+  return {
+    recommended,
+    rest: skills.filter((skill) => skill !== recommended),
+  };
+}
 
 // THE Lighthouse skills menu. Every surface that opens a skills dropdown
 // (row ⋮ submenu, hover pill, finding-detail rail) must render this body so
@@ -75,10 +89,14 @@ const REST_SKILLS = MENU_SKILLS.filter((skill) => skill !== RECOMMENDED_SKILL);
 export function LighthouseSkillsMenuItems({
   onLaunch,
   onSubmitPrompt,
+  surface = LIGHTHOUSE_SKILL_SURFACE.FINDING,
 }: {
   onLaunch: (skill: LighthouseSkillDefinition) => void;
   onSubmitPrompt?: (text: string) => void;
+  surface?: LighthouseSkillSurface;
 }) {
+  const { recommended: RECOMMENDED_SKILL, rest: REST_SKILLS } =
+    splitMenuSkills(surface);
   return (
     <>
       {RECOMMENDED_SKILL && (
@@ -93,7 +111,8 @@ export function LighthouseSkillsMenuItems({
             className="bg-bg-neutral-tertiary"
             onSelect={() => onLaunch(RECOMMENDED_SKILL)}
           />
-          <DropdownMenuSeparator />
+          {/* Only between groups: a lone skill gets just the footer's divider. */}
+          {REST_SKILLS.length > 0 && <DropdownMenuSeparator />}
         </>
       )}
       {REST_SKILLS.map((skill) => (
@@ -169,10 +188,22 @@ function AskLighthouseAnythingRow({
 export function LighthouseSkillsSubmenu({
   onLaunch,
   onSubmitPrompt,
+  disabledReason,
 }: {
   onLaunch: (skill: LighthouseSkillDefinition) => void;
   onSubmitPrompt?: (text: string) => void;
+  disabledReason?: string;
 }) {
+  if (disabledReason) {
+    return (
+      <ActionDropdownItem
+        icon={<LighthouseIcon size={16} />}
+        label="Lighthouse Skills"
+        disabled
+        disabledTooltip={disabledReason}
+      />
+    );
+  }
   return (
     <>
       <DropdownMenuSeparator />
@@ -211,6 +242,17 @@ export function LighthouseSkillsRowButton({
 }) {
   const launchSkill = useLighthouseSkillLaunch();
   const launchPrompt = useLighthousePromptLaunch();
+
+  if (isSampleId(findingItem.id)) {
+    return (
+      <span title={SAMPLE_DATA_READ_ONLY_MESSAGE}>
+        <CornerDownRight
+          className="text-text-neutral-tertiary size-4 shrink-0"
+          aria-hidden
+        />
+      </span>
+    );
+  }
 
   return (
     <span className="relative flex size-4 shrink-0 items-center justify-center">

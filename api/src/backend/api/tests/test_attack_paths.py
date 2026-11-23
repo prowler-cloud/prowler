@@ -664,6 +664,28 @@ def test_execute_custom_query_raises_permission_denied_on_write(sink_backend_stu
         )
 
 
+def test_execute_custom_query_keeps_database_error_text_out_of_the_response(
+    sink_backend_stub,
+):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.ClientStatementException(
+            message='Text cannot be parsed to a Date "|999988887777|prod-account"',
+            code="Neo.ClientError.Statement.SyntaxError",
+        )
+    )
+    with pytest.raises(ValidationError) as exc:
+        views_helpers.execute_custom_query(
+            "db-tenant-test",
+            "MATCH p=() RETURN date(reduce(a='', x IN nodes(p) | a + x.id))",
+            "provider-1",
+            scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
+        )
+
+    detail = str(exc.value.detail)
+    assert "999988887777" not in detail
+    assert "Neo.ClientError.Statement.SyntaxError" in detail
+
+
 def test_execute_custom_query_wraps_graph_errors(sink_backend_stub):
     sink_backend_stub.execute_read_query.side_effect = (
         graph_database.GraphDatabaseQueryException("boom")

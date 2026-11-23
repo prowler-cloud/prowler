@@ -1,9 +1,15 @@
 import base64
 import json
 import logging
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 
 import yaml
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    is_api_key_session,
+    session_bound_tenant_id,
+)
 from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
@@ -60,8 +66,12 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    validate_gcp_service_account_key,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from config.custom_logging import BackendLogger
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -153,7 +163,9 @@ class StateEnumSerializerField(serializers.ChoiceField):
 # Tokens
 
 
-def generate_tokens(user: User, tenant_id: str) -> dict:
+def generate_tokens(
+    user: User, tenant_id: str, sso_tenant_id: str | None = None
+) -> dict:
     try:
         refresh = RefreshToken.for_user(user)
     except InvalidKeyError:
@@ -170,6 +182,8 @@ def generate_tokens(user: User, tenant_id: str) -> dict:
     # Post-process the tokens
     # Set the tenant_id
     refresh["tenant_id"] = tenant_id
+    if sso_tenant_id:
+        refresh[SSO_TENANT_CLAIM] = sso_tenant_id
 
     # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
     # way to set the nbf claim
@@ -208,7 +222,9 @@ class BaseTokenSerializer(TokenObtainPairSerializer):
                 raise ValidationError("User has no memberships.")
             tenant_id = str(first_membership.tenant_id)
 
-        return generate_tokens(user, tenant_id)
+        return generate_tokens(
+            user, tenant_id, sso_tenant_id=self.context.get(SSO_TENANT_CLAIM)
+        )
 
 
 class TokenSerializer(BaseTokenSerializer):
@@ -254,6 +270,29 @@ class TokenSocialLoginSerializer(BaseTokenSerializer):
 
     def validate(self, attrs):
         return super().custom_validate(attrs, social=True)
+
+
+class AuthorizationCodeSocialLoginSerializer(SocialLoginSerializer):
+    """Social login that only accepts an OAuth authorization code.
+
+    A caller-supplied access_token or id_token may have been issued to any
+    OAuth client, so trusting it lets anyone holding such a token for a victim
+    sign in as them. Exchanging the code with Prowler's own client secret
+    guarantees the token was issued to Prowler.
+    """
+
+    def validate(self, attrs):
+        if attrs.get("access_token") or attrs.get("id_token"):
+            raise serializers.ValidationError(
+                "Only the OAuth authorization code flow is supported.",
+                code="social-login-token-not-allowed",
+            )
+        if not attrs.get("code"):
+            raise serializers.ValidationError(
+                "An OAuth authorization code is required.",
+                code="social-login-code-required",
+            )
+        return super().validate(attrs)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -320,11 +359,25 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
         if not user.is_authenticated:
             raise ValidationError("Invalid or expired token.")
 
+        if is_api_key_session(request):
+            raise ValidationError(
+                "API keys cannot be exchanged for a session token.",
+                code="session-bound-to-tenant",
+            )
+
         tenant_id = str(attrs.get("tenant_id"))
         if not user.is_member_of_tenant(tenant_id):
             raise ValidationError("Tenant does not exist or user is not a member.")
 
-        return generate_tokens(user, tenant_id)
+        bound_tenant_id = session_bound_tenant_id(request)
+        if bound_tenant_id and bound_tenant_id != tenant_id:
+            raise ValidationError(
+                "This session can only access the organization it signed in to. "
+                "Sign in again to switch to another organization.",
+                code="session-bound-to-tenant",
+            )
+
+        return generate_tokens(user, tenant_id, sso_tenant_id=bound_tenant_id)
 
 
 # Users
@@ -1771,75 +1824,105 @@ def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
     return True
 
 
+def provider_secret_serializer_class(
+    provider_type: str, secret_type: str, secret: dict
+) -> type[serializers.Serializer]:
+    """Serializer that validates a secret of this provider and secret type."""
+    if secret_type == ProviderSecret.TypeChoices.STATIC:
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            return AwsProviderSecret
+        elif provider_type == Provider.ProviderChoices.AZURE.value:
+            return AzureProviderSecret
+        elif provider_type == Provider.ProviderChoices.GCP.value:
+            return GCPProviderSecret
+        elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+            return GoogleWorkspaceProviderSecret
+        elif provider_type == Provider.ProviderChoices.OKTA.value:
+            return OktaProviderSecret
+        elif provider_type == Provider.ProviderChoices.GITHUB.value:
+            return GithubProviderSecret
+        elif provider_type == Provider.ProviderChoices.IAC.value:
+            return IacProviderSecret
+        elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
+            return KubernetesProviderSecret
+        elif provider_type == Provider.ProviderChoices.M365.value:
+            return M365ProviderSecret
+        elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
+            return OracleCloudProviderSecret
+        elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
+            return MongoDBAtlasProviderSecret
+        elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+            return AlibabaCloudProviderSecret
+        elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
+            if "api_token" in secret:
+                return CloudflareTokenProviderSecret
+            elif "api_key" in secret and "api_email" in secret:
+                return CloudflareApiKeyProviderSecret
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "secret": "Cloudflare credentials must include either 'api_token' "
+                        "or both 'api_key' and 'api_email'."
+                    }
+                )
+        elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
+            return OpenStackCloudsYamlProviderSecret
+        elif provider_type == Provider.ProviderChoices.IMAGE.value:
+            return ImageProviderSecret
+        elif provider_type == Provider.ProviderChoices.VERCEL.value:
+            return VercelProviderSecret
+        else:
+            raise serializers.ValidationError(
+                {"provider": f"Provider type not supported {provider_type}"}
+            )
+    elif secret_type == ProviderSecret.TypeChoices.ROLE:
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            return AWSRoleAssumptionProviderSecret
+        elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+            return AlibabaCloudRoleAssumptionProviderSecret
+        else:
+            raise serializers.ValidationError(
+                {
+                    "secret_type": f"Role assumption not supported for provider type: {provider_type}"
+                }
+            )
+    elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
+        return GCPServiceAccountProviderSecret
+    else:
+        raise serializers.ValidationError(
+            {"secret_type": f"Secret type not supported: {secret_type}"}
+        )
+
+
+def declared_secret_fields(provider_type: str, secret_type: str, secret: dict) -> dict:
+    """The secret limited to the fields its serializer declares."""
+    # the stored secret is passed to the provider as keyword arguments, so an
+    # undeclared field would reach parameters such as file paths
+    if provider_type not in Provider.ProviderChoices.values:
+        # a provider type without a serializer here validates its own secret
+        return dict(secret)
+    # a known provider whose stored secret no longer matches a serializer raises
+    fields = provider_secret_serializer_class(
+        provider_type, secret_type, secret
+    )().fields
+    return {key: value for key, value in secret.items() if key in fields}
+
+
+def validated_secret_fields(secret: dict, validated_secret) -> dict:
+    """The secret as sent, limited to the fields its serializer validated."""
+    if not isinstance(validated_secret, Mapping):
+        return secret
+    return {key: value for key, value in secret.items() if key in validated_secret}
+
+
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
     def validate_secret_based_on_provider(
         provider_type: str, secret_type: ProviderSecret.TypeChoices, secret: dict
     ):
-        if secret_type == ProviderSecret.TypeChoices.STATIC:
-            if provider_type == Provider.ProviderChoices.AWS.value:
-                serializer = AwsProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.AZURE.value:
-                serializer = AzureProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GCP.value:
-                serializer = GCPProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
-                serializer = GoogleWorkspaceProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OKTA.value:
-                serializer = OktaProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GITHUB.value:
-                serializer = GithubProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.IAC.value:
-                serializer = IacProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
-                serializer = KubernetesProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.M365.value:
-                serializer = M365ProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
-                serializer = OracleCloudProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
-                serializer = MongoDBAtlasProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
-                serializer = AlibabaCloudProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
-                if "api_token" in secret:
-                    serializer = CloudflareTokenProviderSecret(data=secret)
-                elif "api_key" in secret and "api_email" in secret:
-                    serializer = CloudflareApiKeyProviderSecret(data=secret)
-                else:
-                    raise serializers.ValidationError(
-                        {
-                            "secret": "Cloudflare credentials must include either 'api_token' "
-                            "or both 'api_key' and 'api_email'."
-                        }
-                    )
-            elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
-                serializer = OpenStackCloudsYamlProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.IMAGE.value:
-                serializer = ImageProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.VERCEL.value:
-                serializer = VercelProviderSecret(data=secret)
-            else:
-                raise serializers.ValidationError(
-                    {"provider": f"Provider type not supported {provider_type}"}
-                )
-        elif secret_type == ProviderSecret.TypeChoices.ROLE:
-            if provider_type == Provider.ProviderChoices.AWS.value:
-                serializer = AWSRoleAssumptionProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
-                serializer = AlibabaCloudRoleAssumptionProviderSecret(data=secret)
-            else:
-                raise serializers.ValidationError(
-                    {
-                        "secret_type": f"Role assumption not supported for provider type: {provider_type}"
-                    }
-                )
-        elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
-            serializer = GCPServiceAccountProviderSecret(data=secret)
-        else:
-            raise serializers.ValidationError(
-                {"secret_type": f"Secret type not supported: {secret_type}"}
-            )
+        serializer = provider_secret_serializer_class(
+            provider_type, secret_type, secret
+        )(data=secret)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as validation_error:
@@ -1921,6 +2004,13 @@ class GCPProviderSecret(serializers.Serializer):
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
 
+    def validate_service_account_key(self, service_account_key):
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return service_account_key
+
     class Meta:
         resource_name = "provider-secrets"
 
@@ -1928,6 +2018,30 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
 class GoogleWorkspaceProviderSecret(serializers.Serializer):
     credentials_content = serializers.CharField()
     delegated_user = serializers.EmailField()
+
+    def validate_credentials_content(self, credentials_content):
+        try:
+            service_account_key = json.loads(credentials_content)
+        except json.JSONDecodeError as error:
+            raise ValidationError(
+                "The credentials content must be a valid JSON service account key.",
+                code="googleworkspace-invalid-service-account-key",
+            ) from error
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return credentials_content
+
+    def validate(self, attrs):
+        # The stored secret is passed to the provider as keyword arguments
+        unknown = set(self.initial_data) - set(self.fields)
+        if unknown:
+            raise ValidationError(
+                f"Unexpected fields: {', '.join(sorted(unknown))}.",
+                code="googleworkspace-unexpected-fields",
+            )
+        return attrs
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2011,20 +2125,25 @@ class OCIHomeRegionField(serializers.Field):
 class OracleCloudProviderSecret(serializers.Serializer):
     user = serializers.CharField()
     fingerprint = serializers.CharField()
-    key_file = serializers.CharField(required=False)
-    key_content = serializers.CharField(required=False)
+    key_content = serializers.CharField()
     tenancy = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
     region = OCIHomeRegionField(required=False, allow_null=True)
 
+    def to_internal_value(self, data):
+        # a path is read on the worker, where no tenant can have placed a key
+        if isinstance(data, dict) and "key_file" in data:
+            raise serializers.ValidationError(
+                {
+                    "key_file": "key_file is not supported. Provide the private key "
+                    "in key_content (base64 encoded)."
+                }
+            )
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
         if not attrs.get("region"):
             attrs.pop("region", None)
-
-        if "key_file" not in attrs and "key_content" not in attrs:
-            raise serializers.ValidationError(
-                {"key_file": "Either key_file or key_content must be provided."}
-            )
 
         return attrs
 
@@ -2059,6 +2178,12 @@ class ImageProviderSecret(serializers.Serializer):
     registry_username = serializers.CharField(required=False)
     registry_password = serializers.CharField(required=False)
     registry_token = serializers.CharField(required=False)
+    image_filter = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    tag_filter = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2178,6 +2303,10 @@ class ProviderSecretCreateSerializer(
         )
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        else:
+            validated_attrs["secret"] = validated_secret_fields(
+                secret, validated_secret
+            )
         return validated_attrs
 
 
@@ -2214,6 +2343,10 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         )
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        else:
+            validated_attrs["secret"] = validated_secret_fields(
+                secret, validated_secret
+            )
         return validated_attrs
 
 
@@ -4329,6 +4462,9 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
         # Check that all findings exist and belong to this tenant
         findings = Finding.all_objects.filter(tenant_id=tenant_id, id__in=value)
+        visible_providers = self.context.get("visible_providers")
+        if visible_providers is not None:
+            findings = findings.filter(scan__provider__in=visible_providers)
         found_ids = set(findings.values_list("id", flat=True))
         provided_ids = set(value)
 
@@ -4357,11 +4493,15 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
         # Check for overlaps with existing enabled rules
         existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, enabled=True)
 
+        # A scoped role may not be able to see the conflicting rule, so its name
+        # is only shown to roles with unlimited visibility
+        rule_names_visible = self.context.get("visible_providers") is None
         for rule in existing_rules:
             overlap = set(finding_uids) & set(rule.finding_uids)
             if overlap:
+                by_rule = f" by rule '{rule.name}'" if rule_names_visible else ""
                 raise ConflictException(
-                    detail=f"The following finding UIDs are already muted by rule '{rule.name}': {overlap}"
+                    detail=f"The following finding UIDs are already muted{by_rule}: {overlap}"
                 )
 
         # Store finding_uids in validated_data for create

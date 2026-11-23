@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 
 export const LIGHTHOUSE_SKILL_ID = {
   CONTEXTUAL_FIX: "contextual-fix",
+  ISSUE_CONTEXTUAL_FIX: "issue-contextual-fix",
   TRIAGE_DECISION: "triage-decision",
   SYSTEMIC_SCOPE: "systemic-scope",
   COMPLIANCE_IMPACT: "compliance-impact",
@@ -14,6 +15,7 @@ export type LighthouseSkillId =
 // Where a skill is offered: finding menus never list wizard-only skills.
 export const LIGHTHOUSE_SKILL_SURFACE = {
   FINDING: "finding",
+  ISSUE: "issue",
   PROVIDER_WIZARD: "provider-wizard",
 } as const;
 

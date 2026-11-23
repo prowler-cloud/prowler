@@ -317,12 +317,9 @@ class cloudtrail_bucket_requires_mfa_delete(Check):
                                 report.status = "PASS"
                                 report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) has MFA delete enabled."
 
-                    # Handle cross-account scenarios
-                    if not trail_bucket_is_in_account:
-                        report.status = "MANUAL"
-                        report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
-
-                    findings.append(report)
+                    # Cross-account bucket: out of audit scope, so no finding (never MANUAL)
+                    if trail_bucket_is_in_account:
+                        findings.append(report)
         return findings
 ```
 
@@ -406,17 +403,18 @@ from prowler.providers.aws.services.service_b.service_b_client import service_b_
 
 ```python
 # Handle cross-service scenarios
-resource_found_in_account = False
-for external_resource in other_service_client.resources.values():
-    if target_resource_id == external_resource.id:
-        resource_found_in_account = True
-        # Process found resource
-        break
+for resource in service_client.resources.values():
+    resource_found_in_account = False
+    for external_resource in other_service_client.resources.values():
+        if resource.target_resource_id == external_resource.id:
+            resource_found_in_account = True
+            break
 
-if not resource_found_in_account:
-    # Handle cross-account or missing resource scenarios
-    report.status = "MANUAL"
-    report.status_extended = "Resource is cross-account or out of audit scope"
+    if not resource_found_in_account:
+        # Cross-account or out of audit scope: emit no finding, never MANUAL
+        continue
+
+    # Build the report for the found resource
 ```
 
 **3. Document cross-service dependencies:**

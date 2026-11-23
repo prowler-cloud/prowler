@@ -10,14 +10,12 @@ import { useAppSidebarMode } from "./app-sidebar-mode-store";
 import { APP_SIDEBAR_MODE } from "./types";
 
 const {
-  issuesFlagValue,
   openCloudUpgradeMock,
   openLaunchScanModalMock,
   pathnameValue,
   permissionsValue,
   pushMock,
 } = vi.hoisted(() => ({
-  issuesFlagValue: { current: false },
   openCloudUpgradeMock: vi.fn(),
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
@@ -36,11 +34,6 @@ vi.mock("@/hooks", () => ({
 
 vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
-}));
-
-vi.mock("@/lib/feature-flags", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
-  useFeatureFlag: () => issuesFlagValue.current,
 }));
 
 vi.mock("@/store", () => ({
@@ -64,7 +57,6 @@ describe("AppSidebarContent", () => {
   beforeEach(() => {
     pathnameValue.current = "/findings";
     permissionsValue.current = { manage_providers: true };
-    issuesFlagValue.current = false;
     pushMock.mockClear();
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
@@ -121,29 +113,42 @@ describe("AppSidebarContent", () => {
     );
   });
 
-  it("shows Issues navigation in Cloud once the feature flag is on", () => {
+  it("shows Issues navigation in Cloud", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    issuesFlagValue.current = true;
 
     // When
     render(<AppSidebarContent />);
 
     // Then
-    expect(screen.getByRole("link", { name: /Issues/ })).toHaveAttribute(
-      "href",
-      "/issues",
-    );
+    expect(
+      screen.getByRole("link", { name: /Exploitability issues/ }),
+    ).toHaveAttribute("href", "/issues");
   });
 
-  it("hides Issues navigation in Cloud while the feature flag is off", () => {
-    // Given / When
+  it("shows Realtime navigation to every Cloud user", () => {
+    // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
     render(<AppSidebarContent />);
 
     // Then
     expect(
-      screen.queryByRole("link", { name: /Issues/ }),
+      screen
+        .getAllByRole("link", { name: /Realtime/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/realtime"]);
+  });
+
+  it("hides Issues navigation in Local Server", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Exploitability issues/ }),
     ).not.toBeInTheDocument();
   });
 

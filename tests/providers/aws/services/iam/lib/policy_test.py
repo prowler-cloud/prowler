@@ -1715,6 +1715,52 @@ class Test_Policy:
         assert not is_condition_block_restrictive_organization(condition_statement)
 
     @pytest.mark.parametrize(
+        "condition_statement,expected",
+        [
+            (
+                {"ForAnyValue:StringEquals": {"aws:PrincipalOrgID": "o-a1b2c3d4e5"}},
+                True,
+            ),
+            (
+                {"StringLike": {"aws:PrincipalOrgPaths": "o-a1b2c3d4e5/r-ab12/*"}},
+                True,
+            ),
+            (
+                {
+                    "ForAnyValue:StringLike": {
+                        "aws:PrincipalOrgPaths": [
+                            "o-a1b2c3d4e5/r-ab12/ou-ab12-11111111/*"
+                        ]
+                    }
+                },
+                True,
+            ),
+            ({"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "*"}}, False),
+            ({"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "o-*"}}, False),
+            (
+                {"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "o-a1b2c3d4e5*"}},
+                False,
+            ),
+            # ForAllValues is true when the key is absent, so it admits principals outside any org
+            (
+                {
+                    "ForAllValues:StringLike": {
+                        "aws:PrincipalOrgPaths": "o-a1b2c3d4e5/*"
+                    }
+                },
+                False,
+            ),
+            ({"StringEquals": {"aws:PrincipalOrgID": ["o-a1b2c3d4e5", "o-*"]}}, False),
+        ],
+    )
+    def test_condition_parser_organization_paths_and_set_operators(
+        self, condition_statement: dict, expected: bool
+    ):
+        assert (
+            is_condition_block_restrictive_organization(condition_statement) == expected
+        )
+
+    @pytest.mark.parametrize(
         "condition_value,expected",
         [
             ("*@example.com", True),

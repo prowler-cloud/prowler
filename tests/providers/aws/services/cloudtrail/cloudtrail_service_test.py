@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -9,6 +12,65 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+MEMORY_RESOURCE_TYPE = "AWS::BedrockAgentCore::Memory"
+RUNTIME_RESOURCE_TYPE = "AWS::BedrockAgentCore::Runtime"
+MEMORY_SELECTOR = {
+    "Name": "AgentCore Memory data events",
+    "FieldSelectors": [
+        {"Field": "eventCategory", "Equals": ["Data"]},
+        {"Field": "resources.type", "Equals": [MEMORY_RESOURCE_TYPE]},
+    ],
+}
+
+
+def _access_denied(operation_name):
+    """Build the AccessDeniedException a caller without the needed permission would raise.
+
+    Args:
+        operation_name: The API operation the denial is raised for.
+
+    Returns:
+        A ``ClientError`` whose class name is what the collectors record in
+        ``status_error`` and ``event_selectors_error``.
+    """
+    return botocore.exceptions.ClientError(
+        {
+            "Error": {
+                "Code": "AccessDeniedException",
+                "Message": "not authorized",
+            }
+        },
+        operation_name,
+    )
+
+
+def _create_trail(region, trail_name, bucket_name, start_logging=True):
+    """Create a single-region trail and its log bucket in the mocked account.
+
+    Args:
+        region: Region to create the trail and bucket in.
+        trail_name: Name of the trail.
+        bucket_name: Name of the S3 bucket the trail delivers to.
+        start_logging: Whether to start the trail logging, so a test can build a
+            trail that exists but is not logging.
+    """
+    cloudtrail = client("cloudtrail", region_name=region)
+    s3 = client("s3", region_name=region)
+    if region == AWS_REGION_US_EAST_1:
+        s3.create_bucket(Bucket=bucket_name)
+    else:
+        s3.create_bucket(
+            Bucket=bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": region},
+        )
+    cloudtrail.create_trail(
+        Name=trail_name, S3BucketName=bucket_name, IsMultiRegionTrail=False
+    )
+    if start_logging:
+        cloudtrail.start_logging(Name=trail_name)
 
 
 class Test_Cloudtrail_Service:
@@ -314,6 +376,84 @@ class Test_Cloudtrail_Service:
         )
         cloudtrail = Cloudtrail(aws_provider)
         assert len(cloudtrail.trails) == len(aws_provider.identity.audited_regions)
+
+    @mock_aws
+    def test_get_event_selectors_error_is_recorded_per_trail(self):
+        """One trail's denied GetEventSelectors must not answer for the others.
+
+        An empty ``data_events`` reads as "this trail selects no data events", so a failed
+        read is recorded on the trail it failed for, and the remaining trails are still
+        collected.
+        """
+        _create_trail(AWS_REGION_US_EAST_1, "trail_denied", "bucket_denied")
+        _create_trail(AWS_REGION_US_EAST_1, "trail_readable", "bucket_readable")
+        client("cloudtrail", region_name=AWS_REGION_US_EAST_1).put_event_selectors(
+            TrailName="trail_readable", AdvancedEventSelectors=[MEMORY_SELECTOR]
+        )
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            """Deny GetEventSelectors for trail_denied only, passing everything else through."""
+            if operation_name == "GetEventSelectors" and "trail_denied" in kwarg.get(
+                "TrailName", ""
+            ):
+                raise _access_denied(operation_name)
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            cloudtrail = Cloudtrail(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+
+        trails = {trail.name: trail for trail in cloudtrail.trails.values()}
+        assert trails["trail_denied"].event_selectors_error == "ClientError"
+        assert trails["trail_denied"].data_events == []
+        assert trails["trail_readable"].event_selectors_error is None
+        assert len(trails["trail_readable"].data_events) == 1
+        selector = trails["trail_readable"].data_events[0]
+        assert selector.is_advanced
+        assert selector.event_selector["FieldSelectors"] == [
+            {"Field": "eventCategory", "Equals": ["Data"]},
+            {"Field": "resources.type", "Equals": [MEMORY_RESOURCE_TYPE]},
+        ]
+
+    @mock_aws
+    def test_get_trail_status_error_is_recorded_per_trail(self):
+        """A denied GetTrailStatus is recorded, not left as is_logging False."""
+        _create_trail(AWS_REGION_US_EAST_1, "trail_denied", "bucket_denied")
+        _create_trail(AWS_REGION_US_EAST_1, "trail_readable", "bucket_readable")
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            """Deny GetTrailStatus for trail_denied only, passing everything else through."""
+            if operation_name == "GetTrailStatus" and "trail_denied" in kwarg.get(
+                "Name", ""
+            ):
+                raise _access_denied(operation_name)
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            cloudtrail = Cloudtrail(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+
+        trails = {trail.name: trail for trail in cloudtrail.trails.values()}
+        assert trails["trail_denied"].status_error == "ClientError"
+        assert trails["trail_denied"].is_logging is False
+        assert trails["trail_readable"].status_error is None
+        assert trails["trail_readable"].is_logging is True
+
+    @mock_aws
+    def test_get_trail_status_without_is_logging_is_recorded(self):
+        """A response missing IsLogging is unknown, not not-logging."""
+        _create_trail(AWS_REGION_US_EAST_1, "trail_test", "bucket_test")
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            """Answer GetTrailStatus without the IsLogging key the collector reads."""
+            if operation_name == "GetTrailStatus":
+                return {"LatestDeliveryError": ""}
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            cloudtrail = Cloudtrail(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+
+        trails = {trail.name: trail for trail in cloudtrail.trails.values()}
+        assert trails["trail_test"].status_error == "KeyError"
+        assert trails["trail_test"].is_logging is False
 
     @mock_aws
     def test_list_tags_for_resource(self):
