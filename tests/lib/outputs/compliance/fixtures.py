@@ -1,6 +1,7 @@
 from prowler.lib.check.compliance_models import (
     ASDEssentialEight_Requirement_Attribute,
     AWS_Well_Architected_Requirement_Attribute,
+    C5Germany_Requirement_Attribute,
     CCC_Requirement_Attribute,
     CIS_Requirement_Attribute,
     Compliance,
@@ -579,6 +580,53 @@ ENS_RD2022_AZURE = Compliance(
                     Marco="operacional",
                     Categoria="explotación",
                     DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+ENS_RD2022_M365 = Compliance(
+    Framework="ENS",
+    Name="ENS RD 311/2022 - Categoría Alta",
+    Provider="M365",
+    Version="RD2022",
+    Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="op.exp.8.m365.purview.1",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar el registro de auditoría unificado para que quede constancia de la actividad de usuarios y administradores.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=["purview_audit_log_search_enabled", "service_test_check_id"],
+        ),
+        Compliance_Requirement(
+            Id="op.exp.8.m365.purview.2",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar el registro de auditoría unificado para que quede constancia de la actividad de usuarios y administradores.",
                     Tipo=ENS_Requirement_Attribute_Tipos.requisito,
                     Nivel=ENS_Requirement_Attribute_Nivel.alto,
                     Dimensiones=["trazabilidad"],
@@ -1297,6 +1345,44 @@ OKTA_IDAAS_STIG_OKTA = Compliance(
                     CCI=["CCI-000205"],
                     CheckText="Verify the password policy enforces a minimum length of 15 characters.",
                     FixText="From the Admin Console set the minimum password length to 15 characters.",
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+C5_AWS = Compliance(
+    Framework="C5",
+    Name="Cloud Computing Compliance Criteria Catalogue C5",
+    Version="2025",
+    Provider="AWS",
+    Description="The C5 criteria catalogue specifies minimum requirements for secure cloud computing.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="OIS-04.01B",
+            Description="Conflicting tasks and responsibilities are separated based on a risk assessment.",
+            Attributes=[
+                C5Germany_Requirement_Attribute(
+                    Section="Organisation of Information Security (OIS)",
+                    SubSection="OIS-04 Separation of Duties",
+                    Type="Basic",
+                    AboutCriteria="The separation of duties covers the administration of roles and the approval of access.",
+                    ComplementaryCriteria="",
+                )
+            ],
+            Checks=["service_test_check_id"],
+        ),
+        Compliance_Requirement(
+            Id="OIS-01.01B",
+            Description="The cloud service provider operates an information security management system (ISMS).",
+            Attributes=[
+                C5Germany_Requirement_Attribute(
+                    Section="Organisation of Information Security (OIS)",
+                    SubSection="OIS-01 Information Security Management System (ISMS)",
+                    Type="Basic",
+                    AboutCriteria="The auditor evaluates whether the documentation meets the requirements of ISO/IEC 27001.",
+                    ComplementaryCriteria="",
                 )
             ],
             Checks=[],

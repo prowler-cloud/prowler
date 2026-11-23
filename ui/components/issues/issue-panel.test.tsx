@@ -26,7 +26,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }));
-vi.mock("@/actions/issues", () => ({
+vi.mock("@/actions/issues/issues", () => ({
   getIssue,
   getIssueFindings,
   getIssueNotes: async () => [],

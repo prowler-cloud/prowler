@@ -106,10 +106,10 @@
   {
     "section": "dependencies",
     "name": "@next/third-parties",
-    "from": "16.2.9",
-    "to": "16.4.1",
+    "from": "16.4.1",
+    "to": "16.4.5",
     "strategy": "installed",
-    "generatedAt": "2026-10-23T09:16:43.200Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "dependencies",
@@ -490,10 +490,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.3.8",
-    "to": "16.4.1",
+    "from": "16.4.1",
+    "to": "16.4.5",
     "strategy": "installed",
-    "generatedAt": "2026-10-23T09:16:43.200Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "dependencies",
@@ -658,10 +658,10 @@
   {
     "section": "devDependencies",
     "name": "@next/eslint-plugin-next",
-    "from": "16.2.9",
-    "to": "16.4.1",
+    "from": "16.4.1",
+    "to": "16.4.5",
     "strategy": "installed",
-    "generatedAt": "2026-10-23T09:16:43.200Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "devDependencies",
@@ -762,26 +762,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.1.10",
-    "to": "4.1.11",
+    "from": "4.1.11",
+    "to": "4.1.12",
     "strategy": "installed",
-    "generatedAt": "2026-11-03T13:08:27.774Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.1.10",
-    "to": "4.1.11",
+    "from": "4.1.11",
+    "to": "4.1.12",
     "strategy": "installed",
-    "generatedAt": "2026-11-03T13:08:27.774Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.1.10",
-    "to": "4.1.11",
+    "from": "4.1.11",
+    "to": "4.1.12",
     "strategy": "installed",
-    "generatedAt": "2026-11-03T13:08:27.774Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "devDependencies",
@@ -970,10 +970,10 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.1.10",
-    "to": "4.1.11",
+    "from": "4.1.11",
+    "to": "4.1.12",
     "strategy": "installed",
-    "generatedAt": "2026-11-03T13:08:27.774Z"
+    "generatedAt": "2026-11-18T13:40:49.073Z"
   },
   {
     "section": "devDependencies",
