@@ -277,6 +277,7 @@ class Test_redshift_cluster_public_access:
                 ],
             )
         }
+        ec2_client.managed_prefix_lists = {}
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
