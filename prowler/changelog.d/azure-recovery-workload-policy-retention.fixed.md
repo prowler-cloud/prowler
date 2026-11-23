@@ -1,1 +1,0 @@
-Azure `recovery_vault_backup_policy_retention_adequate` reads daily retention from the Full sub-policy of SQL in Azure VM and SAP HANA backup policies instead of reporting them as having no daily retention

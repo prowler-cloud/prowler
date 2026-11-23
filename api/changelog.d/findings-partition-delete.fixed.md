@@ -1,1 +1,0 @@
-Findings partitions past the retention window can now be dropped by `pgpartition`; the matching `resource_finding_mappings` partition is dropped and the findings partition detached first, so the foreign key no longer blocks the `DROP TABLE`

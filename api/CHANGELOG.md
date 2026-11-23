@@ -4,6 +4,26 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.53.0] (Prowler v5.52.0)
+
+### 🐞 Fixed
+
+- Security Hub exports report incomplete ASFF conversion or finding delivery and skip archival when the export is incomplete [(#13022)](https://github.com/prowler-cloud/prowler/pull/13022)
+- Production Docker Compose workers report unhealthy when their own Celery control endpoint stops responding, even if other workers are healthy [(#13307)](https://github.com/prowler-cloud/prowler/pull/13307)
+- Findings partitions past the retention window can now be dropped by `pgpartition`; the matching `resource_finding_mappings` partition is dropped and the findings partition detached first, so the foreign key no longer blocks the `DROP TABLE` [(#13397)](https://github.com/prowler-cloud/prowler/pull/13397)
+
+### 🔐 Security
+
+- Custom Attack Paths queries can no longer switch to another database with USE or list databases with SHOW, and database error messages are no longer returned in the response [(#13451)](https://github.com/prowler-cloud/prowler/pull/13451)
+- Google Workspace provider secrets validated on creation and update, rejecting service account keys whose token_uri is not one of Google's token endpoints [(#13452)](https://github.com/prowler-cloud/prowler/pull/13452)
+- SAML configurations whose IdP entityID matches the name of a social login provider such as github or google rejected, so their assertions cannot resolve to accounts linked through that provider [(#13454)](https://github.com/prowler-cloud/prowler/pull/13454)
+- Mute rules scoped to the providers a role can see: roles without unlimited visibility can no longer list, change or delete rules covering findings on other providers, or create rules for findings they cannot read [(#13455)](https://github.com/prowler-cloud/prowler/pull/13455)
+- Provider secrets stored and passed to the provider with only the fields their credential type declares, so undeclared fields such as file paths no longer reach the provider as keyword arguments [(#13483)](https://github.com/prowler-cloud/prowler/pull/13483)
+- Oracle Cloud provider secrets reject key_file, a path read on the worker, and the private key must be supplied in key_content; key_file values stored earlier are ignored [(#13484)](https://github.com/prowler-cloud/prowler/pull/13484)
+- Sessions started through SAML SSO or with an API key can no longer change the account password or email, even when the user belongs only to that organization, so credentials set from them cannot be used to reach organizations the user joins later [(#13485)](https://github.com/prowler-cloud/prowler/pull/13485)
+
+---
+
 ## [1.52.0] (Prowler v5.51.0)
 
 ### 🚀 Added
