@@ -9,6 +9,14 @@ from django.utils.translation import gettext as _
 
 LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_SCHEMES = frozenset({"https"})
 LIGHTHOUSE_NAT64_WELL_KNOWN_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
+LIGHTHOUSE_NON_PUBLIC_IP_PROPERTIES = (
+    "is_private",
+    "is_loopback",
+    "is_link_local",
+    "is_multicast",
+    "is_reserved",
+    "is_unspecified",
+)
 LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(
     {
         "169.254.169.254",
@@ -16,6 +24,16 @@ LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(
         "fd00:ec2::254",
         "localhost",
         "metadata.google.internal",
+    }
+)
+
+# Google's OAuth 2.0 token endpoints. Mirrors the SDK's
+# GCP_SERVICE_ACCOUNT_TOKEN_URIS; the API pins the SDK from git, so it cannot
+# rely on that constant until it is released.
+GCP_SERVICE_ACCOUNT_TOKEN_URIS = frozenset(
+    {
+        "https://oauth2.googleapis.com/token",
+        "https://accounts.google.com/o/oauth2/token",
     }
 )
 
@@ -44,7 +62,11 @@ def _validate_lighthouse_public_ip(address: str) -> None:
             embedded_ip_address = ipaddress.IPv4Address(int(ip_address) & 0xFFFFFFFF)
         if embedded_ip_address is not None:
             ip_address = embedded_ip_address
-    if not ip_address.is_global:
+    # is_global is true for ::/96 and ::ffff:0:0/96 on some Python versions;
+    # is_reserved covers both
+    if not ip_address.is_global or any(
+        getattr(ip_address, prop) for prop in LIGHTHOUSE_NON_PUBLIC_IP_PROPERTIES
+    ):
         raise ValidationError(
             _("Base URL must use an external public endpoint."),
             code="lighthouse_base_url_not_public",
@@ -142,6 +164,35 @@ def validate_lighthouse_openai_compatible_base_url(
         port or 443,
         resolve_dns=resolve_dns,
     )
+
+
+def validate_gcp_service_account_key(service_account_key) -> None:
+    """Validate a GCP service account key before google-auth uses it.
+
+    Other credential types (e.g. external_account) make the worker read local
+    files or fetch arbitrary URLs during token refresh, and a custom token_uri
+    makes it POST a signed assertion to any URL.
+    """
+    if (
+        not isinstance(service_account_key, dict)
+        or service_account_key.get("type") != "service_account"
+    ):
+        raise ValidationError(
+            _(
+                'The service account key must be a JSON object with "type": "service_account".'
+            ),
+            code="gcp-invalid-service-account-key",
+        )
+    token_uri = service_account_key.get("token_uri")
+    if (
+        not isinstance(token_uri, str)
+        or token_uri not in GCP_SERVICE_ACCOUNT_TOKEN_URIS
+    ):
+        raise ValidationError(
+            _("The service account key token_uri must be one of: %(uris)s")
+            % {"uris": ", ".join(sorted(GCP_SERVICE_ACCOUNT_TOKEN_URIS))},
+            code="gcp-invalid-service-account-key",
+        )
 
 
 class MaximumLengthValidator:

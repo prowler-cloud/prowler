@@ -623,6 +623,29 @@ describe("findings triage actions", () => {
     expect(createMuteRuleMock).not.toHaveBeenCalled();
   });
 
+  it("should return the usage-limit marker when the plan refuses the triage patch", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+    handleApiResponseMock.mockResolvedValue({
+      error: "Payment required",
+      status: 402,
+    });
+
+    // When
+    const result = await updateFindingTriage({
+      findingId: "finding-snapshot-id",
+      findingUid: "finding/stable/uid",
+      triageId: "triage-1",
+      notesCount: 0,
+      status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+      previousStatus: FINDING_TRIAGE_STATUS.OPEN,
+    });
+
+    // Then
+    expect(result).toEqual({ usageLimited: true });
+    expect(createMuteRuleMock).not.toHaveBeenCalled();
+  });
+
   it("should rollback triage status when automatic muting fails", async () => {
     // Given
     const { updateFindingTriage } = await importActions();

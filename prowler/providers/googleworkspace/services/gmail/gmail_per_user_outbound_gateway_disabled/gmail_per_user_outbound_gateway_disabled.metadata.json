@@ -36,5 +36,5 @@
     "gmail_pop_imap_access_disabled",
     "gmail_auto_forwarding_disabled"
   ],
-  "Notes": ""
+  "Notes": "When Gmail is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

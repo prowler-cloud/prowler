@@ -18,6 +18,8 @@ from prowler.config.config import (
 )
 from prowler.lib.check.models import CheckReportImage
 from prowler.lib.logger import logger
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
     resolve_vulnerability_reference_urls,
@@ -26,6 +28,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidAllowedNetworksError,
     ImageInvalidConfigScannerError,
     ImageInvalidFilterError,
     ImageInvalidNameError,
@@ -46,6 +49,11 @@ from prowler.providers.image.lib.arguments.arguments import (
     IMAGE_CONFIG_SCANNERS_CHOICES,
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
+)
+from prowler.providers.image.lib.registry.base import (
+    ALLOWED_PRIVATE_NETWORKS_ENV,
+    _outbound_check_skipped,
+    _parse_allowed_private_networks,
 )
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import create_registry_adapter
@@ -195,6 +203,7 @@ class ImageProvider(Provider):
         if not self._listing_only:
             for image in self.images:
                 self._validate_image_name(image)
+            self._validate_registry_hosts()
 
             if not self.images:
                 raise ImageNoImagesProvidedError(
@@ -358,6 +367,19 @@ class ImageProvider(Provider):
                 return value[len(prefix) :]
         return value
 
+    def _validate_registry_hosts(self) -> None:
+        """Apply the registry outbound check to every host an image is pulled from."""
+        # Discovered images come from a registry the adapter has already checked
+        hosts = {
+            self._extract_registry(image)
+            for image in self.images
+            if image not in self._registry_discovered
+        }
+        hosts -= {None, "docker.io", "registry-1.docker.io"}
+        for host in sorted(hosts):
+            adapter = create_registry_adapter(registry_url=host)
+            adapter._validate_outbound_url(f"https://{host}/v2/", enforce_origin=False)
+
     @staticmethod
     def _extract_registry(image: str) -> str | None:
         """Extract registry hostname from an image reference.
@@ -366,7 +388,9 @@ class ImageProvider(Provider):
         """
         image = ImageProvider._strip_scheme(image)
         parts = image.split("/")
-        if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
+        if len(parts) >= 2 and (
+            "." in parts[0] or ":" in parts[0] or parts[0] == "localhost"
+        ):
             return parts[0]
         return None
 
@@ -752,8 +776,40 @@ class ImageProvider(Provider):
         return env
 
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
-        """Execute Trivy command with optional progress bar."""
+        """Execute Trivy, routed through the outbound proxy unless the check is skipped."""
         env = self._build_trivy_env()
+        if _outbound_check_skipped():
+            return self._run_trivy(command, image, env)
+        try:
+            proxy = TrivyOutboundProxy(
+                env,
+                allowed_networks=_parse_allowed_private_networks(
+                    env.get(ALLOWED_PRIVATE_NETWORKS_ENV)
+                ),
+                allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
+            )
+            proxy.start()
+        except (
+            ImageInvalidAllowedNetworksError,
+            OutboundURLNotAllowedError,
+            OSError,
+        ) as error:
+            # the scan loop only re-raises ImageScanError; anything else would
+            # report the image as scanned with no findings
+            raise ImageScanError(
+                file=__file__,
+                original_exception=error,
+                message=f"Could not start the outbound proxy for Trivy: {error}",
+            )
+        try:
+            return self._run_trivy(command, image, proxy.route(env))
+        finally:
+            proxy.stop()
+
+    def _run_trivy(
+        self, command: list, image: str, env: dict
+    ) -> subprocess.CompletedProcess:
+        """Run the Trivy subprocess with an optional progress bar."""
         try:
             if sys.stdout.isatty():
                 with alive_bar(

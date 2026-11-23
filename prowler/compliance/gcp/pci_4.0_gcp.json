@@ -701,7 +701,9 @@
       "Id": "1.2.8.37",
       "Description": "Checks if direct internet access is disabled for a Google AI Platform (formerly AI Platform Notebooks) instance. The rule is NON_COMPLIANT if an AI Platform notebook instance is internet-enabled.",
       "Name": "Google AI Platform",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1.2.8: Network security controls (NSCs) are configured and maintained.",
@@ -1358,7 +1360,9 @@
       "Id": "1.3.1.41",
       "Description": "Checks if direct internet access is disabled for a Google AI Platform Notebook instance. The rule is NON_COMPLIANT if an AI Platform Notebook instance is internet-enabled.",
       "Name": "Google AI Platform",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1.3.1: Network access to and from the cardholder data environment is restricted.",
@@ -2029,7 +2033,9 @@
       "Id": "1.3.2.41",
       "Description": "Checks if direct internet access is disabled for a Google AI Platform (formerly known as AI Platform Notebooks) instance. The rule is NON_COMPLIANT if an AI Platform Notebook instance is internet-enabled.",
       "Name": "Google AI Platform",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1.3.2: Network access to and from the cardholder data environment is restricted.",
@@ -2805,7 +2811,9 @@
       "Id": "1.4.2.39",
       "Description": "Checks if direct internet access is disabled for a Google Cloud AI Platform Notebooks instance. The rule is NON_COMPLIANT if an AI Platform Notebooks instance is internet-enabled.",
       "Name": "Google Cloud AI Platform Notebooks",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1.4.2: Network connections between trusted and untrusted networks are controlled.",
@@ -3616,7 +3624,9 @@
       "Id": "1.5.1.37",
       "Description": "Checks if direct internet access is disabled for a Google Cloud Vertex AI Workbench instance. The rule is NON_COMPLIANT if the Vertex AI Workbench instance is internet-enabled.",
       "Name": "Google Cloud Vertex AI Workbench",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1.5.1: Risks to the CDE from computing devices that are able to connect to both untrusted networks and the CDE are mitigated.",
@@ -8491,7 +8501,9 @@
       "Id": "10.3.2.25",
       "Description": "Checks if direct internet access is disabled for a Google AI Platform Notebook instance. The rule is NON_COMPLIANT if an AI Platform Notebook instance is internet-enabled.",
       "Name": "Google AI Platform Notebooks",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "10.3.2: Audit logs are protected from destruction and unauthorized modifications.",
@@ -12122,7 +12134,9 @@
       "Id": "3.5.1.3.30",
       "Description": "Checks if direct internet access is disabled for a Google Cloud AI Platform Notebooks instance. The rule is NON_COMPLIANT if an AI Platform Notebooks instance is internet-enabled.",
       "Name": "Google Cloud AI Platform Notebooks",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3.5.1.3: Primary account number (PAN) is secured wherever it is stored.",
@@ -15753,7 +15767,9 @@
       "Id": "7.2.1.28",
       "Description": "Checks if the Google AI Platform Notebooks Root Access setting is enabled for AI Platform Notebook instances. The rule is NON_COMPLIANT if the Root Access setting is set to 'Enabled' for an AI Platform Notebook instance.",
       "Name": "Google AI Platform Notebooks",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_root_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "7.2.1: Access to system components and data is appropriately defined and assigned.",
@@ -16153,7 +16169,9 @@
       "Id": "7.2.2.28",
       "Description": "Checks if the Google AI Platform Notebook instance has root access enabled. The rule is NON_COMPLIANT if the root access is set to 'Enabled' for a Google AI Platform Notebook instance.",
       "Name": "Google AI Platform",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_root_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "7.2.2: Access to system components and data is appropriately defined and assigned.",
@@ -16282,7 +16300,9 @@
       "Id": "7.2.3.9",
       "Description": "Checks if the Vertex AI Workbench Root Access setting is enabled for Vertex AI Workbench Notebooks. The rule is NON_COMPLIANT if the Root Access setting is set to 'Enabled' for a Vertex AI Workbench Notebook instance.",
       "Name": "Vertex AI",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_root_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "7.2.3: Access to system components and data is appropriately defined and assigned.",
@@ -20547,7 +20567,9 @@
       "Id": "A1.1.2.21",
       "Description": "Checks if direct internet access is disabled for a Google AI Platform Notebook instance. The rule is NON_COMPLIANT if an AI Platform Notebook instance is internet-enabled.",
       "Name": "Google AI Platform Notebooks",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "A1.1.2: Multi-tenant service providers protect and separate all customer environments and data.",
@@ -21060,7 +21082,9 @@
       "Id": "A1.1.3.37",
       "Description": "Checks if direct internet access is disabled for a Google Cloud AI Platform Notebook instance. The rule is NON_COMPLIANT if an AI Platform Notebook instance is internet-enabled.",
       "Name": "Google Cloud AI Platform",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "A1.1.3: Multi-tenant service providers protect and separate all customer environments and data.",
@@ -22180,7 +22204,9 @@
       "Id": "A3.4.1.23",
       "Description": "Checks if direct internet access is disabled for a Google Cloud AI Platform Notebook instance. The rule is NON_COMPLIANT if an AI Platform Notebook instance is internet-enabled.",
       "Name": "Google Cloud AI Platform Notebooks",
-      "Checks": [],
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ],
       "Attributes": [
         {
           "Section": "A3.4.1: Logical access to the cardholder data environment is controlled and managed.",
