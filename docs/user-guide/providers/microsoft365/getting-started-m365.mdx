@@ -178,10 +178,6 @@ Prowler signs in through the selected region's Microsoft Entra ID authority and 
 
 <Note>
 Azure CLI authentication (`--az-cli-auth`) uses the cloud the Azure CLI is signed in to. When targeting `M365China` or `M365USGovernment`, switch the Azure CLI to the matching cloud before signing in, for example `az cloud set --name AzureUSGovernment` or `az cloud set --name AzureChinaCloud`.
-The PowerShell checks (Exchange Online and Microsoft Teams, which also feed Entra, Defender, Purview and Admin Center checks) follow the selected region. For `M365USGovernment` and `M365China`, Prowler requests tokens from that cloud's sign-in endpoint and connects with the matching `-ExchangeEnvironmentName` (`O365USGovGCCHigh`, `O365China`) and `-TeamsEnvironmentName` (`TeamsGCCH`, `TeamsChina`) values. Nothing is sent to the commercial sign-in endpoint for those regions.
-
-<Note>
-Only the Microsoft Teams checks for `M365USGovernment` are verified against a live tenant. Exchange Online for `M365USGovernment` and everything for `M365China` are not, and Teams checks may not connect with `M365China`.
 </Note>
 
 ---
