@@ -202,3 +202,54 @@ class Test_ElastiCache_Service:
             automatic_failover="disabled",
             engine_version="0.0",
         )
+
+    def test_describe_follows_marker_pagination(self):
+        def cluster(name, version):
+            return {
+                "CacheClusterId": name,
+                "ARN": f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:{name}",
+                "Engine": ELASTICACHE_ENGINE,
+                "EngineVersion": version,
+            }
+
+        def group(group_id, members):
+            return {
+                "ReplicationGroupId": group_id,
+                "ARN": f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:replicationgroup:{group_id}",
+                "Status": REPLICATION_GROUP_STATUS,
+                "MemberClusters": members,
+            }
+
+        pages = {
+            "DescribeCacheClusters": (
+                {"CacheClusters": [cluster("cache-0001", "7.0")], "Marker": "next"},
+                {"CacheClusters": [cluster("sessions-0001", "7.1")]},
+            ),
+            "DescribeReplicationGroups": (
+                {
+                    "ReplicationGroups": [group("cache", ["cache-0001"])],
+                    "Marker": "next",
+                },
+                {"ReplicationGroups": [group("sessions", ["sessions-0001"])]},
+            ),
+        }
+
+        def mock_paginated_api_call(self, operation_name, kwargs):
+            if operation_name in pages:
+                return pages[operation_name][1 if kwargs.get("Marker") else 0]
+            if operation_name == "ListTagsForResource":
+                return {"TagList": []}
+            return mock_make_api_call(self, operation_name, kwargs)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_paginated_api_call
+        ):
+            elasticache = ElastiCache(set_mocked_aws_provider())
+
+        assert sorted(c.id for c in elasticache.clusters.values()) == [
+            "cache-0001",
+            "sessions-0001",
+        ]
+        groups = {g.id: g for g in elasticache.replication_groups.values()}
+        assert sorted(groups) == ["cache", "sessions"]
+        assert groups["sessions"].engine_version == "7.1"
