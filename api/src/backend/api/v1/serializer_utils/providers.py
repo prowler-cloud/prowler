@@ -284,13 +284,9 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The fingerprint of the API signing key.",
                     },
-                    "key_file": {
-                        "type": "string",
-                        "description": "The path to the private key file for API signing. Either key_file or key_content must be provided.",
-                    },
                     "key_content": {
                         "type": "string",
-                        "description": "The content of the private key for API signing (base64 encoded). Either key_file or key_content must be provided.",
+                        "description": "The content of the private key for API signing (base64 encoded).",
                     },
                     "tenancy": {
                         "type": "string",
@@ -305,11 +301,7 @@ from rest_framework_json_api import serializers
                         "description": "Optional OCI home region (or any region the tenancy is subscribed to) used to validate the credentials. It does not filter the scan, which covers all subscribed regions. Defaults to us-ashburn-1.",
                     },
                 },
-                "required": ["user", "fingerprint", "tenancy"],
-                "anyOf": [
-                    {"required": ["key_file"]},
-                    {"required": ["key_content"]},
-                ],
+                "required": ["user", "fingerprint", "key_content", "tenancy"],
             },
             {
                 "type": "object",
