@@ -1,12 +1,13 @@
+import { UserCog } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
-import { filterRoles } from "@/components/filters/data-filters";
+import { RolesFilters } from "@/app/(prowler)/roles/_components/roles-filters";
 import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
 import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/shadcn/content-layout";
-import { DataTable, DataTableFilterCustom } from "@/components/shadcn/table";
+import { DataTable } from "@/components/shadcn/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Roles({
@@ -18,13 +19,10 @@ export default async function Roles({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Roles" icon="lucide:user-cog">
+    <ContentLayout title="Roles" icon={<UserCog />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-between">
-          <DataTableFilterCustom
-            filters={filterRoles || []}
-            gridClassName="w-fit grid-cols-[14rem_auto] items-center gap-4 sm:grid-cols-[14rem_auto] lg:grid-cols-[14rem_auto] xl:grid-cols-[14rem_auto] 2xl:grid-cols-[14rem_auto]"
-          />
+          <RolesFilters />
           <Button asChild>
             <Link href="/roles/new">Add Role</Link>
           </Button>

@@ -51,6 +51,12 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
                 default_policy_well_configured = False
 
                 for policy in defender_client.inbound_spam_policies:
+                    # Preset security policies are scoped by protection policy rules, not filter rules
+                    if (
+                        not policy.default
+                        and policy.identity not in defender_client.inbound_spam_rules
+                    ):
+                        continue
                     report = CheckReportM365(
                         metadata=self.metadata(),
                         resource=policy,

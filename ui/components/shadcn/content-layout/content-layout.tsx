@@ -1,26 +1,17 @@
-import { ReactNode } from "react";
+import { type ReactElement } from "react";
 
-import {
-  Navbar,
-  type OnboardingActionConfig,
-} from "@/components/layout/nav-bar/navbar";
+import { Navbar } from "@/components/layout/nav-bar/navbar";
 
 interface ContentLayoutProps {
   title: string;
-  icon?: string | ReactNode;
-  onboardingAction?: OnboardingActionConfig;
+  icon?: ReactElement;
   children: React.ReactNode;
 }
 
-export function ContentLayout({
-  title,
-  icon,
-  onboardingAction,
-  children,
-}: ContentLayoutProps) {
+export function ContentLayout({ title, icon, children }: ContentLayoutProps) {
   return (
     <>
-      <Navbar title={title} icon={icon} onboardingAction={onboardingAction} />
+      <Navbar title={title} icon={icon} />
       <div className="py-4 pr-6">{children}</div>
     </>
   );

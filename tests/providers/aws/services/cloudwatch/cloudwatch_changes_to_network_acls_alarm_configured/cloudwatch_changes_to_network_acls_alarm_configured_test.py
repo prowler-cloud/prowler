@@ -670,10 +670,12 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             )
 
             cloudtrail_client.trails = None
+            cloudtrail_client.trails_unavailable = True
             check = cloudwatch_changes_to_network_acls_alarm_configured()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_reversed_clauses(

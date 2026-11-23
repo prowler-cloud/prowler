@@ -1,9 +1,15 @@
 import base64
 import json
 import logging
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 
 import yaml
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    is_api_key_session,
+    session_bound_tenant_id,
+)
 from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
@@ -60,8 +66,12 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    validate_gcp_service_account_key,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from config.custom_logging import BackendLogger
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -71,6 +81,7 @@ from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.providers.oraclecloud.config import OCI_REGIONS
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -152,7 +163,9 @@ class StateEnumSerializerField(serializers.ChoiceField):
 # Tokens
 
 
-def generate_tokens(user: User, tenant_id: str) -> dict:
+def generate_tokens(
+    user: User, tenant_id: str, sso_tenant_id: str | None = None
+) -> dict:
     try:
         refresh = RefreshToken.for_user(user)
     except InvalidKeyError:
@@ -169,6 +182,8 @@ def generate_tokens(user: User, tenant_id: str) -> dict:
     # Post-process the tokens
     # Set the tenant_id
     refresh["tenant_id"] = tenant_id
+    if sso_tenant_id:
+        refresh[SSO_TENANT_CLAIM] = sso_tenant_id
 
     # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
     # way to set the nbf claim
@@ -207,7 +222,9 @@ class BaseTokenSerializer(TokenObtainPairSerializer):
                 raise ValidationError("User has no memberships.")
             tenant_id = str(first_membership.tenant_id)
 
-        return generate_tokens(user, tenant_id)
+        return generate_tokens(
+            user, tenant_id, sso_tenant_id=self.context.get(SSO_TENANT_CLAIM)
+        )
 
 
 class TokenSerializer(BaseTokenSerializer):
@@ -253,6 +270,29 @@ class TokenSocialLoginSerializer(BaseTokenSerializer):
 
     def validate(self, attrs):
         return super().custom_validate(attrs, social=True)
+
+
+class AuthorizationCodeSocialLoginSerializer(SocialLoginSerializer):
+    """Social login that only accepts an OAuth authorization code.
+
+    A caller-supplied access_token or id_token may have been issued to any
+    OAuth client, so trusting it lets anyone holding such a token for a victim
+    sign in as them. Exchanging the code with Prowler's own client secret
+    guarantees the token was issued to Prowler.
+    """
+
+    def validate(self, attrs):
+        if attrs.get("access_token") or attrs.get("id_token"):
+            raise serializers.ValidationError(
+                "Only the OAuth authorization code flow is supported.",
+                code="social-login-token-not-allowed",
+            )
+        if not attrs.get("code"):
+            raise serializers.ValidationError(
+                "An OAuth authorization code is required.",
+                code="social-login-code-required",
+            )
+        return super().validate(attrs)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -319,11 +359,25 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
         if not user.is_authenticated:
             raise ValidationError("Invalid or expired token.")
 
+        if is_api_key_session(request):
+            raise ValidationError(
+                "API keys cannot be exchanged for a session token.",
+                code="session-bound-to-tenant",
+            )
+
         tenant_id = str(attrs.get("tenant_id"))
         if not user.is_member_of_tenant(tenant_id):
             raise ValidationError("Tenant does not exist or user is not a member.")
 
-        return generate_tokens(user, tenant_id)
+        bound_tenant_id = session_bound_tenant_id(request)
+        if bound_tenant_id and bound_tenant_id != tenant_id:
+            raise ValidationError(
+                "This session can only access the organization it signed in to. "
+                "Sign in again to switch to another organization.",
+                code="session-bound-to-tenant",
+            )
+
+        return generate_tokens(user, tenant_id, sso_tenant_id=bound_tenant_id)
 
 
 # Users
@@ -376,27 +430,48 @@ class UserSerializer(BaseModelSerializerV1):
     def _can_view_relationships(self, instance) -> bool:
         """Allow self to view own relationships. Require manage_account to view others."""
         role = self.context.get("role")
+        return self._is_self(instance) or bool(role and role.manage_account)
+
+    def _is_self(self, instance) -> bool:
         request = self.context.get("request")
-        is_self = bool(
+        return bool(
             request
             and getattr(request, "user", None)
             and getattr(instance, "id", None) == request.user.id
         )
-        return is_self or (role and role.manage_account)
+
+    def _active_tenant_id(self):
+        return getattr(self.context.get("request"), "tenant_id", None)
+
+    @staticmethod
+    def _in_tenant(related_manager, tenant_id):
+        """Filter a prefetched related manager in memory.
+
+        ``.filter()`` clones the queryset without its result cache, so it would
+        discard the viewset's prefetch and re-query once per serialized user.
+        """
+        return [
+            item
+            for item in related_manager.all()
+            if str(item.tenant_id) == str(tenant_id)
+        ]
 
     def get_roles(self, instance):
-        return (
-            instance.roles.all()
-            if self._can_view_relationships(instance)
-            else Role.objects.none()
-        )
+        tenant_id = self._active_tenant_id()
+        if not tenant_id or not self._can_view_relationships(instance):
+            return Role.objects.none()
+        return self._in_tenant(instance.roles, tenant_id)
 
     def get_memberships(self, instance):
-        return (
-            instance.memberships.all()
-            if self._can_view_relationships(instance)
-            else Membership.objects.none()
-        )
+        if not self._can_view_relationships(instance):
+            return Membership.objects.none()
+        # Own memberships span tenants on purpose: the tenant switcher reads them.
+        if self._is_self(instance):
+            return instance.memberships.all()
+        tenant_id = self._active_tenant_id()
+        if not tenant_id:
+            return Membership.objects.none()
+        return self._in_tenant(instance.memberships, tenant_id)
 
 
 class UserMeSerializer(UserSerializer):
@@ -730,11 +805,32 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
 
     included_serializers = {"tenant": "api.v1.serializers.TenantIncludeSerializer"}
 
+    _REQUESTER_TENANTS_ATTR = "_prowler_requester_tenants"
+
+    def _requester_tenants(self):
+        """Tenants the requester belongs to, resolved once per request.
+
+        Memoised on the request because DRF builds a serializer instance per
+        included object, so a per-instance cache would still query per membership.
+        """
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None:
+            return {}
+        tenants = getattr(request, self._REQUESTER_TENANTS_ATTR, None)
+        if tenants is None:
+            tenants = {
+                tenant.id: tenant
+                for tenant in Tenant.objects.using(MainRouter.admin_db).filter(
+                    membership__user_id=user.id
+                )
+            }
+            setattr(request, self._REQUESTER_TENANTS_ATTR, tenants)
+        return tenants
+
     def get_tenant(self, instance):
-        try:
-            return Tenant.objects.using(MainRouter.admin_db).get(id=instance.tenant_id)
-        except Tenant.DoesNotExist:
-            return None
+        """Resolve the tenant only when the requester is a member of it."""
+        return self._requester_tenants().get(instance.tenant_id)
 
 
 # Provider Groups
@@ -1658,14 +1754,43 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
-KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR = (
-    "Kubernetes kubeconfig command-based authentication is not supported in "
-    "Prowler Cloud for security reasons."
+KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR = (
+    "Only inline Kubernetes credentials are supported. "
+    "For user authentication use token, username/password, or client-certificate-data with client-key-data; "
+    "clusters may use certificate-authority-data. "
+    "File-path fields (tokenFile, client-certificate, client-key, certificate-authority), "
+    "command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported."
 )
 KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
 
 
-def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
+KUBECONFIG_ALLOWED_USER_KEYS = frozenset(
+    {
+        "token",
+        "username",
+        "password",
+        "client-certificate-data",
+        "client-key-data",
+        "as",
+        "as-uid",
+        "as-groups",
+        "as-user-extra",
+    }
+)
+KUBECONFIG_ALLOWED_CLUSTER_KEYS = frozenset(
+    {
+        "server",
+        "certificate-authority-data",
+        "insecure-skip-tls-verify",
+        "tls-server-name",
+        "disable-compression",
+        "extensions",
+    }
+)
+
+
+def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
+    """Accept only inline credentials; reject file-reference and auth-provider fields."""
     users = kubeconfig.get("users", [])
     if not isinstance(users, list):
         raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
@@ -1678,21 +1803,116 @@ def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
         if not isinstance(user, dict):
             raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if "exec" in user:
-            return True
+        if any(key not in KUBECONFIG_ALLOWED_USER_KEYS for key in user):
+            return False
 
-        auth_provider = user.get("auth-provider", {})
-        if not isinstance(auth_provider, dict):
-            continue
+    clusters = kubeconfig.get("clusters", [])
+    if not isinstance(clusters, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        auth_provider_config = auth_provider.get("config", {})
-        if not isinstance(auth_provider_config, dict):
-            continue
+    for cluster_entry in clusters:
+        if not isinstance(cluster_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if "cmd-path" in auth_provider_config:
-            return True
+        cluster = cluster_entry.get("cluster", {})
+        if not isinstance(cluster, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-    return False
+        if any(key not in KUBECONFIG_ALLOWED_CLUSTER_KEYS for key in cluster):
+            return False
+
+    return True
+
+
+def provider_secret_serializer_class(
+    provider_type: str, secret_type: str, secret: dict
+) -> type[serializers.Serializer]:
+    """Serializer that validates a secret of this provider and secret type."""
+    if secret_type == ProviderSecret.TypeChoices.STATIC:
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            return AwsProviderSecret
+        elif provider_type == Provider.ProviderChoices.AZURE.value:
+            return AzureProviderSecret
+        elif provider_type == Provider.ProviderChoices.GCP.value:
+            return GCPProviderSecret
+        elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+            return GoogleWorkspaceProviderSecret
+        elif provider_type == Provider.ProviderChoices.OKTA.value:
+            return OktaProviderSecret
+        elif provider_type == Provider.ProviderChoices.GITHUB.value:
+            return GithubProviderSecret
+        elif provider_type == Provider.ProviderChoices.IAC.value:
+            return IacProviderSecret
+        elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
+            return KubernetesProviderSecret
+        elif provider_type == Provider.ProviderChoices.M365.value:
+            return M365ProviderSecret
+        elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
+            return OracleCloudProviderSecret
+        elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
+            return MongoDBAtlasProviderSecret
+        elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+            return AlibabaCloudProviderSecret
+        elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
+            if "api_token" in secret:
+                return CloudflareTokenProviderSecret
+            elif "api_key" in secret and "api_email" in secret:
+                return CloudflareApiKeyProviderSecret
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "secret": "Cloudflare credentials must include either 'api_token' "
+                        "or both 'api_key' and 'api_email'."
+                    }
+                )
+        elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
+            return OpenStackCloudsYamlProviderSecret
+        elif provider_type == Provider.ProviderChoices.IMAGE.value:
+            return ImageProviderSecret
+        elif provider_type == Provider.ProviderChoices.VERCEL.value:
+            return VercelProviderSecret
+        else:
+            raise serializers.ValidationError(
+                {"provider": f"Provider type not supported {provider_type}"}
+            )
+    elif secret_type == ProviderSecret.TypeChoices.ROLE:
+        if provider_type == Provider.ProviderChoices.AWS.value:
+            return AWSRoleAssumptionProviderSecret
+        elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
+            return AlibabaCloudRoleAssumptionProviderSecret
+        else:
+            raise serializers.ValidationError(
+                {
+                    "secret_type": f"Role assumption not supported for provider type: {provider_type}"
+                }
+            )
+    elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
+        return GCPServiceAccountProviderSecret
+    else:
+        raise serializers.ValidationError(
+            {"secret_type": f"Secret type not supported: {secret_type}"}
+        )
+
+
+def declared_secret_fields(provider_type: str, secret_type: str, secret: dict) -> dict:
+    """The secret limited to the fields its serializer declares."""
+    # the stored secret is passed to the provider as keyword arguments, so an
+    # undeclared field would reach parameters such as file paths
+    if provider_type not in Provider.ProviderChoices.values:
+        # a provider type without a serializer here validates its own secret
+        return dict(secret)
+    # a known provider whose stored secret no longer matches a serializer raises
+    fields = provider_secret_serializer_class(
+        provider_type, secret_type, secret
+    )().fields
+    return {key: value for key, value in secret.items() if key in fields}
+
+
+def validated_secret_fields(secret: dict, validated_secret) -> dict:
+    """The secret as sent, limited to the fields its serializer validated."""
+    if not isinstance(validated_secret, Mapping):
+        return secret
+    return {key: value for key, value in secret.items() if key in validated_secret}
 
 
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
@@ -1700,70 +1920,9 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     def validate_secret_based_on_provider(
         provider_type: str, secret_type: ProviderSecret.TypeChoices, secret: dict
     ):
-        if secret_type == ProviderSecret.TypeChoices.STATIC:
-            if provider_type == Provider.ProviderChoices.AWS.value:
-                serializer = AwsProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.AZURE.value:
-                serializer = AzureProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GCP.value:
-                serializer = GCPProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
-                serializer = GoogleWorkspaceProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OKTA.value:
-                serializer = OktaProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.GITHUB.value:
-                serializer = GithubProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.IAC.value:
-                serializer = IacProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
-                serializer = KubernetesProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.M365.value:
-                serializer = M365ProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
-                serializer = OracleCloudProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
-                serializer = MongoDBAtlasProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
-                serializer = AlibabaCloudProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.CLOUDFLARE.value:
-                if "api_token" in secret:
-                    serializer = CloudflareTokenProviderSecret(data=secret)
-                elif "api_key" in secret and "api_email" in secret:
-                    serializer = CloudflareApiKeyProviderSecret(data=secret)
-                else:
-                    raise serializers.ValidationError(
-                        {
-                            "secret": "Cloudflare credentials must include either 'api_token' "
-                            "or both 'api_key' and 'api_email'."
-                        }
-                    )
-            elif provider_type == Provider.ProviderChoices.OPENSTACK.value:
-                serializer = OpenStackCloudsYamlProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.IMAGE.value:
-                serializer = ImageProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.VERCEL.value:
-                serializer = VercelProviderSecret(data=secret)
-            else:
-                raise serializers.ValidationError(
-                    {"provider": f"Provider type not supported {provider_type}"}
-                )
-        elif secret_type == ProviderSecret.TypeChoices.ROLE:
-            if provider_type == Provider.ProviderChoices.AWS.value:
-                serializer = AWSRoleAssumptionProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.ALIBABACLOUD.value:
-                serializer = AlibabaCloudRoleAssumptionProviderSecret(data=secret)
-            else:
-                raise serializers.ValidationError(
-                    {
-                        "secret_type": f"Role assumption not supported for provider type: {provider_type}"
-                    }
-                )
-        elif secret_type == ProviderSecret.TypeChoices.SERVICE_ACCOUNT:
-            serializer = GCPServiceAccountProviderSecret(data=secret)
-        else:
-            raise serializers.ValidationError(
-                {"secret_type": f"Secret type not supported: {secret_type}"}
-            )
+        serializer = provider_secret_serializer_class(
+            provider_type, secret_type, secret
+        )(data=secret)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as validation_error:
@@ -1845,6 +2004,13 @@ class GCPProviderSecret(serializers.Serializer):
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
 
+    def validate_service_account_key(self, service_account_key):
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return service_account_key
+
     class Meta:
         resource_name = "provider-secrets"
 
@@ -1852,6 +2018,30 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
 class GoogleWorkspaceProviderSecret(serializers.Serializer):
     credentials_content = serializers.CharField()
     delegated_user = serializers.EmailField()
+
+    def validate_credentials_content(self, credentials_content):
+        try:
+            service_account_key = json.loads(credentials_content)
+        except json.JSONDecodeError as error:
+            raise ValidationError(
+                "The credentials content must be a valid JSON service account key.",
+                code="googleworkspace-invalid-service-account-key",
+            ) from error
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
+        return credentials_content
+
+    def validate(self, attrs):
+        # The stored secret is passed to the provider as keyword arguments
+        unknown = set(self.initial_data) - set(self.fields)
+        if unknown:
+            raise ValidationError(
+                f"Unexpected fields: {', '.join(sorted(unknown))}.",
+                code="googleworkspace-unexpected-fields",
+            )
+        return attrs
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1875,7 +2065,7 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 
 class KubernetesProviderSecret(serializers.Serializer):
-    kubeconfig_content = serializers.CharField()
+    kubeconfig_content = serializers.CharField(trim_whitespace=False)
 
     def validate_kubeconfig_content(self, kubeconfig_content):
         try:
@@ -1888,9 +2078,9 @@ class KubernetesProviderSecret(serializers.Serializer):
         if not isinstance(kubeconfig, dict):
             raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if kubeconfig_contains_unsupported_command_auth(kubeconfig):
+        if not kubeconfig_is_inline_only_credentials(kubeconfig):
             raise serializers.ValidationError(
-                KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR
+                KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
             )
 
         return kubeconfig_content
@@ -1917,9 +2107,16 @@ class IacProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
-class LegacyOCIRegionField(serializers.Field):
+class OCIHomeRegionField(serializers.Field):
+    """Optional OCI home region; blank or non-string legacy values are dropped."""
+
     def to_internal_value(self, data):
-        return data
+        if not isinstance(data, str) or not data.strip():
+            return None
+        region = data.strip()
+        if region not in OCI_REGIONS:
+            raise serializers.ValidationError(f"Invalid OCI region: {region}")
+        return region
 
     def to_representation(self, value):
         return value
@@ -1928,19 +2125,25 @@ class LegacyOCIRegionField(serializers.Field):
 class OracleCloudProviderSecret(serializers.Serializer):
     user = serializers.CharField()
     fingerprint = serializers.CharField()
-    key_file = serializers.CharField(required=False)
-    key_content = serializers.CharField(required=False)
+    key_content = serializers.CharField()
     tenancy = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
-    region = LegacyOCIRegionField(required=False, allow_null=True)
+    region = OCIHomeRegionField(required=False, allow_null=True)
+
+    def to_internal_value(self, data):
+        # a path is read on the worker, where no tenant can have placed a key
+        if isinstance(data, dict) and "key_file" in data:
+            raise serializers.ValidationError(
+                {
+                    "key_file": "key_file is not supported. Provide the private key "
+                    "in key_content (base64 encoded)."
+                }
+            )
+        return super().to_internal_value(data)
 
     def validate(self, attrs):
-        attrs.pop("region", None)
-
-        if "key_file" not in attrs and "key_content" not in attrs:
-            raise serializers.ValidationError(
-                {"key_file": "Either key_file or key_content must be provided."}
-            )
+        if not attrs.get("region"):
+            attrs.pop("region", None)
 
         return attrs
 
@@ -1975,6 +2178,12 @@ class ImageProviderSecret(serializers.Serializer):
     registry_username = serializers.CharField(required=False)
     registry_password = serializers.CharField(required=False)
     registry_token = serializers.CharField(required=False)
+    image_filter = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    tag_filter = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2094,6 +2303,10 @@ class ProviderSecretCreateSerializer(
         )
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        else:
+            validated_attrs["secret"] = validated_secret_fields(
+                secret, validated_secret
+            )
         return validated_attrs
 
 
@@ -2130,6 +2343,10 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         )
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        else:
+            validated_attrs["secret"] = validated_secret_fields(
+                secret, validated_secret
+            )
         return validated_attrs
 
 
@@ -2148,6 +2365,12 @@ class InvitationSerializer(RLSSerializer):
         tenant_id = self.context.get("tenant_id")
         if tenant_id is not None:
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_lapsed:
+            data["state"] = Invitation.State.EXPIRED.value
+        return data
 
     class Meta:
         model = Invitation
@@ -2175,6 +2398,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
     def validate_email(self, value):
+        value = value.strip().lower()
         user = User.objects.filter(email=value).first()
         tenant_id = self.context["tenant_id"]
         if user and Membership.objects.filter(user=user, tenant=tenant_id).exists():
@@ -2182,9 +2406,13 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
                 "The user may already be a member of the tenant or there was an issue with the "
                 "email provided."
             )
-        if Invitation.objects.filter(
-            email=value, state=Invitation.State.PENDING
-        ).exists():
+        pending_invitations = Invitation.objects.filter(
+            tenant_id=tenant_id, email=value, state=Invitation.State.PENDING
+        )
+        pending_invitations.filter(Invitation.lapsed_q()).update(
+            state=Invitation.State.EXPIRED
+        )
+        if pending_invitations.filter(expires_at__gt=datetime.now(UTC)).exists():
             raise ValidationError(
                 "Unable to process your request. Please check the information provided and "
                 "try again."
@@ -4234,6 +4462,9 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
 
         # Check that all findings exist and belong to this tenant
         findings = Finding.all_objects.filter(tenant_id=tenant_id, id__in=value)
+        visible_providers = self.context.get("visible_providers")
+        if visible_providers is not None:
+            findings = findings.filter(scan__provider__in=visible_providers)
         found_ids = set(findings.values_list("id", flat=True))
         provided_ids = set(value)
 
@@ -4262,11 +4493,15 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
         # Check for overlaps with existing enabled rules
         existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, enabled=True)
 
+        # A scoped role may not be able to see the conflicting rule, so its name
+        # is only shown to roles with unlimited visibility
+        rule_names_visible = self.context.get("visible_providers") is None
         for rule in existing_rules:
             overlap = set(finding_uids) & set(rule.finding_uids)
             if overlap:
+                by_rule = f" by rule '{rule.name}'" if rule_names_visible else ""
                 raise ConflictException(
-                    detail=f"The following finding UIDs are already muted by rule '{rule.name}': {overlap}"
+                    detail=f"The following finding UIDs are already muted{by_rule}: {overlap}"
                 )
 
         # Store finding_uids in validated_data for create

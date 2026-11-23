@@ -1,9 +1,8 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { type ReactNode, Suspense, useState } from "react";
+import { type ReactNode, useState } from "react";
 
-import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -12,22 +11,19 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
-import { getFlowById } from "@/lib/onboarding";
 import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
 import { isCloud } from "@/lib/shared/env";
-import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
-const viewFirstScanFlow = getFlowById("view-first-scan")!;
-
 import { CliImportBanner } from "./cli-import-banner";
+import { ImportFindingsModal } from "./import-findings-modal";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
 import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
@@ -37,6 +33,7 @@ interface ScansPageShellProps {
   providers: ProviderProps[];
   providerGroups?: ProviderGroup[];
   hasManageScansPermission: boolean;
+  hasManageIngestionsPermission?: boolean;
   activeScanCount?: number;
   children: ReactNode;
   /** Cloud overlay seam for the launch-scan modal. */
@@ -48,6 +45,7 @@ export function ScansPageShell({
   providers,
   providerGroups = [],
   hasManageScansPermission,
+  hasManageIngestionsPermission = false,
   activeScanCount = 0,
   children,
   scanScheduleCapability,
@@ -70,16 +68,13 @@ export function ScansPageShell({
     (provider) => provider.attributes.connection.connected === true,
   );
   const thereAreNoProviders = providers.length === 0;
-  // Non-blocking onboarding hint: shown when scans can't be launched (no provider, or
+  // Non-blocking hint: shown when scans can't be launched (no provider, or
   // none connected). The table still renders below, so imported scans stay visible.
   const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
   const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen =
     !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
-  // When a scan is already running, the tour highlights its row (anchored in
-  // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
-  const hasInProgressScan = activeScanCount > 0;
 
   const getTabLabel = (tab: ScanJobsTab) => {
     const label = SCAN_TAB_LABELS[tab];
@@ -108,31 +103,13 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Gate on the full launch condition: the tour anchors on Launch Scan, which is
-          disabled without a connected provider AND manage_scans — starting it would
-          point at an unusable button. Every start path (?onboarding= URL, active
-          sequence, navbar replay) funnels through this trigger, so gating here covers
-          them all. */}
-      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      {!launchDisabled && (
-        <Suspense fallback={null}>
-          <OnboardingTrigger
-            flow={{
-              ...viewFirstScanFlow,
-              tour: buildViewFirstScanTour(hasInProgressScan),
-            }}
-          />
-        </Suspense>
-      )}
-      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
-      <PageReady />
       {showProvidersHint && (
         <ScansProvidersEmptyState thereIsNoProviders={thereAreNoProviders} />
       )}
       <div
         role="group"
-        aria-label="Scan filters and actions"
-        className="flex flex-wrap items-center gap-3"
+        aria-label="Scan filters"
+        className="flex flex-wrap items-center gap-4"
       >
         <ScansFilterBar
           providers={providers}
@@ -144,17 +121,6 @@ export function ScansPageShell({
           onScheduleTypeChange={filters.setScheduleType}
           onScanStatusChange={filters.setScanStatus}
         />
-
-        <Button
-          type="button"
-          size="lg"
-          onClick={() => handleLaunchOpenChange(true)}
-          disabled={launchDisabled}
-          className="w-full md:w-auto"
-          data-tour-id="view-first-scan-launch"
-        >
-          Launch Scan
-        </Button>
       </div>
 
       {isCloudEnvironment && <CliImportBanner />}
@@ -167,19 +133,27 @@ export function ScansPageShell({
         <div
           role="group"
           aria-label="Scan tabs"
-          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-wrap items-center justify-between gap-3"
         >
-          <TabsList
-            className="overflow-x-auto"
-            data-tour-id="view-first-scan-tabs"
-          >
+          <TabsList className="w-full overflow-x-auto sm:w-auto">
             {Object.values(SCAN_JOBS_TAB).map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {getTabLabel(tab as ScanJobsTab)}
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="shrink-0">
+          <div className="ml-auto flex w-full flex-wrap items-center gap-3 sm:w-auto">
+            <Button
+              type="button"
+              onClick={() => handleLaunchOpenChange(true)}
+              disabled={launchDisabled}
+              className="w-full sm:w-auto"
+            >
+              Launch Scan
+            </Button>
+            {isCloudEnvironment && hasManageIngestionsPermission && (
+              <ImportFindingsModal />
+            )}
             <MutedFindingsConfigButton />
           </div>
         </div>

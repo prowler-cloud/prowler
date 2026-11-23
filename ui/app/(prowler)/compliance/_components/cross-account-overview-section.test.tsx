@@ -123,6 +123,7 @@ describe("CrossAccountOverviewSection", () => {
       eligibleProviderTypes: [],
       canManage: false,
       unavailable: false,
+      incomplete: false,
     });
   });
 
@@ -334,12 +335,14 @@ describe("CrossAccountOverviewSection watchlist", () => {
     entries: ReturnType<typeof catalogEntry>[],
     canManage = true,
     unavailable = false,
+    incomplete = false,
   ) =>
     vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
       entries,
       eligibleProviderTypes: ["aws"],
       canManage,
       unavailable,
+      incomplete,
     });
 
   it("keeps the provider-type grouping when the filter is on", async () => {
@@ -378,6 +381,19 @@ describe("CrossAccountOverviewSection watchlist", () => {
 
   it("renders nothing when the catalog could not be read", async () => {
     withWatchlist([], true, true);
+
+    const { container } = await renderSection();
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("renders nothing when the catalog is missing pages", async () => {
+    withWatchlist(
+      [catalogEntry("cis_2.0_aws", "aws", false)],
+      true,
+      false,
+      true,
+    );
 
     const { container } = await renderSection();
 

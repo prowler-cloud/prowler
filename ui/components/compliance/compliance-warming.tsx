@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import { Clock, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/shadcn/button/button";
@@ -16,8 +16,8 @@ export const ComplianceWarming = () => {
           <CardContent>
             <div className="flex w-full items-center justify-between gap-6">
               <div className="flex items-start gap-4">
-                <Icon
-                  icon="tabler:clock"
+                <Clock
+                  aria-hidden="true"
                   className="mt-1 h-5 w-5 text-gray-400 dark:text-gray-300"
                 />
                 <div>
@@ -37,7 +37,7 @@ export const ComplianceWarming = () => {
                 onClick={() => router.refresh()}
                 aria-label="Reload compliance data"
               >
-                <Icon icon="tabler:refresh" className="h-4 w-4" />
+                <RefreshCw aria-hidden="true" className="h-4 w-4" />
                 Try Again
               </Button>
             </div>

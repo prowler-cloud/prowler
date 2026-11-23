@@ -258,6 +258,27 @@ describe.each([
   });
 });
 
+describe("crossProviderToMapperInput through the generic mapper", () => {
+  it("joins extras onto every requirement of a framework without a dedicated mapper", () => {
+    const attributes = csaAttributes as CrossProviderOverviewAttributes;
+    const mapper = getComplianceMapper("Registry-Framework-Without-Mapper");
+    const { attributesData, requirementsData } =
+      crossProviderToMapperInput(attributes);
+    const mapped = collectRequirements(
+      mapper.mapComplianceData(attributesData, requirementsData),
+    );
+    const extras = buildRequirementExtrasMap(attributes);
+
+    expect(mapped).toHaveLength(attributes.requirements.length);
+    for (const requirement of mapped) {
+      expect(
+        extras.get(requirement.name),
+        `no extras for "${requirement.name}"`,
+      ).toBeDefined();
+    }
+  });
+});
+
 describe("CSA grouping through the real mapper", () => {
   it("groups requirements by Section into categories with correct counters", () => {
     const mapper = getComplianceMapper("CSA-CCM");

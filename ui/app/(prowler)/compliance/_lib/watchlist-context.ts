@@ -11,6 +11,8 @@ export interface ComplianceWatchlistContext {
   canManage: boolean;
   /** Could not be read — not the same as legitimately empty. */
   unavailable: boolean;
+  /** Read, but some catalog pages failed: `entries` is partial. */
+  incomplete: boolean;
 }
 
 export const EMPTY_WATCHLIST_CONTEXT: ComplianceWatchlistContext = {
@@ -18,6 +20,7 @@ export const EMPTY_WATCHLIST_CONTEXT: ComplianceWatchlistContext = {
   eligibleProviderTypes: [],
   canManage: false,
   unavailable: false,
+  incomplete: false,
 };
 
 // One cached catalog/session lookup feeds every compliance surface in a render.
@@ -38,6 +41,7 @@ const loadContextForKey = cache(
         eligibleProviderTypes: catalog.meta.eligibleProviderTypes,
         canManage: Boolean(session?.user?.permissions?.manage_scans),
         unavailable: catalog.unavailable,
+        incomplete: catalog.incomplete,
       };
     } catch (error) {
       console.error("Error loading the compliance watchlist context:", error);

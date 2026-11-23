@@ -1,236 +1,167 @@
 ---
 name: ai-sdk-5
 description: >
-  Vercel AI SDK 5 patterns.
-  Trigger: When building AI features with AI SDK v5 (chat, streaming, tools/function calling, UIMessage parts), including migration from v4.
+  Vercel AI SDK patterns for the installed major (ui/package.json: `ai` 6.x, `@ai-sdk/react` 3.x).
+  The skill name is historical; the APIs below are the v5+/v6 UIMessage API.
+  Trigger: When building or changing AI chat/streaming features with the Vercel AI SDK (useChat, DefaultChatTransport, UIMessage parts, UI message streams), including Lighthouse v1 in ui/.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "2.0"
   scope: [root, ui]
   auto_invoke: "Building AI chat features"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
-## Breaking Changes from AI SDK 4
+## Installed Versions (check before coding)
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| `ai` | 6.x | Core: `DefaultChatTransport`, `UIMessage`, `createUIMessageStreamResponse`, `streamText`, `tool` |
+| `@ai-sdk/react` | 3.x | `useChat` hook |
+| `@ai-sdk/openai`, `@ai-sdk/langchain` | NOT installed | Prowler drives models through LangChain/LangGraph (`@langchain/*`), not AI SDK providers |
+
+Do not add AI SDK provider packages without checking how Lighthouse is wired first.
+
+## Where AI SDK Is Used in Prowler UI
+
+| File | Role |
+|------|------|
+| `ui/components/lighthouse-v1/chat.tsx` | `useChat` + `DefaultChatTransport({ api: "/api/lighthouse/analyst" })` |
+| `ui/app/api/lighthouse/analyst/route.ts` | LangGraph `streamEvents` -> UI message chunks -> `createUIMessageStreamResponse({ stream })` |
+| `ui/lib/lighthouse-v1/analyst-stream.ts` | Chunk builders: `text-start`, `text-delta`, `text-end`, `data-chain-of-thought` |
+| `ui/lib/lighthouse-v1/utils.ts` | `UIMessage` -> LangChain message conversion |
+| `ui/lib/lighthouse-v1/constants.ts` | `MESSAGE_STATUS` constants compared against `useChat().status` |
+
+Lighthouse v1 (AI SDK) is the OSS path. In Prowler Cloud (`isCloud()`), `app/(prowler)/lighthouse/page.tsx` renders the v2 chat
+(`app/(prowler)/lighthouse/_components`, `_lib`), which talks to Django sessions over SSE proxied by
+`app/api/lighthouse/v2/sessions/[sessionId]/event-stream/route.ts` and does NOT use the AI SDK.
+
+## Client: useChat
 
 ```typescript
-// ❌ AI SDK 4 (OLD)
-import { useChat } from "ai";
-const { messages, handleSubmit, input, handleInputChange } = useChat({
-  api: "/api/chat",
-});
-
-// ✅ AI SDK 5 (NEW)
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-
-const { messages, sendMessage } = useChat({
-  transport: new DefaultChatTransport({ api: "/api/chat" }),
-});
-```
-
-## Client Setup
-
-```typescript
+"use client";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
 
 export function Chat() {
   const [input, setInput] = useState("");
-
-  const { messages, sendMessage, isLoading, error } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
+  const { messages, sendMessage, status, error, stop } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/lighthouse/analyst",
+      credentials: "same-origin",
+      body: () => ({ model: "gpt-4o" }), // extra JSON merged into the request body
+    }),
+    onFinish: ({ message }) => {},
+    onError: (err) => console.error(err),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    sendMessage({ text: input });
-    setInput("");
-  };
+  const isBusy = status === "submitted" || status === "streaming";
 
   return (
-    <div>
-      <div>
-        {messages.map((message) => (
-          <Message key={message.id} message={message} />
-        ))}
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          disabled={isLoading}
-        />
-        <button type="submit" disabled={isLoading}>
-          Send
-        </button>
-      </form>
-
-      {error && <div>Error: {error.message}</div>}
-    </div>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        sendMessage({ text: input });
+        setInput("");
+      }}
+    >
+      {messages.map((m) => (
+        <div key={m.id}>
+          {m.parts.map((part, i) =>
+            part.type === "text" ? <p key={i}>{part.text}</p> : null,
+          )}
+        </div>
+      ))}
+      <input value={input} onChange={(e) => setInput(e.target.value)} disabled={isBusy} />
+      {isBusy && <button type="button" onClick={stop}>Stop</button>}
+      {error && <p>{error.message}</p>}
+    </form>
   );
 }
 ```
 
-## UIMessage Structure (v5)
+Rules:
+- `useChat` comes from `@ai-sdk/react`; the transport from `ai`. There is no `api`, `input`, `handleInputChange`, `handleSubmit` or `isLoading` on `useChat` (v4 API).
+- Use `status` (`"submitted" | "streaming" | "ready" | "error"`), not `isLoading`.
+- Retry with `regenerate()`, cancel with `stop()`, edit history with `setMessages()`.
+
+## UIMessage Parts
+
+`message.content` does not exist. Render from `message.parts`, switching on `part.type`:
+
+| `part.type` | Shape |
+|-------------|-------|
+| `"text"` | `{ text }` |
+| `"reasoning"` | `{ text }` |
+| `"file"` | `{ mediaType, url }` (`FileUIPart`) |
+| `"tool-<toolName>"` | Typed tool part with `state` and `input`/`output` |
+| `"dynamic-tool"` | Tool part for tools not known at compile time |
+| `"data-<name>"` | Custom data part (Prowler uses `data-chain-of-thought`) |
 
 ```typescript
-// ❌ Old: message.content was a string
-// ✅ New: message.parts is an array
+import type { UIMessage } from "ai";
 
-interface UIMessage {
-  id: string;
-  role: "user" | "assistant" | "system";
-  parts: MessagePart[];
-}
-
-type MessagePart =
-  | { type: "text"; text: string }
-  | { type: "image"; image: string }
-  | { type: "tool-call"; toolCallId: string; toolName: string; args: unknown }
-  | { type: "tool-result"; toolCallId: string; result: unknown };
-
-// Extract text from parts
-function getMessageText(message: UIMessage): string {
-  return message.parts
-    .filter((part): part is { type: "text"; text: string } => part.type === "text")
-    .map((part) => part.text)
+const getText = (message: UIMessage) =>
+  message.parts
+    .filter((p) => p.type === "text")
+    .map((p) => p.text)
     .join("");
-}
-
-// Render message
-function Message({ message }: { message: UIMessage }) {
-  return (
-    <div className={message.role === "user" ? "user" : "assistant"}>
-      {message.parts.map((part, index) => {
-        if (part.type === "text") {
-          return <p key={index}>{part.text}</p>;
-        }
-        if (part.type === "image") {
-          return <img key={index} src={part.image} alt="" />;
-        }
-        return null;
-      })}
-    </div>
-  );
-}
 ```
 
-## Server-Side (Route Handler)
+## Server: Custom UI Message Stream (Prowler pattern)
+
+When the model runs outside the AI SDK (LangGraph), emit UI message chunks yourself:
 
 ```typescript
-// app/api/chat/route.ts
-import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { createUIMessageStreamResponse, type UIMessage } from "ai";
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages }: { messages: UIMessage[] } = await req.json();
 
-  const result = await streamText({
-    model: openai("gpt-4o"),
-    messages,
-    system: "You are a helpful assistant.",
+  const stream = new ReadableStream({
+    async start(controller) {
+      controller.enqueue({ type: "text-start", id: "msg" });
+      controller.enqueue({ type: "text-delta", id: "msg", delta: "Hello" });
+      controller.enqueue({ type: "data-chain-of-thought", data: { action: "start" } });
+      controller.enqueue({ type: "text-end", id: "msg" });
+      controller.close();
+    },
   });
 
-  return result.toDataStreamResponse();
+  return createUIMessageStreamResponse({ stream });
 }
 ```
 
-## With LangChain
+Every `text-delta` must sit between a `text-start` and `text-end` with the same `id`.
+Authenticate first (`await auth()` from `@/auth.config`) and return 401 without a session, as the analyst route does.
+
+## Server: streamText (only if an AI SDK provider is added)
 
 ```typescript
-// app/api/chat/route.ts
-import { toUIMessageStream } from "@ai-sdk/langchain";
-import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
-
-export async function POST(req: Request) {
-  const { messages } = await req.json();
-
-  const model = new ChatOpenAI({
-    modelName: "gpt-4o",
-    streaming: true,
-  });
-
-  // Convert UI messages to LangChain format
-  const langchainMessages = messages.map((m) => {
-    const text = m.parts
-      .filter((p) => p.type === "text")
-      .map((p) => p.text)
-      .join("");
-    return m.role === "user"
-      ? new HumanMessage(text)
-      : new AIMessage(text);
-  });
-
-  const stream = await model.stream(langchainMessages);
-
-  return toUIMessageStream(stream).toDataStreamResponse();
-}
-```
-
-## Streaming with Tools
-
-```typescript
-import { openai } from "@ai-sdk/openai";
-import { streamText, tool } from "ai";
+import { convertToModelMessages, streamText, tool, type UIMessage } from "ai";
 import { z } from "zod";
 
-const result = await streamText({
-  model: openai("gpt-4o"),
-  messages,
+const result = streamText({            // not awaited
+  model,                               // a provider model instance
+  messages: await convertToModelMessages(messages),
   tools: {
-    getWeather: tool({
-      description: "Get weather for a location",
-      parameters: z.object({
-        location: z.string().describe("City name"),
-      }),
-      execute: async ({ location }) => {
-        // Fetch weather data
-        return { temperature: 72, condition: "sunny" };
-      },
+    getFinding: tool({
+      description: "Get a finding by id",
+      inputSchema: z.object({ id: z.string() }), // `inputSchema`, not `parameters`
+      execute: async ({ id }) => ({ id }),
     }),
   },
 });
+
+return result.toUIMessageStreamResponse(); // not toDataStreamResponse (v4)
 ```
 
-## useCompletion (Text Generation)
+## Commands
 
-```typescript
-import { useCompletion } from "@ai-sdk/react";
-import { DefaultCompletionTransport } from "ai";
-
-const { completion, complete, isLoading } = useCompletion({
-  transport: new DefaultCompletionTransport({ api: "/api/complete" }),
-});
-
-// Trigger completion
-await complete("Write a haiku about");
-```
-
-## Error Handling
-
-```typescript
-const { error, messages, sendMessage } = useChat({
-  transport: new DefaultChatTransport({ api: "/api/chat" }),
-  onError: (error) => {
-    console.error("Chat error:", error);
-    toast.error("Failed to send message");
-  },
-});
-
-// Display error
-{error && (
-  <div className="error">
-    {error.message}
-    <button onClick={() => sendMessage({ text: lastInput })}>
-      Retry
-    </button>
-  </div>
-)}
+```bash
+cd ui && pnpm run typecheck
+cd ui && pnpm exec vitest run --project unit lib/lighthouse-v1 components/lighthouse-v1
 ```

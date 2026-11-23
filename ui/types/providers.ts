@@ -1,4 +1,5 @@
 import type { ScheduleFrequency } from "./schedules";
+import { TASK_OUTCOME, type TaskOutcome } from "./tasks";
 
 export const PROVIDER_TYPES = [
   "aws",
@@ -21,6 +22,17 @@ export const PROVIDER_TYPES = [
 
 /** The closed set of provider types this UI build ships bespoke assets for. */
 export type KnownProviderType = (typeof PROVIDER_TYPES)[number];
+
+/**
+ * Outcome of a provider connection check (or a poll of one): confirmed
+ * connected, confirmed failed, or still running past the wait. An alias of the
+ * generic `TASK_OUTCOME` (see `types/tasks.ts`), which `pollTaskCompletion` also
+ * returns for the unrelated task it polls (organization/node deletion). Kept
+ * import-free (types only) so it can be used by test doubles and UI-only code
+ * without pulling in `lib/provider-helpers.ts`'s server-action dependencies.
+ */
+export const CONNECTION_CHECK_STATUS = TASK_OUTCOME;
+export type ConnectionCheckStatus = TaskOutcome;
 
 // Autocomplete for predefined + open for dynamic providers
 export type ProviderType = KnownProviderType | (string & {});
@@ -54,6 +66,22 @@ export const PROVIDER_DISPLAY_NAMES: Record<KnownProviderType, string> = {
   okta: "Okta",
 };
 
+// SDK providers without UI assets, named as in the README provider table.
+const SDK_PROVIDER_DISPLAY_NAMES = {
+  e2enetworks: "E2E Networks",
+  huaweicloud: "Huawei Cloud",
+  linode: "Linode",
+  llm: "LLM",
+  nhn: "NHN",
+  scaleway: "Scaleway",
+  stackit: "StackIT",
+} as const;
+
+type SdkProviderId = keyof typeof SDK_PROVIDER_DISPLAY_NAMES;
+
+const isSdkProviderId = (id: string): id is SdkProviderId =>
+  Object.hasOwn(SDK_PROVIDER_DISPLAY_NAMES, id);
+
 /**
  * Turns a raw provider id into a human-readable label: splits on `-`/`_` and
  * capitalizes each word (e.g. `template` → "Template", `local-template` →
@@ -69,9 +97,13 @@ export function humanizeProviderId(id: string): string {
 
 export function getProviderDisplayName(providerId: string): string {
   const normalized = providerId.toLowerCase();
-  return isKnownProviderType(normalized)
-    ? PROVIDER_DISPLAY_NAMES[normalized]
-    : humanizeProviderId(normalized);
+  if (isKnownProviderType(normalized)) {
+    return PROVIDER_DISPLAY_NAMES[normalized];
+  }
+  if (isSdkProviderId(normalized)) {
+    return SDK_PROVIDER_DISPLAY_NAMES[normalized];
+  }
+  return humanizeProviderId(normalized);
 }
 
 export interface ProviderProps {

@@ -10,6 +10,7 @@ from api.models import (
     Tenant,
     User,
     UserRoleRelationship,
+    saml_entity_id_names_social_provider,
 )
 from api.utils import accept_invitation_for_user
 from django.core.exceptions import ValidationError
@@ -67,6 +68,13 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         return None
 
     def pre_social_login(self, request, sociallogin):
+        # Configurations saved before the entityID check can still carry such an
+        # entityID, and allauth has already resolved the account by the time we run
+        if sociallogin.provider.id == "saml" and saml_entity_id_names_social_provider(
+            sociallogin.account.provider
+        ):
+            raise ImmediateHttpResponse(HttpResponseForbidden())
+
         # The provider account is already bound, so no email-based linking is needed.
         if sociallogin.account.pk:
             return

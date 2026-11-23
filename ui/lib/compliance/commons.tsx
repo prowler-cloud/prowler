@@ -7,6 +7,7 @@ import {
   REQUIREMENT_STATUS,
   RequirementItemData,
   RequirementsData,
+  RequirementsTotals,
   RequirementStatus,
   TOP_FAILED_DATA_TYPE,
   TopFailedDataType,
@@ -66,7 +67,7 @@ const incrementFailedCount = (
 };
 
 export const updateCounters = (
-  target: { pass: number; fail: number; manual: number },
+  target: RequirementsTotals,
   status: RequirementStatus,
 ) => {
   if (status === REQUIREMENT_STATUS.MANUAL) {
@@ -76,6 +77,14 @@ export const updateCounters = (
   } else if (status === REQUIREMENT_STATUS.FAIL) {
     target.fail++;
   }
+};
+
+export const getStatusCounters = (
+  status: RequirementStatus,
+): RequirementsTotals => {
+  const counters: RequirementsTotals = { pass: 0, fail: 0, manual: 0 };
+  updateCounters(counters, status);
+  return counters;
 };
 
 export const getTopFailedSections = (

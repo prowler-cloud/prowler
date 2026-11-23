@@ -122,10 +122,12 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
+                bucket.versioning_retrieved = False
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            bucket.versioning_retrieved = False
             if bucket.region:
                 logger.error(
                     f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -441,10 +443,12 @@ class S3(AWSService):
             ):
                 bucket.replication = None
             else:
+                bucket.replication_retrieved = False
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            bucket.replication_retrieved = False
             if regional_client:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -782,5 +786,9 @@ class Bucket(BaseModel):
     tags: List[Dict[str, str]] = Field(default_factory=list)
     lifecycle: List[LifeCycleRule] = Field(default_factory=list)
     replication_rules: List[ReplicationRule] = Field(default_factory=list)
+    # False when GetBucketVersioning / GetBucketReplication failed for a reason
+    # other than the bucket or configuration not existing (e.g. AccessDenied).
+    versioning_retrieved: bool = True
+    replication_retrieved: bool = True
     notification_config: Dict = Field(default_factory=dict)
     object_sampling: Optional[BucketObjectSampling] = None

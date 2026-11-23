@@ -6,6 +6,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from typing import Generator
 
 from alive_progress import alive_bar
@@ -17,6 +18,8 @@ from prowler.config.config import (
 )
 from prowler.lib.check.models import CheckReportImage
 from prowler.lib.logger import logger
+from prowler.lib.network.outbound_proxy import TrivyOutboundProxy
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
     resolve_vulnerability_reference_urls,
@@ -25,6 +28,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageFindingProcessingError,
+    ImageInvalidAllowedNetworksError,
     ImageInvalidConfigScannerError,
     ImageInvalidFilterError,
     ImageInvalidNameError,
@@ -46,8 +50,20 @@ from prowler.providers.image.lib.arguments.arguments import (
     SCANNERS_CHOICES,
     SEVERITY_CHOICES,
 )
+from prowler.providers.image.lib.registry.base import (
+    ALLOWED_PRIVATE_NETWORKS_ENV,
+    _outbound_check_skipped,
+    _parse_allowed_private_networks,
+)
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
 from prowler.providers.image.lib.registry.factory import create_registry_adapter
+
+# Cosign companion tags (signatures, attestations, SBOMs) — skippable by name
+# without fetching the manifest.
+COSIGN_TAG_PATTERN = re.compile(r"^sha256-[0-9a-f]{64}\.(sig|att|sbom)$")
+
+# Concurrency for registry enumeration (tag listing + manifest inspection).
+_ENUMERATION_WORKERS = 10
 
 
 class ImageProvider(Provider):
@@ -107,10 +123,15 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._listing_only = False
-        self._trivy_cache_dir_obj = tempfile.TemporaryDirectory(
-            prefix="prowler-trivy-cache-"
-        )
-        self._trivy_cache_dir = self._trivy_cache_dir_obj.name
+        # A supplied cache dir is never deleted: it may hold a DB we cannot refetch
+        configured_cache_dir = os.environ.get("TRIVY_CACHE_DIR", "").strip()
+        if configured_cache_dir:
+            self._trivy_cache_dir = configured_cache_dir
+        else:
+            self._trivy_cache_dir_obj = tempfile.TemporaryDirectory(
+                prefix="prowler-trivy-cache-"
+            )
+            self._trivy_cache_dir = self._trivy_cache_dir_obj.name
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
         self.registry_username = registry_username or os.environ.get(
@@ -164,6 +185,10 @@ class ImageProvider(Provider):
         if image_list_file:
             self._load_images_from_file(image_list_file)
 
+        # Images discovered via registry enumeration get per-image error
+        # degradation; explicitly requested images keep failing hard.
+        self._registry_discovered: set[str] = set()
+
         # Registry scan mode: enumerate images from registry
         if self.registry:
             self._enumerate_registry()
@@ -178,6 +203,7 @@ class ImageProvider(Provider):
         if not self._listing_only:
             for image in self.images:
                 self._validate_image_name(image)
+            self._validate_registry_hosts()
 
             if not self.images:
                 raise ImageNoImagesProvidedError(
@@ -341,6 +367,19 @@ class ImageProvider(Provider):
                 return value[len(prefix) :]
         return value
 
+    def _validate_registry_hosts(self) -> None:
+        """Apply the registry outbound check to every host an image is pulled from."""
+        # Discovered images come from a registry the adapter has already checked
+        hosts = {
+            self._extract_registry(image)
+            for image in self.images
+            if image not in self._registry_discovered
+        }
+        hosts -= {None, "docker.io", "registry-1.docker.io"}
+        for host in sorted(hosts):
+            adapter = create_registry_adapter(registry_url=host)
+            adapter._validate_outbound_url(f"https://{host}/v2/", enforce_origin=False)
+
     @staticmethod
     def _extract_registry(image: str) -> str | None:
         """Extract registry hostname from an image reference.
@@ -349,7 +388,9 @@ class ImageProvider(Provider):
         """
         image = ImageProvider._strip_scheme(image)
         parts = image.split("/")
-        if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
+        if len(parts) >= 2 and (
+            "." in parts[0] or ":" in parts[0] or parts[0] == "localhost"
+        ):
             return parts[0]
         return None
 
@@ -550,8 +591,15 @@ class ImageProvider(Provider):
                     for batch in self._scan_single_image(image):
                         image_findings.extend(batch)
                     yield (image, image_findings)
-                except (ImageScanError, ImageTrivyBinaryNotFoundError):
+                except ImageTrivyBinaryNotFoundError:
                     raise
+                except ImageScanError as error:
+                    if image not in self._registry_discovered:
+                        raise
+                    logger.warning(
+                        f"Skipping registry-discovered image {image}: {error}"
+                    )
+                    yield (image, [])
                 except Exception as error:
                     logger.error(f"Error scanning image {image}: {error}")
                     yield (image, [])
@@ -568,8 +616,13 @@ class ImageProvider(Provider):
         for image in self.images:
             try:
                 yield from self._scan_single_image(image)
-            except (ImageScanError, ImageTrivyBinaryNotFoundError):
+            except ImageTrivyBinaryNotFoundError:
                 raise
+            except ImageScanError as error:
+                if image not in self._registry_discovered:
+                    raise
+                logger.warning(f"Skipping registry-discovered image {image}: {error}")
+                continue
             except Exception as error:
                 logger.error(f"Error scanning image {image}: {error}")
                 continue
@@ -718,11 +771,45 @@ class ImageProvider(Provider):
             env["TRIVY_PASSWORD"] = self.registry_password
         elif self.registry_token:
             env["TRIVY_REGISTRY_TOKEN"] = self.registry_token
+        if self.registry_insecure:
+            env["TRIVY_INSECURE"] = "true"
         return env
 
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
-        """Execute Trivy command with optional progress bar."""
+        """Execute Trivy, routed through the outbound proxy unless the check is skipped."""
         env = self._build_trivy_env()
+        if _outbound_check_skipped():
+            return self._run_trivy(command, image, env)
+        try:
+            proxy = TrivyOutboundProxy(
+                env,
+                allowed_networks=_parse_allowed_private_networks(
+                    env.get(ALLOWED_PRIVATE_NETWORKS_ENV)
+                ),
+                allowlist_env=ALLOWED_PRIVATE_NETWORKS_ENV,
+            )
+            proxy.start()
+        except (
+            ImageInvalidAllowedNetworksError,
+            OutboundURLNotAllowedError,
+            OSError,
+        ) as error:
+            # the scan loop only re-raises ImageScanError; anything else would
+            # report the image as scanned with no findings
+            raise ImageScanError(
+                file=__file__,
+                original_exception=error,
+                message=f"Could not start the outbound proxy for Trivy: {error}",
+            )
+        try:
+            return self._run_trivy(command, image, proxy.route(env))
+        finally:
+            proxy.stop()
+
+    def _run_trivy(
+        self, command: list, image: str, env: dict
+    ) -> subprocess.CompletedProcess:
+        """Run the Trivy subprocess with an optional progress bar."""
         try:
             if sys.stdout.isatty():
                 with alive_bar(
@@ -809,6 +896,16 @@ class ImageProvider(Provider):
             return f"Rate limited — wait or authenticate: {error_msg}"
         if any(kw in lower for kw in ("timeout", "connection refused", "no such host")):
             return f"Network issue — check connectivity: {error_msg}"
+        if any(
+            kw in lower
+            for kw in (
+                "unsupported mediatype",
+                "unsupported media type",
+                "unsupported artifact",
+                "invalid image",
+            )
+        ):
+            return f"Not a container image — trivy image cannot scan this OCI artifact: {error_msg}"
 
         return error_msg
 
@@ -844,29 +941,49 @@ class ImageProvider(Provider):
         # Determine if this is a Docker Hub adapter (for image reference format)
         is_dockerhub = isinstance(adapter, DockerHubAdapter)
 
+        skipped_artifacts = 0
+        with ThreadPoolExecutor(
+            max_workers=min(_ENUMERATION_WORKERS, len(repositories))
+        ) as pool:
+            all_tags = list(pool.map(adapter.list_tags, repositories))
+
+            candidates: list[tuple[str, str]] = []
+            for repo, tags in zip(repositories, all_tags):
+                if self._tag_filter_re:
+                    tags = [t for t in tags if self._tag_filter_re.search(t)]
+                for tag in tags:
+                    # Cosign companions are skippable by name — no manifest fetch
+                    if COSIGN_TAG_PATTERN.match(tag):
+                        skipped_artifacts += 1
+                        continue
+                    candidates.append((repo, tag))
+
+            # Drop non-image OCI artifacts (Helm charts, signatures, SBOMs...)
+            # that trivy image cannot scan; one manifest fetch per tag, in parallel.
+            verdicts = list(
+                pool.map(lambda rt: adapter.is_container_image(*rt), candidates)
+            )
+
         discovered_images = []
         repos_tags: dict[str, list[str]] = {}
-        for repo in repositories:
-            tags = adapter.list_tags(repo)
+        for (repo, tag), is_image in zip(candidates, verdicts):
+            if not is_image:
+                skipped_artifacts += 1
+                continue
+            repos_tags.setdefault(repo, []).append(tag)
+            if is_dockerhub:
+                # Docker Hub images don't need a host prefix
+                image_ref = f"{repo}:{tag}"
+            else:
+                # OCI registries need the full host/repo:tag reference
+                registry_host = ImageProvider._strip_scheme(self.registry.rstrip("/"))
+                image_ref = f"{registry_host}/{repo}:{tag}"
+            discovered_images.append(image_ref)
 
-            # Apply tag filter
-            if self._tag_filter_re:
-                tags = [t for t in tags if self._tag_filter_re.search(t)]
-
-            if tags:
-                repos_tags[repo] = tags
-
-            for tag in tags:
-                if is_dockerhub:
-                    # Docker Hub images don't need a host prefix
-                    image_ref = f"{repo}:{tag}"
-                else:
-                    # OCI registries need the full host/repo:tag reference
-                    registry_host = ImageProvider._strip_scheme(
-                        self.registry.rstrip("/")
-                    )
-                    image_ref = f"{registry_host}/{repo}:{tag}"
-                discovered_images.append(image_ref)
+        if skipped_artifacts:
+            logger.info(
+                f"Skipped {skipped_artifacts} non-image OCI artifacts (Helm charts, signatures, SBOMs...) from registry {self.registry}"
+            )
 
         # Registry list mode: print listing and return early
         if self.registry_list_images:
@@ -887,6 +1004,9 @@ class ImageProvider(Provider):
             if img not in existing:
                 self.images.append(img)
                 existing.add(img)
+                # Only enumeration-added images get error degradation; an image
+                # the user also requested explicitly keeps failing hard.
+                self._registry_discovered.add(img)
 
         logger.info(
             f"Discovered {len(discovered_images)} images from registry {self.registry} "

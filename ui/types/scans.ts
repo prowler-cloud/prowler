@@ -62,6 +62,8 @@ export interface ScanAttributes {
   completed_at: string | null;
   scheduled_at: string | null;
   next_scan_at: string | null;
+  /** Prowler Cloud only: true when the scan re-checked a few resources. */
+  is_partial?: boolean;
 }
 
 export interface ScanRelationships {

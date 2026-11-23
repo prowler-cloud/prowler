@@ -443,6 +443,47 @@ def authenticated_client_rbac_manage_users_only(
     )
 
 
+@pytest.fixture(scope="function")
+def create_test_user_rbac_manage_integrations_only(django_db_setup, django_db_blocker):
+    """User with only manage_integrations permission (no manage_account)."""
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing_manage_integrations_only",
+            email="rbac_manage_integrations_only@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(name="Tenant Test Manage Integrations Only")
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        role = Role.objects.create(
+            name="manage_integrations_only",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=True,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    return user
+
+
+@pytest.fixture
+def authenticated_client_rbac_manage_integrations_only(
+    create_test_user_rbac_manage_integrations_only, client
+):
+    return authenticate_client_for_tenant(
+        client,
+        create_test_user_rbac_manage_integrations_only,
+        first_membership_tenant(create_test_user_rbac_manage_integrations_only),
+    )
+
+
 @pytest.fixture
 def authenticated_client_rbac(create_test_user_rbac, tenants_fixture, client):
     return authenticate_client_for_tenant(

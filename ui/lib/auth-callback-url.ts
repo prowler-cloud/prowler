@@ -100,3 +100,25 @@ export const getAttributionParamsFromCallbackPath = (
     return {};
   }
 };
+
+const SELF_REGISTRATION_DISABLED_CODE = "self_registration_disabled";
+
+// The API answers a social login from a brand-new user with this error code
+// when the deployment only allows invited users.
+export const isSelfRegistrationDisabledResponse = async (
+  response: Response,
+): Promise<boolean> => {
+  if (response.status !== 403) return false;
+  try {
+    const body = (await response.json()) as {
+      errors?: Array<{ code?: string }>;
+    };
+    return (
+      body.errors?.some(
+        (error) => error.code === SELF_REGISTRATION_DISABLED_CODE,
+      ) ?? false
+    );
+  } catch (_error) {
+    return false;
+  }
+};

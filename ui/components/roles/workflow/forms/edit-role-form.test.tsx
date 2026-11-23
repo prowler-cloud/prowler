@@ -69,6 +69,17 @@ vi.mock("@/lib", () => ({
         "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
     },
     {
+      field: "manage_registry",
+      label: "Manage Registry",
+      description: "Allows managing tenant Registry credentials and artifacts",
+    },
+    {
+      field: "manage_prowler_realtime",
+      label: "Manage Realtime",
+      description:
+        "Allows setting up Prowler Realtime Detection and Remediation, including its policies, alerts and fixes",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",
@@ -97,9 +108,13 @@ beforeAll(() => {
 
 const roleData = ({
   manageProviders = false,
+  manageRegistry = false,
+  manageRealtime = false,
   unlimitedVisibility = false,
 }: {
   manageProviders?: boolean;
+  manageRegistry?: boolean;
+  manageRealtime?: boolean;
   unlimitedVisibility?: boolean;
 } = {}) => ({
   data: {
@@ -109,6 +124,8 @@ const roleData = ({
       manage_account: false,
       manage_providers: manageProviders,
       manage_integrations: false,
+      manage_registry: manageRegistry,
+      manage_prowler_realtime: manageRealtime,
       manage_scans: false,
       unlimited_visibility: unlimitedVisibility,
       groups: [],
@@ -137,6 +154,46 @@ describe("EditRoleForm", () => {
     routerMocks.push.mockClear();
     vi.mocked(updateRole).mockClear();
     vi.unstubAllEnvs();
+  });
+
+  it("retains manage_prowler_realtime when updating a role in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm({ manageRealtime: true });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_prowler_realtime")).toBe("true");
+  });
+
+  it("revokes manage_prowler_realtime when unchecked in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm({ manageRealtime: true });
+
+    // When
+    await user.click(screen.getByRole("checkbox", { name: "Manage Realtime" }));
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_prowler_realtime")).toBe("false");
+  });
+
+  it("retains manage_registry when updating a role in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm({ manageRegistry: true });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_registry")).toBe("true");
   });
 
   it("submits manage_lighthouse_ai_configuration when granted in Prowler Cloud", async () => {
@@ -186,6 +243,7 @@ describe("EditRoleForm", () => {
     expect(submittedFormData().has("manage_lighthouse_ai_configuration")).toBe(
       false,
     );
+    expect(submittedFormData().has("manage_registry")).toBe(false);
   });
 
   it("shows the subtle Unlimited Visibility description inside Visibility", () => {

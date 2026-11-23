@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_no_agentcore_workload_access_token_wildcard",
+  "CheckTitle": "Custom IAM policy scopes Bedrock AgentCore workload access token retrieval to workload identity ARNs",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Credential Access",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
+  "Description": "**Customer-managed IAM policies** are examined for `Allow` statements granting `bedrock-agentcore:GetWorkloadAccessToken`, `GetWorkloadAccessTokenForJWT` or `GetWorkloadAccessTokenForUserId` over resources that reach a workload identity other than the caller's own -- `*`, or an AgentCore ARN whose resource field wildcards past `workload-identity-directory`.",
+  "Risk": "A workload access token carries both user and agent identity and unlocks the outbound credential providers holding that user's stored credentials. `GetWorkloadAccessTokenForUserId` takes a caller-supplied user ID the platform does not verify, so AWS documents the IAM scope as the binding: with a wildcard resource, a compromised agent can mint tokens for **other users** of the same agent.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/get-workload-access-token.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/identity.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/agent-identity-directory.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/identity-manage-agent-ids.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam create-policy-version --policy-arn <POLICY_ARN> --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"bedrock-agentcore:GetWorkloadAccessToken\"],\"Resource\":[\"arn:aws:bedrock-agentcore:<REGION>:<ACCOUNT_ID>:workload-identity-directory/default\",\"arn:aws:bedrock-agentcore:<REGION>:<ACCOUNT_ID>:workload-identity-directory/default/workload-identity/<WORKLOAD_NAME>\"]}]}' --set-as-default",
+      "NativeIaC": "```yaml\n# CloudFormation: scope the token actions to this workload's identity\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::ManagedPolicy\n    Properties:\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Action:\n              - bedrock-agentcore:GetWorkloadAccessToken\n              - bedrock-agentcore:GetWorkloadAccessTokenForJWT\n            Resource:  # FIX: replace '*' with the workload identity this policy is for\n              - !Sub 'arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default'\n              - !Sub 'arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default/workload-identity/<example_resource_id>'\n          # Where a JWT is always available, deny the unverified user-ID path outright\n          - Effect: Deny\n            Action: bedrock-agentcore:GetWorkloadAccessTokenForUserId\n            Resource: !Sub 'arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:workload-identity-directory/default'\n```",
+      "Other": "1. In the AWS console, open IAM > Policies and select <example_resource_name>\n2. Choose Edit > JSON\n3. Find every statement whose Action includes bedrock-agentcore:GetWorkloadAccessToken, GetWorkloadAccessTokenForJWT or GetWorkloadAccessTokenForUserId\n4. Replace \"Resource\": \"*\" with the workload identity ARNs the holder legitimately acts for, for example arn:aws:bedrock-agentcore:<REGION>:<ACCOUNT_ID>:workload-identity-directory/default/workload-identity/<WORKLOAD_NAME>\n5. If a JWT identifying the end user is always available, prefer GetWorkloadAccessTokenForJWT and add an explicit Deny for GetWorkloadAccessTokenForUserId\n6. Save as a new default version and re-run the check",
+      "Terraform": "```hcl\n# Scope the token actions to this workload's identity\nresource \"aws_iam_policy\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\n        \"bedrock-agentcore:GetWorkloadAccessToken\",\n        \"bedrock-agentcore:GetWorkloadAccessTokenForJWT\",\n      ]\n      # FIX: replace '*' with the workload identity this policy is for\n      Resource = [\n        \"arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:workload-identity-directory/default\",\n        \"arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:workload-identity-directory/default/workload-identity/<example_resource_id>\",\n      ]\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Scope the workload access token actions to the workload identity ARNs the policy holder acts for, never `*`. AWS states the security binding of `GetWorkloadAccessTokenForUserId` rests on IAM scope, since the platform treats the user ID as an opaque unverified string: **do not grant it broadly via managed policies or wildcard resource statements**. Prefer `GetWorkloadAccessTokenForJWT` and deny the user-ID path where a JWT is always available.",
+      "Url": "https://hub.prowler.com/check/iam_policy_no_agentcore_workload_access_token_wildcard"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Scope is the customer-managed population, matching every other iam_policy_* check; inline policies are the subject of the iam_inline_policy_* checks.\n\nThree deliberate limits. A bare Action \"*\" is not read as a grant of these operations, because that is what the administrative-privileges checks report; the Action must carry the bedrock-agentcore prefix, wildcards within it included. The assertion is at ARN-type granularity rather than per workload identity: a resource confined to the workload-identity-directory namespace passes even with a wildcard inside it, because that is the scope the AgentCore console issues. A resource naming another AgentCore type passes for the opposite reason, since these actions accept no such resource and the grant reaches no workload identity.\n\nAn unconditional Deny of the same operation on Resource \"*\" clears the finding; a Deny scoped to one directory does not, because the Allow still reaches every other one."
+}
