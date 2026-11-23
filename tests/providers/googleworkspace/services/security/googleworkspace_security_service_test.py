@@ -239,6 +239,115 @@ class TestSecurityService:
             assert security.policies.google_services_restricted is True
             assert security.policies.dlp_drive_rules_exist is True
 
+    def test_the_admin_policy_outranks_the_system_defaults_returned_after_it(self):
+        """The API returns Google's SYSTEM defaults next to the ADMIN policy saved in the console.
+
+        The greatest sortOrder is the value in force, whatever the order the
+        API lists them in. This is the shape of a real tenant, where the last
+        policy returned used to overwrite the admin's password policy.
+        """
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        root_ou = f"orgUnits/{ROOT_ORG_UNIT_ID}"
+        mock_security_list = MagicMock()
+        mock_security_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 201.00131},
+                    "setting": {
+                        "type": "settings/security.password",
+                        "value": {
+                            "allowedStrength": "STRONG",
+                            "minimumLength": 12,
+                            "maximumLength": 100,
+                            "enforceRequirementsAtLogin": True,
+                            "allowReuse": False,
+                            "expirationDuration": "15552000s",
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 100.00001},
+                    "setting": {
+                        "type": "settings/security.password",
+                        "value": {
+                            "allowedStrength": "STRONG",
+                            "minimumLength": 8,
+                            "maximumLength": 100,
+                            "enforceRequirementsAtLogin": False,
+                            "allowReuse": False,
+                            "expirationDuration": "0s",
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 100.00003},
+                    "setting": {
+                        "type": "settings/security.password",
+                        "value": {
+                            "allowedStrength": "STRONG",
+                            "minimumLength": 8,
+                            "maximumLength": 100,
+                            "enforceRequirementsAtLogin": False,
+                            "allowReuse": False,
+                            "expirationDuration": "0s",
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"orgUnit": root_ou, "sortOrder": 100.00003},
+                    "setting": {
+                        "type": "settings/security.session_controls",
+                        "value": {"webSessionDuration": "1209600s"},
+                    },
+                },
+            ]
+        }
+        mock_api_controls_list = MagicMock()
+        mock_api_controls_list.execute.return_value = {"policies": []}
+        mock_dlp_list = MagicMock()
+        mock_dlp_list.execute.return_value = {"policies": []}
+        mock_service = MagicMock()
+        mock_service.policies().list.side_effect = [
+            mock_security_list,
+            mock_api_controls_list,
+            mock_dlp_list,
+        ]
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies_fetched is True
+            assert security.policies.password_minimum_length == 12
+            assert security.policies.password_enforce_at_login is True
+            assert security.policies.password_allow_reuse is False
+            assert security.policies.password_expiration_duration == "15552000s"
+            assert security.policies.web_session_duration == "1209600s"
+            assert security.policies.overridden_settings == []
+
     def test_fetch_policies_empty_response(self):
         """Test handling empty policies response across all namespaces"""
         mock_provider = set_mocked_googleworkspace_provider()

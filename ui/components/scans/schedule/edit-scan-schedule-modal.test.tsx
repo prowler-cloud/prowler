@@ -85,6 +85,7 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import type { ScheduleProps } from "@/types/schedules";
 
 import {
@@ -352,6 +353,10 @@ describe("EditScanScheduleModal remove flow", () => {
         ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       ),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
   });
 
   it("uses the shared subscription error copy when removing is blocked", async () => {
@@ -382,6 +387,10 @@ describe("EditScanScheduleModal remove flow", () => {
         ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       ),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
   });
 
   it("shows one logo per selected provider type in bulk mode", () => {

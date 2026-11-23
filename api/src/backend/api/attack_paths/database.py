@@ -207,6 +207,11 @@ def drop_database(database: str) -> None:
     sink_module.get_backend().drop_database(database)
 
 
+def list_databases() -> list[str]:
+    """List database names on the ingest cluster. Temp scan DBs always live here."""
+    return ingest.list_databases()
+
+
 def drop_subgraph(database: str, provider_id: str) -> int:
     return sink_module.get_backend().drop_subgraph(database, provider_id)
 

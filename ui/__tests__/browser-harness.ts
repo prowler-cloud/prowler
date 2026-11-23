@@ -211,6 +211,31 @@ export abstract class BrowserHarness<TFixture> {
     }
   }
 
+  /** Wait until `read` returns the same value for `quietMs`, and return it. */
+  protected async waitForStable<T>(
+    read: () => T,
+    quietMs: number,
+    timeoutMs = 5000,
+    label?: string,
+  ): Promise<T> {
+    let value = read();
+    let since = performance.now();
+    const settled = await this.waitFor(
+      () => {
+        const next = read();
+        if (!Object.is(next, value)) {
+          value = next;
+          since = performance.now();
+          return null;
+        }
+        return performance.now() - since >= quietMs ? { value } : null;
+      },
+      timeoutMs,
+      label ?? `a value stable for ${quietMs}ms`,
+    );
+    return settled.value;
+  }
+
   protected async waitForText(
     pattern: RegExp,
     timeoutMs = 5000,

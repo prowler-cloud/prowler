@@ -2,15 +2,15 @@ import { create } from "zustand";
 
 import {
   CLOUD_UPGRADE_FEATURE,
-  type CloudUpgradeFeature,
+  type UpgradeFeature,
 } from "@/types/cloud-upgrade";
 
 interface CloudUpgradeStoreState {
-  activeFeature: CloudUpgradeFeature | null;
-  retainedFeature: CloudUpgradeFeature;
+  activeFeature: UpgradeFeature | null;
+  retainedFeature: UpgradeFeature;
   returnFocusElement: HTMLElement | null;
   openCloudUpgrade: (
-    feature: CloudUpgradeFeature,
+    feature: UpgradeFeature,
     returnFocusElement?: HTMLElement,
   ) => void;
   closeCloudUpgrade: () => void;

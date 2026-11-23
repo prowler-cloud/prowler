@@ -143,4 +143,25 @@ describe("installed Registry provider options", () => {
       ).map((option) => option.type),
     ).toEqual(["zeta"]);
   });
+
+  it("capitalizes provider names the registry publishes as plain slugs", () => {
+    // Given: the registry names one provider by its slug and another properly.
+    const catalog = [
+      { ...provider, normalizedName: "vcf-package", providerSlug: "vcf" },
+      { ...provider, normalizedName: "openai-package", providerSlug: "openai" },
+    ];
+    const installed = catalog.map(({ normalizedName }) => ({
+      normalizedName,
+      versionSpec: "latest",
+    }));
+
+    // When
+    const labels = buildRegistryProviderOptions(catalog, installed, [
+      { type: "vcf", label: "vcf" },
+      { type: "openai", label: "OpenAI" },
+    ]).map((option) => option.label);
+
+    // Then
+    expect(labels).toEqual(["OpenAI", "Vcf"]);
+  });
 });

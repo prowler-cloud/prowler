@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -9,37 +8,26 @@ import {
 import { type KnownProviderType, PROVIDER_TYPES } from "@/types/providers";
 
 import {
-  getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
   getProviderWizardModalTitle,
+  getProviderWizardSteps,
 } from "./provider-wizard-modal.utils";
 
-describe("getOrganizationsStepperOffset", () => {
-  it("keeps step 1 active during organization details", () => {
-    const offset = getOrganizationsStepperOffset(
-      ORG_WIZARD_STEP.SETUP,
-      ORG_SETUP_PHASE.DETAILS,
-    );
+describe("getProviderWizardSteps", () => {
+  const labels = (steps: readonly { label: string }[]) =>
+    steps.map((step) => step.label);
 
-    expect(offset).toBe(0);
+  it("connects and launches in two rows for every provider", () => {
+    expect(labels(getProviderWizardSteps(PROVIDER_WIZARD_MODE.ADD))).toEqual([
+      "Connect Provider",
+      "Launch Scan",
+    ]);
   });
 
-  it("moves to step 2 during credentials phase", () => {
-    const offset = getOrganizationsStepperOffset(
-      ORG_WIZARD_STEP.SETUP,
-      ORG_SETUP_PHASE.ACCESS,
+  it("updates credentials in a single row", () => {
+    expect(labels(getProviderWizardSteps(PROVIDER_WIZARD_MODE.UPDATE))).toEqual(
+      ["Update Credentials"],
     );
-
-    expect(offset).toBe(1);
-  });
-
-  it("uses step 2+ offset for later wizard steps", () => {
-    const offset = getOrganizationsStepperOffset(
-      ORG_WIZARD_STEP.VALIDATE,
-      ORG_SETUP_PHASE.DETAILS,
-    );
-
-    expect(offset).toBe(1);
   });
 });
 
@@ -223,7 +211,7 @@ const EXPECTED_MODAL_HEADER_LABEL: Record<KnownProviderType, string> = {
   okta: "Okta",
 };
 
-// Method-specific labels for the credentials step. Providers with per-method
+// Method-specific labels for the connect step. Providers with per-method
 // docs subsections (AWS, M365, Alibaba Cloud, Cloudflare) must round-trip
 // through `getProviderWizardDocsDestination` into a specific label —
 // otherwise the URL in `PROVIDER_CREDENTIALS_METHOD_DOCS_URL` and the label
@@ -246,8 +234,6 @@ const EXPECTED_METHOD_MODAL_HEADER_LABEL: Array<
 describe("provider label parity", () => {
   const STEPS = [
     PROVIDER_WIZARD_STEP.CONNECT,
-    PROVIDER_WIZARD_STEP.CREDENTIALS,
-    PROVIDER_WIZARD_STEP.TEST,
     PROVIDER_WIZARD_STEP.LAUNCH,
   ] as const;
 
@@ -277,7 +263,7 @@ describe("provider label parity", () => {
     ] of EXPECTED_METHOD_MODAL_HEADER_LABEL) {
       const { link } = getProviderHelpText(
         provider,
-        PROVIDER_WIZARD_STEP.CREDENTIALS,
+        PROVIDER_WIZARD_STEP.CONNECT,
         method,
       );
       const label = getProviderWizardDocsDestination(link);

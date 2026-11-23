@@ -1,5 +1,5 @@
-# Example: Azure Storage Secure Transfer Check
-# Source: prowler/providers/azure/services/storage/storage_secure_transfer_required_is_enabled/
+# Example: Azure storage secure transfer check
+# Source: prowler/providers/azure/services/storage/storage_secure_transfer_required_is_enabled/storage_secure_transfer_required_is_enabled.py
 
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
@@ -9,16 +9,19 @@ class storage_secure_transfer_required_is_enabled(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for storage_account in storage_accounts:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=storage_account
                 )
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has secure transfer required enabled."
+                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has secure transfer required enabled."
                 if not storage_account.enable_https_traffic_only:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has secure transfer required disabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has secure transfer required disabled."
 
                 findings.append(report)
 

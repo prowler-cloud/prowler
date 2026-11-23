@@ -4,22 +4,15 @@ sidebarTitle: 'Getting Started'
 ---
 
 import { ProviderCards } from "/snippets/provider-cards.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
+
+<AppliesTo />
 
 **Prowler Cloud** is a web application that simplifies running Prowler. This tutorial will guide you through setting up and using it.
 
-**Prowler Local Server** is the self-hosted version of **Prowler Cloud**. See [Prowler product families](/getting-started/products) for every official product name.
-
 ## Accessing Prowler Cloud and API Documentation
 
-If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user, you can access API docs at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs)
-
-<Note>
-**For Prowler Local Server users**
-
-After [installing](/getting-started/installation/prowler-app) **Prowler Local Server**, access it at [http://localhost:3000](http://localhost:3000).
-
-To view the auto-generated **Prowler API** documentation, navigate to [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs). This documentation provides details on available endpoints, parameters, and responses.
-</Note>
+Sign in at [cloud.prowler.com](https://cloud.prowler.com/sign-in). The API documentation is available at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs).
 
 ## Step 1: Sign Up
 ### Sign Up with Email
@@ -85,12 +78,14 @@ For detailed instructions on configuring credentials for each provider, refer to
 <ProviderCards />
 
 ## Step 5: Test Connection
-After adding your cloud account credentials, click the `Check connection` button to verify that Prowler can successfully connect to your provider:
+To verify the credentials, click the connect action at the bottom of the same step (for example, "Connect account", "Connect subscription" or "Connect project"). Prowler saves the provider and its credentials and tests the connection in that single action. When the test succeeds, the wizard moves straight to launching the scan. When it fails, the reason appears above the form and the values stay in place: click "Retry connection" to test again, or correct a field, which brings back the connect action, and click it. Neither adds the provider twice.
 
-<img src="/images/test-connection-button.png" alt="Test Connection" width="700" />
+<Note>
+To delegate the connection, select "I don't have access, invite a teammate" on the same step when you cannot create the credentials yourself. The option is available for every provider to users who can manage the account. Prowler Local Server adds the invitation to the tenant and shows the link to share. Prowler Cloud also emails it.
+</Note>
 
 ## Step 6: Scan Started
-After the connection check succeeds, save the provider and start your first scan with the `Launch Scan` button. The `Scans` section shows the scan in progress:
+Once the connection test succeeds, the wizard moves to the launch step, since the provider is already saved. To start the first scan, click "Launch scan", or "Save and launch scan" when scanning on a schedule. The `Scans` section shows the scan in progress:
 
 <img src="/images/provider-added.png" alt="Start Now" width="700" />
 
@@ -169,3 +164,9 @@ Once your scan has finished, you don’t need to grab the entire ZIP—just pull
 To fetch a single compliance report via API, see the Retrieve compliance report as CSV endpoint in the Prowler API Reference. [Prowler API Reference - Retrieve compliance report as CSV](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_compliance_retrieve)
 
 </Note>
+
+## Running the Same Steps on Prowler Local Server
+
+**Prowler Local Server** is the self-hosted version of **Prowler Cloud**, and every step in this guide works the same way on it. See [Prowler product families](/getting-started/products) for every official product name.
+
+After [installing](/getting-started/installation/prowler-app) **Prowler Local Server**, access it at [http://localhost:3000](http://localhost:3000) and the auto-generated **Prowler API** documentation at [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs).

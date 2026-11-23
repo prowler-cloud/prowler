@@ -112,7 +112,7 @@ class AwsProvider(Provider):
 
     def __init__(
         self,
-        retries_max_attempts: int = 3,
+        retries_max_attempts: Optional[int] = None,
         role_arn: str = None,
         session_duration: int = 3600,
         external_id: str = None,
@@ -141,6 +141,7 @@ class AwsProvider(Provider):
 
         Args:
             - retries_max_attempts: The maximum number of retries for the AWS client.
+              Defaults to the PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS environment variable or, if unset, to 3.
             - role_arn: The ARN of the IAM role to assume.
             - session_duration: The duration of the session in seconds, between 900 and 43200.
             - external_id: The external ID to use when assuming the IAM role.
@@ -389,7 +390,7 @@ class AwsProvider(Provider):
             )
 
         self._organizations_metadata = self.get_organizations_info(
-            aws_organizations_session, self._identity.account
+            aws_organizations_session, self._identity.account, sts_region
         )
 
         # Fallback to the original (pre-assume) session when no explicit
@@ -411,7 +412,7 @@ class AwsProvider(Provider):
                 "Retrying AWS Organizations metadata retrieval with the original session"
             )
             self._organizations_metadata = self.get_organizations_info(
-                self._session.original_session, self._identity.account
+                self._session.original_session, self._identity.account, sts_region
             )
         ########
 
@@ -507,7 +508,10 @@ class AwsProvider(Provider):
 
     # TODO: This can be moved to another class since it doesn't need self
     def get_organizations_info(
-        self, organizations_session: Session, aws_account_id: str
+        self,
+        organizations_session: Session,
+        aws_account_id: str,
+        region: str | None = None,
     ) -> AWSOrganizationsInfo:
         """
         get_organizations_info returns a AWSOrganizationsInfo object if the account to be audited is a delegated administrator for AWS Organizations or if the AWS Organizations Role ARN (--organizations-role) is passed.
@@ -515,6 +519,7 @@ class AwsProvider(Provider):
         Args:
         - organizations_session: needs to be a Session object with permissions to do organizations:DescribeAccount and organizations:ListTagsForResource.
         - aws_account_id: is the AWS Account ID from which we want to get the AWS Organizations account metadata
+        - region: a region of the audited partition, so the client reaches that partition's Organizations endpoint
 
         Returns:
         - AWSOrganizationsInfo object with the AWS Organizations metadata for the account to be audited.
@@ -528,6 +533,7 @@ class AwsProvider(Provider):
                 get_organizations_metadata(
                     aws_account_id=aws_account_id,
                     session=organizations_session,
+                    region=region,
                 )
             )
 
@@ -1230,7 +1236,8 @@ class AwsProvider(Provider):
 
         Args:
             - session: The AWS session object
-            - assumed_role_info: The AWSAssumeRoleInfo object
+            - assumed_role_info: The AWSAssumeRoleInfo object. Its sts_region is
+              updated to the region that answered, so later calls go straight there
 
         Returns:
             - AWSCredentials: The AWS credentials for the assumed role
@@ -1256,11 +1263,14 @@ class AwsProvider(Provider):
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
-            _, assumed_credentials = AwsProvider.sts_call_with_partition_failover(
-                session,
-                assumed_role_info.sts_region,
-                lambda sts_client: sts_client.assume_role(**assume_role_arguments),
+            sts_region, assumed_credentials = (
+                AwsProvider.sts_call_with_partition_failover(
+                    session,
+                    assumed_role_info.sts_region,
+                    lambda sts_client: sts_client.assume_role(**assume_role_arguments),
+                )
             )
+            assumed_role_info.sts_region = sts_region
             # Convert the UTC datetime object to your local timezone
             credentials_expiration_local_time = (
                 assumed_credentials["Credentials"]["Expiration"]
@@ -1558,6 +1568,8 @@ class AwsProvider(Provider):
                     session,
                     assumed_role_information,
                 )
+                # Validate where the role was assumed, not where it timed out
+                aws_region = assumed_role_information.sts_region
                 session = Session(
                     aws_access_key_id=assumed_role_credentials.aws_access_key_id,
                     aws_secret_access_key=assumed_role_credentials.aws_secret_access_key,

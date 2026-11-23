@@ -1,5 +1,7 @@
+import gzip
 import os
 import re
+import shutil
 import zipfile
 
 import boto3
@@ -45,6 +47,7 @@ from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
+from prowler.lib.outputs.compliance.ens.ens_m365 import M365ENS
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
@@ -130,6 +133,7 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
+        (lambda name: name.startswith("ens_"), M365ENS),
         (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
         (lambda name: name.startswith("iso27001_"), M365ISO27001),
     ],
@@ -200,6 +204,37 @@ def _compress_output_files(output_directory: str) -> str:
     return zip_path
 
 
+def _remove_archived_files(zip_path: str) -> None:
+    """Delete the loose files next to the archive that the archive already contains."""
+    scan_dir = os.path.dirname(os.path.abspath(zip_path))
+    with zipfile.ZipFile(zip_path) as zipf:
+        corrupt_member = zipf.testzip()
+        if corrupt_member:
+            raise zipfile.BadZipFile(f"Corrupt archive member {corrupt_member}")
+        archived = zipf.infolist()
+
+    emptied_dirs = set()
+    for member in archived:
+        file_path = os.path.abspath(os.path.join(scan_dir, member.filename))
+        if os.path.commonpath([scan_dir, file_path]) != scan_dir:
+            continue
+        try:
+            if os.path.islink(file_path) or not os.path.isfile(file_path):
+                continue
+            # A size mismatch means the loose file changed after it was archived.
+            if os.path.getsize(file_path) != member.file_size:
+                logger.warning(f"Keeping {file_path}: it differs from the archive")
+                continue
+            os.remove(file_path)
+            emptied_dirs.add(os.path.dirname(file_path))
+        except OSError as error:
+            logger.warning(f"Could not remove archived output {file_path}: {error}")
+
+    for foldername in sorted(emptied_dirs, key=len, reverse=True):
+        if foldername != scan_dir and not os.listdir(foldername):
+            os.rmdir(foldername)
+
+
 def get_s3_client():
     """
     Create and return a boto3 S3 client using AWS credentials from environment variables.
@@ -207,15 +242,21 @@ def get_s3_client():
     This function attempts to initialize an S3 client by reading the AWS access key, secret key,
     session token, and region from environment variables. It then validates the client by listing
     available S3 buckets. If an error occurs during this process (for example, due to missing or
-    invalid credentials), it falls back to creating an S3 client without explicitly provided credentials,
-    which may rely on other configuration sources (e.g., IAM roles).
+    invalid credentials), it falls back to creating an S3 client without explicitly provided
+    credentials, which may rely on other configuration sources (e.g., IAM roles).
+
+    That fallback is only safe when no explicit endpoint is configured: with an endpoint set, the
+    explicit client already targets the intended S3-compatible storage, and the fallback client
+    would go to the AWS default provider chain instead, an unrelated real-AWS account reachable
+    from the host. So when an endpoint is configured, the original error propagates instead.
 
     Returns:
         boto3.client: A configured S3 client instance.
 
     Raises:
-        ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
+        ClientError, NoCredentialsError, or ParamValidationError if the client cannot be created.
     """
+    endpoint = settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL
     s3_client = None
     try:
         s3_client = boto3.client(
@@ -226,9 +267,12 @@ def get_s3_client():
             # Storage that has no meaningful region, MinIO among it, is usually configured
             # without one, and botocore rejects an empty region before any request is made.
             region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
+            endpoint_url=endpoint or None,
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError):
+        if endpoint:
+            raise
         s3_client = boto3.client("s3")
         s3_client.list_buckets()
 
@@ -236,13 +280,21 @@ def get_s3_client():
 
 
 def get_s3_presign_client():
-    """Return a client that signs URLs against the public storage host.
+    """Return a client that signs download URLs with SigV4.
 
-    None means no public host is configured and the caller should presign with its own
-    client, which leaves deployments on real S3 with the URL they get today.
+    It is used when a public or internal storage host is configured, or when the bucket's
+    region is: boto3 otherwise presigns S3 URLs with SigV2, which S3 rejects for SSE-KMS
+    objects. None means none of those is set and the caller should presign with its own
+    client, which leaves those deployments with the URL they get today.
+
+    The public endpoint wins when both are set: the internal endpoint may only be reachable
+    from inside the cluster, and a URL signed against it would not open in a browser.
     """
-    public_endpoint = settings.DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL
-    if not public_endpoint:
+    endpoint = (
+        settings.DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL
+        or settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL
+    )
+    if not endpoint and not settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION:
         return None
 
     # Blank keys are signed as-is (empty credential scope) instead of deferring to the
@@ -266,15 +318,34 @@ def get_s3_presign_client():
         # SigV4 puts the region in the credential scope, and MinIO answers to us-east-1
         # unless it was told otherwise, so an empty region would sign an unusable URL.
         region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
-        endpoint_url=public_endpoint,
+        endpoint_url=endpoint or None,
         # The signature covers the host, so the addressing style has to be pinned rather
-        # than guessed from the endpoint: MinIO serves path-style.
+        # than guessed from the endpoint: MinIO serves path-style, and on AWS it keeps the
+        # regional host instead of the global one, which redirects for new buckets.
         config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
     )
 
 
+def _gzip_copy(local_path: str) -> str | None:
+    """Write a gzip copy next to the file, or return None when there is no room for it."""
+    gzip_path = f"{local_path}.gz"
+    try:
+        with open(local_path, "rb") as source, gzip.open(gzip_path, "wb") as target:
+            shutil.copyfileobj(source, target)
+    except OSError as error:
+        logger.warning(f"Uploading {local_path} uncompressed: {error}")
+        if os.path.exists(gzip_path):
+            os.remove(gzip_path)
+        return None
+    return gzip_path
+
+
 def _upload_to_s3(
-    tenant_id: str, scan_id: str, local_path: str, relative_key: str
+    tenant_id: str,
+    scan_id: str,
+    local_path: str,
+    relative_key: str,
+    gzip_encode: bool = False,
 ) -> str | None:
     """
     Upload a local artifact to an S3 bucket under the tenant/scan prefix.
@@ -284,6 +355,8 @@ def _upload_to_s3(
         scan_id (str): The scan identifier used as the second segment of the S3 key.
         local_path (str): Filesystem path to the artifact to upload.
         relative_key (str): Object key relative to `<tenant_id>/<scan_id>/`.
+        gzip_encode (bool): Store the object gzip-compressed under the same key, with
+            `Content-Encoding: gzip` so HTTP clients receive the original bytes.
 
     Returns:
         str | None: S3 URI of the uploaded artifact, or None if the upload is skipped.
@@ -305,7 +378,20 @@ def _upload_to_s3(
         s3 = get_s3_client()
 
         s3_key = f"{tenant_id}/{scan_id}/{relative_key}"
-        s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
+        gzip_path = _gzip_copy(local_path) if gzip_encode else None
+        try:
+            if gzip_path:
+                s3.upload_file(
+                    Filename=gzip_path,
+                    Bucket=bucket,
+                    Key=s3_key,
+                    ExtraArgs={"ContentEncoding": "gzip"},
+                )
+            else:
+                s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
+        finally:
+            if gzip_path and os.path.exists(gzip_path):
+                os.remove(gzip_path)
 
         return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:

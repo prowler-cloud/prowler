@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
+import { KeyRound } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -241,10 +241,9 @@ export const SignInForm = ({
                   form.setValue("isSamlMode", true);
                 }}
               >
-                <Icon
+                <KeyRound
+                  aria-hidden="true"
                   className="text-text-neutral-tertiary"
-                  icon="mdi:shield-key"
-                  width={24}
                 />
               </Button>
             </TooltipTrigger>

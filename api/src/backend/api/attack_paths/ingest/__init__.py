@@ -13,6 +13,7 @@ from api.attack_paths.ingest.driver import (
     get_session,
     get_uri,
     init_driver,
+    list_databases,
     run_cypher,
 )
 
@@ -25,5 +26,6 @@ __all__ = [
     "get_session",
     "get_uri",
     "init_driver",
+    "list_databases",
     "run_cypher",
 ]

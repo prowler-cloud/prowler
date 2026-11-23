@@ -9,7 +9,6 @@ import {
   VolumeOff,
   VolumeX,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -18,16 +17,20 @@ import {
   loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   type ResourceDrawerFinding,
-  updateFindingTriage,
 } from "@/actions/findings";
 import {
   requestPanelChatMessage,
   requestPanelSkillLaunch,
 } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
+  buildComplianceDetailHref,
+  ComplianceFrameworkChip,
+} from "@/components/compliance/compliance-framework-chip";
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { getComplianceIcon } from "@/components/icons";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
+import { RecheckResourceIconButton } from "@/components/findings/recheck-resource-icon-button";
 import {
   Badge,
   Button,
@@ -73,12 +76,18 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
+import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badge";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
@@ -89,25 +98,19 @@ import type {
   UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
-import {
-  SKILL_LAUNCHER_VARIANT,
-  type LighthouseSkillDefinition,
-} from "@/types/lighthouse-skills";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import {
   FindingNoteActionItem,
-  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
 
-import { LighthouseSkillsBlock } from "./lighthouse-skills-block";
 import { LighthouseSkillsRail } from "./lighthouse-skills-rail";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
-import { useSkillLauncherVariant } from "./use-skill-launcher-variant";
 
 const OTHER_FINDINGS_ACTION_CELL_CLASS =
   "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary";
@@ -180,68 +183,6 @@ function renderRemediationCodeBlock({
   );
 }
 
-/** Frameworks are not uniquely named — eight AWS ones are called "CIS" — so the
- *  version is part of the label, not decoration. */
-function complianceFrameworkLabel(
-  framework: FindingComplianceFramework,
-): string {
-  const name = framework.framework || framework.name;
-  return framework.version ? `${name} ${framework.version}` : name;
-}
-
-interface ComplianceFrameworkChipProps {
-  framework: FindingComplianceFramework;
-  isNavigable: boolean;
-  onOpen: (framework: FindingComplianceFramework) => void;
-}
-
-function ComplianceFrameworkChip({
-  framework,
-  isNavigable,
-  onOpen,
-}: ComplianceFrameworkChipProps) {
-  const icon = getComplianceIcon(framework.complianceId);
-  const label = complianceFrameworkLabel(framework);
-  const content = icon ? (
-    <span className="border-border-neutral-tertiary flex size-7 shrink-0 items-center justify-center rounded-md border bg-slate-50">
-      <Image
-        src={icon}
-        alt={label}
-        width={20}
-        height={20}
-        className="size-5 object-contain"
-      />
-    </span>
-  ) : (
-    label
-  );
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {isNavigable ? (
-          <Button
-            type="button"
-            variant={icon ? "bare" : "outline"}
-            size={icon ? "icon-xs" : "sm"}
-            aria-label={`Open ${label} compliance details`}
-            onClick={() => onOpen(framework)}
-          >
-            {content}
-          </Button>
-        ) : icon ? (
-          content
-        ) : (
-          <Badge variant="tag" size="sm" aria-label={label}>
-            {content}
-          </Badge>
-        )}
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
 function parseSelectedScanIds(scanFilterValue: string | null): string[] {
   if (!scanFilterValue) {
     return [];
@@ -251,33 +192,6 @@ function parseSelectedScanIds(scanFilterValue: string | null): string[] {
     .split(",")
     .map((scanId) => scanId.trim())
     .filter(Boolean);
-}
-
-function buildComplianceDetailHref({
-  complianceId,
-  framework,
-  version,
-  scanId,
-  regionFilter,
-}: {
-  complianceId: string;
-  framework: string;
-  version: string;
-  scanId: string;
-  regionFilter: string | null;
-}): string {
-  const params = new URLSearchParams();
-  params.set("complianceId", complianceId);
-  if (version) {
-    params.set("version", version);
-  }
-  params.set("scanId", scanId);
-
-  if (regionFilter) {
-    params.set("filter[region__in]", regionFilter);
-  }
-
-  return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
 }
 
 function buildResourceDetailHref(resourceId: string): string {
@@ -320,10 +234,6 @@ export function ResourceDetailDrawerContent({
   const searchParams = useSearchParams();
   const openSidePanel = useSidePanelStore((state) => state.openPanel);
   const lighthouseContext = useLighthouseCurrentContext();
-  // A/B experiment: PostHog decides between the footer card (control) and
-  // the header chip rail. Falls back to the card until the flag resolves.
-  const isDropdownLauncher =
-    useSkillLauncherVariant() === SKILL_LAUNCHER_VARIANT.DROPDOWN;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
     Set<string>
@@ -383,6 +293,9 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
+  const sampleDisabledReason = isSampleId(f?.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const jiraPayload = createJiraDispatchPayload({
     targetIds: f ? [f.id] : [],
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
@@ -408,31 +321,46 @@ export function ResourceDetailDrawerContent({
   const resourceRegionLabel = resourceRegion || "-";
   const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
   const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
+  const recheckTarget = {
+    providerId: f?.providerId,
+    providerUid,
+    providerType,
+    providerAlias,
+    resourceUid,
+    resourceName,
+  };
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
   const selectedScanIds = parseSelectedScanIds(
     searchParams.get("filter[scan__in]"),
   );
   const complianceScanId =
-    selectedScanIds.length === 1
-      ? selectedScanIds[0]
-      : selectedScanIds.length === 0
-        ? (f?.scan?.id ?? null)
-        : null;
+    isSampleId(f?.id) || isSampleId(f?.scan?.id)
+      ? null
+      : selectedScanIds.length === 1
+        ? selectedScanIds[0]
+        : selectedScanIds.length === 0
+          ? (f?.scan?.id ?? null)
+          : null;
   const regionFilter = searchParams.get("filter[region__in]");
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
-  const resourceDetailHref = f?.resourceId
-    ? buildResourceDetailHref(f.resourceId)
-    : null;
-  const externalResourceTarget = resolveExternalTarget({
-    providerType,
-    resourceUid,
-    providerUid,
-    resourceName,
-    findingUid: f?.uid,
-    region: resourceRegion,
-  });
+  // Resources and Scans have no sample data, so sample records link nowhere.
+  const resourceDetailHref =
+    f?.resourceId && !isSampleId(f.resourceId)
+      ? buildResourceDetailHref(f.resourceId)
+      : null;
+  // The sample account is not theirs: its console links would open nothing.
+  const externalResourceTarget = isSampleId(f?.resourceId)
+    ? null
+    : resolveExternalTarget({
+        providerType,
+        resourceUid,
+        providerUid,
+        resourceName,
+        findingUid: f?.uid,
+        region: resourceRegion,
+      });
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -451,7 +379,7 @@ export function ResourceDetailDrawerContent({
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    const result = await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
     if (shouldRefreshAfterTriageUpdate(input)) {
       onMuteComplete();
       return result;
@@ -461,19 +389,11 @@ export function ResourceDetailDrawerContent({
     return result;
   };
 
-  // Navigation only: the panel picks up the focused finding as context on its
-  // own, so no conversation is started on the user's behalf.
-  const handleOpenLighthouseChat = () => {
-    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
-  };
-
   const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
     requestPanelSkillLaunch(skill, lighthouseContext.context);
   };
 
-  // TODO(experiment): capture launch origin + skill id via cloud's
-  // trackEvent/ANALYTICS_EVENTS once the flag readout event lands.
   const handleSubmitPrompt = (text: string) => {
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
     requestPanelChatMessage(text, lighthouseContext.context);
@@ -541,7 +461,7 @@ export function ResourceDetailDrawerContent({
           {findingIsMuted !== undefined && (
             <Muted isMuted={findingIsMuted} mutedReason={findingMutedReason} />
           )}
-          {findingTriage && <FindingTriageStatusBadge triage={findingTriage} />}
+          {findingTriage && <TriageStatusBadge status={findingTriage.status} />}
         </div>
 
         {showCheckMetaContent ? (
@@ -586,9 +506,9 @@ export function ResourceDetailDrawerContent({
           </div>
         )}
 
-        {/* Skill launcher experiment, "dropdown" variant: chip rail under the
-            title instead of the footer card. */}
-        {isCloud() && !isNavigating && isDropdownLauncher && (
+        {/* Lighthouse skill launcher: chip rail under the title. Sample
+            findings exist only in the UI, so Lighthouse has nothing to read. */}
+        {isCloud() && !isNavigating && !isSampleId(currentFinding?.id) && (
           <LighthouseSkillsRail
             onLaunchSkill={handleLaunchSkill}
             onSubmitPrompt={handleSubmitPrompt}
@@ -726,7 +646,15 @@ export function ResourceDetailDrawerContent({
                     variant="compact"
                     className="min-w-0"
                   >
-                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                    <span className="group flex items-center gap-1.5">
+                      <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                      {f && (
+                        <RecheckResourceIconButton
+                          target={recheckTarget}
+                          disabledReason={sampleDisabledReason}
+                        />
+                      )}
+                    </span>
                   </InfoField>
                   <InfoField
                     label="First seen"
@@ -777,12 +705,17 @@ export function ResourceDetailDrawerContent({
                         )
                       }
                       label={f.isMuted ? "Muted" : "Mute"}
-                      disabled={f.isMuted}
+                      disabled={f.isMuted || Boolean(sampleDisabledReason)}
+                      disabledTooltip={sampleDisabledReason}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
                     <JiraDispatchActionItem
                       label={buildJiraActionLabel({ findingCount: 1 })}
                       payload={jiraPayload}
+                    />
+                    <RecheckResourceActionItem
+                      target={recheckTarget}
+                      disabledReason={sampleDisabledReason}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem
@@ -1219,16 +1152,18 @@ export function ResourceDetailDrawerContent({
                   <p className="text-text-neutral-secondary text-xs">
                     Showing the latest scan that evaluated this finding
                   </p>
-                  <Button variant="link" size="link-sm" asChild>
-                    <Link
-                      href={`/scans?filter[id__in]=${f?.scan?.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View scan
-                      <ExternalLink className="size-3" />
-                    </Link>
-                  </Button>
+                  {!isSampleId(f?.scan?.id) && (
+                    <Button variant="link" size="link-sm" asChild>
+                      <Link
+                        href={`/scans?filter[id__in]=${f?.scan?.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View scan
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Scan Name" variant="compact">
@@ -1298,14 +1233,6 @@ export function ResourceDetailDrawerContent({
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Lighthouse AI Skills (design 1d) — the experiment's card control */}
-      {isCloud() && !isNavigating && !isDropdownLauncher && (
-        <LighthouseSkillsBlock
-          onLaunchSkill={handleLaunchSkill}
-          onAskAnything={handleOpenLighthouseChat}
-        />
-      )}
     </div>
   );
 }
@@ -1526,6 +1453,9 @@ function OtherFindingRow({
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
+  const sampleDisabledReason = isSampleId(finding.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const jiraPayload = createJiraDispatchPayload({
     targetIds: [finding.id],
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
@@ -1620,7 +1550,8 @@ function OtherFindingRow({
                   )
                 }
                 label={isMuted ? "Muted" : "Mute"}
-                disabled={isMuted}
+                disabled={isMuted || Boolean(sampleDisabledReason)}
+                disabledTooltip={sampleDisabledReason}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
               <JiraDispatchActionItem

@@ -12,6 +12,7 @@ class ElastiCache(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = {}
+        self._cluster_engine_versions = {}
         self.replication_groups = {}
         self.__threading_call__(self._describe_cache_clusters)
         self.__threading_call__(self._describe_cache_subnet_groups)
@@ -27,6 +28,10 @@ class ElastiCache(AWSService):
             ]:
                 try:
                     cluster_arn = cache_cluster["ARN"]
+                    # Replication groups need member versions even when members are filtered out.
+                    self._cluster_engine_versions[cluster_arn] = cache_cluster.get(
+                        "EngineVersion", "0.0"
+                    )
                     if not self.audit_resources or (
                         is_resource_filtered(cluster_arn, self.audit_resources)
                     ):
@@ -99,7 +104,7 @@ class ElastiCache(AWSService):
                         engine_version = "0.0"
                         if member_clusters:
                             cluster_arn = f"arn:{self.audited_partition}:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
-                            engine_version = self.clusters[cluster_arn].engine_version
+                            engine_version = self._cluster_engine_versions[cluster_arn]
 
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
