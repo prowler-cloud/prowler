@@ -1,0 +1,966 @@
+{
+  "app/(auth)/invitation/accept/accept-invitation-client.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/_overview/_components/accounts-selector.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/_overview/_components/provider-type-selector.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/_overview/attack-surface/_components/attack-surface-card-item.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/_overview/check-findings/check-findings.ssr.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/_overview/risk-severity/risk-severity-chart.ssr.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/_overview/severity-over-time/_components/finding-severity-over-time.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/_overview/severity-over-time/_components/time-range-selector.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/attack-paths/(workflow)/_components/vertical-steps.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/attack-paths/(workflow)/query-builder/_components/node-detail/node-overview.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/attack-paths/(workflow)/query-builder/_components/node-detail/node-remediation.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/attack-paths/(workflow)/query-builder/_components/query-parameters-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/attack-paths/(workflow)/query-builder/_components/query-selector.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/attack-paths/(workflow)/query-builder/_hooks/use-wizard-state.ts": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/compliance/_components/aggregated-compliance-detail.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/compliance/_components/aggregated-framework-card.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/compliance/_components/aggregated-framework-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/demo-expandable-table/page.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "app/(prowler)/error.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/findings/page.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    },
+    "react-hooks/purity": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/integrations/amazon-s3/page.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/integrations/aws-security-hub/page.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/integrations/integrations-content.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/integrations/jira/page.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/(prowler)/integrations/slack/page.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/invitations/(send-invite)/layout.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/invitations/page.tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/lighthouse/_components/chat/message-bubble.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/lighthouse/settings/(connect-llm)/layout.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/manage-groups/layout.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/resources/page.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/roles/(add-role)/layout.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/roles/(add-role)/new/page.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/roles/page.tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/scans/config/_components/scan-configuration-editor.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "app/(prowler)/users/page.tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    }
+  },
+  "components/attack-paths/graph/attack-path-graph.tsx": {
+    "react-hooks/refs": {
+      "count": 6
+    }
+  },
+  "components/auth/oss/sign-in-form.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-accordion/checks-with-providers.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-accordion/client-accordion-content.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/compliance/compliance-accordion/compliance-accordion-title.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "components/compliance/compliance-card.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-charts/heatmap-chart.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-framework-chip.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-header/compliance-header.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/compliance-warming.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/compliance/no-scans-available.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/compliance/skeletons/compliance-accordion-skeleton.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/compliance/threatscore-logo.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/feeds/feeds-client.tsx": {
+    "no-restricted-syntax": {
+      "count": 13
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/filters/custom-search-input.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/filters/provider-group-selector.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/findings/table/findings-group-drill-down.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/findings/table/impacted-resources-cell.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/findings/table/inline-resource-container.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/findings/table/resource-detail-drawer/resource-detail-drawer-content.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/findings/table/resource-detail-drawer/resource-detail-drawer-content.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/graphs/map-chart.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/graphs/sankey-chart.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/graphs/threat-map.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "components/icons/Icons.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/aws-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/azure-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/cloudflare-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/gcp-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/github-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/iac-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/ks8-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/mongodbatlas-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/okta-provider-badge.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/openstack-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/providers-badge/oraclecloud-provider-badge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/icons/prowler/ProwlerIcons.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/integrations/jira/jira-integration-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/integrations/jira/jira-integration-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/integrations/jira/jira-integrations-manager.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/integrations/s3/s3-integration-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/integrations/s3/s3-integration-form.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/integrations/s3/s3-integrations-manager.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/integrations/saml/saml-config-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 13
+    },
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/integrations/saml/saml-integration-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/integrations/security-hub/security-hub-integration-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/integrations/security-hub/security-hub-integration-form.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/integrations/security-hub/security-hub-integrations-manager.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/integrations/shared/integration-action-buttons.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/integrations/shared/integration-skeleton.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/integrations/shared/link-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/integrations/slack/slack-integration-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/integrations/slack/slack-integration-manager.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/invitations/forms/delete-form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/invitations/forms/edit-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/invitations/workflow/vertical-steps.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/invitations/workflow/workflow-send-invite.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/issues/verdict-filter.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/ai-elements/chain-of-thought.tsx": {
+    "no-restricted-imports": {
+      "count": 2
+    }
+  },
+  "components/lighthouse-v1/ai-elements/prompt-input.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/ai-elements/select.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/ai-elements/tooltip.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/forms/delete-llm-provider-form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/lighthouse-settings.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/llm-provider-registry.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/lighthouse-v1/llm-providers-table.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/lighthouse-v1/workflow/workflow-connect-llm.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/manage-groups/forms/add-group-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/manage-groups/forms/delete-group-form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/manage-groups/forms/edit-group-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/manage-groups/table/column-groups.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/providers/forms/delete-form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/providers/no-providers-added.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/providers/organizations/azure-org-setup-form.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/providers/organizations/gcp-org-setup-form.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/providers/organizations/hooks/org-setup-strategy.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/providers/organizations/org-account-selection.tsx": {
+    "react-hooks/static-components": {
+      "count": 1
+    }
+  },
+  "components/providers/organizations/org-launch-scan.tsx": {
+    "react-hooks/refs": {
+      "count": 1
+    }
+  },
+  "components/providers/organizations/org-setup-form.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/providers/wizard/hooks/use-provider-wizard-controller.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/providers/wizard/steps/connect/registry-connect-form.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/providers/wizard/steps/footer-controls.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/providers/wizard/steps/invite-teammate/invite-teammate-panel.test.tsx": {
+    "react-hooks/refs": {
+      "count": 1
+    }
+  },
+  "components/providers/wizard/steps/launch-step.tsx": {
+    "react-hooks/refs": {
+      "count": 1
+    }
+  },
+  "components/registry/registry-explorer.tsx": {
+    "react-hooks/immutability": {
+      "count": 1
+    }
+  },
+  "components/resources/table/column-resources.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/roles/workflow/forms/delete-role-form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/roles/workflow/forms/role-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/roles/workflow/vertical-steps.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/roles/workflow/workflow-add-edit-role.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/scans/no-scans-empty-state.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/shadcn/action-card/ActionCard.tsx": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "components/shadcn/alert-dialog/AlertDialog.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/shadcn/alert.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/shadcn/avatar/avatar.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/shadcn/badge/badge.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/breadcrumbs/breadcrumb-navigation.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/calendar.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/card/resource-stats-card/resource-stats-card-content.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "components/shadcn/chart/Chart.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/shadcn/combobox/combobox.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/shadcn/dropdown-menu/dropdown-menu.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/shadcn/entities/date-with-time.tsx": {
+    "react-hooks/error-boundaries": {
+      "count": 8
+    }
+  },
+  "components/shadcn/entities/scan-status.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/feedback-banner/feedback-banner.tsx": {
+    "no-restricted-syntax": {
+      "count": 10
+    }
+  },
+  "components/shadcn/form/Form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/shadcn/form/Label.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/shadcn/label/Label.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/shadcn/modal/modal.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/navigation-progress/navigation-progress.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/shadcn/scroll-area/scroll-area.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/shadcn/select/enhanced-multi-select.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    },
+    "react-hooks/refs": {
+      "count": 1
+    }
+  },
+  "components/shadcn/select/multiselect.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/select/select.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/shadcn/sheet/sheet.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/shadcn/table/data-table-search.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "components/shadcn/table/data-table.tsx": {
+    "react-hooks/incompatible-library": {
+      "count": 1
+    }
+  },
+  "components/shadcn/table/status-badge.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/shadcn/table/status-finding-badge.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/shadcn/table/table.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/shadcn/tabs/tabs.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/shadcn/tabs/tabs.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "components/shadcn/toast/Toast.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/shadcn/toast/use-toast.ts": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/ui/alert/Alert.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/ui/button/button.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/ui/dialog/dialog.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/ui/dropdown/Dropdown.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/ui/select/Select.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/ui/toast/index.test.ts": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/ui/tooltip/tooltip.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/users/forms/delete-form.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "components/users/forms/edit-form.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/users/profile/api-keys-card-client.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/users/profile/create-api-key-modal.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/users/profile/edit-api-key-name-modal.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/users/profile/memberships-card-client.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/users/profile/role-item.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/users/profile/roles-card.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "contexts/filter-transition-context.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/use-filter-batch.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/use-local-storage.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/use-scroll-hint.ts": {
+    "no-restricted-imports": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "types/authFormSchema.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "types/tasks.ts": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  }
+}

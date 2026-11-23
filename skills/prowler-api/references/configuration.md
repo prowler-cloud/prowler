@@ -11,6 +11,7 @@ api/src/backend/config/
 │   └── testing.py            # Test settings
 ├── settings/
 │   ├── celery.py             # Celery broker/backend config
+│   ├── eventstream.py        # SSE (django-eventstream over Valkey Pub/Sub)
 │   ├── partitions.py         # Table partitioning settings
 │   ├── sentry.py             # Error tracking + exception filtering
 │   └── social_login.py       # OAuth/SAML providers
@@ -77,8 +78,11 @@ REST_FRAMEWORK = {
     # Throttling
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {
-        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
         "dj_rest_auth": None,
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "attack-paths-custom-query": env("DJANGO_THROTTLE_ATTACK_PATHS_CUSTOM_QUERY", default="10/min"),
+        "health-live": env("DJANGO_THROTTLE_HEALTH_LIVE", default="120/min"),
+        "health-ready": env("DJANGO_THROTTLE_HEALTH_READY", default="60/min"),
     },
 }
 ```
@@ -89,6 +93,9 @@ REST_FRAMEWORK = {
 |-------|---------------------|---------|--------|
 | `token-obtain` | `DJANGO_THROTTLE_TOKEN_OBTAIN` | `None` (disabled) | `"X/minute"`, `"X/hour"`, `"X/day"` |
 | `dj_rest_auth` | N/A | `None` (disabled) | Same |
+| `attack-paths-custom-query` | `DJANGO_THROTTLE_ATTACK_PATHS_CUSTOM_QUERY` | `10/min` | Same |
+| `health-live` | `DJANGO_THROTTLE_HEALTH_LIVE` | `120/min` | Same |
+| `health-ready` | `DJANGO_THROTTLE_HEALTH_READY` | `60/min` | Same |
 
 **To enable throttling:**
 ```bash
@@ -249,6 +256,7 @@ FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS = env.int("...", None)  # Optional clean
 
 ```python
 MIDDLEWARE = [
+    "api.middleware.CloseDBConnectionsMiddleware",   # 0. Close DB connections per request
     "django_guid.middleware.guid_middleware",        # 1. Transaction ID
     "django.middleware.security.SecurityMiddleware", # 2. Security headers
     "django.contrib.sessions.middleware.SessionMiddleware",

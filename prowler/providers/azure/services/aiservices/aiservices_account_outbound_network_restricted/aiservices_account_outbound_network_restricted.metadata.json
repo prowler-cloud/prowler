@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_outbound_network_restricted",
+  "CheckTitle": "AI services account restricts outbound network access to an allowed FQDN list",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) can call external endpoints, for example to fetch data for features that reach out to URLs. Setting `restrictOutboundNetworkAccess` to `true` limits those calls to the domains in `allowedFqdnList`.",
+  "Risk": "Unrestricted outbound access lets the service send data to any endpoint:\n- **Exfiltration**: a prompt-injected or misconfigured feature can post data to an attacker-controlled host\n- **Trust boundary**: the account can reach destinations no one reviewed\n- **Compliance**: data-loss-prevention controls for AI workloads are not enforced",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-data-loss-prevention"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az resource update --ids <account_resource_id> --set properties.restrictOutboundNetworkAccess=true properties.allowedFqdnList='[\"<allowed_fqdn>\"]'",
+      "NativeIaC": "```bicep\n// Restrict outbound calls from an Azure AI services account\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'OpenAI'\n  sku: { name: 'S0' }\n  properties: {\n    customSubDomainName: '<example_resource_name>'\n    restrictOutboundNetworkAccess: true // CRITICAL: blocks outbound calls outside the allow list\n    allowedFqdnList: [\n      '<allowed_fqdn>'\n    ]\n  }\n}\n```",
+      "Other": "1. List the external domains the account must reach, for example storage endpoints used by your data sources\n2. Deploy the Bicep or Terraform example with those domains in the allowed FQDN list\n3. Or run the Azure CLI command above with your domains in allowedFqdnList\n4. Test the features that call external endpoints; an empty allow list blocks every outbound call",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_account\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<location>\"\n  resource_group_name   = \"<resource_group>\"\n  kind                  = \"OpenAI\"\n  sku_name              = \"S0\"\n  custom_subdomain_name = \"<example_resource_name>\"\n\n  outbound_network_access_restricted = true # CRITICAL: blocks outbound calls outside the allow list\n  fqdns                              = [\"<allowed_fqdn>\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **outbound network restriction** on AI services accounts and keep the **allowed FQDN list** to the domains each workload needs. Review the list when data sources change.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_outbound_network_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

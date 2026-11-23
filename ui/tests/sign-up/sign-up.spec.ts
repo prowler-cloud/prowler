@@ -1,6 +1,7 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { SignUpPage } from "./sign-up-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
+import { ProvidersPage } from "../providers/providers-page";
 import { makeSuffix } from "../helpers";
 
 test.describe("Sign Up Flow", () => {
@@ -45,7 +46,12 @@ test.describe("Sign Up Flow", () => {
         email: uniqueEmail,
         password: password,
       });
-      await signInPage.verifySuccessfulLogin();
+
+      // A brand-new tenant has no providers, so the first run lands on the
+      // add-provider wizard instead of the Overview.
+      const providersPage = new ProvidersPage(page);
+      await expect(page).toHaveURL(/\/providers/);
+      await providersPage.verifyWizardModalOpen();
     },
   );
 });

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
+from prowler.providers.azure.models import AzureRegionConfig
 from prowler.providers.azure.services.defender.defender_service import (
     Assesment,
     AutoProvisioningSetting,
@@ -618,3 +619,53 @@ class Test_Defender_get_jit_policies:
         mock_client.jit_network_access_policies.list_by_resource_group.assert_called_once_with(
             resource_group_name="RG"
         )
+
+
+US_GOV_REGION_CONFIG = AzureRegionConfig(
+    name="AzureUSGovernment",
+    base_url="https://management.usgovcloudapi.net",
+    credential_scopes=["https://management.usgovcloudapi.net/.default"],
+)
+
+
+class Test_Defender_get_security_contacts_sovereign_cloud:
+    def _defender(self, provider):
+        with (
+            patch(DEFENDER_INIT_PATCHES[0], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[1], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[2], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[3], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[4], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[5], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[6], return_value={}),
+        ):
+            return Defender(provider)
+
+    def test_init_requests_token_for_cloud_scope(self):
+        provider = set_mocked_azure_provider(azure_region_config=US_GOV_REGION_CONFIG)
+
+        self._defender(provider)
+
+        provider.session.get_token.assert_called_once_with(
+            "https://management.usgovcloudapi.net/.default"
+        )
+
+    def test_get_security_contacts_uses_cloud_management_host(self):
+        provider = set_mocked_azure_provider(azure_region_config=US_GOV_REGION_CONFIG)
+        defender = self._defender(provider)
+
+        response = MagicMock()
+        response.json.return_value = {"value": []}
+        with patch(
+            "prowler.providers.azure.services.defender.defender_service.requests.get",
+            return_value=response,
+        ) as mock_get:
+            result = defender._get_security_contacts(token="token")
+
+        assert result == {AZURE_SUBSCRIPTION_ID: {}}
+        mock_get.assert_called_once()
+        url = mock_get.call_args.args[0]
+        assert url.startswith(
+            f"https://management.usgovcloudapi.net/subscriptions/{AZURE_SUBSCRIPTION_ID}/"
+        )
+        assert "management.azure.com" not in url

@@ -205,7 +205,9 @@ class rolesanywhere_profile_restricts_session_permissions(Check):
             not administrative, and disabled profiles.
         """
         findings = []
-        roles_by_arn = {role.arn: role for role in iam_client.roles}
+        # iam:ListRoles denied leaves roles as None: every referenced role is
+        # then unknown and the profile falls through to MANUAL.
+        roles_by_arn = {role.arn: role for role in (iam_client.roles or [])}
         for profile in rolesanywhere_client.profiles.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=profile)
             role_statuses = {
