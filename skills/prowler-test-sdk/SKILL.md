@@ -177,7 +177,7 @@ tests/providers/{provider}/
 | No resources | `len(result) == 0` |
 | Compliant resource | `status == "PASS"` |
 | Non-compliant resource | `status == "FAIL"` |
-| Data could not be retrieved (if the check handles it) | `status == "MANUAL"`, single finding |
+| Data could not be retrieved | `len(result) == 0` (never `MANUAL`) |
 | Multiple resources | correct count, one finding per resource |
 
 Assert `status_extended` (exact string), `resource_id`, `resource_name`/`resource_arn`, and the location field (`region`, `subscription`/`location`, `project_id`/`location`, `namespace`).

@@ -77,12 +77,8 @@ Multiple SAST tools run on every push and pull request to catch vulnerabilities 
 ### JavaScript/TypeScript (UI)
 
 - **TypeScript (`tsc`):** strict type checking for the UI. Catches whole classes of null/undefined and type-confusion bugs at build time. Runs on every pull request and push via `pnpm run healthcheck`.
-- **ESLint:** UI linting with a capped warning budget (`--max-warnings 40`). Runs on every pull request and push via `pnpm run healthcheck`.
-- **Knip:** dead-code and unused-export detection for the UI. The UI analogue to Vulture.
-
-<Note>
-Knip runs locally on demand via `pnpm run lint:knip` and is not yet wired into CI.
-</Note>
+- **ESLint:** UI linting with a zero-warning budget (`--max-warnings 0`). Existing violations are frozen in `ui/eslint-suppressions.json`, so new code cannot add violations. Runs in pre-commit on staged files and on every pull request and push via `pnpm run healthcheck`.
+- **Knip:** dead-code, unused-export, and unused-dependency detection for the UI. The UI analogue to Vulture. Runs on every pull request and push via `pnpm run lint:knip`, which fails when the issue count exceeds the cap set by `--max-issues`.
 
 ### Shell
 

@@ -23,6 +23,8 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
         )
         validate = logs_client.audit_config.get("secrets_validate", False)
 
+        confidence = logs_client.audit_config.get("secrets_confidence", "low")
+
         # Phase 1: batch-scan every (log group, log stream). Payloads are yielded
         # lazily so only a chunk is written/held at a time, which matters for
         # accounts with very large numbers of log groups/streams. The log group
@@ -46,6 +48,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                 stream_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             stream_results = {}
@@ -121,7 +124,9 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
         if rescan_payloads:
             try:
                 rescan_results = detect_secrets_scan_batch(
-                    rescan_payloads, excluded_secrets=secrets_ignore_patterns
+                    rescan_payloads,
+                    excluded_secrets=secrets_ignore_patterns,
+                    confidence=confidence,
                 )
             except SecretsScanError as error:
                 rescan_scan_error = error

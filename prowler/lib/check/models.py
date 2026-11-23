@@ -753,6 +753,10 @@ class Check_Report:
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
         self.muted = False
+        # Structured, machine-readable detail a check wants to hand downstream
+        # (stored as the finding's raw result), so consumers never parse
+        # status_extended prose. Empty for almost every check.
+        self.raw = {}
 
 
 @dataclass

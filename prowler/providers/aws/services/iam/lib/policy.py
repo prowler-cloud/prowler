@@ -895,8 +895,14 @@ def is_condition_block_restrictive_sns_endpoint(
                 }
 
                 if value in condition_statement[condition_operator]:
-                    if pattern.fullmatch(
-                        condition_statement[condition_operator][value]
+                    endpoints = condition_statement[condition_operator][value]
+                    endpoints = (
+                        endpoints if isinstance(endpoints, list) else [endpoints]
+                    )
+                    # A request can match any of the listed endpoint values.
+                    if endpoints and all(
+                        isinstance(endpoint, str) and pattern.fullmatch(endpoint)
+                        for endpoint in endpoints
                     ):
                         is_condition_valid = True
 

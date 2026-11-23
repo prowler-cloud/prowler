@@ -5,6 +5,7 @@ import { getAllProviders } from "@/actions/providers";
 import { S3IntegrationsManager } from "@/components/integrations/s3/s3-integrations-manager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { isS3IntegrationLocked } from "@/lib/s3-integration-access";
 
 interface S3IntegrationsProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -45,9 +46,10 @@ export default async function S3Integrations({
     }
   });
 
-  const [integrations, providers] = await Promise.all([
+  const [integrations, providers, subscriptionOnly] = await Promise.all([
     getIntegrations(urlSearchParams),
     getAllProviders(),
+    isS3IntegrationLocked(),
   ]);
 
   const s3Integrations = integrations?.data || [];
@@ -94,6 +96,7 @@ export default async function S3Integrations({
           integrations={s3Integrations}
           providers={availableProviders}
           metadata={metadata}
+          subscriptionOnly={subscriptionOnly}
         />
       </div>
     </ContentLayout>

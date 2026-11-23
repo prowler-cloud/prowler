@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.2"
+  version: "1.3"
   scope: [root, ui]
   auto_invoke:
     - "Creating/modifying Prowler UI components"
@@ -19,6 +19,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 - `typescript` - Const types, flat interfaces
 - `react-19` - No useMemo/useCallback, compiler
+- `no-use-effect` - Derive state, handlers, server data; no direct useEffect
+- `prowler-ui-browser-review` - Browser sign-off for user-visible changes
 - `nextjs-16` - App Router, Server Actions
 - `tailwind-4` - cn() utility, styling rules
 - `zod-4` - Schema validation
@@ -52,35 +54,29 @@ Applies to ALL UI work. The design system is the single source of truth — reus
 - **Modals**: only `@/components/shadcn/modal`. **Selects**: `components/shadcn/select`.
 - **Colors**: reuse existing semantic tokens from `ui/styles/globals.css`. No raw Tailwind color utilities (e.g. `bg-blue-950/40`), no hex. If no token fits, STOP and ask the design owner — do not invent or near-duplicate tokens.
 - **Need a genuinely new variant/token?** That is a design-system change: add it to the shared component API (with design sign-off), then consume it. It is never a call-site decision.
+- **Design-system-shaped patterns** (callouts, hints, empty states) go into `components/shadcn/` as compound components, even with one consumer. When a shadcn primitive carries stock tokens that `globals.css` does not define (e.g. `bg-popover`), fix the primitive with house tokens instead of patching call sites.
+- **Shared components serve many screens.** Before changing one for a request about a single screen, grep its usages and check every render context. Nested finding rows have no header row and rely on per-cell labels; put the change at the call site.
 
-When reviewing UI PRs, flag: custom modals/primitives that duplicate shadcn, call-site visual `className` on shared controls, raw color utilities, and new variants/tokens introduced without going through the shared component API.
+Lint rejects raw palette classes, hex values, `var()` in `className` and imports from `components/ui/`. When reviewing UI PRs, also flag custom modals/primitives that duplicate shadcn, call-site visual `className` on shared controls, and new variants/tokens introduced without going through the shared component API.
 
 ## DECISION TREES
 
-### Component Placement
-
-```text
-New UI primitive?   → components/shadcn/ (shadcn/ui + Tailwind)
-Used by 1 domain?   → components/{domain}/
-Used by 2+ domains? → components/shared/
-Needs state/hooks?  → "use client"
-Server component?    → No directive needed
-```
-
 ### Code Location
 
+New features live with their route (reference: `app/(prowler)/alerts/`). Older features still live in the global folders; follow their layout unless the task is the migration.
+
 ```text
-Server action      → actions/{feature}/{feature}.ts
-Data transform     → actions/{feature}/{feature}.adapter.ts
-Types (shared 2+)  → types/{domain}.ts
-Types (local 1)    → {feature}/types.ts
-Utils (shared 2+)  → lib/
-Utils (local 1)    → {feature}/utils/
-Hooks (shared 2+)  → hooks/
-Hooks (local 1)    → {feature}/hooks.ts
-UI primitive       → components/shadcn/
-Domain component   → components/{domain}/
+Server action + adapter → app/(prowler)/<domain>/_actions/ (index.ts barrel)
+Feature component       → app/(prowler)/<domain>/_components/<sub>/ (index.ts per subfolder)
+Pure helpers, schemas   → app/(prowler)/<domain>/_lib/
+Feature types           → app/(prowler)/<domain>/_types/ (index.ts barrel)
+Used by 2+ domains      → components/shared/, lib/, types/, hooks/
+UI primitive            → components/shadcn/
+API route handler       → app/api/...
+Needs state/handlers    → "use client"; otherwise a Server Component (no directive)
 ```
+
+Import across `_` folders with `@/app/(prowler)/<domain>/_lib/...`; use relative paths inside one folder.
 
 > **Deprecated:** `components/ui/` is a temporary re-export shim that maps
 > legacy import paths to `components/shadcn/` for the prowler-cloud overlay.
@@ -100,55 +96,54 @@ Recharts/library?      → CHART_COLORS constant + var()
 
 ### Scope Rule (ABSOLUTE)
 
-- Used 2+ places → `lib/` or `types/` or `hooks/` (components go in `components/{domain}/`)
-- Used 1 place → keep local in feature directory
-- **This determines ALL folder structure decisions**
+- Used 2+ domains → `components/shared/`, `lib/`, `types/` or `hooks/`
+- Used by 1 feature → keep it in that feature's `app/(prowler)/<domain>/_*` folders
+- Exception: design-system-shaped patterns go to `components/shadcn/` even with one consumer
 
 ## Project Structure
 
 ```text
 ui/
 ├── app/
-│   ├── (auth)/              # Auth pages (login, signup)
-│   └── (prowler)/           # Main app
-│       ├── compliance/
-│       ├── findings/
-│       ├── providers/
-│       ├── scans/
-│       ├── services/
-│       └── integrations/
+│   ├── (auth)/              # Sign-in, sign-up, invitation
+│   ├── (prowler)/           # Main app; each route owns _actions/_components/_lib/_types
+│   └── api/                 # Route handlers (proxies, auth, health)
 ├── components/
-│   ├── shadcn/              # shadcn/ui primitives (USE THIS)
-│   ├── shared/             # Cross-domain composed components (2+ domains)
-│   ├── ui/                  # DEPRECATED shim → re-exports shadcn (do not use)
-│   ├── {domain}/            # Domain-specific (compliance, findings, providers, etc.)
-│   ├── filters/             # Filter components
-│   ├── graphs/              # Chart components
-│   └── icons/               # Icon components
-├── actions/                 # Server actions ({feature}/{feature}.ts + .adapter.ts + tests)
-├── types/                   # Shared types
-├── hooks/                   # Shared hooks
-├── lib/                     # Utilities (cn() in lib/utils.ts)
-├── store/                   # Zustand stores ({feature}/store.ts, re-exported from store/index.ts)
+│   ├── shadcn/              # shadcn/ui primitives and design-system patterns (USE THIS)
+│   ├── shared/              # Cross-domain composed components (2+ domains)
+│   ├── ui/                  # DEPRECATED shim → re-exports shadcn for the Cloud overlay
+│   ├── {domain}/            # Older domain components (findings, providers, scans...)
+│   ├── filters/ graphs/ icons/
+├── actions/                 # Older server actions ({feature}/{feature}.ts + .adapter.ts)
+├── types/ hooks/ lib/       # Shared code (cn() in lib/utils.ts, isCloud() in lib/shared/env.ts)
+├── store/                   # Zustand stores shared across routes
 ├── __tests__/               # Vitest shared harness (render-browser, MSW handlers)
 ├── tests/                   # Playwright E2E
 ├── changelog.d/             # Towncrier fragments (see prowler-changelog)
+├── eslint-suppressions.json # Frozen lint violations (never add entries)
 ├── proxy.ts                 # Next 16 proxy (auth + security headers)
-└── styles/globals.css       # Tailwind 4 config + design tokens (@theme)
+└── styles/globals.css       # Tailwind 4 config, design tokens, container-query breakpoints
 ```
 
-The route list above is partial; `app/(prowler)/` also has `attack-paths`, `issues`, `lighthouse`, `mutelist`, `registry`, `resources`, `roles`, `users`, etc.
+## Feature Guides
 
-## Lighthouse AI (two implementations)
+Complex features keep their own `AGENTS.md` next to the code:
 
-| | Lighthouse v1 (OSS) | Lighthouse v2 (Cloud, `isCloud()`) |
-|---|---|---|
-| UI | `components/lighthouse-v1/` | `app/(prowler)/lighthouse/_components/`, `_lib/`, `_actions/` |
-| Logic | `lib/lighthouse-v1/` (LangGraph workflow, MCP client, `analyst-stream.ts`) | Django sessions; SSE proxied by `app/api/lighthouse/v2/sessions/[sessionId]/event-stream/route.ts` |
-| Transport | AI SDK `useChat` -> `app/api/lighthouse/analyst/route.ts` | `EventSource` on the Next.js route (token stays server-side) |
-| Server actions / types | `actions/lighthouse-v1/`, `types/lighthouse-v1/` | `app/(prowler)/lighthouse/_actions` |
+- `app/(prowler)/lighthouse/AGENTS.md`: Lighthouse v1 vs v2 owner map and the chat stream contract
+- `app/(prowler)/realtime/AGENTS.md`: Prowler Realtime (Cloud only)
 
-Shared, version-agnostic pieces: `lib/lighthouse/` (page context, skills), `components/lighthouse/`, `store/lighthouse-context/`, `lib/lighthouse-routes.ts`. Entry point that picks the version: `app/(prowler)/lighthouse/page.tsx`.
+## Server and Client Boundary
+
+- Server Components fetch; client components receive data or a promise unwrapped with `use()`.
+- Never pass a function across the boundary. `components/filters/data-filters.ts` stays plain data; `labelFormatter` and similar attach in a `"use client"` wrapper such as `app/(prowler)/invitations/_components/invitations-filters.tsx`. TypeScript and jsdom tests accept the bad version; only the real page throws.
+- Cloud-only UI is gated with `isCloud()` (`lib/shared/env.ts`). Paid gates are seams whose OSS body returns the self-hosted default (`lib/s3-integration-access.ts`, `lib/report-download-access.ts`, `lib/findings-access.ts`); the Cloud overlay replaces the body.
+
+## Layout
+
+- `sm:`…`2xl:` are redefined in `styles/globals.css`: container queries inside `[data-responsive-container]` (set on `<main>`, so the side panel's push re-evaluates them) and media queries elsewhere. Use `min-[64rem]:` when you need viewport semantics inside `<main>`.
+- `<main>` is a container, so it becomes the containing block of `fixed` descendants. Portal them to `document.body` (`components/findings/floating-selection-actions.tsx`).
+- Browser tests that check layout wrap the component in `<div data-responsive-container className="@container" style={{ width }}>`; otherwise the variants follow the test viewport.
+- No layout shift: decide visibility from synchronous signals (the runtime config island), render the structure on first paint, and size skeletons like the real content.
 
 ## Recharts (Special Case)
 
@@ -287,7 +282,7 @@ If a helper doesn't exist and will be used in 2+ places, add it to `ui/lib/` or 
 
 ## Derived State Rule (REQUIRED)
 
-Avoid `useState` + `useEffect` patterns that mirror props or searchParams — they create sync bugs and unnecessary re-renders. Derive values directly from the source of truth.
+Avoid `useState` + `useEffect` patterns that mirror props or searchParams — they create sync bugs and unnecessary re-renders. Derive values directly from the source of truth. The full effect rules live in `no-use-effect`.
 
 ```typescript
 // ❌ NEVER: Mirror props into state via effect
@@ -335,10 +330,8 @@ const STATUS_LABELS = {
 
 ## QA Checklist Before Commit
 
-- [ ] `pnpm run typecheck` passes
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run format:write` passes
-- [ ] Relevant Vitest (`test:unit` / `test:integration`) and E2E tests pass
+- [ ] The checks for your change type in the `ui/AGENTS.md` verification table pass, quoted with their summary lines
+- [ ] User-visible changes reviewed in a browser (see `prowler-ui-browser-review`)
 - [ ] Changelog fragment added in `ui/changelog.d/` when user-facing (see `prowler-changelog`)
 - [ ] All UI states handled (loading, error, empty)
 - [ ] No secrets in code (use `.env.local`)
