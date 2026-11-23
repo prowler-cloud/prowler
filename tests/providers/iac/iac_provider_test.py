@@ -25,8 +25,10 @@ from tests.providers.iac.iac_fixtures import (
     SAMPLE_KUBERNETES_CHECK,
     SAMPLE_PASSED_CHECK,
     SAMPLE_SKIPPED_CHECK,
+    SAMPLE_TRIVY_MISCONFIGURATION_WITHOUT_DESCRIPTION,
     SAMPLE_TRIVY_NON_CVE_VULNERABILITY,
     SAMPLE_TRIVY_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
+    SAMPLE_TRIVY_VULNERABILITY_WITHOUT_DESCRIPTION,
     SAMPLE_TRIVY_VULNERABILITY_WITHOUT_REFERENCES,
     SAMPLE_YAML_CHECK,
     get_empty_trivy_output,
@@ -163,6 +165,25 @@ class TestIacProvider:
         assert report.check_metadata.AdditionalURLs == [
             "https://www.cve.org/CVERecord?id=CVE-2023-9012"
         ]
+
+    @pytest.mark.parametrize(
+        "finding, file_path, finding_type",
+        [
+            (SAMPLE_TRIVY_MISCONFIGURATION_WITHOUT_DESCRIPTION, "main.tf", "terraform"),
+            (SAMPLE_TRIVY_VULNERABILITY_WITHOUT_DESCRIPTION, "package.json", "nodejs"),
+        ],
+    )
+    def test_iac_provider_process_finding_without_description_uses_title(
+        self, finding, file_path, finding_type
+    ):
+        """A finding Trivy reports without "Description" is kept, described by its title."""
+        provider = IacProvider()
+
+        report = provider._process_finding(finding, file_path, finding_type)
+
+        assert isinstance(report, CheckReportIAC)
+        assert report.check_metadata.CheckTitle == finding["Title"]
+        assert report.check_metadata.Description == finding["Title"]
 
     def test_iac_provider_process_non_cve_vulnerability_falls_back_to_github_advisory(
         self,

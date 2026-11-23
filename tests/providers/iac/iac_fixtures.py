@@ -307,6 +307,27 @@ SAMPLE_TRIVY_NON_CVE_VULNERABILITY = {
     ],
 }
 
+# Trivy leaves "Description" out of the JSON when the check has an empty one,
+# as its built-in DigitalOcean check DIG-0008 does
+SAMPLE_TRIVY_MISCONFIGURATION_WITHOUT_DESCRIPTION = {
+    "Type": "Terraform Security Check",
+    "ID": "DIG-0008",
+    "Title": "Kubernetes clusters should be auto-upgraded to ensure that they always contain the latest security patches.",
+    "Message": "Kubernetes cluster does not have auto-upgrades enabled.",
+    "Namespace": "builtin.digitalocean.compute.digitalocean0008",
+    "Resolution": "Set maintenance policy deterministically when auto upgrades are enabled",
+    "Severity": "CRITICAL",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/dig-0008",
+    "Status": "FAIL",
+}
+
+SAMPLE_TRIVY_VULNERABILITY_WITHOUT_DESCRIPTION = {
+    "VulnerabilityID": "CVE-2023-3456",
+    "Title": "Vulnerability without a description",
+    "Severity": "high",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-3456",
+}
+
 # Sample Trivy output with secrets
 SAMPLE_TRIVY_SECRET_OUTPUT = {
     "Results": [
