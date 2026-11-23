@@ -1,15 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
 import { ComplianceFrameworkGrid } from "@/components/compliance/compliance-framework-grid";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
-import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
 import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
-import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
 import {
   buildWatchlistIndex,
   isFrameworkPinned,
@@ -20,8 +18,6 @@ import {
   LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT,
 } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
-import { getFlowById } from "@/lib/onboarding";
-import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
 import { WATCHLIST_PIN_STATE } from "@/types/compliance-watchlist";
@@ -29,15 +25,6 @@ import type { ScanEntity } from "@/types/scans";
 
 import { WatchlistEmptyState } from "./watchlist/watchlist-empty-state";
 import { WatchlistToggle } from "./watchlist/watchlist-toggle";
-
-const viewComplianceFlow = getFlowById("view-compliance")!;
-
-// Module-level so the identity is stable: `configOverrides` is an effect dependency in
-// `useDriverTour`, and a fresh object per keystroke would tear the tour down mid-typing.
-const VIEW_COMPLIANCE_TOUR_CONFIG = {
-  // Last step opens the first card (see createViewComplianceTourStepHandlers).
-  doneBtnText: "Open Compliance",
-};
 
 interface ComplianceOverviewGridProps {
   frameworks: ComplianceOverviewData[];
@@ -47,6 +34,7 @@ interface ComplianceOverviewGridProps {
   catalogEntries?: ComplianceCatalogEntry[];
   providerType?: string;
   canManageWatchlist?: boolean;
+  subscriptionOnly?: boolean;
 }
 
 export const ComplianceOverviewGrid = ({
@@ -57,8 +45,8 @@ export const ComplianceOverviewGrid = ({
   catalogEntries,
   providerType,
   canManageWatchlist = false,
+  subscriptionOnly = false,
 }: ComplianceOverviewGridProps) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const showOnlyWatchlist = useShowOnlyWatchlist();
@@ -90,34 +78,6 @@ export const ComplianceOverviewGrid = ({
   const visibleFrameworks = filterToWatchlist
     ? filteredFrameworks.filter((compliance) => isPinned(compliance.id))
     : filteredFrameworks;
-  const tourAnchorId = visibleFrameworks[0]?.id;
-
-  const resetSearch = () => {
-    setSearchTerm("");
-    // Clearing the search does not bring the anchor back while the persisted
-    // watchlist filter is on and nothing is pinned: the grid renders the empty
-    // state instead, so the tour has to skip the step rather than wait for a
-    // selector that never mounts.
-    return filterToWatchlist ? pinnedTotal > 0 : frameworks.length > 0;
-  };
-
-  const openFirstFramework = () => {
-    // The fallback covers a search that filtered every card away — never the
-    // watchlist filter, where opening a hidden framework would contradict the
-    // list the user is looking at.
-    const first =
-      visibleFrameworks[0] ?? (filterToWatchlist ? undefined : frameworks[0]);
-    if (!first) return;
-    router.push(
-      buildComplianceDetailPath({
-        title: first.attributes.framework,
-        complianceId: first.id,
-        version: first.attributes.version,
-        scanId,
-        regionFilter: searchParams.get("filter[region__in]"),
-      }),
-    );
-  };
 
   const renderGrid = (items: ComplianceOverviewData[]) => (
     <ComplianceFrameworkGrid>
@@ -127,13 +87,7 @@ export const ComplianceOverviewGrid = ({
           attributes;
 
         return (
-          <div
-            key={id}
-            {...(id === tourAnchorId
-              ? { "data-tour-id": "view-compliance-frameworks" }
-              : {})}
-            className="h-full [&>*]:h-full"
-          >
+          <div key={id} className="h-full [&>*]:h-full">
             <ComplianceCard
               title={framework}
               version={version}
@@ -146,6 +100,7 @@ export const ComplianceOverviewGrid = ({
               id={id}
               selectedScan={selectedScan}
               isLatestCisForProvider={latestCisIds?.has(id) ?? false}
+              subscriptionOnly={subscriptionOnly}
               watchlistAction={
                 watchlistEnabled && canManageWatchlist ? (
                   <WatchlistToggle
@@ -192,27 +147,12 @@ export const ComplianceOverviewGrid = ({
             })}
           />
         ))}
-      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      <Suspense fallback={null}>
-        <OnboardingTrigger
-          flow={viewComplianceFlow}
-          stepHandlers={createViewComplianceTourStepHandlers({
-            resetSearch,
-            openFirstFramework,
-          })}
-          configOverrides={VIEW_COMPLIANCE_TOUR_CONFIG}
-        />
-      </Suspense>
-      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
-      <PageReady />
       <div className="flex items-center justify-between gap-4">
-        <div data-tour-id="view-compliance-search">
-          <DataTableSearch
-            controlledValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            placeholder="Search frameworks..."
-          />
-        </div>
+        <DataTableSearch
+          controlledValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          placeholder="Search frameworks..."
+        />
         <span className="text-text-neutral-secondary shrink-0 text-sm">
           {visibleFrameworks.length.toLocaleString()} Total Entries
         </span>

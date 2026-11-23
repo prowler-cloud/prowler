@@ -1624,8 +1624,11 @@ class TestCompliance:
 
             assert "custom_1.0_ext" in frameworks
 
-    @patch("prowler.config.config.importlib.metadata.entry_points")
-    def test_get_available_compliance_includes_external_universal(self, mock_ep):
+    @patch("prowler.config.config._get_ep_compliance_dirs", return_value={})
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_get_available_compliance_includes_external_universal(
+        self, mock_ep, _mock_ep_dirs
+    ):
         """External universal frameworks under prowler.compliance.universal are
         listed, for a provider and for the provider=None case that feeds
         --compliance choices."""

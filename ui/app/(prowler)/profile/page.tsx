@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { Suspense } from "react";
 
 import { getSamlConfig } from "@/actions/integrations/saml";
@@ -26,7 +27,7 @@ export default async function Profile({
   const resolvedSearchParams = await searchParams;
 
   return (
-    <ContentLayout title="User Profile" icon="lucide:users">
+    <ContentLayout title="User Profile" icon={<Users />}>
       <Suspense fallback={<SkeletonUserInfo />}>
         <SSRDataUser searchParams={resolvedSearchParams} />
       </Suspense>
@@ -88,13 +89,7 @@ const SSRDataUser = async ({
       role.attributes.manage_account === true && userRoleIds.includes(role.id),
   );
 
-  const hasManageIntegrations = roleDetails.some(
-    (role) =>
-      role.attributes.manage_integrations === true &&
-      userRoleIds.includes(role.id),
-  );
-
-  const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
+  const samlConfig = hasManageAccount ? await getSamlConfig() : undefined;
 
   return (
     <Card
@@ -111,7 +106,7 @@ const SSRDataUser = async ({
           <ApiKeysCard searchParams={searchParams} />
         </div>
       )}
-      {hasManageIntegrations && (
+      {hasManageAccount && (
         <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
       )}
       <MembershipsCard

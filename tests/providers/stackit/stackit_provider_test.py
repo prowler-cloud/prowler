@@ -276,6 +276,40 @@ class TestStackITProviderTestConnection:
             (None, self.KEY_CONTENT, self.PROJECT_ID)
         ]
 
+    def test_connection_resource_manager_403_does_not_fail_service_discovery(
+        self, fake_stackit_resourcemanager
+    ):
+        class Http403Error(Exception):
+            status = 403
+
+        fake_stackit_resourcemanager.error = Http403Error()
+
+        with patch.object(stackit_provider_module.logger, "warning") as warning:
+            connection = StackitProvider.test_connection(
+                project_id=self.PROJECT_ID,
+                service_account_key_path=self.KEY_PATH,
+            )
+
+        assert connection == Connection(is_connected=True)
+        warning.assert_called_once_with(
+            "StackIT test_connection: Resource Manager access could not be verified "
+            "(403). Service permissions will be checked during discovery."
+        )
+
+    def test_connection_resource_manager_401_still_fails(
+        self, fake_stackit_resourcemanager
+    ):
+        class Http401Error(Exception):
+            status = 401
+
+        fake_stackit_resourcemanager.error = Http401Error()
+
+        with pytest.raises(StackITInvalidTokenError):
+            StackitProvider.test_connection(
+                project_id=self.PROJECT_ID,
+                service_account_key_path=self.KEY_PATH,
+            )
+
     def test_connection_returns_error_when_raise_on_exception_is_false(
         self, fake_stackit_resourcemanager
     ):

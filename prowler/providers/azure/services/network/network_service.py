@@ -1,13 +1,25 @@
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Callable, Iterable, List, Optional
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network import NetworkManagementClient
+from azure.mgmt.network import models as network_models
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
+
+WAF_POLICY_ID = re.compile(
+    r"^/subscriptions/(?P<subscription>[^/]+)/resourceGroups/(?P<resource_group>[^/]+)"
+    r"/providers/Microsoft\.Network/ApplicationGatewayWebApplicationFirewallPolicies"
+    r"/(?P<name>[^/]+)$",
+    re.IGNORECASE,
+)
+
+# Whether a WAF policy in each state, matched without regard to case, is enabled.
+WAF_POLICY_STATES = {"enabled": True, "disabled": False}
 
 
 class Network(AzureService):
@@ -18,6 +30,14 @@ class Network(AzureService):
         self.network_watchers = self._get_network_watchers()
         self.public_ip_addresses = self._get_public_ip_addresses()
         self.virtual_networks = self._get_virtual_networks()
+        # Subscriptions whose WAF policies could not be listed completely.
+        self.waf_policies_lookup_failed: set[str] = set()
+        self.waf_policies = self._get_waf_policies()
+        # Casefolded IDs of WAF policies outside that listing that could not be read.
+        self.waf_policy_reads_failed: set[str] = set()
+        # Subscriptions whose Application Gateways could not be listed completely.
+        self.application_gateways_lookup_failed: set[str] = set()
+        self.application_gateways = self._get_application_gateways()
 
     def _get_security_groups(self):
         logger.info("Network - Getting Network Security Groups...")
@@ -258,6 +278,109 @@ class Network(AzureService):
                 )
         return virtual_networks
 
+    def _get_waf_policies(self) -> dict:
+        """Get the Application Gateway WAF policies of every subscription.
+
+        A subscription whose WAF policies cannot be listed or mapped completely
+        is added to waf_policies_lookup_failed. A policy that cannot be mapped
+        is logged and skipped, so the others are still collected.
+
+        Returns:
+            A dictionary keyed by subscription ID whose values map each WAF
+            policy ID to a WafPolicy model.
+        """
+        logger.info("Network - Getting Application Gateway WAF policies...")
+        waf_policies = {}
+        for subscription_id, client in self.clients.items():
+            try:
+                waf_policies[subscription_id] = {}
+                waf_policies_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.web_application_firewall_policies.list_all,
+                    mark_failed_lookups(
+                        client.web_application_firewall_policies.list,
+                        self.waf_policies_lookup_failed,
+                        subscription_id,
+                    ),
+                )
+                for waf_policy in waf_policies_list:
+                    try:
+                        policy = build_waf_policy(waf_policy)
+                        waf_policies[subscription_id][policy.id] = policy
+                    except Exception as error:
+                        self.waf_policies_lookup_failed.add(subscription_id)
+                        logger.error(
+                            f"Subscription ID: {subscription_id} -- WAF policy: {getattr(waf_policy, 'id', None)} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+            except Exception as error:
+                self.waf_policies_lookup_failed.add(subscription_id)
+                logger.error(
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return waf_policies
+
+    def _get_application_gateways(self) -> dict:
+        """Get the Application Gateways of every subscription.
+
+        The state of each gateway's WAF policy comes from the policies that
+        _get_waf_policies collected, so that method must run first, and a
+        policy that was not listed is read once by its ID. A subscription whose
+        gateways cannot be listed or mapped completely is added to
+        application_gateways_lookup_failed. A gateway that cannot be mapped is
+        logged and skipped, so the others are still collected.
+
+        Returns:
+            A dictionary keyed by subscription ID whose values map each
+            Application Gateway ID to an ApplicationGateway model.
+        """
+        logger.info("Network - Getting Application Gateways...")
+        application_gateways = {}
+        for subscription_id, client in self.clients.items():
+            try:
+                application_gateways[subscription_id] = {}
+                application_gateways_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.application_gateways.list_all,
+                    mark_failed_lookups(
+                        client.application_gateways.list,
+                        self.application_gateways_lookup_failed,
+                        subscription_id,
+                    ),
+                )
+                listed_policies = {
+                    policy_id.casefold(): policy
+                    for policy_id, policy in self.waf_policies.get(
+                        subscription_id, {}
+                    ).items()
+                }
+                policy_states = {}
+                for application_gateway in application_gateways_list:
+                    try:
+                        gateway = build_application_gateway(application_gateway)
+                        if gateway.firewall_policy_id:
+                            key = gateway.firewall_policy_id.casefold()
+                            if key not in policy_states:
+                                policy_states[key] = get_waf_policy_enabled(
+                                    client,
+                                    subscription_id,
+                                    gateway.firewall_policy_id,
+                                    listed_policies,
+                                    self.waf_policy_reads_failed,
+                                )
+                            gateway.firewall_policy_enabled = policy_states[key]
+                        application_gateways[subscription_id][gateway.id] = gateway
+                    except Exception as error:
+                        self.application_gateways_lookup_failed.add(subscription_id)
+                        logger.error(
+                            f"Subscription ID: {subscription_id} -- Application Gateway: {getattr(application_gateway, 'id', None)} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+            except Exception as error:
+                self.application_gateways_lookup_failed.add(subscription_id)
+                logger.error(
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return application_gateways
+
 
 @dataclass
 class BastionHost:
@@ -336,3 +459,192 @@ class VirtualNetwork:
     def __post_init__(self):
         if self.subnets is None:
             self.subnets = []
+
+
+class ApplicationGateway(BaseModel):
+    """Application Gateway settings used by the network checks."""
+
+    id: str
+    name: str
+    location: str
+    firewall_policy_id: Optional[str] = None
+    firewall_policy_enabled: Optional[bool] = None
+    waf_configuration_enabled: bool = False
+    http2_enabled: bool = False
+
+
+class WafPolicy(BaseModel):
+    """Application Gateway WAF policy settings used by the network checks."""
+
+    id: str
+    name: str
+    location: str
+    state: Optional[str] = None
+
+
+def mark_failed_lookups(
+    list_by_rg_fn: Callable[..., Iterable[object]],
+    lookup_failed: set[str],
+    subscription_id: str,
+) -> Callable[..., List[object]]:
+    """Wrap a per-resource-group list call so that a failure marks the subscription.
+
+    list_with_rg_scope logs and skips a resource group whose list call fails,
+    so the subscription is recorded here before the error reaches it. A
+    resource group that no longer exists (not found) is not a failed lookup.
+
+    Args:
+        list_by_rg_fn: Azure SDK list operation for one resource group.
+        lookup_failed: Set of subscriptions whose listing was incomplete.
+        subscription_id: Subscription the list call belongs to.
+
+    Returns:
+        A callable with the same keyword arguments as list_by_rg_fn.
+    """
+
+    def list_by_resource_group(**kwargs) -> List[object]:
+        try:
+            return list(list_by_rg_fn(**kwargs))
+        except ResourceNotFoundError:
+            raise
+        except Exception:
+            lookup_failed.add(subscription_id)
+            raise
+
+    return list_by_resource_group
+
+
+def build_application_gateway(
+    application_gateway: network_models.ApplicationGateway,
+) -> ApplicationGateway:
+    """Convert an Azure SDK Application Gateway into an ApplicationGateway model.
+
+    The state of the associated WAF policy is not part of the gateway, so
+    firewall_policy_enabled is set afterwards from get_waf_policy_enabled.
+
+    Args:
+        application_gateway: ApplicationGateway from the Azure SDK.
+
+    Returns:
+        The ApplicationGateway model.
+    """
+    waf_configuration = getattr(
+        application_gateway, "web_application_firewall_configuration", None
+    )
+    return ApplicationGateway(
+        id=application_gateway.id,
+        name=application_gateway.name,
+        location=application_gateway.location,
+        firewall_policy_id=getattr(
+            getattr(application_gateway, "firewall_policy", None), "id", None
+        ),
+        waf_configuration_enabled=bool(getattr(waf_configuration, "enabled", False)),
+        http2_enabled=bool(getattr(application_gateway, "enable_http2", False)),
+    )
+
+
+def build_waf_policy(
+    waf_policy: network_models.WebApplicationFirewallPolicy,
+) -> WafPolicy:
+    """Convert an Azure SDK WAF policy into a WafPolicy model.
+
+    Args:
+        waf_policy: WebApplicationFirewallPolicy from the Azure SDK.
+
+    Returns:
+        The WafPolicy model.
+    """
+    settings = getattr(waf_policy, "policy_settings", None)
+    return WafPolicy(
+        id=waf_policy.id,
+        name=waf_policy.name,
+        location=waf_policy.location,
+        state=getattr(settings, "state", None),
+    )
+
+
+def read_waf_policy(
+    client: NetworkManagementClient,
+    subscription_id: str,
+    policy_id: str,
+    reads_failed: set[str],
+) -> Optional[WafPolicy]:
+    """Read one Application Gateway WAF policy by its resource ID.
+
+    A read that fails for any reason other than the policy not existing adds
+    the casefolded policy ID to reads_failed. Every failure is logged.
+
+    Args:
+        client: NetworkManagementClient of the gateway's subscription.
+        subscription_id: Subscription of the gateway.
+        policy_id: Resource ID of the WAF policy.
+        reads_failed: Casefolded IDs of WAF policies that could not be read.
+
+    Returns:
+        The WafPolicy model, or None when the ID is not a WAF policy ID in the
+        subscription or the policy cannot be read.
+    """
+    match = WAF_POLICY_ID.match(policy_id)
+    if (
+        not match
+        or match.group("subscription").casefold() != subscription_id.casefold()
+    ):
+        logger.warning(
+            f"Subscription ID: {subscription_id} -- WAF policy: {policy_id} -- not an Application Gateway WAF policy ID in this subscription, so the policy was not read."
+        )
+        return None
+    try:
+        return build_waf_policy(
+            client.web_application_firewall_policies.get(
+                resource_group_name=match.group("resource_group"),
+                policy_name=match.group("name"),
+            )
+        )
+    except ResourceNotFoundError as error:
+        logger.warning(
+            f"Subscription ID: {subscription_id} -- WAF policy: {policy_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    except Exception as error:
+        reads_failed.add(policy_id.casefold())
+        logger.error(
+            f"Subscription ID: {subscription_id} -- WAF policy: {policy_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    return None
+
+
+def get_waf_policy_enabled(
+    client: NetworkManagementClient,
+    subscription_id: str,
+    policy_id: str,
+    listed_policies: dict,
+    reads_failed: set[str],
+) -> Optional[bool]:
+    """Return whether the WAF policy associated with a gateway is enabled.
+
+    The policy is looked up among the WAF policies listed for the
+    subscription, and read by its ID only when it was not listed, such as a
+    policy outside the scanned resource groups.
+
+    Args:
+        client: NetworkManagementClient of the gateway's subscription.
+        subscription_id: Subscription of the gateway.
+        policy_id: Resource ID of the associated WAF policy.
+        listed_policies: WafPolicy models listed for the subscription, keyed by
+            casefolded policy ID.
+        reads_failed: Casefolded IDs of WAF policies that could not be read.
+
+    Returns:
+        True when the policy is enabled, False when it is disabled, and None
+        when its state cannot be determined.
+    """
+    policy = listed_policies.get(policy_id.casefold())
+    if policy is None:
+        policy = read_waf_policy(client, subscription_id, policy_id, reads_failed)
+    if policy is None:
+        return None
+    enabled = WAF_POLICY_STATES.get((policy.state or "").casefold())
+    if enabled is None:
+        logger.warning(
+            f"Subscription ID: {subscription_id} -- WAF policy: {policy_id} -- unrecognised policy state: {policy.state}"
+        )
+    return enabled

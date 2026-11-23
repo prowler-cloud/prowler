@@ -21,6 +21,60 @@ def _get_patterns_from_standard_value(value):
     return patterns
 
 
+def iam_pattern_matches(pattern: str, value: str) -> bool:
+    """Whether an IAM wildcard pattern from a policy document names a given value.
+
+    IAM honours exactly two metacharacters, ``*`` for any run of characters and ``?`` for exactly
+    one; every other character is literal, ``[seq]`` character classes included. Matching is
+    case-insensitive, as IAM matches action names.
+
+    Args:
+        pattern: A value taken from a policy document -- an Action's service or operation, a
+            Resource ARN field, a condition value. Surrounding whitespace is stripped, which IAM
+            tolerates.
+        value: The concrete string to test the pattern against.
+
+    Returns:
+        True when IAM would consider the pattern to name that value.
+
+    MATCHED WITH A TWO-POINTER SCAN RATHER THAN A TRANSLATED REGEX.
+    Building ``.*`` for every ``*`` and calling ``re``, which is what this file's callers previously
+    did, backtracks catastrophically on input the ACCOUNT controls: against the 17-character
+    ``bedrock-agentcore``, a pattern of N stars, a literal absent from the value, then N more stars
+    took 0.7 ms at N=6, 62 ms at N=10 and 2287 ms at N=14 -- a 31-character policy value, where a
+    managed policy document allows 6144. Cost rises with the number of quantifiers, which is the
+    account's side of the input, so a short value does not bound it. A hang raises nothing, so the
+    bare ``except Exception`` in ``prowler/lib/check/check.py`` cannot catch it and every finding for
+    the account is discarded in silence. This scan is O(len(pattern) x len(value)) with no
+    backtracking path at all: 0.006 ms on that same 31-character pattern, 0.214 ms at 4003.
+    """
+    # Normalised here rather than inside the scan, so the scan stays identical to the one already
+    # under review. IAM tolerates surrounding whitespace and matches case-insensitively, both of
+    # which the regex form this replaced provided through .strip() and re.IGNORECASE.
+    pattern = pattern.strip().lower()
+    action = value.lower()
+
+    p = a = 0
+    star = resume = -1
+    while a < len(action):
+        if p < len(pattern) and pattern[p] in ("?", action[a]):
+            p += 1
+            a += 1
+        elif p < len(pattern) and pattern[p] == "*":
+            star = p
+            resume = a
+            p += 1
+        elif star >= 0:
+            # Backtrack to the most recent star and let it absorb one more character. Only ever
+            # one star is reconsidered, which is what bounds this at a product rather than a power.
+            resume += 1
+            a = resume
+            p = star + 1
+        else:
+            return False
+    return all(char == "*" for char in pattern[p:])
+
+
 def get_effective_actions(policy: dict) -> set[str]:
     """
     Calculates the set of effectively allowed IAM actions from a policy document.
@@ -761,46 +815,41 @@ def is_condition_block_restrictive_organization(
     """
     is_condition_valid = False
 
+    # ForAnyValue is false when the key is absent, so it still excludes principals outside any
+    # organization. ForAllValues is true on an absent key and is deliberately not accepted.
+    valid_condition_operators = (
+        "StringEquals",
+        "StringLike",
+        "ForAnyValue:StringEquals",
+        "ForAnyValue:StringLike",
+    )
     # The conditions must be defined in lowercase since the context key names are not case-sensitive.
     # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
-    valid_condition_options = {
-        "StringEquals": [
-            "aws:principalorgid",
-        ],
-        "StringLike": [
-            "aws:principalorgid",
-        ],
-    }
+    valid_condition_keys = ("aws:principalorgid", "aws:principalorgpaths")
 
-    for condition_operator, condition_operator_key in valid_condition_options.items():
+    def names_one_organization(key: str, value) -> bool:
+        if not isinstance(value, str):
+            return False
+        if key == "aws:principalorgpaths":
+            # The organization ID must be literal; wildcards only make sense below it
+            return bool(re.match(r"o-[a-z0-9]{10,32}/", value))
+        return "*" not in value
+
+    for condition_operator in valid_condition_operators:
         if condition_operator in condition_statement:
-            for value in condition_operator_key:
-                # We need to transform the condition_statement into lowercase
-                condition_statement[condition_operator] = {
-                    k.lower(): v
-                    for k, v in condition_statement[condition_operator].items()
-                }
-
-                if value in condition_statement[condition_operator]:
-                    # values are a list
-                    if isinstance(
-                        condition_statement[condition_operator][value],
-                        list,
+            # We need to transform the condition_statement into lowercase
+            condition_statement[condition_operator] = {
+                k.lower(): v for k, v in condition_statement[condition_operator].items()
+            }
+            for key in valid_condition_keys:
+                if key in condition_statement[condition_operator]:
+                    values = condition_statement[condition_operator][key]
+                    values = values if isinstance(values, list) else [values]
+                    if values and all(
+                        names_one_organization(key, value) for value in values
                     ):
                         is_condition_valid = True
-                        for item in condition_statement[condition_operator][value]:
-                            if item == "*":
-                                is_condition_valid = False
-                                break
-
-                    # value is a string
-                    elif isinstance(
-                        condition_statement[condition_operator][value],
-                        str,
-                    ):
-                        if "*" not in condition_statement[condition_operator][value]:
-                            is_condition_valid = True
 
     return is_condition_valid
 

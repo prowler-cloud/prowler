@@ -94,6 +94,14 @@ class JiraBaseException(ProwlerException):
             "message": "Jira project requires custom fields that are not supported.",
             "remediation": "Please configure the Jira project to not require custom fields, or use a different project.",
         },
+        (9022, "JiraGetIssuesStatusError"): {
+            "message": "Failed to get the issues status from Jira.",
+            "remediation": "Please check the connection settings and permissions and try again.",
+        },
+        (9023, "JiraGetIssuesStatusResponseError"): {
+            "message": "Failed to get the issues status from Jira, response code did not match 200.",
+            "remediation": "Please check the connection settings and permissions and try again.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -261,4 +269,18 @@ class JiraRequiredCustomFieldsError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9021, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraGetIssuesStatusError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9022, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraGetIssuesStatusResponseError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9023, file=file, original_exception=original_exception, message=message
         )

@@ -25,17 +25,28 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # =============================================================================
 # Final stage - Minimal runtime environment
 # =============================================================================
-FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212be9e070c5a5e2769fb5e76
+FROM python:3.13.18-alpine3.23@sha256:e4aeaca9081549f19bd5bc8605ed5ab257ba34f97e0471f8e09161f45b4b08b8
 
 LABEL maintainer="https://github.com/prowler-cloud"
+
+# Targeted exception: zlib 1.4-r0 fixes critical CVE-2026-4738, but even the newest
+# python:3.13.18-alpine3.23 still ships 1.3.2-r1. Drop once the base image ships it.
+#hadolint ignore=DL3018
+RUN apk add --no-cache --upgrade 'zlib>=1.4-r0'
 
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
 RUN addgroup -g 1001 prowler && \
     adduser -D -u 1001 -G prowler prowler
 
+# pip is build-only; the entrypoint runs the venv directly.
+RUN rm -rf /usr/local/lib/python3.13/site-packages/pip \
+    /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.13
+
 WORKDIR /app
-USER prowler
+# Numeric UID (1001 = prowler) so runAsNonRoot can verify it; no :GID, so groups still come from /etc/group.
+USER 1001
 
 # Copy only the necessary files from builder stage to minimize image size:
 # 1. Virtual environment with all dependencies and the installed package

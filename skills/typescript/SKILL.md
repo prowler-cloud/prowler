@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Writing TypeScript types/interfaces"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -29,6 +29,17 @@ type Status = "active" | "inactive" | "pending";
 ```
 
 **Why?** Single source of truth, runtime values, autocomplete, easier refactoring.
+
+When you need the ordered list too (iteration, `z.enum`), a const array works the same way:
+
+```typescript
+// ui/types/severities.ts
+export const SEVERITY_LEVELS = ["critical", "high", "medium", "low", "informational"] as const;
+export type SeverityLevel = (typeof SEVERITY_LEVELS)[number];
+
+// Known key set -> Record<Union, ...> (typos fail to compile)
+export const SEVERITY_DISPLAY_NAMES: Record<SeverityLevel, string> = { /* ... */ };
+```
 
 ## Flat Interfaces (REQUIRED)
 
@@ -133,6 +144,12 @@ type PaginationProps = ControlledPagination | UncontrolledPagination;
 ```
 
 **Key rule:** If two or more props are only meaningful together, they belong to the same discriminated union branch. Mixing them as independent optionals shifts correctness responsibility from the type system to runtime guards.
+
+## Validate
+
+```bash
+cd ui && pnpm run typecheck   # tsc (TypeScript 5.5, strict)
+```
 
 ## Import Types
 

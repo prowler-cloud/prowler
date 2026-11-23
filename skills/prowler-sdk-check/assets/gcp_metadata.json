@@ -1,7 +1,7 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_versioning_enabled",
-  "CheckTitle": "Cloud Storage buckets have Object Versioning enabled",
+  "CheckTitle": "Cloud Storage bucket has Object Versioning enabled",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
@@ -9,22 +9,25 @@
   "Severity": "medium",
   "ResourceType": "storage.googleapis.com/Bucket",
   "ResourceGroup": "storage",
-  "Description": "Google Cloud Storage buckets are evaluated to ensure that Object Versioning is enabled.",
-  "Risk": "Buckets without Object Versioning enabled cannot recover previous object versions after accidental deletion or overwrites.",
+  "Description": "**Cloud Storage buckets** with **Object Versioning** keep prior object generations. The finding indicates whether the bucket's `versioning` setting is enabled.",
+  "Risk": "Without **Object Versioning**, deleted or overwritten objects can't be restored, reducing **availability** and **integrity**. Compromised credentials or faulty processes can irreversibly delete or corrupt data, enabling ransomware-style destruction, accidental loss, and weakening forensic reconstruction.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/enable-versioning.html",
-    "https://cloud.google.com/storage/docs/object-versioning"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/enable-versioning.html",
+    "https://docs.cloud.google.com/storage/docs/object-versioning",
+    "https://docs.cloud.google.com/storage/docs/using-object-versioning",
+    "https://docs.cloud.google.com/storage/docs/deleting-objects#restoring_noncurrent_versions",
+    "https://docs.cloud.google.com/storage/docs/lifecycle#delete"
   ],
   "Remediation": {
     "Code": {
       "CLI": "gcloud storage buckets update gs://<BUCKET_NAME> --versioning",
       "NativeIaC": "",
-      "Other": "1) Open Google Cloud Console -> Storage -> Buckets\n2) Select the bucket\n3) Click 'Edit bucket' -> 'Protection'\n4) Enable 'Object versioning'\n5) Save",
-      "Terraform": "resource \"google_storage_bucket\" \"example\" {\n  versioning {\n    enabled = true\n  }\n}"
+      "Other": "1. In Google Cloud Console, go to Storage > Buckets and open <BUCKET_NAME>\n2. Click the Configuration tab, then click Edit\n3. Set Object versioning to Enabled\n4. Click Save",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<LOCATION>\"\n\n  versioning {                 # Critical: enables Object Versioning\n    enabled = true             # This makes the check pass\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Object Versioning on Cloud Storage buckets to protect against accidental data loss.",
+      "Text": "Enable **Object Versioning** on buckets holding important data. Pair with `lifecycle` rules to expire noncurrent versions and control cost. Enforce **least privilege** for delete/overwrite actions, and add bucket `retention` policies or object holds for defense-in-depth and auditability.",
       "Url": "https://hub.prowler.com/check/cloudstorage_bucket_versioning_enabled"
     }
   },
@@ -33,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Buckets missing the 'versioning' block are treated as having Object Versioning disabled."
 }

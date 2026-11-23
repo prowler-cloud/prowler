@@ -90,17 +90,17 @@ describe("loadComplianceWatchlistContext in Cloud", () => {
   });
 
   it("degrades to the empty context when the session lookup rejects", async () => {
-    // The catalog already swallows its own failures; `auth()` rejecting has to
-    // cost the page its watchlist affordances rather than its compliance data,
-    // since every surface awaits this loader during the server render.
+    // Every surface awaits this loader, so a rejected `auth()` costs the
+    // watchlist affordances, not the compliance data.
     authMock.mockRejectedValue(new Error("session unavailable"));
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
-    expect(await loadComplianceWatchlistContext()).toEqual(
-      EMPTY_WATCHLIST_CONTEXT,
-    );
+    expect(await loadComplianceWatchlistContext()).toEqual({
+      ...EMPTY_WATCHLIST_CONTEXT,
+      unavailable: true,
+    });
 
     consoleError.mockRestore();
   });

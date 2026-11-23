@@ -3,9 +3,10 @@ from datetime import UTC, datetime
 
 from api.models import Finding, ResourceFindingMapping
 from api.rls import RowLevelSecurityConstraint
-from api.uuid_utils import datetime_to_uuid7
+from api.uuid_utils import uuid7_range_bound
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from psqlextra.partitioning import (
     PostgresPartitioningError,
     PostgresPartitioningManager,
@@ -101,11 +102,13 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         )
 
         for _ in range(self.count):
-            end_datetime = (
-                current_datetime + self.size.as_delta() - relativedelta(microseconds=1)
-            )
-            start_uuid7 = datetime_to_uuid7(current_datetime)
-            end_uuid7 = datetime_to_uuid7(end_datetime)
+            # The upper bound is the next window's start, not an instant just
+            # before it: PostgreSQL's upper bound is exclusive, so this is what
+            # makes consecutive partitions meet instead of leaving the gap a
+            # sub-millisecond offset produces on a millisecond-resolution key.
+            end_datetime = current_datetime + self.size.as_delta()
+            start_uuid7 = uuid7_range_bound(current_datetime)
+            end_uuid7 = uuid7_range_bound(end_datetime)
 
             yield PostgresUUIDv7RangePartition(
                 from_values=start_uuid7,
@@ -125,8 +128,8 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
 
         while True:
             end_datetime = current_datetime + self.size.as_delta()
-            start_uuid7 = datetime_to_uuid7(current_datetime)
-            end_uuid7 = datetime_to_uuid7(end_datetime)
+            start_uuid7 = uuid7_range_bound(current_datetime)
+            end_uuid7 = uuid7_range_bound(end_datetime)
 
             # dropping table will delete indexes and policies
             yield PostgresUUIDv7RangePartition(
@@ -153,10 +156,17 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         )
 
 
-def relative_days_or_none(value):
-    if value is None:
+def relative_months_or_none(value):
+    # A negative value would set the cutoff in the future and delete every
+    # partition, so it is rejected rather than silently ignored.
+    if value is not None and value < 0:
+        raise ImproperlyConfigured(
+            "FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS must not be negative; "
+            "leave it unset or use 0 to keep partitions indefinitely"
+        )
+    if not value:
         return None
-    return relativedelta(days=value)
+    return relativedelta(months=value)
 
 
 #
@@ -173,7 +183,7 @@ manager = PostgresPartitioningManager(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
-                max_age=relative_days_or_none(
+                max_age=relative_months_or_none(
                     settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
                 name_format="%Y_%b",
@@ -189,7 +199,7 @@ manager = PostgresPartitioningManager(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
-                max_age=relative_days_or_none(
+                max_age=relative_months_or_none(
                     settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
                 name_format="%Y_%b",

@@ -35,5 +35,5 @@
   "RelatedTo": [
     "chat_incoming_webhooks_disabled"
   ],
-  "Notes": ""
+  "Notes": "When Google Chat is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

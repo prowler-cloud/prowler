@@ -7,9 +7,19 @@ query encoding and header assembly stay covered.
 
 import httpx
 import pytest
+from fastmcp.exceptions import ToolError
 
-from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIError
-from tests.helpers.jsonapi import jsonapi_collection, jsonapi_error, jsonapi_resource
+from prowler_mcp_server.prowler_app.utils.api_client import (
+    ProwlerAPIError,
+    ProwlerAPIInvalidResponse,
+    ProwlerAPIUnreachable,
+)
+from tests.helpers.jsonapi import (
+    jsonapi_collection,
+    jsonapi_error,
+    jsonapi_resource,
+    task_document,
+)
 from tests.helpers.tokens import FAKE_API_KEY
 
 
@@ -46,11 +56,7 @@ async def test_get_forwards_query_parameters(mock_api_client, mock_router):
 
 
 async def test_error_response_surfaces_the_jsonapi_detail(mock_api_client, mock_router):
-    """A failed request is raised with the API's own `errors[].detail` message.
-
-    Tools relay this text straight to the model, so losing it turns an actionable
-    error into an opaque one.
-    """
+    """A failed request carries the API's own `errors[].detail`."""
     mock_router.add(
         "GET",
         "/api/v1/findings/nope",
@@ -64,25 +70,111 @@ async def test_error_response_surfaces_the_jsonapi_detail(mock_api_client, mock_
         await mock_api_client.get("/findings/nope")
 
     assert raised.value.status_code == 404
+    assert raised.value.detail == "Not found."
+
+
+async def test_a_body_that_is_not_jsonapi_is_never_repeated(
+    mock_api_client, mock_router
+):
+    """A body that is not JSON:API leaves `detail` unset, so nothing is relayed."""
+    mock_router.add(
+        "GET",
+        "/api/v1/findings",
+        status=502,
+        text="<html><body>Traceback: secret-internal-host:5432</body></html>",
+    )
+
+    with pytest.raises(ProwlerAPIError) as raised:
+        await mock_api_client.get("/findings")
+
+    assert raised.value.detail is None
+    assert "secret-internal-host" not in str(raised.value)
+
+
+async def test_a_server_error_detail_never_reaches_the_exception_text(
+    mock_api_client, mock_router
+):
+    """On a 5xx `errors[].detail` carries the failure, not a reason for a caller.
+
+    Tools that answer with `str(exc)` bypass the shared classifier, so the check
+    is on the exception itself rather than on the message the classifier builds.
+    """
+    mock_router.add(
+        "GET",
+        "/api/v1/findings",
+        status=500,
+        json=jsonapi_error(
+            500, "OperationalError: could not connect to secret-internal-host:5432"
+        ),
+    )
+
+    with pytest.raises(ProwlerAPIError) as raised:
+        await mock_api_client.get("/findings")
+
+    assert raised.value.detail is None
+    assert "secret-internal-host" not in str(raised.value)
+
+
+async def test_an_unreadable_body_is_not_an_argument_failure(
+    mock_api_client, mock_router
+):
+    """A `JSONDecodeError` here is the API's doing, and must not read as ours."""
+    mock_router.add("GET", "/api/v1/findings", text="<html>gateway timeout</html>")
+
+    with pytest.raises(ProwlerAPIInvalidResponse) as raised:
+        await mock_api_client.get("/findings")
+
+    assert not isinstance(raised.value, ValueError)
+    assert "gateway timeout" not in str(raised.value)
+
+
+async def test_a_mutation_with_an_unreadable_answer_still_raises(
+    mock_api_client, mock_router
+):
+    """`post` shares the parse, so a write cannot answer with an unread body."""
+    mock_router.add(
+        "POST", "/api/v1/providers", status=201, text="<html>accepted</html>"
+    )
+
+    with pytest.raises(ProwlerAPIInvalidResponse):
+        await mock_api_client.post("/providers", json_data={"data": {}})
 
 
 async def test_a_request_that_got_no_answer_is_not_an_api_error(
     mock_api_client, mock_router
 ):
-    """`ProwlerAPIError` means the API answered, and callers act on that.
-
-    A write tool tells a rejected request -- which changed nothing -- from one
-    that may have been processed by the type of the failure, so a timeout must
-    not be dressed up as a rejection.
-    """
+    """`ProwlerAPIError` means the API answered, so a timeout must not use it."""
 
     def timed_out(request):
         raise httpx.ReadTimeout("Timed out reading the response", request=request)
 
     mock_router.add_handler("GET", "/api/v1/findings", timed_out)
 
-    with pytest.raises(httpx.ReadTimeout):
+    with pytest.raises(ProwlerAPIUnreachable) as raised:
         await mock_api_client.get("/findings")
+
+    assert not isinstance(raised.value, ProwlerAPIError)
+
+
+async def test_a_failed_task_does_not_relay_its_own_error_text(
+    mock_api_client, mock_router
+):
+    """A failed task's error is an upstream body, so polling must not repeat it."""
+    mock_router.add(
+        "GET",
+        "/api/v1/tasks/t1",
+        json=task_document(
+            "t1",
+            "failed",
+            error="Traceback: connection to secret-internal-host:5432 refused",
+        ),
+    )
+
+    with pytest.raises(ToolError) as raised:
+        await mock_api_client.poll_task_until_complete(task_id="t1", timeout=5)
+
+    assert "secret-internal-host" not in str(raised.value)
+    assert "t1" in str(raised.value)
 
 
 def test_build_filter_params_normalises_types_for_the_api(mock_api_client):

@@ -30,7 +30,8 @@ describe("Toaster", () => {
       "max-h-48",
       "overflow-x-hidden",
       "overflow-y-auto",
-      "break-all",
+      "wrap-anywhere",
+      "break-normal",
       "whitespace-pre-wrap",
     );
     expect(description.parentElement).toHaveClass(

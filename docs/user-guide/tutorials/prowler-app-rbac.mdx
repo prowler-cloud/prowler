@@ -47,6 +47,8 @@ Follow these steps to edit a user of your account:
 <Note>
 Users can edit their own account details. Editing another user's account details requires the **Invite and Manage Users** or **admin** permission.
 
+Only the account owner can change their own email address or password. Users with the **Invite and Manage Users** or **admin** permission can edit other profile fields, such as name and company name, but Prowler rejects email or password changes made to another user's account.
+
 </Note>
 
 #### Removing a User
@@ -69,7 +71,7 @@ To remove **another** user from your organization, use the [_Expel from organiza
 #### Inviting Users
 
 <Note>
-Please be aware that at this time, an email address can only be associated with a single Prowler account.
+Note that an email address can only be associated with a single Prowler account.
 
 </Note>
 Follow these steps to invite a user to your account:
@@ -147,6 +149,18 @@ New roles have no provider visibility by default. Assign at least one Provider G
 <VersionBadge version="5.36.0" />
 
 Integrations follow the visibility of the providers attached to them: a role can see an integration when it can access at least one of its providers, and only the providers visible to that role are listed on the integration. Editing or deleting an integration attached to providers outside the visibility of the role is not allowed. Integrations that are not attached to any provider, such as Jira, are tenant-wide and remain available to every role with the **Manage Integrations** permission.
+
+#### Task Visibility and Revocation
+
+<VersionBadge version="5.44.0" />
+
+Background tasks, such as provider deletions, connection checks and scans, follow the visibility of the provider they belong to: a role can see a task when it can access its provider. Tasks that carry no provider reference are treated as tenant-wide and are visible to every role. Revoking a pending task requires the same permission as the operation that queued it, for example **Manage Scans** for a scan. Provider deletions cannot be revoked.
+
+#### Mute Rule Visibility
+
+<VersionBadge version="5.52.0" />
+
+[Simple Mutelist](/user-guide/tutorials/prowler-app-simple-mutelist) rules follow the visibility of the providers their findings belong to. A role without **Unlimited Visibility** sees a mute rule only when all of its findings are on providers the role can access. Rules that also cover findings on other providers are hidden from that role, so it cannot change or delete them. The role also cannot create mute rules for findings it cannot see. When a new rule overlaps an existing one, the conflict error names the existing rule only for roles with **Unlimited Visibility**.
 
 #### Creating a Provider Group
 
@@ -243,7 +257,7 @@ Assign administrative permissions by selecting from the following options:
 | Permission | Scope | Description |
 |------------|-------|-------------|
 | Invite and Manage Users | All | Invite new users and manage existing ones. |
-| Manage Account | All | Adjust account settings, delete users and read/manage users permissions. |
+| Manage Account | All | Adjust account settings, delete users, read/manage users permissions and configure SAML SSO. |
 | Manage Scans | All | Run and review scans, and manage [Scan Configuration](/user-guide/tutorials/prowler-app-scan-configuration) settings. |
 | Manage Providers | All | Add or modify connected providers, and attach or detach providers from a [Scan Configuration](/user-guide/tutorials/prowler-app-scan-configuration) (in addition to Manage Scans). |
 | Manage Integrations | All | Add or modify the Prowler Integrations. |
@@ -257,12 +271,14 @@ The **Scope** column indicates where each permission applies. **All** means the 
 </Note>
 To grant all administrative permissions, select the **Grant all admin permissions** option.
 
-### Prowler Cloud exclusive permissions
+### Prowler Cloud Exclusive Permissions
 
 The following permissions are available exclusively in **Prowler Cloud**:
 
-**Manage Ingestions:** Submit and manage findings ingestion jobs via the API. Required to upload OCSF scan results using the `--push-to-cloud` CLI flag or the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-import-findings) for details.
+**Manage Ingestions:** Submit and manage findings ingestion jobs. Required to upload OCSF scan results from the Scans page, with the `--push-to-cloud` CLI flag or through the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-import-findings) for details.
 
 **Manage Billing:** Access and manage billing settings, subscription plans, and payment methods.
 
 **Manage Alerts:** Create, edit, and delete alert rules and recipients used to deliver scan-result digests via email.
+
+**Manage Realtime:** Set up and change [Prowler Realtime](/user-guide/tutorials/prowler-cloud-realtime) for an AWS account: its policy, event feed, remediation credentials, alerts and cost anomaly settings, activation, and reverting fixes. Roles without it can still view Realtime for the providers they can access.

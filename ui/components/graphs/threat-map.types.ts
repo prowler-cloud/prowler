@@ -36,6 +36,7 @@ export interface ThreatMapData {
 }
 
 export interface ThreatMapProps {
+  disableNavigation?: boolean;
   data: ThreatMapData;
   height?: number;
   onLocationSelect?: (location: LocationPoint | null) => void;

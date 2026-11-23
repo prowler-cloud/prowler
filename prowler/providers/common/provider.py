@@ -382,6 +382,8 @@ class Provider(ABC):
                     )
                     provider_class(
                         retries_max_attempts=arguments.aws_retries_max_attempts,
+                        connect_timeout=arguments.aws_connect_timeout,
+                        read_timeout=arguments.aws_read_timeout,
                         role_arn=arguments.role,
                         session_duration=arguments.session_duration,
                         external_id=arguments.external_id,
@@ -439,6 +441,10 @@ class Provider(ABC):
                 elif arguments.provider == "m365":
                     provider_class(
                         region=arguments.region,
+                        region_endpoints={
+                            "authority_host": arguments.m365_authority_host,
+                            "graph": arguments.m365_graph_endpoint,
+                        },
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,

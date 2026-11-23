@@ -25,10 +25,14 @@ function getScoreColor(score: number): string {
 }
 
 interface RiskPlotClientProps {
+  disableNavigation?: boolean;
   data: RiskPlotPoint[];
 }
 
-export function RiskPlotClient({ data }: RiskPlotClientProps) {
+export function RiskPlotClient({
+  data,
+  disableNavigation = false,
+}: RiskPlotClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedPoint, setSelectedPoint] = useState<RiskPlotPoint | null>(
@@ -131,7 +135,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
               </div>
               <HorizontalBarChart
                 data={selectedPoint.severityData}
-                onBarClick={handleBarClick}
+                onBarClick={disableNavigation ? undefined : handleBarClick}
               />
             </div>
           ) : (

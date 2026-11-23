@@ -79,13 +79,13 @@ vi.mock("@/app/(prowler)/alerts/_components/alert-form-modal", () => ({
             onSubmit({
               name: defaultName ?? "Findings filter alert",
               description: "",
-              method: "email",
               frequency: "after_scan",
               condition: seededCondition ?? {
                 op: "any",
                 filter: { severity: ["critical"] },
               },
               recipientEmails: ["security@example.com"],
+              slackChannels: [],
               enabled: true,
             })
           }

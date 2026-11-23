@@ -3,12 +3,11 @@ import { ComplianceAccordionRequirementTitle } from "@/components/compliance/com
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
 import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
-import {
+import type {
   AttributesData,
   CISControlsAttributesMetadata,
   Framework,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -19,13 +18,8 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 // Sort the 18 CIS Controls by their leading number ("1. ...", "2. ...", ...,
 // "18. ...") so the accordion always reads in canonical control order

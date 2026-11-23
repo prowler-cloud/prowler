@@ -26,9 +26,16 @@ export interface LighthouseV2BedrockApiKeyCredentials {
   aws_region_name: string;
 }
 
+// Only where the API allows it (the provider's `credentialsOptional`): Bedrock
+// is then called with the installation's own AWS role, so only the region.
+export interface LighthouseV2BedrockInstanceRoleCredentials {
+  aws_region_name: string;
+}
+
 export type LighthouseV2BedrockCredentials =
   | LighthouseV2BedrockAccessKeyCredentials
-  | LighthouseV2BedrockApiKeyCredentials;
+  | LighthouseV2BedrockApiKeyCredentials
+  | LighthouseV2BedrockInstanceRoleCredentials;
 
 export type LighthouseV2Credentials =
   | LighthouseV2OpenAICredentials
@@ -84,6 +91,9 @@ export interface LighthouseV2ConfigurationUpdateInput {
 export interface LighthouseV2SupportedProvider {
   id: LighthouseV2ProviderType;
   name: string;
+  // True when the API accepts this provider without credentials (Bedrock with
+  // the installation's own role). False whenever the API does not say so.
+  credentialsOptional: boolean;
 }
 
 export interface LighthouseV2SupportedModel {

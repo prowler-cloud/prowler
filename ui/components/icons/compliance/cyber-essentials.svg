@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 130" fill="none">
+  <!-- Mark: navy disc with a green leaf and a light-blue check swoosh -->
+  <circle cx="62" cy="65" r="52" fill="#20204E"/>
+  <path d="M44,46 Q62,60 80,46 Q74,79 62,98 Q50,79 44,46 Z" fill="#8CC63F"/>
+  <path d="M55,96 C64,78 80,61 99,45 C111,34 123,25 132,18 L147,32 C135,45 117,62 99,77 C85,88 71,93 55,96 Z" fill="#7CB9E2"/>
+  <!-- Wordmark -->
+  <text x="132" y="58" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700" fill="#7CB9E2" letter-spacing="3">CYBER</text>
+  <text x="132" y="104" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700" fill="#8CC63F" letter-spacing="1">ESSENTIALS</text>
+</svg>

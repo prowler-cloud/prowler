@@ -175,4 +175,69 @@ describe("DataTable", () => {
       expect(actionsCell).toHaveClass("before:to-bg-neutral-secondary");
     });
   });
+
+  describe("when a preview lock limits the visible rows", () => {
+    it("blurs the rows past the limit, keeps their content inert, and floats the overlay over them", () => {
+      // Given
+      const renderAfterRow = vi.fn(() => null);
+      render(
+        <DataTable
+          columns={columns}
+          data={[
+            { name: "Finding A" },
+            { name: "Finding B" },
+            { name: "Finding C" },
+          ]}
+          metadata={metadata}
+          renderAfterRow={renderAfterRow}
+          previewLock={{
+            visibleRowCount: 2,
+            overlay: <div>Unlock every finding</div>,
+            onLockedInteraction: vi.fn(),
+          }}
+        />,
+      );
+
+      // When
+      const visibleRow = screen.getByText("Finding B").closest("tr");
+      const lockedRow = screen.getByText("Finding C").closest("tr");
+
+      // Then
+      expect(visibleRow?.querySelector("[inert]")).toBeNull();
+      expect(lockedRow?.querySelector("td > div")).toHaveAttribute("inert");
+      expect(lockedRow).toHaveAttribute("aria-hidden", "true");
+      expect(lockedRow).toHaveClass("select-none");
+      expect(screen.getByText("Unlock every finding")).toBeInTheDocument();
+      expect(renderAfterRow).toHaveBeenCalledWith(
+        expect.objectContaining({ index: 1 }),
+      );
+      expect(renderAfterRow).not.toHaveBeenCalledWith(
+        expect.objectContaining({ index: 2 }),
+      );
+    });
+
+    it("renders no overlay when every row fits in the preview", () => {
+      // Given / When
+      render(
+        <DataTable
+          columns={columns}
+          data={[{ name: "Finding A" }]}
+          metadata={metadata}
+          previewLock={{
+            visibleRowCount: 2,
+            overlay: <div>Unlock every finding</div>,
+            onLockedInteraction: vi.fn(),
+          }}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.queryByText("Unlock every finding"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Finding A").closest("tr")).not.toHaveAttribute(
+        "inert",
+      );
+    });
+  });
 });

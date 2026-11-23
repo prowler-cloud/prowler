@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_runtime_monitoring_enabled",
+  "CheckTitle": "GuardDuty detector has Runtime Monitoring enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
+  "Description": "GuardDuty detectors are evaluated for unified **Runtime Monitoring** being enabled. The configuration is at the detector level and relates to visibility into *process execution, file access, and network connections* on Amazon EC2 instances, Amazon ECS on AWS Fargate tasks, and Amazon EKS nodes and containers. The legacy EKS-only feature covers Amazon EKS alone and does not satisfy this check.",
+  "Risk": "Without **Runtime Monitoring**, on-host behavior of EC2, Fargate and EKS workloads is blind to detection. Adversaries can run malware or cryptominers, break out of containers, harvest credentials from instance metadata, tamper with workloads, or pivot to other services, degrading confidentiality, corrupting integrity, and exhausting resources (availability).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/guardduty-runtime-monitoring-enabled.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-11"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=RUNTIME_MONITORING,Status=ENABLED",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::GuardDuty::Detector\n    Properties:\n      Enable: true\n      Features:\n        - Name: RUNTIME_MONITORING   # Critical: selects unified Runtime Monitoring, which covers EC2, ECS-Fargate and EKS\n          Status: ENABLED            # Critical: enables the feature to pass the check\n          AdditionalConfiguration:\n            - Name: EC2_AGENT_MANAGEMENT\n              Status: ENABLED\n            - Name: ECS_FARGATE_AGENT_MANAGEMENT\n              Status: ENABLED\n            - Name: EKS_ADDON_MANAGEMENT\n              Status: ENABLED\n```",
+      "Other": "1. Open the AWS Console and go to Amazon GuardDuty\n2. In the left pane, select Protection plans > Runtime Monitoring\n3. Switch Runtime Monitoring to Enabled\n4. Enable automated agent configuration for Amazon EC2, AWS Fargate (Amazon ECS only) and Amazon EKS\n5. Click Save changes\n6. If you were using EKS Runtime Monitoring, migrate to Runtime Monitoring; the two features are mutually exclusive",
+      "Terraform": "```hcl\nresource \"aws_guardduty_detector_feature\" \"<example_resource_name>\" {\n  detector_id = aws_guardduty_detector.<example_detector_name>.id\n  name        = \"RUNTIME_MONITORING\"  # Critical: unified feature covering EC2, ECS-Fargate and EKS\n  status      = \"ENABLED\"             # Critical: enables the feature to pass the check\n\n  additional_configuration {\n    name   = \"EC2_AGENT_MANAGEMENT\"\n    status = \"ENABLED\"\n  }\n\n  additional_configuration {\n    name   = \"ECS_FARGATE_AGENT_MANAGEMENT\"\n    status = \"ENABLED\"\n  }\n\n  additional_configuration {\n    name   = \"EKS_ADDON_MANAGEMENT\"\n    status = \"ENABLED\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "- Enable unified **Runtime Monitoring** with automated agent management for Amazon EC2, AWS Fargate (Amazon ECS only) and Amazon EKS across all accounts\n- Migrate from EKS Runtime Monitoring, which covers Amazon EKS only and is mutually exclusive with Runtime Monitoring\n- Review runtime coverage statistics rather than treating enablement as coverage, and route findings to Security Hub or EventBridge for response",
+      "Url": "https://hub.prowler.com/check/guardduty_runtime_monitoring_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

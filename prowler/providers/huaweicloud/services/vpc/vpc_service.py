@@ -91,6 +91,8 @@ class VPC(HuaweiCloudService):
                                         id=getattr(rule_data, "id", None) or "",
                                         direction=getattr(rule_data, "direction", None)
                                         or "",
+                                        action=getattr(rule_data, "action", None)
+                                        or "allow",
                                         protocol=getattr(rule_data, "protocol", None)
                                         or "",
                                         ethertype=getattr(rule_data, "ethertype", None)
@@ -107,6 +109,12 @@ class VPC(HuaweiCloudService):
                                         or "",
                                         remote_group_id=getattr(
                                             rule_data, "remote_group_id", None
+                                        )
+                                        or "",
+                                        remote_address_group_id=getattr(
+                                            rule_data,
+                                            "remote_address_group_id",
+                                            None,
                                         )
                                         or "",
                                         description=getattr(
@@ -148,12 +156,14 @@ class SecurityGroupRule(HuaweiCloudBaseModel):
 
     id: str
     direction: str
+    action: str = "allow"
     protocol: str
     ethertype: str
     port_range_min: Optional[int] = None
     port_range_max: Optional[int] = None
     remote_ip_prefix: str = ""
     remote_group_id: str = ""
+    remote_address_group_id: str = ""
     description: str = ""
 
 
@@ -181,13 +191,16 @@ def rule_source_is_open(rule: SecurityGroupRule) -> bool:
 
     Huawei Cloud represents "any source" in two ways: an explicit ``0.0.0.0/0``
     (or ``::/0``) in ``remote_ip_prefix``, or leaving both ``remote_ip_prefix``
-    and ``remote_group_id`` empty. Rules that reference another security group
-    via ``remote_group_id`` are NOT open even when ``remote_ip_prefix`` is
-    empty.
+    and both group identifiers empty. Rules that reference a security group or
+    address group are NOT open even when ``remote_ip_prefix`` is empty.
     """
     if rule.remote_ip_prefix in ("0.0.0.0/0", "::/0"):
         return True
-    return not rule.remote_ip_prefix and not rule.remote_group_id
+    return (
+        not rule.remote_ip_prefix
+        and not rule.remote_group_id
+        and not rule.remote_address_group_id
+    )
 
 
 def rule_covers_all_ports(rule: SecurityGroupRule) -> bool:

@@ -27,6 +27,7 @@ class AzureService:
         )
 
         self.subscriptions = provider.identity.subscriptions
+        self.region_config = provider.region_config
         self.resource_groups = provider.resource_groups
         self.locations = provider.locations
         self.audit_config = provider.audit_config

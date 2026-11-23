@@ -23,9 +23,6 @@ interface CrossProviderFrameworkGridProps {
   cards: CrossProviderCard[];
   /** MANAGE_SCANS, forwarded to each card's pin. */
   canManageWatchlist: boolean;
-  /** False when the tenant has no catalog at all (OSS), in which case the
-   *  stored filter must not be able to blank the grid. */
-  watchlistEnabled: boolean;
 }
 
 /**
@@ -37,11 +34,9 @@ interface CrossProviderFrameworkGridProps {
 export const CrossProviderFrameworkGrid = ({
   cards,
   canManageWatchlist,
-  watchlistEnabled,
 }: CrossProviderFrameworkGridProps) => {
-  const showOnlyWatchlist = useShowOnlyWatchlist();
-
-  const filterToWatchlist = watchlistEnabled && showOnlyWatchlist;
+  // Cards derive from the catalog, so no catalog means no cards to filter.
+  const filterToWatchlist = useShowOnlyWatchlist();
   const isPinned = (card: CrossProviderCard) =>
     card.watchlist.state === WATCHLIST_PIN_STATE.PINNED;
   const visibleCards = filterToWatchlist ? cards.filter(isPinned) : cards;

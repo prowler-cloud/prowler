@@ -1,0 +1,53 @@
+---
+title: 'Azure Management Groups in Prowler'
+---
+
+Azure Management Groups provide a hierarchy above subscriptions. They allow Azure role assignments and governance policies to apply to multiple subscriptions through a shared scope.
+
+For the cross-provider concepts and lifecycle, see [Organizations Across Cloud Providers](/user-guide/organizations).
+
+## Azure Hierarchy
+
+Azure resources are organized in the following order:
+
+1. Tenant
+2. Management groups
+3. Subscriptions
+4. Resource groups
+5. Resources
+
+Prowler scans Azure subscriptions. Management groups help organize those subscriptions and provide a scope where permissions can be assigned, but a management group is not itself a scan target.
+
+## Create a Management Group
+
+To create a management group, follow the [official Azure guide](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal).
+
+![Create management group](/images/create-management-group.gif)
+
+After creating the management group, add the subscriptions that Prowler should access and scan.
+
+![Add Subscription to Management Group](/images/add-sub-to-management-group.gif)
+
+## Assign Roles
+
+Assign the roles required by Prowler at the management-group scope instead of assigning them separately to every subscription. Role assignments at a management group can inherit to its child subscriptions, subject to Azure role-assignment and inheritance rules.
+
+Use the [subscription scope permissions](/user-guide/providers/azure/authentication#subscription-scope-permissions) guide to identify the permissions required for scans. The identity used by Prowler must be able to read the management-group hierarchy and access each subscription selected for scanning.
+
+## Subscription Scope
+
+Management groups organize subscriptions, but Azure scan results remain scoped to individual subscriptions:
+
+- Prowler Cloud scans one subscription per scan.
+- Prowler CLI can scan multiple subscriptions by using the `--subscription-ids` option.
+- A subscription must be accessible to the configured identity before Prowler can scan it.
+- Moving a subscription between management groups can change the permissions it inherits and may require a connection test or rediscovery.
+
+See [Azure Subscription Scope](/user-guide/providers/azure/subscriptions) for subscription selection and CLI options.
+
+## Limitations
+
+- Management groups do not replace subscription providers in Prowler.
+- Azure role inheritance depends on the management-group hierarchy and the scope of each assignment; verify access on every subscription selected for scanning.
+- The Prowler Cloud workflow is designed around Azure management-group discovery and subscription onboarding. The Prowler CLI workflow still requires explicit subscription selection when restricting scans.
+- Changes to management-group membership or role assignments may not be reflected until the hierarchy is refreshed and access is tested again.

@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import botocore
+from botocore.exceptions import ClientError
 
 from prowler.providers.aws.services.batch.batch_service import Batch
 from tests.providers.aws.utils import (
@@ -10,6 +11,16 @@ from tests.providers.aws.utils import (
 )
 
 make_api_call = botocore.client.BaseClient._make_api_call
+
+COMPUTE_ENVIRONMENT_NAME = "test-compute-environment"
+COMPUTE_ENVIRONMENT_ARN = f"arn:aws:batch:eu-west-1:123456789012:compute-environment/{COMPUTE_ENVIRONMENT_NAME}"
+
+
+def default_api_call(self, operation_name, kwarg):
+    """Fall back to the real call, stubbing the APIs a test does not exercise."""
+    if operation_name == "DescribeComputeEnvironments":
+        return {"computeEnvironments": []}
+    return make_api_call(self, operation_name, kwarg)
 
 
 def mock_make_api_call(self, operation_name, kwarg):
@@ -31,7 +42,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 }
             ]
         }
-    return make_api_call(self, operation_name, kwarg)
+    return default_api_call(self, operation_name, kwarg)
 
 
 def mock_generate_regional_clients(provider, service):
@@ -114,7 +125,7 @@ class Test_Batch_Service:
         def mock_make_api_call_empty(self, operation_name, kwarg):
             if operation_name == "DescribeJobDefinitions":
                 return {"jobDefinitions": []}
-            return make_api_call(self, operation_name, kwarg)
+            return default_api_call(self, operation_name, kwarg)
 
         with patch(
             "botocore.client.BaseClient._make_api_call",
@@ -144,7 +155,7 @@ class Test_Batch_Service:
                         for i in (3, 2, 1)
                     ]
                 }
-            return make_api_call(self, operation_name, kwarg)
+            return default_api_call(self, operation_name, kwarg)
 
         with patch(
             "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
@@ -176,7 +187,7 @@ class Test_Batch_Service:
                         for i in (3, 2, 1)
                     ]
                 }
-            return make_api_call(self, operation_name, kwarg)
+            return default_api_call(self, operation_name, kwarg)
 
         with patch(
             "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
@@ -189,6 +200,134 @@ class Test_Batch_Service:
 
             assert [jd.revision for jd in batch.job_definitions.values()] == [3, 2]
             assert len(describe_calls) == 1
+
+    def test_describe_compute_environments(self):
+        def compute_environments_api_call(self, operation_name, kwarg):
+            if operation_name == "DescribeComputeEnvironments":
+                return {
+                    "computeEnvironments": [
+                        {
+                            "computeEnvironmentName": COMPUTE_ENVIRONMENT_NAME,
+                            "computeEnvironmentArn": COMPUTE_ENVIRONMENT_ARN,
+                            "computeResources": {
+                                "securityGroupIds": ["sg-1", "sg-2"],
+                                "subnets": ["subnet-1"],
+                            },
+                        }
+                    ]
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=compute_environments_api_call,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            batch = Batch(aws_provider)
+
+            assert len(batch.compute_environments) == 1
+            compute_environment = batch.compute_environments[COMPUTE_ENVIRONMENT_ARN]
+            assert compute_environment.name == COMPUTE_ENVIRONMENT_NAME
+            assert compute_environment.arn == COMPUTE_ENVIRONMENT_ARN
+            assert compute_environment.region == AWS_REGION_EU_WEST_1
+            assert compute_environment.security_groups == ["sg-1", "sg-2"]
+            assert compute_environment.subnets == ["subnet-1"]
+            assert batch.security_groups_in_use == {"sg-1", "sg-2"}
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_no_compute_environments(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        batch = Batch(aws_provider)
+
+        assert len(batch.compute_environments) == 0
+        assert batch.security_groups_in_use == set()
+        assert batch.compute_environment_lookup_failed_regions == set()
+
+    def test_compute_environments_access_denied(self):
+        def access_denied_api_call(self, operation_name, kwarg):
+            if operation_name == "DescribeComputeEnvironments":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized to perform: batch:DescribeComputeEnvironments",
+                        }
+                    },
+                    operation_name,
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=access_denied_api_call
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            batch = Batch(aws_provider)
+
+            # The associations are unknown, not absent
+            assert batch.compute_environments == {}
+            assert batch.security_groups_in_use == set()
+            assert batch.compute_environment_lookup_failed_regions == {
+                AWS_REGION_EU_WEST_1
+            }
+            # Unrelated discovery is unaffected
+            assert len(batch.job_definitions) == 1
+
+    def test_compute_environment_without_compute_resources(self):
+        def unmanaged_api_call(self, operation_name, kwarg):
+            # UNMANAGED compute environments carry no `computeResources` block
+            if operation_name == "DescribeComputeEnvironments":
+                return {
+                    "computeEnvironments": [
+                        {
+                            "computeEnvironmentName": COMPUTE_ENVIRONMENT_NAME,
+                            "computeEnvironmentArn": COMPUTE_ENVIRONMENT_ARN,
+                        }
+                    ]
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=unmanaged_api_call):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            batch = Batch(aws_provider)
+
+            assert len(batch.compute_environments) == 1
+            compute_environment = batch.compute_environments[COMPUTE_ENVIRONMENT_ARN]
+            assert compute_environment.security_groups == []
+            assert compute_environment.subnets == []
+            assert batch.security_groups_in_use == set()
+
+    def test_audit_resources_filters_compute_environments(self):
+        def compute_environments_api_call(self, operation_name, kwarg):
+            if operation_name == "DescribeComputeEnvironments":
+                return {
+                    "computeEnvironments": [
+                        {
+                            "computeEnvironmentName": f"compute-environment-{i}",
+                            "computeEnvironmentArn": f"arn:aws:batch:eu-west-1:123456789012:compute-environment/compute-environment-{i}",
+                            "computeResources": {
+                                "securityGroupIds": [f"sg-{i}"],
+                                "subnets": ["subnet-1"],
+                            },
+                        }
+                        for i in (1, 2)
+                    ]
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=compute_environments_api_call,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            aws_provider._audit_resources = [
+                "arn:aws:batch:eu-west-1:123456789012:compute-environment/compute-environment-1"
+            ]
+            batch = Batch(aws_provider)
+
+            assert list(batch.compute_environments) == [
+                "arn:aws:batch:eu-west-1:123456789012:compute-environment/compute-environment-1"
+            ]
+            assert batch.security_groups_in_use == {"sg-1"}
 
     def test_audit_resources_filters_job_definitions(self):
         def counting_make_api_call(self, operation_name, kwarg):
@@ -207,7 +346,7 @@ class Test_Batch_Service:
                         for i in (1, 2)
                     ]
                 }
-            return make_api_call(self, operation_name, kwarg)
+            return default_api_call(self, operation_name, kwarg)
 
         with patch(
             "botocore.client.BaseClient._make_api_call", new=counting_make_api_call

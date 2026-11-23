@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, type SubmitEvent } from "react";
+import posthogClient from "posthog-js";
+import { type ReactNode, type SubmitEvent, useState } from "react";
 
 import {
   Conversation,
@@ -19,6 +20,7 @@ import {
   parseLighthouseV2ModelSelectionValue,
 } from "@/app/(prowler)/lighthouse/_lib/model-selection";
 import {
+  LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   type LighthouseV2Configuration,
   type LighthouseV2ProviderType,
@@ -27,19 +29,21 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseCurrentContextBadge } from "@/components/lighthouse/context-chip";
 import { Card } from "@/components/shadcn";
-import {
-  Combobox,
-  type ComboboxGroup,
-} from "@/components/shadcn/combobox/combobox";
+import { type ComboboxGroup } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
-
-import { ProviderIcon } from "../config/provider-icon";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import { ChatComposerPanel } from "./composer";
+import { CurrentModelDisplay } from "./current-model-display";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
+import {
+  resolveLighthouseFeedbackSurvey,
+  type LighthouseFeedbackSurvey,
+} from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
+import { ModelSelect } from "./model-select";
 import { SkillComposerPill } from "./skill-composer-pill";
 import { SkillRunProgress } from "./skill-run-progress";
 import { StreamingAssistantMessage } from "./streaming-message";
@@ -62,6 +66,7 @@ export function LighthouseV2ChatView({
   emptyStateFooter,
 }: LighthouseV2ChatViewProps) {
   const currentContext = useLighthouseCurrentContext();
+  const feedbackSurvey = useLighthouseOutcomeFeedbackSurvey();
   // Whole-store subscription is intentional: the view renders most of the state and selectLighthouseChatCanSend takes full state.
   const state = useLighthouseChatStore((current) => current);
   const {
@@ -72,6 +77,7 @@ export function LighthouseV2ChatView({
     feedback,
     isLoadingSession,
     lastSubmission,
+    failedOutcomeMessageId,
     selectedModelSelection,
     modelPreferenceSaving,
     setInput,
@@ -142,9 +148,14 @@ export function LighthouseV2ChatView({
     Boolean(streamState.assistantText) ||
     streamState.toolCalls.length > 0;
   const hasConversation = messages.length > 0 || hasLiveAssistantActivity;
+  const failedOutcomeFeedbackTarget = failedOutcomeMessageId
+    ? messages.find((message) => message.id === failedOutcomeMessageId)
+    : undefined;
 
   const composerPanelProps = {
     feedback,
+    feedbackTarget: failedOutcomeFeedbackTarget,
+    feedbackSurvey,
     canRetry:
       streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED &&
       lastSubmission !== null,
@@ -169,19 +180,12 @@ export function LighthouseV2ChatView({
         modelName={selectedModelLabel}
       />
     ) : (
-      <div className="min-w-0 flex-1 sm:max-w-48">
-        <Combobox
-          aria-label="Model"
-          value={selectedModelValue}
-          onValueChange={handleModelValueChange}
-          groups={modelSelectorGroups}
-          disabled={modelSelectorGroups.length === 0 || modelPreferenceSaving}
-          placeholder="Select model"
-          searchPlaceholder="Search models..."
-          emptyMessage="No models found."
-          size="sm"
-        />
-      </div>
+      <ModelSelect
+        value={selectedModelValue}
+        onValueChange={handleModelValueChange}
+        groups={modelSelectorGroups}
+        isSaving={modelPreferenceSaving}
+      />
     ),
     selectedConfigurationConnected: selectedConfiguration?.connected === true,
     onInputChange: setInput,
@@ -200,14 +204,22 @@ export function LighthouseV2ChatView({
             scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
           >
             {messages.map((message, index) => {
-              const skillRun = getSkillRunFromLaunch(
-                message,
-                messages[index - 1],
-              );
+              const previousMessage = messages[index - 1];
+              const skillRun = getSkillRunFromLaunch(message, previousMessage);
+              // The assistant owns the controls visually; its adjacent persisted
+              // user turn remains the API task/trace feedback target.
+              const feedbackTarget =
+                message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.ASSISTANT &&
+                previousMessage?.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+                !previousMessage.id.startsWith("optimistic-")
+                  ? previousMessage
+                  : undefined;
               return (
                 <MessageBubble
                   key={message.id}
                   message={message}
+                  feedbackTarget={feedbackTarget}
+                  feedbackSurvey={feedbackSurvey}
                   skillRun={skillRun}
                   onLaunchSkill={(skill) => {
                     // The DyR prompts hand follow-up skills off to a separate
@@ -275,6 +287,18 @@ export function LighthouseV2ChatView({
   );
 }
 
+function useLighthouseOutcomeFeedbackSurvey(): LighthouseFeedbackSurvey | null {
+  const [survey, setSurvey] = useState<LighthouseFeedbackSurvey | null>(null);
+
+  useMountEffect(() => {
+    return posthogClient.onSurveysLoaded((surveys) => {
+      setSurvey(resolveLighthouseFeedbackSurvey(surveys));
+    });
+  });
+
+  return survey;
+}
+
 function SessionLoadingState() {
   return (
     <div
@@ -285,36 +309,6 @@ function SessionLoadingState() {
       <Skeleton className="h-24 w-full" />
       <Skeleton className="h-10 w-1/2 self-end" />
       <Skeleton className="h-16 w-full" />
-    </div>
-  );
-}
-
-interface CurrentModelDisplayProps {
-  provider: LighthouseV2ProviderType;
-  providerName: string;
-  modelName: string;
-}
-
-function CurrentModelDisplay({
-  provider,
-  providerName,
-  modelName,
-}: CurrentModelDisplayProps) {
-  return (
-    <div
-      aria-label={`Current model: ${providerName} ${modelName}`}
-      className="border-border-neutral-secondary bg-bg-neutral-secondary flex h-8 max-w-48 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-sm"
-    >
-      <ProviderIcon
-        provider={provider}
-        className="text-text-neutral-secondary size-3.5 shrink-0"
-      />
-      <span className="text-text-neutral-tertiary shrink-0">
-        {providerName}
-      </span>
-      <span className="text-text-neutral-primary min-w-0 truncate font-medium">
-        {modelName}
-      </span>
     </div>
   );
 }

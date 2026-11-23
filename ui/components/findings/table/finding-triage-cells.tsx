@@ -12,7 +12,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
-import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
@@ -39,13 +38,12 @@ import {
   FindingNoteModal,
   type FindingNoteModalMode,
 } from "./finding-note-modal";
-import {
-  FindingTriageStatusControl,
-  TRIAGE_STATUS_TEXT_CLASS,
-} from "./finding-triage-status-control";
+import { FindingTriageStatusControl } from "./finding-triage-status-control";
 
 export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
+export const SAMPLE_TRIAGE_COPY =
+  "Sample data. Connect your cloud account to triage your own findings.";
 
 const getDisabledCopy = ({
   triage,
@@ -58,6 +56,10 @@ const getDisabledCopy = ({
 }): string | undefined => {
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
     return CLOUD_ONLY_TOOLTIP_COPY;
+  }
+
+  if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.SAMPLE) {
+    return SAMPLE_TRIAGE_COPY;
   }
 
   // Status-picker only: notes stay available on resolved findings.
@@ -337,28 +339,6 @@ export function FindingTriageStatusCell({
       </TooltipTrigger>
       <TooltipContent>{disabledCopy}</TooltipContent>
     </Tooltip>
-  );
-}
-
-// Read-only triage status indicator, e.g. for the side drawer header where the
-// editable picker would be out of place among the status/severity badges.
-export function FindingTriageStatusBadge({
-  triage,
-}: {
-  triage: FindingTriageSummary;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <span className="text-text-neutral-tertiary text-xs">Triage:</span>
-      <span
-        className={cn(
-          "text-xs font-medium",
-          TRIAGE_STATUS_TEXT_CLASS[triage.status],
-        )}
-      >
-        {triage.label}
-      </span>
-    </div>
   );
 }
 

@@ -52,6 +52,7 @@ interface MembershipsCardClientProps {
   tenantsMap: Record<string, TenantDetailData>;
   hasManageAccount: boolean;
   sessionTenantId: string | undefined;
+  canCreateOrganization?: boolean;
 }
 
 const OrganizationNameCell = ({ name }: { name: string }) => (
@@ -204,6 +205,7 @@ export const MembershipsCardClient = ({
   tenantsMap,
   hasManageAccount,
   sessionTenantId,
+  canCreateOrganization = true,
 }: MembershipsCardClientProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -232,13 +234,15 @@ export const MembershipsCardClient = ({
 
   return (
     <>
-      <Modal
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        title="Create organization"
-      >
-        <CreateTenantForm setIsOpen={setIsCreateOpen} />
-      </Modal>
+      {canCreateOrganization && (
+        <Modal
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          title="Create organization"
+        >
+          <CreateTenantForm setIsOpen={setIsCreateOpen} />
+        </Modal>
+      )}
       <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
         <CardHeader>
           <div className="flex flex-col gap-1">
@@ -250,15 +254,17 @@ export const MembershipsCardClient = ({
               </CustomLink>
             </p>
           </div>
-          <CardAction>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsCreateOpen(true)}
-            >
-              Create organization
-            </Button>
-          </CardAction>
+          {canCreateOrganization && (
+            <CardAction>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsCreateOpen(true)}
+              >
+                Create organization
+              </Button>
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent>
           {memberships.length === 0 ? (
