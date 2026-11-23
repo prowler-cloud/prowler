@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import botocore
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.ses.ses_service import SES
@@ -45,6 +46,59 @@ def mock_generate_regional_clients(provider, service):
     )
     regional_client.region = AWS_REGION_EU_WEST_1
     return {AWS_REGION_EU_WEST_1: regional_client}
+
+
+@mock_aws
+def test_list_identities_includes_later_pages():
+    aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+    regional_clients = mock_generate_regional_clients(aws_provider, "sesv2")
+    client = regional_clients[AWS_REGION_EU_WEST_1]
+    with (
+        Stubber(client) as stubber,
+        patch.object(
+            client,
+            "get_email_identity",
+            return_value={"DkimAttributes": {"SigningEnabled": True}},
+        ),
+        patch.object(
+            type(aws_provider),
+            "generate_regional_clients",
+            return_value=regional_clients,
+        ),
+    ):
+        stubber.add_response(
+            "list_email_identities",
+            {
+                "EmailIdentities": [
+                    {"IdentityName": "first.example", "IdentityType": "DOMAIN"}
+                ],
+                "NextToken": "second-page",
+            },
+            {},
+        )
+        stubber.add_response(
+            "list_email_identities",
+            {"EmailIdentities": [], "NextToken": "third-page"},
+            {"NextToken": "second-page"},
+        )
+        stubber.add_response(
+            "list_email_identities",
+            {
+                "EmailIdentities": [
+                    {"IdentityName": "later.example", "IdentityType": "DOMAIN"}
+                ],
+            },
+            {"NextToken": "third-page"},
+        )
+        ses = SES(aws_provider)
+
+        assert {identity.name for identity in ses.email_identities.values()} == {
+            "first.example",
+            "later.example",
+        }
+        assert all(
+            identity.dkim_signing_enabled for identity in ses.email_identities.values()
+        )
 
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

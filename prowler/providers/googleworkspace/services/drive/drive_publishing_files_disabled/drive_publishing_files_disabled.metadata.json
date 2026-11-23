@@ -37,5 +37,5 @@
     "drive_sharing_allowlisted_domains",
     "drive_internal_users_distribute_content"
   ],
-  "Notes": ""
+  "Notes": "The publishing option only applies when sharing outside of the organization is ON. With Allowlisted domains or OFF, Google hides it and nothing can be made visible to anyone with the link, so the check passes regardless of the stored flag."
 }

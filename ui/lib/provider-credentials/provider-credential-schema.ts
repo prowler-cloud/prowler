@@ -5,6 +5,7 @@ const FIELD_KIND = {
   TEXTAREA: "textarea",
   CHECKBOX: "checkbox",
   INTEGER: "integer",
+  CONSTANT: "constant",
 } as const;
 
 export const REGISTRY_CREDENTIAL_SCHEMA_LIMITS = {
@@ -12,6 +13,7 @@ export const REGISTRY_CREDENTIAL_SCHEMA_LIMITS = {
   MAX_NAME_LENGTH: 50,
   MAX_TEXT_LENGTH: 200,
   MAX_ENUM_OPTIONS: 20,
+  MAX_VARIANTS: 8,
 } as const;
 
 type FieldKind = (typeof FIELD_KIND)[keyof typeof FIELD_KIND];
@@ -34,7 +36,18 @@ export interface RegistryCredentialSchema {
   readonly fields: readonly RegistryCredentialField[];
 }
 
-const ROOT = new Set("type title description properties required".split(" "));
+/** One alternative of a `oneOf`/`anyOf` schema, or the whole flat schema. */
+export interface RegistryCredentialVariant {
+  readonly label?: string;
+  readonly schema: RegistryCredentialSchema;
+}
+
+const ROOT = new Set(
+  "type title description properties required additionalProperties".split(" "),
+);
+const UNION_ROOT = new Set(
+  "title description oneOf anyOf discriminator".split(" "),
+);
 const FIELD = new Set(
   "title description type format writeOnly enum default examples x-prowler-widget".split(
     " ",
@@ -43,6 +56,9 @@ const FIELD = new Set(
 const BOOLEAN_FIELD = new Set("title description type default".split(" "));
 const INTEGER_FIELD = new Set(
   "title description type default minimum maximum".split(" "),
+);
+const CONSTANT_FIELD = new Set(
+  "title description type const default".split(" "),
 );
 const FORBIDDEN_NAMES = new Set(["__proto__", "prototype", "constructor"]);
 const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -87,7 +103,14 @@ function hasOnly(
 export function parseRegistryCredentialSchema(
   value: unknown,
 ): RegistryCredentialSchema | null {
-  if (!isRecord(value) || !hasOnly(value, ROOT) || value.type !== "object") {
+  if (
+    !isRecord(value) ||
+    !hasOnly(value, ROOT) ||
+    value.type !== "object" ||
+    // Only a closed object: the form never sends undeclared keys anyway.
+    (value.additionalProperties !== undefined &&
+      value.additionalProperties !== false)
+  ) {
     return null;
   }
   if (
@@ -189,6 +212,22 @@ export function parseRegistryCredentialSchema(
       });
       continue;
     }
+    if (property.type === "string" && property.const !== undefined) {
+      // A union's discriminator: fixed by the variant, never typed by the user.
+      if (
+        !hasOnly(property, CONSTANT_FIELD) ||
+        !isText(property.const) ||
+        (defaultValue !== undefined && defaultValue !== property.const)
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.CONSTANT,
+        defaultValue: property.const,
+      });
+      continue;
+    }
     if (property.type !== "string" || !hasOnly(property, FIELD)) return null;
 
     const format = property.format;
@@ -255,4 +294,43 @@ export function parseRegistryCredentialSchema(
     });
   }
   return { fields };
+}
+
+export function parseRegistryCredentialVariants(
+  value: unknown,
+): readonly RegistryCredentialVariant[] | null {
+  const isUnion =
+    isRecord(value) &&
+    (Object.hasOwn(value, "oneOf") || Object.hasOwn(value, "anyOf"));
+  if (!isUnion) {
+    const schema = parseRegistryCredentialSchema(value);
+    return schema ? [{ schema }] : null;
+  }
+  if (
+    !hasOnly(value, UNION_ROOT) ||
+    (Object.hasOwn(value, "oneOf") && Object.hasOwn(value, "anyOf")) ||
+    (value.title !== undefined && !isText(value.title)) ||
+    (value.description !== undefined &&
+      typeof value.description !== "string") ||
+    (value.discriminator !== undefined && !isRecord(value.discriminator))
+  ) {
+    return null;
+  }
+
+  const branches = value.oneOf ?? value.anyOf;
+  if (
+    !Array.isArray(branches) ||
+    branches.length === 0 ||
+    branches.length > REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_VARIANTS
+  ) {
+    return null;
+  }
+  const variants: RegistryCredentialVariant[] = [];
+  for (const branch of branches) {
+    const schema = parseRegistryCredentialSchema(branch);
+    if (!schema) return null;
+    const label = isRecord(branch) ? branch.title : undefined;
+    variants.push({ ...(isText(label) ? { label } : {}), schema });
+  }
+  return variants;
 }

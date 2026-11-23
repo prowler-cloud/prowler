@@ -105,6 +105,8 @@ export interface ProvidersAccountsViewData {
   rows: ProvidersTableRow[];
   /** `unavailable` when the hierarchy fetch failed (drives the degraded notice). */
   hierarchyStatus: HierarchyStatus;
+  /** Registry logo per provider type, streamed so rows never wait for it. */
+  registryLogos: Promise<Record<string, string>>;
 }
 
 export function isProvidersOrganizationRow(

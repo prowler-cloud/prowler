@@ -45,7 +45,6 @@ if (sentryDsn) {
     // 📊 Sample Rates - Performance monitoring
     // 100% in dev (test everything), 50% in production (balance visibility with costs)
     tracesSampleRate: isDevelopment ? 1.0 : 0.5,
-    profilesSampleRate: isDevelopment ? 1.0 : 0.5,
 
     // 🔌 Integrations
     integrations: [

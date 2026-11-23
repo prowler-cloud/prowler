@@ -49,9 +49,11 @@ export const handlersForIngestion = (
 ) => {
   let statusRequestCount = 0;
   let inFlightStatusRequests = 0;
+  let uploaded = false;
 
   return [
     http.post(API, async ({ request }) => {
+      uploaded = true;
       const formData = await request.formData();
       if (uploadDelayMs) await delay(uploadDelayMs);
       if (!(formData.get("file") instanceof File)) {
@@ -75,6 +77,11 @@ export const handlersForIngestion = (
     http.get(`${API}/:id`, async ({ params }) => {
       if (params.id !== fixture.id) {
         return HttpResponse.json({ error: "Not found." }, { status: 404 });
+      }
+      // Every fixture shares one id: a poll before this test's upload is a
+      // previous test's request still in flight, so it must not use up the sequence.
+      if (!uploaded) {
+        return HttpResponse.json(ingestionResponse(fixture, "processing"));
       }
 
       statusRequestCount += 1;

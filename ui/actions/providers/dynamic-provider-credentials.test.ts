@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
 import templateSchema from "@/lib/provider-credentials/fixtures/template-credential-schema.json";
+import unionSchema from "@/lib/provider-credentials/fixtures/union-credential-schema.json";
 const { fetchMock, getProviderSchemas, getAuthHeaders, revalidatePath } =
   vi.hoisted(() => ({
     fetchMock: vi.fn(),
@@ -135,6 +136,61 @@ describe("dynamic provider credential actions", () => {
       errors: { timeout_seconds: expect.any(String) },
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  describe("when the secret type's schema offers several variants", () => {
+    const basic = {
+      auth_method: "basic",
+      host: "api.acme.test",
+      username: "fixture-user",
+      password: "fixture-password-not-a-secret",
+    };
+    beforeEach(() => {
+      getProviderSchemas.mockResolvedValue({
+        status: "success",
+        providerType: "acme",
+        secretTypes: { static: unionSchema },
+      });
+    });
+
+    it("sends a secret that one variant accepts", async () => {
+      // Given
+      fetchMock
+        .mockResolvedValueOnce(response(account()))
+        .mockResolvedValueOnce(response({ data: { id: "saved" } }, 201));
+
+      // When
+      const result = await saveDynamicProviderCredentials({
+        ...input,
+        secretType: "static",
+        secret: basic,
+      });
+
+      // Then
+      expect(result).toEqual({ status: "saved", secretId: "saved" });
+      expect(
+        JSON.parse(fetchMock.mock.calls[1][1].body).data.attributes,
+      ).toEqual({ secret_type: "static", secret: basic });
+    });
+
+    it.each([
+      ["fields of two variants", { ...basic, token: "fixture-token" }],
+      ["another variant's discriminator", { ...basic, auth_method: "token" }],
+      ["a missing required field", { ...basic, password: "" }],
+    ])("does not write a secret with %s", async (_name, secret) => {
+      // Given
+      fetchMock.mockResolvedValueOnce(response(account()));
+
+      // When
+      const result = await saveDynamicProviderCredentials({
+        ...input,
+        secretType: "static",
+        secret,
+      });
+
+      // Then
+      expect(result.status).toBe("invalid");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
   });
   it.each([
     { ...input, secretType: "invented" },

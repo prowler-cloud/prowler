@@ -9,7 +9,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [api, root]
   auto_invoke:
     - "Creating or reviewing Django migrations"
@@ -259,14 +259,15 @@ The migration should only dispatch the work. The actual backfill runs asynchrono
 # 0090_backfill_finding_group_summaries.py
 from django.db import migrations
 
-def trigger_backfill(apps, schema_editor):
-    from tasks.jobs.backfill import backfill_finding_group_summaries_task
-    Tenant = apps.get_model("api", "Tenant")
-    from api.db_router import MainRouter
+from api.db_router import MainRouter
+from api.rls import Tenant
+from tasks.tasks import backfill_finding_group_summaries_task  # tasks live in tasks/tasks.py
 
+
+def trigger_backfill(apps, schema_editor):
     tenant_ids = Tenant.objects.using(MainRouter.admin_db).values_list("id", flat=True)
     for tenant_id in tenant_ids:
-        backfill_finding_group_summaries_task.delay(tenant_id=str(tenant_id))
+        backfill_finding_group_summaries_task.delay(tenant_id=str(tenant_id), days=30)
 
 class Migration(migrations.Migration):
     dependencies = [("api", "0089_previous_migration")]
@@ -359,7 +360,7 @@ Model.objects.bulk_create(objects, batch_size=500, ignore_conflicts=True)
 | `0080_backfill_attack_paths_graph_data_ready.py` | Inline (trivial update) |
 | `0082_backfill_finding_group_summaries.py` | `backfill_finding_group_summaries_task` |
 
-Task implementations: `tasks/jobs/backfill.py`
+Task definitions (`@shared_task`, `queue="backfill"`): `tasks/tasks.py`. Business logic: `tasks/jobs/backfill.py`
 Batch utilities: `api/db_utils.py` (`batch_delete`, `create_objects_in_batches`, `update_objects_in_batches`)
 
 ## Decision tree
@@ -407,44 +408,39 @@ New model?
 
 If migration passes all checks, say so.
 
-## Context7 lookups
+## Adding a value to a Postgres enum
 
-**Prerequisite:** Install Context7 MCP server for up-to-date documentation lookup.
+Enum-backed fields (`ProviderEnumField`, `StateEnumField`, ...) need raw SQL next to the `AlterField`:
 
-When implementing or debugging migration patterns, query these libraries via `mcp_context7_query-docs`:
-
-| Library | Context7 ID | Use for |
-|---------|-------------|---------|
-| Django 5.1 | `/websites/djangoproject_en_5_1` | Migration operations, indexes, constraints, `SchemaEditor` |
-| PostgreSQL | `/websites/postgresql_org_docs_current` | `CREATE INDEX CONCURRENTLY`, partitioned tables, `pg_inherits` |
-| django-postgres-extra | `/SectorLabs/django-postgres-extra` | Partitioned models, `PostgresPartitionedModel`, partition management |
-
-**Example queries:**
-```text
-mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_1", query="migration operations AddIndex RunPython atomic")
-mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_1", query="database indexes Meta class concurrently")
-mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="CREATE INDEX CONCURRENTLY partitioned table")
-mcp_context7_query-docs(libraryId="/SectorLabs/django-postgres-extra", query="partitioned model range partition index")
+```python
+migrations.RunSQL(
+    "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'okta';",
+    reverse_sql=migrations.RunSQL.noop,
+)
 ```
 
-> **Note:** Use `mcp_context7_resolve-library-id` first if you need to find the correct library ID.
+See `0093_okta_provider.py`. New enum types use `PostgresEnumMigration` from `api.db_utils`.
 
 ## Commands
 
+Run from `api/src/backend`. `MainRouter.allow_migrate()` only allows the `admin` alias, so always pass `--database admin`.
+
 ```bash
 # Generate migrations (ALWAYS review output before committing)
-python manage.py makemigrations
-python manage.py pgmakemigrations
+uv run python manage.py makemigrations
+uv run python manage.py pgmakemigrations
 
 # Apply migrations
-python manage.py migrate
+uv run python manage.py migrate --database admin
 
 # Fake a migration (mark as applied without running)
-python manage.py migrate api <migration_name> --fake
+uv run python manage.py migrate api <migration_name> --fake --database admin
 
-# Manage partitions
-python manage.py pgpartition --using admin
+# Manage partitions (what docker-entrypoint.sh runs)
+uv run python manage.py pgpartition --using admin --skip-delete --yes
 ```
+
+Add an API changelog fragment in `api/changelog.d/` for user-visible schema changes (see `prowler-changelog`).
 
 ## Resources
 

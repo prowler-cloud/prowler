@@ -9,7 +9,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "3.1"
+  version: "3.2"
   scope: [root, api]
   auto_invoke:
     - "Creating Attack Paths queries"
@@ -30,7 +30,7 @@ This skill is the concise, action-oriented reference for building queries. For t
 
 |                    | Predefined queries                                          | Custom queries                                                        |
 | ------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
-| Where they live    | `api/src/backend/api/attack_paths/queries/{provider}.py`    | User-supplied via the custom query API endpoint                       |
+| Where they live    | `api/src/backend/api/attack_paths/queries/aws.py` (only provider registered today) | User-supplied via the custom query API endpoint (max 10,000 chars, blocked-pattern check in `validate_custom_query`) |
 | Provider isolation | `AWSAccount {id: $provider_uid}` anchor + path connectivity | Automatic `_Provider_{uuid}` label injection by `cypher_sanitizer.py` |
 | What to write      | Chain every MATCH from the `aws` variable                   | Plain Cypher, no isolation boilerplate                                |
 | Internal labels    | Never use                                                   | Never use (system-injected)                                           |
@@ -83,6 +83,7 @@ The runner binds `$provider_uid` automatically. Every other node is isolated by 
 from api.attack_paths.queries.types import (
     AttackPathsQueryAttribution,
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
@@ -96,7 +97,8 @@ Always use `PROWLER_FINDING_LABEL` via f-string interpolation, never hardcode `"
 - **name**: short, human-friendly label. Sourced queries append the reference ID: `"EC2 Instance Launch with Privileged Role (EC2-001)"`.
 - **short_description**: one sentence, no technical permissions.
 - **description**: full technical explanation, plain text.
-- **provider**: `aws`, `azure`, `gcp`, `kubernetes`, or `github`.
+- **provider**: `aws`. `registry.py` only registers `AWS_QUERIES`, and only AWS has Cartography ingestion today (`tasks/jobs/attack_paths/scan.py`).
+- **outcome**: required in practice (`test_every_query_has_an_outcome`). One of `AttackPathsQueryOutcome.CODE_EXECUTION`, `PRIVILEGE_ESCALATION`, `PUBLIC_EXPOSURE`, `RESOURCE_INVENTORY` (partial/latent). The UI renders it as the terminal node.
 - **cypher**: f-string Cypher body. Literal `{` / `}` are escaped as `{{` / `}}`.
 - **parameters**: `parameters=[]` if none.
 - **attribution**: optional `AttackPathsQueryAttribution(text, link)` for sourced queries. `link` uses the lowercase ID.
@@ -120,6 +122,7 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/{reference_id_lowercase}",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with {permission}
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -238,7 +241,7 @@ Statements that constrain a target are still checked via `HAS_RESOURCE` traversa
 
 ## Network exposure pattern
 
-The Internet node is reached via `CAN_ACCESS` through an already-scoped resource, never as a standalone lookup:
+The Internet node is reached via `CAN_ACCESS` through an already-scoped resource, never as a standalone lookup. Set `outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE`:
 
 ```python
 cypher=f"""
@@ -383,16 +386,15 @@ RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
 
 ## Prowler-specific labels and relationships
 
-Added by the sync task, not part of the Cartography schema. For everything else, consult the pinned Cartography schema (see "Creation steps").
+Added by the Prowler sync task, not part of the Cartography schema. For everything else (including `POLICY`, `STATEMENT`, `TRUSTS_AWS_PRINCIPAL`, `STS_ASSUMEROLE_ALLOW`, which Cartography's AWS IAM module writes), consult the pinned Cartography schema (see "Creation steps").
 
-| Label / Relationship   | Description                                                 |
-| ---------------------- | ----------------------------------------------------------- |
-| `ProwlerFinding`       | Finding node (`status`, `severity`, `check_id`)             |
-| `Internet`             | Internet sentinel node                                      |
-| `CAN_ACCESS`           | `(Internet)-[:CAN_ACCESS]->(resource)` exposure edge        |
-| `HAS_FINDING`          | `(resource)-[:HAS_FINDING]->(:ProwlerFinding)` finding link |
-| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship                                     |
-| `STS_ASSUMEROLE_ALLOW` | Can assume role                                             |
+| Label / Relationship          | Description                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `ProwlerFinding`              | Finding node (`status`, `status_extended`, `severity`, `check_id`, `check_title`, ...)        |
+| `Internet`                    | Internet sentinel node (`tasks/jobs/attack_paths/internet.py`)                                |
+| `CAN_ACCESS`                  | `(Internet)-[:CAN_ACCESS]->(resource)` exposure edge                                          |
+| `HAS_FINDING`                 | `(resource)-[:HAS_FINDING]->(:ProwlerFinding)` finding link                                   |
+| `<Parent><Prop>Item` + `HAS_*` | List-property child nodes from `AWS_NORMALIZED_LISTS` (see above)                            |
 
 ---
 
@@ -451,7 +453,7 @@ For list-typed properties in the catalog (action, resource, and so on), traverse
 ## Naming conventions
 
 - **ID**: kebab-case `{provider}-{category}-{description}`, e.g. `aws-ec2-privesc-passrole-iam`.
-- **Constant**: SHOUTING*SNAKE_CASE `{PROVIDER}*{CATEGORY}\_{DESCRIPTION}`, e.g. `AWS_EC2_PRIVESC_PASSROLE_IAM`.
+- **Constant**: SHOUTING_SNAKE_CASE `{PROVIDER}_{CATEGORY}_{DESCRIPTION}`, e.g. `AWS_EC2_PRIVESC_PASSROLE_IAM`.
 
 ---
 
@@ -462,37 +464,48 @@ For list-typed properties in the catalog (action, resource, and so on), traverse
    ```text
    api/src/backend/api/attack_paths/queries/
    ├── __init__.py
-   ├── types.py         # dataclass definitions
-   ├── registry.py
-   └── {provider}.py
+   ├── types.py            # AttackPathsQueryDefinition, ...Outcome, ...Attribution, ...ParameterDefinition
+   ├── registry.py         # provider -> query list; is_migrated selects the catalog
+   ├── schema.py           # Cartography schema metadata query + schema URL templates
+   ├── aws.py              # current catalog (AWS_QUERIES): add new queries here
+   └── aws_deprecated.py   # pre-cutover catalog for scans with is_migrated=False; slated for deletion, do not extend
    ```
 
 2. **Fetch the Cartography schema for the pinned version.** Do not guess labels, properties, or relationships. Read the dependency pin:
 
    ```bash
-   grep cartography api/pyproject.toml
+   grep -n '"cartography' api/pyproject.toml     # PyPI pin, e.g. "cartography==0.138.1"
    ```
 
-   Then fetch the schema for that exact tag:
+   Then fetch the schema for that exact tag (same template as `RAW_SCHEMA_URL` in `queries/schema.py`):
 
    ```text
-   # Git pin (prowler-cloud/cartography@<TAG>):
-   https://raw.githubusercontent.com/prowler-cloud/cartography/refs/tags/<TAG>/docs/root/modules/{provider}/schema.md
-
-   # PyPI pin (cartography==<TAG>):
    https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/<TAG>/docs/root/modules/{provider}/schema.md
    ```
 
+   The installed package is also readable locally under `api/.venv/lib/python*/site-packages/cartography/models/` once `uv sync` has run in `api/`. The Prowler MCP server exposes the same schema through its `prowler_get_attack_paths_cartography_schema` tool for a given scan.
+
 3. **Build the query** using the canonical predefined template plus the appropriate sub-pattern (privilege escalation or network exposure). For list-typed properties (action/resource/etc.), traverse the exploded child nodes via `[:HAS_ACTION]->(:AWSPolicyStatementActionItem)` etc. (see "List-typed properties as child nodes" and the `AWS_NORMALIZED_LISTS` catalog).
 
-4. **Register** the constant in the `{PROVIDER}_QUERIES` list at the bottom of the provider file.
+4. **Register** the constant in the `AWS_QUERIES` list at the bottom of `aws.py`. IDs must be unique (`TestAllQueriesUniqueIds`).
+
+5. **Test.** The structural tests (anchor, typed finding probe, no `any/all/none`, no `=~`, no `CALL {`, no `.action`/`.resource` field reads, read-only, `RETURN` contract, under 10,000 chars) only run for the constants listed in `NEW_PATHFINDING_QUERIES` (`test_attack_paths_queries.py`) and `PATHFINDING_2279_QUERY_IDS` (`test_attack_paths_service_privesc_queries.py`). Add the new query to one of those lists (or a new parametrized list), then:
+
+   ```bash
+   cd api && uv run pytest src/backend/api/tests/test_attack_paths_queries.py \
+     src/backend/api/tests/test_attack_paths_service_privesc_queries.py -q
+   ```
+
+   No graph database is needed for these tests. Validate behavior against a real graph through Prowler App or the MCP `prowler_run_attack_paths_query` tool.
+
+6. **Changelog**: add an `api/changelog.d/<slug>.added.md` fragment (do not edit `api/CHANGELOG.md`).
 
 ---
 
 ## Reference
 
 - **pathfinding.cloud**: https://github.com/DataDog/pathfinding.cloud (use `curl | jq`; the aggregated `paths.json` is too large for WebFetch).
-- **Cartography schema** (per pinned tag): `https://raw.githubusercontent.com/{org}/cartography/refs/tags/{tag}/docs/root/modules/{provider}/schema.md`.
+- **Cartography schema** (per pinned tag): `https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/{tag}/docs/root/modules/{provider}/schema.md`, where `{tag}` is the `cartography==` pin in `api/pyproject.toml`.
 - **Neptune openCypher compliance**: https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html.
 - **openCypher spec**: https://github.com/opencypher/openCypher.
 - **Sync converter** (`tasks/jobs/attack_paths/sync.py`): list-typed node properties listed in `tasks/jobs/attack_paths/provider_config.py::AWS_NORMALIZED_LISTS` are materialised as child item nodes + `HAS_*` edges. Properties that are not in the catalog are serialised to a comma-delimited string and emit a one-time warning. Dict-typed properties become JSON strings. Same shape on both sinks.

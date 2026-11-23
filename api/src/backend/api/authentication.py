@@ -154,6 +154,31 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         ).update(last_used_at=now)
 
 
+SSO_TENANT_CLAIM = "sso_tenant_id"
+
+
+def is_api_key_session(request: Request) -> bool:
+    return bool(request.auth and request.auth.get("api_key_prefix"))
+
+
+def session_bound_tenant_id(request: Request) -> str | None:
+    """Tenant a session is confined to: SSO logins and API keys vouch for one tenant only."""
+    auth = request.auth
+    if auth is None:
+        return None
+    if is_api_key_session(request):
+        return auth.get("tenant_id")
+    return auth.get(SSO_TENANT_CLAIM)
+
+
+def session_reaches_other_tenants(request: Request) -> bool:
+    """Whether a bound session belongs to a user with tenants beyond the bound one."""
+    bound_tenant_id = session_bound_tenant_id(request)
+    if not bound_tenant_id:
+        return False
+    return request.user.memberships.exclude(tenant_id=bound_tenant_id).exists()
+
+
 class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):
     jwt_auth = JWTAuthentication()
     api_key_auth = TenantAPIKeyAuthentication()
