@@ -17,7 +17,8 @@ dev = [
 [project]
 dependencies = [
   "fastmcp==3.4.10",
-  "httpx==0.28.1"
+  "httpx==0.28.1",
+  "opentelemetry-api==1.45.2"
 ]
 description = "MCP server for Prowler ecosystem"
 name = "prowler-mcp"
@@ -78,10 +79,10 @@ extend-select = [
 constraint-dependencies = [
   "authlib==1.9.1",
   "cryptography==50.0.0",
-  "dnspython==2.9.0",
+  "dnspython==2.9.2",
   "joserfc==1.7.6",
   "mcp==1.30.0",
-  "opentelemetry-api==1.45.1",
+  "opentelemetry-api==1.45.2",
   "pyjwt==2.15.0",
   "python-multipart==0.0.31"
 ]

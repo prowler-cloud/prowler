@@ -124,7 +124,7 @@ To install Prowler as a Python package, use `Python >= 3.10, <= 3.13`. Prowler i
     ```
   </Tab>
   <Tab title="AWS CloudShell">
-    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it is already included in AL2023. Prowler can thus be easily installed following the generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
+    AWS CloudShell runs on Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), which ships Python 3.9 as the system interpreter. Prowler CLI requires Python 3.10 or later, so the steps below install it with [uv](https://docs.astral.sh/uv/), which downloads a supported Python version without changing the system interpreter.
 
     _Requirements_:
 
@@ -136,9 +136,9 @@ To install Prowler as a Python package, use `Python >= 3.10, <= 3.13`. Prowler i
     sudo bash
     adduser prowler
     su prowler
-    python3 -m pip install --user pipx
-    python3 -m pipx ensurepath
-    pipx install prowler
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source $HOME/.local/bin/env
+    uv tool install --python 3.12 prowler
     cd /tmp
     prowler aws
     ```
@@ -213,7 +213,14 @@ Upgrade Prowler CLI to the latest release using the same method chosen for insta
     ```
   </Tab>
   <Tab title="CloudShell">
-    Both AWS CloudShell and Azure CloudShell install Prowler with `pipx`, so the upgrade command is the same:
+    AWS CloudShell installs Prowler CLI with `uv`:
+
+    ```bash
+    uv tool upgrade prowler
+    prowler -v
+    ```
+
+    Azure CloudShell installs Prowler CLI with `pipx`:
 
     ```bash
     pipx upgrade prowler

@@ -47,6 +47,8 @@ Follow these steps to edit a user of your account:
 <Note>
 Users can edit their own account details. Editing another user's account details requires the **Invite and Manage Users** or **admin** permission.
 
+Only the account owner can change their own email address or password. Users with the **Invite and Manage Users** or **admin** permission can edit other profile fields, such as name and company name, but Prowler rejects email or password changes made to another user's account.
+
 </Note>
 
 #### Removing a User
@@ -153,6 +155,12 @@ Integrations follow the visibility of the providers attached to them: a role can
 <VersionBadge version="5.44.0" />
 
 Background tasks, such as provider deletions, connection checks and scans, follow the visibility of the provider they belong to: a role can see a task when it can access its provider. Tasks that carry no provider reference are treated as tenant-wide and are visible to every role. Revoking a pending task requires the same permission as the operation that queued it, for example **Manage Scans** for a scan. Provider deletions cannot be revoked.
+
+#### Mute Rule Visibility
+
+<VersionBadge version="5.52.0" />
+
+[Simple Mutelist](/user-guide/tutorials/prowler-app-simple-mutelist) rules follow the visibility of the providers their findings belong to. A role without **Unlimited Visibility** sees a mute rule only when all of its findings are on providers the role can access. Rules that also cover findings on other providers are hidden from that role, so it cannot change or delete them. The role also cannot create mute rules for findings it cannot see. When a new rule overlaps an existing one, the conflict error names the existing rule only for roles with **Unlimited Visibility**.
 
 #### Creating a Provider Group
 

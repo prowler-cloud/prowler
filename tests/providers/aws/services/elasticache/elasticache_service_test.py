@@ -110,7 +110,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "AtRestEncryptionEnabled": REPLICATION_GROUP_ENCRYPTION,
                     "ARN": REPLICATION_GROUP_ARN,
                     "AutoMinorVersionUpgrade": AUTO_MINOR_VERSION_UPGRADE,
-                    "Memberclusters": [ELASTICACHE_CLUSTER_NAME],
+                    "MemberClusters": [ELASTICACHE_CLUSTER_NAME],
                     "AuthTokenEnabled": False,
                 },
             ]
@@ -200,5 +200,39 @@ class Test_ElastiCache_Service:
             auto_minor_version_upgrade=AUTO_MINOR_VERSION_UPGRADE,
             auth_token_enabled=False,
             automatic_failover="disabled",
-            engine_version="0.0",
+            engine_version="6.0",
         )
+
+    def test_replication_group_filter_preserves_member_engine_version(self):
+        aws_provider = set_mocked_aws_provider()
+        aws_provider._audit_resources = [REPLICATION_GROUP_ARN]
+
+        elasticache = ElastiCache(aws_provider)
+
+        assert elasticache.clusters == {}
+        assert set(elasticache.replication_groups) == {REPLICATION_GROUP_ARN}
+        group = elasticache.replication_groups[REPLICATION_GROUP_ARN]
+        assert group.engine_version == "6.0"
+        assert group.encrypted is True
+        assert group.transit_encryption is True
+        assert group.tags == REPLICATION_GROUP_TAGS
+
+    def test_cluster_filter_excludes_replication_group(self):
+        aws_provider = set_mocked_aws_provider()
+        aws_provider._audit_resources = [ELASTICACHE_CLUSTER_ARN]
+
+        elasticache = ElastiCache(aws_provider)
+
+        assert set(elasticache.clusters) == {ELASTICACHE_CLUSTER_ARN}
+        assert elasticache.replication_groups == {}
+
+    def test_replication_group_missing_member_keeps_existing_error_handling(self):
+        elasticache = ElastiCache(set_mocked_aws_provider())
+        elasticache.replication_groups.clear()
+        elasticache._cluster_engine_versions.clear()
+
+        elasticache._describe_replication_groups(
+            elasticache.regional_clients[AWS_REGION_US_EAST_1]
+        )
+
+        assert elasticache.replication_groups == {}

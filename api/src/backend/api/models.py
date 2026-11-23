@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import defusedxml
 from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.providers import registry as social_provider_registry
 from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
@@ -2129,6 +2130,17 @@ class SAMLDomainIndex(models.Model):
         ]
 
 
+def saml_entity_id_names_social_provider(entity_id: str) -> bool:
+    """Whether an entityID equals a registered social provider id, ignoring case.
+
+    allauth stores SAML accounts under the entityID as their provider, so such an
+    entityID would match the accounts users linked through that provider.
+    """
+    return entity_id.casefold() in {
+        provider.id.casefold() for provider in social_provider_registry.get_class_list()
+    }
+
+
 class SAMLConfiguration(RowLevelSecurityProtectedModel):
     """
     Stores per-tenant SAML settings, including email domain and IdP metadata.
@@ -2212,6 +2224,11 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         entity_id = idp_settings.get("entity_id")
 
         if entity_id:
+            if saml_entity_id_names_social_provider(entity_id):
+                raise ValidationError(
+                    {"metadata_xml": "There is a problem with your metadata."}
+                )
+
             # Find any SocialApp with this entityID
             q = SocialApp.objects.filter(provider="saml", provider_id=entity_id)
 
