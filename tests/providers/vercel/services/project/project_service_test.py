@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from prowler.providers.vercel.services.project.project_service import Project
 from tests.providers.vercel.vercel_fixtures import (
     PROJECT_ID,
@@ -11,6 +13,96 @@ from tests.providers.vercel.vercel_fixtures import (
 
 
 class TestProjectService:
+    @pytest.mark.parametrize(
+        "settings, preview, production, skew",
+        [
+            ({"ssoProtection": {"deploymentType": "all"}}, "all", "all", False),
+            (
+                {
+                    "ssoProtection": {
+                        "deploymentType": "prod_deployment_urls_and_all_previews"
+                    },
+                    "skewProtectionMaxAge": 43200,
+                },
+                "prod_deployment_urls_and_all_previews",
+                None,
+                True,
+            ),
+            (
+                {"ssoProtection": {"deploymentType": "all_except_custom_domains"}},
+                "all_except_custom_domains",
+                None,
+                False,
+            ),
+            ({"ssoProtection": {"deploymentType": "preview"}}, "preview", None, False),
+            (
+                {
+                    "ssoProtection": {"deploymentType": "preview"},
+                    "passwordProtection": {"deploymentType": "all"},
+                },
+                "all",
+                "all",
+                False,
+            ),
+            (
+                {
+                    "ssoProtection": {"deploymentType": "unknown"},
+                    "skewProtectionMaxAge": 0,
+                },
+                None,
+                None,
+                False,
+            ),
+            (
+                {
+                    "ssoProtection": None,
+                    "deploymentProtection": {"deploymentType": "all"},
+                    "skewProtection": "enabled",
+                    "skewProtectionMaxAge": 0,
+                },
+                None,
+                None,
+                False,
+            ),
+            (
+                {
+                    "deploymentProtection": {
+                        "deploymentType": "standard",
+                        "prod": {"deploymentType": "all"},
+                    },
+                    "skewProtection": "enabled",
+                },
+                "standard",
+                "all",
+                True,
+            ),
+        ],
+    )
+    def test_list_projects_parses_protection_settings(
+        self, settings, preview, production, skew
+    ):
+        service = Project.__new__(Project)
+        service.provider = set_mocked_vercel_provider()
+        service.projects = {}
+        service._paginate = mock.MagicMock(
+            return_value=[{"id": PROJECT_ID, "name": PROJECT_NAME, **settings}]
+        )
+
+        service._list_projects()
+
+        project = service.projects[PROJECT_ID]
+        assert (
+            project.deployment_protection.level
+            if project.deployment_protection
+            else None
+        ) == preview
+        assert (
+            project.production_deployment_protection.level
+            if project.production_deployment_protection
+            else None
+        ) == production
+        assert project.skew_protection is skew
+
     def test_list_projects_parses_security_metadata(self):
         service = Project.__new__(Project)
         service.provider = set_mocked_vercel_provider()

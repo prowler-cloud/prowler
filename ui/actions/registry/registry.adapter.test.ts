@@ -414,6 +414,47 @@ describe("Registry adapter", () => {
     });
   });
 
+  it("points access requests at the bundle, else at the Registry package page", async () => {
+    // Given
+    const document = {
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "prowler-provider-vcf",
+          attributes: { owner_slug: "prowler", bundle_id: "vcf-bundle" },
+        },
+        {
+          type: "registry-artifacts",
+          id: "unbundled",
+          attributes: { owner_slug: "prowler", bundle_id: null },
+        },
+        { type: "registry-artifacts", id: "anonymous", attributes: {} },
+      ],
+      meta: { pagination: { page: 1, pages: 1, count: 3 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        { normalizedName: "anonymous" },
+        {
+          normalizedName: "prowler-provider-vcf",
+          accessRequestPath: "/bundles/vcf-bundle",
+        },
+        {
+          normalizedName: "unbundled",
+          accessRequestPath: "/orgs/prowler/unbundled",
+        },
+      ],
+    });
+    if (result.status !== "complete") throw new Error("Incomplete fixture");
+    expect(result.artifacts[0]).not.toHaveProperty("accessRequestPath");
+  });
+
   it("reads the deployment's install verdict and refuses installs an older API never confirmed", async () => {
     // Given
     const document = {

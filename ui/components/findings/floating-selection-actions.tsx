@@ -10,6 +10,10 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown/action-dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
 import { JiraDispatchActionItem } from "./jira-dispatch-action-item";
@@ -27,6 +31,7 @@ interface FloatingSelectionActionsBaseProps {
   label?: string;
   /** Custom mute action label. Defaults to "Mute". */
   muteLabel?: string;
+  disabledReason?: string;
 }
 
 type FloatingSelectionActionsProps = FloatingSelectionActionsBaseProps &
@@ -51,7 +56,13 @@ export function FloatingSelectionActions({
   muteLabel = "Mute",
   jiraPayload,
   jiraLabel,
+  disabledReason,
 }: FloatingSelectionActionsProps) {
+  const reason =
+    disabledReason ??
+    (selectedFindingIds.some(isSampleId)
+      ? SAMPLE_DATA_READ_ONLY_MESSAGE
+      : undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -75,6 +86,7 @@ export function FloatingSelectionActions({
   };
 
   const handleMuteClick = async () => {
+    if (reason) return;
     if (onBeforeOpen) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -146,17 +158,21 @@ export function FloatingSelectionActions({
                       icon={<VolumeX />}
                       label={muteLabel}
                       aria-label={muteLabel}
+                      disabled={Boolean(reason)}
+                      disabledTooltip={reason}
                       onSelect={() => void handleMuteClick()}
                     />
                     <JiraDispatchActionItem
                       label={jiraLabel}
                       payload={jiraPayload}
+                      disabledReason={reason}
                     />
                   </ActionDropdown>
                 ) : (
                   <Button
                     onClick={() => void handleMuteClick()}
-                    disabled={isResolving}
+                    disabled={isResolving || Boolean(reason)}
+                    title={reason}
                     size="lg"
                   >
                     {isResolving ? (

@@ -441,6 +441,10 @@ class Provider(ABC):
                 elif arguments.provider == "m365":
                     provider_class(
                         region=arguments.region,
+                        region_endpoints={
+                            "authority_host": arguments.m365_authority_host,
+                            "graph": arguments.m365_graph_endpoint,
+                        },
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,

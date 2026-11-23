@@ -18,11 +18,18 @@ class inspector2_active_findings_kev_within_due_date(Check):
         now = datetime.now(timezone.utc)
         known_exploited = inspector2_client.known_exploited_vulnerabilities
         lookup_failed = inspector2_client.vulnerability_lookup_failed
+        scope = (
+            ""
+            if inspector2_client.audit_config.get(
+                "inspector2_kev_include_findings_without_exploit", False
+            )
+            else " with a public exploit"
+        )
         for inspector in inspector2_client.inspectors:
             if inspector.status != "ENABLED":
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=inspector)
-            if inspector.findings is None:
+            if inspector.kev_candidates is None:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Inspector2 findings could not be retrieved in region {inspector.region}; "
@@ -30,11 +37,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
                 )
                 findings.append(report)
                 continue
-            vulnerability_ids = {
-                finding.vulnerability_id
-                for finding in inspector.findings
-                if finding.vulnerability_id
-            }
+            vulnerability_ids = inspector.kev_candidates.keys()
             overdue = sorted(
                 f"{vulnerability_id} (due {known_exploited[vulnerability_id].date_due.date().isoformat()})"
                 for vulnerability_id in known_exploited.keys() & vulnerability_ids
@@ -59,7 +62,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
             else:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Inspector2 has no active findings in region {inspector.region} for CISA "
+                    f"Inspector2 has no active findings{scope} in region {inspector.region} for CISA "
                     "Known Exploited Vulnerabilities past their remediation due date."
                 )
             findings.append(report)

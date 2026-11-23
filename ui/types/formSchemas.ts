@@ -91,6 +91,7 @@ export const roleFormSchema = z.object({
   manage_alerts: z.boolean().default(false),
   manage_lighthouse_ai_configuration: z.boolean().default(false),
   manage_registry: z.boolean().default(false),
+  manage_prowler_realtime: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });

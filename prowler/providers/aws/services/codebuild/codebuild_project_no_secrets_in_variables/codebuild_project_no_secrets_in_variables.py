@@ -19,6 +19,8 @@ class codebuild_project_no_secrets_in_variables(Check):
             "secrets_ignore_patterns", []
         )
         validate = codebuild_client.audit_config.get("secrets_validate", False)
+
+        confidence = codebuild_client.audit_config.get("secrets_confidence", "low")
         projects = list(codebuild_client.projects.values())
 
         # Collect every scannable plaintext variable across all projects and scan
@@ -39,7 +41,10 @@ class codebuild_project_no_secrets_in_variables(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

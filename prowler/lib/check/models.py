@@ -753,6 +753,10 @@ class Check_Report:
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
         self.muted = False
+        # Structured, machine-readable detail a check wants to hand downstream
+        # (stored as the finding's raw result), so consumers never parse
+        # status_extended prose. Empty for almost every check.
+        self.raw = {}
 
 
 @dataclass
@@ -1110,7 +1114,13 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def zone_name(self) -> str:
-        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        """Zone name - for DNS records use zone_name attribute, for zones use name.
+
+        Account-scoped resources (members, API tokens, Workers, R2 buckets) set
+        ``is_global_resource`` and report "global" instead of their own name.
+        """
+        if getattr(self._zone, "is_global_resource", False):
+            return "global"
         zone_name = getattr(self._zone, "zone_name", None)
         if zone_name:
             return zone_name

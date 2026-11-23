@@ -1384,7 +1384,7 @@ OAuthAppInfo
         settings: Dict[str, PimRoleApprovalSetting] = {}
         try:
             url = (
-                "https://graph.microsoft.com/v1.0/policies/"
+                f"{self.region_config.base_url}/v1.0/policies/"
                 "roleManagementPolicyAssignments?$filter=scopeId%20eq%20'/'%20and%20"
                 "scopeType%20eq%20'DirectoryRole'&$expand=policy($expand=rules)"
             )
@@ -1450,7 +1450,7 @@ OAuthAppInfo
         definitions = []
         try:
             url = (
-                "https://graph.microsoft.com/v1.0/identityGovernance/"
+                f"{self.region_config.base_url}/v1.0/identityGovernance/"
                 "accessReviews/definitions"
             )
             request_info = self.client.identity_governance.with_url(
@@ -1543,7 +1543,7 @@ OAuthAppInfo
         logger.info("Entra - Getting B2B collaboration policy...")
         b2b_policy = None
         try:
-            url = "https://graph.microsoft.com/beta/legacy/policies"
+            url = f"{self.region_config.base_url}/beta/legacy/policies"
             builder = self.client.policies.with_url(url)
             request_info = builder.to_get_request_information()
             response = await self.client.request_adapter.send_primitive_async(
@@ -1833,7 +1833,7 @@ OAuthAppInfo
         settings = None
         try:
             builder = self.client.policies.authentication_methods_policy.with_url(
-                "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy"
+                f"{self.region_config.base_url}/v1.0/policies/authenticationMethodsPolicy"
             )
             request_info = builder.to_get_request_information()
             response = await self.client.request_adapter.send_primitive_async(
