@@ -13,6 +13,11 @@ from prowler.providers.azure.lib.regions.regions import (
     AZURE_US_GOV_GRAPH_HOST,
     AZURE_US_GOV_GRAPH_SCOPE,
     AZURE_US_GOV_LOGS_ENDPOINT,
+    AZURE_BLEU_FRSOV_AUTHORITY_HOST,
+    AZURE_BLEU_FRSOV_CLOUD,
+    AZURE_BLEU_FRSOV_GRAPH_HOST,
+    AZURE_BLEU_FRSOV_GRAPH_SCOPE,
+    AZURE_BLEU_FRSOV_LOGS_ENDPOINT,
     get_regions_config,
 )
 
@@ -48,6 +53,15 @@ class Test_azure_regions:
                 "graph_host": AZURE_US_GOV_GRAPH_HOST,
                 "graph_scope": AZURE_US_GOV_GRAPH_SCOPE,
                 "logs_endpoint": AZURE_US_GOV_LOGS_ENDPOINT,
+            },
+            "AzureBleuCloud": {
+                # Bleu, French sovereign Azure cloud. More details https://bleucloud.fr
+                "authority": AZURE_BLEU_FRSOV_AUTHORITY_HOST,
+                "base_url": AZURE_BLEU_FRSOV_CLOUD,
+                "credential_scopes": [AZURE_BLEU_FRSOV_CLOUD + "/.default"],
+                "graph_host": AZURE_BLEU_FRSOV_GRAPH_HOST,
+                "graph_scope": AZURE_BLEU_FRSOV_GRAPH_SCOPE,
+                "logs_endpoint": AZURE_BLEU_FRSOV_LOGS_ENDPOINT,
             },
         }
 
