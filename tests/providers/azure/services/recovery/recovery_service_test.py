@@ -2,6 +2,8 @@ from types import SimpleNamespace
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
+from azure.core.exceptions import HttpResponseError
+
 from prowler.providers.azure.services.recovery.recovery_service import (
     BackupVault,
     Recovery,
@@ -28,6 +30,39 @@ class BackupClientFake:
 
 
 class Test_Recovery_get_vaults:
+    def test_get_vaults_continues_after_subscription_listing_error(self):
+        first_vault = SimpleNamespace(
+            id="first-vault-id", name="first-vault", location="eastus"
+        )
+        last_vault = SimpleNamespace(
+            id="last-vault-id", name="last-vault", location="westus"
+        )
+        first_client = MagicMock()
+        first_client.vaults.list_by_subscription_id.return_value = [first_vault]
+        denied_client = MagicMock()
+        denied_client.vaults.list_by_subscription_id.side_effect = HttpResponseError(
+            message="AuthorizationFailed"
+        )
+        last_client = MagicMock()
+        last_client.vaults.list_by_subscription_id.return_value = [last_vault]
+        recovery = object.__new__(Recovery)
+        recovery.clients = {
+            "first-subscription": first_client,
+            "denied-subscription": denied_client,
+            "last-subscription": last_client,
+        }
+        recovery.resource_groups = None
+
+        result = recovery._get_vaults()
+
+        assert result["first-subscription"] == {
+            first_vault.id: BackupVault(**vars(first_vault))
+        }
+        assert result["last-subscription"] == {
+            last_vault.id: BackupVault(**vars(last_vault))
+        }
+        assert "denied-subscription" not in result
+
     def test_get_vaults_no_resource_groups(self):
         mock_client = MagicMock()
         mock_client.vaults = MagicMock()
