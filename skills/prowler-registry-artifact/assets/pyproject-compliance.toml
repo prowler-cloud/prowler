@@ -1,0 +1,29 @@
+# Compliance artifact: per-provider (legacy) JSON and/or universal multi-provider JSON.
+# Layout: src/{pkg}/{provider}/{__init__.py, {framework}_{version}_{provider}.json}
+#         src/{pkg}/universal/{__init__.py, {framework}_{version}.json}
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{org}-prowler-compliance"
+version = "0.1.0"
+description = "{Org} compliance frameworks for Prowler"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = "Apache-2.0"
+dependencies = []
+
+[project.optional-dependencies]
+runtime = ["prowler>=5.48.0"]
+
+# Name MUST be the provider the JSON files belong to; value = package holding the JSON.
+[project.entry-points."prowler.compliance"]
+{provider} = "{pkg}.{provider}"
+
+# Name is free-form (only the value is used); value = package holding universal JSON.
+[project.entry-points."prowler.compliance.universal"]
+{org} = "{pkg}.universal"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{pkg}"]

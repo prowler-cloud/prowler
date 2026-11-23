@@ -12,7 +12,6 @@ import { useImperativeHandle, useRef, useState } from "react";
 import {
   loadFindingTriageDetail,
   loadLatestFindingTriageNote,
-  updateFindingTriage,
 } from "@/actions/findings";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
@@ -21,6 +20,7 @@ import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { useScrollportPin } from "@/hooks/use-scrollport-pin";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
@@ -249,7 +249,7 @@ export function InlineResourceContainer({
       drawer.openDrawer(rowIndex);
     },
     onTriageUpdateAction: (input) =>
-      updateTriageOptimistically(input, updateFindingTriage),
+      updateTriageOptimistically(input, updateFindingTriageOrThrow),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
     onTriageDetailLoadAction: loadFindingTriageDetail,
   });

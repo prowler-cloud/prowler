@@ -42,6 +42,7 @@ export type RegistryCredentialSubmissionResult = RegistryTaskSubmissionResult;
 export interface RegistryArtifactTaskResult {
   installed: boolean;
   error: string | null;
+  code?: string | null;
 }
 
 export interface RegistryAddArtifactInput {
@@ -125,6 +126,8 @@ export interface RegistryCatalogArtifact {
   isInstallable: boolean;
   /** Stable API code; new codes can appear without a UI release. */
   notInstallableReason?: string;
+  /** Registry page where access to it is requested (a bundle, else the package). */
+  accessRequestPath?: string;
   checkCount?: number;
   complianceCount?: number;
   versionCount: number;
@@ -192,8 +195,7 @@ export type RegistryCredentialActionResult =
     }
   | {
       status: typeof REGISTRY_CREDENTIAL_ACTION.DISCONNECTED;
-      credential: RegistryCredentialStatus;
-      tenantArtifacts: RegistryTenantArtifact[];
+      state: RegistryBootstrapState;
     }
   | {
       status:

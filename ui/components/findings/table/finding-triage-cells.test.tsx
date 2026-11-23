@@ -80,6 +80,8 @@ beforeAll(() => {
   });
 });
 
+import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
@@ -1278,6 +1280,37 @@ describe("finding triage cells", () => {
       }),
     );
     expect(statusControl).toHaveTextContent("Open");
+  });
+
+  it("should offer the plans when the usage limit refuses the status update", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi
+      .fn()
+      .mockRejectedValue(new UsageLimitError());
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Remediating" }));
+
+    // Then
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+    const toastOptions = toastMock.mock.calls[0][0];
+    expect(toastOptions.description).toBe(USAGE_LIMIT_MESSAGE);
+    render(<>{toastOptions.action}</>);
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
   });
 
   it("should not confirm when moving between Mutelist shortcut statuses", async () => {

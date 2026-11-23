@@ -21,14 +21,14 @@ import {
 } from "@/types/invitations";
 import { getProviderDisplayName, type ProviderType } from "@/types/providers";
 
-import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";
+import { CONNECT_ACTION_KIND, type ConnectUiState } from "../connect/types";
 
 interface InviteTeammateFormProps {
   roles: InvitationRoleOption[];
   providerType: ProviderType;
   formId: string;
   onSent: (invitation: SentInvitation) => void;
-  onUiStateChange: (state: AwsConnectUiState) => void;
+  onUiStateChange: (state: ConnectUiState) => void;
   onBusyChange: (isBusy: boolean) => void;
 }
 
@@ -59,7 +59,7 @@ export function InviteTeammateForm({
       actionLabel: isSubmitting ? "Sending invitation..." : "Send invitation",
       actionDisabled: !isValid || isSubmitting,
       isLoading: isSubmitting,
-      actionKind: AWS_CONNECT_ACTION_KIND.SUBMIT,
+      actionKind: CONNECT_ACTION_KIND.SUBMIT,
     });
   }, [isSubmitting, isValid, onBusyChange, onUiStateChange]);
 

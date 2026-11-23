@@ -33,6 +33,22 @@ describe("skills registry", () => {
     expect(getSkillById("provider-connection-guide")?.enabled).toBe(true);
   });
 
+  it("should keep the issue fix apart from the finding menus", () => {
+    // Given / When
+    const issueSkills = getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.ISSUE);
+
+    // Then: an issue is a group of findings, so it gets its own prompt
+    expect(issueSkills.map((skill) => skill.id)).toEqual([
+      "issue-contextual-fix",
+    ]);
+    expect(issueSkills[0].prompt).toContain("finding id in the context");
+    expect(
+      getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING).map(
+        (skill) => skill.id,
+      ),
+    ).not.toContain("issue-contextual-fix");
+  });
+
   it("should only offer enabled skills for launch", () => {
     expect(
       getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.FINDING).map(

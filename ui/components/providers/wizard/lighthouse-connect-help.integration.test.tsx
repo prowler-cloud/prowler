@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { describe, expect, vi } from "vitest";
 
 import { it } from "@/__tests__/fixtures";
@@ -17,20 +18,38 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
 const DESCRIPTION =
   "Lighthouse AI walks you through it with Prowler's docs, right beside this form.";
 
+const LEFT_COLUMN_WIDTH = 328;
+
+function Help({ docsDestination = "Provider" }: { docsDestination?: string }) {
+  return (
+    <LighthouseConnectHelp
+      docsLink="https://goto.prowler.com/provider-aws"
+      docsDestination={docsDestination}
+      providerType={null}
+      mode="add"
+      stepName="connect"
+      stepLabel="Connect Provider"
+      connectionMethod={null}
+      isOrganizationsFlow={false}
+    />
+  );
+}
+
 // Like the modal frame: a marked size container, so lg: follows its width.
+// A wide wizard holds the help in its left column, above the steps.
+function Frame({ width, children }: { width: number; children: ReactNode }) {
+  return (
+    <div data-responsive-container className="@container" style={{ width }}>
+      <div className="lg:w-[328px]">{children}</div>
+    </div>
+  );
+}
+
 function renderInWizardFrame(width: number) {
   return render(
-    <div data-responsive-container className="@container" style={{ width }}>
-      <LighthouseConnectHelp
-        docsLink="https://goto.prowler.com/provider-aws"
-        docsDestination="Provider"
-        providerType={null}
-        mode="add"
-        stepName="connect"
-        stepLabel="Link a Provider"
-        isOrganizationsFlow={false}
-      />
-    </div>,
+    <Frame width={width}>
+      <Help />
+    </Frame>,
   );
 }
 
@@ -64,5 +83,30 @@ describe("Lighthouse help in the wizard header", () => {
       .element(screen.getByRole("button", { name: "Ask Lighthouse AI" }))
       .toBeVisible();
     await expect.element(screen.getByText(DESCRIPTION)).toBeVisible();
+  });
+
+  it("fits the left column and keeps its height when the docs link changes", async () => {
+    // Given
+    const screen = await renderInWizardFrame(1200);
+    await expect
+      .element(screen.getByRole("button", { name: "Ask Lighthouse AI" }))
+      .toBeVisible();
+    const callout = () =>
+      screen
+        .getByRole("region", { name: "Help from Lighthouse AI" })
+        .element()
+        .getBoundingClientRect();
+    const before = callout();
+
+    // When: picking another method points the docs link elsewhere.
+    await screen.rerender(
+      <Frame width={1200}>
+        <Help docsDestination="Alibaba Cloud Credentials" />
+      </Frame>,
+    );
+
+    // Then: the steps below the help do not move.
+    expect(before.width).toBeLessThanOrEqual(LEFT_COLUMN_WIDTH);
+    expect(callout().height).toBe(before.height);
   });
 });

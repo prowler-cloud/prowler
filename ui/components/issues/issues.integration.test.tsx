@@ -1,19 +1,13 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
-import {
-  getFindingGroups,
-  getFindingGroupResources,
-} from "@/actions/finding-groups";
-import { getScan } from "@/actions/scans";
 import { ExploitabilityChart } from "@/app/(prowler)/_overview/exploitability/_components/exploitability-chart";
 import { TopIssues } from "@/app/(prowler)/_overview/exploitability/_components/top-issues";
 import { IssuesList } from "@/app/(prowler)/issues/_components/issues-list";
-import { applyDefaultMutedFilter, extractFiltersAndQuery } from "@/lib";
-import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import { GlobalSidePanel } from "@/components/side-panel/global-side-panel";
 import { IssueResource, IssuesOverviewAttributes } from "@/types/issues";
 
 const resource = `arn:aws:s3:::production-customer-data-${"long-resource-name-".repeat(8)}`;
@@ -151,80 +145,156 @@ describe("Issues responsive layout", () => {
     await page.viewport(1280, 800);
   });
 
-  it("opens the selected finding's group and muted resource through the destination actions", async () => {
-    // Given: the destination returns the finding only for its supported filters.
+  it("opens a folded finding inside the panel and comes back to the issue", async () => {
+    // Given: the list next to the real side panel host the app shell mounts.
     setup();
     worker.use(
-      http.get("*/scans/scan-1", () =>
+      http.get("*/findings/f1", () =>
         HttpResponse.json({
           data: {
-            id: "scan-1",
-            type: "scans",
+            type: "findings",
+            id: "f1",
             attributes: {
-              inserted_at: "2026-10-20T10:00:00Z",
-              completed_at: "2026-10-20T11:00:00Z",
+              uid: "finding-uid-1",
+              check_id: "s3_public",
+              status: "FAIL",
+              severity: "critical",
+              check_metadata: { checktitle: "S3 bucket is public" },
             },
+            relationships: { resources: { data: [] } },
           },
         }),
       ),
-      http.get("*/finding-groups", ({ request }) => {
-        const params = new URL(request.url).searchParams;
-        const matches =
-          params.get("filter[check_id__in]") === "s3_public" &&
-          params.get("filter[resource_uid]") === resource &&
-          params.get("filter[scan__in]") === "scan-1" &&
-          params.get("filter[inserted_at]") === "2026-10-20" &&
-          params.get("filter[muted]") === "include";
-        return HttpResponse.json({
-          data: matches ? [{ id: "s3_public", type: "finding-groups" }] : [],
-        });
-      }),
-      http.get("*/finding-groups/s3_public/resources", ({ request }) => {
-        const params = new URL(request.url).searchParams;
-        const matches =
-          params.get("filter[resource_uid]") === resource &&
-          params.get("filter[muted]") === "include";
-        return HttpResponse.json({
-          data: matches
-            ? [{ id: "r1", attributes: { finding_id: "f1", muted: true } }]
-            : [],
-        });
-      }),
     );
-    const screen = await render(await IssuesList({ searchParams: {} }));
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
     await screen
-      .getByRole("button", { name: `Expand ${issue.attributes.title}` })
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
       .click();
-    const link = screen.getByRole("link", { name: "S3 bucket is public" });
-    await expect.element(link).toBeVisible();
+    await screen.getByRole("tab", { name: "Findings" }).click();
 
-    // When: resolve the same filters used by the Findings page and drill-down.
-    const destination = new URL(
-      link.element().getAttribute("href")!,
-      window.location.origin,
-    );
-    const { filters } = extractFiltersAndQuery(
-      Object.fromEntries(destination.searchParams),
-    );
-    const resolvedFilters = applyDefaultMutedFilter(
-      await resolveFindingScanDateFilters({
-        filters,
-        scans: [],
-        loadScan: async (id) => (await getScan(id))?.data,
-      }),
-    );
-    const groups = await getFindingGroups({ filters: resolvedFilters });
+    // When
+    await screen.getByRole("button", { name: "S3 bucket is public" }).click();
+
+    // Then: the finding takes the panel without closing the issue
+    const back = screen.getByRole("button", { name: "Issue details" });
+    await expect.element(back).toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: "Exploitability" }))
+      .not.toBeInTheDocument();
+
+    // When
+    await back.click();
 
     // Then
-    expect(groups.data).toEqual([{ id: "s3_public", type: "finding-groups" }]);
-    expect(destination.searchParams.get("expandedCheckId")).toBe("s3_public");
-    const resources = await getFindingGroupResources({
-      checkId: "s3_public",
-      filters: resolvedFilters,
-    });
-    expect(resources.data).toEqual([
-      { id: "r1", attributes: { finding_id: "f1", muted: true } },
-    ]);
+    await expect
+      .element(screen.getByRole("tab", { name: "Findings" }))
+      .toHaveAttribute("aria-selected", "true");
+  });
+
+  it("opens a clicked row in the app's Details side panel", async () => {
+    // Given: the list next to the real side panel host the app shell mounts.
+    setup();
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
+
+    // When: a plain cell of the row is clicked, not the title button.
+    await screen
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
+      .click();
+
+    // Then
+    await expect
+      .element(screen.getByText("Block Public Access is disabled."))
+      .toBeVisible();
+
+    // When: the attack path tab asks for the graph
+    await screen.getByRole("tab", { name: "Attack path" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("region", { name: "Finding evidence" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByTestId("attack-path-finding-node"))
+      .toBeVisible();
+  });
+
+  it("resets the Details tab when another row opens", async () => {
+    // Given: the first issue's panel is open on the Remediation tab. The
+    // panel overlays the right edge here (no app shell pushes the page), so
+    // rows are clicked on their leftmost cell.
+    await page.viewport(1440, 900);
+    setup();
+    const secondIssue: IssueResource = {
+      ...issue,
+      id: "issue-2",
+      attributes: {
+        ...issue.attributes,
+        title: "Admin role assumable from any account",
+        account: "Staging",
+      },
+    };
+    worker.use(
+      http.get("*/issues", () =>
+        HttpResponse.json({ data: [issue, secondIssue] }),
+      ),
+      // The panel loads the evidence of whichever issue it opens.
+      http.get("*/issues/issue-2", () =>
+        HttpResponse.json({
+          data: {
+            ...secondIssue,
+            attributes: { ...secondIssue.attributes, resource_uids: [] },
+          },
+        }),
+      ),
+    );
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
+    await screen
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
+      .click();
+    await screen.getByRole("tab", { name: "Remediation" }).click();
+    await expect
+      .element(screen.getByRole("tab", { name: "Remediation" }))
+      .toHaveAttribute("aria-selected", "true");
+
+    // When
+    await screen
+      .getByRole("row", { name: /Admin role assumable from any account/ })
+      .getByText("Likely")
+      .click();
+
+    // Then: the panel remounted on the new issue, back on its first tab
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          level: 3,
+          name: "Admin role assumable from any account",
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: "Exploitability" }))
+      .toHaveAttribute("aria-selected", "true");
   });
 
   it.each([
@@ -234,7 +304,7 @@ describe("Issues responsive layout", () => {
     { width: 375, theme: "dark" },
     { width: 1440, theme: "dark" },
   ])(
-    "keeps the filters and expanded detail usable at $width px in $theme mode",
+    "keeps the list and the issue panel usable at $width px in $theme mode",
     async ({ width, theme }) => {
       await page.viewport(width, 1000);
       localStorage.setItem("theme", theme);
@@ -243,38 +313,62 @@ describe("Issues responsive layout", () => {
         searchParams: { "filter[pattern]": "aws_public_bucket" },
       });
       const screen = await render(
-        <main className="min-w-0 p-4">
-          <h1 className="mb-6 text-2xl font-semibold">Issues</h1>
-          {content}
-        </main>,
+        <>
+          <main className="flex min-w-0 flex-col gap-6 p-4">
+            <h1 className="text-2xl font-semibold">Issues</h1>
+            {content}
+          </main>
+          <GlobalSidePanel />
+        </>,
       );
       await expect
         .element(screen.getByRole("button", { name: "Remove Pattern filter" }))
         .toBeVisible();
-      await screen
-        .getByRole("button", {
-          name: "Expand Public bucket exposes customer data",
-        })
-        .click();
       await expect
-        .element(screen.getByRole("region", { name: "Affected resources" }))
+        .element(
+          screen.getByText("The internet → Data exposure · aws_public_bucket"),
+        )
         .toBeVisible();
+
+      // When: the row opens in the panel
+      await screen
+        .getByRole("row", { name: /Public bucket exposes customer data/ })
+        .getByRole("button", { name: "Public bucket exposes customer data" })
+        .click();
+
+      // Then: every tab fits the viewport, long identifiers wrap
       await expect
         .element(screen.getByText("Partly", { exact: true }))
         .toBeVisible();
-      await expect.element(screen.getByText("Public by design.")).toBeVisible();
+      const fits = (element: Element) =>
+        element.getBoundingClientRect().right <= width;
+      for (const snippet of screen
+        .getByText(resource, { exact: true })
+        .elements()) {
+        expect(snippet.scrollWidth).toBeLessThanOrEqual(
+          snippet.clientWidth + 1,
+        );
+      }
+
+      await screen.getByRole("tab", { name: "Findings" }).click();
       await expect
-        .element(
-          screen.getByRole("img", { name: "Critical finding risk icon" }),
-        )
+        .element(screen.getByRole("button", { name: "S3 bucket is public" }))
         .toBeVisible();
+
+      await screen.getByRole("tab", { name: "Resources" }).click();
+      const resources = screen.getByRole("region", {
+        name: "Affected resources",
+      });
+      await expect.element(resources).toBeVisible();
+      expect(fits(resources.element())).toBe(true);
       expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
-      const detailBounds = screen
-        .getByRole("region", { name: "Affected resources" })
-        .element()
-        .getBoundingClientRect();
-      expect(detailBounds.right).toBeLessThanOrEqual(width);
+      await page.screenshot();
+
+      await screen.getByRole("tab", { name: "Triage" }).click();
+      await expect.element(screen.getByText("Public by design.")).toBeVisible();
+
       if (width < 640) {
+        await screen.getByRole("tab", { name: "Attack path" }).click();
         await expect
           .poll(() => {
             const node = screen
@@ -286,49 +380,8 @@ describe("Issues responsive layout", () => {
           })
           .toBe(true);
       }
-
-      // Long resource identifiers and evidence must wrap within the detail.
-      for (const snippet of screen
-        .getByText(resource, { exact: true })
-        .elements()) {
-        expect(snippet.scrollWidth).toBeLessThanOrEqual(
-          snippet.clientWidth + 1,
-        );
-      }
-      await page.viewport(
-        width,
-        Math.max(1000, document.documentElement.scrollHeight),
-      );
-      await screen.getByRole("main").screenshot();
-      await screen
-        .getByRole("button", {
-          name: "Collapse Public bucket exposes customer data",
-        })
-        .click();
-      await expect
-        .element(screen.getByRole("region", { name: "Affected resources" }))
-        .not.toBeInTheDocument();
     },
   );
-
-  it("keeps keyboard focus on the expansion control", async () => {
-    setup();
-    const screen = await render(await IssuesList({ searchParams: {} }));
-    const toggle = screen.getByRole("button", {
-      name: "Expand Public bucket exposes customer data",
-    });
-    toggle.element().focus();
-    await userEvent.keyboard("{Enter}");
-    await expect
-      .element(
-        screen.getByRole("button", {
-          name: "Collapse Public bucket exposes customer data",
-        }),
-      )
-      .toHaveFocus();
-    await userEvent.keyboard(" ");
-    await expect.element(toggle).toHaveFocus();
-  });
 
   it.each([375, 768, 1440])(
     "contains overview cards at %s px",

@@ -13,12 +13,11 @@ from tests.providers.aws.utils import (
 
 
 class Test_emr_cluster_publicly_accesible:
+    @mock_aws
     def test_no_clusters(self):
         # EMR Client
         emr_client = mock.MagicMock
         emr_client.clusters = {}
-        # EC2 Client
-        ec2_client = mock.MagicMock
 
         with (
             mock.patch(
@@ -26,8 +25,12 @@ class Test_emr_cluster_publicly_accesible:
                 new=emr_client,
             ),
             mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_service.EC2",
-                new=ec2_client,
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
+                new=mock.MagicMock(),
             ),
         ):
             # Test Check

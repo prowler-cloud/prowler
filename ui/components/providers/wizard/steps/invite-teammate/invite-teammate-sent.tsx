@@ -9,12 +9,12 @@ import { isCloud } from "@/lib/shared/env";
 import type { SentInvitation } from "@/types/invitations";
 import { getProviderDisplayName, type ProviderType } from "@/types/providers";
 
-import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";
+import { CONNECT_ACTION_KIND, type ConnectUiState } from "../connect/types";
 
 interface InviteTeammateSentProps {
   invitation: SentInvitation;
   providerType: ProviderType;
-  onUiStateChange: (state: AwsConnectUiState) => void;
+  onUiStateChange: (state: ConnectUiState) => void;
 }
 
 /** The link to share once the invitation exists; the footer's "Done" closes the wizard. */
@@ -30,7 +30,7 @@ export function InviteTeammateSent({
       actionLabel: "Done",
       actionDisabled: false,
       isLoading: false,
-      actionKind: AWS_CONNECT_ACTION_KIND.CLOSE,
+      actionKind: CONNECT_ACTION_KIND.CLOSE,
     });
   });
 

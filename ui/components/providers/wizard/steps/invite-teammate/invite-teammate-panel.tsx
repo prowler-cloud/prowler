@@ -9,7 +9,7 @@ import { orderRolesAdminFirst } from "@/lib/invitations/order-roles";
 import type { SentInvitation } from "@/types/invitations";
 import type { ProviderType } from "@/types/providers";
 
-import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";
+import { CONNECT_ACTION_KIND, type ConnectUiState } from "../connect/types";
 
 import { InviteTeammateForm } from "./invite-teammate-form";
 import { InviteTeammateSent } from "./invite-teammate-sent";
@@ -19,14 +19,14 @@ const SEND_LABEL = "Send invitation";
 interface InviteTeammatePanelProps {
   providerType: ProviderType;
   formId: string;
-  onUiStateChange: (state: AwsConnectUiState) => void;
+  onUiStateChange: (state: ConnectUiState) => void;
   onBusyChange: (isBusy: boolean) => void;
 }
 
 /**
  * The connect step's way out for a user who cannot connect the account: invite
  * a teammate who can. Loads the roles, sends the invitation through the wizard
- * footer and then shows the link to share. Provider-agnostic; AWS mounts it.
+ * footer and then shows the link to share. Provider-agnostic: every connect step offers it.
  */
 export function InviteTeammatePanel({
   providerType,
@@ -74,7 +74,7 @@ export function InviteTeammatePanel({
 }
 
 interface StaticStateProps {
-  onUiStateChange: (state: AwsConnectUiState) => void;
+  onUiStateChange: (state: ConnectUiState) => void;
 }
 
 function RolesLoading({ onUiStateChange }: StaticStateProps) {
@@ -85,7 +85,7 @@ function RolesLoading({ onUiStateChange }: StaticStateProps) {
       actionLabel: SEND_LABEL,
       actionDisabled: true,
       isLoading: false,
-      actionKind: AWS_CONNECT_ACTION_KIND.SUBMIT,
+      actionKind: CONNECT_ACTION_KIND.SUBMIT,
     });
   });
 
@@ -108,7 +108,7 @@ function RolesUnavailable({ onUiStateChange }: StaticStateProps) {
       actionLabel: SEND_LABEL,
       actionDisabled: true,
       isLoading: false,
-      actionKind: AWS_CONNECT_ACTION_KIND.SUBMIT,
+      actionKind: CONNECT_ACTION_KIND.SUBMIT,
     });
   });
 

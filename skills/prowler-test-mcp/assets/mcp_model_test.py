@@ -1,5 +1,7 @@
 # Example: Prowler MCP Server model test patterns
-# Source: mcp_server/tests/prowler_app/models/test_findings.py
+# Pattern based on: mcp_server/tests/prowler_app/models/test_findings.py
+# Illustrative tests; they pass against the current suite fixtures. Copy into a
+# tests/ subdirectory that has an __init__.py.
 
 from prowler_mcp_server.prowler_app.models.findings import (
     DetailedFinding,

@@ -1,4 +1,5 @@
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
+import { FindingSeverityOverTimeCard } from "@/components/overview/finding-severity-over-time-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 import { pickFilterParams } from "../_lib/filter-params";
@@ -42,16 +43,8 @@ export const FindingSeverityOverTimeSSR = async ({
   }
 
   return (
-    <Card variant="base" className="flex h-full flex-1 flex-col">
-      <CardHeader className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <CardTitle>Findings Severity Over Time</CardTitle>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex flex-1 flex-col px-6">
-        <FindingSeverityOverTime data={result.data.data} />
-      </CardContent>
-    </Card>
+    <FindingSeverityOverTimeCard>
+      <FindingSeverityOverTime data={result.data.data} />
+    </FindingSeverityOverTimeCard>
   );
 };

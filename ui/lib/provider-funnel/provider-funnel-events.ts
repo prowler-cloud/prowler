@@ -35,6 +35,7 @@ export const WIZARD_OPEN_SOURCE = {
   PAGE_BUTTON: "page_button",
   EMPTY_STATE: "empty_state",
   ROW_ACTION: "row_action",
+  SAMPLE_PREVIEW: "sample_preview",
 } as const;
 
 export type WizardOpenSource =
@@ -93,7 +94,8 @@ export const ACCOUNT_SUBMIT_OUTCOME = {
 export type AccountSubmitOutcome =
   (typeof ACCOUNT_SUBMIT_OUTCOME)[keyof typeof ACCOUNT_SUBMIT_OUTCOME];
 
-// Account and credentials sent together (the one-step AWS form).
+// Account and credentials sent together from the connect step; `via` is
+// "default" for a provider with a single method.
 export interface AccountSubmittedDetail {
   step: typeof PROVIDER_FUNNEL_STEP.ACCOUNT_SUBMITTED;
   providerType: string;

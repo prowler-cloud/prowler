@@ -1283,6 +1283,113 @@ def _process_finding_micro_batch(
         )
 
 
+def _store_resource_scan_summaries(
+    tenant_id: str, scan_id: str, scan_resources: set[tuple[str, str, str, str]]
+) -> None:
+    """Store one `ResourceScanSummary` row per resource the scan has seen."""
+    resource_scan_summaries = [
+        ResourceScanSummary(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_id=resource_id,
+            service=service,
+            region=region,
+            resource_type=resource_type,
+        )
+        for resource_id, service, region, resource_type in scan_resources
+    ]
+    with rls_transaction(tenant_id):
+        ResourceScanSummary.objects.bulk_create(
+            resource_scan_summaries, batch_size=500, ignore_conflicts=True
+        )
+
+
+def _store_scan_category_summaries(
+    tenant_id: str,
+    scan_id: str,
+    scan_categories_cache: dict[tuple[str, str], dict[str, int]],
+) -> None:
+    """Upsert the scan's category counters, refreshing the rows stored earlier."""
+    if not scan_categories_cache:
+        return
+    category_summaries = [
+        ScanCategorySummary(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            category=category,
+            severity=severity,
+            total_findings=counts["total"],
+            failed_findings=counts["failed"],
+            new_failed_findings=counts["new_failed"],
+        )
+        for (category, severity), counts in scan_categories_cache.items()
+    ]
+    with rls_transaction(tenant_id):
+        ScanCategorySummary.objects.bulk_create(
+            category_summaries,
+            batch_size=500,
+            update_conflicts=True,
+            unique_fields=["tenant_id", "scan", "category", "severity"],
+            update_fields=["total_findings", "failed_findings", "new_failed_findings"],
+        )
+
+
+def _store_running_scan_summaries(
+    tenant_id: str,
+    scan_id: str,
+    scan_resource_cache: set[tuple[str, str, str, str]],
+    stored_scan_resources: set[tuple[str, str, str, str]],
+    scan_categories_cache: dict[tuple[str, str], dict[str, int]],
+) -> None:
+    """Make the filter values of a running scan available before it finishes."""
+    try:
+        new_scan_resources = scan_resource_cache - stored_scan_resources
+        if new_scan_resources:
+            _store_resource_scan_summaries(tenant_id, scan_id, new_scan_resources)
+            stored_scan_resources.update(new_scan_resources)
+        _store_scan_category_summaries(tenant_id, scan_id, scan_categories_cache)
+    except Exception as error:
+        sentry_sdk.capture_exception(error)
+        logger.error(f"Error storing running summaries for scan {scan_id}: {error}")
+
+
+def _store_final_scan_summaries(
+    tenant_id: str,
+    scan_id: str,
+    scan_resource_cache: set[tuple[str, str, str, str]],
+    scan_categories_cache: dict[tuple[str, str], dict[str, int]],
+) -> None:
+    """Store the complete filter values and category counters of a scan."""
+    try:
+        _store_resource_scan_summaries(tenant_id, scan_id, scan_resource_cache)
+    except Exception as filter_exception:
+        sentry_sdk.capture_exception(filter_exception)
+        logger.error(
+            f"Error storing filter values for scan {scan_id}: {filter_exception}"
+        )
+
+    try:
+        _store_scan_category_summaries(tenant_id, scan_id, scan_categories_cache)
+    except Exception as cat_exception:
+        sentry_sdk.capture_exception(cat_exception)
+        logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
+
+
+def _delete_scan_summaries(tenant_id: str, scan_id: str) -> None:
+    """Drop the partial summaries of a failed scan so readers aggregate its findings."""
+    try:
+        with rls_transaction(tenant_id):
+            ResourceScanSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).delete()
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).delete()
+    except Exception as error:
+        sentry_sdk.capture_exception(error)
+        logger.error(f"Error deleting partial summaries for scan {scan_id}: {error}")
+
+
 def perform_prowler_scan(
     tenant_id: str,
     scan_id: str,
@@ -1313,6 +1420,7 @@ def perform_prowler_scan(
     exception = None
     unique_resources = set()
     scan_resource_cache: set[tuple[str, str, str, str]] = set()
+    stored_scan_resources: set[tuple[str, str, str, str]] = set()
     scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
     scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
     group_resources_cache: dict[str, set] = {}
@@ -1444,6 +1552,19 @@ def perform_prowler_scan(
                     )
                 last_persisted_progress = progress
                 last_persisted_progress_at = now
+                _store_running_scan_summaries(
+                    tenant_id,
+                    scan_id,
+                    scan_resource_cache,
+                    stored_scan_resources,
+                    scan_categories_cache,
+                )
+
+        # Written before the scan is saved as completed: a mute rule can
+        # reaggregate the categories of a completed scan at any time.
+        _store_final_scan_summaries(
+            tenant_id, scan_id, scan_resource_cache, scan_categories_cache
+        )
 
         scan_instance.state = StateChoices.COMPLETED
 
@@ -1498,51 +1619,11 @@ def perform_prowler_scan(
                 exception = e
 
     if exception is not None:
+        if not skip_final_scan_update and (
+            scan_resource_cache or scan_categories_cache
+        ):
+            _delete_scan_summaries(tenant_id, scan_id)
         raise exception
-
-    try:
-        resource_scan_summaries = [
-            ResourceScanSummary(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                resource_id=resource_id,
-                service=service,
-                region=region,
-                resource_type=resource_type,
-            )
-            for resource_id, service, region, resource_type in scan_resource_cache
-        ]
-        with rls_transaction(tenant_id):
-            ResourceScanSummary.objects.bulk_create(
-                resource_scan_summaries, batch_size=500, ignore_conflicts=True
-            )
-    except Exception as filter_exception:
-        sentry_sdk.capture_exception(filter_exception)
-        logger.error(
-            f"Error storing filter values for scan {scan_id}: {filter_exception}"
-        )
-
-    try:
-        if scan_categories_cache:
-            category_summaries = [
-                ScanCategorySummary(
-                    tenant_id=tenant_id,
-                    scan_id=scan_id,
-                    category=category,
-                    severity=severity,
-                    total_findings=counts["total"],
-                    failed_findings=counts["failed"],
-                    new_failed_findings=counts["new_failed"],
-                )
-                for (category, severity), counts in scan_categories_cache.items()
-            ]
-            with rls_transaction(tenant_id):
-                ScanCategorySummary.objects.bulk_create(
-                    category_summaries, batch_size=500, ignore_conflicts=True
-                )
-    except Exception as cat_exception:
-        sentry_sdk.capture_exception(cat_exception)
-        logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
 
     try:
         if scan_resource_groups_cache:

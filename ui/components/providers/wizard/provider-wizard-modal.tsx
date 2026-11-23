@@ -27,21 +27,16 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import { LighthouseConnectHelp } from "./lighthouse-connect-help";
 import {
-  getCredentialsRetryStep,
-  getLaunchBackStep,
-  getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
-  getProviderWizardStepper,
+  getProviderWizardSteps,
 } from "./provider-wizard-modal.utils";
 import { ConnectStep } from "./steps/connect-step";
-import { CredentialsStep } from "./steps/credentials-step";
 import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
-import { TestConnectionStep } from "./steps/test-connection-step";
 import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
 import {
   getActiveStepIndex,
-  PROVIDER_WIZARD_STEPS,
+  ORGANIZATION_WIZARD_STEPS,
   WizardStepper,
 } from "./wizard-stepper";
 
@@ -68,6 +63,7 @@ export function ProviderWizardModal({
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
+    connectionMethod,
     currentStep,
     docsLink,
     handleClose,
@@ -108,31 +104,12 @@ export function ProviderWizardModal({
     isScheduleCapabilityLoading,
   } = useScanScheduleCapability(scanScheduleCapability);
   const docsDestination = getProviderWizardDocsDestination(docsLink);
-  const providerStepper = getProviderWizardStepper({
-    mode,
-    providerType: providerTypeHint,
-    currentStep,
-    isDirectCredentialsEntry,
-  });
-  const orgStepOffset = getOrganizationsStepperOffset(
-    orgCurrentStep,
-    orgSetupPhase,
-  );
-  const stepLabel = isProviderFlow
-    ? providerStepper.steps[
-        getActiveStepIndex(
-          currentStep,
-          providerStepper.stepOffset,
-          providerStepper.steps.length,
-        )
-      ].label
-    : PROVIDER_WIZARD_STEPS[
-        getActiveStepIndex(
-          orgCurrentStep,
-          orgStepOffset,
-          PROVIDER_WIZARD_STEPS.length,
-        )
-      ].label;
+  const stepperSteps = isProviderFlow
+    ? getProviderWizardSteps(mode)
+    : ORGANIZATION_WIZARD_STEPS;
+  const stepperCurrent = isProviderFlow ? currentStep : orgCurrentStep;
+  const stepLabel =
+    stepperSteps[getActiveStepIndex(stepperCurrent, stepperSteps.length)].label;
 
   return (
     <SidePanelHostModal
@@ -146,32 +123,25 @@ export function ProviderWizardModal({
         <DialogTitle className="text-lg font-semibold">
           {modalTitle}
         </DialogTitle>
-        <LighthouseConnectHelp
-          docsLink={docsLink}
-          docsDestination={docsDestination}
-          providerType={isProviderFlow ? providerTypeHint : organizationType}
-          mode={mode}
-          stepName={stepName}
-          stepLabel={stepLabel}
-          isOrganizationsFlow={!isProviderFlow}
-        />
       </DialogHeader>
 
       <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-          <div className="mb-4 box-border w-full shrink-0 lg:mb-0 lg:w-[328px]">
-            {isProviderFlow ? (
-              <WizardStepper
-                currentStep={currentStep}
-                stepOffset={providerStepper.stepOffset}
-                steps={providerStepper.steps}
-              />
-            ) : (
-              <WizardStepper
-                currentStep={orgCurrentStep}
-                stepOffset={orgStepOffset}
-              />
-            )}
+          {/* Help and progress share the left column, so the form keeps the height. */}
+          <div className="mb-4 box-border flex w-full shrink-0 flex-col gap-4 lg:mb-0 lg:w-[328px] lg:gap-8">
+            <LighthouseConnectHelp
+              docsLink={docsLink}
+              docsDestination={docsDestination}
+              providerType={
+                isProviderFlow ? providerTypeHint : organizationType
+              }
+              mode={mode}
+              stepName={stepName}
+              stepLabel={stepLabel}
+              connectionMethod={connectionMethod}
+              isOrganizationsFlow={!isProviderFlow}
+            />
+            <WizardStepper currentStep={stepperCurrent} steps={stepperSteps} />
           </div>
           <div
             aria-hidden
@@ -187,21 +157,10 @@ export function ProviderWizardModal({
                 {isProviderFlow &&
                   currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
                     <ConnectStep
-                      initialProviderType={providerTypeHint}
-                      onNext={() => {
-                        setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
-                      }}
-                      onCredentialsSaved={() => {
-                        // AWS stored its credentials and tested the connection in this
-                        // step, so it takes the same exit the test step took: an update
-                        // closes the wizard, an add moves on to the launch step.
-                        handleTestSuccess();
-                      }}
-                      onClose={handleClose}
-                      onSelectOrganizations={openOrganizationsFlow}
-                      onFooterChange={setFooterConfig}
+                      providerType={providerTypeHint}
+                      locked={isDirectCredentialsEntry}
                       onProviderTypeChange={(providerType) => {
-                        // The form re-reports the same type on re-render; signal a pick once.
+                        // The picker re-reports the same type on re-render; signal a pick once.
                         if (providerType && providerType !== providerTypeHint) {
                           dispatchProviderFunnel({
                             step: PROVIDER_FUNNEL_STEP.PROVIDER_TYPE_SELECTED,
@@ -210,33 +169,11 @@ export function ProviderWizardModal({
                         }
                         setProviderTypeHint(providerType);
                       }}
-                    />
-                  )}
-
-                {isProviderFlow &&
-                  currentStep === PROVIDER_WIZARD_STEP.CREDENTIALS && (
-                    <CredentialsStep
-                      onNext={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
-                      onBack={() =>
-                        setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT)
-                      }
-                      onFooterChange={setFooterConfig}
-                    />
-                  )}
-
-                {isProviderFlow &&
-                  currentStep === PROVIDER_WIZARD_STEP.TEST && (
-                    <TestConnectionStep
-                      onSuccess={handleTestSuccess}
-                      onResetCredentials={() =>
-                        setCurrentStep(
-                          getCredentialsRetryStep({
-                            mode,
-                            providerType: providerTypeHint,
-                            isDirectCredentialsEntry,
-                          }),
-                        )
-                      }
+                      // The account is saved and tested: an update closes the
+                      // wizard, an add moves on to the launch step.
+                      onConnected={handleTestSuccess}
+                      onClose={handleClose}
+                      onSelectOrganizations={openOrganizationsFlow}
                       onFooterChange={setFooterConfig}
                     />
                   )}
@@ -245,12 +182,7 @@ export function ProviderWizardModal({
                   currentStep === PROVIDER_WIZARD_STEP.LAUNCH && (
                     <LaunchStep
                       onBack={() =>
-                        setCurrentStep(
-                          getLaunchBackStep({
-                            providerType: providerTypeHint,
-                            isDirectCredentialsEntry,
-                          }),
-                        )
+                        setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT)
                       }
                       onClose={handleClose}
                       onFooterChange={setFooterConfig}
@@ -296,6 +228,9 @@ export function ProviderWizardModal({
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow
                       }
+                      onSelectSingleAccount={
+                        isOrgDirectEntry ? undefined : backToProviderFlow
+                      }
                       onNext={() => {
                         setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                       }}
@@ -320,6 +255,9 @@ export function ProviderWizardModal({
                     <GcpOrgSetupForm
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
+                      onSelectSingleAccount={
+                        isOrgDirectEntry ? undefined : backToProviderFlow
                       }
                       onClose={handleClose}
                       onNext={() => {

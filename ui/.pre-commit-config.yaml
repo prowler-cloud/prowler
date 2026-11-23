@@ -18,7 +18,7 @@ repos:
 
       - id: ui-lint
         name: UI - ESLint (fix, staged)
-        entry: pnpm exec eslint --fix --max-warnings 40 --no-warn-ignored
+        entry: pnpm exec eslint --fix --max-warnings 0 --no-warn-ignored
         language: system
         files: '\.(ts|tsx|js|jsx)$'
         pass_filenames: true
