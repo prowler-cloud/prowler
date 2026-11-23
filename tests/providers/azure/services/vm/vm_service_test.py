@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from azure.mgmt.compute import models as compute_models
 
 from prowler.providers.azure.services.vm.vm_service import (
     Disk,
@@ -129,6 +130,129 @@ def vm_service_factory():
         return vm_service
 
     return _build
+
+
+@pytest.mark.parametrize(
+    "resource_groups", [None, {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}]
+)
+@pytest.mark.parametrize(
+    "flag",
+    ["disable_password_authentication", "secure_boot_enabled", "v_tpm_enabled"],
+)
+@pytest.mark.parametrize("value", ["omitted", None, False, True])
+def test_get_virtual_machines_nullable_security_flags(
+    vm_service_factory, resource_groups, flag, value
+):
+    linux_flags = {"disable_password_authentication": True}
+    uefi_flags = {"secure_boot_enabled": True, "v_tpm_enabled": True}
+    flags = linux_flags if flag == "disable_password_authentication" else uefi_flags
+    if value == "omitted":
+        flags.pop(flag)
+    else:
+        flags[flag] = value
+
+    vm = compute_models.VirtualMachine(
+        location="westeurope",
+        os_profile=compute_models.OSProfile(
+            linux_configuration=compute_models.LinuxConfiguration(**linux_flags)
+        ),
+        security_profile=compute_models.SecurityProfile(
+            security_type="TrustedLaunch",
+            uefi_settings=compute_models.UefiSettings(**uefi_flags),
+        ),
+    )
+    following_vm = compute_models.VirtualMachine(
+        location="westeurope",
+        os_profile=compute_models.OSProfile(
+            linux_configuration=compute_models.LinuxConfiguration(
+                disable_password_authentication=True
+            )
+        ),
+        security_profile=compute_models.SecurityProfile(
+            security_type="TrustedLaunch",
+            uefi_settings=compute_models.UefiSettings(
+                secure_boot_enabled=True, v_tpm_enabled=True
+            ),
+        ),
+    )
+    # The SDK fills read-only resource metadata when deserializing API responses.
+    for sdk_vm, name in [(vm, "nullable-vm"), (following_vm, "following-vm")]:
+        sdk_vm.id = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}/providers/Microsoft.Compute/virtualMachines/{name}"
+        sdk_vm.name = name
+
+    mock_client = MagicMock()
+    mock_client.virtual_machines.list_all.return_value = [vm, following_vm]
+    mock_client.virtual_machines.list.return_value = [vm, following_vm]
+    service = vm_service_factory(mock_client, resource_groups)
+    service.virtual_machines = service._get_virtual_machines()
+
+    machines = service.virtual_machines[AZURE_SUBSCRIPTION_ID]
+    assert list(machines) == [vm.id, following_vm.id]
+    assert machines[vm.id].resource_name == vm.name
+    assert machines[vm.id].location == vm.location
+    if resource_groups:
+        mock_client.virtual_machines.list.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.virtual_machines.list_all.assert_not_called()
+    else:
+        mock_client.virtual_machines.list_all.assert_called_once_with()
+        mock_client.virtual_machines.list.assert_not_called()
+
+    expected_enabled = value is True
+    if flag == "disable_password_authentication":
+        assert (
+            machines[vm.id].linux_configuration.disable_password_authentication
+            is expected_enabled
+        )
+        assert (
+            machines[
+                following_vm.id
+            ].linux_configuration.disable_password_authentication
+            is True
+        )
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication.vm_client",
+                new=service,
+            ),
+        ):
+            from prowler.providers.azure.services.vm.vm_linux_enforce_ssh_authentication.vm_linux_enforce_ssh_authentication import (
+                vm_linux_enforce_ssh_authentication,
+            )
+
+            findings = vm_linux_enforce_ssh_authentication().execute()
+    else:
+        assert (
+            getattr(machines[vm.id].security_profile.uefi_settings, flag)
+            is expected_enabled
+        )
+        assert getattr(machines[following_vm.id].security_profile.uefi_settings, flag)
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.vm.vm_trusted_launch_enabled.vm_trusted_launch_enabled.vm_client",
+                new=service,
+            ),
+        ):
+            from prowler.providers.azure.services.vm.vm_trusted_launch_enabled.vm_trusted_launch_enabled import (
+                vm_trusted_launch_enabled,
+            )
+
+            findings = vm_trusted_launch_enabled().execute()
+
+    assert [finding.resource_id for finding in findings] == [vm.id, following_vm.id]
+    assert [finding.status for finding in findings] == [
+        "PASS" if expected_enabled else "FAIL",
+        "PASS",
+    ]
 
 
 @patch(
