@@ -292,6 +292,36 @@ class TestFinding:
         assert finding_output.service_name == "service"
         assert finding_output.raw == {}
 
+    def test_generate_output_carries_the_check_raw_payload(self):
+        # Prowler Cloud stores Finding.raw as the finding's raw result, which is
+        # where the emerging-threat checks hand their matches downstream.
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.identity.profile = "default"
+        provider.identity.account = "123456789012"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata = None
+        check_output = MagicMock()
+        check_output.resource_id = "i-0123"
+        check_output.resource_arn = "arn:aws:ec2:us-east-1:123456789012:instance/i-0123"
+        check_output.resource_details = ""
+        check_output.resource_tags = {}
+        check_output.region = "us-east-1"
+        check_output.partition = "aws"
+        check_output.status = Status.FAIL
+        check_output.status_extended = "affected"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="aws")
+        check_output.resource = {}
+        check_output.compliance = {}
+        check_output.raw = {"threats": [{"id": "demo-ssh-bypass"}]}
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert finding_output.raw == {"threats": [{"id": "demo-ssh-bypass"}]}
+
     def test_generate_output_aws_without_organizations_metadata(self):
         # Simulates running without --organizations-role
         provider = MagicMock()

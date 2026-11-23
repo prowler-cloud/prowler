@@ -11,18 +11,19 @@ Prowler supports Alibaba Cloud both from the CLI and from Prowler Cloud. This gu
 
 Before you begin, make sure you have:
 
-1. An **Alibaba Cloud Account ID** (visible in the Alibaba Cloud Console under your profile).
-2. **Credentials** with appropriate permissions:
+1. An **Alibaba Cloud Account ID** (visible in the Alibaba Cloud Console under your profile). This is required for Prowler Cloud only; the CLI does not need it.
+2. **Credentials** with the permissions Prowler needs to audit your resources:
    - **RAM User with Access Keys**: For local CLI usage or simple CI setups. See [RAM User and AccessKey](/user-guide/providers/alibabacloud/authentication#ram-user-and-accesskey).
    - **RAM Role**: For role assumption and Prowler Cloud onboarding. See [RAM Role Assumption](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended).
-3. The required permissions for Prowler to audit your resources. See the [Alibaba Cloud Authentication](/user-guide/providers/alibabacloud/authentication) guide for setup steps and permission guidance.
+
+For setup steps and permission guidance, see the [Alibaba Cloud Authentication](/user-guide/providers/alibabacloud/authentication) guide.
 
 <CardGroup cols={2}>
   <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
-    Onboard Alibaba Cloud using Prowler Cloud
+    Connect your Alibaba Cloud account in the Prowler Cloud UI
   </Card>
   <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
-    Onboard Alibaba Cloud using Prowler CLI
+    Scan your Alibaba Cloud account from the command line
   </Card>
 </CardGroup>
 
@@ -34,28 +35,28 @@ Before you begin, make sure you have:
 
 ### Step 1: Get Your Alibaba Cloud Account ID
 
-1. Log in to the [Alibaba Cloud Console](https://home.console.alibabacloud.com/)
-2. Click your profile avatar in the top-right corner
-3. Locate and copy your Account ID
+1. Log in to the [Alibaba Cloud Console](https://home.console.alibabacloud.com/).
+2. Click your profile avatar in the top-right corner.
+3. Locate and copy your Account ID.
 
 ![Get Account ID](/images/providers/alibaba-account-id.png)
 
 ### Step 2: Access Prowler Cloud
 
-1. Sign in to [Prowler Cloud](https://cloud.prowler.com/sign-in) or [create an account](https://cloud.prowler.com/sign-up)
-2. Go to "Configuration" > "Providers"
+1. Sign in to [Prowler Cloud](https://cloud.prowler.com/sign-in) or [create an account](https://cloud.prowler.com/sign-up).
+2. Go to "Configuration" > "Providers".
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
 
-3. Click "Add Provider"
+3. Click "Add Provider".
 
     ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
 
-4. Select "Alibaba Cloud"
+4. Select "Alibaba Cloud".
 
     ![Select Alibaba Cloud](/images/providers/select-alibaba-cloud.png)
 
-5. Enter your Alibaba Cloud Account ID and optionally provide a friendly alias
+5. Enter your Alibaba Cloud Account ID and optionally provide a friendly alias.
 
     ![Add Account ID](/images/providers/add-alibaba-account-id.png)
 
@@ -69,8 +70,8 @@ After the Account ID is in place, select the authentication method that matches 
 
 Use this method for secure cross-account access. For detailed instructions on how to create the RAM role, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended).
 
-1. Enter the **Role ARN** (format: `acs:ram::<account-id>:role/<role-name>`)
-2. Enter the **Access Key ID** and **Access Key Secret** of the RAM user that will assume the role
+1. Enter the **Role ARN** (format: `acs:ram::<account-id>:role/<role-name>`).
+2. Enter the **Access Key ID** and **Access Key Secret** of the RAM user that will assume the role.
 
     ![Input the Role ARN](/images/providers/alibaba-get-role-arn.png)
 
@@ -82,7 +83,7 @@ The RAM user whose credentials you provide must have permission to assume the ta
 
 Use static credentials for quick scans (not recommended for production). For detailed setup, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#ram-user-and-accesskey).
 
-1. Enter the **Access Key ID** and **Access Key Secret**
+1. Enter the **Access Key ID** and **Access Key Secret**.
 
     ![Filled Credentials Page](/images/providers/alibaba-credentials-form.png)
 
@@ -92,8 +93,8 @@ Static access keys are long-lived credentials. For production environments, cons
 
 ### Step 4: Launch the Scan
 
-1. Click "Next" to review your configuration
-2. Click "Launch Scan" to start auditing your Alibaba Cloud account
+1. Click "Next" to review your configuration.
+2. Click "Launch Scan" to start auditing your Alibaba Cloud account.
 
     ![Launch Scan](/images/providers/launch-scan-alibaba.png)
 
@@ -103,7 +104,7 @@ Static access keys are long-lived credentials. For production environments, cons
 
 <VersionBadge version="5.15.0" />
 
-You can also run Alibaba Cloud assessments directly from the CLI. Both command-line flags and environment variables are supported.
+You can also run Alibaba Cloud assessments directly from the CLI. Both command-line flags and environment variables are supported. Make sure Prowler CLI is installed before you start.
 
 ### Step 1: Select an Authentication Method
 
@@ -119,6 +120,8 @@ prowler alibabacloud
 
 #### Default Credential Chain
 
+This method requires the [Alibaba Cloud CLI](https://www.alibabacloud.com/help/en/cli/) (`aliyun`) to be installed.
+
 ```bash
 aliyun configure --mode AK
 prowler alibabacloud
@@ -126,15 +129,22 @@ prowler alibabacloud
 
 #### RAM Role Assumption
 
-```bash
-# Using --role-arn CLI flag
-export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
-export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
-prowler alibabacloud --role-arn acs:ram::123456789012:role/ProwlerAuditRole
+Set the access keys of the RAM user that will assume the role:
 
-# Or using environment variables
+```bash
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
 export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+```
+
+Then provide the role using either the `--role-arn` flag:
+
+```bash
+prowler alibabacloud --role-arn acs:ram::123456789012:role/ProwlerAuditRole
+```
+
+or the `ALIBABA_CLOUD_ROLE_ARN` environment variable:
+
+```bash
 export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/ProwlerAuditRole"
 prowler alibabacloud
 ```
@@ -174,5 +184,5 @@ prowler alibabacloud --compliance cis_2.0_alibabacloud
 ### Additional Tips
 
 - Combine flags (for example, `--checks` or `--services`) just like with other providers.
-- Use `--output-modes` to export findings in JSON, CSV, ASFF, etc.
+- Use `--output-modes` to export findings in formats such as CSV, JSON-OCSF, and HTML.
 - For more authentication options (OIDC, Credentials URI, STS), see the [Authentication guide](/user-guide/providers/alibabacloud/authentication).

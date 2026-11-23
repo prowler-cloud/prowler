@@ -19,6 +19,8 @@ class ec2_launch_template_no_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = ec2_client.audit_config.get("secrets_validate", False)
+
+        confidence = ec2_client.audit_config.get("secrets_confidence", "low")
         templates = list(ec2_client.launch_templates)
 
         # Track versions whose User Data cannot be decoded so the template is
@@ -62,7 +64,10 @@ class ec2_launch_template_no_secrets(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

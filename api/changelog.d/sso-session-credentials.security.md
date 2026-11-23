@@ -1,0 +1,1 @@
+Sessions started through SAML SSO or with an API key can no longer change the account password or email, even when the user belongs only to that organization, so credentials set from them cannot be used to reach organizations the user joins later

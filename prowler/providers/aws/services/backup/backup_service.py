@@ -159,6 +159,8 @@ class Backup(AWSService):
         logger.info("Backup - Listing Backup Selections...")
         try:
             for backup_plan in self.backup_plans:
+                if backup_plan.region != regional_client.region:
+                    continue
                 paginator = regional_client.get_paginator("list_backup_selections")
                 for page in paginator.paginate(BackupPlanId=backup_plan.id):
                     for selection in page.get("BackupSelectionsList", []):

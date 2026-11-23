@@ -767,7 +767,7 @@ def generate_compliance_reports(
         results["threatscore"] = {"upload": False, "path": ""}
         generate_threatscore = False
 
-    if generate_ens and provider_type not in ["aws", "azure", "gcp"]:
+    if generate_ens and provider_type not in ["aws", "azure", "gcp", "m365"]:
         logger.info("Provider %s not supported for ENS report", provider_type)
         results["ens"] = {"upload": False, "path": ""}
         generate_ens = False
