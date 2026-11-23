@@ -92,3 +92,34 @@ class GCPENSModel(BaseModel):
     ResourceName: str
     Framework: str
     Name: str
+
+
+class M365ENSModel(BaseModel):
+    """
+    M365ENSModel generates a finding's output in CSV ENS format for Microsoft 365.
+    """
+
+    Provider: str
+    Description: str
+    TenantId: str
+    Location: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_IdGrupoControl: str
+    Requirements_Attributes_Marco: str
+    Requirements_Attributes_Categoria: str
+    Requirements_Attributes_DescripcionControl: str
+    Requirements_Attributes_Nivel: str
+    Requirements_Attributes_Tipo: str
+    Requirements_Attributes_Dimensiones: str
+    Requirements_Attributes_ModoEjecucion: str
+    Requirements_Attributes_Dependencias: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+    Muted: bool
+    ResourceName: str
+    Framework: str
+    Name: str

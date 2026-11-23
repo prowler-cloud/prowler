@@ -53,7 +53,7 @@ class TestDispatchStartswith:
 
     @pytest.mark.parametrize(
         "framework_name",
-        ["ens_rd2022_aws", "ens_rd2022_azure", "ens_rd2022_gcp"],
+        ["ens_rd2022_aws", "ens_rd2022_azure", "ens_rd2022_gcp", "ens_rd2022_m365"],
     )
     @patch(f"{MODULE}.get_ens_table")
     def test_ens_dispatch(self, mock_fn, framework_name):

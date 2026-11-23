@@ -12,7 +12,7 @@ from api.db_utils import rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
 from api.models import Finding, Provider
 from api.rls import Tenant
-from tasks.base import RLSTask
+from config.celery import RLSTask
 
 # =============================================================================
 # TENANT ISOLATION (RLS)
@@ -29,7 +29,7 @@ class ProviderViewSet:
 
 
 @shared_task(base=RLSTask)
-@set_tenant
+@set_tenant(keep_tenant=True)  # function receives tenant_id
 def process_scan_good(tenant_id, scan_id):
     """GOOD: Explicit RLS context in Celery tasks."""
     with rls_transaction(tenant_id):
@@ -80,7 +80,7 @@ class SecureViewSet:
 
 
 @shared_task(base=RLSTask)
-@set_tenant
+@set_tenant(keep_tenant=True)  # function receives tenant_id
 def process_provider(tenant_id, provider_id):
     """Example: Validate task arguments before processing."""
     # Validate UUID format before database query
@@ -150,7 +150,7 @@ def create_provider_bad(request, data):
     soft_time_limit=300,  # 5 min: raises SoftTimeLimitExceeded
     time_limit=360,  # 6 min: hard kill
 )
-@set_tenant
+@set_tenant(keep_tenant=True)  # function receives tenant_id
 def sync_provider_data(self, tenant_id, provider_id):
     """Example: Modern retry pattern with time limits."""
     try:
@@ -169,7 +169,7 @@ def sync_provider_data(self, tenant_id, provider_id):
 
 
 @shared_task(base=RLSTask, acks_late=True)
-@set_tenant
+@set_tenant(keep_tenant=True)  # function receives tenant_id
 def process_finding_good(tenant_id, finding_uid, data):
     """GOOD: Idempotent - safe to retry, uses upsert pattern."""
     with rls_transaction(tenant_id):
@@ -178,7 +178,7 @@ def process_finding_good(tenant_id, finding_uid, data):
 
 
 @shared_task(base=RLSTask)
-@set_tenant
+@set_tenant(keep_tenant=True)  # function receives tenant_id
 def create_notification_bad(tenant_id, message):
     """BAD: Non-idempotent - retry creates duplicates."""
     with rls_transaction(tenant_id):
@@ -187,7 +187,7 @@ def create_notification_bad(tenant_id, message):
 
 
 @shared_task(base=RLSTask, acks_late=True)
-@set_tenant
+@set_tenant(keep_tenant=True)  # function receives tenant_id
 def send_notification_good(tenant_id, idempotency_key, message):
     """GOOD: Idempotency key for non-upsertable operations."""
     with rls_transaction(tenant_id):
