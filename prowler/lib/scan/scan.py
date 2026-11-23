@@ -29,6 +29,8 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.image.image_provider import ImageProvider
 
+SEVERITY_ORDER = {severity: index for index, severity in enumerate(Severity)}
+
 
 class Scan:
     _provider: Provider
@@ -164,7 +166,7 @@ class Scan:
         if provider.type in ("iac", "image"):
             self._checks_to_execute = [f"{provider.type}_scan"]
         else:
-            self._checks_to_execute = sorted(
+            self._checks_to_execute = self._sort_checks(
                 load_checks_to_execute(
                     bulk_checks_metadata=self._bulk_checks_metadata,
                     bulk_compliance_frameworks=self._bulk_compliance_frameworks,
@@ -229,7 +231,7 @@ class Scan:
                 raise ScanInvalidCheckError(
                     "The scan configuration excludes every selected check."
                 )
-            self._checks_to_execute = sorted(selected_checks)
+            self._checks_to_execute = self._sort_checks(selected_checks)
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
@@ -244,6 +246,28 @@ class Scan:
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
+
+    def _sort_checks(self, checks) -> list[str]:
+        """Order checks by severity, highest first, then by name.
+
+        A long scan then stores its most valuable findings early.
+
+        Args:
+            checks: Check names to order.
+
+        Returns:
+            list[str]: The ordered check names.
+        """
+        return sorted(
+            checks,
+            key=lambda check: (
+                SEVERITY_ORDER.get(
+                    getattr(self._bulk_checks_metadata.get(check), "Severity", None),
+                    len(SEVERITY_ORDER),
+                ),
+                check,
+            ),
+        )
 
     @property
     def checks_to_execute(self) -> list[str]:

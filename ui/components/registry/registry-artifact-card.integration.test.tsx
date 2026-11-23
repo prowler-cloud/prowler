@@ -71,7 +71,7 @@ describe("Registry card install verdict", () => {
         artifact={{
           ...checksArtifact,
           isInstallable: false,
-          notInstallableReason: "checks_target_is_not_builtin",
+          notInstallableReason: "artifact_targets_no_provider",
         }}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
@@ -81,8 +81,45 @@ describe("Registry card install verdict", () => {
     // Then
     await expect
       .element(
+        screen.getByText("It ships checks but names no provider to extend."),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: /Add/ }))
+      .not.toBeInTheDocument();
+  });
+
+  it("links an artifact that needs approved access to its Registry bundle", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...checksArtifact,
+          isInstallable: false,
+          notInstallableReason: "access_required",
+          accessRequestPath: "/bundles/vcf-bundle",
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+        registryUrl="https://registry.example.com/"
+      />,
+    );
+
+    // Then: the link takes the action slot and the note says why.
+    const link = screen.getByRole("link", {
+      name: "Request access to Acme AWS checks in the Prowler Registry (opens in a new tab)",
+    });
+    await expect
+      .element(link)
+      .toHaveAttribute(
+        "href",
+        "https://registry.example.com/bundles/vcf-bundle",
+      );
+    await expect.element(link).toHaveTextContent("Request access");
+    await expect
+      .element(
         screen.getByText(
-          "Its checks are written for a provider this deployment does not ship.",
+          "Needs approved access in the Prowler Registry. Once approved, it installs with that account's Registry API key.",
         ),
       )
       .toBeVisible();
@@ -181,15 +218,17 @@ describe("Registry card metadata layout", () => {
     await expect
       .element(screen.getByText("Added", { exact: true }))
       .not.toBeInTheDocument();
+    const metadata = screen.getByRole("group", { name: "Artifact metadata" });
     await expect
-      .element(screen.getByText("Installed", { exact: true }))
-      .toBeVisible();
+      .element(metadata.getByText("Installed", { exact: true }))
+      .toBeInTheDocument();
     await expect
-      .element(screen.getByText("1.0.0", { exact: true }))
-      .toBeVisible();
-    await expect
-      .element(screen.getByText("Available", { exact: true }))
-      .toBeVisible();
+      .element(metadata.getByText("Available", { exact: true }))
+      .toBeInTheDocument();
+    // Installed → available, read in that order.
+    expect(metadata.element().firstElementChild?.textContent).toBe(
+      "Installed1.0.0Available→ 5.15.0",
+    );
   });
 
   afterEach(async () => {
@@ -201,14 +240,14 @@ describe("Registry card metadata layout", () => {
     // Given
     const screen = await render(
       <RegistryArtifactCard
-        artifact={{ ...artifact, providers: ["aws", "gcp", "template"] }}
+        artifact={{ ...artifact, providers: ["aws", "gcp"] }}
         onAdd={vi.fn()}
         onRemove={vi.fn()}
       />,
     );
 
     // When / Then: each visible provider uses its own display name.
-    for (const name of ["AWS", "Google Cloud", "Template"]) {
+    for (const name of ["AWS", "Google Cloud"]) {
       const logo = screen.getByRole("img", { name, exact: true });
       await logo.hover();
       await expect.element(screen.getByRole("tooltip")).toHaveTextContent(name);
@@ -231,6 +270,72 @@ describe("Registry card metadata layout", () => {
       .toHaveTextContent("Google Cloud");
   });
 
+  it("names Registry providers in text, since they have no logo of their own", async () => {
+    // Given: an artifact covering a built-in and two providers without a logo
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          providers: ["aws", "template", "local-template"],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then: the built-in keeps its logo, the others read without hovering
+    await expect
+      .element(screen.getByRole("img", { name: "AWS", exact: true }))
+      .toBeVisible();
+    for (const name of ["Template", "Local Template"]) {
+      await expect
+        .element(screen.getByText(name, { exact: true }))
+        .toBeVisible();
+    }
+  });
+
+  it("shows three Registry provider names and lists the rest behind +N", async () => {
+    // Given: a built-in and six providers without a logo
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          providers: [
+            "aws",
+            "openai",
+            "chatgpt",
+            "vcf",
+            "snowflake",
+            "datadog",
+            "salesforce",
+          ],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then: three names read as text and one +3 holds the rest
+    const names = screen.getByRole("list", { name: "Providers" });
+    expect(
+      names
+        .getByRole("listitem")
+        .elements()
+        .map((item) => item.textContent),
+    ).toEqual(["Openai", "Chatgpt", "Vcf", "+3"]);
+
+    // When: keyboard users reach the overflow
+    const more = screen.getByRole("img", {
+      name: "3 more: Snowflake, Datadog, Salesforce",
+    });
+    (more.element() as HTMLElement).focus();
+
+    // Then
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Snowflake, Datadog, Salesforce");
+  });
+
   it.each([
     { width: 320, theme: "dark" },
     { width: 768, theme: "dark" },
@@ -248,7 +353,7 @@ describe("Registry card metadata layout", () => {
       const onAdd = vi.fn();
       const screen = await render(
         <main className="p-4">
-          <RegistryArtifactGrid isEmpty={false} emptyMessage="No artifacts">
+          <RegistryArtifactGrid>
             <li>
               <RegistryArtifactCard
                 artifact={artifact}
@@ -288,17 +393,19 @@ describe("Registry card metadata layout", () => {
         </main>,
       );
 
-      // Then: values stay complete, contained, and grouped in each card's footer.
+      // Then: values stay complete and inside each card.
+      const contents = screen.getByRole("list", { name: "Contents" });
       const metadataBlocks = screen.getByRole("group", {
         name: "Artifact metadata",
       });
       await expect.element(metadataBlocks.nth(2)).toBeVisible();
       await expect
         .element(
-          metadataBlocks
-            .nth(1)
-            .getByText("9,007,199,254,740,991", { exact: true }),
+          contents.nth(1).getByText("9,007,199,254,740,991", { exact: true }),
         )
+        .toBeVisible();
+      await expect
+        .element(contents.nth(1).getByText("123,456,789", { exact: true }))
         .toBeVisible();
       await expect
         .element(
@@ -308,12 +415,15 @@ describe("Registry card metadata layout", () => {
       await expect
         .element(metadataBlocks.nth(2).getByText(longVersion, { exact: true }))
         .toBeVisible();
-      for (const item of screen.getByRole("listitem").elements()) {
-        const card = item.querySelector('[data-slot="card"]')!;
-        const metadata = item.querySelector("dl")!;
+      const cards = Array.from(document.querySelectorAll('[data-slot="card"]'));
+      expect(cards).toHaveLength(3);
+      for (const card of cards) {
         const bounds = card.getBoundingClientRect();
         expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth);
-        for (const value of Array.from(metadata.querySelectorAll("dt, dd"))) {
+        const values = card.querySelectorAll(
+          'ul[aria-label="Contents"] > li, dl dd',
+        );
+        for (const value of Array.from(values)) {
           expect(value.scrollWidth).toBeLessThanOrEqual(value.clientWidth);
           const range = document.createRange();
           range.selectNodeContents(value);
@@ -322,10 +432,6 @@ describe("Registry card metadata layout", () => {
             expect(line.right).toBeLessThanOrEqual(bounds.right);
           }
         }
-        const description = item.querySelector("p");
-        expect(metadata.getBoundingClientRect().top).toBeGreaterThan(
-          description!.getBoundingClientRect().bottom,
-        );
       }
       expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
 
@@ -337,4 +443,61 @@ describe("Registry card metadata layout", () => {
       await screen.getByRole("main").screenshot();
     },
   );
+
+  it("lines up the footers of cards in the same row", async () => {
+    // Given: three cards with different descriptions, chips, notes and
+    // providers, most of them Registry-only.
+    await page.viewport(1440, 1000);
+    await render(
+      <main className="p-4">
+        <RegistryArtifactGrid>
+          <li>
+            <RegistryArtifactCard
+              artifact={artifact}
+              onAdd={vi.fn()}
+              onRemove={vi.fn()}
+            />
+          </li>
+          <li>
+            <RegistryArtifactCard
+              artifact={{
+                ...checksArtifact,
+                providers: [
+                  "aws",
+                  "azure",
+                  "openai",
+                  "chatgpt",
+                  "vcf",
+                  "snowflake",
+                  "datadog",
+                  "salesforce",
+                ],
+                description: undefined,
+                isInstallable: false,
+                notInstallableReason: "checks_target_is_not_builtin",
+              }}
+              onAdd={vi.fn()}
+              onRemove={vi.fn()}
+            />
+          </li>
+          <li>
+            <RegistryTenantArtifactCard
+              normalizedName="retired-aws-checks"
+              resolvedVersion="0.2.2"
+              onRemove={vi.fn()}
+            />
+          </li>
+        </RegistryArtifactGrid>
+      </main>,
+    );
+
+    // Then
+    const footerTops = Array.from(
+      document.querySelectorAll('dl[aria-label="Artifact metadata"]'),
+      (metadata) =>
+        Math.round(metadata.parentElement!.getBoundingClientRect().top),
+    );
+    expect(footerTops).toHaveLength(3);
+    expect(new Set(footerTops).size).toBe(1);
+  });
 });

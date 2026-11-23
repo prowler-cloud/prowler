@@ -6,31 +6,36 @@ import { LighthouseSkillsMenuItems } from "@/components/findings/table/lighthous
 import { LighthouseIcon } from "@/components/icons";
 import { ActionDropdown } from "@/components/shadcn/dropdown";
 import {
-  getAllSkills,
   getLaunchableSkills,
+  getSkillsForSurface,
 } from "@/lib/lighthouse/skills/registry";
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
-
-// Catalog is static, so the chip split is module-level: launchable skills
-// become direct-launch chips; +N counts what the rail hides (disabled skills
-// today). The menu itself is the app-wide shared skills menu.
-const CHIP_SKILLS = getLaunchableSkills();
-const OVERFLOW_COUNT = getAllSkills().length - CHIP_SKILLS.length;
+import {
+  LIGHTHOUSE_SKILL_SURFACE,
+  type LighthouseSkillDefinition,
+  type LighthouseSkillSurface,
+} from "@/types/lighthouse-skills";
 
 interface LighthouseSkillsRailProps {
+  // Which catalog the rail offers: a finding's skills or an issue's.
+  surface?: LighthouseSkillSurface;
   onLaunchSkill: (skill: LighthouseSkillDefinition) => void;
   // Free-text prompt submitted from the menu footer; starts a fresh
   // Lighthouse panel conversation with the typed text.
   onSubmitPrompt: (text: string) => void;
 }
 
-// Finding-detail skill launcher, "dropdown" experiment variant (chip rail):
-// one compact row under the finding title — direct-launch chips plus a +N
-// trigger opening the same skills menu used by the table row surfaces.
+// Finding-detail skill launcher (chip rail): one compact row under the
+// finding title — direct-launch chips plus a +N trigger opening the same
+// skills menu used by the table row surfaces.
 export function LighthouseSkillsRail({
+  surface = LIGHTHOUSE_SKILL_SURFACE.FINDING,
   onLaunchSkill,
   onSubmitPrompt,
 }: LighthouseSkillsRailProps) {
+  // Launchable skills become direct-launch chips; +N counts what the rail
+  // hides (disabled skills today). The menu is the app-wide skills menu.
+  const chipSkills = getLaunchableSkills(surface);
+  const overflowCount = getSkillsForSurface(surface).length - chipSkills.length;
   return (
     <div className="border-border-lighthouse bg-lighthouse-soft flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3">
       <div className="flex shrink-0 items-center gap-1.5">
@@ -41,7 +46,7 @@ export function LighthouseSkillsRail({
       </div>
       <span aria-hidden className="bg-border-lighthouse h-5 w-px shrink-0" />
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
-        {CHIP_SKILLS.map((skill) => (
+        {chipSkills.map((skill) => (
           <button
             key={skill.id}
             type="button"
@@ -66,12 +71,13 @@ export function LighthouseSkillsRail({
             aria-label="More Lighthouse skills"
             className="text-text-lighthouse inline-flex shrink-0 cursor-pointer items-center gap-1 text-sm font-medium"
           >
-            {OVERFLOW_COUNT > 0 && `+${OVERFLOW_COUNT}`}
+            {overflowCount > 0 && `+${overflowCount}`}
             <ChevronDown className="size-4" aria-hidden />
           </button>
         }
       >
         <LighthouseSkillsMenuItems
+          surface={surface}
           onLaunch={onLaunchSkill}
           onSubmitPrompt={onSubmitPrompt}
         />

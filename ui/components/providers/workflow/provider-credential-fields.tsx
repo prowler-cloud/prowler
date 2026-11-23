@@ -17,6 +17,7 @@ import type {
   RegistryCredentialSchema,
   RegistryCredentialValue,
 } from "@/lib/provider-credentials/provider-credential-schema";
+import { formatRegistryLabel } from "@/lib/registry/labels";
 
 interface RegistryCredentialFieldsProps {
   readonly errors: Readonly<Record<string, string | undefined>>;
@@ -107,7 +108,7 @@ export function RegistryCredentialFields({
                 <SelectContent>
                   {field.options?.map((option) => (
                     <SelectItem key={option} value={option}>
-                      {option}
+                      {formatRegistryLabel(option)}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -13,19 +14,27 @@ from api.models import (
     Membership,
     Processor,
     Provider,
-    Resource,
     Role,
     UserRoleRelationship,
 )
-from api.v1.serializers import FindingMetadataSerializer
-from django.contrib.postgres.aggregates import ArrayAgg
+from api.v1.serializers import (
+    FindingMetadataSerializer,
+    KubernetesProviderSecret,
+    declared_secret_fields,
+)
 from django.db import transaction
-from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
 from rest_framework.exceptions import NotFound, ValidationError
+
+logger = logging.getLogger(__name__)
+
+STORED_SECRET_NOT_SUPPORTED_ERROR = (
+    "The stored credentials do not match a supported credential type for this "
+    "provider. Update the provider credentials."
+)
 
 if TYPE_CHECKING:
     from prowler.providers.alibabacloud.alibabacloud_provider import (
@@ -201,6 +210,37 @@ def return_prowler_provider(
     return prowler_provider
 
 
+def _validate_kubernetes_secret(secret: dict) -> None:
+    """Re-validate a stored kubeconfig at use time; errors never echo its content."""
+    KubernetesProviderSecret(
+        data={"kubeconfig_content": secret.get("kubeconfig_content")}
+    ).is_valid(raise_exception=True)
+
+
+def _googleworkspace_credentials(secret: dict) -> dict:
+    """Only the stored key and delegated user: the provider also reads file paths."""
+    return {
+        "credentials_content": secret.get("credentials_content"),
+        "delegated_user": secret.get("delegated_user"),
+    }
+
+
+def declared_provider_secret(provider: Provider) -> dict:
+    """The provider's stored secret without fields its serializer does not declare."""
+    secret = provider.secret.secret
+    declared = declared_secret_fields(
+        provider.provider, provider.secret.secret_type, secret
+    )
+    # secrets stored before the write path dropped undeclared fields may still hold them
+    ignored = sorted(set(secret) - set(declared))
+    if ignored:
+        logger.warning(
+            f"Ignoring undeclared fields in the secret of provider {provider.id}: "
+            + ", ".join(ignored)
+        )
+    return declared
+
+
 def get_prowler_provider_kwargs(
     provider: Provider, mutelist_processor: Processor | None = None
 ) -> dict:
@@ -213,7 +253,7 @@ def get_prowler_provider_kwargs(
     Returns:
         dict: The provider kwargs for the corresponding provider class.
     """
-    prowler_provider_kwargs = provider.secret.secret
+    prowler_provider_kwargs = declared_provider_secret(provider)
     if provider.provider == Provider.ProviderChoices.AZURE.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,
@@ -225,6 +265,7 @@ def get_prowler_provider_kwargs(
             "project_ids": [provider.uid],
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
+        _validate_kubernetes_secret(prowler_provider_kwargs)
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
     elif provider.provider == Provider.ProviderChoices.GITHUB.value:
         if provider.uid:
@@ -238,10 +279,9 @@ def get_prowler_provider_kwargs(
         prowler_provider_kwargs = {
             "scan_repository_url": provider.uid,
         }
-        if "access_token" in provider.secret.secret:
-            prowler_provider_kwargs["oauth_app_token"] = provider.secret.secret[
-                "access_token"
-            ]
+        secret = declared_provider_secret(provider)
+        if "access_token" in secret:
+            prowler_provider_kwargs["oauth_app_token"] = secret["access_token"]
     elif provider.provider == Provider.ProviderChoices.MONGODBATLAS.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,
@@ -266,6 +306,8 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "okta_org_domain": provider.uid,
         }
+    elif provider.provider == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+        prowler_provider_kwargs = _googleworkspace_credentials(prowler_provider_kwargs)
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         # Detect whether uid is a registry URL (e.g. "docker.io/andoniaf") or
         # a concrete image reference (e.g. "docker.io/andoniaf/myimage:latest").
@@ -299,9 +341,14 @@ def get_prowler_provider_kwargs(
     return prowler_provider_kwargs
 
 
+def _without_oraclecloud_key_file(secret: dict) -> dict:
+    """Copy of an OCI secret without key_file, a worker path stored before it was refused."""
+    return {key: value for key, value in secret.items() if key != "key_file"}
+
+
 def _normalize_oraclecloud_provider_kwargs(secret: dict) -> dict:
     """Normalize external OCI secret fields into SDK provider kwargs."""
-    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs = _without_oraclecloud_key_file(secret)
     home_region = _oraclecloud_home_region(prowler_provider_kwargs.pop("region", None))
     if home_region:
         prowler_provider_kwargs["home_region"] = home_region
@@ -320,17 +367,14 @@ def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
     """Normalize external OCI secret fields into test_connection kwargs."""
     from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
-    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs = _without_oraclecloud_key_file(secret)
     home_region = _oraclecloud_home_region(prowler_provider_kwargs.pop("region", None))
 
     if (
         prowler_provider_kwargs.get("user")
         and prowler_provider_kwargs.get("fingerprint")
         and prowler_provider_kwargs.get("tenancy")
-        and (
-            prowler_provider_kwargs.get("key_content")
-            or prowler_provider_kwargs.get("key_file")
-        )
+        and prowler_provider_kwargs.get("key_content")
     ):
         # Identity calls only succeed in a region the tenancy is subscribed to.
         prowler_provider_kwargs["region"] = (
@@ -388,9 +432,25 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     prowler_provider = return_prowler_provider(provider)
 
     try:
-        prowler_provider_kwargs = provider.secret.secret
+        prowler_provider_kwargs = declared_provider_secret(provider)
     except Provider.secret.RelatedObjectDoesNotExist as secret_error:
         return Connection(is_connected=False, error=secret_error)
+    except ValidationError:
+        # A stored secret no serializer accepts is a failed connection, not a task error.
+        return Connection(
+            is_connected=False,
+            error=Exception(STORED_SECRET_NOT_SUPPORTED_ERROR),
+        )
+
+    if provider.provider == Provider.ProviderChoices.KUBERNETES.value:
+        # A rejected stored kubeconfig is a failed connection, not a task error.
+        try:
+            _validate_kubernetes_secret(prowler_provider_kwargs)
+        except ValidationError as validation_error:
+            return Connection(
+                is_connected=False,
+                error=Exception(validation_error.detail["kubeconfig_content"][0]),
+            )
 
     # For IaC provider, construct the kwargs properly for test_connection
     if provider.provider == Provider.ProviderChoices.IAC.value:
@@ -451,6 +511,12 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
             provider_id=provider.uid,
             raise_on_exception=False,
         )
+    elif provider.provider == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+        return prowler_provider.test_connection(
+            **_googleworkspace_credentials(prowler_provider_kwargs),
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,
@@ -490,7 +556,7 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
         credentials = (
             integration.credentials
             if integration.credentials
-            else provider_relationship.provider.secret.secret
+            else declared_provider_secret(provider_relationship.provider)
         )
         connection = SecurityHub.test_connection(
             aws_account_id=provider_relationship.provider.uid,
@@ -627,51 +693,63 @@ def accept_invitation_for_user(
 
 
 # ToRemove after removing the fallback mechanism in /findings/metadata
-def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
-    filtered_ids = filtered_queryset.order_by().values("id")
+def get_findings_metadata_no_aggregations(filtered_queryset):
+    """Build the findings metadata from the values each finding already carries."""
+    services, regions, resource_types, categories, groups = (set() for _ in range(5))
 
-    relevant_resources = Resource.all_objects.filter(
-        tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
-    ).only("service", "region", "type")
-
-    aggregation = relevant_resources.aggregate(
-        services=ArrayAgg("service", flat=True),
-        regions=ArrayAgg("region", flat=True),
-        resource_types=ArrayAgg("type", flat=True),
-    )
-
-    services = sorted(set(aggregation["services"] or []))
-    regions = sorted({region for region in aggregation["regions"] or [] if region})
-    resource_types = sorted(set(aggregation["resource_types"] or []))
-
-    # Aggregate categories from findings
-    categories_set = set()
-    for categories_list in filtered_queryset.values_list("categories", flat=True):
-        if categories_list:
-            categories_set.update(categories_list)
-    categories = sorted(categories_set)
-
-    # Aggregate groups from findings
-    groups = list(
-        filtered_queryset.exclude(resource_groups__isnull=True)
-        .exclude(resource_groups__exact="")
-        .values_list("resource_groups", flat=True)
+    # One pass over the findings: the distinct combinations are few, the findings are not
+    combinations = (
+        filtered_queryset.order_by()
+        .values_list(
+            "resource_services",
+            "resource_regions",
+            "resource_types",
+            "categories",
+            "resource_groups",
+        )
         .distinct()
-        .order_by("resource_groups")
     )
+    for (
+        finding_services,
+        finding_regions,
+        finding_types,
+        finding_categories,
+        finding_group,
+    ) in combinations:
+        services.update(filter(None, finding_services or ()))
+        regions.update(filter(None, finding_regions or ()))
+        resource_types.update(filter(None, finding_types or ()))
+        categories.update(filter(None, finding_categories or ()))
+        if finding_group:
+            groups.add(finding_group)
 
     result = {
-        "services": services,
-        "regions": regions,
-        "resource_types": resource_types,
-        "categories": categories,
-        "groups": groups,
+        "services": sorted(services),
+        "regions": sorted(regions),
+        "resource_types": sorted(resource_types),
+        "categories": sorted(categories),
+        "groups": sorted(groups, key=str.casefold),
     }
 
     serializer = FindingMetadataSerializer(data=result)
     serializer.is_valid(raise_exception=True)
 
     return serializer.data
+
+
+def get_findings_categories(filtered_queryset) -> list[str]:
+    """Sorted categories of the findings, for scans without a category summary."""
+    category_lists = (
+        filtered_queryset.order_by().values_list("categories", flat=True).distinct()
+    )
+    return sorted(
+        {
+            category
+            for categories in category_lists
+            for category in categories or ()
+            if category
+        }
+    )
 
 
 def initialize_prowler_integration(integration: Integration) -> Jira:

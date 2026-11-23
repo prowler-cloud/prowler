@@ -1,6 +1,8 @@
+import gzip
 import os
 import uuid
 import zipfile
+import zlib
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
@@ -14,6 +16,7 @@ from tasks.jobs.export import (
     _compress_output_files,
     _generate_compliance_output_directory,
     _generate_output_directory,
+    _remove_archived_files,
     _upload_to_s3,
     get_s3_client,
     get_s3_presign_client,
@@ -104,6 +107,165 @@ class TestOutputs:
         client = get_s3_client()
         assert client is not None
         assert mock_boto_client.call_args_list[1] == call("s3")
+
+    def test_remove_archived_files_keeps_only_archive_and_unarchived(self, tmpdir):
+        scan_dir = Path(str(tmpdir.mkdir("scan")))
+        output = scan_dir / "prowler-output-aws-20260101000000"
+        (scan_dir / "prowler-output-aws-20260101000000.csv").write_text("finding")
+        compliance_dir = scan_dir / "compliance"
+        compliance_dir.mkdir()
+        (
+            compliance_dir / "prowler-output-aws-20260101000000_cis_1.4_aws.csv"
+        ).write_text("requirement")
+
+        zip_path = _compress_output_files(str(output))
+
+        pdf_dir = scan_dir / "threatscore"
+        pdf_dir.mkdir()
+        (pdf_dir / "report.pdf").write_bytes(b"pdf")
+
+        _remove_archived_files(zip_path)
+
+        assert sorted(p.name for p in scan_dir.iterdir()) == [
+            "prowler-output-aws-20260101000000.zip",
+            "threatscore",
+        ]
+        assert (pdf_dir / "report.pdf").exists()
+        with zipfile.ZipFile(zip_path) as zipf:
+            assert sorted(zipf.namelist()) == [
+                "compliance/prowler-output-aws-20260101000000_cis_1.4_aws.csv",
+                "prowler-output-aws-20260101000000.csv",
+            ]
+
+    def test_remove_archived_files_keeps_files_changed_after_archiving(self, tmpdir):
+        scan_dir = Path(str(tmpdir.mkdir("scan")))
+        loose = scan_dir / "out.csv"
+        loose.write_text("row-1\n")
+        zip_path = _compress_output_files(str(scan_dir / "out"))
+        loose.write_text("row-1\nrow-2\n")
+
+        _remove_archived_files(zip_path)
+
+        assert loose.read_text() == "row-1\nrow-2\n"
+
+    def test_remove_archived_files_keeps_everything_when_a_member_is_corrupt(
+        self, tmpdir
+    ):
+        scan_dir = Path(str(tmpdir.mkdir("scan")))
+        loose = scan_dir / "out.csv"
+        loose.write_text("finding;" * 500)
+        zip_path = Path(_compress_output_files(str(scan_dir / "out")))
+        raw = bytearray(zip_path.read_bytes())
+        with zipfile.ZipFile(zip_path) as zipf:
+            data_offset = zipf.infolist()[0].header_offset + 30 + len("out.csv")
+        raw[data_offset + 2] ^= 0xFF
+        zip_path.write_bytes(bytes(raw))
+
+        with pytest.raises((zipfile.BadZipFile, zlib.error)):
+            _remove_archived_files(str(zip_path))
+
+        assert loose.exists()
+
+    def test_remove_archived_files_ignores_members_outside_the_scan_dir(self, tmpdir):
+        base_dir = Path(str(tmpdir.mkdir("base")))
+        outside = base_dir / "outside.csv"
+        outside.write_text("keep")
+        scan_dir = base_dir / "scan"
+        scan_dir.mkdir()
+        zip_path = scan_dir / "out.zip"
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            zipf.writestr("../outside.csv", "keep")
+
+        _remove_archived_files(str(zip_path))
+
+        assert outside.read_text() == "keep"
+
+    def test_remove_archived_files_keeps_unrelated_empty_directories(self, tmpdir):
+        scan_dir = Path(str(tmpdir.mkdir("scan")))
+        (scan_dir / "out.csv").write_text("finding")
+        zip_path = _compress_output_files(str(scan_dir / "out"))
+        (scan_dir / "threatscore").mkdir()
+
+        _remove_archived_files(zip_path)
+
+        assert (scan_dir / "threatscore").is_dir()
+
+    @patch("tasks.jobs.export.get_s3_client")
+    @patch("tasks.jobs.export.base")
+    def test_upload_to_s3_gzip_encode_removes_temp_file_when_upload_fails(
+        self, mock_base, mock_get_client, tmpdir
+    ):
+        mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
+        artifact = Path(str(tmpdir.mkdir("gzip_fail"))) / "report.csv"
+        artifact.write_text("row")
+        mock_get_client.return_value.upload_file.side_effect = ClientError(
+            {"Error": {"Code": "500"}}, "PutObject"
+        )
+
+        result = _upload_to_s3(
+            "tenant-id", "scan-id", str(artifact), "compliance/report.csv", True
+        )
+
+        assert result is None
+        assert [p.name for p in artifact.parent.iterdir()] == ["report.csv"]
+
+    @patch("tasks.jobs.export.gzip.open", side_effect=OSError(28, "No space left"))
+    @patch("tasks.jobs.export.get_s3_client")
+    @patch("tasks.jobs.export.base")
+    def test_upload_to_s3_gzip_encode_falls_back_to_plain_upload_without_disk_space(
+        self, mock_base, mock_get_client, _mock_gzip_open, tmpdir
+    ):
+        mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
+        artifact = Path(str(tmpdir.mkdir("gzip_enospc"))) / "report.csv"
+        artifact.write_text("row")
+
+        result = _upload_to_s3(
+            "tenant-id", "scan-id", str(artifact), "compliance/report.csv", True
+        )
+
+        assert result == "s3://test-bucket/tenant-id/scan-id/compliance/report.csv"
+        mock_get_client.return_value.upload_file.assert_called_once_with(
+            Filename=str(artifact),
+            Bucket="test-bucket",
+            Key="tenant-id/scan-id/compliance/report.csv",
+        )
+
+    @patch("tasks.jobs.export.get_s3_client")
+    @patch("tasks.jobs.export.base")
+    def test_upload_to_s3_gzip_encode(self, mock_base, mock_get_client, tmpdir):
+        mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = "test-bucket"
+        artifact = Path(str(tmpdir.mkdir("gzip"))) / "report_dora.ocsf.json"
+        artifact.write_text("[" + "{}," * 1000 + "{}]")
+
+        uploaded = {}
+
+        def capture(**kwargs):
+            gzip_file = Path(kwargs["Filename"])
+            uploaded["key"] = kwargs["Key"]
+            uploaded["extra"] = kwargs["ExtraArgs"]
+            uploaded["body"] = gzip.decompress(gzip_file.read_bytes())
+            uploaded["size"] = gzip_file.stat().st_size
+
+        client_mock = MagicMock()
+        client_mock.upload_file.side_effect = capture
+        mock_get_client.return_value = client_mock
+
+        result = _upload_to_s3(
+            "tenant-id",
+            "scan-id",
+            str(artifact),
+            "compliance/report_dora.ocsf.json",
+            gzip_encode=True,
+        )
+
+        assert result == (
+            "s3://test-bucket/tenant-id/scan-id/compliance/report_dora.ocsf.json"
+        )
+        assert uploaded["key"] == "tenant-id/scan-id/compliance/report_dora.ocsf.json"
+        assert uploaded["extra"] == {"ContentEncoding": "gzip"}
+        assert uploaded["body"] == artifact.read_bytes()
+        assert uploaded["size"] < artifact.stat().st_size
+        assert not Path(f"{artifact}.gz").exists()
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")

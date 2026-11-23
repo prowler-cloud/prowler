@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "r2_bucket_public_dev_url_disabled",
+  "CheckTitle": "Cloudflare R2 bucket is not publicly readable through r2.dev",
+  "CheckType": [],
+  "ServiceName": "r2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "R2Bucket",
+  "ResourceGroup": "storage",
+  "Description": "**Cloudflare R2 buckets** are assessed for **public r2.dev access**, which makes every object in the bucket readable by anyone on the internet through a `*.r2.dev` URL.",
+  "Risk": "A bucket with **r2.dev access** enabled is **publicly readable without authentication**.\n- **Confidentiality**: every object, including backups, exports or user uploads, can be downloaded\n- **Availability and cost**: r2.dev traffic is rate limited and bypasses caching, WAF and Access controls\n- **Discovery**: public bucket URLs are routinely enumerated by attackers",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/r2/buckets/public-buckets/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to R2 Object Storage and select the bucket\n3. Open Settings > Public Development URL\n4. Click Disable and confirm",
+      "Terraform": "```hcl\nresource \"cloudflare_r2_managed_domain\" \"example\" {\n  account_id  = \"<ACCOUNT_ID>\"\n  bucket_name = \"example-bucket\"\n  enabled     = false # Critical: disables public r2.dev access\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Keep **r2.dev access disabled** for every bucket.\n- Serve intentionally public content through a **custom domain** protected by WAF, caching and Access\n- Use presigned URLs or a Worker for authenticated access\n- Review which buckets hold sensitive data",
+      "Url": "https://hub.prowler.com/checks/cloudflare/r2_bucket_public_dev_url_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "r2.dev URLs are intended for development only. Buckets in the EU and FedRAMP jurisdictions are included."
+}

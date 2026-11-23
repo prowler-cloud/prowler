@@ -9,9 +9,8 @@ import {
   SheetTitle,
 } from "@/components/shadcn/sheet/sheet";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { isProwlerFindingNode } from "@/lib/attack-paths";
 import type { GraphNode } from "@/types/attack-paths";
-
-import { isProwlerFindingNode } from "../../_lib";
 
 import { NodeFindings } from "./node-findings";
 import { NodeOverview } from "./node-overview";

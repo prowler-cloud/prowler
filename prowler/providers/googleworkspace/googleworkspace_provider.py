@@ -17,6 +17,7 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.googleworkspace.exceptions.exceptions import (
     GoogleWorkspaceImpersonationError,
     GoogleWorkspaceInsufficientScopesError,
@@ -25,6 +26,10 @@ from prowler.providers.googleworkspace.exceptions.exceptions import (
     GoogleWorkspaceMissingDelegatedUserError,
     GoogleWorkspaceNoCredentialsError,
     GoogleWorkspaceSetUpIdentityError,
+)
+from prowler.providers.googleworkspace.lib.licensing import (
+    LICENSING_SCOPE,
+    fetch_editions,
 )
 from prowler.providers.googleworkspace.lib.mutelist.mutelist import (
     GoogleWorkspaceMutelist,
@@ -116,6 +121,8 @@ class GoogleworkspaceProvider(Provider):
             resolved_delegated_user,
         )
         self._domain_resource = GoogleWorkspaceResource.from_identity(self._identity)
+        # Licensed editions, read on first use: see the `editions` property.
+        self._editions = None
 
         # Audit Config
         if config_content:
@@ -151,6 +158,38 @@ class GoogleworkspaceProvider(Provider):
     def identity(self):
         """Returns the identity information for the Google Workspace provider."""
         return self._identity
+
+    @property
+    def editions(self) -> list[str]:
+        """Google Workspace editions licensed to the tenant, read once, best effort.
+
+        Google sells some audited features only on certain editions, and a
+        finding can say so when every licensed edition lacks the feature. The
+        lookup needs the Enterprise License Manager API and the
+        `apps.licensing` scope, requested as a separate token so a scope the
+        admin has not granted never breaks the session. Without them the list
+        stays empty and findings carry no edition context.
+        """
+        if self._editions is None:
+            self._editions = self._fetch_editions()
+        return self._editions
+
+    def _fetch_editions(self) -> list[str]:
+        """Build a Licensing API client with its own scope and read the editions."""
+        try:
+            service = build(
+                "licensing",
+                "v1",
+                credentials=self._session.credentials.with_scopes([LICENSING_SCOPE]),
+                cache_discovery=False,
+            )
+        except Exception as error:
+            logger.warning(
+                f"Google Workspace editions could not be read: the Licensing "
+                f"client could not be built ({error.__class__.__name__}: {error})."
+            )
+            return []
+        return fetch_editions(service, self._identity.customer_id)
 
     @property
     def type(self):
@@ -253,6 +292,7 @@ class GoogleworkspaceProvider(Provider):
                     message="Invalid JSON in credentials content",
                 )
             try:
+                GcpProvider.validate_service_account_key(credentials_data)
                 credentials = service_account.Credentials.from_service_account_info(
                     credentials_data,
                     scopes=GoogleworkspaceProvider.SCOPES,
@@ -305,6 +345,7 @@ class GoogleworkspaceProvider(Provider):
                         message="Invalid JSON in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
                     )
                 try:
+                    GcpProvider.validate_service_account_key(credentials_data)
                     credentials = service_account.Credentials.from_service_account_info(
                         credentials_data,
                         scopes=GoogleworkspaceProvider.SCOPES,

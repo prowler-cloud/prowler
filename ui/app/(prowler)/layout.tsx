@@ -5,14 +5,9 @@ import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
-import { getScansByState } from "@/actions/scans/scans";
 import { auth } from "@/auth.config";
 import MainLayout from "@/components/layout/main-layout/main-layout";
-import {
-  OnboardingCheckpointWatcher,
-  OnboardingGate,
-  OnboardingSequenceBanner,
-} from "@/components/onboarding";
+import { FirstRunRedirect } from "@/components/providers/first-run-redirect";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
@@ -26,7 +21,6 @@ import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import { StoreInitializer } from "@/store/ui/store-initializer";
-import { SCAN_STATES } from "@/types/attack-paths";
 
 import { Providers } from "../providers";
 
@@ -56,37 +50,19 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Skip Cloud-only onboarding fetches and orchestrators in OSS.
   const cloudEnabled = isCloud();
 
   // Every deployment needs the provider count: it drives the first-run redirect
   // and the sidebar's Add Provider action.
   const providersPromise = getProviders({ page: 1, pageSize: 1 });
 
+  const session = await auth();
   // One-time server-side Registry gate per request: only an ELIGIBLE answer
-  // shows the sidebar entry; UNKNOWN and INELIGIBLE both hide it. Started
-  // here so it resolves in parallel with the Cloud onboarding fetches.
-  const registryAccessPromise = auth().then((session) =>
-    evaluateRegistryAccess(session?.accessToken),
-  );
-
-  // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
-  // progression on a fetch error.
-  let hasCompletedScan = true;
-  // Scopes the onboarding steps' local markers, so resolving them for one
-  // tenant does not silence them for another.
-  let tenantId: string | null = null;
-
-  if (cloudEnabled) {
-    const scansByState = await getScansByState();
-    hasCompletedScan = Array.isArray(scansByState?.data)
-      ? scansByState.data.some(
-          (scan: { attributes?: { state?: string } }) =>
-            scan.attributes?.state === SCAN_STATES.COMPLETED,
-        )
-      : true;
-    tenantId = (await auth())?.tenantId ?? null;
-  }
+  // shows the sidebar entry; UNKNOWN and INELIGIBLE both hide it.
+  const registryAccessPromise = evaluateRegistryAccess(session?.accessToken);
+  // Scopes the first-run marker, so resolving it for one tenant does not
+  // silence it for another.
+  const tenantId = session?.tenantId ?? null;
 
   const providersData = await providersPromise;
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
@@ -119,15 +95,7 @@ export default async function RootLayout({
           {/* Tri-state for both: an unknown count leaves the store unresolved and the gate closed. */}
           <StoreInitializer values={{ hasProviders, registryEligible }} />
           {/* Every deployment: an empty tenant lands on the add-provider wizard once. */}
-          <OnboardingGate hasProviders={hasProviders} tenantId={tenantId} />
-          {cloudEnabled && (
-            <>
-              {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher tenantId={tenantId} />
-              {/* Persistent banner shown only while a guided sequence is active. */}
-              <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
-            </>
-          )}
+          <FirstRunRedirect hasProviders={hasProviders} tenantId={tenantId} />
           <MainLayout>{children}</MainLayout>
           {cloudEnabled && <FeedbackSurvey />}
           {/* Always mounted: it hosts the detail (finding/resource) views in

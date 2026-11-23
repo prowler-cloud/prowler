@@ -59,11 +59,11 @@ describe("sendInvite", () => {
 
   it("forwards the invitation source as a query param", async () => {
     // When
-    await sendInvite(inviteFormData("onboarding"));
+    await sendInvite(inviteFormData("provider_connect"));
 
     // Then
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.example.com/api/v1/tenants/invitations?source=onboarding",
+      "https://api.example.com/api/v1/tenants/invitations?source=provider_connect",
       expect.objectContaining({ method: "POST" }),
     );
     const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);

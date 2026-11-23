@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "lightsail_instance_php_blueprint_updated",
+  "CheckTitle": "Lightsail instance created from a PHP blueprint runs a fixed PHP release",
+  "CheckType": [
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/Vulnerabilities/CVE"
+  ],
+  "ServiceName": "lightsail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:lightsail:region:account-id:Instance/resource-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "compute",
+  "Description": "**Lightsail instances** created from blueprints that ship PHP (WordPress, WordPress Multisite, LAMP, Nginx and other PHP applications, configurable through `lightsail_php_blueprints`) are flagged for manual verification, because the PHP runtime inside the instance is not visible through the Lightsail API and running instances are not patched in place.",
+  "Risk": "A PHP release older than the fixed versions is vulnerable to **unauthenticated remote code execution** through crafted web requests. Lightsail does not update running instances, and Bitnami-packaged blueprints bundle their own PHP copy that the system package manager never updates, so the instance stays exploitable until it is patched by hand or recreated from an updated blueprint.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-update-php-security-vulnerabilities.html",
+    "https://docs.aws.amazon.com/lightsail/latest/userguide/migrate-from-bitnami-to-lightsail-blueprints.html",
+    "https://www.php.net/supported-versions.php"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "sudo apt update && sudo apt upgrade -y && sudo systemctl restart apache2 && php -v",
+      "NativeIaC": "",
+      "Other": "1. Create a snapshot of the instance\n2. Connect over SSH and check the PHP release: php -v on Lightsail-packaged blueprints, /opt/bitnami/php/bin/php -v on Bitnami-packaged blueprints\n3. Lightsail-packaged blueprints (WordPress, WordPress Multisite, LAMP, Nginx): run sudo apt update && sudo apt upgrade, then restart Apache (sudo systemctl restart apache2) or PHP-FPM on Nginx (sudo systemctl restart php8.2-fpm)\n4. Bitnami-packaged WordPress, WordPress Multisite and LAMP: create a new instance from the matching Lightsail-packaged blueprint, move the content, database and static IP, then delete the old instance\n5. Bitnami-packaged applications without a Lightsail-packaged equivalent (Drupal, Joomla, Magento, PrestaShop and others): install a package-managed PHP-FPM alongside the Bitnami copy and point the Bitnami web server at it, following the AWS guide linked above\n6. Confirm the web server uses the fixed release: 8.2.35, 8.3.36, 8.4.27, 8.5.12 or newer",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify the PHP release on every instance created from a PHP blueprint and update it immediately. Prefer **Lightsail-packaged blueprints**, whose PHP is maintained through the system package manager, over Bitnami-packaged ones; where no Lightsail-packaged equivalent exists, replace the bundled Bitnami PHP with a package-managed PHP-FPM so future updates arrive through apt. Upgrade instances still on PHP 8.1 or older, since those branches receive no security fixes.",
+      "Url": "https://hub.prowler.com/check/lightsail_instance_php_blueprint_updated"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "lightsail_instance_automated_snapshots"
+  ],
+  "Notes": "This check always reports MANUAL for instances matching a PHP blueprint prefix, because the PHP version is only observable from inside the instance. Instances created from other blueprints are not evaluated."
+}

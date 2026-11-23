@@ -14,12 +14,15 @@ interface ResourcesTableWithSelectionProps {
   data: ResourceProps[];
   metadata?: MetaDataProps;
   initialResource?: ResourceProps | null;
+  /** Sample rows must not reach Lighthouse, not even as a count. */
+  contributeLighthouseContext?: boolean;
 }
 
 export function ResourcesTableWithSelection({
   data,
   metadata,
   initialResource = null,
+  contributeLighthouseContext = true,
 }: ResourcesTableWithSelectionProps) {
   const safeData = data ?? [];
 
@@ -36,13 +39,14 @@ export function ResourcesTableWithSelection({
 
   return (
     <>
-      {metadata?.pagination.count !== undefined && (
-        <LighthouseContextContributor
-          key={`resources-summary-${metadata.pagination.count}`}
-          contributorId="resources-summary"
-          item={buildResourceSummaryContext(metadata.pagination.count)}
-        />
-      )}
+      {contributeLighthouseContext &&
+        metadata?.pagination.count !== undefined && (
+          <LighthouseContextContributor
+            key={`resources-summary-${metadata.pagination.count}`}
+            contributorId="resources-summary"
+            item={buildResourceSummaryContext(metadata.pagination.count)}
+          />
+        )}
       <DataTable
         columns={columns}
         data={safeData}

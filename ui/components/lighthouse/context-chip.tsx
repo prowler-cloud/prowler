@@ -144,6 +144,11 @@ function getContextItemDescription(
         id: `${item.kind}:${item.id}`,
         text: `Finding: ${item.findingId}${item.checkId ? ` (${item.checkId})` : ""}`,
       };
+    case LIGHTHOUSE_CONTEXT_KIND.ISSUE:
+      return {
+        id: `${item.kind}:${item.id}`,
+        text: `Issue: ${item.title ?? item.issueId}`,
+      };
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return {
         id: `${item.kind}:${item.id}`,
