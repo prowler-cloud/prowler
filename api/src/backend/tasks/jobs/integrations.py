@@ -8,7 +8,11 @@ from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
 from api.models import Finding, Integration, Provider
 from api.rls import Tenant
-from api.utils import initialize_prowler_integration, initialize_prowler_provider
+from api.utils import (
+    declared_provider_secret,
+    initialize_prowler_integration,
+    initialize_prowler_provider,
+)
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.conf import settings
@@ -198,7 +202,7 @@ def get_security_hub_client_from_integration(
                 is_connected=False, error="No provider associated with this integration"
             )
         provider_uid = provider_relationship.provider.uid
-        provider_secret = provider_relationship.provider.secret.secret
+        provider_secret = declared_provider_secret(provider_relationship.provider)
 
     credentials = (
         integration.credentials if integration.credentials else provider_secret

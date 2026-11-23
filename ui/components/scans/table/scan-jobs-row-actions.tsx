@@ -83,6 +83,8 @@ export function ScanJobsRowActions({
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
+  // Findings are stored check by check, so a running scan can already show some.
+  const isExecuting = scanState === "executing";
   // Prowler Cloud partial scans re-check a few resources: they compute no
   // compliance and write no report files, so neither entry applies.
   const isPartial = scan.attributes.is_partial === true;
@@ -101,7 +103,7 @@ export function ScanJobsRowActions({
     : undefined;
 
   const openFindings = () => {
-    if (!isCompleted || !hasCompletedAt) return;
+    if (!isExecuting && (!isCompleted || !hasCompletedAt)) return;
     router.push(
       `/findings?filter[scan__in]=${scan.id}&filter[status__in]=FAIL`,
     );
@@ -203,6 +205,13 @@ export function ScanJobsRowActions({
             icon={<Pencil />}
             label="Edit Scan Alias"
             onSelect={() => setEditOpen(true)}
+          />
+        )}
+        {isExecuting && (
+          <ActionDropdownItem
+            icon={<Eye />}
+            label="View Early Findings"
+            onSelect={openFindings}
           />
         )}
         {isCompleted && (

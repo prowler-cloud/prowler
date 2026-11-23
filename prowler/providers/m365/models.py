@@ -22,6 +22,7 @@ class M365RegionConfig(BaseModel):
     authority: Optional[str] = None
     base_url: str = ""
     credential_scopes: list = []
+    powershell: Optional[dict] = None
 
 
 class M365Credentials(BaseModel):

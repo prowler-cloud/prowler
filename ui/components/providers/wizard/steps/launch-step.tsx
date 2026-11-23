@@ -171,8 +171,8 @@ export function LaunchStep({
       title: "Scan launched",
       description: "The scan was launched successfully.",
       action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
+        <ToastAction altText="Go to findings" asChild>
+          <Link href="/findings">Go to findings</Link>
         </ToastAction>
       ),
     });
@@ -206,10 +206,14 @@ export function LaunchStep({
     onClose();
 
     const launched = result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
-    const targetTab = launched ? SCAN_JOBS_TAB.ACTIVE : SCAN_JOBS_TAB.SCHEDULED;
-    const goToScans = (
+    // A running scan already stores findings; a schedule only lists on Scans.
+    const nextStepAction = launched ? (
+      <ToastAction altText="Go to findings" asChild>
+        <Link href="/findings">Go to findings</Link>
+      </ToastAction>
+    ) : (
       <ToastAction altText="Go to scans" asChild>
-        <Link href={`/scans?tab=${targetTab}`}>Go to scans</Link>
+        <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
       </ToastAction>
     );
 
@@ -218,7 +222,7 @@ export function LaunchStep({
         title: "Scan schedule saved",
         description: `The schedule was saved, but the initial scan could not be launched: ${result.message}`,
         // Over the limit, the plans unblock the scan; the scans page would not.
-        action: result.usageLimited ? usageLimitToastAction() : goToScans,
+        action: result.usageLimited ? usageLimitToastAction() : nextStepAction,
       });
       return;
     }
@@ -230,7 +234,7 @@ export function LaunchStep({
       description: launched
         ? "The schedule was saved and the initial scan was launched."
         : "The scan schedule was saved successfully.",
-      action: goToScans,
+      action: nextStepAction,
     });
   });
 
