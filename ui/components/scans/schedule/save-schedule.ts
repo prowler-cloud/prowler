@@ -1,7 +1,11 @@
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { updateSchedule } from "@/actions/schedules";
 import type { ActionErrorResult } from "@/lib/action-errors";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+} from "@/lib/action-errors";
 import { buildScheduleUpdatePayload } from "@/lib/schedules";
 import type { ScheduleFormValues } from "@/types/schedules";
 
@@ -25,6 +29,8 @@ export interface SaveScheduleParams {
 export interface SaveScheduleResult {
   status: SaveScheduleStatus;
   message?: string;
+  /** The schedule or its initial scan was refused by the plan's usage limit. */
+  usageLimited?: boolean;
 }
 
 /** Saves a provider's scan schedule and optionally launches the initial scan. */
@@ -50,6 +56,7 @@ export async function saveScheduleWithInitialScan({
     return {
       status: SAVE_SCHEDULE_STATUS.ERROR,
       message: getActionErrorMessage(scheduleResult),
+      usageLimited: isUsageLimitError(scheduleResult),
     };
   }
 
@@ -65,6 +72,7 @@ export async function saveScheduleWithInitialScan({
     return {
       status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
       message: getActionErrorMessage(scanResult),
+      usageLimited: isUsageLimitError(scanResult),
     };
   }
 

@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from py_ocsf_models.events.base_event import StatusID as EventStatusID
 from py_ocsf_models.events.findings.compliance_finding import ComplianceFinding
@@ -301,6 +302,56 @@ class TestOCSFComplianceOutput:
         assert ComplianceStatusID.Pass in statuses
         assert ComplianceStatusID.Fail in statuses
 
+    def test_resource_data_sanitized_once_per_finding(self):
+        fw = _make_framework(
+            [
+                _simple_requirement("REQ-1", ["check_a"]),
+                _simple_requirement("REQ-2", ["check_a"]),
+                _simple_requirement("REQ-3", ["check_a"]),
+            ]
+        )
+        finding = _make_finding("check_a")
+        finding.resource_metadata = {"big": ["payload"]}
+
+        with patch(
+            "prowler.lib.outputs.compliance.universal.ocsf_compliance._sanitize_resource_data",
+            wraps=_sanitize_resource_data,
+        ) as sanitize:
+            output = OCSFComplianceOutput(
+                findings=[finding], framework=fw, provider="aws"
+            )
+
+        assert len(output.data) == 3
+        sanitize.assert_called_once_with(
+            finding.resource_details, finding.resource_metadata
+        )
+        assert all(
+            cf.resources[0].data["metadata"] is finding.resource_metadata
+            for cf in output.data
+        )
+
+    def test_resource_data_error_skips_only_that_finding(self):
+        fw = _make_framework([_simple_requirement("REQ-1", ["check_a"])])
+        broken = _make_finding("check_a")
+        healthy = _make_finding("check_a")
+
+        def sanitize(details, metadata):
+            if metadata is broken.resource_metadata:
+                raise RuntimeError("boom")
+            return _sanitize_resource_data(details, metadata)
+
+        broken.resource_metadata = {"broken": True}
+        with patch(
+            "prowler.lib.outputs.compliance.universal.ocsf_compliance._sanitize_resource_data",
+            side_effect=sanitize,
+        ):
+            output = OCSFComplianceOutput(
+                findings=[broken, healthy], framework=fw, provider="aws"
+            )
+
+        assert len(output.data) == 1
+        assert output.data[0].resources[0].data["metadata"] == {}
+
     def test_requirement_attributes_in_unmapped(self):
         req = UniversalComplianceRequirement(
             id="REQ-1",
@@ -508,6 +559,11 @@ class TestSanitizeResourceData:
     def test_dict_passthrough(self):
         result = _sanitize_resource_data("details", {"a": 1, "b": "two"})
         assert result == {"details": "details", "metadata": {"a": 1, "b": "two"}}
+
+    def test_plain_json_is_not_copied(self):
+        metadata = {"a": [1, {"b": "two"}]}
+        result = _sanitize_resource_data("details", metadata)
+        assert result["metadata"] is metadata
 
     def test_none_metadata(self):
         result = _sanitize_resource_data("details", None)

@@ -1,28 +1,41 @@
 # Importing Packages
+import os
 import sys
 import warnings
 
-import click
 import dash
 import dash_bootstrap_components as dbc
-from colorama import Fore, Style
+from colorama import init as colorama_init
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
 from dashboard.config import folder_path_overview
-from prowler.config.config import orange_color
-from prowler.lib.banner import print_banner
+from dashboard.lib.startup import (
+    install_server_ready_hook,
+    silence_dash_running_line,
+)
+from prowler.lib.banner import (
+    print_dashboard_banner,
+    print_dashboard_loading,
+    print_dashboard_promotion,
+)
 
 warnings.filterwarnings("ignore")
 
+# Honour the NO_COLOR convention: the dashboard parser has no --no-color flag.
+if os.environ.get("NO_COLOR"):
+    colorama_init(strip=True)
+
+# Compact startup output: identity, one hand-off block and the CSV directory.
+# The local URL is printed by ``install_server_ready_hook`` once the server is
+# actually listening, so nothing claims to be ready before it is. S3 download
+# instructions live in the dashboard documentation instead of every startup.
 cli = sys.modules["flask.cli"]
-print_banner()
-print(
-    f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
-)
-cli.show_server_banner = lambda *_: click.echo(
-    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Prowler Cloud{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Prowler CLI{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
-)
+print_dashboard_banner()
+print_dashboard_promotion()
+print_dashboard_loading(folder_path_overview)
+cli.show_server_banner = lambda *_: None
+install_server_ready_hook()
 
 # Initialize the app - incorporate css
 dashboard = dash.Dash(
@@ -30,8 +43,10 @@ dashboard = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     use_pages=True,
     suppress_callback_exceptions=True,
-    title="Prowler Dashboard",
+    title="Prowler Local Dashboard",
 )
+# The ready block already announces the URL; drop Dash's pre-bind duplicate.
+silence_dash_running_line(dashboard)
 
 # ``use_pages`` above already imported dashboard/pages/cloud.py and registered
 # every /cloud/* route. Import its metadata now (after app instantiation) so
@@ -70,7 +85,10 @@ DASHBOARD_ITEMS = [
 # Gated navigation groups reference the shared feature metadata by slug so the
 # sidebar and the informational pages never drift apart.
 GATED_GROUPS = [
-    ("Upgrade to Prowler Cloud", ["lighthouse-ai", "attack-paths", "findings"]),
+    (
+        "Upgrade to Prowler Cloud",
+        ["findings", "exploitable-issues", "lighthouse-ai", "mcp", "attack-paths"],
+    ),
     ("Configuration", ["alerts", "mutelist", "integrations"]),
     ("Workspace", ["organization"]),
 ]

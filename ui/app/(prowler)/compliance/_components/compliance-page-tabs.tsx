@@ -66,7 +66,7 @@ export const CompliancePageTabs = ({
         {/* Wraps below the tabs on narrow viewports instead of squeezing the
             triggers, which are the primary navigation of the page. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
+          <div className="overflow-x-auto">
             <TabsList>
               <TabsTrigger
                 value={COMPLIANCE_TAB.CROSS_PROVIDER}

@@ -1,9 +1,27 @@
 import { render, waitFor } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { MessageMarkdown } from "./message-markdown";
 
 describe("MessageMarkdown", () => {
+  describe("when a finished message is first rendered", () => {
+    it("should paint the text without waiting for an effect", () => {
+      // Given
+      const markdown = "The **AWS** resource is private.";
+
+      // When
+      // Server rendering runs no effects, so it shows the first paint.
+      const firstPaint = document.createElement("div");
+      firstPaint.innerHTML = renderToStaticMarkup(
+        <MessageMarkdown text={markdown} />,
+      );
+
+      // Then
+      expect(firstPaint).toHaveTextContent("The AWS resource is private.");
+    });
+  });
+
   describe("when streamed inline code is incomplete", () => {
     it("should not render a code block inside a paragraph", async () => {
       // Given

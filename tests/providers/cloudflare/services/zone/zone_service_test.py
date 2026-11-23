@@ -62,3 +62,106 @@ class TestZoneService:
         assert sts.include_subdomains is False
         assert sts.preload is False
         assert sts.nosniff is False
+
+
+class TestSkipTargets:
+    def test_skip_targets_describe_bypassed_features(self):
+        from types import SimpleNamespace
+
+        from prowler.providers.cloudflare.services.zone.zone_service import (
+            _skip_targets,
+        )
+
+        assert _skip_targets(None) == []
+        assert _skip_targets(
+            SimpleNamespace(
+                phases=["http_request_firewall_managed", "http_ratelimit"],
+                products=["bic"],
+                ruleset="current",
+                rulesets=["a", "b"],
+                rules={"a": ["r1"]},
+            )
+        ) == [
+            "http_request_firewall_managed",
+            "http_ratelimit",
+            "bic",
+            "remaining custom rules",
+            "2 managed ruleset(s)",
+            "specific managed rules",
+        ]
+
+
+class TestZoneFirewallRules:
+    def _zone_service(self, client):
+        from prowler.providers.cloudflare.services.zone.zone_service import Zone
+
+        service = Zone.__new__(Zone)
+        service.client = client
+        service.firewall_rules_failed_zones = set()
+        return service
+
+    def _zone(self):
+        return CloudflareZone(
+            id=ZONE_ID,
+            name=ZONE_NAME,
+            status="active",
+            paused=False,
+            settings=CloudflareZoneSettings(),
+        )
+
+    def test_ruleset_listing_failure_marks_zone_failed(self):
+        from unittest import mock
+
+        client = mock.MagicMock()
+        client.rulesets.list.side_effect = Exception("forbidden")
+        service = self._zone_service(client)
+        zone = self._zone()
+
+        service._get_zone_firewall_rules(zone)
+
+        assert zone.firewall_rules == []
+        assert service.firewall_rules_failed_zones == {ZONE_ID}
+
+    def test_ruleset_detail_failure_marks_zone_failed(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        client = mock.MagicMock()
+        client.rulesets.list.return_value = [
+            SimpleNamespace(id="rs-1", phase="http_request_firewall_custom")
+        ]
+        client.rulesets.get.side_effect = Exception("forbidden")
+        service = self._zone_service(client)
+        zone = self._zone()
+
+        service._get_zone_firewall_rules(zone)
+
+        assert service.firewall_rules_failed_zones == {ZONE_ID}
+
+    def test_successful_retrieval_does_not_mark_zone_failed(self):
+        from types import SimpleNamespace
+        from unittest import mock
+
+        client = mock.MagicMock()
+        client.rulesets.list.return_value = [
+            SimpleNamespace(id="rs-1", phase="http_request_firewall_custom")
+        ]
+        client.rulesets.get.return_value = SimpleNamespace(
+            rules=[
+                SimpleNamespace(
+                    id="rule-1",
+                    description="Bypass",
+                    action="skip",
+                    enabled=True,
+                    expression="true",
+                    action_parameters=None,
+                )
+            ]
+        )
+        service = self._zone_service(client)
+        zone = self._zone()
+
+        service._get_zone_firewall_rules(zone)
+
+        assert [rule.id for rule in zone.firewall_rules] == ["rule-1"]
+        assert service.firewall_rules_failed_zones == set()
