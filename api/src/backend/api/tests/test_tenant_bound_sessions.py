@@ -239,7 +239,7 @@ class TestSSOBoundSessionOfSingleTenantUser:
         tokens = generate_tokens(user, str(tenant.id), sso_tenant_id=str(tenant.id))
         return tokens, user
 
-    def test_own_password_change_is_allowed(self, bound):
+    def test_own_password_change_is_rejected(self, bound):
         tokens, user = bound
 
         response = _patch_own_user(
@@ -249,9 +249,32 @@ class TestSSOBoundSessionOfSingleTenantUser:
             _bearer(tokens["access"]),
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         user.refresh_from_db()
-        assert user.check_password("AnotherPassword123@")
+        assert user.check_password("OriginalPassword123@")
+
+    def test_own_email_change_is_rejected(self, bound):
+        tokens, user = bound
+
+        response = _patch_own_user(
+            APIClient(),
+            user,
+            {"email": "someone-else@example.com"},
+            _bearer(tokens["access"]),
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        user.refresh_from_db()
+        assert user.email == "sso-only@example.com"
+
+    def test_own_name_change_is_allowed(self, bound):
+        tokens, user = bound
+
+        response = _patch_own_user(
+            APIClient(), user, {"name": "Renamed User"}, _bearer(tokens["access"])
+        )
+
+        assert response.status_code == status.HTTP_200_OK
 
     def test_own_account_deletion_is_allowed(self, bound):
         tokens, user = bound
