@@ -26,6 +26,16 @@ from tasks.jobs.integrations import (
 )
 
 
+@pytest.fixture(autouse=True)
+def stored_secret_passes_through():
+    """These tests build MagicMock providers; the field filter is tested in api."""
+    with patch(
+        "api.utils.declared_secret_fields",
+        side_effect=lambda provider_type, secret_type, secret: dict(secret),
+    ):
+        yield
+
+
 @pytest.mark.django_db
 class TestS3IntegrationUploads:
     @patch("tasks.jobs.integrations.S3")
