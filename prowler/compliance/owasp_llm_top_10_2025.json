@@ -588,8 +588,7 @@
       },
       "checks": {
         "aws": [
-          "sagemaker_models_monitor_enabled",
-          "sagemaker_clarify_exists"
+          "sagemaker_models_monitor_enabled"
         ],
         "azure": [],
         "gcp": []
@@ -1102,12 +1101,15 @@
       },
       "checks": {
         "aws": [
-          "sagemaker_models_network_isolation_enabled"
+          "sagemaker_models_network_isolation_enabled",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
         ],
         "azure": [
           "aiservices_account_outbound_network_restricted"
         ],
-        "gcp": []
+        "gcp": [
+          "vertexai_workbench_instance_public_ip_disabled"
+        ]
       }
     },
     {
@@ -1163,9 +1165,7 @@
         "Section": "LLM10:2025 Unbounded Consumption"
       },
       "checks": {
-        "aws": [
-          "sagemaker_endpoint_config_prod_variant_instances"
-        ],
+        "aws": [],
         "azure": [],
         "gcp": []
       }
@@ -1210,15 +1210,13 @@
           "bedrock_api_key_no_long_term_credentials",
           "sagemaker_domain_sso_configured",
           "sagemaker_notebook_instance_root_access_disabled",
-          "sagemaker_notebook_instance_without_direct_internet_access_configured",
           "iam_user_access_not_stale_to_sagemaker"
         ],
         "azure": [
           "aiservices_account_local_auth_disabled"
         ],
         "gcp": [
-          "vertexai_workbench_instance_root_access_disabled",
-          "vertexai_workbench_instance_public_ip_disabled"
+          "vertexai_workbench_instance_root_access_disabled"
         ]
       }
     },
@@ -1245,9 +1243,7 @@
         "Section": "LLM10:2025 Unbounded Consumption"
       },
       "checks": {
-        "aws": [
-          "sagemaker_models_registry_in_use"
-        ],
+        "aws": [],
         "azure": [],
         "gcp": []
       }
