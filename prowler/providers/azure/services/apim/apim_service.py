@@ -79,8 +79,8 @@ class APIM(AzureService):
 
         This method queries the Azure Monitor diagnostic settings for a specific APIM
         instance to find the configured Log Analytics workspace. It specifically looks
-        for diagnostic settings that have GatewayLogs enabled, which are essential for
-        monitoring APIM API calls and operations.
+        for diagnostic settings that enable GatewayLogs directly or through allLogs,
+        which are essential for monitoring APIM API calls and operations.
 
         Args:
             instance_id: The ARM ID of the APIM instance
@@ -97,12 +97,12 @@ class APIM(AzureService):
             for setting in diagnostic_settings:
                 if setting.workspace_id and setting.logs:
                     for log_setting in setting.logs:
-                        if (
-                            log_setting.enabled
-                            and log_setting.category == "GatewayLogs"
+                        if log_setting.enabled and (
+                            log_setting.category == "GatewayLogs"
+                            or log_setting.category_group == "allLogs"
                         ):
                             logger.info(
-                                f"Found enabled Log Analytics workspace for APIM instance {instance_id} with category {log_setting.category}"
+                                f"Found enabled Log Analytics workspace for APIM instance {instance_id} with category {log_setting.category or log_setting.category_group}"
                             )
                             return setting.workspace_id
         except Exception as error:
