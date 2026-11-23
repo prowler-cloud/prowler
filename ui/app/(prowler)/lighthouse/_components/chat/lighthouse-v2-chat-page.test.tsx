@@ -104,9 +104,13 @@ const modelsByProvider = {
 };
 
 const supportedProviders: LighthouseV2SupportedProvider[] = [
-  { id: "openai", name: "OpenAI" },
-  { id: "bedrock", name: "AWS Bedrock" },
-  { id: "openai-compatible", name: "OpenAI Compatible" },
+  { id: "openai", name: "OpenAI", credentialsOptional: false },
+  { id: "bedrock", name: "AWS Bedrock", credentialsOptional: false },
+  {
+    id: "openai-compatible",
+    name: "OpenAI Compatible",
+    credentialsOptional: false,
+  },
 ];
 
 const OUTCOME_FEEDBACK_SURVEY = {

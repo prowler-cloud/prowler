@@ -17,6 +17,10 @@ import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { getOptionalText } from "@/lib/utils";
 import type {
@@ -128,6 +132,9 @@ export function DataTableRowActions<T extends FindingRowData>({
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
+  const sampleDisabledReason = isSampleId(finding.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
   const [mutePreparationError, setMutePreparationError] = useState<
@@ -211,6 +218,7 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleMuteClick = async () => {
+    if (sampleDisabledReason) return;
     if (resolveMuteIds) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -316,13 +324,22 @@ export function DataTableRowActions<T extends FindingRowData>({
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={!canMute || isResolving}
+            disabled={Boolean(sampleDisabledReason) || !canMute || isResolving}
+            disabledTooltip={sampleDisabledReason}
             onSelect={handleMuteClick}
           />
-          <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
-          <RecheckResourceActionItem target={recheckTarget} />
+          <JiraDispatchActionItem
+            label={jiraLabel}
+            payload={jiraPayload}
+            disabledReason={sampleDisabledReason}
+          />
+          <RecheckResourceActionItem
+            target={recheckTarget}
+            disabledReason={sampleDisabledReason}
+          />
           {isCloud() && !isGroup && (
             <LighthouseSkillsSubmenu
+              disabledReason={sampleDisabledReason}
               onLaunch={handleLaunchSkill}
               onSubmitPrompt={handleSubmitPrompt}
             />

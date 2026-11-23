@@ -124,6 +124,7 @@ To write a custom query, select **Custom openCypher query** from the query dropd
 Custom queries are sandboxed to keep the graph database safe and responsive:
 
 - **Read-only:** Only read operations are allowed. Statements that mutate the graph (`CREATE`, `MERGE`, `SET`, `DELETE`, `REMOVE`, `DROP`, `LOAD CSV`, `CALL { ... }` writes, etc.) are rejected before execution.
+- **Single graph:** Queries run against the graph of the selected scan only. `USE` and `SHOW` statements and the `CYPHER` options prefix are rejected, and database errors are reported by their error code without the original message.
 - **Length limit:** Each query is capped at **10,000 characters**.
 - **Scoped to the selected scan:** Results are automatically scoped to the provider and scan selected in the scan table. There is no need to filter by tenant or scan identifier in the query body.
 

@@ -12,6 +12,10 @@ class compute_firewall_rdp_access_from_the_internet_allowed(Check):
                 location=compute_client.region,
             )
             report.status = "PASS"
+            if firewall.disabled:
+                report.status_extended = f"Firewall {firewall.name} is disabled and does not expose port 3389 (RDP) to the internet."
+                findings.append(report)
+                continue
             report.status_extended = f"Firewall {firewall.name} does not expose port 3389 (RDP) to the internet."
             opened_port = False
             for rule in firewall.allowed_rules:

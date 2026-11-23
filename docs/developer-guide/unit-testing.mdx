@@ -97,6 +97,7 @@ The table maps a service (key) to the list of services that depend on it (values
 | `autoscaling` | `dynamodb` |
 | `awslambda` | `ec2`, `inspector2` |
 | `backup` | `dynamodb`, `ec2`, `rds` |
+| `bedrockagentcore` | `cloudtrail` |
 | `cloudfront` | `shield` |
 | `cloudtrail` | `awslambda`, `cloudwatch` |
 | `cloudwatch` | `bedrock` |
@@ -105,7 +106,7 @@ The table maps a service (key) to the list of services that depend on it (values
 | `elb` | `shield` |
 | `elbv2` | `shield` |
 | `globalaccelerator` | `shield` |
-| `iam` | `bedrock`, `cloudtrail`, `cloudwatch`, `codebuild` |
+| `iam` | `bedrock`, `bedrockagentcore`, `cloudtrail`, `cloudwatch`, `codebuild` |
 | `kafka` | `firehose` |
 | `kinesis` | `firehose` |
 | `kms` | `kafka` |

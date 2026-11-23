@@ -190,6 +190,9 @@ export async function classifyRegistryFailure(
   endpoint: RegistryEndpoint,
   credentialStatus: RegistryCredentialStatus | null,
 ): Promise<RegistryFailureResult> {
+  if (response.status === 402) {
+    return { status: REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED };
+  }
   if (response.status === 401 || response.status === 403) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
@@ -198,15 +201,16 @@ export async function classifyRegistryFailure(
     return { status: REGISTRY_FAILURE.ERROR };
   }
 
+  const code = await getRegistryErrorCode(response);
   if (
     response.status === 409 &&
-    credentialStatus !== null &&
-    !isActiveRegistryCredential(credentialStatus)
+    (code === "registry_credential_not_configured" ||
+      (credentialStatus !== null &&
+        !isActiveRegistryCredential(credentialStatus)))
   ) {
     return { status: REGISTRY_FAILURE.ONBOARDING };
   }
 
-  const code = await getRegistryErrorCode(response);
   if (response.status === 502 && code === REGISTRY_ERROR_CODE.KEY_REJECTED) {
     return { status: REGISTRY_FAILURE.RECONNECT };
   }
@@ -261,7 +265,9 @@ const catalogAttributesSchema = z.object({
   latest_version: z.string().optional(),
   providers: z.array(z.string().trim().min(1)).optional(),
   owner_name: z.string().optional(),
+  owner_slug: z.string().optional(),
   owner_type: z.string().optional(),
+  bundle_id: z.string().nullish(),
   owner_logo_url: z.string().nullable().optional(),
   is_verified: z.boolean().optional(),
   is_official: z.boolean().optional(),
@@ -365,6 +371,13 @@ function adaptCatalogArtifact(
     a.is_installable === true
       ? undefined
       : text(a.not_installable_reason ?? undefined);
+  const bundleId = text(a.bundle_id ?? undefined);
+  const ownerSlug = text(a.owner_slug);
+  const accessRequestPath = bundleId
+    ? `/bundles/${encodeURIComponent(bundleId)}`
+    : ownerSlug
+      ? `/orgs/${ownerSlug.split("/").map(encodeURIComponent).join("/")}/${encodeURIComponent(id)}`
+      : undefined;
   return {
     normalizedName: id,
     name: text(a.name),
@@ -387,6 +400,7 @@ function adaptCatalogArtifact(
     // An older API sends no verdict; never offer an install it did not confirm.
     isInstallable: a.is_installable ?? false,
     ...(notInstallableReason ? { notInstallableReason } : {}),
+    ...(accessRequestPath ? { accessRequestPath } : {}),
     checkCount: a.check_count ?? undefined,
     complianceCount: a.compliance_count ?? undefined,
     versionCount: a.version_count ?? 0,
@@ -429,6 +443,7 @@ function mergeArtifacts(
     isInstallable: left.isInstallable && right.isInstallable,
     notInstallableReason:
       left.notInstallableReason ?? right.notInstallableReason,
+    accessRequestPath: left.accessRequestPath ?? right.accessRequestPath,
     checkCount: mergeCount(left.checkCount, right.checkCount),
     complianceCount: mergeCount(left.complianceCount, right.complianceCount),
     versionCount: Math.max(left.versionCount, right.versionCount),

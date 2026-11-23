@@ -74,6 +74,12 @@ vi.mock("@/lib", () => ({
       description: "Allows managing tenant Registry credentials and artifacts",
     },
     {
+      field: "manage_prowler_realtime",
+      label: "Manage Realtime",
+      description:
+        "Allows setting up Prowler Realtime Detection and Remediation, including its policies, alerts and fixes",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",
@@ -103,10 +109,12 @@ beforeAll(() => {
 const roleData = ({
   manageProviders = false,
   manageRegistry = false,
+  manageRealtime = false,
   unlimitedVisibility = false,
 }: {
   manageProviders?: boolean;
   manageRegistry?: boolean;
+  manageRealtime?: boolean;
   unlimitedVisibility?: boolean;
 } = {}) => ({
   data: {
@@ -117,6 +125,7 @@ const roleData = ({
       manage_providers: manageProviders,
       manage_integrations: false,
       manage_registry: manageRegistry,
+      manage_prowler_realtime: manageRealtime,
       manage_scans: false,
       unlimited_visibility: unlimitedVisibility,
       groups: [],
@@ -145,6 +154,33 @@ describe("EditRoleForm", () => {
     routerMocks.push.mockClear();
     vi.mocked(updateRole).mockClear();
     vi.unstubAllEnvs();
+  });
+
+  it("retains manage_prowler_realtime when updating a role in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm({ manageRealtime: true });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_prowler_realtime")).toBe("true");
+  });
+
+  it("revokes manage_prowler_realtime when unchecked in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm({ manageRealtime: true });
+
+    // When
+    await user.click(screen.getByRole("checkbox", { name: "Manage Realtime" }));
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_prowler_realtime")).toBe("false");
   });
 
   it("retains manage_registry when updating a role in Prowler Cloud", async () => {

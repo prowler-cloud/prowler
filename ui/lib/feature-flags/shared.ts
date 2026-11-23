@@ -1,0 +1,26 @@
+// Registry of every feature flag key the UI reads. Side-effect free and
+// SDK-agnostic so both client and server readers can import it. Every key
+// lives here, including the ones only the cloud fork reads, so the registry
+// never diverges between repos.
+export const FEATURE_FLAG = {
+  // Boolean flag evaluated server-side per tenant in cloud. When on, it pins
+  // the tenant to legacy billing; off or absent means the new Metronome system.
+  BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
+  // Boolean flag evaluated server-side per tenant in cloud. When on, trial
+  // tenants only preview the most critical finding groups on /findings.
+  FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
+} as const;
+
+export type FeatureFlag = (typeof FEATURE_FLAG)[keyof typeof FEATURE_FLAG];
+
+// Resolution state of a boolean flag. PENDING means PostHog is still loading
+// flags, so gates render neither branch yet. Without a PostHog key nothing
+// initializes it, so the flag resolves to OFF once mounted.
+export const FEATURE_FLAG_STATE = {
+  PENDING: "pending",
+  ON: "on",
+  OFF: "off",
+} as const;
+
+export type FeatureFlagState =
+  (typeof FEATURE_FLAG_STATE)[keyof typeof FEATURE_FLAG_STATE];

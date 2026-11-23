@@ -236,7 +236,12 @@ class MongodbatlasProvider(Provider):
                     message="MongoDB Atlas authentication failed. Please check your API credentials.",
                 )
 
-            response.raise_for_status()
+            if not response.ok:
+                raise MongoDBAtlasIdentityError(
+                    file=os.path.basename(__file__),
+                    message=MongodbatlasProvider._describe_api_error(response),
+                )
+
             organizations_data = response.json()
 
             # Extract organization information from the response
@@ -266,7 +271,7 @@ class MongodbatlasProvider(Provider):
 
             return identity
 
-        except MongoDBAtlasAuthenticationError:
+        except (MongoDBAtlasAuthenticationError, MongoDBAtlasIdentityError):
             raise
         except Exception as error:
             logger.critical(
@@ -275,6 +280,22 @@ class MongodbatlasProvider(Provider):
             raise MongoDBAtlasIdentityError(
                 original_exception=error,
             )
+
+    @staticmethod
+    def _describe_api_error(response) -> str:
+        """Build an identity error message that keeps the reason Atlas returns."""
+        message = f"MongoDB Atlas identity setup failed - HTTP {response.status_code}"
+        try:
+            body = response.json()
+        except ValueError:
+            return message
+        if not isinstance(body, dict):
+            return message
+        if body.get("errorCode"):
+            message += f" {body['errorCode']}"
+        if body.get("detail"):
+            message += f": {body['detail']}"
+        return message
 
     def print_credentials(self):
         """Print the MongoDB Atlas credentials"""
