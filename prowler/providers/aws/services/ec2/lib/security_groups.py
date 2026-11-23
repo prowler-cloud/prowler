@@ -8,6 +8,7 @@ def check_security_group(
     ports: list | None = None,
     any_address: bool = False,
     all_ports: bool = False,
+    prefix_lists: dict | None = None,
 ) -> bool:
     """
     Check if the security group ingress rule has public access to the check_ports using the protocol.
@@ -29,6 +30,12 @@ def check_security_group(
             },
         ],
         'ToPort': 123,
+        'PrefixListIds': [
+            {
+                'PrefixListId': 'string',
+                'Description': 'string'
+            },
+        ],
     }
 
     @param protocol: Protocol to check. If -1, all protocols will be checked.
@@ -39,10 +46,17 @@ def check_security_group(
 
     @param all_ports: If True, empty ports list will be treated as all ports. (Default: False)
 
+    @param prefix_lists: Managed prefix lists by ID, whose entries are checked as CIDRs of the rules that reference them. (Default: None)
+
     @return: True if the security group has public access to the check_ports using the protocol
     """
     if ports is None:
         ports = []
+
+    # Check the CIDRs of referenced managed prefix lists as if they were in the rule.
+    # The caller's rule is not changed, since fixers pass it back to AWS.
+    if prefix_lists and ingress_rule.get("PrefixListIds"):
+        ingress_rule = _add_prefix_list_cidrs(ingress_rule, prefix_lists)
 
     # With any_address, CIDRs that together cover every address in one rule, such as
     # 0.0.0.0/1 and 128.0.0.0/1, are as open as 0.0.0.0/0.
@@ -106,6 +120,28 @@ def check_security_group(
                 return all_ports_open or empty_ports_same_as_all_ports_open
 
     return False
+
+
+def _add_prefix_list_cidrs(ingress_rule: Any, prefix_lists: dict) -> dict:
+    """
+    Return a copy of the ingress rule with the entries of its managed prefix lists added to its IP ranges
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+
+    @param prefix_lists: Managed prefix lists by ID
+    """
+    ip_ranges = list(ingress_rule.get("IpRanges", []))
+    ipv6_ranges = list(ingress_rule.get("Ipv6Ranges", []))
+    for prefix_list_id in ingress_rule.get("PrefixListIds", []):
+        prefix_list = prefix_lists.get(prefix_list_id.get("PrefixListId"))
+        if not prefix_list:
+            continue
+        for cidr in prefix_list.entries:
+            if ":" in cidr:
+                ipv6_ranges.append({"CidrIpv6": cidr})
+            else:
+                ip_ranges.append({"CidrIp": cidr})
+    return {**ingress_rule, "IpRanges": ip_ranges, "Ipv6Ranges": ipv6_ranges}
 
 
 def _covers_all_addresses(ingress_rule: Any) -> bool:
