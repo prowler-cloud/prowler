@@ -5,6 +5,8 @@ import logging
 import os
 import time
 import uuid
+import zipfile
+import zlib
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
@@ -19,12 +21,18 @@ from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
+from api.authentication import (
+    SSO_TENANT_CLAIM,
+    session_bound_tenant_id,
+    session_reaches_other_tenants,
+)
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     COMPLIANCE_WARMED,
     COMPLIANCE_WARMING_STARTED,
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_prowler_check_title,
     get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
@@ -139,6 +147,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     accept_invitation_for_user,
+    get_findings_categories,
     get_findings_metadata_no_aggregations,
     initialize_prowler_integration,
     initialize_prowler_provider,
@@ -161,6 +170,7 @@ from api.v1.serializers import (
     AttackPathsQuerySerializer,
     AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
+    AuthorizationCodeSocialLoginSerializer,
     CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -271,6 +281,7 @@ from django.db.models import (
     Exists,
     ExpressionWrapper,
     F,
+    Func,
     IntegerField,
     Max,
     Min,
@@ -350,6 +361,15 @@ from tasks.tasks import (
 )
 
 logger = logging.getLogger(BackendLogger.API)
+
+
+def _scans_visible_to(role, tenant_id):
+    """Tenant scans, narrowed to the role's provider groups unless it has unlimited visibility."""
+    scans = Scan.all_objects.filter(tenant_id=tenant_id)
+    if role.unlimited_visibility:
+        return scans
+    return scans.filter(provider__in=get_providers(role))
+
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -600,6 +620,7 @@ class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = CustomOAuth2Client
     callback_url = GOOGLE_OAUTH_CALLBACK_URL
+    serializer_class = AuthorizationCodeSocialLoginSerializer
 
     def get_response(self):
         original_response = super().get_response()
@@ -629,6 +650,7 @@ class GithubSocialLoginView(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
     client_class = CustomOAuth2Client
     callback_url = GITHUB_OAUTH_CALLBACK_URL
+    serializer_class = AuthorizationCodeSocialLoginSerializer
 
     def get_response(self):
         original_response = super().get_response()
@@ -799,7 +821,9 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
     """
 
     serializer_class = SAMLConfigurationSerializer
-    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    # The IdP behind this configuration decides who signs in and which role
+    # they get, so writing it is account administration, not an integration.
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
     queryset = SAMLConfiguration.objects.all()
 
     def get_queryset(self):
@@ -1017,7 +1041,8 @@ class TenantFinishACSView(FinishACSView):
         )
 
         serializer = TokenSocialLoginSerializer(
-            data={"email": user.email, "tenant_id": str(tenant.id)}
+            data={"email": user.email, "tenant_id": str(tenant.id)},
+            context={SSO_TENANT_CLAIM: str(tenant.id)},
         )
         serializer.is_valid(raise_exception=True)
 
@@ -1057,7 +1082,12 @@ class TenantFinishACSView(FinishACSView):
     partial_update=extend_schema(
         tags=["User"],
         summary="Update user information",
-        description="Partially update information about a user.",
+        description=(
+            "Partially update information about a user. Users with the "
+            "`manage_users` permission can update the profile fields of other "
+            "users in the tenant, but credentials (`password` and `email`) can "
+            "only be changed by the user themselves."
+        ),
     ),
     destroy=extend_schema(
         tags=["User"],
@@ -1149,6 +1179,10 @@ class UserViewSet(BaseUserViewset):
                 raise ValidationError(
                     "Only users with manage users permission can update other users."
                 )
+            # Email and password belong to the user, not to this tenant.
+            self._reject_credential_changes_for_other_user(user, request.data)
+        elif session_bound_tenant_id(request):
+            self._reject_credential_changes_from_bound_session(user, request.data)
 
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -1159,9 +1193,49 @@ class UserViewSet(BaseUserViewset):
 
         return Response(serializer.data)
 
+    @staticmethod
+    def _reject_credential_changes_for_other_user(user, data):
+        errors = {}
+        if "password" in data:
+            errors["password"] = "Only the user themselves can change their password."
+        new_email = data.get("email")
+        # Re-sending the current email (e.g. from an edit form) is not a change.
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = "Only the user themselves can change their email."
+        if errors:
+            raise ValidationError(errors)
+
+    @staticmethod
+    def _reject_credential_changes_from_bound_session(user, data):
+        # Credentials set here would outlive the session and reach tenants the
+        # user joins later, so only a password session may change them.
+        errors = {}
+        if "password" in data:
+            errors["password"] = (
+                "This session is limited to one organization and cannot change "
+                "the account password."
+            )
+        new_email = data.get("email")
+        if new_email is not None and (
+            not isinstance(new_email, str) or new_email.strip().lower() != user.email
+        ):
+            errors["email"] = (
+                "This session is limited to one organization and cannot change "
+                "the account email."
+            )
+        if errors:
+            raise ValidationError(errors)
+
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
+        if session_reaches_other_tenants(request):
+            raise ValidationError(
+                "This session is limited to one organization and cannot delete an "
+                "account that belongs to other organizations."
+            )
 
         user = self.get_object()
         user.delete(using=MainRouter.admin_db)
@@ -1371,6 +1445,15 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def _tenants_reachable_from(request):
+    """Tenants of the user that the current session is allowed to act on."""
+    queryset = Tenant.objects.filter(membership__user=request.user)
+    bound_tenant_id = session_bound_tenant_id(request)
+    if bound_tenant_id:
+        queryset = queryset.filter(id=bound_tenant_id)
+    return queryset
+
+
 @extend_schema_view(
     list=extend_schema(
         tags=["Tenant"],
@@ -1423,10 +1506,14 @@ class TenantViewSet(BaseTenantViewset):
             self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
-        queryset = Tenant.objects.filter(membership__user=self.request.user)
+        queryset = _tenants_reachable_from(self.request)
         return queryset.prefetch_related("memberships")
 
     def create(self, request, *args, **kwargs):
+        if session_bound_tenant_id(request):
+            raise ValidationError(
+                "This session is limited to one organization and cannot create another."
+            )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tenant = Tenant.objects.using(MainRouter.admin_db).create(
@@ -1553,7 +1640,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     def get_tenant(self):
         tenant_id = self.kwargs.get("tenant_pk")
         return get_object_or_404(
-            Tenant.objects.filter(membership__user=self.request.user),
+            _tenants_reachable_from(self.request),
             id=tenant_id,
         )
 
@@ -1896,7 +1983,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
             queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
@@ -2436,6 +2523,28 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
 
         return content, filename
 
+    def _load_archived_file(self, archive_path, member_pattern):
+        """Return the bytes and filename of the newest archive member matching the pattern."""
+        not_found = Response(
+            {
+                "detail": "The scan has no reports, or the report generation task has not started yet."
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                members = [
+                    info
+                    for info in archive.infolist()
+                    if fnmatch.fnmatch(info.filename, member_pattern)
+                ]
+                if not members:
+                    return not_found
+                member = max(members, key=lambda info: (info.date_time, info.filename))
+                return archive.read(member), os.path.basename(member.filename)
+        except (OSError, zipfile.BadZipFile, zlib.error):
+            return not_found
+
     def _serve_file(self, content, filename, content_type):
         response = HttpResponse(content, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -2515,7 +2624,13 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "compliance", f"*_{name}.{file_extension}")
-            loader = self._load_file(pattern, s3=False)
+            # Scans generated before the loose copy was dropped still have it on disk.
+            if glob.glob(pattern):
+                loader = self._load_file(pattern, s3=False)
+            else:
+                loader = self._load_archived_file(
+                    scan.output_location, f"compliance/*_{name}.{file_extension}"
+                )
 
         if isinstance(loader, HttpResponseBase):
             return loader
@@ -3058,7 +3173,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
 
         if user_roles.unlimited_visibility:
@@ -3412,7 +3527,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
@@ -3456,9 +3571,13 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
     def _get_findings_prefetch(self):
-        findings_queryset = Finding.all_objects.defer("scan", "resources").filter(
-            tenant_id=self.request.tenant_id
-        )
+        findings_queryset = Finding.all_objects.filter(tenant_id=self.request.tenant_id)
+        include_param = self.request.query_params.get("include", "")
+        if "findings" in include_param.split(","):
+            findings_queryset = findings_queryset.defer("scan", "resources")
+        else:
+            # The relationship only serializes the finding ids
+            findings_queryset = findings_queryset.only("id")
         return [Prefetch("findings", queryset=findings_queryset)]
 
     def get_serializer_class(self):
@@ -3544,8 +3663,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        if not user_roles.unlimited_visibility:
+            queryset = queryset.filter(
+                scan_id__in=_scans_visible_to(user_roles, tenant_id).values_list(
+                    "id", flat=True
+                )
+            )
 
         if scans := query_params.get("filter[scan__in]") or query_params.get(
             "filter[scan]"
@@ -3623,7 +3749,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         all_groups = Resource.objects.filter(
             tenant_id=tenant_id,
             groups__isnull=False,
-        ).values_list("groups", flat=True)
+        )
+        if not user_roles.unlimited_visibility:
+            all_groups = all_groups.filter(provider__in=get_providers(user_roles))
+        all_groups = all_groups.values_list("groups", flat=True)
         groups = sorted(
             {g for groups_list in all_groups if groups_list for g in groups_list}
         )
@@ -3648,9 +3777,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
 
-        latest_scans_queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id
+        latest_scans_queryset = _scans_visible_to(
+            user_roles, tenant_id
         ).latest_per_provider()
 
         queryset = ResourceScanSummary.objects.filter(
@@ -3691,7 +3821,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         all_groups = Resource.objects.filter(
             tenant_id=tenant_id,
             groups__isnull=False,
-        ).values_list("groups", flat=True)
+        )
+        if not user_roles.unlimited_visibility:
+            all_groups = all_groups.filter(provider__in=get_providers(user_roles))
+        all_groups = all_groups.values_list("groups", flat=True)
         groups = sorted(
             {g for groups_list in all_groups if groups_list for g in groups_list}
         )
@@ -4028,7 +4161,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -4102,8 +4235,16 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
+        visible_scan_ids = (
+            None
+            if user_roles.unlimited_visibility
+            else _scans_visible_to(user_roles, tenant_id).values_list("id", flat=True)
+        )
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        if not user_roles.unlimited_visibility:
+            queryset = queryset.filter(scan_id__in=visible_scan_ids)
         scan_based_filters = {}
         category_scan_filters = {}  # Filters for ScanCategorySummary
 
@@ -4161,7 +4302,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         if not queryset.exists():
             raw_scans_ids = Scan.objects.filter(
                 tenant_id=tenant_id, **scan_based_filters
-            ).values_list("id", "unique_resource_count")
+            )
+            if not user_roles.unlimited_visibility:
+                raw_scans_ids = raw_scans_ids.filter(id__in=visible_scan_ids)
+            raw_scans_ids = raw_scans_ids.values_list("id", "unique_resource_count")
             scan_ids = [
                 scan_id for scan_id, count in raw_scans_ids if count and count > 0
             ]
@@ -4169,9 +4313,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 backfill_scan_resource_summaries_task.apply_async(
                     kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
                 )
-            return Response(
-                get_findings_metadata_no_aggregations(tenant_id, filtered_queryset)
-            )
+            return Response(get_findings_metadata_no_aggregations(filtered_queryset))
 
         if service_filter := query_params.get("filter[service]") or query_params.get(
             "filter[service__in]"
@@ -4203,24 +4345,20 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
         # Get categories from ScanCategorySummary using same scan filters
+        category_summaries = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, **category_scan_filters
+        )
+        if not user_roles.unlimited_visibility:
+            category_summaries = category_summaries.filter(scan_id__in=visible_scan_ids)
         categories = list(
-            ScanCategorySummary.objects.filter(
-                tenant_id=tenant_id, **category_scan_filters
-            )
-            .values_list("category", flat=True)
+            category_summaries.values_list("category", flat=True)
             .distinct()
             .order_by("category")
         )
 
         # Fallback to finding aggregation if no ScanCategorySummary exists
         if not categories:
-            categories_set = set()
-            for categories_list in filtered_queryset.values_list(
-                "categories", flat=True
-            ):
-                if categories_list:
-                    categories_set.update(categories_list)
-            categories = sorted(categories_set)
+            categories = get_findings_categories(filtered_queryset)
 
         result = {
             "services": services,
@@ -4262,9 +4400,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
 
-        latest_scans_queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id
+        latest_scans_queryset = _scans_visible_to(
+            user_roles, tenant_id
         ).latest_per_provider()
         raw_latest_scans_ids = list(
             latest_scans_queryset.values_list("id", "unique_resource_count")
@@ -4293,7 +4432,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 )
             return Response(
                 get_findings_metadata_no_aggregations(
-                    tenant_id, self.filter_queryset(self.get_queryset())
+                    self.filter_queryset(self.get_queryset()).filter(
+                        tenant_id=tenant_id,
+                        scan_id__in=[scan_id for scan_id, _ in raw_latest_scans_ids],
+                    )
                 )
             )
 
@@ -4343,13 +4485,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 tenant_id=tenant_id,
                 scan_id__in=latest_scans_queryset.values_list("id", flat=True),
             )
-            categories_set = set()
-            for categories_list in filtered_queryset.values_list(
-                "categories", flat=True
-            ):
-                if categories_list:
-                    categories_set.update(categories_list)
-            categories = sorted(categories_set)
+            categories = get_findings_categories(filtered_queryset)
 
         # Get groups from ScanGroupSummary for latest scans
         groups = list(
@@ -7542,9 +7678,36 @@ class MuteRuleViewSet(BaseRLSViewSet):
     ]
     required_permissions = [Permissions.MANAGE_SCANS]
 
+    def _visible_providers(self):
+        role = self.user_role
+        return None if role.unlimited_visibility else get_providers(role)
+
     def get_queryset(self):
-        queryset = MuteRule.objects.filter(tenant_id=self.request.tenant_id)
+        tenant_id = self.request.tenant_id
+        queryset = MuteRule.objects.filter(tenant_id=tenant_id)
+        visible_providers = self._visible_providers()
+        if visible_providers is not None:
+            # A rule is shown only when its findings are all on providers the role
+            # can see, and at least one of them still exists
+            uid_in_rule = Func(
+                F("uid"),
+                OuterRef("finding_uids"),
+                arg_joiner=" = ANY(",
+                template="%(expressions)s)",
+                output_field=BooleanField(),
+            )
+            rule_findings = Finding.all_objects.filter(uid_in_rule, tenant_id=tenant_id)
+            queryset = queryset.filter(
+                Exists(rule_findings.filter(scan__provider__in=visible_providers))
+            ).exclude(
+                Exists(rule_findings.exclude(scan__provider__in=visible_providers))
+            )
         return queryset.select_related("created_by")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["visible_providers"] = self._visible_providers()
+        return context
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -7984,7 +8147,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
                 .values("check_id", "check_title", "check_description")
             }
             for row in rows:
-                metadata = metadata_by_check.get(row["check_id"], {})
+                # A tenant's first scan writes no summaries until it completes.
+                metadata = metadata_by_check.get(
+                    row["check_id"]
+                ) or get_prowler_check_title(
+                    row["check_id"],
+                    (row.get("impacted_providers_str") or "").split(","),
+                )
                 row["check_title"] = metadata.get("check_title")
                 row["check_description"] = metadata.get("check_description")
 

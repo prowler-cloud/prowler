@@ -80,6 +80,8 @@ Prowler Features are considered proper nouns. They are to be referenced without 
 
 Prowler ships two product families. Use these names exactly; the former names Prowler App (now Prowler Local Server) and Prowler Enterprise (now Prowler Private Cloud) must not appear in new writing. The only allowed former-name notes are on the Prowler Product Families page (`getting-started/products/index.mdx`) and in the site-wide banner, which document the mapping.
 
+Web UI guides are written for Prowler Cloud. Steps that open the application link to `https://cloud.prowler.com/sign-in`, and the scope is stated once at the top of the section with the AppliesTo banner (see [AppliesTo Banner for Product Scope](#appliesto-banner-for-product-scope)). Do not offer Prowler Local Server as an inline alternative in a step list ("Go to Prowler Cloud or launch Prowler Local Server"). Mention Prowler Local Server inline only where its behavior differs, for example a feature that is not available or an environment variable that must be set.
+
 Prowler Products:
 
 * **Prowler Cloud**
@@ -573,7 +575,7 @@ The default covers Prowler Cloud, Prowler Private Cloud, and Prowler Local Serve
 <AppliesTo products={["Prowler Cloud", "Prowler Private Cloud"]} />
 ```
 
-Place it on its own line below the Version Badge when one is present, otherwise directly after the imports.
+Place it on its own line below the Version Badge when one is present, otherwise directly after the imports. On a page that also covers Prowler CLI, such as the provider getting-started guides, place it under the `## Prowler Cloud` heading instead, so it scopes only the web UI section.
 
 ### Cloud Marker for Subscription Content
 

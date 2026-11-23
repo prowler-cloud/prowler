@@ -8,7 +8,7 @@ import { sendInvite } from "@/actions/invitations/invitation";
 import { toSentInvitation } from "@/actions/invitations/invitation.adapter";
 import { useToast } from "@/components/shadcn";
 import { ApiError } from "@/types";
-import type { SentInvitation } from "@/types/onboarding-invite";
+import type { SentInvitation } from "@/types/invitations";
 
 export const sendInvitationFormSchema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -22,7 +22,7 @@ const ROLES_ERROR_POINTER = "/data/relationships/roles";
 
 interface UseSendInvitationOptions {
   // Where the invitation is sent from, forwarded to the API as `?source=`
-  // so the origin can be told apart (e.g. the onboarding invite step).
+  // so the origin can be told apart (e.g. the add-provider wizard).
   source?: string;
   defaultRoleId?: string;
   // `onChange` lets a caller gate its submit button on `isValid`.

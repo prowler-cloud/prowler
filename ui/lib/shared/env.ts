@@ -22,6 +22,21 @@ export function isCloud(): boolean {
 }
 
 /**
+ * Whether this Cloud deployment offers Registry providers (`UI_REGISTRY_ENABLED`).
+ *
+ * Read from the island in the browser, then the env, like `isCloud()`. It only
+ * gates the deployment: per-user Registry access is still decided server-side.
+ */
+export function isRegistryEnabled(): boolean {
+  if (!isCloud()) return false;
+
+  const islandConfig = readRuntimeConfigIsland();
+  if (islandConfig) return islandConfig.registryEnabled;
+
+  return readBoolEnv("UI_REGISTRY_ENABLED");
+}
+
+/**
  * Whether visitors can create an account without an invitation.
  *
  * Prowler Cloud only: always on elsewhere. In Cloud it follows

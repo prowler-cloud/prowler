@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Drive(GoogleWorkspaceService):
@@ -31,88 +32,21 @@ class Drive(GoogleWorkspaceService):
                 logger.error("Failed to build Cloud Identity service")
                 return
 
-            request = service.policies().list(
-                pageSize=100,
-                filter='setting.type.matches("drive_and_docs.*")',
+            policies, fetch_succeeded = self._list_policies(
+                service,
+                'setting.type.matches("drive_and_docs.*")',
+                "fetching Drive and Docs policies",
             )
-            fetch_succeeded = True
 
-            while request is not None:
-                try:
-                    response = request.execute()
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "drive_and_docs.service_status")
 
-                    for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
-                            continue
-
-                        setting = policy.get("setting", {})
-                        setting_type = setting.get("type", "").removeprefix("settings/")
-                        value = setting.get("value", {})
-
-                        if setting_type == "drive_and_docs.external_sharing":
-                            self.policies.external_sharing_mode = value.get(
-                                "externalSharingMode"
-                            )
-                            self.policies.warn_for_external_sharing = value.get(
-                                "warnForExternalSharing"
-                            )
-                            self.policies.warn_for_sharing_outside_allowlisted_domains = value.get(
-                                "warnForSharingOutsideAllowlistedDomains"
-                            )
-                            self.policies.allow_publishing_files = value.get(
-                                "allowPublishingFiles"
-                            )
-                            self.policies.access_checker_suggestions = value.get(
-                                "accessCheckerSuggestions"
-                            )
-                            self.policies.allowed_parties_for_distributing_content = (
-                                value.get("allowedPartiesForDistributingContent")
-                            )
-                            logger.debug(
-                                "Drive external sharing settings fetched: "
-                                f"mode={self.policies.external_sharing_mode}, "
-                                f"warn={self.policies.warn_for_external_sharing}, "
-                                f"publish={self.policies.allow_publishing_files}"
-                            )
-
-                        elif setting_type == "drive_and_docs.shared_drive_creation":
-                            self.policies.allow_shared_drive_creation = value.get(
-                                "allowSharedDriveCreation"
-                            )
-                            self.policies.allow_managers_to_override_settings = (
-                                value.get("allowManagersToOverrideSettings")
-                            )
-                            self.policies.allow_non_member_access = value.get(
-                                "allowNonMemberAccess"
-                            )
-                            self.policies.allowed_parties_for_download_print_copy = (
-                                value.get("allowedPartiesForDownloadPrintCopy")
-                            )
-                            logger.debug(
-                                "Drive shared drive creation settings fetched: "
-                                f"creation={self.policies.allow_shared_drive_creation}, "
-                                f"managers_override={self.policies.allow_managers_to_override_settings}"
-                            )
-
-                        elif setting_type == "drive_and_docs.drive_for_desktop":
-                            self.policies.allow_drive_for_desktop = value.get(
-                                "allowDriveForDesktop"
-                            )
-                            logger.debug(
-                                "Drive for desktop setting fetched: "
-                                f"{self.policies.allow_drive_for_desktop}"
-                            )
-
-                    request = service.policies().list_next(request, response)
-
-                except Exception as error:
-                    self._handle_api_error(
-                        error,
-                        "fetching Drive and Docs policies",
-                        self.provider.identity.customer_id,
-                    )
-                    fetch_succeeded = False
-                    break
+            for policy in self._effective_policies(policies):
+                setting = policy.get("setting", {})
+                setting_type = setting.get("type", "").removeprefix("settings/")
+                self._process_setting(setting_type, setting.get("value", {}))
 
             self.policies_fetched = fetch_succeeded
 
@@ -131,8 +65,56 @@ class Drive(GoogleWorkspaceService):
             )
             self.policies_fetched = False
 
+    def _process_setting(self, setting_type: str, value: dict):
+        """Populate the model from a single policy setting."""
+        if setting_type == "drive_and_docs.external_sharing":
+            self.policies.external_sharing_mode = value.get("externalSharingMode")
+            self.policies.warn_for_external_sharing = value.get(
+                "warnForExternalSharing"
+            )
+            self.policies.warn_for_sharing_outside_allowlisted_domains = value.get(
+                "warnForSharingOutsideAllowlistedDomains"
+            )
+            self.policies.allow_publishing_files = value.get("allowPublishingFiles")
+            self.policies.access_checker_suggestions = value.get(
+                "accessCheckerSuggestions"
+            )
+            self.policies.allowed_parties_for_distributing_content = value.get(
+                "allowedPartiesForDistributingContent"
+            )
+            logger.debug(
+                "Drive external sharing settings fetched: "
+                f"mode={self.policies.external_sharing_mode}, "
+                f"warn={self.policies.warn_for_external_sharing}, "
+                f"publish={self.policies.allow_publishing_files}"
+            )
 
-class DrivePolicies(BaseModel):
+        elif setting_type == "drive_and_docs.shared_drive_creation":
+            self.policies.allow_shared_drive_creation = value.get(
+                "allowSharedDriveCreation"
+            )
+            self.policies.allow_managers_to_override_settings = value.get(
+                "allowManagersToOverrideSettings"
+            )
+            self.policies.allow_non_member_access = value.get("allowNonMemberAccess")
+            self.policies.allowed_parties_for_download_print_copy = value.get(
+                "allowedPartiesForDownloadPrintCopy"
+            )
+            logger.debug(
+                "Drive shared drive creation settings fetched: "
+                f"creation={self.policies.allow_shared_drive_creation}, "
+                f"managers_override={self.policies.allow_managers_to_override_settings}"
+            )
+
+        elif setting_type == "drive_and_docs.drive_for_desktop":
+            self.policies.allow_drive_for_desktop = value.get("allowDriveForDesktop")
+            logger.debug(
+                "Drive for desktop setting fetched: "
+                f"{self.policies.allow_drive_for_desktop}"
+            )
+
+
+class DrivePolicies(ServicePolicies):
     """Model for domain-level Drive and Docs policy settings."""
 
     # drive_and_docs.external_sharing
