@@ -40,6 +40,7 @@ class workers_script_no_secrets_in_plain_text_bindings(Check):
             "secrets_ignore_patterns", []
         )
         validate = workers_client.audit_config.get("secrets_validate", False)
+        confidence = workers_client.audit_config.get("secrets_confidence", "low")
         # Scripts whose bindings could not be retrieved are covered by the
         # account-level MANUAL finding, never by a "no secrets found" PASS.
         scripts = [
@@ -59,6 +60,7 @@ class workers_script_no_secrets_in_plain_text_bindings(Check):
                 bindings_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

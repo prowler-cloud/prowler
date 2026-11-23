@@ -6,6 +6,13 @@ from pydantic import BaseModel, Field
 from prowler.lib.logger import logger
 from prowler.providers.vercel.lib.service.service import VercelService
 
+_PREVIEW_PROTECTION_LEVELS = (
+    "all",
+    "prod_deployment_urls_and_all_previews",
+    "all_except_custom_domains",
+    "preview",
+)
+
 
 class Project(VercelService):
     """Retrieve Vercel projects with security-relevant settings and environment variables."""
@@ -42,21 +49,46 @@ class Project(VercelService):
 
                 # Parse deployment protection
                 dp = None
-                dp_raw = proj.get("deploymentProtection", {}) or {}
-
-                preview_dp = dp_raw.get("deploymentType", "none")
+                prod_dp = None
+                if "ssoProtection" in proj or "passwordProtection" in proj:
+                    levels = [
+                        protection.get("deploymentType")
+                        for protection in (
+                            proj.get("ssoProtection"),
+                            proj.get("passwordProtection"),
+                        )
+                        if isinstance(protection, dict)
+                    ]
+                    preview_dp = next(
+                        (
+                            level
+                            for level in _PREVIEW_PROTECTION_LEVELS
+                            if level in levels
+                        ),
+                        None,
+                    )
+                    # Standard protection excludes the live production domain.
+                    prod_level = "all" if "all" in levels else None
+                else:
+                    dp_raw = proj.get("deploymentProtection") or {}
+                    preview_dp = dp_raw.get("deploymentType")
+                    prod_level = (dp_raw.get("prod") or {}).get("deploymentType")
                 if preview_dp and preview_dp != "none":
                     dp = DeploymentProtectionConfig(level=preview_dp)
-
-                prod_dp = None
-                prod_raw = dp_raw.get("prod", {}) or {}
-                prod_level = prod_raw.get("deploymentType", "none")
                 if prod_level and prod_level != "none":
                     prod_dp = DeploymentProtectionConfig(level=prod_level)
 
                 # Parse password protection
                 pwd_protection = proj.get("passwordProtection")
                 security = proj.get("security", {}) or {}
+                if "skewProtectionMaxAge" in proj:
+                    max_age = proj["skewProtectionMaxAge"]
+                    skew_protection = type(max_age) is int and max_age > 0
+                else:
+                    skew = proj.get("skewProtection", False)
+                    skew_protection = (
+                        skew == "enabled" if isinstance(skew, str) else bool(skew)
+                    )
 
                 project_team_id = proj.get("accountId") or self.provider.session.team_id
 
@@ -73,11 +105,7 @@ class Project(VercelService):
                     node_version=proj.get("nodeVersion"),
                     auto_expose_system_envs=proj.get("autoExposeSystemEnvs", False),
                     directory_listing=proj.get("directoryListing", False),
-                    skew_protection=(
-                        proj.get("skewProtection") == "enabled"
-                        if isinstance(proj.get("skewProtection"), str)
-                        else bool(proj.get("skewProtection", False))
-                    ),
+                    skew_protection=skew_protection,
                     deployment_protection=dp,
                     production_deployment_protection=prod_dp,
                     password_protection=pwd_protection,
@@ -146,7 +174,7 @@ class Project(VercelService):
 class DeploymentProtectionConfig(BaseModel):
     """Per-environment deployment protection settings."""
 
-    level: str = "none"  # "standard" | "all" | "none"
+    level: str = "none"
     method: Optional[str] = None
 
 

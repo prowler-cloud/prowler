@@ -91,3 +91,113 @@ class TestCloudStorageService:
                 in cloudstorage_client.vpc_service_controls_protected_projects
             )
             assert len(cloudstorage_client.buckets) == 0
+
+    def test_iam_policy_denied_on_one_bucket(self):
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            ) as mock_client,
+        ):
+            mock_resp = MagicMock()
+            mock_resp.status = 403
+            mock_resp.reason = "Forbidden"
+            denied = HttpError(
+                resp=mock_resp,
+                content=b'{"error": {"message": "caller does not have storage.buckets.getIamPolicy access"}}',
+            )
+
+            mock_buckets = MagicMock()
+            mock_buckets.list.return_value.execute.return_value = {
+                "items": [
+                    {
+                        "name": "denied",
+                        "id": "denied",
+                        "location": "US",
+                        "iamConfiguration": {
+                            "uniformBucketLevelAccess": {"enabled": True}
+                        },
+                    },
+                    {
+                        "name": "readable",
+                        "id": "readable",
+                        "location": "EU",
+                        "iamConfiguration": {
+                            "uniformBucketLevelAccess": {"enabled": False}
+                        },
+                    },
+                ]
+            }
+            mock_buckets.list_next.return_value = None
+
+            def get_iam_policy(bucket):
+                request = MagicMock()
+                if bucket == "denied":
+                    request.execute.side_effect = denied
+                else:
+                    request.execute.return_value = {
+                        "bindings": [{"members": ["allUsers"]}]
+                    }
+                return request
+
+            mock_buckets.getIamPolicy = get_iam_policy
+            mock_client.return_value.buckets.return_value = mock_buckets
+
+            cloudstorage_client = CloudStorage(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+
+            assert len(cloudstorage_client.buckets) == 2
+            assert cloudstorage_client.buckets[0].name == "denied"
+            assert cloudstorage_client.buckets[0].public is None
+            assert cloudstorage_client.buckets[0].uniform_bucket_level_access
+            assert cloudstorage_client.buckets[1].name == "readable"
+            assert cloudstorage_client.buckets[1].public
+            assert not cloudstorage_client.vpc_service_controls_protected_projects
+
+    def test_vpc_service_controls_blocked_on_bucket_iam_policy(self):
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            ) as mock_client,
+        ):
+            mock_resp = MagicMock()
+            mock_resp.status = 403
+            mock_resp.reason = "Forbidden"
+            vpc_error = HttpError(
+                resp=mock_resp,
+                content=b'{"error": {"message": "Request is prohibited by organization\'s policy. vpcServiceControlsUniqueIdentifier: 12345"}}',
+            )
+
+            mock_buckets = MagicMock()
+            mock_buckets.list.return_value.execute.return_value = {
+                "items": [
+                    {
+                        "name": "protected",
+                        "id": "protected",
+                        "location": "US",
+                        "iamConfiguration": {
+                            "uniformBucketLevelAccess": {"enabled": True}
+                        },
+                    }
+                ]
+            }
+            mock_buckets.getIamPolicy.return_value.execute.side_effect = vpc_error
+            mock_client.return_value.buckets.return_value = mock_buckets
+
+            cloudstorage_client = CloudStorage(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+
+            assert (
+                GCP_PROJECT_ID
+                in cloudstorage_client.vpc_service_controls_protected_projects
+            )
+            assert len(cloudstorage_client.buckets) == 0
