@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "next-devtools": {
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "next-devtools-mcp@0.4.0"
+      ]
+    },
+    "playwright": {
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "@playwright/mcp@0.0.84",
+        "--isolated",
+        "--output-dir",
+        "/tmp/playwright-mcp",
+        "--test-id-attribute",
+        "data-testid"
+      ]
+    }
+  }
+}

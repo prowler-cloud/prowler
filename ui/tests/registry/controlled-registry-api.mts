@@ -598,6 +598,13 @@ async function handleApiRequest(
 
   if (method === "GET" && pathname === "/api/v1/registry/available-artifacts") {
     state.catalogReadCount += 1;
+    // Like the API, the catalog needs an active tenant key.
+    if (state.credentialState !== "active") {
+      sendJson(response, 409, {
+        errors: [{ code: "registry_credential_not_configured" }],
+      });
+      return;
+    }
     if (state.discoveryMode !== "ready") {
       sendDiscoveryResponse(response);
       return;

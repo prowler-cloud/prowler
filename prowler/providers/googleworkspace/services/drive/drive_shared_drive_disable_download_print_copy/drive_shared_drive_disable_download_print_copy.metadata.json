@@ -35,5 +35,5 @@
     "drive_shared_drive_managers_cannot_override",
     "drive_shared_drive_members_only_access"
   ],
-  "Notes": ""
+  "Notes": "Not configurable on Business Starter: new shared drives on that edition allow every sharing option and the Admin console does not let you change the defaults; a tenant downgraded from another edition may still display its earlier values. When the Licensing API scope is authorized and every edition the tenant holds is Business Starter, the finding says so."
 }

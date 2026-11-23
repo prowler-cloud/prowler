@@ -2,10 +2,13 @@
 title: 'Getting Started With Microsoft 365 on Prowler'
 ---
 
+import { AppliesTo } from "/snippets/applies-to.mdx"
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 <Note>
 **Government Cloud Support**
 
-Government cloud accounts or tenants (Microsoft 365 Government) are currently unsupported, but we expect to add support for them in the near future.
+Prowler CLI scans Microsoft 365 Government GCC High and Microsoft 365 operated by 21Vianet tenants with the `--region` flag, see [Region Selection](#region-selection). Microsoft 365 GCC uses the commercial endpoints and needs no flag. Microsoft 365 DoD is not available, and Prowler Cloud does not support government clouds yet.
 
 </Note>
 
@@ -29,6 +32,8 @@ Set up authentication for Microsoft 365 with the [Microsoft 365 Authentication](
 
 ## Prowler Cloud
 
+<AppliesTo />
+
 ### Step 1: Locate the Domain ID
 
 1. Open the Entra ID portal, then search for "Domain" or go to Identity > Settings > Domain Names.
@@ -41,7 +46,7 @@ Set up authentication for Microsoft 365 with the [Microsoft 365 Authentication](
 
 ### Step 2: Open Prowler Cloud
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app).
+1. Sign in to [Prowler Cloud](https://cloud.prowler.com/sign-in) or [create an account](https://cloud.prowler.com/sign-up).
 2. Navigate to "Configuration" > "Providers".
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
@@ -140,5 +145,43 @@ Available regions:
 * **M365Global** (default): Standard commercial cloud
 * **M365China**: China-operated cloud (21Vianet)
 * **M365USGovernment**: US Government cloud (GCC High)
+* **M365Custom**: Any other Microsoft cloud, with operator-supplied endpoints
+
+The PowerShell checks (Exchange Online and Microsoft Teams, which also feed Entra, Defender, Purview and Admin Center checks) follow the selected region. For `M365USGovernment` and `M365China`, Prowler requests tokens from that cloud's sign-in endpoint and connects with the matching `-ExchangeEnvironmentName` (`O365USGovGCCHigh`, `O365China`) and `-TeamsEnvironmentName` (`TeamsGCCH`, `TeamsChina`) values. Nothing is sent to the commercial sign-in endpoint for those regions.
+
+<Note>
+Only the Microsoft Teams checks for `M365USGovernment` are verified against a live tenant. Exchange Online for `M365USGovernment` and everything for `M365China` are not, and Teams checks may not connect with `M365China`.
+</Note>
+
+#### Custom Cloud Endpoints
+
+<VersionBadge version="5.52.0" />
+
+To scan a tenant in a Microsoft cloud that is not listed above, such as a sovereign or air-gapped cloud, set the region to `M365Custom` and supply the cloud's endpoints:
+
+```console
+prowler m365 --sp-env-auth --region M365Custom --m365-authority-host login.example.cloud --m365-graph-endpoint https://graph.example.cloud
+```
+
+* `--m365-authority-host`: Microsoft Entra ID authority host used to sign in.
+* `--m365-graph-endpoint`: Microsoft Graph endpoint used to query the tenant.
+
+Both flags are required with `M365Custom` and are only valid with it. Each value is a host or an `https://` URL.
+
+With `--az-cli-auth`, the token comes from whichever cloud the `az` CLI is signed in to.
+
+<Note>
+With `M365Custom`, the checks that rely on the Exchange Online and Microsoft Teams PowerShell modules are skipped, because those modules need environment values that are only known for the built-in regions. The Microsoft Graph checks run against the supplied endpoints.
+</Note>
+
+Prowler signs in through the selected region's Microsoft Entra ID authority and sends Microsoft Graph requests to that region's endpoint.
+
+<Note>
+Azure CLI authentication (`--az-cli-auth`) uses the cloud the Azure CLI is signed in to. When targeting `M365China` or `M365USGovernment`, switch the Azure CLI to the matching cloud before signing in, for example `az cloud set --name AzureUSGovernment` or `az cloud set --name AzureChinaCloud`.
+The PowerShell checks (Exchange Online and Microsoft Teams, which also feed Entra, Defender, Purview and Admin Center checks) follow the selected region. For `M365USGovernment` and `M365China`, Prowler requests tokens from that cloud's sign-in endpoint and connects with the matching `-ExchangeEnvironmentName` (`O365USGovGCCHigh`, `O365China`) and `-TeamsEnvironmentName` (`TeamsGCCH`, `TeamsChina`) values. Nothing is sent to the commercial sign-in endpoint for those regions.
+
+<Note>
+Only the Microsoft Teams checks for `M365USGovernment` are verified against a live tenant. Exchange Online for `M365USGovernment` and everything for `M365China` are not, and Teams checks may not connect with `M365China`.
+</Note>
 
 ---

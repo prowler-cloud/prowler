@@ -93,6 +93,165 @@ class TestChatService:
             assert chat.policies.enable_apps is False
             assert chat.policies.enable_webhooks is False
 
+    def test_the_admin_policy_outranks_a_system_default_returned_after_it(self):
+        """The greatest sortOrder is the value in force, whatever order the API lists them in"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"sortOrder": 201.00131},
+                    "setting": {
+                        "type": "settings/chat.chat_apps_access",
+                        "value": {"enableApps": False, "enableWebhooks": False},
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"sortOrder": 100.00005},
+                    "setting": {
+                        "type": "settings/chat.chat_apps_access",
+                        "value": {"enableApps": True, "enableWebhooks": True},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.chat.chat_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.chat.chat_service import (
+                Chat,
+            )
+
+            chat = Chat(mock_provider)
+
+            assert chat.policies_fetched is True
+            assert chat.policies.enable_apps is False
+            assert chat.policies.enable_webhooks is False
+
+    def test_off_for_everyone_when_off_at_the_root_with_no_override(self):
+        """A root-level DISABLED status with no org unit or group override is off for everyone"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {
+                        "orgUnit": f"orgUnits/{ROOT_ORG_UNIT_ID}",
+                        "sortOrder": 201.00122,
+                    },
+                    "setting": {
+                        "type": "settings/chat.service_status",
+                        "value": {"serviceState": "DISABLED"},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.chat.chat_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.chat.chat_service import (
+                Chat,
+            )
+
+            fetched = Chat(mock_provider)
+
+            assert fetched.policies_fetched is True
+            assert fetched.policies.service_state == "DISABLED"
+            assert fetched.policies.service_state_overridden is False
+            assert fetched.policies.off_for_everyone is True
+
+    def test_reads_the_service_status_and_its_overrides(self):
+        """Off at the customer level only counts when no org unit or group turns the service back on"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"sortOrder": 201.00122},
+                    "setting": {
+                        "type": "settings/chat.service_status",
+                        "value": {"serviceState": "DISABLED"},
+                    },
+                },
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"orgUnit": "orgUnits/sub", "sortOrder": 301.00122},
+                    "setting": {
+                        "type": "settings/chat.service_status",
+                        "value": {"serviceState": "ENABLED"},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.chat.chat_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.chat.chat_service import (
+                Chat,
+            )
+
+            fetched = Chat(mock_provider)
+
+            assert fetched.policies_fetched is True
+            assert fetched.policies.service_state == "DISABLED"
+            assert fetched.policies.service_state_overridden is True
+            assert fetched.policies.off_for_everyone is False
+
     def test_chat_fetch_policies_empty_response(self):
         """Test handling empty policies response"""
         mock_provider = set_mocked_googleworkspace_provider()

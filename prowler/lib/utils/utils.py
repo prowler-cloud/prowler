@@ -340,6 +340,8 @@ def detect_secrets_scan_batch(
             An empty result is therefore always "no secrets found", never a
             silent scan failure; callers must report MANUAL on this error.
     """
+    # An explicit null in the provider config reaches here as None.
+    confidence = confidence or default_secrets_confidence
     items = payloads.items() if hasattr(payloads, "items") else payloads
     results = {}
     chunk = []

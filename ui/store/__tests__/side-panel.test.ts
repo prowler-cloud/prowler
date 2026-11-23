@@ -24,7 +24,7 @@ describe("useSidePanelStore", () => {
       contextTab: null,
       contextOwnerToken: 0,
       contextOutlet: null,
-      hasSeenAiTriggerHint: false,
+      modalHostCount: 0,
     });
   });
 
@@ -313,53 +313,24 @@ describe("useSidePanelStore", () => {
     expect(persisted.state).toEqual({
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
       width: SIDE_PANEL_DETAIL_MIN_WIDTH,
-      hasSeenAiTriggerHint: false,
     });
     expect(persisted.state.isOpen).toBeUndefined();
     expect(persisted.state.contextTab).toBeUndefined();
   });
 
-  it("retires the AI trigger hint when the AI chat opens by any entry point", () => {
-    // When: the trigger (or the Overview banner) opens the AI chat
-    useSidePanelStore.getState().openPanel(SIDE_PANEL_TAB.AI_CHAT);
+  it("counts modal hosts until each one unregisters, ignoring repeated cleanups", () => {
+    // Given: two dialogs share the screen with the panel
+    const unregisterFirst = useSidePanelStore.getState().registerModalHost();
+    const unregisterSecond = useSidePanelStore.getState().registerModalHost();
+    expect(useSidePanelStore.getState().modalHostCount).toBe(2);
 
-    // Then
-    expect(useSidePanelStore.getState().hasSeenAiTriggerHint).toBe(true);
-  });
+    // When: the first one unregisters twice (e.g. a double cleanup)
+    unregisterFirst();
+    unregisterFirst();
 
-  it("retires the AI trigger hint when ⌘. toggles the panel open on the AI tab", () => {
-    // Given: the AI tab is the remembered selection
-    expect(useSidePanelStore.getState().selectedTab).toBe(
-      SIDE_PANEL_TAB.AI_CHAT,
-    );
-
-    // When
-    useSidePanelStore.getState().togglePanel();
-
-    // Then
-    expect(useSidePanelStore.getState().hasSeenAiTriggerHint).toBe(true);
-  });
-
-  it("keeps the AI trigger hint while only a detail view opens the panel", () => {
-    // When: a detail view registers (panel opens on the context tab)
-    useSidePanelStore.getState().registerContextTab({
-      label: "Details",
-      onRequestClose: vi.fn(),
-    });
-
-    // Then: the user has not discovered the AI entry point yet
-    expect(useSidePanelStore.getState().hasSeenAiTriggerHint).toBe(false);
-  });
-
-  it("marks and persists the AI trigger hint as seen on dismissal", () => {
-    // When
-    useSidePanelStore.getState().markAiTriggerHintSeen();
-
-    // Then
-    expect(useSidePanelStore.getState().hasSeenAiTriggerHint).toBe(true);
-    const persisted = JSON.parse(
-      localStorage.getItem("side-panel-store") ?? "{}",
-    );
-    expect(persisted.state.hasSeenAiTriggerHint).toBe(true);
+    // Then: only its own registration is released
+    expect(useSidePanelStore.getState().modalHostCount).toBe(1);
+    unregisterSecond();
+    expect(useSidePanelStore.getState().modalHostCount).toBe(0);
   });
 });

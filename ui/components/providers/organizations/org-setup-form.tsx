@@ -11,9 +11,9 @@ import { z } from "zod";
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
-  AWS_ONBOARDING_METHOD,
-  AwsOnboardingMethodTabs,
-} from "@/components/providers/wizard/steps/aws/aws-onboarding-method-tabs";
+  ONBOARDING_METHOD,
+  OnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/connect/onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -334,8 +334,9 @@ export function OrgSetupForm({
             </div>
 
             {onSelectSingleAccount && (
-              <AwsOnboardingMethodTabs
-                value={AWS_ONBOARDING_METHOD.ORGANIZATION}
+              <OnboardingMethodTabs
+                orgType={ORGANIZATION_TYPE.AWS}
+                value={ONBOARDING_METHOD.ORGANIZATION}
                 onSelectSingle={onSelectSingleAccount}
               />
             )}

@@ -37,6 +37,8 @@ export const EditRoleForm = ({
     ...roleData.data.attributes,
     ...(isCloudEnvironment && {
       manage_registry: roleData.data.attributes.manage_registry ?? false,
+      manage_prowler_realtime:
+        roleData.data.attributes.manage_prowler_realtime ?? false,
     }),
     groups:
       roleData.data.relationships?.provider_groups?.data.map((g) => g.id) || [],
@@ -66,6 +68,7 @@ export const EditRoleForm = ({
         updatedFields.manage_lighthouse_ai_configuration =
           values.manage_lighthouse_ai_configuration;
         updatedFields.manage_registry = values.manage_registry;
+        updatedFields.manage_prowler_realtime = values.manage_prowler_realtime;
       }
 
       if (
