@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl patch deployment <deployment-name> -n <namespace> --type=strategic -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"<container-name>\",\"securityContext\":{\"seccompProfile\":{\"type\":\"RuntimeDefault\",\"localhostProfile\":null}}}]}}}}'",
       "NativeIaC": "",
-      "Other": "1. Open the workload manifest and locate the Pod spec. For a controller such as a Deployment, this is under spec.template.spec.\n2. Set securityContext.seccompProfile.type to RuntimeDefault on the Pod to provide a default for its containers.\n3. Review the regular and init container security contexts. Set any explicit seccomp profiles to RuntimeDefault or remove them to inherit the Pod default.\n4. Apply the updated manifest and verify the replacement Pods. If an existing ephemeral container has a conflicting profile, recreate the Pod and use RuntimeDefault for any new ephemeral container.",
+      "Other": "1. Locate the Pod spec in the workload manifest. For a Deployment, it is under spec.template.spec.\n2. Set securityContext.seccompProfile.type to RuntimeDefault in the Pod spec. Set explicit regular and init container profiles to RuntimeDefault or remove the overrides so they inherit the Pod profile. Remove localhostProfile when changing a profile to RuntimeDefault.\n3. For controller-managed Pods, roll out the corrected Pod template and verify the replacement Pods. The CLI example updates one named regular container in a Deployment.\n4. For an existing standalone Pod, recreate the Pod from the corrected manifest and verify its security context.\n5. If an existing ephemeral container has a conflicting profile, replace the Pod and set RuntimeDefault when adding any new ephemeral container.",
       "Terraform": "```hcl\nresource \"kubernetes_pod_v1\" \"example\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    security_context {\n      seccomp_profile {\n        type = \"RuntimeDefault\" # Inherited by containers without an explicit profile\n      }\n    }\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
