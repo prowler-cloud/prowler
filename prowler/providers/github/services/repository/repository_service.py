@@ -10,6 +10,8 @@ from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
 from prowler.providers.github.models import GithubAppIdentityInfo
 
+GITHUB_GRAPHQL_TIMEOUT = (10, 60)
+
 
 class Repository(GithubService):
     def __init__(self, provider):
@@ -65,41 +67,105 @@ class Repository(GithubService):
             "Content-Type": "application/json",
         }
         query = """
-        {
+        query ($cursor: String) {
           viewer {
-            repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER]) {
+            repositories(
+              first: 100
+              after: $cursor
+              affiliations: [OWNER, ORGANIZATION_MEMBER]
+            ) {
               nodes {
                 nameWithOwner
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
               }
             }
           }
         }
         """
 
+        repositories = []
+        cursor = None
+        seen_cursors = set()
+
         try:
-            response = requests.post(
-                graphql_url, json={"query": query}, headers=headers
-            )
-            response.raise_for_status()
-            data = response.json()
+            while True:
+                response = requests.post(
+                    graphql_url,
+                    json={"query": query, "variables": {"cursor": cursor}},
+                    headers=headers,
+                    timeout=GITHUB_GRAPHQL_TIMEOUT,
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            if "errors" in data:
-                logger.error(f"Error in GraphQL query: {data['errors']}")
-                return []
+                errors = data.get("errors") if isinstance(data, dict) else None
+                repository_connection = (
+                    ((data.get("data") or {}).get("viewer") or {}).get("repositories")
+                    if isinstance(data, dict)
+                    else None
+                )
+                if not isinstance(repository_connection, dict):
+                    logger.error(
+                        f"Error in GraphQL query: {errors or 'invalid response'}"
+                    )
+                    return repositories
+                if errors:
+                    # GitHub returns partial responses: repositories the token
+                    # cannot access (e.g. behind organization SAML enforcement)
+                    # come back as null nodes together with an "errors" entry,
+                    # while the rest of the page is valid.
+                    logger.warning(
+                        f"GitHub GraphQL returned errors while discovering repositories, "
+                        f"some repositories may be skipped: {errors}"
+                    )
 
-            repo_nodes = (
-                data.get("data", {})
-                .get("viewer", {})
-                .get("repositories", {})
-                .get("nodes", [])
-            )
-            return [repo["nameWithOwner"] for repo in repo_nodes]
+                repo_nodes = repository_connection.get("nodes")
+                page_info = repository_connection.get("pageInfo")
+                if (
+                    not isinstance(repo_nodes, list)
+                    or not isinstance(page_info, dict)
+                    or not isinstance(page_info.get("hasNextPage"), bool)
+                ):
+                    logger.error(
+                        "GitHub GraphQL returned an invalid repositories page; "
+                        "repository discovery may be incomplete."
+                    )
+                    return repositories
 
-        except requests.exceptions.RequestException as error:
+                for repo_node in repo_nodes:
+                    if not repo_node:
+                        logger.warning(
+                            "Skipping a repository the token cannot access during discovery."
+                        )
+                        continue
+                    repositories.append(repo_node["nameWithOwner"])
+
+                if not page_info["hasNextPage"]:
+                    return repositories
+
+                cursor = page_info.get("endCursor")
+                if not cursor or cursor in seen_cursors:
+                    logger.error(
+                        "GitHub GraphQL pagination returned an invalid cursor; "
+                        "repository discovery may be incomplete."
+                    )
+                    return repositories
+                seen_cursors.add(cursor)
+
+        except (
+            requests.exceptions.RequestException,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+        ) as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return repositories
 
     def _default_branch_matches_rule_pattern(
         self, pattern: str, default_branch: str
@@ -696,6 +762,8 @@ class Repository(GithubService):
                     approval_count_source = "ruleset_not_active"
 
             secret_scanning_enabled = False
+            # GitHub omits security_and_analysis when the token cannot read it
+            secret_scanning_push_protection_enabled = None
             dependabot_alerts_enabled = False
             try:
                 if (
@@ -704,6 +772,13 @@ class Repository(GithubService):
                 ):
                     secret_scanning_enabled = (
                         repo.security_and_analysis.secret_scanning.status == "enabled"
+                    )
+                if repo.security_and_analysis:
+                    push_protection = (
+                        repo.security_and_analysis.secret_scanning_push_protection
+                    )
+                    secret_scanning_push_protection_enabled = bool(
+                        push_protection and push_protection.status == "enabled"
                     )
                 try:
                     # Use get_dependabot_alerts to check if Dependabot alerts are enabled
@@ -728,6 +803,7 @@ class Repository(GithubService):
                     f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 secret_scanning_enabled = None
+                secret_scanning_push_protection_enabled = None
                 dependabot_alerts_enabled = None
             repos[repo.id] = Repo(
                 id=repo.id,
@@ -774,6 +850,7 @@ class Repository(GithubService):
                 securitymd=securitymd_exists,
                 codeowners_exists=codeowners_exists,
                 secret_scanning_enabled=secret_scanning_enabled,
+                secret_scanning_push_protection_enabled=secret_scanning_push_protection_enabled,
                 dependabot_alerts_enabled=dependabot_alerts_enabled,
                 delete_branch_on_merge=delete_branch_on_merge,
             )
@@ -940,5 +1017,6 @@ class Repo(BaseModel):
     securitymd: Optional[bool]
     codeowners_exists: Optional[bool]
     secret_scanning_enabled: Optional[bool]
+    secret_scanning_push_protection_enabled: Optional[bool] = None
     dependabot_alerts_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]

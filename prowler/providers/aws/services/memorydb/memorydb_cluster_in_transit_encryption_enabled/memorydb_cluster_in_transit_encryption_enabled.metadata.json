@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "memorydb_cluster_in_transit_encryption_enabled",
+  "CheckTitle": "MemoryDB cluster has in-transit encryption enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Security",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "memorydb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "database",
+  "Description": "**MemoryDB clusters** are evaluated for **in-transit encryption (TLS)** on client and inter-node traffic (`TLSEnabled=true`).",
+  "Risk": "Without **in-transit encryption**, client and inter-node traffic travels in cleartext inside the VPC.\n\nAnyone able to observe it can **read cached data** and the **ACL credentials** clients send to authenticate, or **tamper with commands**, enabling **MITM** and replication corruption. This harms **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/memorydb/latest/devguide/in-transit-encryption.html",
+    "https://docs.aws.amazon.com/memorydb/latest/devguide/API_CreateCluster.html",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/memorydb_cluster#tls_enabled"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# Enable in-transit encryption for a MemoryDB cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::MemoryDB::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      ACLName: <example_acl_name>\n      NodeType: <example_node_type>\n      NumShards: 1\n      TLSEnabled: true  # CRITICAL: enables TLS in-transit; replaces the cluster if changed\n```",
+      "Other": "1. In the AWS Console, go to MemoryDB > Clusters\n2. Select the cluster <cluster-name> and choose Actions > Take snapshot\n3. Once the snapshot is available, go to Snapshots, select it and choose Actions > Restore\n4. In the restore form, enable \"Encryption in transit\" and create the cluster\n5. Repoint clients at the new cluster endpoint using a TLS-enabled client, then delete the old cluster",
+      "Terraform": "```hcl\nresource \"aws_memorydb_cluster\" \"<example_resource_name>\" {\n  name       = \"<example_resource_name>\"\n  acl_name   = \"<example_acl_name>\"\n  node_type  = \"<example_node_type>\"\n  num_shards = 1\n\n  tls_enabled = true  # CRITICAL: enables TLS in-transit; forces replacement if changed\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create MemoryDB clusters with `TLSEnabled=true`. Because this flag is **immutable after creation**, an unencrypted cluster must be replaced: snapshot it, restore into a new TLS-enabled cluster, then cut clients over and delete the original.\n\nConfigure clients to validate the server certificate, and pair TLS with **ACL users**, least-privilege security groups, and private subnets for defense in depth.",
+      "Url": "https://hub.prowler.com/check/memorydb_cluster_in_transit_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "MemoryDB enables in-transit encryption by default, and `TLSEnabled` cannot be changed after the cluster is created, so a failing cluster must be recreated from a snapshot rather than updated in place."
+}

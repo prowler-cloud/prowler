@@ -12,6 +12,9 @@ class IAM(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(AuthorizationManagementClient, provider)
         self.roles, self.custom_roles = self._get_roles()
+        # Subscriptions whose role assignments could not be listed completely,
+        # so an empty or partial result there is not evidence of no assignments.
+        self.role_assignments_lookup_failed: set[str] = set()
         self.role_assignments = self._get_role_assignments()
 
     def _get_roles(self):
@@ -82,6 +85,7 @@ class IAM(AzureService):
                         }
                     )
             except Exception as error:
+                self.role_assignments_lookup_failed.add(subscription)
                 logger.error(
                     f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )

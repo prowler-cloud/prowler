@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from colorama import Fore, Style
+from keystoneauth1.session import TCPKeepAliveAdapter
 from openstack import config, connect
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
@@ -14,12 +15,14 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.lib.logger import logger
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError, validate_outbound_url
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.openstack.exceptions.exceptions import (
     OpenStackAmbiguousRegionError,
     OpenStackAuthenticationError,
+    OpenStackAuthUrlNotAllowedError,
     OpenStackCloudNotFoundError,
     OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
@@ -30,6 +33,16 @@ from prowler.providers.openstack.exceptions.exceptions import (
 )
 from prowler.providers.openstack.lib.mutelist.mutelist import OpenStackMutelist
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
+
+
+class _GuardedAdapter(TCPKeepAliveAdapter):
+    """Adapter that keeps redirects and catalog endpoints inside the SSRF guard."""
+
+    def send(self, request, *args, **kwargs):
+        # Not cached per host: a later request may open a new connection and
+        # resolve the name again
+        validate_outbound_url(request.url)
+        return super().send(request, *args, **kwargs)
 
 
 class OpenstackProvider(Provider):
@@ -455,6 +468,15 @@ class OpenstackProvider(Provider):
             )
 
     @staticmethod
+    def _validate_auth_url(auth_url: str) -> None:
+        """Reject an auth_url the worker must not reach; the detail stays in the log."""
+        try:
+            validate_outbound_url(auth_url, allowed_schemes=("http", "https"))
+        except OutboundURLNotAllowedError as error:
+            logger.warning(f"OpenStack auth_url rejected: {error}")
+            raise OpenStackAuthUrlNotAllowedError()
+
+    @staticmethod
     def _create_connection(
         session: OpenStackSession,
         region: str | None = None,
@@ -471,6 +493,7 @@ class OpenstackProvider(Provider):
             region: Optional region override — when given, the connection is
                 scoped to this specific region instead of the session default.
         """
+        OpenstackProvider._validate_auth_url(session.auth_url)
         try:
             # Don't load from clouds.yaml or environment variables, we configure this in setup_session()
             conn = connect(
@@ -478,8 +501,13 @@ class OpenstackProvider(Provider):
                 load_envvars=False,
                 **session.as_sdk_config(region_override=region),
             )
+            for scheme in ("http://", "https://"):
+                conn.session.mount(scheme, _GuardedAdapter())
             conn.authorize()
             return conn
+        except OutboundURLNotAllowedError as error:
+            logger.warning(f"OpenStack request rejected: {error}")
+            raise OpenStackAuthUrlNotAllowedError()
         except openstack_exceptions.SDKException as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "
@@ -636,6 +664,7 @@ class OpenstackProvider(Provider):
         except (
             OpenStackCredentialsError,
             OpenStackAuthenticationError,
+            OpenStackAuthUrlNotAllowedError,
             OpenStackSessionError,
             OpenStackConfigFileNotFoundError,
             OpenStackCloudNotFoundError,

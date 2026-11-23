@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -39,6 +39,10 @@ class ElasticBeanstalk(AWSService):
                             application_name=environment["ApplicationName"],
                             name=environment["EnvironmentName"],
                             region=regional_client.region,
+                            platform_arn=environment.get("PlatformArn", ""),
+                            solution_stack_name=environment.get(
+                                "SolutionStackName", ""
+                            ),
                         )
         except Exception as error:
             logger.error(
@@ -56,6 +60,8 @@ class ElasticBeanstalk(AWSService):
             option_settings = configuration_settings["ConfigurationSettings"][0].get(
                 "OptionSettings", {}
             )
+            environment.option_settings = option_settings
+
             for option in option_settings:
                 if (
                     option["Namespace"] == "aws:elasticbeanstalk:healthreporting:system"
@@ -119,7 +125,11 @@ class Environment(BaseModel):
     arn: str
     region: str
     application_name: str
+    platform_arn: str = ""
+    solution_stack_name: str = ""
     health_reporting: Optional[str]
     managed_platform_updates: Optional[str]
     cloudwatch_stream_logs: Optional[str]
     tags: Optional[list] = []
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("option_settings",)
+    option_settings: Optional[list] = None

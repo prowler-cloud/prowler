@@ -1,3 +1,4 @@
+import { CloudCog } from "lucide-react";
 import { Suspense } from "react";
 
 import { SkeletonTableProviders } from "@/components/providers/table";
@@ -22,22 +23,12 @@ export default async function Providers({
   const activeTab = getProviderTab(resolvedSearchParams.tab);
   const isCloudEnvironment = isCloud();
 
-  // Exclude `tab` and `onboarding` from the key: tab switches must not re-suspend,
-  // and `onboarding` is ephemeral (stripped via history.replaceState) — keeping it
-  // would remount ProvidersAccountsView and reset the wizard mid-flow.
-  const {
-    tab: _tab,
-    onboarding: _onboarding,
-    ...stableParams
-  } = resolvedSearchParams || {};
+  // Exclude `tab` from the key: tab switches must not re-suspend.
+  const { tab: _tab, ...stableParams } = resolvedSearchParams || {};
   const searchParamsKey = JSON.stringify(stableParams);
 
   return (
-    <ContentLayout
-      title="Providers"
-      icon="lucide:cloud-cog"
-      onboardingAction={{ flowId: "add-provider" }}
-    >
+    <ContentLayout title="Providers" icon={<CloudCog />}>
       {isCloudEnvironment && <CliImportBanner className="mb-6" />}
       <FilterTransitionWrapper>
         <ProviderPageTabs

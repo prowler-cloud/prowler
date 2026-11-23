@@ -36,5 +36,5 @@
     "gmail_external_image_scanning_enabled",
     "gmail_untrusted_link_warnings_enabled"
   ],
-  "Notes": ""
+  "Notes": "When Gmail is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

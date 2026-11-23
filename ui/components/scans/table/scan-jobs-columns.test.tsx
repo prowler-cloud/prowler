@@ -11,8 +11,17 @@ import {
 
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Badge: ({
+    children,
+    tabIndex,
+  }: {
+    children: ReactNode;
+    tabIndex?: number;
+  }) => <span tabIndex={tabIndex}>{children}</span>,
   Progress: () => <div />,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: () => null,
   StackedCell: ({
     primary,
     secondary,
@@ -186,6 +195,25 @@ describe("getScanJobsColumns", () => {
 
     expect(screen.getByText("Production scan")).toBeInTheDocument();
     expect(screen.getByText("ID: scan-1")).toBeInTheDocument();
+  });
+
+  it("labels a partial scan next to its alias", () => {
+    // Prowler Cloud exposes is_partial for re-checks of a few resources.
+    const scan = makeCompletedScan();
+    renderCell("scanInfo", {
+      ...scan,
+      attributes: { ...scan.attributes, is_partial: true },
+    });
+
+    expect(screen.getByText("Production scan")).toBeInTheDocument();
+    // Focusable so keyboard users can reach the tooltip.
+    expect(screen.getByText("Partial")).toHaveAttribute("tabindex", "0");
+  });
+
+  it("shows no partial label on a full scan", () => {
+    renderCell("scanInfo", makeCompletedScan());
+
+    expect(screen.queryByText("Partial")).not.toBeInTheDocument();
   });
 
   it("renders the completed duration column", () => {

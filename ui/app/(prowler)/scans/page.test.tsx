@@ -16,7 +16,6 @@ const {
   getAllProviderGroupsMock,
   getScansMock,
   redirectMock,
-  contentLayoutSpy,
   scansPageShellSpy,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
@@ -24,7 +23,6 @@ const {
   getAllProviderGroupsMock: vi.fn(),
   getScansMock: vi.fn(),
   redirectMock: vi.fn(),
-  contentLayoutSpy: vi.fn(),
   scansPageShellSpy: vi.fn(),
 }));
 
@@ -53,13 +51,9 @@ vi.mock("@/actions/schedules", () => ({
 // The shell is exercised in its own test; here we only assert the page always
 // mounts it (with a table subtree) and never gates on provider state.
 vi.mock("@/components/shadcn/content-layout", () => ({
-  ContentLayout: (props: {
-    children: ReactNode;
-    onboardingAction: unknown;
-  }) => {
-    contentLayoutSpy(props);
-    return <div data-testid="content-layout">{props.children}</div>;
-  },
+  ContentLayout: (props: { children: ReactNode }) => (
+    <div data-testid="content-layout">{props.children}</div>
+  ),
 }));
 vi.mock("@/components/scans/scans-page-shell", () => ({
   ScansPageShell: (props: {
@@ -125,51 +119,6 @@ describe("scans page rendering", () => {
       expect(shellProps?.providers).toEqual(providers);
       // The scans table subtree actually renders, regardless of provider state.
       expect(await screen.findByRole("table")).toBeInTheDocument();
-    },
-  );
-
-  it("uses the plain view-first-scan onboarding action when a provider is connected", async () => {
-    getAllProvidersMock.mockResolvedValue({ data: [connectedProvider] });
-
-    await renderPage();
-
-    const props = contentLayoutSpy.mock.calls.at(-1)?.[0];
-    expect(props?.onboardingAction).toEqual({ flowId: "view-first-scan" });
-  });
-
-  it("falls back to add-provider onboarding when a permitted user has no connected provider", async () => {
-    getAllProvidersMock.mockResolvedValue({ data: [disconnectedProvider] });
-
-    await renderPage();
-
-    const props = contentLayoutSpy.mock.calls.at(-1)?.[0];
-    expect(props?.onboardingAction).toEqual({
-      flowId: "view-first-scan",
-      fallbackFlowId: "add-provider",
-      useFallback: true,
-    });
-  });
-
-  // ScansPageShell only mounts the view-first-scan trigger when Launch Scan is
-  // usable, so offering the navbar action without manage_scans yields an enabled
-  // button that can never start a tour.
-  it.each([
-    ["a provider is connected", [connectedProvider]],
-    ["no provider is connected", [disconnectedProvider]],
-    ["there are no providers", [] as ProviderProps[]],
-  ])(
-    "omits the onboarding action when manage_scans is missing and %s",
-    async (_state, providers) => {
-      authMock.mockResolvedValue({
-        user: { permissions: { manage_scans: false } },
-      });
-      getAllProvidersMock.mockResolvedValue({ data: providers });
-
-      await renderPage();
-
-      const props = contentLayoutSpy.mock.calls.at(-1)?.[0];
-      expect(props).toHaveProperty("onboardingAction");
-      expect(props?.onboardingAction).toBeUndefined();
     },
   );
 });

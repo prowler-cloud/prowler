@@ -2,6 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
+import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+
 import { CrossProviderPdfButton } from "./cross-provider-pdf-button";
 
 // Radix dialogs/dropdowns rely on pointer-capture and scrollIntoView, which
@@ -99,6 +102,7 @@ describe("CrossProviderPdfButton", () => {
     vi.clearAllMocks();
     storeState.tasks = {};
     generatePdfMock.mockResolvedValue({ taskId: "task-1" });
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   const openGenerateModal = async (
@@ -191,6 +195,34 @@ describe("CrossProviderPdfButton", () => {
 
     await waitFor(() => expect(downloadPdfMock).toHaveBeenCalledWith("task-7"));
   });
+
+  it.each([/download latest/i, /generate new report/i])(
+    "opens the paid plan upgrade instead of %s for subscription-only tenants",
+    async (label) => {
+      // Given
+      const user = userEvent.setup();
+      render(
+        <CrossProviderPdfButton
+          {...props}
+          latestPdf={{ taskId: "task-7", filename: "csa-latest.pdf" }}
+          subscriptionOnly
+        />,
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: /report/i }));
+      await user.click(await screen.findByRole("menuitem", { name: label }));
+
+      // Then
+      expect(downloadPdfMock).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole("dialog", { name: /generate/i }),
+      ).not.toBeInTheDocument();
+      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+        PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
+      );
+    },
+  );
 
   it("keeps a completed report downloadable after the ready toast closes", async () => {
     // Given

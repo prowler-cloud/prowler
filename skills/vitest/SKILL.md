@@ -1,12 +1,12 @@
 ---
 name: vitest
 description: >
-  Vitest unit testing patterns with React Testing Library.
-  Trigger: When writing unit tests for React components, hooks, or utilities.
+  Vitest 4 unit and browser-integration testing patterns with React Testing Library (Prowler UI).
+  Trigger: When writing Vitest tests (*.test.ts(x) or *.integration.test.tsx) for React components, hooks, utilities, stores or server actions.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke:
     - "Writing Vitest tests"
@@ -18,6 +18,17 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 
 > **For E2E tests**: Use `prowler-test-ui` skill (Playwright).
 > This skill covers **unit/integration tests** with Vitest + React Testing Library.
+
+## Prowler UI Test Projects (`ui/vitest.config.ts`)
+
+| Project | Files | Environment | Setup |
+|---------|-------|-------------|-------|
+| `unit` | `**/*.test.{ts,tsx}` (excludes `tests/**`, `*.integration.test.*`) | jsdom, no React Compiler | `vitest.setup.ts` (jest-dom matchers, storage mock) |
+| `integration` | `**/*.integration.test.{ts,tsx}` | Vitest browser mode, Playwright Chromium, React Compiler | `vitest.integration.setup.ts` (MSW worker, `globals.css`, mocks for `@/auth.config`, `next/cache`, `server-only`) |
+
+- Tests are co-located next to the code (`foo.ts` -> `foo.test.ts`); shared fixtures live in `ui/__tests__/`.
+- Config sets `globals`, `restoreMocks`, `mockReset`, `unstubEnvs`, `unstubGlobals`: do not add `afterEach(vi.restoreAllMocks)` boilerplate.
+- Integration tests import `page`/`userEvent` from `vitest/browser`, render with `@/__tests__/render-browser`, and mock HTTP with MSW (`ui/__tests__/msw/`), not `vi.mock` of fetch.
 
 ## Test Structure (REQUIRED)
 
@@ -123,18 +134,16 @@ const handleClick = vi.fn();
 // Mock with return value
 const fetchUser = vi.fn().mockResolvedValue({ name: "John" });
 
-// Always clean up
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+// Module mock (hoisted) - common for server actions and next/* modules
+vi.mock("@/actions/providers", () => ({ getProviders: vi.fn() }));
 ```
 
 ### vi.spyOn vs vi.mock
 
 | Method | When to Use |
 |--------|-------------|
-| `vi.spyOn` | Observe without replacing (PREFERRED) |
-| `vi.mock` | Replace entire module (use sparingly) |
+| `vi.spyOn` | Observe or override one export/method |
+| `vi.mock` | Replace a module boundary (server actions, `next/navigation`, `next-auth`) |
 
 ---
 
@@ -179,23 +188,13 @@ expect(screen.getByRole("button")).toBeDisabled();
 
 ---
 
-## File Organization
-
-```text
-components/
-├── Button/
-│   ├── Button.tsx
-│   ├── Button.test.tsx    # Co-located
-│   └── index.ts
-```
-
----
-
 ## Commands
 
 ```bash
-pnpm test                    # Watch mode
-pnpm test:run               # Single run
-pnpm test:coverage          # With coverage
-pnpm test Button            # Filter by name
+cd ui && pnpm run test                  # vitest run (all projects, single run)
+cd ui && pnpm run test:unit             # unit project only
+cd ui && pnpm run test:integration      # browser project (needs Playwright Chromium: pnpm run test:e2e:install)
+cd ui && pnpm run test:watch            # watch mode
+cd ui && pnpm run test:coverage         # v8 coverage
+cd ui && pnpm exec vitest run --project unit lib/findings-sort.test.ts   # filter by path
 ```

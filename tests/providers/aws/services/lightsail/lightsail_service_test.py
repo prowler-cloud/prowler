@@ -203,6 +203,14 @@ class TestLightsailService:
         )
         assert lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].tags == []
         assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].blueprint_id
+            == "wordpress"
+        )
+        assert (
+            lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].blueprint_name
+            == "WordPress"
+        )
+        assert (
             lightsail.instances[f"{BASE_LIGHTSAIL_ARN}:Instance/test-id"].region
             == AWS_REGION_US_EAST_1
         )

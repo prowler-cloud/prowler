@@ -6363,7 +6363,8 @@
           "cloudfront_distributions_using_waf",
           "guardduty_is_enabled",
           "shield_advanced_protection_in_cloudfront_distributions",
-          "shield_advanced_protection_in_internet_facing_load_balancers"
+          "shield_advanced_protection_in_internet_facing_load_balancers",
+          "wafv2_webacl_managed_rule_groups_enabled"
         ],
         "azure": [
           "defender_ensure_defender_for_arm_is_on",
@@ -8481,7 +8482,8 @@
           "memorydb_cluster_auto_minor_version_upgrades",
           "mq_broker_auto_minor_version_upgrades",
           "opensearch_service_domains_updated_to_the_latest_service_software_version",
-          "kafka_cluster_uses_latest_version"
+          "kafka_cluster_uses_latest_version",
+          "elasticbeanstalk_environment_php_platform_updated"
         ],
         "azure": [
           "app_ensure_java_version_is_latest",
@@ -8492,6 +8494,9 @@
         ],
         "alibabacloud": [
           "ecs_instance_latest_os_patches_applied"
+        ],
+        "gcp": [
+          "appengine_version_php_runtime_supported"
         ]
       }
     },

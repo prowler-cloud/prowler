@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from azure.identity import DefaultAzureCredential
 
+from prowler.providers.m365.lib.regions.regions import get_regions_config
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.m365.models import (
     M365Credentials,
@@ -35,7 +36,12 @@ def set_mocked_m365_provider(
         user="user@email.com",
     ),
     audit_config: dict = None,
-    azure_region_config: M365RegionConfig = M365RegionConfig(),
+    # No base_url, so a test can never reach Microsoft Graph
+    azure_region_config: M365RegionConfig = M365RegionConfig(
+        name="M365Global",
+        credential_scopes=get_regions_config("M365Global")["credential_scopes"],
+        powershell=get_regions_config("M365Global")["powershell"],
+    ),
 ) -> M365Provider:
     provider = MagicMock()
     provider.type = "m365"

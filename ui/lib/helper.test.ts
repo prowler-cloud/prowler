@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  checkTaskStatus,
   downloadScanZip,
   getErrorMessage,
   permissionFormFields,
+  TASK_STATUS_MAX_RETRIES_ERROR,
 } from "./helper";
 
 vi.mock("@/actions/scans", () => ({
@@ -11,8 +13,9 @@ vi.mock("@/actions/scans", () => ({
   getCompliancePdfReport: vi.fn(),
 }));
 
+const { getTask } = vi.hoisted(() => ({ getTask: vi.fn() }));
 vi.mock("@/actions/task", () => ({
-  getTask: vi.fn(),
+  getTask,
 }));
 
 vi.mock("@/auth.config", () => ({
@@ -137,6 +140,42 @@ describe("getErrorMessage", () => {
     expect(message).toBe(
       "Server is temporarily unavailable. Please try again in a few minutes.",
     );
+  });
+});
+
+describe("checkTaskStatus", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keeps polling past a caller's default retry window and reports success once the task completes", async () => {
+    let calls = 0;
+    getTask.mockImplementation(async () => {
+      calls += 1;
+      if (calls < 25) {
+        return { data: { attributes: { state: "executing" } } };
+      }
+      return { data: { attributes: { state: "completed" } } };
+    });
+
+    // 25 retries exceeds the generic 20-retry default, simulating a task that
+    // outlives the caller's usual wait.
+    const result = await checkTaskStatus("task-id", 40, 1);
+
+    expect(result.completed).toBe(true);
+    expect(calls).toBe(25);
+  });
+
+  it("reports the exhausted-retries error once maxRetries is used up", async () => {
+    getTask.mockResolvedValue({ data: { attributes: { state: "executing" } } });
+
+    const result = await checkTaskStatus("task-id", 3, 1);
+
+    expect(result).toEqual({
+      completed: false,
+      error: TASK_STATUS_MAX_RETRIES_ERROR,
+    });
+    expect(getTask).toHaveBeenCalledTimes(3);
   });
 });
 

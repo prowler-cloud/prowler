@@ -7,7 +7,12 @@ from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import M365CertificateCreationError
 from prowler.providers.m365.lib.jwt.jwt_decoder import decode_msal_token
-from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
+from prowler.providers.m365.lib.regions.regions import get_regions_config
+from prowler.providers.m365.models import (
+    M365Credentials,
+    M365IdentityInfo,
+    M365RegionConfig,
+)
 
 
 class M365PowerShell(PowerShellSession):
@@ -34,7 +39,12 @@ class M365PowerShell(PowerShellSession):
         to be installed and available in the PowerShell environment.
     """
 
-    def __init__(self, credentials: M365Credentials, identity: M365IdentityInfo):
+    def __init__(
+        self,
+        credentials: M365Credentials,
+        identity: M365IdentityInfo,
+        region_config: M365RegionConfig = None,
+    ):
         """
         Initialize a Microsoft 365 PowerShell session.
 
@@ -44,7 +54,33 @@ class M365PowerShell(PowerShellSession):
         Args:
             credentials (M365Credentials): The Microsoft 365 credentials to use
                 for authentication.
+            region_config (M365RegionConfig): The region configuration, M365Global
+                when none is given.
         """
+        if region_config is None:
+            region_config = M365RegionConfig(
+                name="M365Global", **get_regions_config("M365Global")
+            )
+        # Every token request goes to the region's own sign-in host
+        self.token_url = f"https://{region_config.authority or 'login.microsoftonline.com'}/$tenantID/oauth2/v2.0/token"
+        self.graph_scope = region_config.credential_scopes[0]
+        self.exchange_scope = region_config.powershell["exchange_scope"]
+        # Default cloud needs no extra parameters
+        self.msal_authority = (
+            f' -Authority "https://{region_config.authority}/$tenantID"'
+            if region_config.authority
+            else ""
+        )
+        exchange_environment = region_config.powershell["exchange_environment"]
+        self.exchange_environment = (
+            f" -ExchangeEnvironmentName {exchange_environment}"
+            if exchange_environment
+            else ""
+        )
+        teams_environment = region_config.powershell["teams_environment"]
+        self.teams_environment = (
+            f" -TeamsEnvironmentName {teams_environment}" if teams_environment else ""
+        )
         super().__init__()
         self.tenant_identity = identity
         self.init_credential(credentials)
@@ -149,10 +185,10 @@ class M365PowerShell(PowerShellSession):
             self.execute(f"$clientSecret = '{sanitized_secret}'")
             self.execute(f"$tenantID = '{sanitized_tenant_id}'")
             self.execute(
-                '$graphtokenBody = @{ Grant_Type = "client_credentials"; Scope = "https://graph.microsoft.com/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
+                f'$graphtokenBody = @{{ Grant_Type = "client_credentials"; Scope = "{self.graph_scope}"; Client_Id = $clientID; Client_Secret = $clientSecret }}'
             )
             self.execute(
-                '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
+                f'$graphToken = Invoke-RestMethod -Uri "{self.token_url}" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
             )
 
     def execute_connect(self, command: str) -> str:
@@ -177,13 +213,14 @@ class M365PowerShell(PowerShellSession):
                 '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
             )
             result = self.execute(
-                '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
+                f'$teamsToken = Invoke-RestMethod -Uri "{self.token_url}" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
             )
             if result != "":
                 logger.error(f"Microsoft Teams connection failed: {result}")
                 return False
             self.execute_connect(
                 'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+                + self.teams_environment
             )
             return True
         except Exception as e:
@@ -196,6 +233,7 @@ class M365PowerShell(PowerShellSession):
         """Test Microsoft Teams API connection using certificate and raise exception if it fails."""
         result = self.execute_connect(
             "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
+            + self.teams_environment
         )
         if self.tenant_identity.identity_id not in result:
             logger.error(f"Microsoft Teams Certificate connection failed: {result}")
@@ -209,7 +247,8 @@ class M365PowerShell(PowerShellSession):
                 "$SecureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force"
             )
             self.execute(
-                '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
+                f'$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "{self.exchange_scope}"'
+                + self.msal_authority
             )
             token = decode_msal_token(self.execute("Write-Output $exchangeToken"))
             permissions = token.get("roles", [])
@@ -220,6 +259,7 @@ class M365PowerShell(PowerShellSession):
                 return False
             self.execute_connect(
                 'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
+                + self.exchange_environment
             )
             return True
         except Exception as e:
@@ -232,6 +272,7 @@ class M365PowerShell(PowerShellSession):
         """Test Exchange Online API connection using certificate and raise exception if it fails."""
         result = self.execute_connect(
             "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+            + self.exchange_environment
         )
         if "https://aka.ms/exov3-module" not in result:
             logger.error(f"Exchange Online Certificate connection failed: {result}")
