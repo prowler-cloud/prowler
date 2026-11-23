@@ -14,7 +14,6 @@ class Redshift(AWSService):
         self.clusters = []
         self.__threading_call__(self._describe_clusters)
         self.__threading_call__(self._describe_logging_status, self.clusters)
-        self.__threading_call__(self._describe_cluster_snapshots, self.clusters)
         self.__threading_call__(self._describe_cluster_parameters, self.clusters)
         self.__threading_call__(self._describe_cluster_subnets, self.clusters)
 
@@ -28,6 +27,7 @@ class Redshift(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        retention_days = cluster.get("AutomatedSnapshotRetentionPeriod")
                         cluster_to_append = Cluster(
                             arn=arn,
                             id=cluster["ClusterIdentifier"],
@@ -45,6 +45,11 @@ class Redshift(AWSService):
                                 "AllowVersionUpgrade", False
                             ),
                             encrypted=cluster.get("Encrypted", False),
+                            cluster_snapshots=(
+                                retention_days > 0
+                                if retention_days is not None
+                                else None
+                            ),
                             multi_az=cluster.get("MultiAZ", ""),
                             region=regional_client.region,
                             tags=cluster.get("Tags"),
@@ -104,21 +109,6 @@ class Redshift(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_cluster_snapshots(self, cluster):
-        logger.info("Redshift - Describing Cluster Status...")
-        try:
-            regional_client = self.regional_clients[cluster.region]
-            cluster_snapshots = regional_client.describe_cluster_snapshots(
-                ClusterIdentifier=cluster.id
-            )
-            if "Snapshots" in cluster_snapshots and cluster_snapshots["Snapshots"]:
-                cluster.cluster_snapshots = True
-
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
     def _describe_cluster_parameters(self, cluster):
         logger.info("Redshift - Describing Cluster Parameter Groups...")
         try:
@@ -152,7 +142,7 @@ class Cluster(BaseModel):
     allow_version_upgrade: bool = False
     logging_enabled: bool = False
     bucket: str = None
-    cluster_snapshots: bool = False
+    cluster_snapshots: Optional[bool] = None
     tags: Optional[list] = []
     enhanced_vpc_routing: bool = False
     parameter_group_name: str = None
