@@ -1,5 +1,7 @@
 import io
 import json
+import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -13,6 +15,34 @@ from pydantic.v1 import BaseModel
 from prowler.lib.logger import logger
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.github.lib.service.service import GithubService
+
+# Actions that run an AI agent inside a workflow.
+# shortcut: only `uses:` steps are detected, add agent CLIs called from `run:` when needed
+AI_AGENT_ACTIONS = (
+    "anthropics/claude-code-action",
+    "openai/codex-action",
+    "google-github-actions/run-gemini-cli",
+)
+_AI_AGENT_USES = re.compile(
+    r"^\s*-?\s*uses:\s*[\"']?(?:"
+    + "|".join(re.escape(action) for action in AI_AGENT_ACTIONS)
+    + r")(?:[@/\"'\s]|$)",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+# zizmor audits that describe an AI risk when the workflow runs an agent
+AI_AGENT_AUDITS = frozenset(
+    {
+        "dangerous-triggers",
+        "template-injection",
+        "bot-conditions",
+        "excessive-permissions",
+        "overprovisioned-secrets",
+        "secrets-inherit",
+        "unpinned-uses",
+        "known-vulnerable-actions",
+    }
+)
 
 
 class GithubActions(GithubService):
@@ -59,6 +89,7 @@ class GithubActions(GithubService):
                 raw_findings = self._run_zizmor(temp_dir)
 
                 repo_findings = []
+                runs_ai_agent: dict[str, bool] = {}
                 for finding in raw_findings:
                     for location in finding.get("locations", []):
                         workflow_file = self._extract_workflow_file_from_location(
@@ -77,6 +108,11 @@ class GithubActions(GithubService):
                             finding, workflow_file, location, repo
                         )
                         if parsed:
+                            if workflow_file not in runs_ai_agent:
+                                runs_ai_agent[workflow_file] = self._runs_ai_agent(
+                                    os.path.join(temp_dir, workflow_file)
+                                )
+                            parsed.runs_ai_agent = runs_ai_agent[workflow_file]
                             repo_findings.append(parsed)
 
                 self.findings[repo_id] = repo_findings
@@ -149,6 +185,14 @@ class GithubActions(GithubService):
             return []
 
     @staticmethod
+    def _runs_ai_agent(workflow_path: str) -> bool:
+        try:
+            with open(workflow_path, encoding="utf-8", errors="ignore") as workflow:
+                return bool(_AI_AGENT_USES.search(workflow.read()))
+        except OSError:
+            return False
+
+    @staticmethod
     def _should_exclude_workflow(
         workflow_file: str, exclude_patterns: list[str]
     ) -> bool:
@@ -179,8 +223,11 @@ class GithubActions(GithubService):
                 key = symbolic["key"]
                 if isinstance(key, dict) and "Local" in key:
                     local = key["Local"]
-                    if isinstance(local, dict) and "given_path" in local:
-                        return local["given_path"]
+                    # zizmor >= 1.27 reports `verbatim_path`, older versions `given_path`
+                    if isinstance(local, dict):
+                        path = local.get("verbatim_path") or local.get("given_path")
+                        if path:
+                            return path
 
             logger.debug(f"Could not extract workflow file from location: {location}")
             return None
@@ -271,3 +318,4 @@ class GithubActionsWorkflowFinding(BaseModel):
     confidence: str
     annotation: str
     url: str
+    runs_ai_agent: bool = False

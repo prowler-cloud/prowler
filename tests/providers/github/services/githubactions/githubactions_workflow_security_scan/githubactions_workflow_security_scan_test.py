@@ -373,3 +373,49 @@ class Test_githubactions_workflow_security_scan:
             statuses = {r.resource_name: r.status for r in result}
             assert statuses[".github/workflows/ci.yml"] == "FAIL"
             assert statuses["repo2"] == "PASS"
+
+    def _categories(self, finding):
+        repository_client = mock.MagicMock()
+        repository_client.repositories = {1: _make_repo()}
+
+        githubactions_client = mock.MagicMock()
+        githubactions_client.findings = {1: [finding]}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan.repository_client",
+                new=repository_client,
+            ),
+            mock.patch(
+                "prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan.githubactions_client",
+                new=githubactions_client,
+            ),
+        ):
+            from prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan import (
+                githubactions_workflow_security_scan,
+            )
+
+            result = githubactions_workflow_security_scan().execute()
+            assert len(result) == 1
+            return result[0].check_metadata.Categories
+
+    def test_ai_agent_workflow_finding_is_gen_ai(self):
+        finding = _make_finding().copy(update={"runs_ai_agent": True})
+        assert self._categories(finding) == ["software-supply-chain", "gen-ai"]
+
+    def test_non_agent_workflow_finding_is_not_gen_ai(self):
+        assert self._categories(_make_finding()) == ["software-supply-chain"]
+
+    def test_ai_agent_workflow_unrelated_audit_is_not_gen_ai(self):
+        finding = _make_finding().copy(
+            update={
+                "runs_ai_agent": True,
+                "ident": "concurrency-limits",
+                "finding_id": "githubactions_concurrency_limits",
+            }
+        )
+        assert self._categories(finding) == ["software-supply-chain"]

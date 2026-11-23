@@ -5,6 +5,9 @@ from prowler.lib.check.models import Check, CheckReportGithub
 from prowler.providers.github.services.githubactions.githubactions_client import (
     githubactions_client,
 )
+from prowler.providers.github.services.githubactions.githubactions_service import (
+    AI_AGENT_AUDITS,
+)
 from prowler.providers.github.services.repository.repository_client import (
     repository_client,
 )
@@ -30,6 +33,9 @@ class githubactions_workflow_security_scan(Check):
                 findings.append(report)
             else:
                 for f in repo_findings:
+                    categories = ["software-supply-chain"]
+                    if f.runs_ai_agent and f.ident in AI_AGENT_AUDITS:
+                        categories.append("gen-ai")
                     metadata_dict = {
                         "Provider": "github",
                         "CheckID": f.finding_id,
@@ -56,7 +62,7 @@ class githubactions_workflow_security_scan(Check):
                                 "Url": "",
                             },
                         },
-                        "Categories": ["software-supply-chain"],
+                        "Categories": categories,
                         "DependsOn": [],
                         "RelatedTo": [],
                         "Notes": "",
