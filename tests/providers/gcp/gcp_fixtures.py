@@ -736,6 +736,7 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         "backupConfiguration": {"enabled": True},
                         "databaseFlags": [],
                         "availabilityType": "REGIONAL",
+                        "deletionProtectionEnabled": True,
                     },
                 },
                 {
