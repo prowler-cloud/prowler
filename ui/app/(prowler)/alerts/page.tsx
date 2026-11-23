@@ -1,3 +1,4 @@
+import { BellRing } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { getLatestMetadataInfo } from "@/actions/findings";
@@ -101,7 +102,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
     : undefined;
 
   return (
-    <ContentLayout title="Alerts" icon="lucide:bell-ring">
+    <ContentLayout title="Alerts" icon={<BellRing />}>
       {!hasError ? (
         <AlertsLighthouseContext
           totalCount={apiMeta?.pagination?.count ?? alerts.length}

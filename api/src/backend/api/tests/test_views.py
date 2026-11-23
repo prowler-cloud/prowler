@@ -3,6 +3,7 @@ import io
 import json
 import os
 import tempfile
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -31,6 +32,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
     InvitationRoleRelationship,
@@ -38,6 +40,7 @@ from api.models import (
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -45,6 +48,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
@@ -60,8 +64,10 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.rbac.permissions import TASK_REVOKE_PERMISSIONS
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
+from api.v1.serializers import MembershipIncludeSerializer
 from api.v1.views import (
     ComplianceOverviewViewSet,
     CustomSAMLLoginView,
@@ -96,6 +102,11 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_resource_scan_summaries,
+)
 
 
 class TestViewSet:
@@ -131,6 +142,145 @@ class TestUserViewSet:
         response = authenticated_client.get(reverse("user-me"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == create_test_user.email
+
+    @staticmethod
+    def _shared_user_in_two_tenants(tenant_a, tenant_b):
+        shared_user = User.objects.create_user(
+            name="shared_user",
+            email=f"shared-user-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=shared_user, tenant=tenant_a)
+        Membership.objects.create(user=shared_user, tenant=tenant_b)
+        role_a = Role.objects.create(name="role-a", tenant=tenant_a)
+        role_b = Role.objects.create(name="role-b", tenant=tenant_b)
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=role_a, tenant=tenant_a
+        )
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=role_b, tenant=tenant_b
+        )
+        return shared_user, role_a, role_b
+
+    @staticmethod
+    def _user_in_two_tenants_with_unique_roles(tenant_a, tenant_b):
+        suffix = uuid4()
+        user = User.objects.create_user(
+            name="scaled_user",
+            email=f"scaled-user-{suffix}@prowler.com",
+            password="TmpPass123@",
+        )
+        for tenant in (tenant_a, tenant_b):
+            Membership.objects.create(user=user, tenant=tenant)
+            role = Role.objects.create(name=f"role-{tenant.id}-{suffix}", tenant=tenant)
+            UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant)
+        return user
+
+    def test_users_list_query_count_does_not_grow_with_user_count(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+        params = {"include": "memberships,roles"}
+
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        baseline_users = len(response.json()["data"])
+
+        for _ in range(3):
+            self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > baseline_users
+
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Tenant-scoped relations are re-querying per user: "
+            f"{len(baseline.captured_queries)} queries for {baseline_users} users "
+            f"vs {len(scaled.captured_queries)} for "
+            f"{len(response.json()['data'])}. The prefetch is being discarded."
+        )
+
+    def test_users_retrieve_scopes_relations_to_active_tenant(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        shared_user, role_a, role_b = self._shared_user_in_two_tenants(
+            tenant_a, tenant_b
+        )
+
+        response = authenticated_client.get(
+            reverse("user-detail", kwargs={"pk": shared_user.id}),
+            {"include": "memberships,roles,memberships.tenant"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        relationships = payload["data"]["relationships"]
+        assert len(relationships["memberships"]["data"]) == 1
+        assert [item["id"] for item in relationships["roles"]["data"]] == [
+            str(role_a.id)
+        ]
+
+        included = payload["included"]
+        included_memberships = [i for i in included if i["type"] == "memberships"]
+        assert len(included_memberships) == 1
+        assert included_memberships[0]["relationships"]["tenant"]["data"]["id"] == str(
+            tenant_a.id
+        )
+        assert {i["id"] for i in included if i["type"] == "roles"} == {str(role_a.id)}
+        assert {
+            i["attributes"]["name"] for i in included if i["type"] == "tenants"
+        } == {tenant_a.name}
+        body = response.content.decode()
+        assert tenant_b.name not in body
+        assert str(tenant_b.id) not in body
+        assert str(role_b.id) not in body
+
+    def test_users_me_keeps_own_memberships_and_scopes_roles(
+        self, authenticated_client, create_test_user, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+
+        response = authenticated_client.get(
+            reverse("user-me"), {"include": "memberships,roles,memberships.tenant"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        relationships = payload["data"]["relationships"]
+        assert len(relationships["memberships"]["data"]) == 2
+        assert {
+            i["attributes"]["name"]
+            for i in payload["included"]
+            if i["type"] == "tenants"
+        } == {tenant_a.name, tenant_b.name}
+        active_roles = create_test_user.roles.filter(tenant_id=tenant_a.id)
+        assert {i["id"] for i in relationships["roles"]["data"]} == {
+            str(role.id) for role in active_roles
+        }
+
+    def test_membership_include_serializer_hides_tenant_of_non_member(
+        self, create_test_user, tenants_fixture
+    ):
+        tenant_a, _, isolated_tenant = tenants_fixture
+        outsider = User.objects.create_user(
+            name="outsider",
+            email=f"outsider-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        foreign_membership = Membership.objects.create(
+            user=outsider, tenant=isolated_tenant
+        )
+        own_membership = Membership.objects.get(user=create_test_user, tenant=tenant_a)
+        request = SimpleNamespace(user=create_test_user, tenant_id=str(tenant_a.id))
+
+        serializer = MembershipIncludeSerializer(context={"request": request})
+
+        assert serializer.get_tenant(own_membership) == tenant_a
+        assert serializer.get_tenant(foreign_membership) is None
 
     def test_users_create(self, client):
         valid_user_payload = {
@@ -310,6 +460,198 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         target_user.refresh_from_db()
         assert target_user.email == original_email
+
+    @staticmethod
+    def _add_target_user_to_tenant(email, password, tenant):
+        target_user = User.objects.create_user(
+            name="target", email=email, password=password
+        )
+        Membership.objects.create(
+            user=target_user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        return target_user
+
+    def test_users_partial_update_manage_users_other_user_password_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            "target-mu-password@example.com", original_password, tenant
+        )
+        payload = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"password": new_password},
+            },
+        }
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Only the user themselves can change their password."
+        )
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+        assert not target_user.check_password(new_password)
+
+    def test_users_partial_update_manage_users_multi_tenant_user_password_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        from rest_framework.test import APIClient
+
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        tenant_a = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        tenant_b = Tenant.objects.create(name="Tenant B")
+        target_user = self._add_target_user_to_tenant(
+            "target-cross-tenant@example.com", original_password, tenant_a
+        )
+        Membership.objects.create(
+            user=target_user, tenant=tenant_b, role=Membership.RoleChoices.OWNER
+        )
+        admin_role_b = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_b.id,
+            manage_users=True,
+            manage_account=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=target_user, role=admin_role_b, tenant_id=tenant_b.id
+        )
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {"password": new_password},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        token_response = APIClient().post(
+            reverse("token-obtain"),
+            {
+                "data": {
+                    "type": "tokens",
+                    "attributes": {
+                        "email": target_user.email,
+                        "password": new_password,
+                        "tenant_id": str(tenant_b.id),
+                    },
+                }
+            },
+            format="vnd.api+json",
+        )
+        assert token_response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+
+    def test_users_partial_update_manage_users_other_user_email_denied(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_email = "target-mu-email@example.com"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            original_email, "OriginalPassword123@", tenant
+        )
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {"email": "updated-mu-email@example.com"},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Only the user themselves can change their email."
+        )
+        target_user.refresh_from_db()
+        assert target_user.email == original_email
+
+    def test_users_partial_update_manage_users_other_user_profile_allowed(
+        self,
+        authenticated_client_rbac_manage_users_only,
+        create_test_user_rbac_manage_users_only,
+    ):
+        original_email = "target-mu-profile@example.com"
+        original_password = "OriginalPassword123@"
+        tenant = create_test_user_rbac_manage_users_only.memberships.first().tenant
+        target_user = self._add_target_user_to_tenant(
+            original_email, original_password, tenant
+        )
+
+        # The UI edit form re-sends the unchanged email alongside profile fields.
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(target_user.id),
+                    "attributes": {
+                        "name": "Renamed Target",
+                        "company_name": "New Company",
+                        "email": original_email.upper(),
+                    },
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        target_user.refresh_from_db()
+        assert target_user.name == "Renamed Target"
+        assert target_user.company_name == "New Company"
+        assert target_user.email == original_email
+        assert target_user.check_password(original_password)
+
+    def test_users_partial_update_own_password_allowed(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        user = authenticated_client_rbac_manage_users_only.user
+        new_password = "UpdatedPassword123@"
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": user.id}),
+            data={
+                "data": {
+                    "type": "users",
+                    "id": str(user.id),
+                    "attributes": {"password": new_password},
+                },
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        user.refresh_from_db()
+        assert user.check_password(new_password)
 
     def test_users_partial_update_invalid_content_type(
         self, authenticated_client, create_test_user
@@ -3103,7 +3445,7 @@ class TestProviderSecretViewSet:
                         "client_email": "client-email",
                         "client_id": "client-id",
                         "auth_uri": "auth-uri",
-                        "token_uri": "token-uri",
+                        "token_uri": "https://oauth2.googleapis.com/token",
                         "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
                         "client_x509_cert_url": "client-x509-cert-url",
                         "universe_domain": "universe-domain",
@@ -3167,17 +3509,6 @@ current-context: test-context
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
                     "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
-                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                },
-            ),
-            # OCI with API key credentials (with key_file)
-            (
-                Provider.ProviderChoices.ORACLECLOUD.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
-                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_file": "/path/to/oci_api_key.pem",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
                 },
             ),
@@ -3273,7 +3604,7 @@ current-context: test-context
                 Provider.ProviderChoices.GOOGLEWORKSPACE.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
-                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789", "token_uri": "https://oauth2.googleapis.com/token"}',
                     "delegated_user": "admin@example.com",
                 },
             ),
@@ -3292,6 +3623,17 @@ current-context: test-context
                 {
                     "registry_username": "user",
                     "registry_password": "pass",
+                },
+            ),
+            # Image registry credentials with the scan filters the UI sends
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "registry_username": "user",
+                    "registry_password": "pass",
+                    "image_filter": "^prod/",
+                    "tag_filter": "^v[0-9]+",
                 },
             ),
             # Okta with inline private key credentials
@@ -3346,6 +3688,104 @@ current-context: test-context
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+        if provider_type != Provider.ProviderChoices.ORACLECLOUD.value:
+            assert provider_secret.secret == secret_data
+
+    @staticmethod
+    def _secret_payload(attributes, provider=None, secret_id=None):
+        data = {"type": "provider-secrets", "attributes": attributes}
+        if provider is not None:
+            data["relationships"] = {
+                "provider": {"data": {"type": "providers", "id": str(provider.id)}}
+            }
+        if secret_id is not None:
+            data["id"] = str(secret_id)
+        return json.dumps({"data": data})
+
+    def test_provider_secrets_create_drops_undeclared_fields(
+        self, authenticated_client, provider_factory
+    ):
+        provider = provider_factory(Provider.ProviderChoices.GCP.value)
+        declared = {
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "refresh_token": "refresh-token",
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=self._secret_payload(
+                {
+                    "name": "GCP",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        **declared,
+                        "credentials_file": "/etc/passwd",
+                        "config_path": "/proc/self/environ",
+                    },
+                },
+                provider=provider,
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ProviderSecret.objects.get().secret == declared
+
+    def test_provider_secrets_update_drops_undeclared_fields(
+        self, authenticated_client, provider_factory
+    ):
+        provider = provider_factory(Provider.ProviderChoices.AWS.value)
+        declared = {
+            "aws_access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "aws_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        }
+        provider_secret = ProviderSecret.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            name="AWS",
+            secret_type=ProviderSecret.TypeChoices.STATIC,
+            secret=declared,
+        )
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=self._secret_payload(
+                {"secret": {**declared, "profile": "worker-profile"}},
+                secret_id=provider_secret.id,
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret == declared
+
+    @pytest.mark.parametrize(
+        "key_fields",
+        [
+            {"key_file": "/proc/self/environ"},
+            {"key_file": "/proc/self/environ", "key_content": "dGVzdC1rZXk="},
+        ],
+    )
+    def test_provider_secrets_create_oraclecloud_rejects_key_file(
+        self, authenticated_client, oraclecloud_provider, key_fields
+    ):
+        secret = {
+            key: value
+            for key, value in self._oraclecloud_secret().items()
+            if key != "key_content"
+        }
+
+        response = self._create_oraclecloud_secret(
+            authenticated_client, oraclecloud_provider, {**secret, **key_fields}
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/key_file"
+        )
+        assert not ProviderSecret.objects.exists()
 
     def test_provider_secrets_create_oraclecloud_without_region_stores_no_region(
         self,
@@ -3362,7 +3802,7 @@ current-context: test-context
         provider_secret = ProviderSecret.objects.get()
         assert "region" not in provider_secret.secret
 
-    def test_provider_secrets_create_oraclecloud_accepts_and_ignores_region(
+    def test_provider_secrets_create_oraclecloud_stores_region(
         self,
         authenticated_client,
         oraclecloud_provider,
@@ -3371,14 +3811,14 @@ current-context: test-context
             authenticated_client,
             oraclecloud_provider,
             self._oraclecloud_secret(
-                key_content="  test-key-content  ", region=" us-ashburn-1 "
+                key_content="  test-key-content  ", region=" me-abudhabi-1 "
             ),
         )
 
         assert response.status_code == status.HTTP_201_CREATED
         provider_secret = ProviderSecret.objects.get()
         assert provider_secret.secret["key_content"] == "test-key-content"
-        assert "region" not in provider_secret.secret
+        assert provider_secret.secret["region"] == "me-abudhabi-1"
 
     def test_provider_secrets_update_oraclecloud_without_region_stores_no_region(
         self,
@@ -3411,7 +3851,7 @@ current-context: test-context
         provider_secret.refresh_from_db()
         assert "region" not in provider_secret.secret
 
-    def test_provider_secrets_update_oraclecloud_accepts_and_ignores_region(
+    def test_provider_secrets_update_oraclecloud_stores_region(
         self,
         authenticated_client,
         oraclecloud_provider,
@@ -3429,7 +3869,7 @@ current-context: test-context
                 "type": "provider-secrets",
                 "id": str(provider_secret.id),
                 "attributes": {
-                    "secret": self._oraclecloud_secret(region=" us-ashburn-1 ")
+                    "secret": self._oraclecloud_secret(region=" me-abudhabi-1 ")
                 },
             }
         }
@@ -3442,7 +3882,7 @@ current-context: test-context
 
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
-        assert "region" not in provider_secret.secret
+        assert provider_secret.secret["region"] == "me-abudhabi-1"
 
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
@@ -3546,6 +3986,78 @@ current-context: test-context
         assert response.json()["errors"][0]["source"]["pointer"] == (
             "/data/attributes/secret/okta_private_key"
         )
+
+    @pytest.mark.parametrize(
+        "service_account_key",
+        [
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"file": "/etc/passwd"},
+            },
+            {
+                "type": "external_account",
+                "audience": "//iam.googleapis.com/test",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+                "token_url": "https://attacker.example.com/token",
+                "credential_source": {"url": "http://169.254.169.254/"},
+            },
+            {"type": "impersonated_service_account"},
+            {"type": "authorized_user"},
+            {"private_key": "missing-type"},
+            "not-a-dict",
+            {},
+            {
+                "type": "service_account",
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {"type": "service_account"},
+            {
+                "type": "service_account",
+                "token_uri": ["https://oauth2.googleapis.com/token"],
+            },
+            {"type": "service_account", "token_uri": {"url": "x"}},
+        ],
+    )
+    def test_provider_secrets_invalid_create_gcp_non_service_account_key(
+        self,
+        gcp_provider,
+        authenticated_client,
+        service_account_key,
+    ):
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "GCP Secret",
+                    "secret_type": ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
+                    "secret": {"service_account_key": service_account_key},
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(gcp_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/service_account_key"
+        )
+        assert not ProviderSecret.objects.filter(provider=gcp_provider).exists()
 
     def test_provider_secrets_partial_update(
         self, authenticated_client, provider_secret_fixture
@@ -3726,7 +4238,11 @@ current-context: test-context
                 "attributes": {
                     "name": "new_name",
                     "secret": {
-                        "service_account_key": {},
+                        "service_account_key": {
+                            "type": "service_account",
+                            "project_id": "project-id",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                        },
                     },
                     "secret_type": "service_account",
                 },
@@ -3748,7 +4264,13 @@ current-context: test-context
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
         assert provider_secret.name == "new_name"
-        assert provider_secret.secret == {"service_account_key": {}}
+        assert provider_secret.secret == {
+            "service_account_key": {
+                "type": "service_account",
+                "project_id": "project-id",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        }
 
     def test_provider_secrets_partial_update_with_invalid_secret_type(
         self, authenticated_client, provider_secret_fixture
@@ -4934,6 +5456,140 @@ class TestScanViewSet:
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
 
+    def test_compliance_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_cis_1.4_aws.csv", "archived")
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"archived"
+        assert resp["Content-Disposition"].endswith('filename="scan_cis_1.4_aws.csv"')
+
+    def test_compliance_ocsf_local_file_served_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr("compliance/scan_dora_2022_2554.csv", "csv")
+                zipf.writestr("compliance/scan_dora_2022_2554.ocsf.json", "[]")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance-ocsf",
+                kwargs={"pk": scan.id, "name": "dora_2022_2554"},
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"[]"
+        assert resp["Content-Disposition"].endswith(
+            'filename="scan_dora_2022_2554.ocsf.json"'
+        )
+
+    def test_compliance_local_file_served_from_newest_archive_member(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/b_cis_1.4_aws.csv", (2026, 1, 1, 0, 0, 0)
+                    ),
+                    "old",
+                )
+                zipf.writestr(
+                    zipfile.ZipInfo(
+                        "compliance/a_cis_1.4_aws.csv", (2026, 6, 1, 0, 0, 0)
+                    ),
+                    "new",
+                )
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.content == b"new"
+
+    @pytest.mark.parametrize("corruption", ["not_a_zip", "corrupt_member", "missing"])
+    def test_compliance_local_unreadable_archive_returns_404(
+        self, authenticated_client, scans_fixture, corruption
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            if corruption == "not_a_zip":
+                archive.write_bytes(b"not a zip")
+            elif corruption == "corrupt_member":
+                member = "compliance/scan_cis_1.4_aws.csv"
+                with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    zipf.writestr(member, "finding;" * 500)
+                raw = bytearray(archive.read_bytes())
+                raw[30 + len(member) + 2] ^= 0xFF
+                archive.write_bytes(bytes(raw))
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_local_file_missing_from_archive(
+        self, authenticated_client, scans_fixture
+    ):
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "scan.zip"
+            with zipfile.ZipFile(archive, "w") as zipf:
+                zipf.writestr("compliance/scan_cis_2.0_aws.csv", "other")
+
+            scan.output_location = str(archive)
+            scan.save()
+
+            url = reverse(
+                "scan-compliance", kwargs={"pk": scan.id, "name": "cis_1.4_aws"}
+            )
+            resp = authenticated_client.get(url)
+
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
     def test_cis_no_output(self, authenticated_client, scans_fixture):
         """CIS PDF endpoint must 404 when the scan has no output_location."""
         scan = scans_fixture[0]
@@ -5239,6 +5895,7 @@ class TestTaskViewSet:
     @patch("api.v1.views.AsyncResult", return_value=Mock())
     def test_tasks_revoke(self, mock_async_result, authenticated_client, tasks_fixture):
         _, task2 = tasks_fixture
+        self._set_task_name(task2, "scan-perform")
         response = authenticated_client.delete(
             reverse("task-detail", kwargs={"pk": task2.id})
         )
@@ -5254,11 +5911,310 @@ class TestTaskViewSet:
 
     def test_tasks_revoke_invalid_status(self, authenticated_client, tasks_fixture):
         task1, _ = tasks_fixture
+        self._set_task_name(task1, "scan-perform")
         response = authenticated_client.delete(
             reverse("task-detail", kwargs={"pk": task1.id})
         )
         # Task status is SUCCESS
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @staticmethod
+    def _set_task_name(task, name):
+        task.task_runner_task.task_name = name
+        task.task_runner_task.save(update_fields=["task_name"])
+
+    @staticmethod
+    def _set_task_kwargs(task, kwargs):
+        task.task_runner_task.task_kwargs = json.dumps(repr(kwargs))
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+    @staticmethod
+    def _client_with_role(tenant, factory, **permissions):
+        user = User.objects.create_user(
+            name=f"revoker-{uuid4()}",
+            email=f"revoker-{uuid4()}@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        flags = {
+            "manage_users": False,
+            "manage_account": False,
+            "manage_billing": False,
+            "manage_providers": False,
+            "manage_integrations": False,
+            "manage_scans": False,
+            "unlimited_visibility": True,
+            **permissions,
+        }
+        role = Role.objects.create(
+            name=f"revoker-{uuid4()}", tenant_id=tenant.id, **flags
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        return factory(user, tenant)
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_without_permission_is_forbidden(
+        self, mock_async_result, authenticated_client_no_permissions_rbac, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-connection-check")
+
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "task_name, permissions, expected_status",
+        [
+            (
+                "provider-connection-check",
+                {"manage_providers": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            (
+                "provider-connection-check",
+                {"manage_scans": True},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            ("scan-perform", {"manage_scans": True}, status.HTTP_202_ACCEPTED),
+            (
+                "scan-perform-scheduled",
+                {"manage_providers": True},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            (
+                "integration-jira",
+                {"manage_integrations": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            ("integration-jira", {"manage_providers": True}, status.HTTP_403_FORBIDDEN),
+            ("lighthouse-connection-check", {}, status.HTTP_202_ACCEPTED),
+        ],
+    )
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_requires_originating_operation_permission(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        task_name,
+        permissions,
+        expected_status,
+    ):
+        tenant, *_ = tenants_fixture
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, task_name)
+        client = self._client_with_role(
+            tenant, authenticated_client_for_tenant_factory, **permissions
+        )
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+
+        assert response.status_code == expected_status
+        if expected_status == status.HTTP_202_ACCEPTED:
+            mock_async_result.return_value.revoke.assert_called_once()
+        else:
+            mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_provider_deletion_is_forbidden_even_for_admin(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-deletion")
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_unmapped_task_is_forbidden(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        assert pending_task.task_runner_task.task_name not in TASK_REVOKE_PERMISSIONS
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    def test_every_rls_task_has_revoke_permissions(self):
+        from config.celery import RLSTask, celery_app
+
+        rls_task_names = {
+            name for name, task in celery_app.tasks.items() if isinstance(task, RLSTask)
+        }
+        assert rls_task_names
+        assert rls_task_names <= set(TASK_REVOKE_PERMISSIONS)
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_hidden_for_providers_outside_role_visibility(
+        self,
+        mock_async_result,
+        authenticated_client_no_permissions_rbac,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        client = authenticated_client_no_permissions_rbac
+        limited_user = client.user
+        tenant = Membership.objects.filter(user=limited_user).first().tenant
+        allowed_provider, denied_provider = aws_provider_pair
+        allowed_task, denied_task = tasks_fixture
+        self._set_task_kwargs(
+            allowed_task,
+            {"tenant_id": str(tenant.id), "provider_id": str(allowed_provider.id)},
+        )
+        self._set_task_name(denied_task, "provider-deletion")
+        self._set_task_kwargs(
+            denied_task,
+            {"tenant_id": str(tenant.id), "provider_id": str(denied_provider.id)},
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="limited-task-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=limited_user.roles.first(),
+            provider_group=provider_group,
+        )
+
+        response = client.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [
+            str(allowed_task.id)
+        ]
+
+        response = client.get(reverse("task-detail", kwargs={"pk": denied_task.id}))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": denied_task.id}))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_of_soft_deleted_provider_stay_visible_to_its_groups(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        tenant, *_ = tenants_fixture
+        provider, _ = aws_provider_pair
+        finished_task, pending_task = tasks_fixture
+        client = self._client_with_role(
+            tenant,
+            authenticated_client_for_tenant_factory,
+            manage_providers=True,
+            unlimited_visibility=False,
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="own-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=provider_group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=client.user.roles.first(),
+            provider_group=provider_group,
+        )
+        for task, name in (
+            (finished_task, "provider-deletion"),
+            (pending_task, "provider-connection-check"),
+        ):
+            self._set_task_name(task, name)
+            self._set_task_kwargs(
+                task, {"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+            )
+        provider.is_deleted = True
+        provider.save()
+
+        response = client.get(reverse("task-detail", kwargs={"pk": finished_task.id}))
+        assert response.status_code == status.HTTP_200_OK
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_async_result.return_value.revoke.assert_called_once()
+
+    def test_tasks_without_provider_stay_visible_for_limited_roles(
+        self, authenticated_client_no_permissions_rbac, tasks_fixture, aws_provider_pair
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(tasks_fixture)
+
+    def test_tasks_list_without_role_is_forbidden(
+        self, authenticated_client_rbac_noroles, tasks_fixture
+    ):
+        response = authenticated_client_rbac_noroles.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_tasks_revoke_without_permission_hides_task_status(
+        self, authenticated_client_no_permissions_rbac, tasks_fixture
+    ):
+        finished_task, _ = tasks_fixture
+        self._set_task_name(finished_task, "provider-connection-check")
+
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("task-detail", kwargs={"pk": finished_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_unauthenticated_returns_401(
+        self, mock_async_result, tasks_fixture
+    ):
+        from rest_framework.test import APIClient
+
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "scan-perform")
+
+        response = APIClient().delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_foreign_tenant_task_returns_404(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+    ):
+        _, foreign_tenant, *_ = tenants_fixture
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "scan-perform")
+        client = self._client_with_role(
+            foreign_tenant, authenticated_client_for_tenant_factory, manage_scans=True
+        )
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_async_result.return_value.revoke.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -6648,6 +7604,99 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+def _client_restricted_to_provider(tenant, provider, factory):
+    """Authenticated client for a fresh member whose role only sees `provider`."""
+    user = User.objects.create_user(
+        name=f"restricted-{uuid4()}",
+        email=f"restricted-{uuid4()}@prowler.com",
+        password=TEST_PASSWORD,
+    )
+    Membership.objects.create(
+        user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+    )
+    role = Role.objects.create(
+        name=f"restricted-{uuid4()}",
+        tenant_id=tenant.id,
+        manage_users=False,
+        manage_account=False,
+        manage_billing=False,
+        manage_providers=False,
+        manage_integrations=False,
+        manage_scans=False,
+        unlimited_visibility=False,
+    )
+    UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    provider_group = ProviderGroup.objects.create(
+        name=f"restricted-{uuid4()}", tenant_id=tenant.id
+    )
+    ProviderGroupMembership.objects.create(
+        tenant_id=tenant.id, provider_group=provider_group, provider=provider
+    )
+    RoleProviderGroupRelationship.objects.create(
+        tenant_id=tenant.id, role=role, provider_group=provider_group
+    )
+    return factory(user, tenant)
+
+
+def _completed_scan_with_summaries(
+    tenant, provider, resources, *, categories, resource_group
+):
+    """Completed scan for `provider` with one finding over `resources`, summary tables filled."""
+    tenant_id = str(tenant.id)
+    scan = Scan.objects.create(
+        name=f"scan-{uuid4()}",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid=f"finding-{uuid4()}",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="scoped_check",
+        check_metadata={"CheckId": "scoped_check"},
+        categories=categories,
+        resource_groups=resource_group,
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources(resources)
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    aggregate_scan_category_summaries(tenant_id, str(scan.id))
+    aggregate_scan_resource_group_summaries(tenant_id, str(scan.id))
+    return scan
+
+
+@pytest.fixture
+def scans_per_provider_fixture(tenants_fixture, aws_provider_pair, resources_fixture):
+    """One completed scan per provider; provider 2 only owns the `test` typed resource."""
+    tenant = tenants_fixture[0]
+    provider1, provider2 = aws_provider_pair
+    resource1, resource2, resource3 = resources_fixture
+    _completed_scan_with_summaries(
+        tenant,
+        provider1,
+        [resource1, resource2],
+        categories=["iam"],
+        resource_group="identity",
+    )
+    _completed_scan_with_summaries(
+        tenant,
+        provider2,
+        [resource3],
+        categories=["data-protection"],
+        resource_group="data",
+    )
+    return tenant, provider2
+
+
 @pytest.mark.django_db
 class TestResourceViewSet:
     def test_resources_list_none(self, authenticated_client):
@@ -6672,6 +7721,76 @@ class TestResourceViewSet:
         assert "details" in response.json()["data"][0]["attributes"]
         assert "partition" in response.json()["data"][0]["attributes"]
         assert "groups" in response.json()["data"][0]["attributes"]
+
+    def test_resources_list_loads_only_finding_ids_for_the_relationship(
+        self, authenticated_client, resources_fixture, findings_fixture
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-list"),
+                {"include": "provider", "filter[updated_at]": TODAY},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        related_finding_ids = {
+            finding["id"]
+            for resource in response.json()["data"]
+            for finding in resource["relationships"]["findings"]["data"]
+        }
+        assert related_finding_ids == {str(finding.id) for finding in findings_fixture}
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
+        assert '"findings"."check_metadata"' not in findings_queries[0]
+
+    def test_resources_latest_loads_only_finding_ids_for_the_relationship(
+        self, authenticated_client, latest_scan_finding
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-latest"), {"include": "provider"}
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        related_finding_ids = {
+            finding["id"]
+            for resource in response.json()["data"]
+            for finding in resource["relationships"]["findings"]["data"]
+        }
+        assert related_finding_ids == {str(latest_scan_finding.id)}
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
+        assert '"findings"."check_metadata"' not in findings_queries[0]
+
+    def test_resources_list_include_findings_loads_their_attributes_once(
+        self, authenticated_client, resources_fixture, findings_fixture
+    ):
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("resource-list"),
+                {"include": "findings", "filter[updated_at]": TODAY},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        included_findings = [
+            included
+            for included in response.json()["included"]
+            if included["type"] == "findings"
+        ]
+        assert {finding["id"] for finding in included_findings} == {
+            str(finding.id) for finding in findings_fixture
+        }
+        assert all(
+            finding["attributes"]["check_id"] == "test_check_id"
+            for finding in included_findings
+        )
+        findings_queries = [
+            query["sql"] for query in queries if 'FROM "findings"' in query["sql"]
+        ]
+        assert len(findings_queries) == 1
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -7018,6 +8137,42 @@ class TestResourceViewSet:
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
+
+    def test_resources_metadata_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("resource-metadata"), {"filter[updated_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
+
+    def test_resources_metadata_latest_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("resource-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
 
     def test_resources_latest_filter_by_provider_id(
         self, authenticated_client, latest_scan_resource
@@ -8551,6 +9706,147 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_200_OK
         mock_backfill_task.assert_not_called()
 
+    def test_findings_metadata_without_summaries_merges_finding_values(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        finding_1, finding_2 = findings_fixture
+        Finding.objects.filter(id=finding_1.id).update(
+            resource_services=["s3", "ec2", ""],
+            resource_regions=["us-east-1", "eu-west-1"],
+            resource_types=["bucket", ""],
+            categories=["logging", ""],
+            resource_groups="storage",
+        )
+        Finding.objects.filter(id=finding_2.id).update(
+            resource_services=None,
+            resource_regions=None,
+            resource_types=None,
+            categories=None,
+            resource_groups="IAM",
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {"filter[scan]": str(scans_fixture[0].id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["services"] == ["ec2", "s3"]
+        assert attributes["regions"] == ["eu-west-1", "us-east-1"]
+        assert attributes["resource_types"] == ["bucket"]
+        assert attributes["categories"] == ["logging"]
+        assert attributes["groups"] == ["IAM", "storage"]
+
+    def test_findings_metadata_without_summaries_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        ResourceScanSummary.objects.filter(tenant_id=tenant.id).delete()
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        with patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async"):
+            response = client.get(
+                reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["services"] == ["ec2"]
+        assert attributes["regions"] == ["us-east-1"]
+        assert attributes["resource_types"] == ["test"]
+        assert attributes["categories"] == ["data-protection"]
+        assert attributes["groups"] == ["data"]
+
+    def test_findings_metadata_latest_without_summaries_reads_only_latest_scans(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        aws_provider_pair,
+        resources_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider, _ = aws_provider_pair
+        resource1, _, resource3 = resources_fixture
+        _completed_scan_with_summaries(
+            tenant, provider, [resource3], categories=["old"], resource_group="old"
+        )
+        latest_scan = _completed_scan_with_summaries(
+            tenant,
+            provider,
+            [resource1],
+            categories=["iam"],
+            resource_group="identity",
+        )
+        Scan.objects.filter(id=latest_scan.id).update(unique_resource_count=1)
+        ResourceScanSummary.objects.filter(scan_id=latest_scan.id).delete()
+
+        with patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async"):
+            response = authenticated_client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert attributes["resource_types"] == [resource1.type]
+        assert attributes["categories"] == ["iam"]
+        assert attributes["groups"] == ["identity"]
+
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_findings_metadata_categories_fallback_reads_distinct_values(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        Finding.objects.filter(scan_id=finding_1.scan_id).update(
+            categories=["encryption"]
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d")},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["categories"] == ["encryption"]
+        categories_queries = [
+            query["sql"]
+            for query in queries
+            if '"findings"."categories"' in query["sql"]
+        ]
+        assert categories_queries
+        assert all("DISTINCT" in sql for sql in categories_queries)
+
+    def test_findings_metadata_without_summaries_aggregates_from_findings(
+        self, authenticated_client, scans_fixture, findings_fixture
+    ):
+        finding_1, finding_2 = findings_fixture
+        Finding.objects.filter(id=finding_1.id).update(
+            categories=["encryption", "logging"], resource_groups="storage"
+        )
+        Finding.objects.filter(id=finding_2.id).update(
+            categories=["encryption"], resource_groups="compute"
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = authenticated_client.get(
+                reverse("finding-metadata"),
+                {"filter[scan]": str(scans_fixture[0].id)},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2", "s3"}
+        assert set(attributes["regions"]) == {"eu-west-1", "us-east-1"}
+        assert set(attributes["resource_types"]) == {"prowler-test"}
+        assert attributes["categories"] == ["encryption", "logging"]
+        assert attributes["groups"] == ["compute", "storage"]
+        assert not [
+            query["sql"]
+            for query in queries
+            if "resource_finding_mappings" in query["sql"]
+        ]
+
     def test_findings_metadata_latest_backfill(
         self, authenticated_client, scans_fixture, findings_fixture
     ):
@@ -8650,6 +9946,53 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert "groups" in attributes
         assert "ai_ml" in attributes["groups"]
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_latest_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+        assert set(attributes["groups"]) == {"data"}
 
     def test_findings_filter_by_category(
         self, authenticated_client, findings_with_categories
@@ -15256,6 +16599,84 @@ class TestTenantFinishACSView:
             not SAMLToken.objects.using(MainRouter.admin_db).filter(user=user).exists()
         )
 
+    def test_saml_token_cannot_switch_to_tenant_outside_the_saml_tenant(
+        self, client, create_test_user, tenants_fixture, saml_setup, monkeypatch
+    ):
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        saml_tenant, other_tenant = tenants_fixture[0], tenants_fixture[1]
+        assert user.is_member_of_tenant(str(other_tenant.id))
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={"firstName": ["John"], "lastName": ["Doe"]},
+        )
+        request = RequestFactory().get(
+            reverse(
+                "saml_finish_acs", kwargs={"organization_slug": saml_setup["domain"]}
+            )
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(
+                tenant_id=saml_tenant.id
+            )
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=saml_tenant
+            )
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug=saml_setup["domain"])
+
+        assert response.status_code == 302
+        token_id = parse_qs(urlparse(response.url).query)["id"][0]
+        saml_access = SAMLToken.objects.using(MainRouter.admin_db).get(id=token_id)
+        auth_headers = {"Authorization": f"Bearer {saml_access.token['access']}"}
+
+        def switch_to(tenant):
+            return client.post(
+                reverse("token-switch"),
+                data={
+                    "data": {
+                        "type": "tokens-switch-tenant",
+                        "attributes": {"tenant_id": str(tenant.id)},
+                    }
+                },
+                content_type=API_JSON_CONTENT_TYPE,
+                headers=auth_headers,
+            )
+
+        assert switch_to(saml_tenant).status_code == status.HTTP_200_OK
+        assert switch_to(other_tenant).status_code in (
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_403_FORBIDDEN,
+        )
+
     def test_rollback_saml_user_when_error_occurs(self, users_fixture, monkeypatch):
         """Test that a user is properly deleted when created during SAML flow and an error occurs"""
         monkeypatch.setenv("AUTH_URL", "http://localhost")
@@ -18652,6 +20073,275 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
+    @staticmethod
+    def _client_scoped_to(provider, tenant, factory):
+        user = User.objects.create_user(
+            name=f"scoped-{uuid4()}",
+            email=f"scoped-{uuid4()}@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        role = Role.objects.create(
+            name=f"scoped-{uuid4()}",
+            tenant_id=tenant.id,
+            manage_scans=True,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        group = ProviderGroup.objects.create(
+            name=f"group-{uuid4()}", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id, role=role, provider_group=group
+        )
+        return factory(user, tenant)
+
+    def test_mute_rules_scoped_role_sees_only_rules_on_its_providers(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, other_provider = aws_provider_pair
+        tenant = tenants_fixture[0]
+        factory = authenticated_client_for_tenant_factory
+        own_client = self._client_scoped_to(own_provider, tenant, factory)
+        other_client = self._client_scoped_to(other_provider, tenant, factory)
+
+        own = own_client.get(reverse("mute-rule-list"))
+        other = other_client.get(reverse("mute-rule-list"))
+
+        assert len(own.json()["data"]) == len(mute_rules_fixture)
+        assert other.json()["data"] == []
+
+    def test_mute_rules_scoped_role_cannot_touch_rules_outside_its_providers(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        _, other_provider = aws_provider_pair
+        client = self._client_scoped_to(
+            other_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        rule = mute_rules_fixture[0]
+        url = reverse("mute-rule-detail", kwargs={"pk": rule.id})
+        patch_body = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(rule.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        retrieved = client.get(url)
+        patched = client.patch(
+            url,
+            data=json.dumps(patch_body),
+            content_type="application/vnd.api+json",
+        )
+        deleted = client.delete(url)
+
+        assert retrieved.status_code == status.HTTP_404_NOT_FOUND
+        assert patched.status_code == status.HTTP_404_NOT_FOUND
+        assert deleted.status_code == status.HTTP_404_NOT_FOUND
+        assert MuteRule.objects.filter(id=rule.id, enabled=True).exists()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    def test_mute_rules_scoped_role_conflict_does_not_name_the_rule(
+        self,
+        mock_mute_task,
+        mute_rules_fixture,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, _ = aws_provider_pair
+        client = self._client_scoped_to(
+            own_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Overlapping rule",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert mute_rules_fixture[0].name not in response.content.decode()
+
+    def test_mute_rules_scoped_role_cannot_touch_a_rule_spanning_another_provider(
+        self,
+        findings_fixture,
+        scans_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+        create_test_user,
+    ):
+        own_provider, _ = aws_provider_pair
+        tenant = tenants_fixture[0]
+        other_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="other_provider_finding_uid",
+            scan=scans_fixture[1],
+            status=Status.FAIL,
+            severity=Severity.critical,
+            impact=Severity.critical,
+            check_id="test_check_id",
+            check_metadata={"CheckId": "test_check_id"},
+            raw_result={},
+        )
+        mixed = MuteRule.objects.create(
+            tenant_id=tenant.id,
+            name="Mixed rule",
+            reason="spans two providers",
+            created_by=create_test_user,
+            finding_uids=[findings_fixture[0].uid, other_finding.uid],
+        )
+        client = self._client_scoped_to(
+            own_provider, tenant, authenticated_client_for_tenant_factory
+        )
+        url = reverse("mute-rule-detail", kwargs={"pk": mixed.id})
+
+        listed = client.get(reverse("mute-rule-list"))
+        retrieved = client.get(url)
+        patched = client.patch(
+            url,
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "mute-rules",
+                        "id": str(mixed.id),
+                        "attributes": {"enabled": False},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+        deleted = client.delete(url)
+
+        assert str(mixed.id) not in {item["id"] for item in listed.json()["data"]}
+        assert retrieved.status_code == status.HTTP_404_NOT_FOUND
+        assert patched.status_code == status.HTTP_404_NOT_FOUND
+        assert deleted.status_code == status.HTTP_404_NOT_FOUND
+        assert MuteRule.objects.filter(id=mixed.id, enabled=True).exists()
+
+    def test_mute_rules_scoped_role_does_not_see_rules_without_findings(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+        create_test_user,
+    ):
+        own_provider, _ = aws_provider_pair
+        tenant = tenants_fixture[0]
+        orphan = MuteRule.objects.create(
+            tenant_id=tenant.id,
+            name="Orphan rule",
+            reason="provider deleted",
+            created_by=create_test_user,
+            finding_uids=["uid-with-no-finding"],
+        )
+        client = self._client_scoped_to(
+            own_provider, tenant, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("mute-rule-list"))
+
+        listed = {item["id"] for item in response.json()["data"]}
+        assert str(orphan.id) not in listed
+        assert listed == {str(rule.id) for rule in mute_rules_fixture}
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    def test_mute_rules_scoped_role_cannot_mute_a_finding_it_cannot_read(
+        self,
+        mock_mute_task,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        _, other_provider = aws_provider_pair
+        client = self._client_scoped_to(
+            other_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Hide another team",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert findings_fixture[0].uid not in response.content.decode()
+        assert not MuteRule.objects.filter(name="Hide another team").exists()
+        mock_mute_task.assert_not_called()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
+    def test_mute_rules_scoped_role_can_mute_its_own_finding(
+        self,
+        _mock_on_commit,
+        mock_mute_task,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, _ = aws_provider_pair
+        client = self._client_scoped_to(
+            own_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Own exception",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_mute_task.assert_called_once()
+
     @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
@@ -19198,6 +20888,30 @@ class TestFindingGroupViewSet:
         assert (
             attrs["check_description"] == "EC2 instances should use private IPs only."
         )
+
+    def test_finding_groups_check_title_from_sdk_without_summaries(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """A first scan writes no summaries until it completes; titles come from the SDK."""
+        FindingGroupDailySummary.objects.all().delete()
+        Scan.objects.filter(
+            id__in=Finding.objects.filter(check_id="ec2_instance_public_ip").values(
+                "scan_id"
+            )
+        ).update(state=StateChoices.EXECUTING, completed_at=None)
+
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert attrs["check_title"] == "EC2 instance does not have a public IP address"
+        assert attrs["check_description"].startswith("**EC2 instances**")
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture

@@ -23,6 +23,8 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
             "secrets_ignore_patterns", []
         )
         validate = glue_client.audit_config.get("secrets_validate", False)
+
+        confidence = glue_client.audit_config.get("secrets_confidence", "low")
         jobs = list(glue_client.jobs)
 
         # Collect every default argument across all jobs and scan them in batched
@@ -37,7 +39,10 @@ class glue_etl_jobs_no_secrets_in_arguments(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

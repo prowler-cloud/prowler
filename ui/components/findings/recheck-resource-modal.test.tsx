@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -50,6 +50,8 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
+import { USAGE_LIMIT_MESSAGE } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { PARTIAL_SCAN_LAUNCH_ERROR } from "@/lib/partial-scans";
 
 import {
@@ -170,6 +172,25 @@ describe("RecheckResourceModal", () => {
         screen.getByRole("button", { name: RECHECK_RESOURCE_SUBMIT_LABEL }),
       ).toBeEnabled(),
     );
+  });
+
+  it("offers the plans when the usage limit refuses the re-check", async () => {
+    createPartialScanMock.mockResolvedValue({
+      error: "An active subscription is required.",
+      status: 402,
+    });
+    render(
+      <RecheckResourceModal isOpen onOpenChange={vi.fn()} target={target} />,
+    );
+
+    await submit();
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(USAGE_LIMIT_MESSAGE);
+    expect(
+      within(alert).getByRole("link", { name: "View plans" }),
+    ).toHaveAttribute("href", PRICING_URL);
+    expect(toastMock).not.toHaveBeenCalled();
   });
 
   it("treats a response without a scan id as a failed launch", async () => {

@@ -12,21 +12,7 @@ import type {
   CrossAccountRequirementExtras,
 } from "../_types";
 
-/** Candidate display names a framework mapper may give this requirement.
- *
- *  Unlike the cross-provider view (whose three universal frameworks all
- *  compose `id - name`), cross-account serves EVERY framework, and mappers
- *  disagree on the composed name: CSA/CIS-Controls/DORA use `id - name`,
- *  CIS/CCC/PCI use the bare `id`, the generic mapper uses the bare `name`.
- *  The extras map registers every candidate so the join works regardless of
- *  which mapper renders the framework. */
-const candidateRequirementNames = (id: string, name: string): string[] => {
-  const candidates = [id];
-  if (name) {
-    candidates.push(name, `${id} - ${name}`);
-  }
-  return candidates;
-};
+import { candidateRequirementNames } from "./requirement-names";
 
 /** Display label for an account column: alias when set, uid otherwise. */
 export const accountDisplayLabel = (account: CrossAccountAccountRef): string =>

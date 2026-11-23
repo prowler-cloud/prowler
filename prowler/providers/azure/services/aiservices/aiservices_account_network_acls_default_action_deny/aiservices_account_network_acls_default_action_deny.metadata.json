@@ -1,0 +1,40 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_network_acls_default_action_deny",
+  "CheckTitle": "AI services account network access rules deny public traffic by default",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) that keep **public network access** enabled can set the network ACL default action (`networkAcls.defaultAction`) to `Deny`, so the public endpoint only accepts traffic from allowed virtual networks and IP ranges. Accounts with public network access `Disabled` also pass.",
+  "Risk": "With the default action set to `Allow`, the public endpoint accepts traffic from any network:\n- **Confidentiality**: prompts, completions, and grounding data are reachable by anyone holding a leaked key or token\n- **Integrity**: unauthorized model calls and deployment changes from any source\n- **Availability**: quota exhaustion and cost abuse from scanning and automated traffic",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-virtual-networks",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/baselines/cognitive-services-security-baseline"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az resource update --ids <account_resource_id> --set properties.networkAcls.defaultAction=Deny",
+      "NativeIaC": "```bicep\n// Deny public traffic by default on an Azure AI services account\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'OpenAI'\n  sku: { name: 'S0' }\n  properties: {\n    customSubDomainName: '<example_resource_name>'\n    networkAcls: {\n      defaultAction: 'Deny' // CRITICAL: only allowed networks reach the public endpoint\n      ipRules: [\n        { value: '<allowed_ip_range>' }\n      ]\n    }\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the Azure AI services or Azure OpenAI resource\n2. Go to Resource Management > Networking\n3. Under Firewalls and virtual networks, select Selected Networks and Private Endpoints\n4. Add the required virtual networks and IP ranges\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_account\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<location>\"\n  resource_group_name   = \"<resource_group>\"\n  kind                  = \"OpenAI\"\n  sku_name              = \"S0\"\n  custom_subdomain_name = \"<example_resource_name>\"\n\n  network_acls {\n    default_action = \"Deny\" # CRITICAL: only allowed networks reach the public endpoint\n    ip_rules       = [\"<allowed_ip_range>\"]\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Prefer disabling **public network access** and using **Private Link**. Where the public endpoint must stay on, set the network ACL default action to `Deny` and allow only the virtual networks and IP ranges each workload needs.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_network_acls_default_action_deny"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aiservices_account_public_network_access_disabled"
+  ],
+  "Notes": "Mirrors the Azure Policy built-in \"Azure AI Services resources should restrict network access\", which flags accounts where public network access is not Disabled and the network ACL default action is not Deny. Add the needed IP ranges and virtual networks before switching to Deny to avoid losing connectivity."
+}

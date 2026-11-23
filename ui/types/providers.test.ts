@@ -39,6 +39,11 @@ describe("getProviderDisplayName", () => {
     expect(getProviderDisplayName("AWS")).toBe("AWS");
   });
 
+  it("names SDK providers that have no UI assets", () => {
+    expect(getProviderDisplayName("huaweicloud")).toBe("Huawei Cloud");
+    expect(getProviderDisplayName("e2enetworks")).toBe("E2E Networks");
+  });
+
   it("humanizes an unknown/dynamic provider id", () => {
     expect(getProviderDisplayName("template")).toBe("Template");
     expect(getProviderDisplayName("local-template")).toBe("Local Template");

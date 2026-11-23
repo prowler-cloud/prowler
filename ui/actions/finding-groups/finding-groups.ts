@@ -14,7 +14,13 @@ import {
   includesMutedFindings,
   splitCsvFilterValues,
 } from "@/lib";
+import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
+import {
+  isSampleScanFilter,
+  pickSampleFindingFilters,
+  sampleFindingGroupResources,
+} from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 /**
@@ -151,6 +157,25 @@ export const getLatestFindingGroups = async (
   params: FetchFindingGroupsParams = {},
 ) => fetchFindingGroupsEndpoint("finding-groups/latest", params);
 
+/**
+ * Options for the "Finding Group" filter. Walks every finding-group page on the
+ * server, so the browser issues a single request instead of one per page
+ * (client-side Server Action calls are dispatched sequentially).
+ */
+export const getFindingGroupCheckOptions = async ({
+  filters,
+  hasHistoricalData,
+}: {
+  filters: Record<string, string>;
+  hasHistoricalData: boolean;
+}) =>
+  getFindingGroupFilterOptions({
+    fetchFindingGroups: hasHistoricalData
+      ? getFindingGroups
+      : getLatestFindingGroups,
+    filters,
+  });
+
 interface FetchFindingGroupResourcesParams {
   checkId: string;
   page?: number;
@@ -167,6 +192,19 @@ async function fetchFindingGroupResourcesEndpoint(
     filters = {},
   }: FetchFindingGroupResourcesParams,
 ) {
+  if (isSampleScanFilter(filters)) {
+    const status = filters["filter[status]"] ?? filters["filter[status__in]"];
+    const search = filters["filter[name__icontains]"];
+    return sampleFindingGroupResources({
+      checkId,
+      page,
+      pageSize,
+      status: Array.isArray(status) ? status.join(",") : status,
+      search: Array.isArray(search) ? search[0] : search,
+      filters: pickSampleFindingFilters(filters),
+    });
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const normalizedFilters = normalizeFindingGroupResourceFilters(filters);
 

@@ -52,7 +52,10 @@ export interface RegistryMarketplaceIncompleteModel {
 
 export interface RegistryMarketplaceCompleteModel {
   isComplete: true;
+  /** Registry artifacts (not built in), filtered and sorted. */
   artifacts: RegistryMarketplaceArtifact[];
+  /** Artifacts that ship with Prowler, filtered and sorted the same way. */
+  builtinArtifacts: RegistryMarketplaceArtifact[];
   providers: string[];
   myArtifacts: RegistryMarketplaceMyArtifact[];
 }
@@ -97,7 +100,7 @@ export function buildRegistryMarketplaceModel(
       ];
     }),
   );
-  const artifacts = Array.from(merged.values())
+  const visibleArtifacts = Array.from(merged.values())
     .filter((artifact) => matches(artifact, filters))
     .sort((left, right) =>
       sort === REGISTRY_MARKETPLACE_SORT.DOWNLOADS
@@ -107,7 +110,8 @@ export function buildRegistryMarketplaceModel(
     );
   return {
     isComplete: true,
-    artifacts,
+    artifacts: visibleArtifacts.filter((artifact) => !artifact.isBuiltin),
+    builtinArtifacts: visibleArtifacts.filter((artifact) => artifact.isBuiltin),
     providers: Array.from(
       new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)),
     ).sort(compare),

@@ -1,0 +1,1 @@
+M365 provider PowerShell checks (Exchange Online and Microsoft Teams) now use the selected region's sign-in endpoint and cloud environment for `M365USGovernment` (GCC High) and `M365China`, instead of always using the commercial cloud

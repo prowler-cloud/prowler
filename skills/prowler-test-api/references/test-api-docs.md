@@ -177,46 +177,34 @@ from conftest import (
 
 ## Running Tests
 
+`pytest.ini` lives in `api/src/backend/`, so run pytest from there (or pass `src/backend` as the path from `api/`,
+as CI does). Tests need PostgreSQL and Valkey (CI uses `postgres:17` and `valkey/valkey:7`) and fail if the
+development `.env` is loaded: use a clean shell.
+
 ```bash
-# Full test suite
-cd api && uv run pytest
-
-# Fast fail on first error
-cd api && uv run pytest -x
-
-# Short traceback
-cd api && uv run pytest --tb=short
-
-# Specific file
-cd api && uv run pytest api/src/backend/api/tests/test_views.py
-
-# Pattern match
-cd api && uv run pytest -k "Provider"
-
-# Verbose with print output
-cd api && uv run pytest -v -s
-
-# With coverage
-cd api && uv run pytest --cov=api --cov-report=html
-
-# Parallel execution
-cd api && uv run pytest -n auto
+cd api/src/backend && uv run pytest                       # Full suite
+cd api/src/backend && uv run pytest -x --tb=short         # Fast fail, short traceback
+cd api/src/backend && uv run pytest api/tests/test_views.py
+cd api/src/backend && uv run pytest tasks/tests/test_tasks.py -k "Provider"
+cd api/src/backend && uv run pytest -n auto               # pytest-xdist
+cd api && uv run pytest --cov=./src/backend --cov-report=xml src/backend   # CI command
 ```
 
 ---
 
 ## pytest Configuration
 
-From `api/pyproject.toml`:
+From `api/src/backend/pytest.ini`:
 
-```toml
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings"
-python_files = "test_*.py"
-addopts = "--reuse-db"
+```ini
+[pytest]
+DJANGO_SETTINGS_MODULE = config.django.testing
+addopts = -rP
 ```
 
 Key points:
-- Uses `--reuse-db` for faster test runs
-- Settings from `config.settings`
-- Test files must match `test_*.py`
+- Settings from `config.django.testing`
+- `pytest-randomly` is installed: test order is shuffled, so tests must not depend on each other
+- `conftest.py` sorts `test_rbac.py` first and patches `MainRouter.admin_db` to `"default"` for the whole session
+- Markers `requires_test_admin_alias` / `requires_test_replica_alias` create mirrored DB aliases
+  (`TEST_ADMIN_ALIAS = "admin"`, `TEST_REPLICA_ALIAS = "test_replica"`)

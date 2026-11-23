@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_account_recovery_sms_not_preferred",
+  "CheckTitle": "Cognito user pool does not prefer SMS for account recovery",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access"
+  ],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "IAM",
+  "Description": "**Amazon Cognito user pools** do not rank `verified_phone_number` as the first **account recovery** mechanism. The evaluation inspects the `RecoveryMechanisms` of each user pool's `AccountRecoverySetting` and looks at the entry with the lowest `Priority`.",
+  "Risk": "SMS is the weakest recovery channel: an attacker who performs a **SIM swap** or intercepts **SS7** traffic receives the reset code and takes over the account, bypassing the password. A pool with no `AccountRecoverySetting` is equally exposed, since Cognito then applies **legacy behavior preferring SMS over email**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-recover-a-user-account.html",
+    "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AccountRecoverySettingType.html",
+    "https://pages.nist.gov/800-63-3/sp800-63b.html#-5122-out-of-band-verifiers"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cognito-idp update-user-pool --user-pool-id <example_resource_id> --account-recovery-setting RecoveryMechanisms=[{Priority=1,Name=verified_email}]",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::Cognito::UserPool\n    Properties:\n      AccountRecoverySetting:\n        RecoveryMechanisms:\n          - Name: verified_email  # Critical: email is ranked ahead of SMS\n            Priority: 1\n```",
+      "Other": "1. Open the AWS Management Console and go to Amazon Cognito\n2. Click User pools and select your pool\n3. Go to Sign-in > Account recovery and click Edit\n4. Set Email only (or Admin only) as the recovery method, or move Email above SMS in the priority order\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"aws_cognito_user_pool\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  account_recovery_setting {\n    recovery_mechanism {\n      name     = \"verified_email\" # Critical: email is ranked ahead of SMS\n      priority = 1\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set an explicit **account recovery** order that ranks `verified_email` (or `admin_only`) ahead of `verified_phone_number`.\n- Never rely on the **default**, which silently prefers SMS\n- Prefer `admin_only` for privileged pools so recovery requires an operator\n- Require **verified email** on sign-up so the stronger channel is always available",
+      "Url": "https://hub.prowler.com/check/cognito_user_pool_account_recovery_sms_not_preferred"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

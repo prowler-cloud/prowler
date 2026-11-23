@@ -46,7 +46,7 @@ To create a new organization:
 4. Click **Create**. The session automatically switches to the newly created organization.
 
 <Note>
-Creating an organization requires being authenticated. Any user can create a new organization regardless of their current role.
+Creating an organization requires being authenticated. Any user can create a new organization regardless of their current role, except from a session started with SAML SSO. For details, see [Sessions Started with SSO](/user-guide/tutorials/prowler-app-sso#sessions-started-with-sso).
 
 </Note>
 
@@ -66,6 +66,8 @@ To switch the active organization:
 
 <Note>
 The currently active organization is indicated by an **Active** badge. Switching updates the session tokens, so the page will reload automatically.
+
+Sessions started with SAML SSO stay in the organization that signed the user in and cannot switch to another one. To work in another organization, sign in to it directly.
 
 </Note>
 
@@ -183,9 +185,9 @@ If the expelled organization was the user's **only** organization, the account i
 
 | Action | Required Conditions |
 |--------|-------------------|
-| View organizations | Any authenticated user |
-| Create an organization | Any authenticated user |
-| Switch organizations | Any authenticated user |
+| View organizations | Any authenticated user; SAML SSO sessions and API keys only see their own organization |
+| Create an organization | Any authenticated user; not available from SAML SSO sessions or with API keys |
+| Switch organizations | Any authenticated user; not available from SAML SSO sessions or with API keys |
 | Edit organization name | Membership role `owner` **and** a role with **Manage Account** permission |
 | Delete an organization | Membership role `owner` **and** a role with **Manage Account** permission; must belong to more than one organization |
 | Expel a user from an organization | Organization owner (no additional permission required); last remaining owner cannot expel themselves |
