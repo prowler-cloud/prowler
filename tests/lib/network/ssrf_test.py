@@ -243,6 +243,45 @@ class TestExtractHost:
         assert "s3cr3t" not in str(rejection.value)
         assert "user" not in str(rejection.value)
 
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://127.0.0.1:8080\\@example.com/",
+            "https://169.254.169.254\\@example.com/latest/meta-data",
+            "http://127.0.0.1:8080\\\\@8.8.8.8/",
+        ],
+    )
+    def test_rejects_a_url_whose_dialed_host_differs_from_the_parsed_one(self, url):
+        with pytest.raises(OutboundURLNotAllowedError, match="ambiguous host"):
+            extract_host(url)
+
+    def test_reads_a_bracketed_ipv6_host(self):
+        assert extract_host("https://[2606:4700::1111]:443/v1") == "2606:4700::1111"
+
+    @pytest.mark.parametrize(
+        "url, expected",
+        [
+            ("https://münchen.de:8443/v3", "xn--mnchen-3ya.de"),
+            ("https://straße.de/", "xn--strae-oqa.de"),
+            ("https://例え.jp/", "xn--r8jz45g.jp"),
+        ],
+    )
+    def test_reads_an_internationalised_host_in_its_dialed_form(self, url, expected):
+        assert extract_host(url) == expected
+
+    def test_resolves_the_internationalised_host_the_client_dials(self):
+        with _resolves_to("93.184.215.14") as getaddrinfo:
+            validate_outbound_url("https://straße.de/")
+
+        assert getaddrinfo.call_args[0][0] == "xn--strae-oqa.de"
+
+    def test_ignores_surrounding_whitespace(self):
+        assert extract_host("  https://example.com/  ") == "example.com"
+
+    def test_rejects_a_url_the_http_client_cannot_parse(self):
+        with pytest.raises(OutboundURLNotAllowedError, match="ambiguous host"):
+            extract_host("https://example.com:99999/")
+
 
 class TestValidateOutboundURL:
     def test_rejects_a_disallowed_scheme(self):
@@ -263,3 +302,8 @@ class TestValidateOutboundURL:
     def test_rejects_shared_address_space_on_an_allowed_scheme(self):
         with pytest.raises(OutboundURLNotAllowedError):
             validate_outbound_url("http://100.100.100.200/latest/meta-data")
+
+    def test_rejects_a_loopback_host_hidden_behind_a_backslash(self):
+        with _resolves_to("93.184.215.14"):
+            with pytest.raises(OutboundURLNotAllowedError):
+                validate_outbound_url("http://127.0.0.1:8080\\@example.com/")

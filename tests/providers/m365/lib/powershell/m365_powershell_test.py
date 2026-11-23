@@ -6,7 +6,12 @@ import pytest
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import M365CertificateCreationError
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
-from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
+from prowler.providers.m365.lib.regions.regions import get_regions_config
+from prowler.providers.m365.models import (
+    M365Credentials,
+    M365IdentityInfo,
+    M365RegionConfig,
+)
 
 
 class Testm365PowerShell:
@@ -1264,4 +1269,174 @@ class Testm365PowerShell:
         assert any('$tenantID = "test_tenant_id"' in cmd for cmd in executed_commands)
         assert any('$tenantDomain = "contoso.com"' in cmd for cmd in executed_commands)
 
+        session.close()
+
+
+def _region_config(region):
+    return M365RegionConfig(name=region, **get_regions_config(region))
+
+
+# (login host, Graph scope, Exchange scope, Get-MsalToken suffix, Connect-ExchangeOnline suffix, Connect-MicrosoftTeams suffix)
+REGION_COMMANDS = {
+    "M365Global": (
+        "login.microsoftonline.com",
+        "https://graph.microsoft.com/.default",
+        "https://outlook.office365.com/.default",
+        "",
+        "",
+        "",
+    ),
+    "M365USGovernment": (
+        "login.microsoftonline.us",
+        "https://graph.microsoft.us/.default",
+        "https://outlook.office365.us/.default",
+        ' -Authority "https://login.microsoftonline.us/$tenantID"',
+        " -ExchangeEnvironmentName O365USGovGCCHigh",
+        " -TeamsEnvironmentName TeamsGCCH",
+    ),
+    "M365China": (
+        "login.chinacloudapi.cn",
+        "https://microsoftgraph.chinacloudapi.cn/.default",
+        "https://partner.outlook.cn/.default",
+        ' -Authority "https://login.chinacloudapi.cn/$tenantID"',
+        " -ExchangeEnvironmentName O365China",
+        " -TeamsEnvironmentName TeamsChina",
+    ),
+}
+
+
+@pytest.mark.parametrize("region", REGION_COMMANDS)
+class Testm365PowerShellRegions:
+    """The exact commands sent to PowerShell for each built-in region."""
+
+    def _session(self, region, credentials=None):
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(
+                credentials or M365Credentials(),
+                M365IdentityInfo(identity_id="expected-id"),
+                _region_config(region),
+            )
+        return session
+
+    @patch("subprocess.Popen")
+    def test_init_credential_client_secret(self, _, region):
+        login_host, graph_scope, *_ = REGION_COMMANDS[region]
+        credentials = M365Credentials(
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+        )
+        session = self._session(region, credentials)
+        session.execute = MagicMock()
+
+        M365PowerShell.init_credential(session, credentials)
+
+        assert session.execute.call_args_list[-2:] == [
+            call(
+                f'$graphtokenBody = @{{ Grant_Type = "client_credentials"; Scope = "{graph_scope}"; Client_Id = $clientID; Client_Secret = $clientSecret }}'
+            ),
+            call(
+                f'$graphToken = Invoke-RestMethod -Uri "https://{login_host}/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
+            ),
+        ]
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_teams_connection_client_secret(self, _, region):
+        login_host, *_, teams_suffix = REGION_COMMANDS[region]
+        session = self._session(region)
+        session.execute = MagicMock(side_effect=[None, ""])
+        session.execute_connect = MagicMock(return_value="")
+
+        assert session.test_teams_connection() is True
+
+        assert session.execute.call_args_list == [
+            call(
+                '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
+            ),
+            call(
+                f'$teamsToken = Invoke-RestMethod -Uri "https://{login_host}/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
+            ),
+        ]
+        session.execute_connect.assert_called_once_with(
+            'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+            + teams_suffix
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_teams_connection_certificate(self, _, region):
+        teams_suffix = REGION_COMMANDS[region][5]
+        session = self._session(region)
+        session.execute_connect = MagicMock(return_value="expected-id")
+
+        assert session.test_teams_certificate_connection() is True
+
+        session.execute_connect.assert_called_once_with(
+            "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
+            + teams_suffix
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_exchange_connection_client_secret(self, _, region):
+        _, _, exchange_scope, msal_suffix, exchange_suffix, _ = REGION_COMMANDS[region]
+        session = self._session(region)
+        session.execute = MagicMock(return_value="token")
+        session.execute_connect = MagicMock(return_value="")
+
+        with patch(
+            "prowler.providers.m365.lib.powershell.m365_powershell.decode_msal_token",
+            return_value={"roles": ["Exchange.ManageAsApp"]},
+        ):
+            assert session.test_exchange_connection() is True
+
+        assert session.execute.call_args_list == [
+            call(
+                "$SecureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force"
+            ),
+            call(
+                f'$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "{exchange_scope}"'
+                + msal_suffix
+            ),
+            call("Write-Output $exchangeToken"),
+        ]
+        session.execute_connect.assert_called_once_with(
+            'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
+            + exchange_suffix
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_exchange_connection_certificate(self, _, region):
+        exchange_suffix = REGION_COMMANDS[region][4]
+        session = self._session(region)
+        session.execute_connect = MagicMock(
+            return_value="Connected successfully https://aka.ms/exov3-module"
+        )
+
+        assert session.test_exchange_certificate_connection() is True
+
+        session.execute_connect.assert_called_once_with(
+            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+            + exchange_suffix
+        )
+        session.close()
+
+
+class Testm365PowerShellDefaultRegion:
+    @patch("subprocess.Popen")
+    def test_no_region_is_m365_global(self, _):
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(M365Credentials(), M365IdentityInfo())
+
+        assert (
+            session.token_url
+            == "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token"
+        )
+        assert session.graph_scope == "https://graph.microsoft.com/.default"
+        assert session.exchange_scope == "https://outlook.office365.com/.default"
+        assert session.msal_authority == ""
+        assert session.exchange_environment == ""
+        assert session.teams_environment == ""
         session.close()
