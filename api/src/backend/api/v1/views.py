@@ -1181,7 +1181,7 @@ class UserViewSet(BaseUserViewset):
                 )
             # Email and password belong to the user, not to this tenant.
             self._reject_credential_changes_for_other_user(user, request.data)
-        elif session_reaches_other_tenants(request):
+        elif session_bound_tenant_id(request):
             self._reject_credential_changes_from_bound_session(user, request.data)
 
         serializer = self.get_serializer(user, data=request.data, partial=True)
@@ -1209,20 +1209,21 @@ class UserViewSet(BaseUserViewset):
 
     @staticmethod
     def _reject_credential_changes_from_bound_session(user, data):
-        # Email and password are shared by every tenant the user belongs to.
+        # Credentials set here would outlive the session and reach tenants the
+        # user joins later, so only a password session may change them.
         errors = {}
         if "password" in data:
             errors["password"] = (
-                "This session is limited to one organization and cannot change a "
-                "password shared with your other organizations."
+                "This session is limited to one organization and cannot change "
+                "the account password."
             )
         new_email = data.get("email")
         if new_email is not None and (
             not isinstance(new_email, str) or new_email.strip().lower() != user.email
         ):
             errors["email"] = (
-                "This session is limited to one organization and cannot change an "
-                "email shared with your other organizations."
+                "This session is limited to one organization and cannot change "
+                "the account email."
             )
         if errors:
             raise ValidationError(errors)
