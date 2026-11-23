@@ -30,7 +30,7 @@ def fixer(resource_id: str = "") -> bool:
             )
             return False
 
-        session = M365PowerShell(credentials, identity)
+        session = M365PowerShell(credentials, identity, provider.region_config)
         if not session.connect_exchange_online():
             logger.error("Unable to connect to Exchange Online PowerShell.")
             return False

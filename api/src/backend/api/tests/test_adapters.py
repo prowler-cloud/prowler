@@ -248,6 +248,22 @@ class TestProwlerSocialAccountAdapter:
         _, called_user = call_args[0]
         assert called_user.email == create_test_user.email
 
+    @pytest.mark.parametrize("entity_id", ["github", "google", "GitHub"])
+    def test_pre_social_login_rejects_saml_app_named_after_a_social_provider(
+        self, create_test_user, rf, entity_id
+    ):
+        adapter = ProwlerSocialAccountAdapter()
+        sociallogin = _saml_sociallogin(create_test_user)
+        sociallogin.account.pk = 42
+        sociallogin.account.provider = entity_id
+        domain = create_test_user.email.rsplit("@", 1)[-1]
+
+        with pytest.raises(ImmediateHttpResponse) as rejection:
+            adapter.pre_social_login(_saml_request(rf, domain), sociallogin)
+
+        assert rejection.value.response.status_code == 403
+        sociallogin.connect.assert_not_called()
+
     def test_pre_social_login_blocks_cross_tenant_takeover(
         self, create_test_user, tenants_fixture, rf
     ):

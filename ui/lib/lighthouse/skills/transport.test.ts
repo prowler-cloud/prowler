@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import { toApiLighthouseContext } from "@/lib/lighthouse/context/transport";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import {
+  LIGHTHOUSE_SKILL_SURFACE,
+  type LighthouseSkillDefinition,
+} from "@/types/lighthouse-skills";
 
 import {
   buildSkillAgentText,
@@ -16,6 +19,7 @@ const skill: LighthouseSkillDefinition = {
   name: "Triage Decision",
   description: "Is this real, and if not, close it out",
   icon: Sparkle,
+  surface: LIGHTHOUSE_SKILL_SURFACE.FINDING,
   prompt: "Focus on real evidence gathered from tools.",
   nextSkillId: "contextual-fix",
   enabled: true,

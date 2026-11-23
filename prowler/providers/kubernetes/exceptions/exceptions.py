@@ -34,6 +34,10 @@ class KubernetesBaseException(ProwlerException):
             "message": "The provided kube-config is invalid.",
             "remediation": "Review the kube-config and the attached error to get more details. Please, refer to the Kubernetes config documentation: https://kubernetes.io/docs/reference/config-api/kubeconfig.v1/#Config",
         },
+        (4007, "KubernetesKubeConfigServerNotAllowedError"): {
+            "message": "The provided kube-config points to a cluster server that is not an allowed destination.",
+            "remediation": "Make sure every cluster server in the kube-config is a public HTTP or HTTPS endpoint. To scan a cluster that lives on a private network, declare the trusted ranges in the PROWLER_ALLOWED_PRIVATE_NETWORKS environment variable of the process running the scan. Please, refer to the Kubernetes config documentation: https://kubernetes.io/docs/reference/config-api/kubeconfig.v1/#Config",
+        },
     }
 
     def __init__(
@@ -89,3 +93,8 @@ class KubernetesInvalidProviderIdError(KubernetesBaseException):
 class KubernetesInvalidKubeConfigFileError(KubernetesBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(4006, file, original_exception, message)
+
+
+class KubernetesKubeConfigServerNotAllowedError(KubernetesBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(4007, file, original_exception, message)

@@ -16,6 +16,8 @@ class ecs_task_definitions_no_environment_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = ecs_client.audit_config.get("secrets_validate", False)
+
+        confidence = ecs_client.audit_config.get("secrets_confidence", "low")
         task_definitions = [
             task_definition
             for task_definition in ecs_client.task_definitions.values()
@@ -43,6 +45,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 environment_payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

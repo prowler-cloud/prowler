@@ -1,12 +1,12 @@
 ---
 name: prowler-api
 description: >
-  Prowler API patterns: RLS, RBAC, providers, Celery tasks.
-  Trigger: When working in api/ on models/serializers/viewsets/filters/tasks involving tenant isolation (RLS), RBAC, or provider lifecycle.
+  Prowler API patterns: RLS, RBAC, providers, Celery tasks, SSE.
+  Trigger: When working in api/ on models/serializers/viewsets/filters/tasks involving tenant isolation (RLS), RBAC, provider lifecycle, Celery tasks or SSE endpoints.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.2.0"
+  version: "1.3.0"
   scope: [root, api]
   auto_invoke: "Creating/modifying models, views, serializers"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -19,71 +19,83 @@ Use this skill for **Prowler-specific** patterns:
 - RBAC permissions and role checks
 - Provider lifecycle and validation
 - Celery tasks with tenant context
-- Multi-database architecture (4-database setup)
+- Multi-database architecture (primary, replica, admin)
+- Server-Sent Events (SSE) endpoints
 
 For **generic DRF patterns** (ViewSets, Serializers, Filters, JSON:API), use `django-drf` skill.
+
+All paths below are relative to `api/src/backend/` unless they start with `api/`.
 
 ---
 
 ## Critical Rules
 
-- ALWAYS use `rls_transaction(tenant_id)` when querying outside ViewSet context
-- ALWAYS use `get_role()` before checking permissions (returns FIRST role only)
-- ALWAYS use `@set_tenant` then `@handle_provider_deletion` decorator order
-- ALWAYS use explicit through models for M2M relationships (required for RLS)
-- NEVER access `Provider.objects` without RLS context in Celery tasks
-- NEVER bypass RLS by using raw SQL or `connection.cursor()`
-- NEVER use Django's default M2M - RLS requires through models with `tenant_id`
+- ALWAYS use `rls_transaction(tenant_id)` when querying tenant data outside a ViewSet (tasks, jobs, management commands)
+- ALWAYS take `tenant_id` from the auth token (`request.tenant_id`), NEVER from `request.data`
+- ALWAYS pass `tenant_id` to `get_role(user, tenant_id)`; inside `BaseRLSViewSet` use the cached `self.user_role`
+- ALWAYS use explicit through models (inheriting `RowLevelSecurityProtectedModel`) for M2M relationships
+- ALWAYS give Celery tasks a `name=`; route with `queue=` (omitted = default `celery` queue)
+- ALWAYS call tasks with keyword arguments (`tenant_id=...`): the decorators read `kwargs`
+- NEVER access `Provider.objects` (or any tenant model) in Celery without RLS context
+- NEVER combine plain `@set_tenant` with `@handle_provider_deletion`: `@set_tenant` pops `tenant_id`, which `@handle_provider_deletion` needs. Use `@set_tenant(keep_tenant=True)`
+- NEVER use `MainRouter.admin_db` unless it is an auth or cross-tenant admin operation (it bypasses RLS)
 
-> **Note**: `rls_transaction()` accepts both UUID objects and strings - it converts internally via `str(value)`.
+> `rls_transaction(value, parameter=POSTGRES_TENANT_VAR, using=None, retry_on_replica=True)` validates that `value` is a UUID (UUID objects and strings both work) and raises `ValidationError` otherwise.
 
 ---
 
 ## Architecture Overview
 
-### 4-Database Architecture
+### Databases (`config/django/{devel,production,testing}.py`)
 
-| Database | Alias | Purpose | RLS |
-|----------|-------|---------|-----|
-| `default` | `prowler_user` | Standard API queries | **Yes** |
-| `admin` | `admin` | Migrations, auth bypass | No |
-| `replica` | `prowler_user` | Read-only queries | **Yes** |
-| `admin_replica` | `admin` | Admin read replica | No |
+| Alias | DB user | Purpose | RLS |
+|-------|---------|---------|-----|
+| `default` | `POSTGRES_USER` (`default` = the `prowler_user` entry) | Standard API queries | **Yes** |
+| `admin` | `POSTGRES_ADMIN_USER` | Migrations, auth lookups, Django internal tables | No |
+| `replica` | `POSTGRES_REPLICA_USER` | Read-only queries | **Yes** |
+| `admin_replica` | `POSTGRES_ADMIN_USER` | Admin reads on replica | No |
+| `neo4j` | `NEO4J_USER` | Graph DB for Attack Paths (not routed by Django) | - |
 
 ```python
-# When to use admin (bypasses RLS)
-from api.db_router import MainRouter
-User.objects.using(MainRouter.admin_db).get(id=user_id)  # Auth lookups
+from api.db_router import MainRouter, READ_REPLICA_ALIAS
 
-# Standard queries use default (RLS enforced)
-Provider.objects.filter(connected=True)  # Requires rls_transaction context
+User.objects.using(MainRouter.admin_db).get(id=user_id)  # Auth lookups (bypasses RLS)
+
+with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):  # Read-heavy task code
+    Finding.objects.filter(scan_id=scan_id).count()
 ```
 
-### RLS Transaction Flow
+- `MainRouter.allow_migrate()` only allows `admin`: run `manage.py migrate --database admin`.
+- `READ_REPLICA_ALIAS` is `None` without a replica; `rls_transaction` then uses `default`.
+- Replica failures retry (`POSTGRES_REPLICA_MAX_ATTEMPTS`, default 3) and then fall back to primary.
+
+### RLS Request Flow (`api/base_views.py`)
 
 ```text
-Request → Authentication → BaseRLSViewSet.initial()
-                                    │
-                                    ├─ Extract tenant_id from JWT
-                                    ├─ SET api.tenant_id = 'uuid' (PostgreSQL)
-                                    └─ All queries now tenant-scoped
+Request -> BaseRLSViewSet.dispatch()  replica for SAFE_METHODS (if configured), transaction.atomic
+        -> BaseRLSViewSet.initial()   tenant_id from request.auth (JWT or API key)
+                                      rls_transaction(tenant_id) -> set_config('api.tenant_id', ...)
+        -> queries are tenant-scoped; serializer context gets tenant_id
 ```
+
+Other bases in the same file: `BaseTenantViewset` (tenant CRUD), `BaseUserViewset` (user endpoints), `BaseViewSet` (no RLS).
 
 ---
 
 ## Implementation Checklist
 
-When implementing Prowler-specific API features:
-
 | # | Pattern | Reference | Key Points |
 |---|---------|-----------|------------|
-| 1 | **RLS Models** | `api/rls.py` | Inherit `RowLevelSecurityProtectedModel`, add constraint |
-| 2 | **RLS Transactions** | `api/db_utils.py` | Use `rls_transaction(tenant_id)` context manager |
-| 3 | **RBAC Permissions** | `api/rbac/permissions.py` | `get_role()`, `get_providers()`, `Permissions` enum |
-| 4 | **Provider Validation** | `api/models.py` | `validate_<provider>_uid()` methods on `Provider` model |
-| 5 | **Celery Tasks** | `tasks/tasks.py`, `api/decorators.py`, `config/celery.py` | Task definitions, decorators (`@set_tenant`, `@handle_provider_deletion`), `RLSTask` base |
-| 6 | **RLS Serializers** | `api/v1/serializers.py` | Inherit `RLSSerializer` to auto-inject `tenant_id` |
-| 7 | **Through Models** | `api/models.py` | ALL M2M must use explicit through with `tenant_id` |
+| 1 | **RLS Models** | `api/rls.py` | Inherit `RowLevelSecurityProtectedModel`, add `RowLevelSecurityConstraint` |
+| 2 | **RLS Transactions** | `api/db_utils.py` | `rls_transaction(tenant_id)` context manager |
+| 3 | **RBAC Permissions** | `api/rbac/permissions.py` | `Permissions` enum, `HasPermissions`, `get_role()`, `get_providers()` |
+| 4 | **Provider Validation** | `api/models.py` | `validate_<provider>_uid()` staticmethods on `Provider` |
+| 5 | **Celery Tasks** | `tasks/tasks.py`, `api/decorators.py`, `config/celery.py` | `@shared_task(base=RLSTask, name=...)`, `@set_tenant`, `@handle_provider_deletion` |
+| 6 | **Task business logic** | `tasks/jobs/*.py` | Keep `tasks.py` thin; logic lives in `jobs/` |
+| 7 | **RLS Serializers** | `api/v1/serializers.py` | Inherit `RLSSerializer` to auto-inject `tenant_id` |
+| 8 | **Base ViewSets** | `api/base_views.py` | `BaseRLSViewSet` for tenant-scoped resources |
+| 9 | **SSE endpoints** | `api/sse/` | Subclass `BaseSSEViewSet`, build channels with `make_channel_name()` |
+| 10 | **Changelog** | `api/changelog.d/` | Add a towncrier fragment, never edit `CHANGELOG.md` (see `prowler-changelog`) |
 
 > **Full file paths**: See [references/file-locations.md](references/file-locations.md)
 
@@ -93,42 +105,54 @@ When implementing Prowler-specific API features:
 
 ### Which Base Model?
 ```text
-Tenant-scoped data       → RowLevelSecurityProtectedModel
-Global/shared data       → models.Model + BaseSecurityConstraint (rare)
-Partitioned time-series  → PostgresPartitionedModel + RowLevelSecurityProtectedModel
-Soft-deletable           → Add is_deleted + ActiveProviderManager
+Tenant-scoped data           -> RowLevelSecurityProtectedModel
+Global/shared data           -> models.Model + BaseSecurityConstraint (rare)
+Partitioned time-series      -> PostgresPartitionedModel + RowLevelSecurityProtectedModel
+Hide data of deleted providers -> objects = ActiveProviderManager(); all_objects = models.Manager()
 ```
 
 ### Which Manager?
 ```text
-Normal queries           → Model.objects (excludes deleted)
-Include deleted records  → Model.all_objects
-Celery task context      → Must use rls_transaction() first
+Normal queries           -> Model.objects (ActiveProviderManager filters out deleted providers)
+Include deleted records  -> Model.all_objects
+Celery task context      -> Must be inside rls_transaction() first
 ```
 
 ### Which Database?
 ```text
-Standard API queries     → default (automatic via ViewSet)
-Read-only operations     → replica (automatic for GET in BaseRLSViewSet)
-Auth/admin operations    → MainRouter.admin_db
-Cross-tenant lookups     → MainRouter.admin_db (use sparingly!)
+Standard API queries     -> default (automatic via ViewSet)
+Read-only API requests   -> replica (automatic for SAFE_METHODS in BaseRLSViewSet)
+Heavy reads in tasks     -> rls_transaction(tenant_id, using=READ_REPLICA_ALIAS)
+Auth/admin operations    -> MainRouter.admin_db
+Cross-tenant lookups     -> MainRouter.admin_db (use sparingly!)
 ```
 
-### Celery Task Decorator Order?
+### Which Celery Decorators?
+
+`@set_tenant` sets `api.tenant_id` on the default connection inside `transaction.atomic`.
+
+| Task needs | Pattern (real example in `tasks/tasks.py`) |
+|------------|--------------------------------------------|
+| RLS context, no `tenant_id` param | `@set_tenant` (`check_provider_connection_task`) |
+| RLS context + `tenant_id` param + deletion handling | `@set_tenant(keep_tenant=True)` then `@handle_provider_deletion` (`generate_outputs_task`) |
+| Job opens its own `rls_transaction` + deletion handling | `@handle_provider_deletion` only (`perform_scan_task`, `perform_scan_summary_task`) |
+
 ```python
-@shared_task(base=RLSTask, name="...", queue="...")
-@set_tenant                    # First: sets tenant context
-@handle_provider_deletion      # Second: handles deleted providers
-def my_task(tenant_id, provider_id):
-    pass
+@shared_task(base=RLSTask, name="scan-report", queue="scan-reports")
+@set_tenant(keep_tenant=True)
+@handle_provider_deletion
+def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
+    ...
 ```
+
+`@handle_provider_deletion` converts DB errors into `ProviderDeletedException` when the provider (looked up via `provider_id` or `scan_id` kwarg) was deleted mid-task.
 
 ---
 
 ## RLS Model Pattern
 
 ```python
-from api.rls import RowLevelSecurityProtectedModel, RowLevelSecurityConstraint
+from api.rls import RowLevelSecurityConstraint, RowLevelSecurityProtectedModel
 
 class MyModel(RowLevelSecurityProtectedModel):
     # tenant FK inherited from parent
@@ -155,17 +179,13 @@ class MyModel(RowLevelSecurityProtectedModel):
 
 ```python
 class Resource(RowLevelSecurityProtectedModel):
-    tags = models.ManyToManyField(
-        ResourceTag,
-        through="ResourceTagMapping",  # REQUIRED for RLS
-    )
+    tags = models.ManyToManyField(ResourceTag, through="ResourceTagMapping")
 
 class ResourceTagMapping(RowLevelSecurityProtectedModel):
-    # Through model MUST have tenant_id for RLS
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     tag = models.ForeignKey(ResourceTag, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(RowLevelSecurityProtectedModel.Meta):
         constraints = [
             RowLevelSecurityConstraint(
                 field="tenant_id",
@@ -179,46 +199,56 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
 
 ## Async Task Response Pattern (202 Accepted)
 
-For long-running operations, return 202 with task reference:
+Real code: `ProviderViewSet.connection` in `api/v1/views.py`.
 
 ```python
 @action(detail=True, methods=["post"], url_name="connection")
 def connection(self, request, pk=None):
+    self.get_object()  # visibility check before queuing
     with transaction.atomic():
         task = check_provider_connection_task.delay(
             provider_id=pk, tenant_id=self.request.tenant_id
         )
-    prowler_task = Task.objects.get(id=task.id)
+    prowler_task = Task.objects.get(id=task.id)  # created by RLSTask.apply_async
     serializer = TaskSerializer(prowler_task)
     return Response(
         data=serializer.data,
         status=status.HTTP_202_ACCEPTED,
-        headers={"Content-Location": reverse("task-detail", kwargs={"pk": prowler_task.id})}
+        headers={"Content-Location": reverse("task-detail", kwargs={"pk": prowler_task.id})},
     )
 ```
 
 ---
 
-## Providers (11 Supported)
+## Providers (16 in `Provider.ProviderChoices`)
 
-| Provider | UID Format | Example |
-|----------|-----------|---------|
-| AWS | 12 digits | `123456789012` |
-| Azure | UUID v4 | `a1b2c3d4-e5f6-...` |
-| GCP | 6-30 chars, lowercase, letter start | `my-gcp-project` |
-| M365 | Valid domain | `contoso.onmicrosoft.com` |
-| Kubernetes | 2-251 chars | `arn:aws:eks:...` |
-| GitHub | 1-39 chars | `my-org` |
-| IaC | Git URL | `https://github.com/user/repo.git` |
-| Oracle Cloud | OCID format | `ocid1.tenancy.oc1..` |
-| MongoDB Atlas | 24-char hex | `507f1f77bcf86cd799439011` |
-| Alibaba Cloud | 16 digits | `1234567890123456` |
+| Provider | Value | UID Format |
+|----------|-------|-----------|
+| AWS | `aws` | 12 digits |
+| Azure | `azure` | UUID v4 |
+| GCP | `gcp` | 6-30 chars, lowercase, letter start (legacy `domain:project` allowed) |
+| Kubernetes | `kubernetes` | 2-251 chars (context name or cluster ARN) |
+| M365 | `m365` | Valid domain |
+| GitHub | `github` | 1-39 chars, alphanumeric + hyphens |
+| MongoDB Atlas | `mongodbatlas` | 24-char hex |
+| IaC | `iac` | Repository URL |
+| Oracle Cloud | `oraclecloud` | Tenancy OCID (`ocid1.…`) |
+| Alibaba Cloud | `alibabacloud` | 16 digits |
+| Cloudflare | `cloudflare` | 32-char lowercase hex |
+| OpenStack | `openstack` | Project ID or name |
+| Image | `image` | Container image reference |
+| Google Workspace | `googleworkspace` | `C` + alphanumerics |
+| Vercel | `vercel` | `team_` + 16-32 alphanumerics |
+| Okta | `okta` | Okta-managed org domain (e.g. `acme.okta.com`) |
 
-**Adding new provider**: Add to `ProviderChoices` enum + create `validate_<provider>_uid()` staticmethod.
+**Adding a new provider**:
+1. Add to `Provider.ProviderChoices` and add a `validate_<value>_uid()` staticmethod (`Provider.clean()` dispatches with `getattr(self, f"validate_{self.provider}_uid")`).
+2. Migration: `AlterField` on `provider.provider` + `RunSQL("ALTER TYPE provider ADD VALUE IF NOT EXISTS '<value>';", reverse_sql=migrations.RunSQL.noop)` (see `api/migrations/0093_okta_provider.py`).
+3. Add a fragment in `api/changelog.d/`.
 
 ---
 
-## RBAC Permissions
+## RBAC Permissions (`api/rbac/permissions.py`)
 
 | Permission | Controls |
 |------------|----------|
@@ -228,134 +258,105 @@ def connection(self, request, pk=None):
 | `MANAGE_PROVIDERS` | Provider CRUD |
 | `MANAGE_INTEGRATIONS` | Integration config |
 | `MANAGE_SCANS` | Scan execution |
-| `UNLIMITED_VISIBILITY` | See all providers (bypasses provider_groups) |
+| `UNLIMITED_VISIBILITY` | See all providers (bypasses provider groups) |
+
+- Views set `required_permissions` in `set_required_permissions()`. `HasPermissions` passes if, for each required permission, **any** of the user's roles in the tenant grants it (`get_user_roles()` + `roles_have_permissions()`).
+- `get_role(user, tenant_id)` returns the **first** role in the tenant and raises `PermissionDenied` if none. It drives visibility, not permission checks.
+- Revoking a task requires the permission mapped in `TASK_REVOKE_PERMISSIONS`; add new task names there.
 
 ### RBAC Visibility Pattern
 
 ```python
 def get_queryset(self):
-    user_role = get_role(self.request.user)
-    if user_role.unlimited_visibility:
+    role = self.user_role  # cached get_role(request.user, request.tenant_id)
+    if role.unlimited_visibility:
         return Model.objects.filter(tenant_id=self.request.tenant_id)
-    else:
-        # Filter by provider_groups assigned to role
-        return Model.objects.filter(provider__in=get_providers(user_role))
+    return Model.objects.filter(provider__in=get_providers(role))
 ```
+
+Related helpers: `get_tasks(role)`, `get_integrations(...)`.
 
 ---
 
-## Celery Queues
+## Celery
+
+### Queues (worker `-Q` list in `api/docker-entrypoint.sh`)
 
 | Queue | Purpose |
 |-------|---------|
+| `celery` | Default (tasks without `queue=`: connection checks, orphan reconciliation) |
 | `scans` | Prowler scan execution |
-| `overview` | Dashboard aggregations (severity, attack surface) |
-| `compliance` | Compliance report generation |
-| `integrations` | External integrations (Jira, S3, Security Hub) |
-| `deletion` | Provider/tenant deletion (async) |
-| `backfill` | Historical data backfill operations |
-| `scan-reports` | Output generation (CSV, JSON, HTML, PDF) |
+| `scan-reports` | Output generation (CSV, JSON-OCSF, HTML, compliance PDFs) |
+| `overview` | Post-scan aggregations (summaries, severity, attack surface) |
+| `compliance` | Compliance requirement rows and reports |
+| `integrations` | S3, Security Hub, Jira |
+| `deletion` | Provider/tenant deletion |
+| `backfill` | Historical data backfills |
+| `attack-paths-scans` | Attack Paths (Cartography/Neo4j) scans and cleanup |
 
----
+A new queue must also be added to the `-Q` list in `api/docker-entrypoint.sh`, or no worker consumes it.
 
-## Task Composition (Canvas)
-
-Use Celery's Canvas primitives for complex workflows:
-
-| Primitive | Use For |
-|-----------|---------|
-| `chain()` | Sequential execution: A → B → C |
-| `group()` | Parallel execution: A, B, C simultaneously |
-| Combined | Chain with nested groups for complex workflows |
-
-> **Note:** Use `.si()` (signature immutable) to prevent result passing. Use `.s()` if you need to pass results.
-
-> **Examples:** See [assets/celery_patterns.py](assets/celery_patterns.py) for chain, group, and combined patterns.
-
----
-
-## Beat Scheduling (Periodic Tasks)
-
-| Operation | Key Points |
-|-----------|------------|
-| **Create schedule** | `IntervalSchedule.objects.get_or_create(every=24, period=HOURS)` |
-| **Create periodic task** | Use task name (not function), `kwargs=json.dumps(...)` |
-| **Delete scheduled task** | `PeriodicTask.objects.filter(name=...).delete()` |
-| **Avoid race conditions** | Use `countdown=5` to wait for DB commit |
-
-> **Examples:** See [assets/celery_patterns.py](assets/celery_patterns.py) for schedule_provider_scan pattern.
-
----
-
-## Advanced Task Patterns
-
-### `@set_tenant` Behavior
-
-| Mode | `tenant_id` in kwargs | `tenant_id` passed to function |
-|------|----------------------|-------------------------------|
-| `@set_tenant` (default) | Popped (removed) | NO - function doesn't receive it |
-| `@set_tenant(keep_tenant=True)` | Read but kept | YES - function receives it |
-
-### Key Patterns
-
-| Pattern | Description |
-|---------|-------------|
-| `bind=True` | Access `self.request.id`, `self.request.retries` |
-| `get_task_logger(__name__)` | Proper logging in Celery tasks |
-| `SoftTimeLimitExceeded` | Catch to save progress before hard kill |
-| `countdown=30` | Defer execution by N seconds |
-| `eta=datetime(...)` | Execute at specific time |
-
-> **Examples:** See [assets/celery_patterns.py](assets/celery_patterns.py) for all advanced patterns.
-
----
-
-## Celery Configuration
+### Configuration (`config/celery.py`, `config/settings/celery.py`)
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `BROKER_VISIBILITY_TIMEOUT` | `86400` (24h) | Prevent re-queue for long tasks |
-| `CELERY_RESULT_BACKEND` | `django-db` | Store results in PostgreSQL |
+| `visibility_timeout` | `DJANGO_BROKER_VISIBILITY_TIMEOUT` (86400) | Prevent re-queue of long tasks |
+| `task_acks_late` + `task_reject_on_worker_lost` | `True` | Redeliver if a worker dies; scans opt out with `acks_late=False` |
+| `worker_prefetch_multiplier` | `1` | One reserved task per worker |
+| `task_time_limit` / `task_soft_time_limit` | 6h / 6h-10min (env overridable) | Global default limits |
+| `task_annotations` | keyed by task name | 60s/120s for connection checks; 48h for scans and deletions |
+| `CELERY_RESULT_BACKEND` | `django-db` | Results in PostgreSQL |
 | `CELERY_TASK_TRACK_STARTED` | `True` | Track when tasks start |
-| `soft_time_limit` | Task-specific | Raises `SoftTimeLimitExceeded` |
-| `time_limit` | Task-specific | Hard kill (SIGKILL) |
 
-> **Full config:** See [assets/celery_patterns.py](assets/celery_patterns.py) and actual files at `config/celery.py`, `config/settings/celery.py`.
+Do not add a `"*"` entry to `task_annotations`: Celery applies it after per-task entries and overwrites them.
+
+### Canvas, Beat, Enqueueing
+
+- Post-scan workflow: `_perform_scan_complete_tasks()` in `tasks/tasks.py` (`chain` + `group` of `.si()` signatures).
+- Daily scans: `schedule_provider_scan()` in `tasks/beat.py` (`IntervalSchedule` 24h, `PeriodicTask(task="scan-perform-scheduled", kwargs=json.dumps(...))`, first run with `countdown=5`). Beat uses `django_celery_beat.schedulers:DatabaseScheduler`.
+- Enqueue after commit with `transaction.on_commit(...)` (see `enqueue_scan_execution_on_commit()` in `tasks/tasks.py`).
+
+> **Examples:** See [assets/celery_patterns.py](assets/celery_patterns.py).
+
+---
+
+## SSE (Server-Sent Events)
+
+`django-eventstream` over Valkey Pub/Sub (`config/settings/eventstream.py`, `EVENTSTREAM_VALKEY_DB`, default 2).
+
+| Piece | Location | Rule |
+|-------|----------|------|
+| `BaseSSEViewSet` | `api/sse/base_views.py` | Subclass and override `get_channels()`; raise DRF exceptions on auth failure, never return an empty set |
+| `make_channel_name(prefix, tenant_id, resource_id)` | `api/sse/utils.py` | Channel format `<prefix>:<tenant_id>:<resource_id>`; segments must not contain `:` |
+| `SSEChannelManager` | `api/sse/channelmanager.py` | Drops channels whose tenant differs from the request tenant; re-checks membership on read; no replay buffer |
 
 ---
 
 ## UUIDv7 for Partitioned Tables
 
-`Finding` and `ResourceFindingMapping` use UUIDv7 for time-based partitioning:
+`Finding` and `ResourceFindingMapping` are `PostgresPartitionedModel`s range-partitioned on UUIDv7 `id`:
 
 ```python
-from uuid6 import uuid7
-from api.uuid_utils import uuid7_start, uuid7_end, datetime_to_uuid7
+from api.uuid_utils import datetime_to_uuid7, uuid7_end, uuid7_start
 
-# Partition-aware filtering
 start = uuid7_start(datetime_to_uuid7(date_from))
 end = uuid7_end(datetime_to_uuid7(date_to), settings.FINDINGS_TABLE_PARTITION_MONTHS)
-queryset.filter(id__gte=start, id__lt=end)
+queryset.filter(id__gte=start, id__lt=end)  # enables partition pruning
 ```
-
-**Why UUIDv7?** Time-ordered UUIDs enable PostgreSQL to prune partitions during range queries.
 
 ---
 
-## Batch Operations with RLS
+## Batch Operations with RLS (`api/db_utils.py`)
 
 ```python
 from api.db_utils import batch_delete, create_objects_in_batches, update_objects_in_batches
 
-# Delete in batches (RLS-aware)
-batch_delete(tenant_id, queryset, batch_size=1000)
-
-# Bulk create with RLS
+batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_SIZE)
 create_objects_in_batches(tenant_id, Finding, objects, batch_size=500)
-
-# Bulk update with RLS
 update_objects_in_batches(tenant_id, Finding, objects, fields=["status"], batch_size=500)
 ```
+
+Each batch runs in its own `rls_transaction`.
 
 ---
 
@@ -363,143 +364,48 @@ update_objects_in_batches(tenant_id, Finding, objects, fields=["status"], batch_
 
 > **Full examples**: See [assets/security_patterns.py](assets/security_patterns.py)
 
-### Tenant Isolation Summary
-
 | Pattern | Rule |
 |---------|------|
-| **RLS in ViewSets** | Automatic via `BaseRLSViewSet` - tenant_id from JWT |
-| **RLS in Celery** | MUST use `@set_tenant` + `rls_transaction(tenant_id)` |
-| **Cross-tenant validation** | Defense-in-depth: verify `obj.tenant_id == request.tenant_id` |
-| **Never trust user input** | Use `request.tenant_id` from JWT, never `request.data.get("tenant_id")` |
-| **Admin DB bypass** | Only for cross-tenant admin ops - exposes ALL tenants' data |
-
-### Celery Task Security Summary
-
-| Pattern | Rule |
-|---------|------|
-| **Named tasks only** | NEVER use dynamic task names from user input |
-| **Validate arguments** | Check UUID format before database queries |
-| **Safe queuing** | Use `transaction.on_commit()` to enqueue AFTER commit |
-| **Modern retries** | Use `autoretry_for`, `retry_backoff`, `retry_jitter` |
-| **Time limits** | Set `soft_time_limit` and `time_limit` to prevent hung tasks |
-| **Idempotency** | Use `update_or_create` or idempotency keys |
-
-### Quick Reference
-
-```python
-# Safe task queuing - task only enqueued after transaction commits
-with transaction.atomic():
-    provider = Provider.objects.create(**data)
-    transaction.on_commit(
-        lambda: verify_provider_connection.delay(
-            tenant_id=str(request.tenant_id),
-            provider_id=str(provider.id)
-        )
-    )
-
-# Modern retry pattern
-@shared_task(
-    base=RLSTask,
-    bind=True,
-    autoretry_for=(ConnectionError, TimeoutError, OperationalError),
-    retry_backoff=True,
-    retry_backoff_max=600,
-    retry_jitter=True,
-    max_retries=5,
-    soft_time_limit=300,
-    time_limit=360,
-)
-@set_tenant
-def sync_provider_data(self, tenant_id, provider_id):
-    with rls_transaction(tenant_id):
-        # ... task logic
-        pass
-
-# Idempotent task - safe to retry
-@shared_task(base=RLSTask, acks_late=True)
-@set_tenant
-def process_finding(tenant_id, finding_uid, data):
-    with rls_transaction(tenant_id):
-        Finding.objects.update_or_create(uid=finding_uid, defaults=data)
-```
-
----
-
-## Production Deployment Checklist
-
-> **Full settings**: See [references/production-settings.md](references/production-settings.md)
-
-Run before every production deployment:
-
-```bash
-cd api && uv run python src/backend/manage.py check --deploy
-```
-
-### Critical Settings
-
-| Setting | Production Value | Risk if Wrong |
-|---------|-----------------|---------------|
-| `DEBUG` | `False` | Exposes stack traces, settings, SQL queries |
-| `SECRET_KEY` | Env var, rotated | Session hijacking, CSRF bypass |
-| `ALLOWED_HOSTS` | Explicit list | Host header attacks |
-| `SECURE_SSL_REDIRECT` | `True` | Credentials sent over HTTP |
-| `SESSION_COOKIE_SECURE` | `True` | Session cookies over HTTP |
-| `CSRF_COOKIE_SECURE` | `True` | CSRF tokens over HTTP |
-| `SECURE_HSTS_SECONDS` | `31536000` (1 year) | Downgrade attacks |
-| `CONN_MAX_AGE` | `60` or higher | Connection pool exhaustion |
+| **RLS in ViewSets** | Automatic via `BaseRLSViewSet` |
+| **RLS in Celery** | `@set_tenant` or explicit `rls_transaction(tenant_id)` |
+| **Never trust user input** | Use `request.tenant_id`, never `request.data.get("tenant_id")` |
+| **Admin DB bypass** | Only for auth or cross-tenant admin ops: exposes ALL tenants' data |
+| **Named tasks only** | NEVER send tasks by a name taken from user input |
+| **Safe queuing** | `transaction.on_commit()` so the worker sees committed rows |
+| **Idempotency** | `update_or_create` or idempotency keys (tasks are `acks_late` by default and may run twice) |
 
 ---
 
 ## Commands
 
 ```bash
-# Development
-cd api && uv run python src/backend/manage.py runserver
-cd api && uv run python src/backend/manage.py shell
+# Run from api/src/backend (manage.py defaults to config.django.production; use your .env for devel)
+cd api/src/backend && uv run python manage.py runserver
+cd api/src/backend && uv run python manage.py migrate --database admin
+cd api/src/backend && uv run python -m celery -A config.celery worker -l info -E
+cd api/src/backend && uv run python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
-# Celery
-cd api && uv run celery -A config.celery worker -l info -Q scans,overview
-cd api && uv run celery -A config.celery beat -l info
+# Tests (pytest.ini with config.django.testing lives in src/backend; needs PostgreSQL + Valkey;
+# run in a shell without the dev .env loaded)
+cd api/src/backend && uv run pytest -x --tb=short
+cd api/src/backend && uv run pytest api/tests/test_views.py -k "provider"
 
-# Testing
-cd api && uv run pytest -x --tb=short
+# Lint/format from repo root (same ruff commands as .github/workflows/api-code-quality.yml)
+make lint-api
+make format-api
 
-# Production checks
-cd api && uv run python src/backend/manage.py check --deploy
+# Git hooks (prek, config in .pre-commit-config.yaml)
+cd api && uv run prek run --all-files
 ```
 
 ---
 
 ## Resources
 
-### Local References
-- **File Locations**: See [references/file-locations.md](references/file-locations.md)
-- **Modeling Decisions**: See [references/modeling-decisions.md](references/modeling-decisions.md)
-- **Configuration**: See [references/configuration.md](references/configuration.md)
-- **Production Settings**: See [references/production-settings.md](references/production-settings.md)
-- **Security Patterns**: See [assets/security_patterns.py](assets/security_patterns.py)
-
-### Related Skills
-- **Generic DRF Patterns**: Use `django-drf` skill
-- **API Testing**: Use `prowler-test-api` skill
-
-### Context7 MCP (Recommended)
-
-**Prerequisite:** Install Context7 MCP server for up-to-date documentation lookup.
-
-When implementing or debugging Prowler-specific patterns, query these libraries via `mcp_context7_query-docs`:
-
-| Library | Context7 ID | Use For |
-|---------|-------------|---------|
-| **Celery** | `/websites/celeryq_dev_en_stable` | Task patterns, queues, error handling |
-| **django-celery-beat** | `/celery/django-celery-beat` | Periodic task scheduling |
-| **Django** | `/websites/djangoproject_en_5_2` | Models, ORM, constraints, indexes |
-
-**Example queries:**
-```text
-mcp_context7_query-docs(libraryId="/websites/celeryq_dev_en_stable", query="shared_task decorator retry patterns")
-mcp_context7_query-docs(libraryId="/celery/django-celery-beat", query="periodic task database scheduler")
-mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="model constraints CheckConstraint UniqueConstraint")
-```
-
-> **Note:** Use `mcp_context7_resolve-library-id` first if you need to find the correct library ID.
+- **File Locations**: [references/file-locations.md](references/file-locations.md)
+- **Modeling Decisions**: [references/modeling-decisions.md](references/modeling-decisions.md)
+- **Configuration**: [references/configuration.md](references/configuration.md)
+- **Production Hardening (generic Django)**: [references/production-settings.md](references/production-settings.md)
+- **Security Patterns**: [assets/security_patterns.py](assets/security_patterns.py)
+- **Celery Patterns**: [assets/celery_patterns.py](assets/celery_patterns.py)
+- **Related skills**: `django-drf` (generic DRF), `prowler-test-api` (tests), `django-migration-psql` (migrations), `prowler-changelog` (changelog fragments)

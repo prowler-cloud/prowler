@@ -1,4 +1,4 @@
-import type { InvitationRoleOption } from "@/types/onboarding-invite";
+import type { InvitationRoleOption } from "@/types/invitations";
 
 const ADMIN_ROLE_NAME = "admin";
 

@@ -34,7 +34,9 @@
       "Url": "https://hub.prowler.com/check/guardduty_ai_protection_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
