@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_ftp_internet",
+  "CheckTitle": "Security group restricts FTP access from the internet",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "ALIYUN::ECS::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Checks that FTP TCP ports 20 and 21 are not exposed to unrestricted IPv4 (`0.0.0.0/0`) or IPv6 (`::/0`) sources.",
+  "Risk": "FTP can expose credentials and data in clear text; public access enables brute force, interception, and unauthorized file transfer.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/ecs/user-guide/add-a-security-group-rule"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --SecurityGroupRuleId <matched_security_group_rule_id>",
+      "NativeIaC": "",
+      "Other": "Inspect inbound rules in the ECS console. Locate effective Accept rules from `0.0.0.0/0` or `::/0` using TCP or ALL whose actual port range contains FTP ports `20` or `21`. Restrict the source or range, or revoke the exact rule by SecurityGroupRuleId. Revocation using protocol/range/source must exactly match the existing rule.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Do not expose TCP ports 20 or 21 to `0.0.0.0/0` or `::/0`.",
+      "Url": "https://hub.prowler.com/check/ecs_securitygroup_restrict_ftp_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
