@@ -981,11 +981,13 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.containsText(new RegExp(reason));
   }
 
-  /** The href behind the success toast's "Go to scans" action. */
-  scansToastHref(): string | null {
+  /** The href behind the success toast's "Go to scans" or "Go to findings" action. */
+  successToastHref(): string | null {
     return (
       Array.from(this.container.querySelectorAll<HTMLAnchorElement>("a"))
-        .find((anchor) => /Go to scans/.test(anchor.textContent ?? ""))
+        .find((anchor) =>
+          /Go to (scans|findings)/.test(anchor.textContent ?? ""),
+        )
         ?.getAttribute("href") ?? null
     );
   }

@@ -1,9 +1,7 @@
 import type { KnipConfig } from "knip";
 
-// Baseline: the `lint:knip` script runs with `--max-issues 504` so CI only
-// fails on regressions beyond the current inventory of unused code. Reduce the
-// threshold as issues are cleaned up (tracked for the dead-code removal step
-// in the knip rollout roadmap).
+// Baseline: CI runs `lint:knip`, whose `--max-issues` equals the current
+// inventory of unused code. Lower it in the same PR that removes issues.
 const config: KnipConfig = {
   entry: [
     // Next.js app conventions (pages, layouts, errors, route handlers)
@@ -27,6 +25,8 @@ const config: KnipConfig = {
     "scripts/*.js",
   ],
   project: ["**/*.{ts,tsx,js,jsx}"],
+  // Re-exports consumed only by the Prowler Cloud overlay.
+  ignore: ["components/ui/**"],
   ignoreDependencies: [
     // Next.js image optimization — loaded at build time, no static import
     "sharp",

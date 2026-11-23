@@ -1,5 +1,6 @@
 import mock
 from boto3 import client
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.cognito.cognito_service import (
@@ -146,6 +147,70 @@ class Test_Cognito_Service:
                     user_pool.user_pool_clients["user_pool_client_id"].arn
                     == f"{user_pool_arn}/client/user_pool_client_id"
                 )
+
+    def test_list_user_pool_clients_paginates(self):
+        user_pool_id = "eu-west-1_poolid"
+        user_pool_arn = (
+            f"arn:aws:cognito-idp:eu-west-1:123456789012:userpool/{user_pool_id}"
+        )
+        user_pool = mock.MagicMock(
+            id=user_pool_id,
+            arn=user_pool_arn,
+            region="eu-west-1",
+            user_pool_clients={},
+        )
+        regional_client = client(
+            "cognito-idp",
+            region_name="eu-west-1",
+            aws_access_key_id="testing",
+            aws_secret_access_key="testing",
+            aws_session_token="testing",
+        )
+        first_page = {
+            "UserPoolClients": [
+                {
+                    "ClientId": "client1",
+                    "ClientName": "client-one",
+                    "UserPoolId": user_pool_id,
+                }
+            ],
+            "NextToken": "page-2",
+        }
+        second_page = {
+            "UserPoolClients": [
+                {
+                    "ClientId": "client2",
+                    "ClientName": "client-two",
+                    "UserPoolId": user_pool_id,
+                }
+            ]
+        }
+
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_user_pool_clients",
+                first_page,
+                {"UserPoolId": user_pool_id},
+            )
+            stubber.add_response(
+                "list_user_pool_clients",
+                second_page,
+                {"UserPoolId": user_pool_id, "NextToken": "page-2"},
+            )
+
+            cognito = object.__new__(CognitoIDP)
+            cognito.user_pools = {user_pool_arn: user_pool}
+            cognito.regional_clients = {"eu-west-1": regional_client}
+
+            cognito._list_user_pool_clients()
+            stubber.assert_no_pending_responses()
+
+        assert set(user_pool.user_pool_clients) == {"client1", "client2"}
+        assert user_pool.user_pool_clients["client2"].name == "client-two"
+        assert (
+            user_pool.user_pool_clients["client2"].arn
+            == f"{user_pool_arn}/client/client2"
+        )
 
     @mock_aws
     def test_describe_user_pool_clients(self):

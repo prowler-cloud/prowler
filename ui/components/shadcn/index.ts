@@ -31,6 +31,7 @@ export * from "./select/select";
 export * from "./separator/separator";
 export * from "./skeleton/skeleton";
 export * from "./stacked-cell/stacked-cell";
+export * from "./status-panel";
 export * from "./switch/switch";
 export * from "./tabs/generic-tabs";
 export * from "./tabs/tabs";

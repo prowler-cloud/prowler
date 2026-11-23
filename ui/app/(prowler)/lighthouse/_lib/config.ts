@@ -37,8 +37,20 @@ export interface FeedbackState {
   variant: FeedbackVariant;
 }
 
+export const BEDROCK_AUTH_METHOD = {
+  ACCESS_KEYS: "access_keys",
+  API_KEY: "api_key",
+} as const;
+
+export type BedrockAuthMethod =
+  (typeof BEDROCK_AUTH_METHOD)[keyof typeof BEDROCK_AUTH_METHOD];
+
+// Long-term keys start with "ABSK", short-term ones with "bedrock-api-key-".
+const BEDROCK_API_KEY_PATTERN = /^(ABSK|bedrock-api-key-)\S+$/;
+
 const lighthouseV2ConfigFormSchemaBase = z.object({
   apiKey: z.string(),
+  bedrockAuthMethod: z.enum(BEDROCK_AUTH_METHOD),
   awsAccessKeyId: z.string(),
   awsSecretAccessKey: z.string(),
   awsRegionName: z.string(),
@@ -51,6 +63,7 @@ export type LighthouseV2ConfigFormValues = z.infer<
 
 export const EMPTY_FORM_VALUES: LighthouseV2ConfigFormValues = {
   apiKey: "",
+  bedrockAuthMethod: BEDROCK_AUTH_METHOD.ACCESS_KEYS,
   awsAccessKeyId: "",
   awsSecretAccessKey: "",
   awsRegionName: "",
@@ -116,6 +129,34 @@ export function buildLighthouseV2ConfigFormSchema(
     }
 
     if (provider !== LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK) return;
+
+    if (data.bedrockAuthMethod === BEDROCK_AUTH_METHOD.API_KEY) {
+      const regionName = data.awsRegionName.trim();
+      if (hasConfiguration && !apiKey && !regionName) return;
+
+      if (!apiKey) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Bedrock API key is required.",
+          path: ["apiKey"],
+        });
+      } else if (!BEDROCK_API_KEY_PATTERN.test(apiKey)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Bedrock API keys start with 'ABSK' (long-term) or 'bedrock-api-key-' (short-term).",
+          path: ["apiKey"],
+        });
+      }
+      if (!regionName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "AWS region is required.",
+          path: ["awsRegionName"],
+        });
+      }
+      return;
+    }
 
     if (credentialsOptional) {
       // The installation's own role: a region alone is enough, and keys,
@@ -190,6 +231,14 @@ export function buildCredentialPayload(
   { credentialsOptional = false }: LighthouseV2ProviderCapabilities = {},
 ): LighthouseV2Credentials | undefined {
   if (provider === LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK) {
+    if (values.bedrockAuthMethod === BEDROCK_AUTH_METHOD.API_KEY) {
+      const apiKey = values.apiKey.trim();
+      const regionName = values.awsRegionName.trim();
+      if (hasConfiguration && !apiKey && !regionName) return undefined;
+
+      return { api_key: apiKey, aws_region_name: regionName };
+    }
+
     const hasBedrockCredentials =
       Boolean(values.awsAccessKeyId.trim()) ||
       Boolean(values.awsSecretAccessKey.trim()) ||

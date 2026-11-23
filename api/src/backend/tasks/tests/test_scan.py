@@ -22,6 +22,7 @@ from api.models import (
     ResourceTag,
     ResourceTagMapping,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     StateChoices,
     StatusChoices,
@@ -267,6 +268,215 @@ class TestPerformScan:
 
         # Assert that failed_findings_count is 0 (finding is PASS and muted)
         assert scan_resource.failed_findings_count == 0
+
+    def test_perform_prowler_scan_stores_summaries_while_running(
+        self, tenants_fixture, scans_fixture, aws_provider
+    ):
+        tenant_id = str(tenants_fixture[0].id)
+        scan = scans_fixture[0]
+
+        def build_finding(index):
+            finding = MagicMock()
+            finding.uid = f"finding-{index}"
+            finding.status = StatusChoices.FAIL
+            finding.status_extended = "test status extended"
+            finding.severity = Severity.high
+            finding.check_id = "check1"
+            finding.get_metadata.return_value = {"categories": ["encryption"]}
+            finding.resource_uid = f"resource-{index}"
+            finding.resource_name = f"resource-{index}"
+            finding.region = "eu-west-1"
+            finding.service_name = "s3"
+            finding.resource_type = "bucket"
+            finding.resource_tags = {}
+            finding.muted = False
+            finding.raw = {}
+            finding.resource_metadata = {}
+            finding.resource_details = ""
+            finding.partition = "aws"
+            finding.compliance = {}
+            return finding
+
+        stored_mid_scan = {}
+
+        def scan_batches():
+            yield 0.5, [build_finding(1)]
+            stored_mid_scan["resources"] = ResourceScanSummary.objects.filter(
+                scan_id=scan.id
+            ).count()
+            stored_mid_scan["categories"] = list(
+                ScanCategorySummary.objects.filter(scan_id=scan.id).values_list(
+                    "category", "total_findings"
+                )
+            )
+            yield 1, [build_finding(2)]
+
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch("tasks.jobs.scan.initialize_prowler_provider") as mock_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            mock_provider.return_value.get_regions.return_value = ["eu-west-1"]
+            mock_prowler_scan_class.return_value.scan.return_value = scan_batches()
+            perform_prowler_scan(tenant_id, str(scan.id), str(aws_provider.id), [])
+
+        assert stored_mid_scan == {
+            "resources": 1,
+            "categories": [("encryption", 1)],
+        }
+        assert ResourceScanSummary.objects.filter(scan_id=scan.id).count() == 2
+        assert list(
+            ScanCategorySummary.objects.filter(scan_id=scan.id).values_list(
+                "category", "total_findings", "failed_findings"
+            )
+        ) == [("encryption", 2, 2)]
+
+    @staticmethod
+    def _build_summary_finding(index):
+        finding = MagicMock()
+        finding.uid = f"finding-{index}"
+        finding.status = StatusChoices.FAIL
+        finding.status_extended = "test status extended"
+        finding.severity = Severity.high
+        finding.check_id = "check1"
+        finding.get_metadata.return_value = {"categories": ["encryption"]}
+        finding.resource_uid = f"resource-{index}"
+        finding.resource_name = f"resource-{index}"
+        finding.region = "eu-west-1"
+        finding.service_name = "s3"
+        finding.resource_type = "bucket"
+        finding.resource_tags = {}
+        finding.muted = False
+        finding.raw = {}
+        finding.resource_metadata = {}
+        finding.resource_details = ""
+        finding.partition = "aws"
+        finding.compliance = {}
+        return finding
+
+    def test_perform_prowler_scan_stores_final_summaries_before_completed(
+        self, tenants_fixture, scans_fixture, aws_provider
+    ):
+        tenant_id = str(tenants_fixture[0].id)
+        scan = scans_fixture[0]
+
+        def scan_batches():
+            yield 0.5, [self._build_summary_finding(1)]
+            # Below the progress throttle, so only the final write stores it
+            yield 0.505, [self._build_summary_finding(2)]
+
+        stored_at_completion = {}
+
+        def save_scan_instance(scan_instance, provider_id, update_fields):
+            if scan_instance.state == StateChoices.COMPLETED:
+                stored_at_completion["resources"] = ResourceScanSummary.objects.filter(
+                    scan_id=scan.id
+                ).count()
+                stored_at_completion["categories"] = list(
+                    ScanCategorySummary.objects.filter(scan_id=scan.id).values_list(
+                        "category", "total_findings"
+                    )
+                )
+            scan_instance.save(update_fields=update_fields)
+
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch("tasks.jobs.scan.initialize_prowler_provider") as mock_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan._save_scan_instance", side_effect=save_scan_instance
+            ),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", float("inf")),
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            mock_provider.return_value.get_regions.return_value = ["eu-west-1"]
+            mock_prowler_scan_class.return_value.scan.return_value = scan_batches()
+            perform_prowler_scan(tenant_id, str(scan.id), str(aws_provider.id), [])
+
+        assert stored_at_completion == {
+            "resources": 2,
+            "categories": [("encryption", 2)],
+        }
+
+    def test_perform_prowler_scan_failure_drops_running_summaries(
+        self, tenants_fixture, scans_fixture, aws_provider
+    ):
+        tenant_id = str(tenants_fixture[0].id)
+        scan = scans_fixture[0]
+
+        stored_mid_scan = {}
+
+        def scan_batches():
+            yield 0.5, [self._build_summary_finding(1)]
+            stored_mid_scan["resources"] = ResourceScanSummary.objects.filter(
+                scan_id=scan.id
+            ).count()
+            yield 0.505, [self._build_summary_finding(2)]
+            raise RuntimeError("provider API went away")
+
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", float("inf")),
+            patch("tasks.jobs.scan.initialize_prowler_provider") as mock_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            mock_provider.return_value.get_regions.return_value = ["eu-west-1"]
+            mock_prowler_scan_class.return_value.scan.return_value = scan_batches()
+            with pytest.raises(RuntimeError):
+                perform_prowler_scan(tenant_id, str(scan.id), str(aws_provider.id), [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.FAILED
+        assert stored_mid_scan == {"resources": 1}
+        assert Finding.objects.filter(scan_id=scan.id).count() == 2
+        assert not ResourceScanSummary.objects.filter(scan_id=scan.id).exists()
+        assert not ScanCategorySummary.objects.filter(scan_id=scan.id).exists()
+
+    def test_perform_prowler_scan_failure_after_final_summaries_drops_them(
+        self, tenants_fixture, scans_fixture, aws_provider
+    ):
+        tenant_id = str(tenants_fixture[0].id)
+        scan = scans_fixture[0]
+        finding = self._build_summary_finding(1)
+        finding.get_metadata.return_value = {"categories": []}
+
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch("tasks.jobs.scan.initialize_prowler_provider") as mock_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan._store_running_scan_summaries"),
+            patch(
+                "tasks.jobs.scan._bulk_update_resource_failed_findings_counts",
+                side_effect=RuntimeError("database went away"),
+            ),
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            mock_provider.return_value.get_regions.return_value = ["eu-west-1"]
+            mock_prowler_scan_class.return_value.scan.return_value = [(1, [finding])]
+            with pytest.raises(RuntimeError):
+                perform_prowler_scan(tenant_id, str(scan.id), str(aws_provider.id), [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.FAILED
+        assert not ResourceScanSummary.objects.filter(scan_id=scan.id).exists()
 
     @patch("tasks.jobs.scan.ProwlerScan")
     @patch(

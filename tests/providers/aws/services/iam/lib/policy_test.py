@@ -1715,9 +1715,58 @@ class Test_Policy:
         assert not is_condition_block_restrictive_organization(condition_statement)
 
     @pytest.mark.parametrize(
+        "condition_statement,expected",
+        [
+            (
+                {"ForAnyValue:StringEquals": {"aws:PrincipalOrgID": "o-a1b2c3d4e5"}},
+                True,
+            ),
+            (
+                {"StringLike": {"aws:PrincipalOrgPaths": "o-a1b2c3d4e5/r-ab12/*"}},
+                True,
+            ),
+            (
+                {
+                    "ForAnyValue:StringLike": {
+                        "aws:PrincipalOrgPaths": [
+                            "o-a1b2c3d4e5/r-ab12/ou-ab12-11111111/*"
+                        ]
+                    }
+                },
+                True,
+            ),
+            ({"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "*"}}, False),
+            ({"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "o-*"}}, False),
+            (
+                {"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "o-a1b2c3d4e5*"}},
+                False,
+            ),
+            # ForAllValues is true when the key is absent, so it admits principals outside any org
+            (
+                {
+                    "ForAllValues:StringLike": {
+                        "aws:PrincipalOrgPaths": "o-a1b2c3d4e5/*"
+                    }
+                },
+                False,
+            ),
+            ({"StringEquals": {"aws:PrincipalOrgID": ["o-a1b2c3d4e5", "o-*"]}}, False),
+        ],
+    )
+    def test_condition_parser_organization_paths_and_set_operators(
+        self, condition_statement: dict, expected: bool
+    ):
+        assert (
+            is_condition_block_restrictive_organization(condition_statement) == expected
+        )
+
+    @pytest.mark.parametrize(
         "condition_value,expected",
         [
             ("*@example.com", True),
+            (["a@example.com", "b@example.com"], True),
+            (["a@example.com", "*"], False),
+            ([], False),
             ("https://events.pagerduty.com/integration/<api-key>/enqueue", True),
             (
                 "arn:aws:sns:eu-west-2:123456789012:example-topic:995be20c-a7e3-44ca-8c18-77cb263d15e7",
@@ -1734,8 +1783,8 @@ class Test_Policy:
             ),
         ],
     )
-    def test_condition_parser_string_equals_sns_endpoint_str(
-        self, condition_value: str, expected: bool
+    def test_condition_parser_sns_endpoint(
+        self, condition_value: str | list[str], expected: bool
     ):
         condition_statement = {"StringEquals": {"SNS:Endpoint": condition_value}}
         assert (

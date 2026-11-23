@@ -85,6 +85,7 @@ export const FINDING_TRIAGE_DISABLED_REASON = {
   CLOUD_ONLY: "cloud_only",
   FORBIDDEN: "forbidden",
   LOADING: "loading",
+  SAMPLE: "sample",
 } as const;
 
 export type FindingTriageDisabledReason =

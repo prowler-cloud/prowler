@@ -56,6 +56,62 @@ and if something could not be determined, say so plainly rather than guessing. A
 clear headers to let me know with a single look what part I am seeing in case I am just
 searching for something in concrete about the remediation.`;
 
+// Drafted by the UI team on the pattern of DyR's Contextual Fix, for an issue
+// (a group of findings on one attack path); pending DyR review.
+const ISSUE_CONTEXTUAL_FIX_PROMPT = `The issue under discussion is the one in the UI context block. An issue is a group of
+findings that together form one attack path. If no issue is present there, ask me for it
+before doing anything else.
+
+Give me the remediation for this specific issue: the changes that close this attack path
+on my resources, not the generic guidance for each check.
+
+Start by calling load_tools with these names, in one call:
+prowler_get_finding_details, prowler_hub_get_check_details,
+prowler_hub_get_check_fixer, prowler_get_resource
+You do not need search_tools — I am naming the tools directly.
+
+Then work in this order:
+
+1. Read the issue from the context block: its pattern, where the attacker starts, the
+   outcome, each leg and the suggested fix. Each leg is "open" (it favours the attacker),
+   "closed", "partial" or "unknown". Closing an open leg breaks the path only when the
+   change stops the attacker's step. Detection alone (the verification leg: logging,
+   alerting) never breaks it; name such changes as defence in depth, not as the fix.
+   If the context has no attacker start or no outcome, the issue is a group of related
+   findings rather than one modelled path: say so in one line, skip the single
+   path-closing change below, and give the fixes grouped by check.
+2. prowler_get_finding_details — for each finding id in the context, establish what
+   failed and on which resource. The context lists at most 20 ids, so if the issue has
+   more findings than that, say how many you did not read. If there are no finding ids,
+   work from the issue alone and say so.
+3. prowler_hub_get_check_details — once per distinct check, not once per finding.
+4. prowler_hub_get_check_fixer — once per distinct check. If the check has a fixer, ground
+   your steps in its code rather than paraphrasing the check description. If there is no
+   fixer, do not mention it and continue with your knowledge.
+5. prowler_get_resource — the affected resources' real configuration. Base your guidance
+   on what is actually set on them, not on what the checks assume.
+
+Then write the remediation:
+
+- Open with one sentence on how this attack path works on these resources specifically.
+- Lead with the single change that closes the path fastest, and say which leg it closes.
+  Prefer a control that covers every affected resource at once (account, organization
+  or project level) over fixing resources one by one.
+- Then give the per-resource fixes, grouped by check, with the real identifiers from
+  step 5: ARN or resource UID, account, region, resource name. No placeholders unless a
+  value genuinely cannot be determined, in which case say so explicitly.
+- Prefer the Prowler Cloud or cloud console path where one exists; give CLI commands
+  when they are the practical route.
+- State what else the changes touch, what I should verify after applying them, and
+  which findings should pass on the next scan.
+- Close with a short example of what may be producing this in the deployment code
+  (Terraform or equivalent). One block, illustrative, not a migration plan.
+
+Keep the whole answer short. Length is the failure mode here: if it does not fit on a
+screen I will not act on it. Do not ask me for information you can retrieve yourself,
+and if something could not be determined, say so plainly rather than guessing. Add
+clear headers so I can tell at a glance which part I am looking at.`;
+
 const TRIAGE_DECISION_PROMPT = `The finding under discussion is the one in the UI context block. If no finding is
 present there, ask me for the finding ID before doing anything else.
 
@@ -248,6 +304,17 @@ export const LIGHTHOUSE_SKILLS = [
     prompt: "",
     nextSkillId: null,
     enabled: false,
+    version: 1,
+  },
+  {
+    id: LIGHTHOUSE_SKILL_ID.ISSUE_CONTEXTUAL_FIX,
+    name: "Contextual Fix",
+    description: "Give me the fix that closes this attack path",
+    icon: Wrench,
+    surface: LIGHTHOUSE_SKILL_SURFACE.ISSUE,
+    prompt: ISSUE_CONTEXTUAL_FIX_PROMPT,
+    nextSkillId: null,
+    enabled: true,
     version: 1,
   },
   {

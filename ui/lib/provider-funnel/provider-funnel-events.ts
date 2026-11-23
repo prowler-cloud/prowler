@@ -35,6 +35,7 @@ export const WIZARD_OPEN_SOURCE = {
   PAGE_BUTTON: "page_button",
   EMPTY_STATE: "empty_state",
   ROW_ACTION: "row_action",
+  SAMPLE_PREVIEW: "sample_preview",
 } as const;
 
 export type WizardOpenSource =

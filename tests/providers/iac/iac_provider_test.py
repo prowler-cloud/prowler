@@ -223,7 +223,65 @@ class TestIacProvider:
             ],
             capture_output=True,
             text=True,
+            env=mock.ANY,
         )
+
+    @patch("subprocess.run")
+    def test_run_scan_routes_trivy_through_the_outbound_proxy_without_credentials(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "AKIAEXAMPLE")
+        monkeypatch.setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/v2/creds")
+        monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "/secrets/key.json")
+        monkeypatch.setenv("NO_PROXY", "169.254.169.254")
+        monkeypatch.setenv("TRIVY_CACHE_DIR", "/tmp/trivy-cache")
+        provider = IacProvider()
+        mock_subprocess.return_value = MagicMock(
+            stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        list(provider.run_scan("/test/directory", ["misconfig"], []))
+
+        env = mock_subprocess.call_args.kwargs["env"]
+        for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+            assert env[key].startswith("http://127.0.0.1:")
+        assert env["GIT_ALLOW_PROTOCOL"] == "http:https"
+        assert env["TRIVY_CACHE_DIR"] == "/tmp/trivy-cache"
+        for key in (
+            "AWS_ACCESS_KEY_ID",
+            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "NO_PROXY",
+        ):
+            assert key not in env
+
+    @patch("subprocess.run")
+    def test_run_scan_inherits_the_environment_when_the_check_is_skipped(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "1")
+        provider = IacProvider()
+        mock_subprocess.return_value = MagicMock(
+            stdout=get_sample_trivy_json_output(), stderr=""
+        )
+
+        list(provider.run_scan("/test/directory", ["misconfig"], []))
+
+        assert mock_subprocess.call_args.kwargs["env"] is None
+
+    @patch("subprocess.run")
+    def test_run_scan_fails_when_the_outbound_proxy_cannot_start(
+        self, mock_subprocess, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        monkeypatch.setenv("PROWLER_ALLOWED_PRIVATE_NETWORKS", "not-a-network")
+        provider = IacProvider()
+
+        with pytest.raises(IacScanError, match="outbound proxy"):
+            list(provider.run_scan("/test/directory", ["misconfig"], []))
+
+        mock_subprocess.assert_not_called()
 
     @patch("subprocess.run")
     def test_iac_provider_run_scan_empty_output(self, mock_subprocess):
@@ -567,6 +625,7 @@ class TestIacProvider:
             ],
             capture_output=True,
             text=True,
+            env=mock.ANY,
         )
 
         # Verify results
@@ -622,6 +681,7 @@ class TestIacProvider:
             expected_command,
             capture_output=True,
             text=True,
+            env=mock.ANY,
         )
 
         # Verify results
