@@ -365,6 +365,36 @@ class TestGoogleWorkspaceProvider:
             )
         assert "Invalid JSON in credentials content" in str(exc_info.value)
 
+    @pytest.mark.parametrize(
+        "key_overrides",
+        [
+            {"token_uri": "http://169.254.169.254/latest/meta-data/"},
+            {"token_uri": "https://attacker.example.com/token"},
+            {"type": "external_account"},
+        ],
+        ids=["metadata", "external_host", "external_account"],
+    )
+    @pytest.mark.parametrize("source", ["argument", "environment"])
+    def test_setup_session_rejects_an_unsafe_service_account_key(
+        self, key_overrides, source, monkeypatch
+    ):
+        import json
+
+        content = json.dumps({**SERVICE_ACCOUNT_CREDENTIALS, **key_overrides})
+        kwargs = {"delegated_user": DELEGATED_USER}
+        if source == "argument":
+            kwargs["credentials_content"] = content
+        else:
+            monkeypatch.setenv("GOOGLEWORKSPACE_CREDENTIALS_CONTENT", content)
+
+        with patch(
+            "prowler.providers.googleworkspace.googleworkspace_provider.service_account.Credentials.from_service_account_info"
+        ) as from_info:
+            with pytest.raises(GoogleWorkspaceInvalidCredentialsError):
+                GoogleworkspaceProvider.setup_session(**kwargs)
+
+        from_info.assert_not_called()
+
     def test_setup_session_invalid_delegated_user_email(self):
         """Test invalid delegated user email format"""
         with pytest.raises(GoogleWorkspaceInvalidCredentialsError) as exc_info:

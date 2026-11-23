@@ -6,6 +6,8 @@ class redshift_cluster_automated_snapshot(Check):
     def execute(self):
         findings = []
         for cluster in redshift_client.clusters:
+            if cluster.cluster_snapshots is None:
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = (

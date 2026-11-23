@@ -55,7 +55,7 @@ class Test_network_udp_internet_access_restricted:
                     security_rules=[
                         SecurityRule(
                             destination_port_range=None,
-                            protocol="TCP",
+                            protocol="UDP",
                             source_address_prefix=None,
                             access="Allow",
                             direction="Inbound",
@@ -79,17 +79,17 @@ class Test_network_udp_internet_access_restricted:
                 new=service_client,
             ),
         ):
-            from prowler.providers.azure.services.network.network_http_internet_access_restricted.network_http_internet_access_restricted import (
-                network_http_internet_access_restricted,
+            from prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted import (
+                network_udp_internet_access_restricted,
             )
 
-            check = network_http_internet_access_restricted()
+            check = network_udp_internet_access_restricted()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has HTTP internet access restricted."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has UDP internet access restricted."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name

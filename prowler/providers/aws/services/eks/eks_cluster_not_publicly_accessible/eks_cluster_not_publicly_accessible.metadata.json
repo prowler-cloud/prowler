@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "eks_cluster_not_publicly_accessible",
-  "CheckTitle": "EKS cluster endpoint is not publicly accessible from 0.0.0.0/0",
+  "CheckTitle": "EKS cluster endpoint restricts public access from the internet",
   "CheckAliases": [
     "eks_endpoints_not_publicly_accessible",
     "eks_control_plane_endpoint_access_restricted"
@@ -18,7 +18,7 @@
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
   "ResourceGroup": "container",
-  "Description": "**Amazon EKS** cluster API server endpoint is evaluated for **unrestricted Internet access**, specifically when the public endpoint permits connections from `0.0.0.0/0` instead of private access or limited CIDR ranges.",
+  "Description": "The **Amazon EKS** Kubernetes API server endpoint allows **unrestricted Internet access** when public access is enabled and its CIDR allowlist contains `0.0.0.0/0` (IPv4) or `::/0` (IPv6).",
   "Risk": "An openly reachable API endpoint enables Internet-wide probing, brute force, and enumeration, increasing exposure to RBAC misconfigurations or API flaws. Successful access can drive secret exfiltration (confidentiality), workload tampering (integrity), and control-plane disruption or scaling abuse (availability, cost).",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -34,7 +34,7 @@
       "Terraform": "```hcl\n# Terraform: Disable public endpoint and enable private endpoint\nresource \"aws_eks_cluster\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  vpc_config {\n    subnet_ids              = [\"<example_subnet_id_1>\", \"<example_subnet_id_2>\"]\n    endpoint_public_access  = false  # critical: disables public API endpoint\n    endpoint_private_access = true   # critical: enables private API endpoint\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Prefer **private endpoint access** and avoid broad exposure. *If public access is required*, restrict to trusted admin CIDRs (not `0.0.0.0/0`), reach the API via **VPN/Direct Connect or bastions**, and enforce **least privilege** with IAM/RBAC. Apply **defense in depth** through network segmentation and continuous monitoring.",
+      "Text": "Prefer **private endpoint access** and avoid broad exposure. *If public access is required*, restrict it to trusted admin CIDRs for each supported IP family, reach the API via **VPN/Direct Connect or bastions**, and enforce **least privilege** with IAM/RBAC. Apply **defense in depth** through network segmentation and continuous monitoring.",
       "Url": "https://hub.prowler.com/check/eks_cluster_not_publicly_accessible"
     }
   },

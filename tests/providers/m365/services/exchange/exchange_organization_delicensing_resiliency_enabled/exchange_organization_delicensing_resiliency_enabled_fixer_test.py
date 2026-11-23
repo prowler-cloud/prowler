@@ -8,11 +8,12 @@ class Test_exchange_organization_delicensing_resiliency_enabled_fixer:
         created_session = mock.MagicMock()
         created_session.connect_exchange_online.return_value = True
         created_session.execute.return_value = ""
+        provider = set_mocked_m365_provider()
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_m365_provider(),
+                return_value=provider,
             ),
             mock.patch(
                 "prowler.providers.m365.services.exchange.exchange_organization_delicensing_resiliency_enabled.exchange_organization_delicensing_resiliency_enabled_fixer.M365PowerShell",
@@ -24,7 +25,9 @@ class Test_exchange_organization_delicensing_resiliency_enabled_fixer:
             )
 
             assert fixer()
-            mocked_powershell.assert_called_once()
+            mocked_powershell.assert_called_once_with(
+                provider.credentials, provider.identity, provider.region_config
+            )
             created_session.connect_exchange_online.assert_called_once()
             created_session.execute.assert_any_call(
                 "Set-OrganizationConfig -DelayedDelicensingEnabled $true",
