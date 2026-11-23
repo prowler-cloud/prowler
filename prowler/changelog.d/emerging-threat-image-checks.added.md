@@ -1,1 +1,0 @@
-`ec2_instance_emerging_threat_image`, `vm_emerging_threat_image` and `compute_instance_emerging_threat_image` checks for AWS, Azure and GCP, matching compute instances against threat signatures

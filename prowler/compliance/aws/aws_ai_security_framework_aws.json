@@ -510,6 +510,20 @@
       ]
     },
     {
+      "Id": "AISF-DATA-08",
+      "Description": "Ensure the effective Amazon Bedrock data-retention policy for each production account, project, and Region meets approved data-handling requirements. Review policy inheritance and model defaults, and restrict changes to authorized administrators.",
+      "Name": "Bedrock Data Retention Governance",
+      "Attributes": [
+        {
+          "Section": "Identity and Data Security",
+          "SubSection": "Data Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "AISF-AI-01",
       "Description": "Ensure Amazon Bedrock has at least one guardrail configured to provide content filtering, prompt injection defense, PII filtering, and topic restrictions for foundation model interactions.",
       "Name": "Bedrock Guardrails Configuration",
@@ -687,6 +701,20 @@
       "Checks": []
     },
     {
+      "Id": "AISF-AI-12",
+      "Description": "Ensure knowledge base source documents and derived indexes retain their data classification and that retrieval enforces the requesting user's authorization to the source data.",
+      "Name": "RAG Data Classification and Access Control",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "RAG Security",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
       "Id": "AISF-AGENT-01",
       "Description": "Ensure every AI agent has its own identity with scoped credentials and independent authorization per request, following zero-trust principles. Agent identities must be separate from human user identities.",
       "Name": "Agent Identity and Authentication",
@@ -748,6 +776,48 @@
       "Id": "AISF-AGENT-05",
       "Description": "Ensure human-in-the-loop approval is required for high-consequence agent actions such as financial transactions, data deletion, or privilege changes.",
       "Name": "Human Approval for Critical Agent Actions",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-06",
+      "Description": "Ensure production evaluator definitions and changes are recorded so results remain attributable to the definition used. Clone a custom evaluator when its active evaluation configuration prevents modification, and review changes before using the revised evaluator in production.",
+      "Name": "Agent Evaluator Change Management",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-11",
+      "Description": "Ensure agent and MCP server registry records are reviewed against organizational security and compliance criteria before becoming discoverable. Restrict approval to authorized reviewers and retain approval audit records.",
+      "Name": "Agent Registry Approval Control",
+      "Attributes": [
+        {
+          "Section": "AI Application Security",
+          "SubSection": "Agent Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-AGENT-12",
+      "Description": "Ensure administration of agent payment budgets and session limits is separated from payment execution, so no single role can both increase an approved payment budget and spend against it.",
+      "Name": "Agent Payment Separation of Duties",
       "Attributes": [
         {
           "Section": "AI Application Security",
@@ -1119,6 +1189,34 @@
           "Section": "Governance and Compliance",
           "SubSection": "Incident Response",
           "Service": "multiple",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-GOV-10",
+      "Description": "Ensure production agents undergo continuous evaluation of safety and security risks relevant to their use case, with documented traffic coverage or sampling, review of evaluation results, and assigned response responsibilities.",
+      "Name": "Continuous Production Safety and Security Evaluation",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "AI Governance",
+          "Service": "bedrock",
+          "Type": "Manual"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AISF-GOV-12",
+      "Description": "Ensure agent authorization policy changes undergo schema and semantic validation before production use. Review validation findings and confirm the terminal validation outcome before deploying a policy change.",
+      "Name": "Policy Pre-Deployment Validation",
+      "Attributes": [
+        {
+          "Section": "Governance and Compliance",
+          "SubSection": "Automated Governance",
+          "Service": "bedrock",
           "Type": "Manual"
         }
       ],

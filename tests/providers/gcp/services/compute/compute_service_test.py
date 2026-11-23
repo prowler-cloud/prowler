@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.gcp.services.compute.compute_service import Compute
 from tests.providers.gcp.gcp_fixtures import (
@@ -110,18 +110,21 @@ class TestComputeService:
             assert compute_client.subnets[0].flow_logs
             assert compute_client.subnets[0].network == "network1"
             assert compute_client.subnets[0].project_id == GCP_PROJECT_ID
+            assert compute_client.subnets[0].region == "europe-west1-b"
 
             assert compute_client.subnets[1].name == "subnetwork2"
             assert compute_client.subnets[1].id.__class__.__name__ == "str"
             assert not compute_client.subnets[1].flow_logs
             assert compute_client.subnets[1].network == "network1"
             assert compute_client.subnets[1].project_id == GCP_PROJECT_ID
+            assert compute_client.subnets[1].region == "europe-west1-b"
 
             assert compute_client.subnets[2].name == "subnetwork3"
             assert compute_client.subnets[2].id.__class__.__name__ == "str"
             assert not compute_client.subnets[2].flow_logs
             assert compute_client.subnets[2].network == "network3"
             assert compute_client.subnets[2].project_id == GCP_PROJECT_ID
+            assert compute_client.subnets[2].region == "europe-west1-c"
 
             assert len(compute_client.addresses) == 3
 
@@ -152,6 +155,7 @@ class TestComputeService:
             assert compute_client.firewalls[0].allowed_rules == [{"IPProtocol": "UDP"}]
             assert compute_client.firewalls[0].source_ranges == ["30.0.0.0/16"]
             assert compute_client.firewalls[0].direction == "INGRESS"
+            assert compute_client.firewalls[0].disabled is False
             assert compute_client.firewalls[0].project_id == GCP_PROJECT_ID
 
             assert compute_client.firewalls[1].name == "firewall2"
@@ -159,6 +163,7 @@ class TestComputeService:
             assert compute_client.firewalls[1].allowed_rules == [{"IPProtocol": "TCP"}]
             assert compute_client.firewalls[1].source_ranges == ["0.0.0.0/0"]
             assert compute_client.firewalls[1].direction == "EGRESS"
+            assert compute_client.firewalls[1].disabled is False
             assert compute_client.firewalls[1].project_id == GCP_PROJECT_ID
 
             assert compute_client.firewalls[2].name == "firewall3"
@@ -166,6 +171,7 @@ class TestComputeService:
             assert compute_client.firewalls[2].allowed_rules == [{"IPProtocol": "TCP"}]
             assert compute_client.firewalls[2].source_ranges == ["10.0.15.0/24"]
             assert compute_client.firewalls[2].direction == "INGRESS"
+            assert compute_client.firewalls[2].disabled is True
             assert compute_client.firewalls[2].project_id == GCP_PROJECT_ID
 
             assert len(compute_client.load_balancers) == 5
@@ -285,3 +291,48 @@ class TestComputeService:
             assert compute_client.images[2].id.__class__.__name__ == "str"
             assert compute_client.images[2].project_id == GCP_PROJECT_ID
             assert not compute_client.images[2].publicly_shared
+
+    def test_get_subnetworks_follows_aggregated_list_pages(self):
+        compute = Compute.__new__(Compute)
+        compute.project_ids = [GCP_PROJECT_ID]
+        compute.subnets = []
+        compute.client = MagicMock()
+        compute.__get_AuthorizedHttp_client__ = MagicMock()
+
+        first_page = MagicMock()
+        first_page.execute.return_value = {
+            "items": {
+                "regions/europe-west1": {
+                    "subnetworks": [
+                        {"name": "subnet-a", "id": "1", "network": "x/net-a"}
+                    ]
+                }
+            }
+        }
+        second_page = MagicMock()
+        second_page.execute.return_value = {
+            "items": {
+                "regions/us-central1": {
+                    "subnetworks": [
+                        {
+                            "name": "subnet-b",
+                            "id": "2",
+                            "network": "x/net-b",
+                            "enableFlowLogs": True,
+                        }
+                    ]
+                }
+            }
+        }
+        compute.client.subnetworks().aggregatedList.return_value = first_page
+        compute.client.subnetworks().aggregatedList_next.side_effect = [
+            second_page,
+            None,
+        ]
+
+        compute._get_subnetworks()
+
+        assert [(s.name, s.region, s.flow_logs) for s in compute.subnets] == [
+            ("subnet-a", "europe-west1", False),
+            ("subnet-b", "us-central1", True),
+        ]

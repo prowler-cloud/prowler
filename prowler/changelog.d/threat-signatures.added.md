@@ -1,1 +1,0 @@
-Threat signatures (`prowler/lib/threats`): emerging vulnerabilities described as data (affected image publishers, names and per-branch version ranges proven by examples, exposed ports, impact and remediation), supplied per scan under `threat_signatures` for AWS, Azure and GCP

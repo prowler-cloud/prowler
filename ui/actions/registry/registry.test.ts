@@ -452,6 +452,88 @@ describe("Registry guarded reads", () => {
     },
   );
 
+  it("shows the catalog without a key when the API serves it", async () => {
+    // Given: with the Prowler Cloud key the catalog needs no tenant key
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(noCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(catalogResponse());
+
+    // When
+    const result = await getRegistryBootstrap();
+
+    // Then
+    expect(result).toMatchObject({
+      status: "ready",
+      state: {
+        status: "ready",
+        credential: noCredential,
+        catalog: { status: "complete" },
+      },
+    });
+  });
+
+  it("falls back to onboarding when the API needs a tenant key", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(noCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { errors: [{ code: "registry_credential_not_configured" }] },
+          409,
+        ),
+      );
+
+    // When
+    const result = await getRegistryBootstrap();
+
+    // Then
+    expect(result).toMatchObject({
+      status: "ready",
+      state: { status: "onboarding", credential: noCredential },
+    });
+  });
+
+  it.each([
+    { status: 503, code: "registry_unavailable", expected: "unavailable" },
+    { status: 500, code: "registry_configuration_error", expected: "error" },
+  ])(
+    "shows a $status Registry failure to a tenant without a key instead of onboarding",
+    async ({ status, code, expected }) => {
+      // Given: a key would not fix a Registry outage or a rejected Cloud key
+      fetchMock
+        .mockResolvedValueOnce(credentialResponse(noCredential))
+        .mockResolvedValueOnce(tenantArtifactsResponse())
+        .mockResolvedValueOnce(jsonResponse({ errors: [{ code }] }, status));
+
+      // When
+      const result = await getRegistryBootstrap();
+
+      // Then
+      expect(result).toMatchObject({
+        status: "ready",
+        state: { status: expected },
+      });
+    },
+  );
+
+  it("keeps a pending validation on its own state without reading the catalog", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(pendingCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse());
+
+    // When
+    const result = await getRegistryBootstrap();
+
+    // Then
+    expect(result).toMatchObject({
+      state: { status: "validation_pending" },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("bootstraps in credential, tenant-artifact, then complete-catalog order", async () => {
     // Given
     fetchMock
@@ -500,10 +582,9 @@ describe("Registry guarded reads", () => {
     });
   });
 
-  it.each([
-    [noCredential, "onboarding"],
-    [pendingCredential, "validation_pending"],
-  ] as const)(
+  // A missing key no longer blocks the catalog: the API may serve it with the
+  // Prowler Cloud key (see "shows the catalog without a key" above).
+  it.each([[pendingCredential, "validation_pending"]] as const)(
     "blocks catalog bootstrap as %s credential is authoritative",
     async (credential, expectedStatus) => {
       // Given
@@ -748,12 +829,18 @@ describe("Registry guarded reads", () => {
     expect(pollTaskUntilSettledMock).not.toHaveBeenCalled();
   });
 
-  it("re-reads credential and preserves authoritative My artifacts after disconnect", async () => {
+  it("returns onboarding with My artifacts after disconnect when the API needs a tenant key", async () => {
     // Given
     fetchMock
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(credentialResponse(noCredential))
-      .mockResolvedValueOnce(tenantArtifactsResponse());
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { errors: [{ code: "registry_credential_not_configured" }] },
+          409,
+        ),
+      );
 
     // When
     const result = await disconnectRegistryCredential();
@@ -761,26 +848,57 @@ describe("Registry guarded reads", () => {
     // Then
     expect(result).toEqual({
       status: "disconnected",
-      credential: noCredential,
-      tenantArtifacts: [
-        {
-          normalizedName: "prowler-aws",
-          versionSpec: "latest",
-          extendsProviderSlugs: [],
-          insertedAt: "2026-03-20T12:00:00Z",
-        },
-      ],
+      state: {
+        status: "onboarding",
+        credential: noCredential,
+        tenantArtifacts: [
+          {
+            normalizedName: "prowler-aws",
+            versionSpec: "latest",
+            extendsProviderSlugs: [],
+            insertedAt: "2026-03-20T12:00:00Z",
+          },
+        ],
+      },
     });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/artifacts",
+      "https://api.test/api/v1/registry/available-artifacts?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     ]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "https://api.test/api/v1/registry/credential",
       expect.objectContaining({ cache: "no-store", method: "DELETE" }),
     );
+  });
+
+  it("returns the keyless catalog after disconnect when the API still serves it", async () => {
+    // Given: with the Prowler Cloud key the catalog needs no tenant key
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(credentialResponse(noCredential))
+      .mockResolvedValueOnce(tenantArtifactsResponse())
+      .mockResolvedValueOnce(catalogResponse());
+
+    // When
+    const result = await disconnectRegistryCredential();
+
+    // Then
+    expect(result).toMatchObject({
+      status: "disconnected",
+      state: {
+        status: "ready",
+        credential: noCredential,
+        catalog: {
+          status: "complete",
+          artifacts: [
+            expect.objectContaining({ normalizedName: "prowler-aws" }),
+          ],
+        },
+      },
+    });
   });
 
   it("rejects a task-binding mismatch without returning the key or a task", async () => {
@@ -900,9 +1018,9 @@ describe("Registry artifact mutations", () => {
       {
         has_checks: true,
         is_installable: false,
-        not_installable_reason: "checks_target_is_not_builtin",
+        not_installable_reason: "artifact_targets_no_provider",
       },
-      "Its checks are written for a provider this deployment does not ship.",
+      "It ships checks but names no provider to extend.",
     ],
     [
       {

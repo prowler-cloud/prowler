@@ -128,6 +128,22 @@ class Test_Cloudflare_Schema:
             == {}
         )
 
+    @pytest.mark.parametrize("level", ["low", "medium", "high"])
+    def test_valid_confidence_levels(self, level):
+        assert _validate("cloudflare", {"secrets_confidence": level}) == {
+            "secrets_confidence": level
+        }
+
+    @pytest.mark.parametrize("level", ["LOW", "Medium", "ANY", "", "X"])
+    def test_invalid_confidence_levels_dropped(self, level):
+        assert _validate("cloudflare", {"secrets_confidence": level}) == {}
+
+    def test_secrets_validate_bool(self):
+        assert _validate("cloudflare", {"secrets_validate": True}) == {
+            "secrets_validate": True
+        }
+        assert _validate("cloudflare", {"secrets_validate": "maybe"}) == {}
+
 
 class Test_Okta_Schema:
     def test_valid_values_round_trip(self):
@@ -277,6 +293,22 @@ class Test_OpenStack_Schema:
 
     def test_zero_threshold_dropped(self):
         assert _validate("openstack", {"image_sharing_threshold": 0}) == {}
+
+    @pytest.mark.parametrize("level", ["low", "medium", "high"])
+    def test_valid_confidence_levels(self, level):
+        assert _validate("openstack", {"secrets_confidence": level}) == {
+            "secrets_confidence": level
+        }
+
+    @pytest.mark.parametrize("level", ["LOW", "Medium", "ANY", "", "X"])
+    def test_invalid_confidence_levels_dropped(self, level):
+        assert _validate("openstack", {"secrets_confidence": level}) == {}
+
+    def test_secrets_validate_bool(self):
+        assert _validate("openstack", {"secrets_validate": True}) == {
+            "secrets_validate": True
+        }
+        assert _validate("openstack", {"secrets_validate": "maybe"}) == {}
 
 
 class Test_E2ENetworks_Schema:
