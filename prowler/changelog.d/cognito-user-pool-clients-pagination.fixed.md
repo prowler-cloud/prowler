@@ -1,1 +1,0 @@
-`cognito_user_pool_client_prevent_user_existence_errors` and `cognito_user_pool_client_token_revocation_enabled` now evaluate every user pool client across paginated Cognito responses

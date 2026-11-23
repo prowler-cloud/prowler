@@ -1,1 +1,0 @@
-AWS resource policy checks no longer treat `StringLike`, `ArnLike` or `ArnEquals` conditions whose wildcards match any AWS account, such as `aws:SourceAccount` set to `*` or `aws:PrincipalArn` set to `arn:aws:iam::*:root`, as restricting public access
