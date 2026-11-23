@@ -15,6 +15,7 @@ import {
   isManualPassTriageUpdate,
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
 import {
@@ -256,6 +257,7 @@ export function useResourceDetailDrawer({
         resourceUid,
         pageSize: 50,
         includeMuted: includeMutedInOtherFindings,
+        ...(isSampleId(findingId) ? { sample: true } : {}),
       });
       const adapted = adaptFindingsByResourceResponse(response);
 

@@ -1,0 +1,1 @@
+M365 provider now uses the selected region's Microsoft Entra ID authority and Microsoft Graph endpoint for Microsoft Graph sign-in and requests, instead of always using the commercial cloud (Azure CLI authentication keeps the cloud the Azure CLI is signed in to)

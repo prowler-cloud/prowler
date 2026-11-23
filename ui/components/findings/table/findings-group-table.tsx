@@ -18,6 +18,10 @@ import {
   buildFindingGroupContext,
   buildFindingSummaryContext,
 } from "@/lib/lighthouse/context/contributions";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { useCloudUpgradeStore } from "@/store";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -444,6 +448,12 @@ const FindingsGroupTableContent = ({
 
       {(selectedCheckIds.length > 0 || hasResourceSelection) && jiraPayload && (
         <FloatingSelectionActions
+          disabledReason={
+            selectedFindings.some((finding) => isSampleId(finding.id)) ||
+            activeResourceSelection.some(isSampleId)
+              ? SAMPLE_DATA_READ_ONLY_MESSAGE
+              : undefined
+          }
           selectedCount={
             selectedCheckIds.length + activeResourceSelection.length
           }

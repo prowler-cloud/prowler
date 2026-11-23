@@ -207,7 +207,7 @@ test.describe.serial("Registry", () => {
       await expect(
         page.getByRole("button", { name: "Connecting…" }),
       ).toBeDisabled();
-      await expect(page.getByLabel("Registry key")).toBeDisabled();
+      await expect(registryPage.registryKeyInput).toBeDisabled();
       await registryPage.verifyKeyIsNotDisclosed(
         FIXTURE_REGISTRY_KEY,
         requestUrls,
@@ -272,7 +272,7 @@ test.describe.serial("Registry", () => {
       await controlledRegistryFixture.setDiscoveryMode("reconnect");
       await page.reload();
       await expect(
-        page.getByRole("heading", { name: "Reconnect Registry" }),
+        page.getByRole("heading", { name: "Reconnect the Registry" }),
       ).toBeVisible();
       await controlledRegistryFixture.setDiscoveryMode("unavailable");
       await page.reload();

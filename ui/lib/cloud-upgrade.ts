@@ -27,6 +27,7 @@ const LOCAL_SERVER_UTM_SOURCE = "prowler-local-server";
 const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",
   [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
+  [CLOUD_UPGRADE_FEATURE.AMAZON_S3]: "amazon-s3",
   [CLOUD_UPGRADE_FEATURE.API_KEYS]: "api-keys",
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "organization",
   [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: "azure-organization",
@@ -38,6 +39,7 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
+  [CLOUD_UPGRADE_FEATURE.REALTIME]: "realtime",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
   [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: "saml-domains",
 } as const satisfies Record<CloudUpgradeFeature, string>;
@@ -64,6 +66,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Manage alert rules from one place",
     ],
     primaryCta: "Create Alerts in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.AMAZON_S3]: {
+    title: "Export Findings to Amazon S3",
+    description:
+      "Send every scan's results to your own S3 buckets automatically.",
+    benefits: [
+      "Export findings after each scan",
+      "Choose the providers and output folder per bucket",
+      "Authenticate with an IAM role or static credentials",
+    ],
+    primaryCta: "Export to S3 in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.API_KEYS]: {
     title: "Automate Prowler with API Keys",
@@ -177,6 +190,17 @@ export const CLOUD_UPGRADE_CONTENT = {
     ],
     primaryCta: "Start a Prowler Cloud Trial",
   },
+  [CLOUD_UPGRADE_FEATURE.REALTIME]: {
+    title: "Catch Risky AWS Changes as They Happen",
+    description:
+      "Prowler Realtime watches CloudTrail and responds minutes after a change, not at the next scan.",
+    benefits: [
+      "Check each risky event against the resource it touched",
+      "Alert, propose a Terraform pull request, or fix it automatically",
+      "Review and revert every automatic fix",
+    ],
+    primaryCta: "Set Up Realtime in Prowler Cloud",
+  },
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: {
     title: "Configure Every Scan Once",
     description:
@@ -232,6 +256,7 @@ const PAID_PLAN_UPGRADE_UTM_CONTENT = {
   [PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]: "findings-preview",
   [PAID_PLAN_UPGRADE_FEATURE.REGISTRY]: "registry",
   [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: "report-download",
+  [PAID_PLAN_UPGRADE_FEATURE.S3_INTEGRATION]: "s3-integration",
 } as const satisfies Record<PaidPlanUpgradeFeature, string>;
 
 export const PAID_PLAN_UPGRADE_CONTENT = {
@@ -264,6 +289,16 @@ export const PAID_PLAN_UPGRADE_CONTENT = {
       "Share evidence with auditors and your team",
     ],
     primaryCta: "Upgrade to Download",
+  },
+  [PAID_PLAN_UPGRADE_FEATURE.S3_INTEGRATION]: {
+    title: "Export Findings to Amazon S3",
+    description: "Amazon S3 exports are included in Prowler Cloud paid plans.",
+    benefits: [
+      "Export findings after each scan",
+      "Choose the providers and output folder per bucket",
+      "Authenticate with an IAM role or static credentials",
+    ],
+    primaryCta: "Upgrade to Export to S3",
   },
 } as const satisfies Record<PaidPlanUpgradeFeature, CloudUpgradeContent>;
 

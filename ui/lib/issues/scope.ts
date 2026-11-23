@@ -5,7 +5,7 @@ export const ISSUE_SCOPE_KEYS = [
   "filter[provider_id__in]",
   "filter[provider_type__in]",
   "filter[provider_groups__in]",
-];
+] as const;
 
 export const pickIssueScope = (
   params: SearchParamsProps | undefined | null,

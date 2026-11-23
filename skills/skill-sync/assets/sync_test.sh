@@ -2,7 +2,7 @@
 # Unit tests for sync.sh
 # Run: ./skills/skill-sync/assets/sync_test.sh
 #
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 # Reason: Test functions are discovered and called dynamically via declare -F
 
 set -e
@@ -486,6 +486,63 @@ test_update_replaces_existing_section() {
         "Should update with new auto_invoke text" && \
     assert_file_not_contains "$TEST_DIR/ui/AGENTS.md" "Testing UI components" \
         "Should remove old auto_invoke text"
+}
+
+test_update_replaces_existing_h2_section() {
+    # Component AGENTS.md files use "## Auto-invoke Skills" (H2)
+    cat > "$TEST_DIR/ui/AGENTS.md" << 'EOF'
+# UI AGENTS
+
+> **Skills Reference**: For detailed patterns, use these skills:
+> - [`mock-ui-skill`](../skills/mock-ui-skill/SKILL.md) - Mock UI patterns
+
+## Auto-invoke Skills
+
+When performing these actions, ALWAYS invoke the corresponding skill FIRST:
+
+| Action | Skill |
+|--------|-------|
+| Stale action | `mock-ui-skill` |
+
+## CRITICAL RULES
+
+UI rules here.
+EOF
+
+    run_sync > /dev/null
+
+    local count
+    count=$(grep -cE "^###? Auto-invoke Skills" "$TEST_DIR/ui/AGENTS.md")
+    assert_equals "1" "$count" "Should keep exactly one Auto-invoke section" && \
+    assert_file_contains "$TEST_DIR/ui/AGENTS.md" "## Auto-invoke Skills" \
+        "Should keep the H2 heading level" && \
+    assert_file_not_contains "$TEST_DIR/ui/AGENTS.md" "### Auto-invoke Skills" \
+        "Should not switch the heading to H3" && \
+    assert_file_contains "$TEST_DIR/ui/AGENTS.md" "| Testing UI components | \`mock-ui-skill\` |" \
+        "Should write the current auto_invoke rows" && \
+    assert_file_not_contains "$TEST_DIR/ui/AGENTS.md" "Stale action" \
+        "Should drop stale rows" && \
+    assert_file_contains "$TEST_DIR/ui/AGENTS.md" "## CRITICAL RULES" \
+        "Should preserve content after the section"
+}
+
+test_generate_inserts_after_described_skills_reference() {
+    # Skills Reference lines often end with a description after the link
+    cat > "$TEST_DIR/api/AGENTS.md" << 'EOF'
+# API AGENTS
+
+> **Skills Reference**: For detailed patterns, use these skills:
+> - [`mock-api-skill`](../skills/mock-api-skill/SKILL.md) - Mock API patterns
+
+## CRITICAL RULES
+
+API rules here.
+EOF
+
+    run_sync > /dev/null
+
+    assert_file_contains "$TEST_DIR/api/AGENTS.md" "| Testing API endpoints | \`mock-api-skill\` |" \
+        "Should insert the Auto-invoke table after a described Skills Reference"
 }
 
 # =============================================================================
