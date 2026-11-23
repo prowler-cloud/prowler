@@ -93,6 +93,38 @@ describe("executeRegistryArtifactAddition", () => {
 
   it.each([
     [
+      "prowler_upgrade_required",
+      "It needs a newer Prowler version than this deployment runs. It will install once the deployment is upgraded.",
+    ],
+    [
+      "access_required",
+      "Needs approved access in the Prowler Registry. Once approved, it installs with that account's Registry API key.",
+    ],
+    [
+      "dependency_access_required",
+      "It depends on another Prowler Registry artifact that your Registry API key cannot install.",
+    ],
+    ["artifact_yanked", "The artifact could not be installed."],
+    [null, "The artifact could not be installed."],
+  ])("explains a task refusal with code %j", async (code, message) => {
+    // Given
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "ready",
+      result: {
+        installed: false,
+        error: "Private diagnostic: /srv/registry/customer",
+        code,
+      },
+    });
+    // When
+    const outcome = await executeRegistryArtifactAddition(artifactInput);
+    // Then
+    expect(outcome).toEqual({ status: "refused", message });
+    expect(confirmRegistryArtifactAdditionMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
       "an otherwise valid result with an extra field",
       { installed: true, error: null, reason: "private deployment detail" },
     ],

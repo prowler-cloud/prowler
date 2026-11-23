@@ -2,6 +2,7 @@ import { permissionFormFields } from "@/lib";
 
 const hiddenOutsideCloudFields = [
   "manage_billing",
+  "manage_prowler_realtime",
   "manage_alerts",
   "manage_lighthouse_ai_configuration",
   "manage_registry",

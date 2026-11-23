@@ -1,0 +1,39 @@
+{
+  "Provider": "azure",
+  "CheckID": "databricks_workspace_uses_private_endpoint",
+  "CheckTitle": "Databricks workspace has an approved private endpoint connection",
+  "CheckType": [],
+  "ServiceName": "databricks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.databricks/workspaces",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure Databricks workspaces** are checked for at least one **private endpoint** connection (Azure Private Link) in the `Approved` state, for any workspace sub-resource such as `databricks_ui_api` (front-end or back-end) or `browser_authentication`. `Pending`, `Rejected` and `Disconnected` connections carry no traffic and do not count.",
+  "Risk": "Without an approved private endpoint, users, tools and clusters reach the workspace over its public endpoint:\n- **Confidentiality**: notebook, API and token traffic crosses the internet\n- **Exposure**: public access must stay on, so leaked tokens work from anywhere IP access lists allow\n- **Control**: the traffic bypasses your VNet, so its NSGs and firewalls cannot filter it",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/concepts/privatelink-concepts",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/front-end/front-end-private-connect",
+    "https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network private-endpoint create --name <private_endpoint_name> --resource-group <resource_group> --vnet-name <vnet_name> --subnet <subnet_name> --private-connection-resource-id <workspace_resource_id> --group-id databricks_ui_api --connection-name <connection_name>",
+      "NativeIaC": "```bicep\n// Private endpoint for an Azure Databricks workspace\nresource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  properties: {\n    subnet: { id: '<subnet_id>' }\n    privateLinkServiceConnections: [\n      {\n        name: '<example_resource_name>'\n        properties: {\n          privateLinkServiceId: '<workspace_resource_id>'\n          groupIds: [ 'databricks_ui_api' ] // CRITICAL: connects the workspace through the private endpoint\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the Databricks workspace and go to Settings > Networking\n2. Select the Private endpoint connections tab and click + Private endpoint\n3. Choose the virtual network and subnet, select the target sub-resource databricks_ui_api, and enable private DNS integration\n4. Approve the connection if it shows Pending",
+      "Terraform": "```hcl\nresource \"azurerm_private_endpoint\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<resource_group>\"\n  subnet_id           = azurerm_subnet.<example_resource_name>.id\n\n  private_service_connection {\n    name                           = \"<example_resource_name>\"\n    private_connection_resource_id = azurerm_databricks_workspace.<example_resource_name>.id\n    subresource_names              = [\"databricks_ui_api\"] # CRITICAL: connects the workspace through the private endpoint\n    is_manual_connection           = false\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Connect Databricks workspaces to your virtual network through an **approved private endpoint** with **private DNS** integration. Private Link needs the **Premium** plan, **VNet injection** and **secure cluster connectivity**. Then disable **public network access** so the private endpoint is the only way in.",
+      "Url": "https://hub.prowler.com/check/databricks_workspace_uses_private_endpoint"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

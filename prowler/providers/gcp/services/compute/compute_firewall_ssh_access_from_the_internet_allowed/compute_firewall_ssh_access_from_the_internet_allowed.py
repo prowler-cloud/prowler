@@ -12,6 +12,10 @@ class compute_firewall_ssh_access_from_the_internet_allowed(Check):
                 location=compute_client.region,
             )
             report.status = "PASS"
+            if firewall.disabled:
+                report.status_extended = f"Firewall {firewall.name} is disabled and does not expose port 22 (SSH) to the internet."
+                findings.append(report)
+                continue
             report.status_extended = f"Firewall {firewall.name} does not expose port 22 (SSH) to the internet."
             opened_port = False
             for rule in firewall.allowed_rules:
@@ -33,7 +37,10 @@ class compute_firewall_ssh_access_from_the_internet_allowed(Check):
                                 opened_port = True
                                 break
             if (
-                "0.0.0.0/0" in firewall.source_ranges
+                (
+                    "0.0.0.0/0" in firewall.source_ranges
+                    or "::/0" in firewall.source_ranges
+                )
                 and firewall.direction == "INGRESS"
                 and opened_port
             ):

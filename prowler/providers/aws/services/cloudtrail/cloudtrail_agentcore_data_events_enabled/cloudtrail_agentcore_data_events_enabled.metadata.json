@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_agentcore_data_events_enabled",
+  "CheckTitle": "CloudTrail logs Amazon Bedrock AgentCore data events",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
+  "Description": "**Actively logging CloudTrail trails** select **Amazon Bedrock AgentCore data events** through advanced event selectors for every AgentCore resource type the account runs: memories, gateways, agent runtimes, and custom code interpreters and browsers.\n\nAgentCore data events are **not logged by default** and a basic event selector cannot select them.",
+  "Risk": "A trail limited to **management events** records which agents, memories and gateways exist, never who invoked them or what they returned.\n\nAn agent driven into a **confused-deputy** or exfiltration path, or a **poisoned memory**, leaves no audit trail, so a session cannot be reconstructed and detections built on invocation activity never fire.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/enabling-cloudtrail-data-event-logging.html",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/understanding-gateway-cloudtrail-log-entries.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: log AgentCore data events on an actively logging trail\nResources:\n  ExampleTrail:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      TrailName: <example_resource_name>\n      S3BucketName: <example_resource_name>\n      IsLogging: true\n      AdvancedEventSelectors:\n        - Name: Management events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Management\n        - Name: AgentCore Runtime data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type          # CRITICAL: one resources.type per selector\n              Equals:\n                - AWS::BedrockAgentCore::Runtime\n        - Name: AgentCore Memory data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type\n              Equals:\n                - AWS::BedrockAgentCore::Memory\n        - Name: AgentCore Gateway data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type\n              Equals:\n                - AWS::BedrockAgentCore::Gateway\n```",
+      "Other": "1. In the AWS Console, open CloudTrail and select a trail that is actively logging\n2. Record the trail's CURRENT selectors first, both management and data events. Applying advanced event selectors REPLACES every selector on the trail, including basic data event selectors for S3, Lambda or DynamoDB, so anything not carried into the new configuration stops being logged\n3. Edit the trail's Data events and choose the AgentCore data event types you run, for example Bedrock-AgentCore Runtime, Memory, Gateway, Code-Interpreter-Custom and Browser-Custom\n4. Re-create every selector you recorded in step 2 alongside them, so the saved configuration is the complete intended state rather than only the AgentCore additions\n5. Leave the log selector template on Log all events for each type; an eventName, readOnly or resources.ARN filter narrows coverage and this check reports it as undetermined\n6. Save changes and confirm the trail remains in logging state, then re-check that the selectors you carried over are still present",
+      "Terraform": "```hcl\n# Terraform: log AgentCore data events on an actively logging trail\nresource \"aws_cloudtrail\" \"example_resource\" {\n  name           = \"example_resource\"\n  s3_bucket_name = \"example_resource\"\n\n  advanced_event_selector {\n    name = \"Management events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Management\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Runtime data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"              # CRITICAL: one resources.type per selector\n      equals = [\"AWS::BedrockAgentCore::Runtime\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Memory data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"\n      equals = [\"AWS::BedrockAgentCore::Memory\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Gateway data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"\n      equals = [\"AWS::BedrockAgentCore::Gateway\"]\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Add an **advanced event selector** with `eventCategory` `Data` for each `AWS::BedrockAgentCore::*` resource type you run, one `resources.type` per selector, on a multi-Region trail. Data events are **billed per event**, so size the trail first. Gateway records redact tool arguments and results, so pair them with AgentCore observability for the reasoning trace.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_agentcore_data_events_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudtrail_bedrock_logging_enabled",
+    "cloudtrail_multi_region_enabled_logging_management_events"
+  ],
+  "Notes": "Required types come from the AgentCore inventory: memories, gateways, agent runtimes (Runtime or RuntimeEndpoint), and account-owned code interpreters and browsers. With no AgentCore resources the check reports nothing unless unused services are scanned, in which case any AgentCore type passes. Coverage is account-wide, so a single-Region trail counts for every Region. Unlike `cloudtrail_bedrock_logging_enabled`, a selector that also filters on `eventName`, `readOnly`, `resources.ARN` or any other field is reported MANUAL, not PASS, because the configuration cannot show what it leaves unlogged."
+}

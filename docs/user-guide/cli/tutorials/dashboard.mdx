@@ -24,7 +24,13 @@ Make sure you update the `/your/local/dir/prowler-output` to match the path that
  **Remember that the `dashboard` server is not authenticated. If you expose it to the Internet, do it at your own risk.**
 
 </Note>
-The banner and additional info about the dashboard will be shown on your console: <img src="/images/cli/dashboard/dashboard-banner.png" />
+The console shows the dashboard version, the directory the CSV files are loaded from, the local URL once the server is listening, and a short note about bringing your findings to Prowler Cloud. Set `PROWLER_NO_PROMOTIONS=1` to omit that note:
+
+```sh
+PROWLER_NO_PROMOTIONS=1 prowler dashboard
+```
+
+Set `NO_COLOR=1` to print the startup output without colors.
 
 ## Overview Page
 

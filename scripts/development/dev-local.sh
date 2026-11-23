@@ -104,6 +104,27 @@ require_uv() {
 }
 
 services_up() {
+  # Create _data/logs before Docker runs: on first launch, compose
+  # bind-mounts create ./_data as root, after which this user can no
+  # longer mkdir _data/logs and `make dev` fails (see #13082).
+  # Creating it first keeps it user-owned; the later mkdir in all_run
+  # stays as an idempotent safety net.
+  # Anyone who already ran the broken version has a root-owned _data,
+  # so this mkdir fails: say how to fix it instead of leaving the bare
+  # "Permission denied". The chown is deliberately non-recursive, since
+  # _data/postgres and _data/neo4j need to keep their container owners.
+  # Keep mkdir's own error visible: a full or read-only filesystem fails
+  # here too, and the chown hint would not fix that. Only suggest the
+  # chown when _data exists and is not owned by the current user.
+  if ! mkdir -p "$REPO_ROOT/_data/logs"; then
+    if [ -e "$REPO_ROOT/_data" ] && [ ! -O "$REPO_ROOT/_data" ]; then
+      # Show the absolute path shell-escaped so the command stays safe
+      # to copy-paste even when the repo path holds spaces or shell
+      # metacharacters.
+      warn "_data is owned by root (created by Docker). Run: sudo chown \"${USER:-$(id -un)}\" $(printf '%q' "$REPO_ROOT/_data")"
+    fi
+    exit 1
+  fi
   log "Starting postgres + valkey + neo4j via Docker (waits for healthchecks)..."
   "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --wait postgres valkey neo4j
   ok "Services ready: pg:${POSTGRES_PORT} / valkey:${VALKEY_PORT} / neo4j:${NEO4J_PORT} / neo4j-http:${NEO4J_HTTP_PORT}"

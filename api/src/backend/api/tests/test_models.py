@@ -371,6 +371,22 @@ class TestSAMLConfigurationModel:
         assert "metadata_xml" in errors
         assert "There is a problem with your metadata." in errors["metadata_xml"][0]
 
+    @pytest.mark.parametrize("entity_id", ["github", "google", "saml", "GitHub"])
+    def test_entity_id_naming_a_social_provider_fails(self, tenants_fixture, entity_id):
+        config = SAMLConfiguration(
+            email_domain="collision.com",
+            metadata_xml=self.VALID_METADATA.replace(
+                "entityID='TEST'", f"entityID='{entity_id}'"
+            ),
+            tenant=tenants_fixture[0],
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            config.save()
+
+        assert "metadata_xml" in exc_info.value.message_dict
+        assert not SocialApp.objects.filter(provider_id=entity_id).exists()
+
 
 @pytest.mark.django_db
 class TestProviderComplianceScoreModel:

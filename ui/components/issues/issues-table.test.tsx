@@ -18,7 +18,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib", () => ({ getPaginationInfo: vi.fn() }));
 vi.mock("@/contexts", () => ({ useFilterTransitionOptional: () => null }));
-vi.mock("@/actions/issues", () => ({
+vi.mock("@/actions/issues/issues", () => ({
   getIssue,
   getIssueFindings: async () => [],
   getIssueNotes: async () => [],

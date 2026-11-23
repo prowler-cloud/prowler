@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudCog, Loader2, Rocket } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -53,7 +53,6 @@ import {
 } from "@/types/schedules";
 
 import { scanAliasSchema } from "./scan-alias-validation";
-import { getScanJobsTab } from "./scans.utils";
 import {
   SAVE_SCHEDULE_STATUS,
   saveScheduleWithInitialScan,
@@ -107,7 +106,6 @@ function LaunchScanForm({
   isScanLimitReached,
 }: LaunchScanFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const form = useForm<LaunchScanFormValues>({
     resolver: zodResolver(launchScanSchema),
     defaultValues: { providerId: "", scanAlias: "" },
@@ -134,8 +132,6 @@ function LaunchScanForm({
 
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const providerId = useWatch({ control: form.control, name: "providerId" });
-  const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
-  const shouldShowActiveTabAction = activeTab !== SCAN_JOBS_TAB.ACTIVE;
   const disconnectedProviderIds = providers
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
@@ -225,11 +221,12 @@ function LaunchScanForm({
     toast({
       title: "Scan launched",
       description: "The scan was launched successfully.",
-      action: shouldShowActiveTabAction ? (
-        <ToastAction altText="View scan in progress" asChild>
-          <Link href="/scans?tab=active">View scan</Link>
+      // Findings are stored as the scan runs, so they are the next stop.
+      action: (
+        <ToastAction altText="View findings" asChild>
+          <Link href="/findings">View findings</Link>
         </ToastAction>
-      ) : undefined,
+      ),
     });
     onClose();
     router.refresh();
@@ -269,8 +266,13 @@ function LaunchScanForm({
               ? "The schedule was saved and the initial scan was launched."
               : "The scan schedule was saved successfully.",
         // Over the limit, the plans unblock the scan; the schedule would not.
+        // A running scan already stores findings; a schedule only lists on Scans.
         action: result.usageLimited ? (
           usageLimitToastAction()
+        ) : launched ? (
+          <ToastAction altText="View findings" asChild>
+            <Link href="/findings">View findings</Link>
+          </ToastAction>
         ) : (
           <ToastAction altText="View scheduled scans" asChild>
             <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>

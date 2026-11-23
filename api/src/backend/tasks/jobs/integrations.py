@@ -8,7 +8,11 @@ from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
 from api.models import Finding, Integration, Provider
 from api.rls import Tenant
-from api.utils import initialize_prowler_integration, initialize_prowler_provider
+from api.utils import (
+    declared_provider_secret,
+    initialize_prowler_integration,
+    initialize_prowler_provider,
+)
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.conf import settings
@@ -198,7 +202,7 @@ def get_security_hub_client_from_integration(
                 is_connected=False, error="No provider associated with this integration"
             )
         provider_uid = provider_relationship.provider.uid
-        provider_secret = provider_relationship.provider.secret.secret
+        provider_secret = declared_provider_secret(provider_relationship.provider)
 
     credentials = (
         integration.credentials if integration.credentials else provider_secret
@@ -318,6 +322,9 @@ def upload_security_hub_integration(
                     try:
                         batch_number = 0
                         has_findings = False
+                        delivery_incomplete = False
+                        security_hub_client = None
+                        total_findings_sent[integration.id] = 0
                         with rls_transaction(
                             tenant_id,
                             using=read_alias,
@@ -332,6 +339,8 @@ def upload_security_hub_integration(
                             )
 
                             for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+                                if not batch:
+                                    continue
                                 batch_number += 1
                                 has_findings = True
 
@@ -349,10 +358,16 @@ def upload_security_hub_integration(
                                     file_path="",
                                     file_extension="json",
                                 )
-                                asff_transformer.transform(transformed_findings)
 
                                 # Get the batch of ASFF findings
                                 batch_asff_findings = asff_transformer.data
+                                expected_asff_findings = sum(
+                                    finding.status != "MANUAL"
+                                    for finding in transformed_findings
+                                )
+                                if len(batch_asff_findings) != expected_asff_findings:
+                                    # ASFF catches errors and can return only a converted prefix.
+                                    delivery_incomplete = True
 
                                 if batch_asff_findings:
                                     # Create Security Hub client for first batch or reuse existing
@@ -366,6 +381,7 @@ def upload_security_hub_integration(
                                         )
 
                                         if not connected:
+                                            delivery_incomplete = True
                                             if isinstance(
                                                 security_hub.error,
                                                 SecurityHubNoEnabledRegionsError,
@@ -394,6 +410,12 @@ def upload_security_hub_integration(
                                             )
                                         )
 
+                                    # Count the actual payload after the SDK applies filtering.
+                                    expected_findings = sum(
+                                        len(findings)
+                                        for findings in security_hub_client._findings_per_region.values()
+                                    )
+
                                     # Send this batch to Security Hub
                                     try:
                                         findings_sent = security_hub_client.batch_send_to_security_hub()
@@ -401,11 +423,15 @@ def upload_security_hub_integration(
                                             findings_sent
                                         )
 
+                                        if findings_sent != expected_findings:
+                                            delivery_incomplete = True
+
                                         if findings_sent > 0:
                                             logger.debug(
                                                 f"Sent batch {batch_number} with {findings_sent} findings to Security Hub"
                                             )
                                     except Exception as batch_error:
+                                        delivery_incomplete = True
                                         logger.error(
                                             f"Failed to send batch {batch_number} to Security Hub: {str(batch_error)}"
                                         )
@@ -433,18 +459,19 @@ def upload_security_hub_integration(
                     )
                     integration_executions += 1
                 elif security_hub_client:
-                    if total_findings_sent[integration.id] > 0:
+                    if not delivery_incomplete:
                         logger.info(
                             f"Successfully sent {total_findings_sent[integration.id]} total findings to Security Hub via integration {integration.id}"
                         )
                         integration_executions += 1
                     else:
                         logger.warning(
-                            f"No findings were sent to Security Hub via integration {integration.id}"
+                            f"Incomplete finding delivery to Security Hub via integration {integration.id}; "
+                            f"accepted {total_findings_sent[integration.id]} findings"
                         )
 
                     # Archive previous findings if configured to do so
-                    if integration.configuration.get(
+                    if not delivery_incomplete and integration.configuration.get(
                         "archive_previous_findings", False
                     ):
                         logger.info(
