@@ -24,6 +24,9 @@ class Compute(GCPService):
         self.instance_groups = []
         self.images = []
         self.snapshots = []
+        # {(project, "zones"|"regions", location): {disk name: sourceImage}},
+        # or None when that listing failed.
+        self._disk_images_cache = {}
         self._get_regions()
         self._get_projects()
         self._get_url_maps()
@@ -31,7 +34,7 @@ class Compute(GCPService):
         self._get_zones()
         self.__threading_call__(self._get_instances, self.zones)
         self._get_networks()
-        self.__threading_call__(self._get_subnetworks, self.regions)
+        self._get_subnetworks()
         self._get_firewalls()
         self.__threading_call__(self._get_addresses, self.regions)
         self.__threading_call__(self._get_regional_instance_groups, self.regions)
@@ -120,14 +123,24 @@ class Compute(GCPService):
                     )
 
                     for instance in response.get("items", []):
-                        public_ip = False
+                        public_ip = public_ipv6 = False
                         network_interfaces_raw = instance.get("networkInterfaces", [])
+                        (
+                            boot_image,
+                            boot_image_project,
+                            boot_image_lookup_failed,
+                        ) = self._boot_image(
+                            project_id, zone, instance.get("disks", [])
+                        )
 
                         network_interfaces = []
                         for interface in network_interfaces_raw:
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
+                            for config in interface.get("ipv6AccessConfigs", []):
+                                if config.get("externalIpv6"):
+                                    public_ipv6 = True
 
                             network_interfaces.append(
                                 NetworkInterface(
@@ -152,6 +165,7 @@ class Compute(GCPService):
                                 zone=zone,
                                 region=zone.rsplit("-", 1)[0],
                                 public_ip=public_ip,
+                                public_ipv6=public_ipv6,
                                 metadata=instance.get("metadata", {}),
                                 shielded_enabled_vtpm=instance.get(
                                     "shieldedInstanceConfig", {}
@@ -208,6 +222,9 @@ class Compute(GCPService):
                                 on_host_maintenance=instance.get("scheduling", {}).get(
                                     "onHostMaintenance", "MIGRATE"
                                 ),
+                                boot_image=boot_image,
+                                boot_image_project=boot_image_project,
+                                boot_image_lookup_failed=boot_image_lookup_failed,
                             )
                         )
 
@@ -250,30 +267,41 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def _get_subnetworks(self, region):
+    def _get_subnetworks(self):
         for project_id in self.project_ids:
             try:
-                request = self.client.subnetworks().list(
-                    project=project_id, region=region
+                # Partial success keeps readable regions when another is unreachable
+                request = self.client.subnetworks().aggregatedList(
+                    project=project_id, returnPartialSuccess=True
                 )
                 while request is not None:
                     response = request.execute(
                         http=self.__get_AuthorizedHttp_client__(),
                         num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
-                    for subnet in response.get("items", []):
-                        self.subnets.append(
-                            Subnet(
-                                name=subnet["name"],
-                                id=subnet["id"],
-                                project_id=project_id,
-                                flow_logs=subnet.get("enableFlowLogs", False),
-                                network=subnet["network"].split("/")[-1],
-                                region=region,
-                            )
+                    for unreachable in response.get("unreachables", []):
+                        logger.error(
+                            f"{project_id} -- Subnetworks scope unreachable: {unreachable}"
                         )
+                    for scope, scoped_item in response.get("items", {}).items():
+                        region = scope.split("/")[-1]
+                        if scoped_item.get("warning", {}).get("code") == "UNREACHABLE":
+                            logger.error(
+                                f"{project_id} -- Subnetworks scope unreachable: {scope}"
+                            )
+                        for subnet in scoped_item.get("subnetworks", []):
+                            self.subnets.append(
+                                Subnet(
+                                    name=subnet["name"],
+                                    id=subnet["id"],
+                                    project_id=project_id,
+                                    flow_logs=subnet.get("enableFlowLogs", False),
+                                    network=subnet["network"].split("/")[-1],
+                                    region=region,
+                                )
+                            )
 
-                    request = self.client.subnetworks().list_next(
+                    request = self.client.subnetworks().aggregatedList_next(
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
@@ -304,7 +332,7 @@ class Compute(GCPService):
                             )
                         )
 
-                    request = self.client.subnetworks().list_next(
+                    request = self.client.addresses().list_next(
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
@@ -327,6 +355,7 @@ class Compute(GCPService):
                                 source_ranges=firewall.get("sourceRanges", []),
                                 direction=firewall["direction"],
                                 allowed_rules=firewall.get("allowed", []),
+                                disabled=firewall.get("disabled", False),
                                 project_id=project_id,
                             )
                         )
@@ -392,6 +421,13 @@ class Compute(GCPService):
     def _describe_backend_service(self):
         for balancer in self.load_balancers:
             if balancer.service:
+                # Global backend buckets have no logConfig and log every request
+                if (
+                    "/backendBuckets/" in balancer.service
+                    and "/regions/" not in balancer.service
+                ):
+                    balancer.logging = True
+                    continue
                 try:
                     backend_service_name = balancer.service.split("/")[-1]
                     is_regional = "/regions/" in balancer.service
@@ -576,6 +612,75 @@ class Compute(GCPService):
             if (mig.project_id, mig.name) in load_balanced_groups:
                 mig.load_balanced = True
 
+    def _boot_image(self, project_id: str, zone: str, attached_disks: list) -> tuple:
+        """``(image name, image project, lookup failed)`` of the instance's boot disk.
+
+        The instance only links its disks; the source image lives on the disk
+        resource, so a zone's (or, for a regional disk, a region's) disks are
+        listed once and reused for every instance there. ``lookup failed`` is
+        true when that listing failed, which is not the same as a disk that was
+        not created from an image.
+        """
+        boot = next((d for d in attached_disks if d.get("boot")), None)
+        if not boot or not boot.get("source"):
+            return "", "", False
+        source = boot["source"]
+        images = self._disk_images(project_id, *self._disk_scope(source, zone))
+        if images is None:
+            return "", "", True
+        source_image = images.get(source.rsplit("/", 1)[-1], "")
+        if not source_image:
+            return "", "", False
+        parts = source_image.split("/")
+        image_project = (
+            parts[parts.index("projects") + 1] if "projects" in parts else ""
+        )
+        return parts[-1], image_project, False
+
+    @staticmethod
+    def _disk_scope(source: str, zone: str) -> tuple:
+        """``("regions", region)`` for a regional disk URL, else ``("zones", zone)``."""
+        parts = source.split("/")
+        if "regions" in parts and parts.index("regions") + 1 < len(parts):
+            return "regions", parts[parts.index("regions") + 1]
+        return "zones", zone
+
+    def _disk_images(self, project_id: str, scope: str, location: str):
+        """``{disk name: sourceImage URL}`` for one project and zone or region, cached.
+
+        ``None`` when the listing failed, even part-way: a partial map would
+        let an instance pass without its image being matched.
+        """
+        cache = self._disk_images_cache
+        key = (project_id, scope, location)
+        if key in cache:
+            return cache[key]
+        if scope == "regions":
+            disks, where = self.client.regionDisks(), {"region": location}
+        else:
+            disks, where = self.client.disks(), {"zone": location}
+        images = {}
+        try:
+            request = disks.list(project=project_id, **where)
+            while request is not None:
+                response = request.execute(
+                    http=self.__get_AuthorizedHttp_client__(),
+                    num_retries=DEFAULT_RETRY_ATTEMPTS,
+                )
+                for disk in response.get("items", []):
+                    if disk.get("sourceImage"):
+                        images[disk["name"]] = disk["sourceImage"]
+                request = disks.list_next(
+                    previous_request=request, previous_response=response
+                )
+        except Exception as error:
+            logger.error(
+                f"{project_id}/{location} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            images = None
+        cache[key] = images
+        return images
+
     def _get_images(self) -> None:
         for project_id in self.project_ids:
             try:
@@ -693,6 +798,8 @@ class Instance(BaseModel):
     zone: str
     region: str
     public_ip: bool
+    #: An external IPv6 address on any interface.
+    public_ipv6: bool = False
     project_id: str
     metadata: dict
     shielded_enabled_vtpm: bool
@@ -709,6 +816,11 @@ class Instance(BaseModel):
     network_interfaces: list[NetworkInterface] = []
     status: str = "RUNNING"
     on_host_maintenance: str = "MIGRATE"
+    #: Name and project of the image the boot disk was created from.
+    boot_image: str = ""
+    boot_image_project: str = ""
+    #: The boot disk could not be listed, so the image is unknown, not absent.
+    boot_image_lookup_failed: bool = False
 
 
 class Network(BaseModel):
@@ -742,6 +854,7 @@ class Firewall(BaseModel):
     source_ranges: list
     direction: str
     allowed_rules: list
+    disabled: bool = False
     project_id: str
 
 

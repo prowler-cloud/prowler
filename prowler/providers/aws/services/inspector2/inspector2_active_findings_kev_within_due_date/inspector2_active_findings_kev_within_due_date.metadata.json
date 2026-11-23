@@ -38,5 +38,5 @@
   "RelatedTo": [
     "inspector2_active_findings_no_known_exploited_vulnerabilities"
   ],
-  "Notes": ""
+  "Notes": "By default only active findings with a public exploit (`exploitAvailable`) are checked against the KEV catalog, which keeps the lookup fast on accounts with many findings. Set `inspector2_kev_include_findings_without_exploit` to `true` in the scan configuration to check every active finding."
 }

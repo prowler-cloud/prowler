@@ -160,18 +160,21 @@ export function getNavigationConfig({
               } as const,
             ]
           : []),
-        ...(isCloudEnvironment
-          ? [
-              {
-                kind: NAVIGATION_ITEM_KIND.LINK,
-                href: "/realtime",
-                label: "Realtime",
-                icon: Radar,
-                active: isRouteActive(pathname, "/realtime"),
-                highlight: true,
-              } as const,
-            ]
-          : []),
+        isCloudEnvironment
+          ? {
+              kind: NAVIGATION_ITEM_KIND.LINK,
+              href: "/realtime",
+              label: "Realtime",
+              icon: Radar,
+              active: isRouteActive(pathname, "/realtime"),
+              highlight: true,
+            }
+          : {
+              kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+              label: "Realtime",
+              icon: Radar,
+              cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REALTIME,
+            },
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/compliance",

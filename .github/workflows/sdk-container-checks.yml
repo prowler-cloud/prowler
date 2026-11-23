@@ -97,6 +97,7 @@ jobs:
             www.powershellgallery.com:443
             aka.ms:443
             cdn.powershellgallery.com:443
+            devopsgallerystorage.blob.core.windows.net:443
             _http._tcp.deb.debian.org:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             get.trivy.dev:443
