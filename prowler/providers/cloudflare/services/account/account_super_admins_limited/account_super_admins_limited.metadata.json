@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "account_super_admins_limited",
+  "CheckTitle": "Cloudflare account limits the number of Super Administrators",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Account",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare accounts** are assessed for the number of members holding the **Super Administrator - All Privileges** role, which is compared against a configurable maximum (`max_super_admins`, default 3).",
+  "Risk": "Each **Super Administrator** can manage members, API tokens, billing and every zone.\n- **Privilege escalation**: one compromised Super Administrator compromises the whole account\n- **Integrity**: more people can make unreviewed, account-wide changes\n- **Accountability**: broad privileges make actions harder to attribute and audit",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/manage-members/roles/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard as a Super Administrator\n2. Go to Manage Account > Members\n3. Review members with the Super Administrator - All Privileges role\n4. Edit each member that does not need full control and assign a scoped role (for example Administrator, DNS or Firewall)\n5. Keep at least two Super Administrators for break-glass access",
+      "Terraform": "```hcl\nresource \"cloudflare_account_member\" \"example\" {\n  account_id    = \"<ACCOUNT_ID>\"\n  email         = \"user@example.com\"\n  # Critical: assign a scoped role instead of Super Administrator\n  roles         = [\"<SCOPED_ROLE_ID>\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege** to account roles.\n- Keep **two or three** Super Administrators for redundancy\n- Grant scoped roles or domain-scoped policies to everyone else\n- Review role assignments regularly",
+      "Url": "https://hub.prowler.com/checks/cloudflare/account_super_admins_limited"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The maximum is configurable with `max_super_admins` in the Cloudflare section of config.yaml. Only accepted members are counted."
+}

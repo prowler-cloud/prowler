@@ -115,7 +115,7 @@ export async function addAWSProvider(
 
   // Fill static credentials
   await providersPage.fillStaticCredentials(staticCredentials);
-  await providersPage.clickNext();
+  await providersPage.submitConnectStep();
 
   // Scans specs launch their own scan. The setup helper should only leave a
   // connected provider behind so the suite does not spend CI capacity on a

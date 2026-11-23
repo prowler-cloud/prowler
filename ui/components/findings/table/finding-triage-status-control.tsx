@@ -1,27 +1,21 @@
 "use client";
 
-import { type ComponentProps, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/shadcn/select/select";
 import { useToast } from "@/components/shadcn/toast/use-toast";
-import { cn } from "@/lib/utils";
+import { TriageStatusPicker } from "@/components/shared/triage/triage-status-picker";
+import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
+import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_MODAL_STATUS_VALUES,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_STATUS,
-  FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageManualStatus,
   type FindingTriageModalStatus,
-  type FindingTriageStatus,
   type FindingTriageSummary,
   type FindingTriageUpdateHandler,
   getFindingTriageMuteInfoCopy,
@@ -29,89 +23,7 @@ import {
   isTriageStatusLocked,
 } from "@/types/findings-triage";
 
-type TriageStatusPickerSize = NonNullable<
-  ComponentProps<typeof SelectTrigger>["size"]
->;
-
-export const TRIAGE_STATUS_TEXT_CLASS = {
-  open: "text-text-error-primary",
-  under_review: "text-text-warning-primary",
-  remediating: "text-bg-data-info",
-  resolved: "text-bg-pass",
-  risk_accepted: "text-bg-pass",
-  false_positive: "text-text-neutral-secondary",
-  reopened: "text-text-error-primary",
-} as const satisfies Record<FindingTriageStatus, string>;
-
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
-export const MANUAL_PASS_NOTE_REQUIRED_COPY =
-  "Add a Triage Note explaining why this finding passes.";
-
-function TriageStatusPicker({
-  disabled,
-  size = "sm",
-  value,
-  statusValues,
-  showManualPassTooltip = false,
-  onValueChange,
-}: {
-  disabled: boolean;
-  size?: TriageStatusPickerSize;
-  value: FindingTriageStatus;
-  statusValues: readonly FindingTriageModalStatus[];
-  showManualPassTooltip?: boolean;
-  onValueChange: (status: FindingTriageModalStatus) => void;
-}) {
-  return (
-    <Select
-      value={value}
-      disabled={disabled}
-      onValueChange={(nextStatus) => {
-        if (statusValues.includes(nextStatus as FindingTriageModalStatus)) {
-          onValueChange(nextStatus as FindingTriageModalStatus);
-        }
-      }}
-    >
-      <SelectTrigger
-        aria-label="Triage status"
-        disabled={disabled}
-        size={size}
-        iconSize="sm"
-      >
-        <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[value])}>
-          {FINDING_TRIAGE_STATUS_LABELS[value]}
-        </span>
-      </SelectTrigger>
-      <SelectContent>
-        {statusValues.map((status) => {
-          const shouldExplainManualPass =
-            showManualPassTooltip && status === FINDING_TRIAGE_STATUS.RESOLVED;
-          return (
-            <SelectItem
-              key={status}
-              value={status}
-              aria-label={FINDING_TRIAGE_STATUS_LABELS[status]}
-            >
-              <span
-                className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[status])}
-              >
-                {FINDING_TRIAGE_STATUS_LABELS[status]}
-              </span>
-              {shouldExplainManualPass && (
-                <span
-                  className="text-text-neutral-secondary text-xs font-normal normal-case"
-                  aria-hidden="true"
-                >
-                  {MANUAL_PASS_NOTE_REQUIRED_COPY}
-                </span>
-              )}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
-}
 
 type TableStatusControlProps = {
   origin: typeof FINDING_TRIAGE_ORIGIN.TABLE;
@@ -183,11 +95,13 @@ export function FindingTriageStatusControl(
         previousStatus: triage.status,
         isMuted: triage.isMuted,
       });
-    } catch {
+    } catch (error) {
+      const isUsageLimited = error instanceof UsageLimitError;
       toast({
         variant: "destructive",
         title: "Could not update triage status.",
-        description: "Please try again.",
+        description: isUsageLimited ? USAGE_LIMIT_MESSAGE : "Please try again.",
+        ...(isUsageLimited && { action: usageLimitToastAction() }),
       });
     } finally {
       setIsTableUpdating(false);

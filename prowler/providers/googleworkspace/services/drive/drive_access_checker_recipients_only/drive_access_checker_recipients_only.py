@@ -27,7 +27,13 @@ class drive_access_checker_recipients_only(Check):
 
             access_checker = drive_client.policies.access_checker_suggestions
 
-            if access_checker == "RECIPIENTS_ONLY":
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so Access Checker cannot widen any share."
+                )
+            elif access_checker == "RECIPIENTS_ONLY":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Drive and Docs Access Checker in domain "

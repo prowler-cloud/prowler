@@ -20,15 +20,19 @@ import {
 } from "@/components/shadcn/radio-group/radio-group";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
+import {
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
 import {
   type ActionErrorResult,
   getActionErrorMessage,
   hasActionError,
+  isUsageLimitError,
 } from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -99,7 +103,7 @@ export function LaunchStep({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
 
   const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;
@@ -154,6 +158,9 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to launch scan",
         description: getActionErrorMessage(scanResult),
+        action: isUsageLimitError(scanResult)
+          ? usageLimitToastAction()
+          : undefined,
       });
       return;
     }
@@ -164,8 +171,8 @@ export function LaunchStep({
       title: "Scan launched",
       description: "The scan was launched successfully.",
       action: (
-        <ToastAction altText="Go to scans" asChild>
-          <Link href={`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`}>Go to scans</Link>
+        <ToastAction altText="Go to findings" asChild>
+          <Link href="/findings">Go to findings</Link>
         </ToastAction>
       ),
     });
@@ -191,6 +198,7 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to save scan schedule",
         description: result.message,
+        action: result.usageLimited ? usageLimitToastAction() : undefined,
       });
       return;
     }
@@ -198,10 +206,14 @@ export function LaunchStep({
     onClose();
 
     const launched = result.status === SAVE_SCHEDULE_STATUS.SAVED_AND_LAUNCHED;
-    const targetTab = launched ? SCAN_JOBS_TAB.ACTIVE : SCAN_JOBS_TAB.SCHEDULED;
-    const goToScans = (
+    // A running scan already stores findings; a schedule only lists on Scans.
+    const nextStepAction = launched ? (
+      <ToastAction altText="Go to findings" asChild>
+        <Link href="/findings">Go to findings</Link>
+      </ToastAction>
+    ) : (
       <ToastAction altText="Go to scans" asChild>
-        <Link href={`/scans?tab=${targetTab}`}>Go to scans</Link>
+        <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>Go to scans</Link>
       </ToastAction>
     );
 
@@ -209,7 +221,8 @@ export function LaunchStep({
       toast({
         title: "Scan schedule saved",
         description: `The schedule was saved, but the initial scan could not be launched: ${result.message}`,
-        action: goToScans,
+        // Over the limit, the plans unblock the scan; the scans page would not.
+        action: result.usageLimited ? usageLimitToastAction() : nextStepAction,
       });
       return;
     }
@@ -221,7 +234,7 @@ export function LaunchStep({
       description: launched
         ? "The schedule was saved and the initial scan was launched."
         : "The scan schedule was saved successfully.",
-      action: goToScans,
+      action: nextStepAction,
     });
   });
 

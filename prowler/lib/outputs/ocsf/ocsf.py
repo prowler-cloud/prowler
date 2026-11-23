@@ -27,7 +27,7 @@ from uuid6 import UUID
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
-from prowler.lib.outputs.utils import unroll_dict_to_list
+from prowler.lib.outputs.utils import is_plain_json, unroll_dict_to_list
 
 
 class OCSF(Output):
@@ -219,9 +219,8 @@ class OCSF(Output):
             if (
                 getattr(self, "_file_descriptor", None)
                 and not self._file_descriptor.closed
-                and self._data
             ):
-                if self._file_descriptor.tell() == 0:
+                if self._data and self._file_descriptor.tell() == 0:
                     self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
@@ -242,12 +241,13 @@ class OCSF(Output):
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 if self.close_file or self._from_cli:
-                    if self._file_descriptor.tell() != 1:
-                        self._file_descriptor.seek(
-                            self._file_descriptor.tell() - 1, os.SEEK_SET
-                        )
-                    self._file_descriptor.truncate()
-                    self._file_descriptor.write("]")
+                    if self._file_descriptor.tell() > 0:
+                        if self._file_descriptor.tell() != 1:
+                            self._file_descriptor.seek(
+                                self._file_descriptor.tell() - 1, os.SEEK_SET
+                            )
+                        self._file_descriptor.truncate()
+                        self._file_descriptor.write("]")
                     self._file_descriptor.close()
         except OSError:
             # Propagate unrecoverable I/O errors (e.g. ENOSPC) so the caller can
@@ -278,6 +278,12 @@ class OCSF(Output):
             if isinstance(obj, (list, tuple)):
                 return [_make_serializable(v) for v in obj]
             return obj
+
+        if is_plain_json(resource_metadata):
+            return {
+                "details": resource_details,
+                "metadata": resource_metadata,
+            }
 
         try:
             converted = _make_serializable(resource_metadata)

@@ -64,6 +64,35 @@ def init_parser(self):
             "M365Global",
             "M365China",
             "M365USGovernment",
+            "M365Custom",
         ],
-        help="Microsoft 365 region to be used, default is M365Global",
+        help="Microsoft 365 region to be used, default is M365Global. Use M365Custom with the endpoint arguments below for any other cloud",
     )
+    m365_regions_subparser.add_argument(
+        "--m365-authority-host",
+        help="Microsoft Entra authority host of the cloud, required with --region M365Custom",
+    )
+    m365_regions_subparser.add_argument(
+        "--m365-graph-endpoint",
+        help="Microsoft Graph endpoint of the cloud, required with --region M365Custom",
+    )
+
+
+def validate_arguments(arguments: argparse.Namespace) -> tuple[bool, str]:
+    """validate_arguments returns (True, "") if the custom cloud endpoint arguments can be used with the region"""
+    endpoints = {
+        "--m365-authority-host": arguments.m365_authority_host,
+        "--m365-graph-endpoint": arguments.m365_graph_endpoint,
+    }
+    if arguments.region == "M365Custom":
+        missing = [flag for flag, value in endpoints.items() if not value]
+        if missing:
+            return (False, f"--region M365Custom requires {', '.join(missing)}")
+    else:
+        used = [flag for flag, value in endpoints.items() if value]
+        if used:
+            return (
+                False,
+                f"{', '.join(used)} can only be used with --region M365Custom",
+            )
+    return (True, "")

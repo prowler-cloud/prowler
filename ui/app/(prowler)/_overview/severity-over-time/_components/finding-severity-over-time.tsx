@@ -20,10 +20,12 @@ import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
 interface FindingSeverityOverTimeProps {
   data: LineDataPoint[];
+  readOnly?: boolean;
 }
 
 export const FindingSeverityOverTime = ({
   data: initialData,
+  readOnly = false,
 }: FindingSeverityOverTimeProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -131,13 +133,15 @@ export const FindingSeverityOverTime = ({
 
   return (
     <>
-      <div className="mb-8 w-fit">
-        <TimeRangeSelector
-          value={timeRange}
-          onChange={handleTimeRangeChange}
-          isLoading={isLoading}
-        />
-      </div>
+      {!readOnly && (
+        <div className="mb-8 w-fit">
+          <TimeRangeSelector
+            value={timeRange}
+            onChange={handleTimeRangeChange}
+            isLoading={isLoading}
+          />
+        </div>
+      )}
       {error ? (
         <div
           role="alert"
@@ -152,7 +156,7 @@ export const FindingSeverityOverTime = ({
             lines={lines}
             height={400}
             xAxisInterval={getXAxisInterval()}
-            onPointClick={handlePointClick}
+            onPointClick={readOnly ? undefined : handlePointClick}
           />
         </div>
       )}

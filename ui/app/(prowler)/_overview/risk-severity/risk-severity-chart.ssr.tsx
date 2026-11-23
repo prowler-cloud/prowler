@@ -20,7 +20,7 @@ export const RiskSeverityChartSSR = async ({
   // bodies ({success, status}), so only a payload with attributes is data.
   if (!findingsBySeverity?.data?.attributes) {
     return (
-      <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+      <div className="flex min-h-[372px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
         <p className="text-zinc-400">Failed to load severity data</p>
       </div>
     );

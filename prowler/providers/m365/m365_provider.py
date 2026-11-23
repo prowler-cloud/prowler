@@ -6,6 +6,7 @@ from argparse import ArgumentTypeError
 from os import getenv
 from uuid import UUID
 
+from azure.core.credentials import TokenCredential
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
     CertificateCredential,
@@ -15,8 +16,13 @@ from azure.identity import (
     InteractiveBrowserCredential,
 )
 from colorama import Fore, Style
+from kiota_authentication_azure.azure_identity_authentication_provider import (
+    AzureIdentityAuthenticationProvider,
+)
 from msal import ConfidentialClientApplication
 from msgraph import GraphServiceClient
+from msgraph.graph_request_adapter import GraphRequestAdapter, options
+from msgraph_core import GraphClientFactory
 
 from prowler.config.config import (
     default_config_file_path,
@@ -127,6 +133,7 @@ class M365Provider(Provider):
         certificate_path: str = None,
         init_modules: bool = False,
         region: str = "M365Global",
+        region_endpoints: dict = None,
         config_content: dict = None,
         config_path: str = None,
         mutelist_path: str = None,
@@ -139,6 +146,7 @@ class M365Provider(Provider):
         Args:
             tenant_id (str): The M365 Active Directory tenant ID.
             region (str): The M365 region.
+            region_endpoints (dict): The endpoints of the M365Custom region. Keys: authority_host and graph.
             client_id (str): The M365 client ID.
             client_secret (str): The M365 client secret.
             config_path (str): The path to the configuration file.
@@ -178,7 +186,7 @@ class M365Provider(Provider):
         )
 
         logger.info("Checking if region is different than default one")
-        self._region_config = self.setup_region_config(region)
+        self._region_config = self.setup_region_config(region, region_endpoints)
 
         # Get the dict from the static credentials
         m365_credentials = None
@@ -189,6 +197,7 @@ class M365Provider(Provider):
                 client_secret=client_secret,
                 certificate_content=certificate_content,
                 certificate_path=certificate_path,
+                region_config=self._region_config,
             )
 
         # Set up the M365 session
@@ -210,6 +219,7 @@ class M365Provider(Provider):
             az_cli_auth,
             certificate_auth,
             self._session,
+            region_config=self._region_config,
         )
 
         # Set up PowerShell session credentials
@@ -220,6 +230,7 @@ class M365Provider(Provider):
             m365_credentials=m365_credentials,
             identity=self.identity,
             init_modules=init_modules,
+            region_config=self._region_config,
         )
 
         # Audit Config
@@ -351,24 +362,26 @@ class M365Provider(Provider):
                 )
 
     @staticmethod
-    def setup_region_config(region):
+    def setup_region_config(region, region_endpoints: dict = None):
         """
         Sets up the region configuration for the M365 provider.
 
         Args:
             region (str): The name of the region.
+            region_endpoints (dict): The endpoints of the M365Custom region. Keys: authority_host and graph.
 
         Returns:
             M365RegionConfig: The region configuration object.
 
         """
         try:
-            config = get_regions_config(region)
+            config = get_regions_config(region, region_endpoints)
             return M365RegionConfig(
                 name=region,
                 authority=config["authority"],
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
+                powershell=config.get("powershell"),
             )
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -388,6 +401,39 @@ class M365Provider(Provider):
             )
 
     @staticmethod
+    def get_credential_kwargs(region_config: M365RegionConfig) -> dict:
+        """Returns the azure-identity credential arguments for the region."""
+        credential_kwargs = {"authority": region_config.authority}
+        if region_config.name == "M365Custom":
+            # azure-identity only accepts a host with a port as an https:// URL
+            credential_kwargs["authority"] = f"https://{region_config.authority}"
+            # MSAL validates an authority host it does not know against the commercial cloud
+            credential_kwargs["disable_instance_discovery"] = True
+        return credential_kwargs
+
+    @staticmethod
+    def build_graph_client(
+        credentials: TokenCredential, region_config: M365RegionConfig = None
+    ) -> GraphServiceClient:
+        """
+        Builds a Microsoft Graph client for the region's Graph endpoint, M365Global when no region is given.
+
+        GraphServiceClient(credentials) alone always targets graph.microsoft.com.
+        """
+        if region_config is None:
+            region_config = M365Provider.setup_region_config("M365Global")
+        auth_provider = AzureIdentityAuthenticationProvider(
+            credentials, scopes=region_config.credential_scopes
+        )
+        # msgraph's default options carry the /me URL replacement and the SDK telemetry
+        http_client = GraphClientFactory.create_with_default_middleware(
+            host=region_config.base_url, options=options
+        )
+        return GraphServiceClient(
+            request_adapter=GraphRequestAdapter(auth_provider, client=http_client)
+        )
+
+    @staticmethod
     def setup_powershell(
         sp_env_auth: bool = False,
         certificate_auth: bool = False,
@@ -395,17 +441,28 @@ class M365Provider(Provider):
         m365_credentials: dict = {},
         identity: M365IdentityInfo = None,
         init_modules: bool = False,
+        region_config: M365RegionConfig = None,
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
         Args:
             sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            region_config (M365RegionConfig): The region configuration, M365Global when none is given.
 
         Returns:
             M365Credentials: Object containing the credentials for PowerShell operations.
         """
         logger.info("M365 provider: Setting up PowerShell session...")
         credentials = None
+
+        if region_config is None:
+            region_config = M365Provider.setup_region_config("M365Global")
+        # M365Custom has no PowerShell values, so the checks that need PowerShell are skipped
+        if not region_config.powershell:
+            logger.warning(
+                f"M365 provider: PowerShell is not available for region {region_config.name}. Checks that need it will be skipped."
+            )
+            return None
 
         if m365_credentials:
             credentials = M365Credentials(
@@ -445,7 +502,7 @@ class M365Provider(Provider):
         if credentials:
             if identity and credentials.certificate_content:
                 identity.identity_type = "Service Principal with Certificate"
-            test_session = M365PowerShell(credentials, identity)
+            test_session = M365PowerShell(credentials, identity, region_config)
             try:
                 if init_modules:
                     initialize_m365_powershell_modules()
@@ -518,6 +575,7 @@ class M365Provider(Provider):
 
         """
         logger.info("M365 provider: Setting up session...")
+        credential_kwargs = M365Provider.get_credential_kwargs(region_config)
         if not browser_auth:
             if sp_env_auth:
                 try:
@@ -547,6 +605,7 @@ class M365Provider(Provider):
                                 certificate_data=base64.b64decode(
                                     m365_credentials["certificate_content"]
                                 ),
+                                **credential_kwargs,
                             )
                         elif m365_credentials["certificate_path"]:
                             with open(
@@ -557,12 +616,14 @@ class M365Provider(Provider):
                                 tenant_id=m365_credentials["tenant_id"],
                                 client_id=m365_credentials["client_id"],
                                 certificate_data=certificate_data,
+                                **credential_kwargs,
                             )
                         else:
                             credentials = ClientSecretCredential(
                                 tenant_id=m365_credentials["tenant_id"],
                                 client_id=m365_credentials["client_id"],
                                 client_secret=m365_credentials["client_secret"],
+                                **credential_kwargs,
                             )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -599,6 +660,7 @@ class M365Provider(Provider):
                             tenant_id=getenv("AZURE_TENANT_ID"),
                             client_id=getenv("AZURE_CLIENT_ID"),
                             certificate_data=certificate_data,
+                            **credential_kwargs,
                         )
                     except ClientAuthenticationError as error:
                         logger.error(
@@ -624,8 +686,10 @@ class M365Provider(Provider):
                             exclude_shared_token_cache_credential=True,
                             # M365 Auth using PowerShell is not supported
                             exclude_powershell_credential=True,
+                            # Workload identity ignores the authority below and would sign in to AZURE_AUTHORITY_HOST
+                            exclude_workload_identity_credential=True,
                             # set Authority of a Microsoft Entra endpoint
-                            authority=region_config.authority,
+                            **credential_kwargs,
                         )
                     except ClientAuthenticationError as error:
                         logger.error(
@@ -658,7 +722,9 @@ class M365Provider(Provider):
                 )
         else:
             try:
-                credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
+                credentials = InteractiveBrowserCredential(
+                    tenant_id=tenant_id, **credential_kwargs
+                )
             except Exception as error:
                 logger.critical(
                     "Failed to retrieve M365 credentials using browser authentication"
@@ -680,6 +746,7 @@ class M365Provider(Provider):
         certificate_auth: bool = False,
         tenant_id: str = None,
         region: str = "M365Global",
+        region_endpoints: dict = None,
         raise_on_exception: bool = True,
         client_id: str = None,
         client_secret: str = None,
@@ -699,6 +766,7 @@ class M365Provider(Provider):
             certificate_auth (bool): Flag indicating whether to use certificate authentication.
             tenant_id (str): The M365 Active Directory tenant ID.
             region (str): The M365 region.
+            region_endpoints (dict): The endpoints of the M365Custom region. Keys: authority_host and graph.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             client_id (str): The M365 client ID.
             client_secret (str): The M365 client secret.
@@ -737,7 +805,7 @@ class M365Provider(Provider):
                 certificate_content,
                 certificate_path,
             )
-            region_config = M365Provider.setup_region_config(region)
+            region_config = M365Provider.setup_region_config(region, region_endpoints)
 
             # Get the dict from the static credentials
             m365_credentials = None
@@ -746,12 +814,14 @@ class M365Provider(Provider):
                     tenant_id=tenant_id,
                     client_id=client_id,
                     client_secret=client_secret,
+                    region_config=region_config,
                 )
             elif tenant_id and client_id and certificate_content:
                 m365_credentials = M365Provider.validate_static_credentials(
                     tenant_id=tenant_id,
                     client_id=client_id,
                     certificate_content=certificate_content,
+                    region_config=region_config,
                 )
 
             # Set up the M365 session
@@ -766,7 +836,7 @@ class M365Provider(Provider):
                 region_config,
             )
 
-            GraphServiceClient(credentials=session)
+            M365Provider.build_graph_client(session, region_config)
 
             logger.info("M365 provider: Connection to MSGraph successful")
 
@@ -777,6 +847,7 @@ class M365Provider(Provider):
                 az_cli_auth,
                 certificate_auth,
                 session,
+                region_config=region_config,
             )
 
             if not identity:
@@ -800,8 +871,10 @@ class M365Provider(Provider):
                 certificate_path,
                 m365_credentials,
                 identity,
+                region_config=region_config,
             )
-            logger.info("M365 provider: Connection to PowerShell successful")
+            if region_config.powershell:
+                logger.info("M365 provider: Connection to PowerShell successful")
 
             return Connection(is_connected=True)
 
@@ -967,6 +1040,7 @@ class M365Provider(Provider):
         az_cli_auth,
         certificate_auth,
         session,
+        region_config: M365RegionConfig = None,
     ):
         """
         Sets up the identity for the M365 provider.
@@ -976,6 +1050,7 @@ class M365Provider(Provider):
             sp_env_auth (bool): Flag indicating if application authentication with environment variables is used.
             browser_auth (bool): Flag indicating if interactive browser authentication is used.
             client_id (str): The M365 client ID.
+            region_config (M365RegionConfig): The region configuration used to reach the cloud's Graph endpoint.
 
         Returns:
             M365IdentityInfo: An instance of M365IdentityInfo containing the identity information.
@@ -995,7 +1070,7 @@ class M365Provider(Provider):
                 logger.info(
                     "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                 )
-                client = GraphServiceClient(credentials=session)
+                client = M365Provider.build_graph_client(session, region_config)
 
                 domain_result = await client.domains.get()
                 for domain in getattr(domain_result, "value", []):
@@ -1047,7 +1122,7 @@ class M365Provider(Provider):
                     logger.info(
                         "Trying to retrieve user information from AAD to populate identity structure ..."
                     )
-                    client = GraphServiceClient(credentials=session)
+                    client = M365Provider.build_graph_client(session, region_config)
 
                     me = await client.me.get()
                     if me:
@@ -1070,7 +1145,7 @@ class M365Provider(Provider):
                     identity.identity_type = "Service Principal"
 
             # Retrieve tenant id from the client
-            client = GraphServiceClient(credentials=session)
+            client = M365Provider.build_graph_client(session, region_config)
             organization_info = await client.organization.get()
             identity.tenant_id = organization_info.value[0].id
 
@@ -1084,6 +1159,7 @@ class M365Provider(Provider):
         client_secret: str = None,
         certificate_content: str = None,
         certificate_path: str = None,
+        region_config: M365RegionConfig = None,
     ) -> dict:
         """
         Validates the static credentials for the M365 provider.
@@ -1094,6 +1170,8 @@ class M365Provider(Provider):
             client_secret (str): The M365 client secret.
             certificate_content (str): The M365 Certificate Content.
             certificate_path (str): The path to the certificate file.
+            region_config (M365RegionConfig): The region configuration used to reach the cloud's login and Graph endpoints.
+                Defaults to the M365Global configuration when not provided.
 
         Raises:
             M365NotValidTenantIdError: If the provided M365 Tenant ID is not valid.
@@ -1156,6 +1234,7 @@ class M365Provider(Provider):
                 client_secret,
                 certificate_content,
                 certificate_path,
+                region_config=region_config,
             )
             return {
                 "tenant_id": tenant_id,
@@ -1191,7 +1270,12 @@ class M365Provider(Provider):
 
     @staticmethod
     def verify_client(
-        tenant_id, client_id, client_secret, certificate_content, certificate_path
+        tenant_id,
+        client_id,
+        client_secret,
+        certificate_content,
+        certificate_path,
+        region_config: M365RegionConfig = None,
     ) -> None:
         """
         Verifies the M365 client credentials using the specified tenant ID, client ID, and client secret.
@@ -1202,6 +1286,8 @@ class M365Provider(Provider):
             client_secret (str): The M365 client secret.
             certificate_content (str): The M365 certificate content.
             certificate_path (str): The path to the certificate file.
+            region_config (M365RegionConfig): The region configuration used to reach the cloud's login and Graph endpoints.
+                Defaults to the M365Global configuration when not provided.
 
         Raises:
             M365NotValidTenantIdError: If the provided M365 Tenant ID is not valid.
@@ -1213,7 +1299,10 @@ class M365Provider(Provider):
         Returns:
             None
         """
-        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        if region_config is None:
+            region_config = M365Provider.setup_region_config("M365Global")
+        credential_kwargs = M365Provider.get_credential_kwargs(region_config)
+        authority = f"https://{region_config.authority or 'login.microsoftonline.com'}/{tenant_id}"
         try:
             if client_secret:
                 # Create a ConfidentialClientApplication instance
@@ -1221,10 +1310,11 @@ class M365Provider(Provider):
                     client_id=client_id,
                     client_credential=client_secret,
                     authority=authority,
+                    instance_discovery=region_config.name != "M365Custom",
                 )
                 # Attempt to acquire a token
                 result = app.acquire_token_for_client(
-                    scopes=["https://graph.microsoft.com/.default"]
+                    scopes=region_config.credential_scopes
                 )
 
                 # Check if token acquisition was successful
@@ -1254,8 +1344,9 @@ class M365Provider(Provider):
                     client_id=client_id,
                     tenant_id=tenant_id,
                     certificate_data=base64.b64decode(certificate_content),
+                    **credential_kwargs,
                 )
-                client = GraphServiceClient(credentials=credential)
+                client = M365Provider.build_graph_client(credential, region_config)
 
                 # Verify that the certificate is valid
                 async def verify_certificate():
@@ -1275,8 +1366,9 @@ class M365Provider(Provider):
                     client_id=client_id,
                     tenant_id=tenant_id,
                     certificate_data=certificate_content,
+                    **credential_kwargs,
                 )
-                client = GraphServiceClient(credentials=credential)
+                client = M365Provider.build_graph_client(credential, region_config)
 
                 # Verify that the certificate is valid
                 async def verify_certificate():

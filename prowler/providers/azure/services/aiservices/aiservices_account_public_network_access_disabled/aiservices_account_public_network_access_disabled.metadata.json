@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_public_network_access_disabled",
+  "CheckTitle": "AI services account has public network access disabled",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) can block their data-plane endpoint from the public internet by setting **public network access** to `Disabled`, so clients connect only through **private endpoints**.",
+  "Risk": "An internet-reachable AI endpoint exposes:\n- **Confidentiality**: prompts, completions, and grounding data to anyone holding a leaked key or token\n- **Integrity**: unauthorized model calls and deployment changes\n- **Availability**: quota exhaustion and cost abuse from scanning and automated traffic",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-virtual-networks",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/baselines/cognitive-services-security-baseline"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az resource update --ids <account_resource_id> --set properties.publicNetworkAccess=Disabled",
+      "NativeIaC": "```bicep\n// Disable public network access for an Azure AI services account\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'OpenAI'\n  sku: { name: 'S0' }\n  properties: {\n    customSubDomainName: '<example_resource_name>'\n    publicNetworkAccess: 'Disabled' // CRITICAL: blocks access from the public internet\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the Azure AI services or Azure OpenAI resource\n2. Go to Resource Management > Networking\n3. Under Firewalls and virtual networks, select Disabled\n4. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_account\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<location>\"\n  resource_group_name   = \"<example_resource_name>\"\n  kind                  = \"OpenAI\"\n  sku_name              = \"S0\"\n  custom_subdomain_name = \"<example_resource_name>\"\n\n  public_network_access_enabled = false # CRITICAL: blocks access from the public internet\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set **public network access** to `Disabled` and reach the account through **Private Link**. If public access is temporarily required, restrict it to specific IP ranges or virtual networks and require Microsoft Entra ID authentication.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_public_network_access_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

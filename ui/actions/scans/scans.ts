@@ -19,6 +19,10 @@ import {
   isReportDownloadLocked,
   REPORT_DOWNLOAD_LOCKED_ERROR,
 } from "@/lib/report-download-access";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -195,6 +199,7 @@ export const createPartialScan = async ({
   providerId: string;
   resourceUids: string[];
 }) => {
+  if (isSampleId(providerId)) return { error: SAMPLE_WRITE_MESSAGE };
   if (!providerId) {
     return { error: "Provider ID is required" };
   }
