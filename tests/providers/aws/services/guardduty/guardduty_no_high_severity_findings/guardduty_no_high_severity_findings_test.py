@@ -15,13 +15,23 @@ orig = botocore.client.BaseClient._make_api_call
 
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListFindings":
+        criteria = kwarg["FindingCriteria"]["Criterion"]
+        severity_values = criteria.get("severity", {}).get("Eq")
+        archive_values = criteria.get("service.archived", {}).get("Eq")
+        findings = (
+            ("f1", "7", "false"),
+            ("f2", "8", "false"),
+            ("f3", "7", "true"),
+            ("f4", "6", "false"),
+        )
         return {
             "FindingIds": [
-                "f1",
-                "f2",
+                finding_id
+                for finding_id, severity, archived in findings
+                if (severity_values is None or severity in severity_values)
+                and (archive_values is None or archived in archive_values)
             ]
         }
-    # If we don't want to patch the API call
     return orig(self, operation_name, kwarg)
 
 
@@ -109,7 +119,7 @@ class Test_guardduty_no_high_severity_findings:
             patch(
                 "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
                 new=GuardDuty(aws_provider),
-            ),
+            ) as guardduty,
         ):
             from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,
@@ -117,6 +127,7 @@ class Test_guardduty_no_high_severity_findings:
 
             check = guardduty_no_high_severity_findings()
             result = check.execute()
+            assert set(guardduty.detectors[0].findings) == {"f1", "f2"}
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
