@@ -187,6 +187,62 @@ class Test_Neptune_Service:
             cloudwatch_logs=[],
         )
 
+    # Test Neptune Get DB Clusters follows pagination
+    @mock_aws
+    def test_describe_db_clusters_follows_marker_pagination(self):
+        def cluster(name, resource_id):
+            return {
+                "DBClusterArn": (
+                    f"arn:aws:neptune:{AWS_REGION_US_EAST_1}:"
+                    f"{AWS_ACCOUNT_NUMBER}:cluster:{name}"
+                ),
+                "DBClusterIdentifier": name,
+                "DbClusterResourceId": resource_id,
+                "BackupRetentionPeriod": 1,
+                "StorageEncrypted": True,
+                "KmsKeyId": "default_kms_key_id",
+                "EnabledCloudwatchLogsExports": ["audit"],
+                "MultiAZ": False,
+                "IAMDatabaseAuthenticationEnabled": True,
+                "DeletionProtection": True,
+                "CopyTagsToSnapshot": False,
+                "DBSubnetGroup": SUBNET_GROUP_NAME,
+            }
+
+        pages = {
+            "DescribeDBClusters": (
+                {
+                    "DBClusters": [cluster("test-cluster-1", "cluster-1")],
+                    "Marker": "next",
+                },
+                {"DBClusters": [cluster("test-cluster-2", "cluster-2")]},
+            ),
+        }
+
+        def mock_paginated_api_call(self, operation_name, kwargs):
+            if operation_name in pages:
+                return pages[operation_name][1 if kwargs.get("Marker") else 0]
+            return mock_make_api_call(self, operation_name, kwargs)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_paginated_api_call,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+            neptune = Neptune(aws_provider)
+
+        assert len(neptune.clusters) == 2
+        assert sorted(c.name for c in neptune.clusters.values()) == [
+            "test-cluster-1",
+            "test-cluster-2",
+        ]
+        second = next(
+            c for c in neptune.clusters.values() if c.name == "test-cluster-2"
+        )
+        assert second.id == "cluster-2"
+        assert second.encrypted is True
+        assert second.iam_auth is True
+
     def test_describe_db_cluster_snapshots(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 

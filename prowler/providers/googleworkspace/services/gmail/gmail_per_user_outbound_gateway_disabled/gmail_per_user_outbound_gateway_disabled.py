@@ -26,7 +26,13 @@ class gmail_per_user_outbound_gateway_disabled(Check):
 
             gateway_allowed = gmail_client.policies.allow_per_user_outbound_gateway
 
-            if gateway_allowed is False:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no outbound gateway can be used."
+                )
+            elif gateway_allowed is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Per-user outbound gateways are disabled "

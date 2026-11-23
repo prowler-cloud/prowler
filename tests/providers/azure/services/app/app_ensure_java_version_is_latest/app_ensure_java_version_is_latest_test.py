@@ -1,6 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
+import pytest
+
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
@@ -8,333 +10,165 @@ from tests.providers.azure.azure_fixtures import (
     set_mocked_azure_provider,
 )
 
+CHECK_PATH = "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest"
+
+
+def _run_check(app_client):
+    with (
+        mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ),
+        mock.patch(f"{CHECK_PATH}.app_client", new=app_client),
+    ):
+        from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
+            app_ensure_java_version_is_latest,
+        )
+
+        return app_ensure_java_version_is_latest().execute()
+
+
+def _app_client(configurations, audit_config=None):
+    # app_service imports monitor_client, which needs the provider patched at import time
+    with mock.patch(
+        "prowler.providers.common.provider.Provider.get_global_provider",
+        return_value=set_mocked_azure_provider(),
+    ):
+        from prowler.providers.azure.services.app.app_service import WebApp
+
+    resource_id = f"/subscriptions/{uuid4()}"
+    app_client = mock.MagicMock()
+    app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+    app_client.audit_config = audit_config or {}
+    app_client.apps = {
+        AZURE_SUBSCRIPTION_ID: {
+            resource_id: WebApp(
+                resource_id=resource_id,
+                name="app_id-1",
+                auth_enabled=True,
+                configurations=configurations,
+                client_cert_mode="Ignore",
+                https_only=False,
+                identity=None,
+                location="West Europe",
+            )
+        }
+    }
+    return app_client, resource_id
+
 
 class Test_app_ensure_java_version_is_latest:
     def test_app_no_subscriptions(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {}
+        assert len(_run_check(app_client)) == 0
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 0
-
-    def test_app_subscriptions_empty(self):
-        app_client = mock.MagicMock
+    def test_app_subscription_empty(self):
+        app_client = mock.MagicMock()
         app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 0
+        assert len(_run_check(app_client)) == 0
 
     def test_app_configurations_none(self):
-        resource_id = f"/subscriptions/{uuid4()}"
-        app_client = mock.MagicMock
-        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        app_client, _ = _app_client(None)
+        assert len(_run_check(app_client)) == 0
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
+    def test_app_linux_fx_version_none_is_skipped(self):
+        app_client, _ = _app_client(
+            mock.MagicMock(linux_fx_version=None, java_version=None)
+        )
+        assert len(_run_check(app_client)) == 0
+
+    def test_app_linux_fx_version_none_uses_windows_version(self):
+        app_client, _ = _app_client(
+            mock.MagicMock(linux_fx_version=None, java_version="17")
+        )
+        result = _run_check(app_client)
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    def test_app_other_runtime_is_skipped(self):
+        app_client, _ = _app_client(
+            mock.MagicMock(linux_fx_version="php|8.0", java_version=None)
+        )
+        assert len(_run_check(app_client)) == 0
+
+    @pytest.mark.parametrize(
+        "configurations,minimum,expected_status,expected_message",
+        [
+            (
+                {"linux_fx_version": "Tomcat|9.0-java11", "java_version": None},
+                "17",
+                "FAIL",
+                "Java version is set to 'Tomcat|9.0-java11', which is below the minimum supported version 'java 17',",
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
+            (
+                {"linux_fx_version": "Tomcat|9.0-java17", "java_version": None},
+                "17",
+                "PASS",
+                "Java version is set to 'Tomcat|9.0-java17', which meets the minimum supported version 'java 17',",
             ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-            from prowler.providers.azure.services.app.app_service import WebApp
-
-            app_client.apps = {
-                AZURE_SUBSCRIPTION_ID: {
-                    resource_id: WebApp(
-                        resource_id=resource_id,
-                        name="app_id-1",
-                        auth_enabled=True,
-                        configurations=None,
-                        client_cert_mode="Ignore",
-                        https_only=False,
-                        identity=None,
-                        location="West Europe",
-                    )
-                }
-            }
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 0
-
-    def test_app_linux_java_version_latest(self):
-        resource_id = f"/subscriptions/{uuid4()}"
-        app_client = mock.MagicMock
-        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
-
-        app_client.audit_config = {"java_latest_version": "17"}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
+            (
+                {"linux_fx_version": "JAVA|21-java21", "java_version": None},
+                "17",
+                "PASS",
+                "Java version is set to 'JAVA|21-java21', which meets the minimum supported version 'java 17',",
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
+            (
+                {"linux_fx_version": "JAVA|8-jre8", "java_version": None},
+                "17",
+                "FAIL",
+                "Java version is set to 'JAVA|8-jre8', which is below the minimum supported version 'java 17',",
             ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-            from prowler.providers.azure.services.app.app_service import WebApp
-
-            app_client.apps = {
-                AZURE_SUBSCRIPTION_ID: {
-                    resource_id: WebApp(
-                        resource_id=resource_id,
-                        name="app_id-1",
-                        auth_enabled=True,
-                        configurations=mock.MagicMock(
-                            linux_fx_version="Tomcat|9.0-java17", java_version=None
-                        ),
-                        client_cert_mode="Ignore",
-                        https_only=False,
-                        identity=None,
-                        location="West Europe",
-                    )
-                }
-            }
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
-            )
-            assert result[0].resource_id == resource_id
-            assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "West Europe"
-
-    def test_app_linux_java_version_not_latest(self):
-        resource_id = f"/subscriptions/{uuid4()}"
-        app_client = mock.MagicMock
-        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
-
-        app_client.audit_config = {"java_latest_version": "17"}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
+            (
+                {"linux_fx_version": "JBOSSEAP|7-java8", "java_version": None},
+                "11",
+                "FAIL",
+                "Java version is set to 'JBOSSEAP|7-java8', which is below the minimum supported version 'java 11',",
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
+            (
+                {"linux_fx_version": "", "java_version": "11"},
+                "17",
+                "FAIL",
+                "Java version is set to 'java11', which is below the minimum supported version 'java 17',",
             ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-            from prowler.providers.azure.services.app.app_service import WebApp
-
-            app_client.apps = {
-                AZURE_SUBSCRIPTION_ID: {
-                    resource_id: WebApp(
-                        resource_id=resource_id,
-                        name="app_id-1",
-                        auth_enabled=True,
-                        configurations=mock.MagicMock(
-                            linux_fx_version="Tomcat|9.0-java11", java_version=None
-                        ),
-                        client_cert_mode="Ignore",
-                        https_only=False,
-                        identity=None,
-                        location="West Europe",
-                    )
-                }
-            }
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Java version is set to 'Tomcat|9.0-java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
-            )
-            assert result[0].resource_id == resource_id
-            assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "West Europe"
-
-    def test_app_windows_java_version_latest(self):
-        resource_id = f"/subscriptions/{uuid4()}"
-        app_client = mock.MagicMock
-        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
-
-        app_client.audit_config = {"java_latest_version": "17"}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
+            (
+                {"linux_fx_version": "", "java_version": "17"},
+                "17",
+                "PASS",
+                "Java version is set to 'java17', which meets the minimum supported version 'java 17',",
             ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
+            (
+                {"linux_fx_version": "", "java_version": "1.8"},
+                "17",
+                "FAIL",
+                "Java version is set to 'java1.8', which is below the minimum supported version 'java 17',",
             ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-            from prowler.providers.azure.services.app.app_service import WebApp
+        ],
+    )
+    def test_app_java_version(
+        self, configurations, minimum, expected_status, expected_message
+    ):
+        app_client, resource_id = _app_client(
+            mock.MagicMock(**configurations), {"java_latest_version": minimum}
+        )
+        result = _run_check(app_client)
+        assert len(result) == 1
+        assert result[0].status == expected_status
+        assert (
+            result[0].status_extended
+            == f"{expected_message} for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
+        )
+        assert result[0].resource_id == resource_id
+        assert result[0].resource_name == "app_id-1"
+        assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+        assert result[0].location == "West Europe"
 
-            app_client.apps = {
-                AZURE_SUBSCRIPTION_ID: {
-                    resource_id: WebApp(
-                        resource_id=resource_id,
-                        name="app_id-1",
-                        auth_enabled=True,
-                        configurations=mock.MagicMock(
-                            linux_fx_version="", java_version="17"
-                        ),
-                        client_cert_mode="Ignore",
-                        https_only=False,
-                        identity=None,
-                        location="West Europe",
-                    )
-                }
-            }
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
-            )
-            assert result[0].resource_id == resource_id
-            assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "West Europe"
-
-    def test_app_windows_java_version_not_latest(self):
-        resource_id = f"/subscriptions/{uuid4()}"
-        app_client = mock.MagicMock
-        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
-        app_client.audit_config = {"java_latest_version": "17"}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-            from prowler.providers.azure.services.app.app_service import WebApp
-
-            app_client.apps = {
-                AZURE_SUBSCRIPTION_ID: {
-                    resource_id: WebApp(
-                        resource_id=resource_id,
-                        name="app_id-1",
-                        auth_enabled=True,
-                        configurations=mock.MagicMock(
-                            linux_fx_version="", java_version="11"
-                        ),
-                        client_cert_mode="Ignore",
-                        https_only=False,
-                        identity=None,
-                        location="West Europe",
-                    )
-                }
-            }
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Java version is set to 'java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
-            )
-            assert result[0].resource_id == resource_id
-            assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "West Europe"
-
-    def test_app_linux_php_version_latest(self):
-        resource_id = f"/subscriptions/{uuid4()}"
-        app_client = mock.MagicMock
-        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
-
-        app_client.audit_config = {"java_latest_version": "17"}
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest.app_client",
-                new=app_client,
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_ensure_java_version_is_latest.app_ensure_java_version_is_latest import (
-                app_ensure_java_version_is_latest,
-            )
-            from prowler.providers.azure.services.app.app_service import WebApp
-
-            app_client.apps = {
-                AZURE_SUBSCRIPTION_ID: {
-                    resource_id: WebApp(
-                        resource_id=resource_id,
-                        name="app_id-1",
-                        auth_enabled=True,
-                        configurations=mock.MagicMock(
-                            linux_fx_version="php|8.0", java_version=None
-                        ),
-                        client_cert_mode="Ignore",
-                        https_only=False,
-                        identity=None,
-                        location="West Europe",
-                    )
-                }
-            }
-            check = app_ensure_java_version_is_latest()
-            result = check.execute()
-            assert len(result) == 0
+    def test_app_default_minimum(self):
+        app_client, _ = _app_client(
+            mock.MagicMock(linux_fx_version="JAVA|21-java21", java_version=None)
+        )
+        result = _run_check(app_client)
+        assert len(result) == 1
+        assert result[0].status == "PASS"

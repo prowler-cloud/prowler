@@ -23,9 +23,7 @@ export const AddProviderButton = ({ onOpenWizard }: AddProviderButtonProps) => {
 
   return (
     <>
-      <Button data-tour-id="add-provider-trigger" onClick={handleOpen}>
-        Add Provider
-      </Button>
+      <Button onClick={handleOpen}>Add Provider</Button>
       {!onOpenWizard && (
         <ProviderWizardModal open={open} onOpenChange={setOpen} />
       )}

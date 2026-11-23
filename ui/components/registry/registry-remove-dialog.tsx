@@ -9,7 +9,8 @@ import {
 } from "@/types/registry";
 
 interface RegistryRemoveDialogProps {
-  artifactName?: string;
+  /** The artifact's display name. */
+  artifactLabel?: string;
   error?: RegistryRemoveDialogError;
   isPending: boolean;
   onConfirm: () => void;
@@ -20,7 +21,7 @@ interface RegistryRemoveDialogProps {
 }
 
 export function RegistryRemoveDialog({
-  artifactName,
+  artifactLabel = "this artifact",
   error,
   isPending,
   onConfirm,
@@ -31,7 +32,7 @@ export function RegistryRemoveDialog({
 }: RegistryRemoveDialogProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const isInUse = error?.status === REGISTRY_ARTIFACT_REMOVAL.IN_USE;
-  // Busy keeps Confirm Remove: waiting is the remedy, not deleting providers.
+  // Busy keeps Remove: waiting is the remedy, not deleting providers.
   const isBusy = error?.status === REGISTRY_ARTIFACT_REMOVAL.BUSY;
 
   // Disabling the submit button can lose focus; restore it inside the dialog
@@ -42,7 +43,11 @@ export function RegistryRemoveDialog({
 
   return (
     <Modal
-      description={`Remove ${artifactName ?? "this artifact"} from My artifacts. Artifacts used by providers cannot be removed.`}
+      description={
+        isInUse
+          ? "One or more providers use it. Delete those providers first, then try again."
+          : "Future scans stop using it. Findings from past scans stay."
+      }
       onOpenAutoFocus={(event) => {
         event.preventDefault();
         cancelButtonRef.current?.focus();
@@ -54,18 +59,23 @@ export function RegistryRemoveDialog({
       onOpenChange={onOpenChange}
       open={open}
       size="sm"
-      title="Remove artifact"
+      title={
+        isInUse ? `${artifactLabel} is in use` : `Remove ${artifactLabel}?`
+      }
     >
-      {error && (
+      {/* Title and description change in place; this announces the outcome. */}
+      {isInUse && (
+        <p className="sr-only" role="alert">
+          {`${artifactLabel} is in use. Delete the providers that use it first.`}
+        </p>
+      )}
+      {error && !isInUse && (
         <Alert variant="error">
-          {isInUse && <AlertTitle>Artifact in use</AlertTitle>}
           {isBusy && <AlertTitle>A scan is using this artifact</AlertTitle>}
           <AlertDescription>
-            {isInUse
-              ? "This artifact cannot be removed because one or more providers use it. Review the associated providers before trying again."
-              : isBusy
-                ? "A scan is running the checks this artifact adds. It clears by itself when the scan finishes, so try again shortly."
-                : error.message}
+            {isBusy
+              ? "A scan is running the checks this artifact adds. It clears by itself when the scan finishes, so try again shortly."
+              : error.message}
           </AlertDescription>
         </Alert>
       )}
@@ -90,7 +100,7 @@ export function RegistryRemoveDialog({
             type="button"
             variant="destructive"
           >
-            {isPending ? "Removing artifact" : "Confirm Remove"}
+            {isPending ? "Removing…" : "Remove"}
           </Button>
         )}
       </div>

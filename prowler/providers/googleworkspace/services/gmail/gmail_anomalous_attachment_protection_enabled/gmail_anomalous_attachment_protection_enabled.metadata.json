@@ -36,5 +36,5 @@
     "gmail_encrypted_attachment_protection_enabled",
     "gmail_script_attachment_protection_enabled"
   ],
-  "Notes": ""
+  "Notes": "When Gmail is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

@@ -383,7 +383,7 @@ export const FindingsFilters = (props: FindingsFiltersProps) => {
   });
 
   return (
-    <div data-tour-id="explore-findings-filters">
+    <div>
       <FindingsFilterBatchControls
         {...props}
         appliedFilters={appliedFilters}

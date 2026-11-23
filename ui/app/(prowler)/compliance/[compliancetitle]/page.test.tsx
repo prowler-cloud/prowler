@@ -14,9 +14,11 @@ const {
   getComplianceAttributesMock,
   getComplianceOverviewMetadataInfoMock,
   getComplianceRequirementsMock,
+  getSamplePreviewStateMock,
   getScanMock,
   mapComplianceDataMock,
 } = vi.hoisted(() => ({
+  getSamplePreviewStateMock: vi.fn(),
   getComplianceAttributesMock: vi.fn(),
   getComplianceOverviewMetadataInfoMock: vi.fn(),
   getComplianceRequirementsMock: vi.fn(),
@@ -110,6 +112,14 @@ vi.mock("@/lib/compliance/compliance-report-types", () => ({
 
 vi.mock("@/lib/shared/env", () => ({
   isCloud: () => false,
+}));
+
+vi.mock("@/lib/sample-preview/get-sample-preview-state", () => ({
+  getSamplePreviewState: getSamplePreviewStateMock,
+}));
+
+vi.mock("../_components/compliance-detail-sample-preview", () => ({
+  ComplianceDetailSamplePreview: () => <div>Sample compliance detail</div>,
 }));
 
 vi.mock("../_components/cross-account-detail", () => ({
@@ -229,5 +239,48 @@ describe("Compliance detail task response", () => {
     expect(
       screen.getByText("Requirements: 1 pass, 0 fail, 0 manual"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Compliance detail for the sample scan", () => {
+  const renderSampleDetail = async () =>
+    ComplianceDetail({
+      params: Promise.resolve({ compliancetitle: "CIS" }),
+      searchParams: Promise.resolve({
+        complianceId: "cis_5.0_aws",
+        version: "5.0",
+        scanId: "sample-scan",
+      }),
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders the sample detail without asking the API about the scan", async () => {
+    // Given
+    getSamplePreviewStateMock.mockResolvedValue({
+      active: true,
+      stage: "no_scan",
+      runningScan: null,
+    });
+
+    // When
+    render((await renderSampleDetail()) as ReactElement);
+
+    // Then
+    expect(screen.getByText("Sample compliance detail")).toBeInTheDocument();
+    expect(getScanMock).not.toHaveBeenCalled();
+    expect(getComplianceRequirementsMock).not.toHaveBeenCalled();
+    expect(getComplianceOverviewMetadataInfoMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the sample scan back to Compliance once the preview is over", async () => {
+    // Given
+    getSamplePreviewStateMock.mockResolvedValue({ active: false });
+
+    // When / Then
+    await expect(renderSampleDetail()).rejects.toThrow("redirect");
+    expect(getScanMock).not.toHaveBeenCalled();
   });
 });

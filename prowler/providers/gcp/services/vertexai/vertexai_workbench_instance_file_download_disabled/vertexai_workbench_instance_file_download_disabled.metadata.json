@@ -1,0 +1,39 @@
+{
+  "Provider": "gcp",
+  "CheckID": "vertexai_workbench_instance_file_download_disabled",
+  "CheckTitle": "Vertex AI Workbench instance has file downloads disabled",
+  "CheckType": [],
+  "ServiceName": "vertexai",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "notebooks.googleapis.com/Instance",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Vertex AI Workbench instances** let JupyterLab users **download any file** from the instance through the browser by default. The finding determines whether file downloads are disabled by setting the `notebook-disable-downloads` instance metadata key to `true`.",
+  "Risk": "With downloads enabled, a notebook user, or anyone who hijacks their browser session, can:\n- **Exfiltration**: save training data, query results from BigQuery or Cloud Storage, and model artifacts to an unmanaged device in a few clicks\n- **Bypass data controls**: move data outside VPC Service Controls perimeters and data loss prevention controls that apply to cloud storage",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/manage-metadata",
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/introduction"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud workbench instances update <example_resource_name> --location=<example_zone> --metadata=notebook-disable-downloads=true",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name and open the Software and security tab\n3. Under Metadata, add the key notebook-disable-downloads with the value true\n4. Click Submit",
+      "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    metadata = {\n      notebook-disable-downloads = \"true\" # FIX: Blocks file downloads from the JupyterLab UI\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable file downloads on Workbench instances that handle sensitive data, and keep data inside governed storage.\n- Share results through Cloud Storage or BigQuery, where IAM and audit logging apply\n- Combine with **VPC Service Controls** to stop data leaving the perimeter by other paths\n- Disable terminal access as well, since a shell can still copy data off the VM",
+      "Url": "https://hub.prowler.com/check/vertexai_workbench_instance_file_download_disabled"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "vertexai_workbench_instance_terminal_access_disabled"
+  ],
+  "Notes": "This setting only blocks downloads through the JupyterLab UI. Users who can run code or open a terminal can still copy data off the instance, so pair it with vertexai_workbench_instance_terminal_access_disabled."
+}

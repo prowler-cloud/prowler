@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.2.0"
+  version: "1.3.0"
   scope: [root, api]
   auto_invoke:
     - "Creating ViewSets, serializers, or filters in api/"
@@ -41,11 +41,12 @@ When implementing a new endpoint, review these patterns in order:
 | 2 | **ViewSets** | `api/base_views.py`, `api/v1/views.py` | Inherit `BaseRLSViewSet`, `get_queryset()` with N+1 prevention |
 | 3 | **Serializers** | `api/v1/serializers.py` | Separate Read/Create/Update/Include, inherit `BaseWriteSerializer` |
 | 4 | **Filters** | `api/filters.py` | Use `filterset_class`, inherit base filter classes |
-| 5 | **Permissions** | `api/base_views.py` | `required_permissions`, `set_required_permissions()` |
-| 6 | **Pagination** | `api/pagination.py` | Custom pagination class if needed |
+| 5 | **Permissions** | `api/base_views.py`, `api/rbac/permissions.py` | `required_permissions`, `set_required_permissions()`, `HasPermissions` |
+| 6 | **Pagination** | `REST_FRAMEWORK` default `JsonApiPageNumberPagination`; `api/pagination.py` | Custom class only if needed; `PaginateByPkMixin` in `api/v1/mixins.py` for heavy joins |
 | 7 | **URL Routing** | `api/v1/urls.py` | `trailing_slash=False`, kebab-case paths |
 | 8 | **OpenAPI Schema** | `api/v1/views.py` | `@extend_schema_view` with drf-spectacular |
-| 9 | **Tests** | `api/tests/test_views.py` | JSON:API content type, fixture patterns |
+| 9 | **Tests** | `api/tests/test_views.py` | JSON:API content type, fixture patterns (see `prowler-test-api`) |
+| 10 | **Changelog** | `api/changelog.d/` | towncrier fragment (see `prowler-changelog`) |
 
 > **Full file paths**: See [references/file-locations.md](references/file-locations.md)
 
@@ -459,13 +460,16 @@ def get_object(self):
 cd api && uv run python src/backend/manage.py runserver
 cd api && uv run python src/backend/manage.py shell
 
-# Database
-cd api && uv run python src/backend/manage.py makemigrations
-cd api && uv run python src/backend/manage.py migrate
+# Database (migrations only run on the admin DB alias)
+cd api/src/backend && uv run python manage.py makemigrations
+cd api/src/backend && uv run python manage.py migrate --database admin
 
-# Testing
-cd api && uv run pytest -x --tb=short
-cd api && uv run make lint
+# Testing (pytest.ini lives in src/backend)
+cd api/src/backend && uv run pytest -x --tb=short
+
+# Lint/format (from repo root; mirrors CI)
+make lint-api
+make format-api
 ```
 
 ---
@@ -477,29 +481,5 @@ cd api && uv run make lint
 - **JSON:API Conventions**: See [references/json-api-conventions.md](references/json-api-conventions.md)
 - **Security Patterns**: See [assets/security_patterns.py](assets/security_patterns.py)
 
-### Context7 MCP (Recommended)
-
-**Prerequisite:** Install Context7 MCP server for up-to-date documentation lookup.
-
-When implementing or debugging, query these libraries via `mcp_context7_query-docs`:
-
-| Library | Context7 ID | Use For |
-|---------|-------------|---------|
-| **Django** | `/websites/djangoproject_en_5_2` | Models, ORM, migrations |
-| **DRF** | `/websites/django-rest-framework` | ViewSets, serializers, permissions |
-| **drf-spectacular** | `/tfranzel/drf-spectacular` | OpenAPI schema, `@extend_schema` |
-
-**Example queries:**
-```text
-mcp_context7_query-docs(libraryId="/websites/django-rest-framework", query="ViewSet get_queryset best practices")
-mcp_context7_query-docs(libraryId="/tfranzel/drf-spectacular", query="extend_schema examples for custom actions")
-mcp_context7_query-docs(libraryId="/websites/djangoproject_en_5_2", query="model constraints and indexes")
-```
-
-> **Note:** Use `mcp_context7_resolve-library-id` first if you need to find the correct library ID.
-
-### External Docs
-- **DRF Docs**: https://www.django-rest-framework.org/
-- **DRF JSON:API**: https://django-rest-framework-json-api.readthedocs.io/
-- **drf-spectacular**: https://drf-spectacular.readthedocs.io/
-- **django-filter**: https://django-filter.readthedocs.io/
+### Related Skills
+- `prowler-api` (RLS, RBAC, Celery), `jsonapi` (spec compliance), `prowler-test-api` (tests)

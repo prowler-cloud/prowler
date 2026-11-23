@@ -28,7 +28,13 @@ class gmail_untrusted_link_warnings_enabled(Check):
                 gmail_client.policies.enable_aggressive_warnings_on_untrusted_links
             )
 
-            if warnings_enabled is True:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no user mailbox receives mail through Gmail."
+                )
+            elif warnings_enabled is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Warning prompts for clicks on untrusted domain links are enabled "

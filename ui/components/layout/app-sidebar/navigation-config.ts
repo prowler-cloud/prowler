@@ -1,11 +1,13 @@
 import {
   Code,
   CreditCard,
+  Crosshair,
   FileText,
   GitBranch,
   LayoutGrid,
   MessageCircleQuestion,
   Package,
+  Radar,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -65,7 +67,6 @@ function getCloudFeature({
     href,
     label,
     active,
-    highlight: true,
   };
 }
 
@@ -146,6 +147,34 @@ export function getNavigationConfig({
     {
       label: "SECURITY",
       items: [
+        // First: the exploitable issues are what to fix before anything else.
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Exploitability issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        isCloudEnvironment
+          ? {
+              kind: NAVIGATION_ITEM_KIND.LINK,
+              href: "/realtime",
+              label: "Realtime",
+              icon: Radar,
+              active: isRouteActive(pathname, "/realtime"),
+              highlight: true,
+            }
+          : {
+              kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+              label: "Realtime",
+              icon: Radar,
+              cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REALTIME,
+            },
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/compliance",
