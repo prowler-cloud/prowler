@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "obs_bucket_multi_az_redundancy",
+  "CheckTitle": "OBS bucket has multi-AZ redundancy enabled",
+  "CheckType": [],
+  "ServiceName": "obs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "**Huawei Cloud Object Storage Service (OBS)** buckets have **multi-AZ (3AZ) redundancy** enabled to store data synchronously across multiple availability zones within a region.",
+  "Risk": "Buckets configured with **single-AZ** redundancy store data in only one availability zone, increasing the risk of **data unavailability** or service disruption if an entire availability zone experiences an outage or disaster.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0037.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Object Storage Service (OBS)**.\n3. Create a new **bucket** with **Data Redundancy Policy** set to **Multi-AZ storage**.\n4. Migrate objects from the single-AZ bucket to the multi-AZ bucket.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **multi-AZ (3AZ) redundancy** when creating OBS buckets for business-critical or high-availability workloads.",
+      "Url": "https://hub.prowler.com/check/obs_bucket_multi_az_redundancy"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

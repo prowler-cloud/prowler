@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "obs_bucket_object_lock",
+  "CheckTitle": "OBS bucket has Object Lock enabled",
+  "CheckType": [],
+  "ServiceName": "obs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "**Huawei Cloud Object Storage Service (OBS)** buckets have **Object Lock (WORM)** enabled at the bucket level to prevent objects from being deleted or overwritten.",
+  "Risk": "Without **Object Lock (WORM)**, stored objects can be deleted or overwritten before their retention period expires, undermining data **integrity** and **availability** against ransomware, accidental deletions, or malicious tampering.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0094.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Object Storage Service (OBS)**.\n3. Select the target **bucket**.\n4. In the navigation pane, choose **Basic Configurations** > **WORM**.\n5. Enable **Bucket-level WORM** and configure the default protection period.\n6. Click **Save**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **Object Lock (WORM)** on OBS buckets storing critical or regulated data and configure an appropriate default retention period to enforce immutability.",
+      "Url": "https://hub.prowler.com/check/obs_bucket_object_lock"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
