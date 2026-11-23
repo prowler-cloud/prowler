@@ -2,13 +2,7 @@
 
 ## Local Documentation
 
-For project overview and development setup, see:
-
-- `docs/developer-guide/introduction.mdx` - Repository structure, setup, and development environment
-
-## Contents
-
-The documentation covers:
-- Project structure overview
-- Development environment setup
-- Repository conventions
+- `docs/developer-guide/introduction.mdx` - Repository structure, development environment, prek hooks
+- `docs/developer-guide/checks.mdx`, `provider.mdx`, `services.mdx` - SDK extension guides
+- `docs/developer-guide/unit-testing.mdx` - SDK testing
+- `docs/developer-guide/ai-skills.mdx` - How the AI skills in `skills/` are structured and installed

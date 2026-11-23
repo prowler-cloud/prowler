@@ -9,6 +9,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 
 /** Frameworks are not uniquely named — eight AWS ones are called "CIS" — so the
@@ -33,6 +37,7 @@ export function ComplianceFrameworkChip({
 }: ComplianceFrameworkChipProps) {
   const icon = getComplianceIcon(framework.complianceId);
   const label = complianceFrameworkLabel(framework);
+  const sample = isSampleId(framework.id);
   const content = icon ? (
     <span className="border-border-neutral-tertiary flex size-7 shrink-0 items-center justify-center rounded-md border bg-slate-50">
       <Image
@@ -50,7 +55,7 @@ export function ComplianceFrameworkChip({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {isNavigable ? (
+        {isNavigable && !sample ? (
           <Button
             type="button"
             variant={icon ? "bare" : "outline"}
@@ -68,7 +73,9 @@ export function ComplianceFrameworkChip({
           </Badge>
         )}
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>
+        {sample ? `${label}. ${SAMPLE_DATA_READ_ONLY_MESSAGE}` : label}
+      </TooltipContent>
     </Tooltip>
   );
 }

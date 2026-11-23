@@ -10,7 +10,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [api]
   auto_invoke:
     - "Creating or modifying PostgreSQL indexes"
@@ -61,7 +61,22 @@ FROM users
 WHERE email = 'user@example.com';
 ```
 
-Use [Postgres EXPLAIN Visualizer (pev)](https://tatiyants.com/pev/) to visualize query plans and identify bottlenecks.
+### RLS changes the plan
+
+Tenant tables have RLS policies (`api/rls.py`) that add `tenant_id = current_setting('api.tenant_id')::uuid`
+to every query run as the API user, and return nothing when the setting is missing. Analyze plans the way the
+API runs them:
+
+```sql
+-- As the RLS-constrained API user (not the admin/owner role, which bypasses RLS)
+BEGIN;
+SELECT set_config('api.tenant_id', '95383b24-da01-44b5-a713-0d9920d554db', true);
+EXPLAIN (ANALYZE, BUFFERS) SELECT ... FROM findings WHERE ...;
+ROLLBACK;
+```
+
+To see the SQL the ORM generates, print `str(queryset.query)` or use `queryset.explain(analyze=True)` inside
+`rls_transaction(tenant_id)`. This is why most Prowler indexes start with `tenant_id`.
 
 ### Force index usage for testing
 
@@ -273,15 +288,17 @@ CREATE INDEX IF NOT EXISTS idx_parent
     ON parent_table (column_name);
 ```
 
-PostgreSQL will automatically recognize partition-level indexes as part of the parent index definition when the index names and definitions match.
+When the parent index is created, PostgreSQL reuses an existing partition index with a matching definition
+(columns, method, predicate) instead of building a new one; names do not need to match. Any partition without a
+matching index gets one built inline, with locks.
 
 ### Prioritize active partitions
 
 For time-based partitions (findings uses monthly partitions):
 
-- Create indexes on recent/current partitions where data is actively queried
-- Skip older partitions that are rarely accessed
-- The `all_partitions=False` default in `create_index_on_partitions` handles this automatically
+- `create_index_on_partitions` (`api/db_utils.py`) defaults to `all_partitions=True`: every partition, CONCURRENTLY
+- `all_partitions=False` only indexes the current and future monthly partitions (plus unparseable names such as the default partition)
+- Caveat: with `all_partitions=False`, the later parent `AddIndex` builds the skipped partitions' indexes with locks. Use it only together with the fake-and-apply-manually procedure in `django-migration-psql`
 
 ## Index maintenance and bloat
 
@@ -368,26 +385,8 @@ REINDEX INDEX CONCURRENTLY idx_name;
 VACUUM (ANALYZE) table_name;
 ```
 
-## Context7 lookups
-
-**Prerequisite:** Install Context7 MCP server for up-to-date documentation lookup.
-
-| Library | Context7 ID | Use for |
-|---------|-------------|---------|
-| PostgreSQL | `/websites/postgresql_org_docs_current` | Index types, EXPLAIN, partitioned table indexing, REINDEX |
-
-**Example queries:**
-
-```text
-mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="CREATE INDEX CONCURRENTLY partitioned table")
-mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="EXPLAIN ANALYZE BUFFERS query plan")
-mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="partial index WHERE clause")
-mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="REINDEX CONCURRENTLY invalid index")
-mcp_context7_query-docs(libraryId="/websites/postgresql_org_docs_current", query="pg_stat_all_indexes monitoring")
-```
-
-> **Note:** Use `mcp_context7_resolve-library-id` first if you need to find the correct library ID.
-
 ## Resources
 
-- **EXPLAIN Visualizer**: [pev](https://tatiyants.com/pev/)
+- **Partition index helpers**: `api/src/backend/api/db_utils.py` (`create_index_on_partitions`, `drop_index_on_partitions`)
+- **Model indexes**: `Meta.indexes` in `api/src/backend/api/models.py`
+- **Migration rules**: `django-migration-psql` skill

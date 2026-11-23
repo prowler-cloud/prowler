@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Writing Playwright E2E tests"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -46,7 +46,7 @@ tests/
     └── {page-name}.md        # Test documentation
 ```
 
-**File Naming:**
+**File Naming** (default; `ui/tests/auth/` is a deliberate exception with one spec per concern and one shared `auth.md`):
 - ✅ `sign-up.spec.ts` (all sign-up tests)
 - ✅ `sign-up-page.ts` (page object)
 - ✅ `sign-up.md` (documentation)
@@ -99,17 +99,13 @@ export class BasePage {
 
   async goto(path: string): Promise<void> {
     await this.page.goto(path);
-    await this.page.waitForLoadState("networkidle");
+    // NEVER waitForLoadState("networkidle"): flaky with polling/streams.
+    // Subclasses implement verifyPageLoaded() with a web-first assertion.
   }
 
   // Common methods go here (see Refactoring Guidelines)
-  async waitForNotification(): Promise<void> {
-    await this.page.waitForSelector('[role="status"]');
-  }
-
-  async verifyNotificationMessage(message: string): Promise<void> {
-    const notification = this.page.locator('[role="status"]');
-    await expect(notification).toContainText(message);
+  async verifyElementVisible(element: Locator): Promise<void> {
+    await expect(element).toBeVisible();
   }
 }
 
@@ -153,7 +149,7 @@ export class LoginPage extends BasePage {
 
 ```typescript
 // ✅ GOOD: Reuse existing page objects
-import { SignInPage } from "../sign-in/sign-in-page";
+import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { HomePage } from "../home/home-page";
 
 test("User can sign up and login", async ({ page }) => {
@@ -200,13 +196,13 @@ export class SignUpPage extends BasePage {
 ```typescript
 // Repeated in multiple page objects
 export class SignUpPage extends BasePage {
-  async waitForNotification(): Promise<void> {
-    await this.page.waitForSelector('[role="status"]');
+  async verifyToast(text: string): Promise<void> {
+    await expect(this.page.getByRole("status")).toContainText(text);
   }
 }
 export class SignInPage extends BasePage {
-  async waitForNotification(): Promise<void> {
-    await this.page.waitForSelector('[role="status"]');  // DUPLICATED!
+  async verifyToast(text: string): Promise<void> {
+    await expect(this.page.getByRole("status")).toContainText(text); // DUPLICATED!
   }
 }
 ```
@@ -214,9 +210,9 @@ export class SignInPage extends BasePage {
 **After (GOOD):**
 ```typescript
 // BasePage - shared across all pages
-export class BasePage {
-  async waitForNotification(): Promise<void> {
-    await this.page.waitForSelector('[role="status"]');
+export abstract class BasePage {
+  async verifyToast(text: string): Promise<void> {
+    await expect(this.page.getByRole("status")).toContainText(text);
   }
 }
 
@@ -312,13 +308,18 @@ test.describe("Login", () => {
 
 ## Commands
 
+Use the project-pinned binary (`@playwright/test` 1.56), not a global `npx`:
+
 ```bash
-npx playwright test                    # Run all
-npx playwright test --grep "login"     # Filter by name
-npx playwright test --ui               # Interactive UI
-npx playwright test --debug            # Debug mode
-npx playwright test tests/login/       # Run specific folder
+cd ui && pnpm exec playwright test --project=providers         # One project (respects setup dependencies)
+cd ui && pnpm exec playwright test --grep "@PROVIDER-E2E-001"  # Filter by tag/title
+cd ui && pnpm exec playwright test tests/sign-up/ --project=sign-up
+cd ui && pnpm exec playwright test --project=providers --ui     # Interactive UI
+cd ui && pnpm exec playwright test --project=providers --debug  # Debug mode
+cd ui && pnpm exec playwright test --list                       # List tests without running
 ```
+
+Prefer web-first assertions (`await expect(locator).toBeVisible()`) over `page.waitForSelector()` / `waitForTimeout()`.
 
 ## Prowler-Specific Patterns
 

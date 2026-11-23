@@ -1,3 +1,4 @@
+import { Radar } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -51,6 +52,7 @@ describe("getNavigationConfig", () => {
       "Lighthouse AI",
     ]);
     expect(sections[1]?.items.map((item) => item.label)).toEqual([
+      "Realtime",
       "Compliance",
       "Findings",
       "Attack Paths",
@@ -106,9 +108,9 @@ describe("getNavigationConfig", () => {
     );
   });
 
-  it("hides Issues in Cloud until the feature flag resolves on", () => {
+  it("never shows Issues in Local Server", () => {
     // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const labels = getNavigationConfig({
@@ -122,21 +124,54 @@ describe("getNavigationConfig", () => {
     expect(labels).not.toContain("Exploitability issues");
   });
 
-  it("never shows Issues in Local Server, even with the flag on", () => {
+  it("links Realtime in Cloud and offers it as a Cloud upgrade in Local Server", () => {
     // Given
+    const realtime = () =>
+      getNavigationConfig({ pathname: "/realtime" })
+        .flatMap((section) => section.items)
+        .find((item) => item.label === "Realtime");
+
+    // When / Then
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    expect(realtime()).toEqual(
+      expect.objectContaining({
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/realtime",
+      }),
+    );
+
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    expect(realtime()).toEqual({
+      kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+      label: "Realtime",
+      icon: Radar,
+      cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REALTIME,
+    });
+  });
 
-    // When
-    const labels = getNavigationConfig({
-      pathname: "/",
-      apiDocsUrl: null,
-      issuesEnabled: true,
-    })
-      .flatMap((section) => section.items)
-      .map((item) => item.label);
+  it("has one Realtime entry, active on the dashboard and its configuration", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const realtimeItems = (pathname: string) =>
+      getNavigationConfig({ pathname })
+        .flatMap((section) => section.items)
+        .flatMap((item) =>
+          item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
+            ? [item, ...item.children]
+            : [item],
+        )
+        .filter((item) => "href" in item && item.href.startsWith("/realtime"));
 
-    // Then
-    expect(labels).not.toContain("Exploitability issues");
+    // When / Then
+    expect(realtimeItems("/realtime")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/realtime/configuration")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/providers")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: false }),
+    ]);
   });
 
   it("uses Cloud destinations and keeps Configuration children unbadged", () => {
@@ -147,7 +182,6 @@ describe("getNavigationConfig", () => {
     const sections = getNavigationConfig({
       pathname: "/scans/config",
       apiDocsUrl: "https://ignored.example/docs",
-      issuesEnabled: true,
     });
     const items = sections.flatMap((section) => section.items);
     const configuration = items.find((item) => item.label === "Configuration");

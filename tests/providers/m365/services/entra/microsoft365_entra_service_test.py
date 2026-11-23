@@ -5,9 +5,12 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
+import httpx
 import pytest
+from azure.core.credentials import AccessToken
 
-from prowler.providers.m365.models import M365IdentityInfo
+from prowler.providers.m365.m365_provider import M365Provider
+from prowler.providers.m365.models import M365IdentityInfo, M365RegionConfig
 from prowler.providers.m365.services.entra import entra_service
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -41,9 +44,12 @@ User = entra_service.User
 UserAction = entra_service.UserAction
 UsersConditions = entra_service.UsersConditions
 
+REGION_CONFIG = M365RegionConfig(base_url="https://graph.microsoft.us")
+
 
 def _get_access_review_definitions(definition):
     service = Entra.__new__(Entra)
+    service.region_config = REGION_CONFIG
     request_information = MagicMock()
     service.client = SimpleNamespace(
         identity_governance=SimpleNamespace(
@@ -140,6 +146,7 @@ class TestAccessReviewDefinitions:
     )
     def test_preserves_definitions_when_terminal_page_is_empty(self, terminal_response):
         service = Entra.__new__(Entra)
+        service.region_config = REGION_CONFIG
         first_page = json.dumps(
             {
                 "value": [{"id": "review-1", "displayName": "Guest Review"}],
@@ -170,6 +177,7 @@ class TestAccessReviewDefinitions:
 
     def test_error_returns_no_access_review_definitions(self):
         service = Entra.__new__(Entra)
+        service.region_config = REGION_CONFIG
         service.client = SimpleNamespace(
             identity_governance=SimpleNamespace(
                 with_url=MagicMock(
@@ -186,9 +194,47 @@ class TestAccessReviewDefinitions:
         assert asyncio.run(service._get_access_review_definitions()) == []
 
 
+class TestRegionGraphHost:
+    def test_hand_built_urls_target_the_region_graph_host(self):
+        requested = []
+
+        async def record_request(_, request):
+            requested.append((request.url.host, request.url.path))
+            return httpx.Response(200, json={"value": []}, request=request)
+
+        credential = MagicMock()
+        credential.get_token.return_value = AccessToken("token", 9999999999)
+        region_config = M365Provider.setup_region_config("M365USGovernment")
+        service = Entra.__new__(Entra)
+        service.region_config = region_config
+        service.client = M365Provider.build_graph_client(credential, region_config)
+
+        async def call_graph():
+            await service._get_access_review_definitions()
+            await service._get_pim_role_approval_settings()
+            await service._get_authentication_methods_policy_settings()
+            await service._get_b2b_collaboration_policy()
+
+        with patch.object(
+            httpx.AsyncHTTPTransport, "handle_async_request", record_request
+        ):
+            asyncio.run(call_graph())
+
+        assert requested == [
+            (
+                "graph.microsoft.us",
+                "/v1.0/identityGovernance/accessReviews/definitions",
+            ),
+            ("graph.microsoft.us", "/v1.0/policies/roleManagementPolicyAssignments"),
+            ("graph.microsoft.us", "/v1.0/policies/authenticationMethodsPolicy"),
+            ("graph.microsoft.us", "/beta/legacy/policies"),
+        ]
+
+
 class TestPimRoleApprovalSettings:
     def test_paginates_and_parses_role_approval_settings(self):
         service = Entra.__new__(Entra)
+        service.region_config = REGION_CONFIG
         first_page = json.dumps(
             {
                 "value": [
@@ -280,6 +326,7 @@ class TestPimRoleApprovalSettings:
     )
     def test_stops_on_falsy_or_empty_response(self, response):
         service = Entra.__new__(Entra)
+        service.region_config = REGION_CONFIG
         service.client = SimpleNamespace(
             policies=SimpleNamespace(
                 with_url=MagicMock(
@@ -297,6 +344,7 @@ class TestPimRoleApprovalSettings:
 
     def test_error_returns_no_role_approval_settings(self):
         service = Entra.__new__(Entra)
+        service.region_config = REGION_CONFIG
         service.client = SimpleNamespace(
             policies=SimpleNamespace(
                 with_url=MagicMock(
@@ -318,6 +366,7 @@ class TestAuthenticationMethodsPolicySettings:
     def _service(response=None, error=None):
         send_mock = AsyncMock(return_value=response, side_effect=error)
         service = Entra.__new__(Entra)
+        service.region_config = REGION_CONFIG
         service.client = SimpleNamespace(
             policies=SimpleNamespace(
                 authentication_methods_policy=SimpleNamespace(
@@ -562,6 +611,7 @@ class Test_Entra_Service:
     @staticmethod
     def _load_b2b_policy(invitation_policy):
         service = object.__new__(Entra)
+        service.region_config = REGION_CONFIG
         service.client = MagicMock()
         service.client.request_adapter.send_primitive_async = AsyncMock(
             return_value=json.dumps(

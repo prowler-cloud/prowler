@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from colorama import Fore, Style
+from keystoneauth1.session import TCPKeepAliveAdapter
 from openstack import config, connect
 from openstack import exceptions as openstack_exceptions
 from openstack.connection import Connection as OpenStackConnection
@@ -32,6 +33,16 @@ from prowler.providers.openstack.exceptions.exceptions import (
 )
 from prowler.providers.openstack.lib.mutelist.mutelist import OpenStackMutelist
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
+
+
+class _GuardedAdapter(TCPKeepAliveAdapter):
+    """Adapter that keeps redirects and catalog endpoints inside the SSRF guard."""
+
+    def send(self, request, *args, **kwargs):
+        # Not cached per host: a later request may open a new connection and
+        # resolve the name again
+        validate_outbound_url(request.url)
+        return super().send(request, *args, **kwargs)
 
 
 class OpenstackProvider(Provider):
@@ -490,8 +501,13 @@ class OpenstackProvider(Provider):
                 load_envvars=False,
                 **session.as_sdk_config(region_override=region),
             )
+            for scheme in ("http://", "https://"):
+                conn.session.mount(scheme, _GuardedAdapter())
             conn.authorize()
             return conn
+        except OutboundURLNotAllowedError as error:
+            logger.warning(f"OpenStack request rejected: {error}")
+            raise OpenStackAuthUrlNotAllowedError()
         except openstack_exceptions.SDKException as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- "

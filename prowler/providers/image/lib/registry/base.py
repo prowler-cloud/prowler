@@ -8,7 +8,7 @@ import re
 import socket
 import time
 from abc import ABC, abstractmethod
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 import tldextract
@@ -22,8 +22,24 @@ from prowler.providers.image.exceptions.exceptions import (
 )
 
 _MAX_RETRIES = 3
+_MAX_REDIRECTS = 5
+# a registry legitimately redirects: Docker Hub sends blob pulls to a CDN and a
+# renamed repository answers 301, so each hop is validated rather than refused
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 _BACKOFF_BASE = 1
 _USER_AGENT = f"Prowler/{prowler_version} (registry-adapter)"
+
+_ALLOWLIST_HINT = (
+    "To scan a registry on a private network, list the trusted ranges in "
+    "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS."
+)
+
+# Same variable the shared guard reads; `prowler/__main__.py` sets it so the CLI,
+# where the operator supplies the registry themselves, is not refused its own
+# private network. Unset means the check runs, so a missing setting fails safe.
+SKIP_OUTBOUND_CHECK_ENV = "PROWLER_SKIP_OUTBOUND_HOST_CHECK"
+
+_TRUTHY = {"1", "true", "yes", "on"}
 
 _NON_PUBLIC_IP_PROPERTIES = (
     "is_private",
@@ -35,11 +51,19 @@ _NON_PUBLIC_IP_PROPERTIES = (
 )
 
 
+def _outbound_check_skipped() -> bool:
+    return os.environ.get(SKIP_OUTBOUND_CHECK_ENV, "").strip().lower() in _TRUTHY
+
+
 def _ip_is_non_public(ip_str: str) -> bool:
     try:
         addr = ipaddress.ip_address(ip_str)
     except ValueError:
         return False
+    # is_global is the broad check; the properties stay because some multicast
+    # ranges report is_global and would otherwise slip through
+    if not addr.is_global:
+        return True
     return any(getattr(addr, prop) for prop in _NON_PUBLIC_IP_PROPERTIES)
 
 
@@ -72,6 +96,63 @@ def _parse_allowed_private_networks(
                 message=f"Malformed entry {entry!r} in {ALLOWED_PRIVATE_NETWORKS_ENV}: {exc}",
             )
     return tuple(networks)
+
+
+# 307 and 308 are the two that must replay the request unchanged
+_BODY_PRESERVING_REDIRECTS = frozenset({307, 308})
+_BODY_OPTIONS = ("data", "json", "files")
+_BODY_HEADERS = ("content-length", "content-type", "transfer-encoding")
+
+
+def _rebuilt_method(method: str, status_code: int) -> str:
+    """How ``requests`` rewrites the method on a redirect (RFC 7231 and history)."""
+    if status_code in (302, 303) and method != "HEAD":
+        return "GET"
+    if status_code == 301 and method == "POST":
+        return "GET"
+    return method
+
+
+def _next_hop(
+    method: str, kwargs: dict, old_url: str, new_url: str, status_code: int
+) -> tuple[str, dict]:
+    """Method and options for a redirect hop, rebuilt the way ``requests`` would.
+
+    Following redirects by hand loses everything ``Session.resolve_redirects``
+    does, so its rules are reapplied here rather than only the ones that first
+    came to mind.
+    """
+    hop = dict(kwargs)
+    # the Location carries its own query; reapplying params can invalidate a
+    # signed URL a registry redirects to
+    hop.pop("params", None)
+
+    if status_code not in _BODY_PRESERVING_REDIRECTS:
+        # a redirected login would otherwise re-send its credentials in the body
+        for option in _BODY_OPTIONS:
+            hop.pop(option, None)
+        hop["headers"] = {
+            name: value
+            for name, value in (hop.get("headers") or {}).items()
+            if name.lower() not in _BODY_HEADERS
+        }
+        method = _rebuilt_method(method, status_code)
+
+    # borrowed rather than restated: the port and scheme cases are subtle, and a
+    # hop that keeps credentials hands the registry token to an unrelated host.
+    # `should_strip_auth` ignores `self`, but calling it off a live session reads
+    # better than passing None.
+    with requests.Session() as redirect_rules:
+        if not redirect_rules.should_strip_auth(old_url, new_url):
+            return method, hop
+
+    hop.pop("auth", None)
+    hop["headers"] = {
+        name: value
+        for name, value in (hop.get("headers") or {}).items()
+        if name.lower() != "authorization"
+    }
+    return method, hop
 
 
 class RegistryAdapter(ABC):
@@ -139,6 +220,7 @@ class RegistryAdapter(ABC):
         signatures, SBOMs...) override this; by default everything is assumed
         to be an image.
         """
+        del repository, tag  # the default inspects neither
         return True
 
     def _origin_url(self) -> str:
@@ -225,36 +307,38 @@ class RegistryAdapter(ABC):
                 message=f"URL has no host: {canonical_url}",
             )
 
-        try:
-            addr = ipaddress.ip_address(host)
-        except ValueError:
+        # Only the address classification is skipped. The origin rule below still
+        # applies: a registry-supplied URL pointing at an unrelated host is a
+        # different problem from deliberately reaching a private network.
+        if not _outbound_check_skipped():
             try:
-                infos = socket.getaddrinfo(host, None)
-            except socket.gaierror:
-                infos = []
-            for *_, sockaddr in infos:
-                resolved_ip = sockaddr[0]
-                if _ip_is_non_public(resolved_ip) and not self._ip_is_allowed(
-                    resolved_ip
-                ):
+                ipaddress.ip_address(host)
+            except ValueError:
+                try:
+                    infos = socket.getaddrinfo(host, None)
+                except socket.gaierror:
+                    infos = []
+                for *_, sockaddr in infos:
+                    resolved_ip = sockaddr[0]
+                    if _ip_is_non_public(resolved_ip) and not self._ip_is_allowed(
+                        resolved_ip
+                    ):
+                        raise ImageRegistryAuthError(
+                            file=__file__,
+                            message=(
+                                f"Host {host!r} resolves to non-public address "
+                                f"{resolved_ip}. {_ALLOWLIST_HINT}"
+                            ),
+                        )
+            else:
+                if _ip_is_non_public(host) and not self._ip_is_allowed(host):
                     raise ImageRegistryAuthError(
                         file=__file__,
                         message=(
-                            f"Host {host!r} resolves to non-public address {resolved_ip}. "
-                            "This may indicate an SSRF attempt."
+                            f"URL targets a non-public address: {host}. "
+                            f"{_ALLOWLIST_HINT}"
                         ),
                     )
-        else:
-            if any(
-                getattr(addr, prop) for prop in _NON_PUBLIC_IP_PROPERTIES
-            ) and not self._ip_is_allowed(host):
-                raise ImageRegistryAuthError(
-                    file=__file__,
-                    message=(
-                        f"URL targets a non-public address: {host}. "
-                        "This may indicate an SSRF attempt."
-                    ),
-                )
 
         if enforce_origin:
             registry_host = urlparse(origin_url or self._origin_url()).hostname or ""
@@ -275,8 +359,39 @@ class RegistryAdapter(ABC):
 
         return canonical_url
 
+    def _request_following_validated_redirects(
+        self, method: str, url: str, **kwargs
+    ) -> requests.Response:
+        """Issue a request, validating the destination of each redirect it takes.
+
+        ``requests`` follows redirects itself, which would send the request to a
+        host the guard never saw.
+        """
+        hop_kwargs = dict(kwargs)
+        for _ in range(_MAX_REDIRECTS + 1):
+            resp = requests.request(method, url, allow_redirects=False, **hop_kwargs)
+            if resp.status_code not in _REDIRECT_STATUSES:
+                return resp
+            location = resp.headers.get("Location")
+            if not location:
+                return resp
+            target = self._validate_outbound_url(
+                urljoin(url, location), enforce_origin=False
+            )
+            method, hop_kwargs = _next_hop(
+                method, hop_kwargs, url, target, resp.status_code
+            )
+            url = target
+        raise ImageRegistryNetworkError(
+            file=__file__,
+            message=f"More than {_MAX_REDIRECTS} redirects from {url}.",
+        )
+
     def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
         context_label = kwargs.pop("context_label", None) or self.registry_url
+        # the only chokepoint every outbound URL passes through, including the
+        # tenant-supplied registry URL that no caller validates
+        url = self._validate_outbound_url(url, enforce_origin=False)
         kwargs.setdefault("timeout", 30)
         kwargs.setdefault("verify", self.verify_ssl)
         headers = kwargs.get("headers", {})
@@ -287,7 +402,9 @@ class RegistryAdapter(ABC):
         last_body = None
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
-                resp = requests.request(method, url, **kwargs)
+                resp = self._request_following_validated_redirects(
+                    method, url, **kwargs
+                )
                 if resp.status_code == 429:
                     last_status = 429
                     wait = _BACKOFF_BASE * (2 ** (attempt - 1))

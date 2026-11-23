@@ -53,7 +53,7 @@ CHECK_INV = {prov: Path(f"/tmp/checks_{prov}.json") for prov in PROVIDERS}
 # ---------------------------------------------------------------------------
 
 # DECISIONS[requirement_id][provider] = list[str] of check ids
-# See SKILL.md → "Audit Reference Table: Requirement Text → Prowler Checks"
+# See references/check-mapping-reference.md (requirement text -> Prowler checks)
 # for a comprehensive mapping cheat sheet built from a 172-AR CCC audit.
 
 DECISIONS: dict[str, dict[str, list[str]]] = {}
