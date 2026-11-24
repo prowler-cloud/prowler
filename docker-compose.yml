@@ -92,7 +92,7 @@ services:
       - path: .env
         required: false
     ports:
-      - "${VALKEY_PORT:-6379}:6379"
+      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'valkey-cli ping'"]
       interval: 10s
