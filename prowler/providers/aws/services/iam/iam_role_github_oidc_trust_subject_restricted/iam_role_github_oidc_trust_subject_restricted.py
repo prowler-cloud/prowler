@@ -4,12 +4,12 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 GITHUB_OIDC_HOST = "token.actions.githubusercontent.com"
-GITHUB_OIDC_PROVIDER = f"oidc-provider/{GITHUB_OIDC_HOST}"
 GITHUB_SUB_KEY = f"{GITHUB_OIDC_HOST}:sub"
 WEB_IDENTITY_ACTION = "sts:AssumeRoleWithWebIdentity"
 
 
-def _as_list(value) -> list:
+def _as_list(value: object) -> list[object]:
+    """Return a policy value as a list."""
     if value is None:
         return []
     if isinstance(value, (list, tuple, set)):
@@ -18,6 +18,7 @@ def _as_list(value) -> list:
 
 
 def _has_github_provider(principal: object) -> bool:
+    """Check whether a principal trusts the GitHub Actions OIDC provider."""
     if not isinstance(principal, dict):
         return False
     return any(
@@ -27,34 +28,38 @@ def _has_github_provider(principal: object) -> bool:
 
 
 def _has_web_identity_action(action: object) -> bool:
+    """Check whether an action allows assuming a role with web identity."""
     return WEB_IDENTITY_ACTION in _as_list(action) or any(
         value in {"sts:*", "*"} for value in _as_list(action)
     )
 
 
-def _subject_values(condition: object) -> tuple[list, bool]:
-    """Return sub values and whether their operators strictly enforce presence."""
+def _subject_values(condition: object) -> tuple[list[object], bool]:
+    """Return positively constrained subject values and whether one was found."""
     if not isinstance(condition, dict):
         return [], False
 
+    valid_operators = {
+        "StringEquals",
+        "StringLike",
+        "ForAnyValue:StringEquals",
+        "ForAnyValue:StringLike",
+        "ForAllValues:StringEquals",
+        "ForAllValues:StringLike",
+    }
     values = []
-    strict_operator_seen = False
+    valid_operator_seen = False
     for operator, entries in condition.items():
-        if not isinstance(entries, dict):
+        if operator not in valid_operators or not isinstance(entries, dict):
             continue
-        for key, value in entries.items():
-            if key != GITHUB_SUB_KEY:
-                continue
-            operator = str(operator)
-            base_operator = operator.removeprefix("ForAnyValue:")
-            if base_operator not in {"StringEquals", "StringLike"}:
-                return [], False
-            strict_operator_seen = True
-            values.extend(_as_list(value))
-    return values, strict_operator_seen
+        if GITHUB_SUB_KEY in entries:
+            valid_operator_seen = True
+            values.extend(_as_list(entries[GITHUB_SUB_KEY]))
+    return values, valid_operator_seen
 
 
-def _subject_is_restricted(values: Iterable) -> bool:
+def _subject_is_restricted(values: Iterable[object]) -> bool:
+    """Check that every subject pins a non-wildcard repository owner."""
     values = list(values)
     if not values:
         return False
@@ -74,9 +79,14 @@ def _subject_is_restricted(values: Iterable) -> bool:
 
 
 class iam_role_github_oidc_trust_subject_restricted(Check):
-    """Ensure GitHub Actions OIDC trust policies pin the repository owner."""
+    """Ensure GitHub Actions OIDC trust policies restrict repository subjects."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate GitHub Actions OIDC trust policies for restricted subjects.
+
+        Returns:
+            A report for each IAM role trusting the GitHub Actions OIDC provider.
+        """
         findings = []
         for role in iam_client.roles or []:
             statements = role.assume_role_policy.get("Statement", [])
@@ -96,19 +106,17 @@ class iam_role_github_oidc_trust_subject_restricted(Check):
             report.region = iam_client.region
             compliant = True
             for statement in in_scope:
-                values, strict_operator_seen = _subject_values(statement.get("Condition"))
+                values, strict_operator_seen = _subject_values(
+                    statement.get("Condition")
+                )
                 if not strict_operator_seen or not _subject_is_restricted(values):
                     compliant = False
                     break
 
             report.status = "PASS" if compliant else "FAIL"
             if compliant:
-                report.status_extended = (
-                    f"IAM Role {role.name} restricts GitHub Actions OIDC trust to specific repository owners."
-                )
+                report.status_extended = f"IAM Role {role.name} restricts GitHub Actions OIDC trust to specific repository owners."
             else:
-                report.status_extended = (
-                    f"IAM Role {role.name} allows GitHub Actions OIDC trust without a strictly restricted repository owner in the sub claim."
-                )
+                report.status_extended = f"IAM Role {role.name} allows GitHub Actions OIDC trust without a strictly restricted repository owner in the sub claim."
             findings.append(report)
         return findings
