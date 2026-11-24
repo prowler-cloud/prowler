@@ -91,10 +91,14 @@ opencode.json
 .github/copilot/
 
 # AI Coding Assistants - Amazon Q Developer (formerly CodeWhisperer)
+.aws/
+.codewhisperer/
+.amazonq/
 .aws-toolkit/
 
 # AI Coding Assistants - Tabnine
-.tabnine_config.json
+.tabnine/
+tabnine_config.json
 
 # AI Coding Assistants - Kiro
 .kiro/
@@ -104,6 +108,7 @@ kiro.config.json
 # AI Coding Assistants - Aider
 .aider/
 .aider.chat.history.md
+.aider.input.history
 .aider.tags.cache.v3/
 
 # AI Coding Assistants - Windsurf
@@ -111,14 +116,14 @@ kiro.config.json
 .windsurfignore
 
 # AI Coding Assistants - Replit Agent
-.replit/
+.replit
 .replitignore
 
 # AI Coding Assistants - Supermaven
 .supermaven/
 
 # AI Coding Assistants - Sourcegraph Cody
-.sourcegraph-cody/
+.cody/
 
 # AI Coding Assistants - General
 .ai/
@@ -145,7 +150,7 @@ coverage*
 # Node
 node_modules
 
-# Persistent data
+# Persistent data
 _data/
 /openspec/
 /.gitmodules
@@ -163,6 +168,7 @@ GEMINI.md
 .codex/skills
 .agents/skills
 .github/skills
+.gemini/skills
 
 # Claude Code (settings.json holds the shared permission allowlist)
 .claude/*
