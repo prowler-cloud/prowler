@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_gateway_waf_acl_attached",
+  "CheckTitle": "Amazon Bedrock AgentCore gateway is associated with an AWS WAF web ACL",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon Bedrock AgentCore gateways** are evaluated for an associated **AWS WAF web ACL**. The regional web ACL inspects inbound requests before they reach a target.",
+  "Risk": "A gateway with no web ACL forwards every inbound request to its targets. Web exploits, bot traffic and request floods then reach those tools, which threatens **availability** and can expose **confidential** data the tools can read.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway-waf.html",
+    "https://docs.aws.amazon.com/waf/latest/APIReference/API_GetWebACLForResource.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 associate-web-acl --web-acl-arn <example_web_acl_arn> --resource-arn <example_resource_arn>",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::WebACLAssociation\n    Properties:\n      ResourceArn: <example_resource_arn> # Critical: AgentCore gateway ARN\n      WebACLArn: <example_web_acl_arn> # Critical: regional WAF web ACL ARN\n```",
+      "Other": "1. Open the AWS WAF console and select the gateway's Region\n2. Open the regional web ACL to associate\n3. Under Associated AWS resources, choose Add AWS resources\n4. Select the AgentCore gateway and confirm the association",
+      "Terraform": "```hcl\nresource \"aws_wafv2_web_acl_association\" \"<example_resource_name>\" {\n  resource_arn = \"<example_resource_arn>\" # Critical: AgentCore gateway ARN\n  web_acl_arn  = \"<example_web_acl_arn>\" # Critical: regional WAF web ACL ARN\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Associate a regional **AWS WAF web ACL** with each AgentCore gateway so inbound requests are inspected before they reach a target. Keep the web ACL in the same Region and include managed rule groups plus rate-based rules.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_gateway_waf_acl_attached"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "A gateway whose WAF GetWebACLForResource call fails produces no finding."
+}

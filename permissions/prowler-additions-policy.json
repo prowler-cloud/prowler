@@ -10,6 +10,7 @@
         "appstream:List*",
         "backup:List*",
         "backup:Get*",
+        "bedrock-agentcore:GatewayGetWebACLForResource",
         "bedrock-agentcore:GetAgentRuntime",
         "bedrock-agentcore:GetBrowser",
         "bedrock-agentcore:GetCodeInterpreter",
