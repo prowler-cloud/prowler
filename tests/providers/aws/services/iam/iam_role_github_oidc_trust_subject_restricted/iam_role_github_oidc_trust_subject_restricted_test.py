@@ -192,6 +192,33 @@ def test_wildcard_action_passes_with_restricted_subject():
 
 
 @mock_aws
+def test_partial_action_wildcard_with_missing_subject_fails():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement(action="sts:AssumeRoleWithWebIdentit?")],
+        }
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_partial_action_wildcard_with_unrestricted_owner_fails():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement(
+                    {"StringLike": {SUB_KEY: "repo:*/infra:*"}},
+                    action="sts:AssumeRole*",
+                )
+            ],
+        }
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
 def test_subject_value_prefix_remains_case_sensitive():
     results, role_arn = run_check(
         {

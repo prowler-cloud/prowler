@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from fnmatch import fnmatchcase
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
@@ -29,9 +30,9 @@ def _has_github_provider(principal: object) -> bool:
 
 def _has_web_identity_action(action: object) -> bool:
     """Match web identity actions case-insensitively, including wildcards."""
-    actions = {str(value).casefold() for value in _as_list(action)}
-    return WEB_IDENTITY_ACTION.casefold() in actions or bool(
-        actions.intersection({"sts:*", "*"})
+    target_action = WEB_IDENTITY_ACTION.casefold()
+    return any(
+        fnmatchcase(target_action, str(value).casefold()) for value in _as_list(action)
     )
 
 
