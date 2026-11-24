@@ -189,6 +189,8 @@ AUTH_SECRET=$(openssl rand -base64 32)
 DJANGO_SECRETS_ENCRYPTION_KEY=$(openssl rand -base64 32)
 # Stop without writing the file if openssl is unavailable or a value came back empty.
 if [ -z "$AUTH_SECRET" ] || [ -z "$DJANGO_SECRETS_ENCRYPTION_KEY" ]; then echo "Secret generation failed; install openssl and rerun."; else
+(
+umask 077
 cat > .env <<EOF
 # Required configuration. Replace the change-me values with strong values
 # before starting, and add any other variables you want to customize.
@@ -213,6 +215,7 @@ DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api
 DJANGO_SECRETS_ENCRYPTION_KEY=$DJANGO_SECRETS_ENCRYPTION_KEY
 EOF
+)
 fi
 fi
 ```
