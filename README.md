@@ -201,7 +201,9 @@ docker compose up -d
 > [!WARNING]
 > 🔒 For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
 >
-> On Docker Engine versions older than 28.0.0, hosts on the same local network can reach ports published to `127.0.0.1`, including the Valkey port mapped with `VALKEY_PORT`. Run Docker Engine 28.0.0 or later, or apply a host firewall rule that blocks access to the Valkey port from other hosts.
+> On Docker Engine versions older than 28.0.0, hosts on the same local network can reach ports published to `127.0.0.1`, including the Valkey port mapped with `VALKEY_PORT`. Engines 28.2.0 through 28.3.2 can additionally expose loopback-published ports after a `firewalld` reload, so run Docker Engine 28.3.3 or later, the release that fixes https://github.com/moby/moby/security/advisories/GHSA-x4rx-4gw3-53p4.
+>
+> If you block the port with a host firewall instead, note that a `ufw deny` rule on the INPUT chain is not enough: Docker diverts published-port traffic before UFW's INPUT rules, so the rule must block forwarded traffic to the published Valkey port. See https://docs.docker.com/engine/network/packet-filtering-firewalls/ and verify from another host that the Valkey port is unreachable.
 
 Once configured, access Prowler Local Server at http://localhost:3000. Sign up using your email and password to get started.
 
