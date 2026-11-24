@@ -91,6 +91,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `guardduty_delegated_admin_enabled_all_regions`                        | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
 | `guardduty_is_enabled`                                                 | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
 | `iam_role_access_not_stale_to_bedrock`                                 | `max_unused_bedrock_access_days`                  | Integer         | `60`                                                                                                                                 |
+| `iam_role_github_oidc_trust_subject_restricted`                        | `iam_github_oidc_allowed_owners`                  | List of Strings | `[]`                                                                                                                                 |
 | `iam_user_access_not_stale_to_bedrock`                                 | `max_unused_bedrock_access_days`                  | Integer         | `60`                                                                                                                                 |
 | `iam_user_access_not_stale_to_sagemaker`                               | `max_unused_sagemaker_access_days`                | Integer         | `90`                                                                                                                                 |
 | `iam_user_accesskey_unused`                                            | `max_unused_access_keys_days`                     | Integer         | `45`                                                                                                                                 |
@@ -413,6 +414,10 @@ aws:
   max_console_access_days: 45
   # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
   max_unused_sagemaker_access_days: 90
+  # aws.iam_role_github_oidc_trust_subject_restricted
+  # Set GitHub repository owners allowed by GitHub Actions OIDC trust policies.
+  # Leave empty to accept any non-wildcard owner.
+  iam_github_oidc_allowed_owners: []
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
