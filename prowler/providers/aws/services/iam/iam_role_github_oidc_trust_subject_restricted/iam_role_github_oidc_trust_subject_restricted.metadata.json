@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "iam_role_github_oidc_trust_subject_restricted",
-  "CheckTitle": "IAM role trusting GitHub Actions OIDC restricts its subject to a specific repository",
+  "CheckTitle": "IAM role trusting GitHub Actions OIDC restricts subjects to specific repository owners",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "TTPs/Initial Access"
@@ -12,10 +12,11 @@
   "Severity": "high",
   "ResourceType": "AwsIamRole",
   "ResourceGroup": "IAM",
-  "Description": "An IAM role trusting GitHub Actions OIDC has a `token.actions.githubusercontent.com:sub` condition matching the `repo:<owner>/<repository>:...` format with a specific owner and repository.",
-  "Risk": "Without a repository-specific subject condition, a workflow from an untrusted GitHub repository may assume the role and use its AWS permissions.",
-  "RelatedUrl": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services",
+  "Description": "An IAM role trusting GitHub Actions OIDC restricts `token.actions.githubusercontent.com:sub` to a non-wildcard repository owner. The repository may be specific (`repo:<owner>/<repo>:*`) or wildcarded (`repo:<owner>/*:*`).",
+  "Risk": "Without a trusted-owner constraint, workflows from repositories owned by untrusted GitHub accounts may assume the role and use its AWS permissions.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html",
     "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect"
   ],
@@ -36,5 +37,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check only passes trust policies that constrain `token.actions.githubusercontent.com:sub` using the `repo:<owner>/<repository>:...` format. Policies using `token.actions.githubusercontent.com:repository_owner` or a custom GitHub OIDC subject, such as `repository_owner_id:...`, are outside the pass criteria and will be reported as FAIL."
+  "Notes": "This check only passes trust policies that constrain `token.actions.githubusercontent.com:sub` using the `repo:<owner>/<repository>:...` format. Policies using `token.actions.githubusercontent.com:repository_owner` or a custom GitHub OIDC subject, such as `repository_owner_id:...`, are outside the pass criteria and will be reported as FAIL. Configure `iam_github_oidc_allowed_owners` to restrict the check to an owner allowlist; an empty list preserves the default behavior."
 }

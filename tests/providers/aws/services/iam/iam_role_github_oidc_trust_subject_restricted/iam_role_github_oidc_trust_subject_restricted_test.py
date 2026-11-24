@@ -18,24 +18,26 @@ GITHUB_PROVIDER = (
 OTHER_PROVIDER = f"arn:aws:iam::{AWS_ACCOUNT_ID}:oidc-provider/accounts.google.com"
 SUB_KEY = "token.actions.githubusercontent.com:sub"
 PASS_MESSAGE = f"IAM Role {ROLE_NAME} restricts GitHub Actions OIDC trust to specific repository owners."
-FAIL_MESSAGE = f"IAM Role {ROLE_NAME} allows GitHub Actions OIDC trust without a strictly restricted repository owner in the sub claim."
+FAIL_MESSAGE = f"IAM Role {ROLE_NAME} does not restrict GitHub Actions OIDC trust to allowed repository owners."
 
 
-def github_statement(condition=None):
+def github_statement(condition=None, action="sts:AssumeRoleWithWebIdentity"):
     """Build a GitHub Actions OIDC trust statement."""
     statement = {
         "Effect": "Allow",
         "Principal": {"Federated": GITHUB_PROVIDER},
-        "Action": "sts:AssumeRoleWithWebIdentity",
+        "Action": action,
     }
     if condition is not None:
         statement["Condition"] = condition
     return statement
 
 
-def run_check(trust_policy=None):
+def run_check(trust_policy=None, audit_config=None):
     """Create an IAM role with Moto and run the check against the IAM service."""
-    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    aws_provider = set_mocked_aws_provider(
+        [AWS_REGION_US_EAST_1], audit_config=audit_config or {}
+    )
     iam_api = client("iam")
     for url in (
         "https://token.actions.githubusercontent.com",
@@ -119,6 +121,30 @@ def test_string_like_subject_passes():
 
 
 @mock_aws
+def test_repository_wildcard_passes_without_allowlist():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:acme/*:*"}})],
+        }
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_any_specific_owner_passes_without_allowlist():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement({"StringLike": {SUB_KEY: "repo:other/infra:*"}})
+            ],
+        }
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
 def test_string_equals_subject_passes():
     results, role_arn = run_check(
         {
@@ -134,7 +160,52 @@ def test_string_equals_subject_passes():
 
 
 @mock_aws
-def test_for_all_values_string_like_subject_passes():
+def test_case_insensitive_action_and_subject_key_pass():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement(
+                    {"StringLike": {SUB_KEY.upper(): "repo:acme/infra:*"}},
+                    action="STS:ASSUMEROLEWITHWEBIDENTITY",
+                )
+            ],
+        }
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_wildcard_action_passes_with_restricted_subject():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement(
+                    {"StringLike": {SUB_KEY: "repo:acme/infra:*"}},
+                    action="STS:*",
+                )
+            ],
+        }
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_subject_value_prefix_remains_case_sensitive():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement({"StringLike": {SUB_KEY: "Repo:acme/infra:*"}})
+            ],
+        }
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_for_all_values_string_like_subject_fails():
     results, role_arn = run_check(
         {
             "Version": "2012-10-17",
@@ -145,7 +216,88 @@ def test_for_all_values_string_like_subject_passes():
             ],
         }
     )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_for_all_values_string_equals_subject_fails():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement(
+                    {"ForAllValues:StringEquals": {SUB_KEY: "repo:acme/infra:ref:main"}}
+                )
+            ],
+        }
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_for_any_value_string_like_subject_passes():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement(
+                    {"ForAnyValue:StringLike": {SUB_KEY: "repo:acme/infra:*"}}
+                )
+            ],
+        }
+    )
     assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_allowed_repository_owner_passes():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement({"StringLike": {SUB_KEY: "repo:acme/infra:*"}})
+            ],
+        },
+        audit_config={"iam_github_oidc_allowed_owners": ["acme"]},
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_repository_owner_outside_allowlist_fails():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement({"StringLike": {SUB_KEY: "repo:other/infra:*"}})
+            ],
+        },
+        audit_config={"iam_github_oidc_allowed_owners": ["acme"]},
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_all_subject_owners_must_be_allowed():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                github_statement(
+                    {
+                        "StringLike": {
+                            SUB_KEY: [
+                                "repo:acme/infra:*",
+                                "repo:other/service:*",
+                            ]
+                        }
+                    }
+                )
+            ],
+        },
+        audit_config={"iam_github_oidc_allowed_owners": ["acme"]},
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
 
 
 @mock_aws

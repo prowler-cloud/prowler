@@ -28,14 +28,15 @@ def _has_github_provider(principal: object) -> bool:
 
 
 def _has_web_identity_action(action: object) -> bool:
-    """Check whether an action allows assuming a role with web identity."""
-    return WEB_IDENTITY_ACTION in _as_list(action) or any(
-        value in {"sts:*", "*"} for value in _as_list(action)
+    """Match web identity actions case-insensitively, including wildcards."""
+    actions = {str(value).casefold() for value in _as_list(action)}
+    return WEB_IDENTITY_ACTION.casefold() in actions or bool(
+        actions.intersection({"sts:*", "*"})
     )
 
 
 def _subject_values(condition: object) -> tuple[list[object], bool]:
-    """Return positively constrained subject values and whether one was found."""
+    """Return sub values using supported positive operators and case-insensitive keys."""
     if not isinstance(condition, dict):
         return [], False
 
@@ -44,25 +45,27 @@ def _subject_values(condition: object) -> tuple[list[object], bool]:
         "StringLike",
         "ForAnyValue:StringEquals",
         "ForAnyValue:StringLike",
-        "ForAllValues:StringEquals",
-        "ForAllValues:StringLike",
     }
     values = []
     valid_operator_seen = False
     for operator, entries in condition.items():
         if operator not in valid_operators or not isinstance(entries, dict):
             continue
-        if GITHUB_SUB_KEY in entries:
-            valid_operator_seen = True
-            values.extend(_as_list(entries[GITHUB_SUB_KEY]))
+        for key, value in entries.items():
+            if str(key).casefold() == GITHUB_SUB_KEY.casefold():
+                valid_operator_seen = True
+                values.extend(_as_list(value))
     return values, valid_operator_seen
 
 
-def _subject_is_restricted(values: Iterable[object]) -> bool:
-    """Check that every subject pins a non-wildcard repository owner."""
+def _subject_is_restricted(
+    values: Iterable[object], allowed_owners: Iterable[str] | None = None
+) -> bool:
+    """Validate each repository subject and apply an optional owner allowlist."""
     values = list(values)
     if not values:
         return False
+    allowed_owners = set(allowed_owners or [])
     for value in values:
         if not isinstance(value, str) or not value.startswith("repo:"):
             return False
@@ -73,7 +76,14 @@ def _subject_is_restricted(values: Iterable[object]) -> bool:
         if len(owner_repo) != 2:
             return False
         owner, repository = owner_repo
-        if not owner or not repository or not parts[1] or "*" in owner or "?" in owner:
+        if (
+            not owner
+            or not repository
+            or not parts[1]
+            or "*" in owner
+            or "?" in owner
+            or (allowed_owners and owner not in allowed_owners)
+        ):
             return False
     return True
 
@@ -88,6 +98,9 @@ class iam_role_github_oidc_trust_subject_restricted(Check):
             A report for each IAM role trusting the GitHub Actions OIDC provider.
         """
         findings = []
+        allowed_owners = (iam_client.audit_config or {}).get(
+            "iam_github_oidc_allowed_owners", []
+        )
         for role in iam_client.roles or []:
             statements = role.assume_role_policy.get("Statement", [])
             statements = _as_list(statements)
@@ -109,7 +122,9 @@ class iam_role_github_oidc_trust_subject_restricted(Check):
                 values, strict_operator_seen = _subject_values(
                     statement.get("Condition")
                 )
-                if not strict_operator_seen or not _subject_is_restricted(values):
+                if not strict_operator_seen or not _subject_is_restricted(
+                    values, allowed_owners
+                ):
                     compliant = False
                     break
 
@@ -117,6 +132,6 @@ class iam_role_github_oidc_trust_subject_restricted(Check):
             if compliant:
                 report.status_extended = f"IAM Role {role.name} restricts GitHub Actions OIDC trust to specific repository owners."
             else:
-                report.status_extended = f"IAM Role {role.name} allows GitHub Actions OIDC trust without a strictly restricted repository owner in the sub claim."
+                report.status_extended = f"IAM Role {role.name} does not restrict GitHub Actions OIDC trust to allowed repository owners."
             findings.append(report)
         return findings
