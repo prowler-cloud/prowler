@@ -169,7 +169,11 @@ api:
     # The maximum number of findings to process in a single batch
     DJANGO_FINDINGS_BATCH_SIZE: "1000"
     # Django settings
-    DJANGO_ALLOWED_HOSTS: "*"
+    # Restrict to the hostnames the deployment is actually served on. Keep
+    # "*" out of production: with it, Django accepts any Host header.
+    # Add your public hostnames here when deploying behind an ingress,
+    # e.g. DJANGO_ALLOWED_HOSTS: "prowler.example.com"
+    DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
     DJANGO_BIND_ADDRESS: "0.0.0.0"
     DJANGO_PORT: "8080"
     DJANGO_DEBUG: "False"
