@@ -75,7 +75,7 @@ services:
       - path: .env
         required: false
     ports:
-      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
       interval: 5s
@@ -125,7 +125,7 @@ services:
       # Networking
       - "dbms.connector.bolt.listen_address=${NEO4J_DBMS_CONNECTOR_BOLT_LISTEN_ADDRESS:-0.0.0.0:7687}"
     ports:
-      - ${NEO4J_PORT:-7687}:7687
+      - 127.0.0.1:${NEO4J_PORT:-7687}:7687
     healthcheck:
         test: ["CMD", "wget", "--no-verbose", "http://localhost:7474"]
         interval: 10s
