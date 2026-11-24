@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/shadcn";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
+import { STATUS_PANEL_LAYOUT } from "@/components/shadcn/status-panel";
 import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
 import { isRegistryEnabled } from "@/lib/shared/env";
 import type { AddProviderFormValues, ProviderType } from "@/types";
@@ -65,7 +66,7 @@ export const ProviderPicker = ({
           registryNotice={
             registryDiscovery?.status ===
             REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED ? (
-              <RegistryUpgradePrompt />
+              <RegistryUpgradePrompt layout={STATUS_PANEL_LAYOUT.INLINE} />
             ) : registryDiscovery?.status ===
               REGISTRY_PROVIDER_DISCOVERY.ONBOARDING ? (
               <RegistrySetupPrompt />

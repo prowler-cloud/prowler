@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from prowler.providers.aws.services.eks.eks_service import EKSCluster
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
@@ -25,7 +27,51 @@ class Test_eks_cluster_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 0
 
-    def test_cluster_public_access(self):
+    @pytest.mark.parametrize(
+        (
+            "endpoint_private_access",
+            "public_access_cidrs",
+            "expected_status",
+            "expected_message",
+        ),
+        [
+            pytest.param(
+                False,
+                ["0.0.0.0/0"],
+                "FAIL",
+                "is publicly accessible from 0.0.0.0/0.",
+                id="unrestricted-ipv4",
+            ),
+            pytest.param(
+                True,
+                ["203.0.113.5/32", "::/0"],
+                "FAIL",
+                "is publicly accessible from ::/0.",
+                id="unrestricted-ipv6",
+            ),
+            pytest.param(
+                True,
+                ["0.0.0.0/0", "::/0"],
+                "FAIL",
+                "is publicly accessible from 0.0.0.0/0, ::/0.",
+                id="unrestricted-dual-stack",
+            ),
+            pytest.param(
+                True,
+                ["203.0.113.5/32", "2001:db8::/48"],
+                "PASS",
+                "has no unrestricted CIDR in its public access list.",
+                id="restricted-dual-stack",
+            ),
+        ],
+    )
+    def test_cluster_public_access(
+        self,
+        endpoint_private_access,
+        public_access_cidrs,
+        expected_status,
+        expected_message,
+    ):
         eks_client = mock.MagicMock
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -35,8 +81,8 @@ class Test_eks_cluster_not_publicly_accessible:
                 region=AWS_REGION_EU_WEST_1,
                 logging=None,
                 endpoint_public_access=True,
-                endpoint_private_access=False,
-                public_access_cidrs=["0.0.0.0/0"],
+                endpoint_private_access=endpoint_private_access,
+                public_access_cidrs=public_access_cidrs,
             )
         )
 
@@ -51,16 +97,19 @@ class Test_eks_cluster_not_publicly_accessible:
             check = eks_cluster_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == expected_status
             assert result[0].status_extended == (
-                f"EKS cluster {cluster_name} is publicly accessible."
+                f"EKS cluster {cluster_name} {expected_message}"
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    def test_endpoint_not_public_access(self):
+    @pytest.mark.parametrize(
+        "public_access_cidrs", [[], ["::/0"]], ids=["no-cidrs", "ipv6-cidr"]
+    )
+    def test_endpoint_not_public_access(self, public_access_cidrs):
         eks_client = mock.MagicMock
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -71,6 +120,7 @@ class Test_eks_cluster_not_publicly_accessible:
                 logging=None,
                 endpoint_public_access=False,
                 endpoint_private_access=True,
+                public_access_cidrs=public_access_cidrs,
             )
         )
 

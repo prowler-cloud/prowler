@@ -4,6 +4,22 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.51.0] (Prowler v5.51.0)
+
+### 🔐 Security
+
+- Next.js 16.4.5, Vitest 4.1.12 and patched pins for `hono`, `@hono/node-server`, `fast-xml-parser`, `zod`, `@modelcontextprotocol/sdk`, `smol-toml`, `source-map-js`, `postcss-selector-parser` and `@ai-sdk/provider-utils` to close open security advisories [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
+## [1.50.0] (Prowler v5.50.0)
+
+### 🐞 Fixed
+
+- Edit user form no longer sends the email when it was not changed [(#13370)](https://github.com/prowler-cloud/prowler/pull/13370)
+
+---
+
 ## [1.49.0] (Prowler v5.49.0)
 
 ### 🔄 Changed

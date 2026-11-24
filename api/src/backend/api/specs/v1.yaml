@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.51.0
+  version: 1.54.0
   description: |-
     Prowler API specification.
 
@@ -21443,15 +21443,10 @@ components:
                       fingerprint:
                         type: string
                         description: The fingerprint of the API signing key.
-                      key_file:
-                        type: string
-                        description: The path to the private key file for API signing.
-                          Either key_file or key_content must be provided.
                       key_content:
                         type: string
-                        description: The content of the private key for API signing
-                          (base64 encoded). Either key_file or key_content must be
-                          provided.
+                        description: The content of the private key for API signing (base64
+                          encoded).
                       tenancy:
                         type: string
                         description: The OCID of the tenancy.
@@ -21465,6 +21460,7 @@ components:
                     required:
                     - user
                     - fingerprint
+                    - key_content
                     - tenancy
                     - region
                   - type: object
@@ -23566,14 +23562,10 @@ components:
                   fingerprint:
                     type: string
                     description: The fingerprint of the API signing key.
-                  key_file:
-                    type: string
-                    description: The path to the private key file for API signing.
-                      Either key_file or key_content must be provided.
                   key_content:
                     type: string
                     description: The content of the private key for API signing (base64
-                      encoded). Either key_file or key_content must be provided.
+                      encoded).
                   tenancy:
                     type: string
                     description: The OCID of the tenancy.
@@ -23586,6 +23578,7 @@ components:
                 required:
                 - user
                 - fingerprint
+                - key_content
                 - tenancy
                 - region
               - type: object
@@ -24006,15 +23999,10 @@ components:
                       fingerprint:
                         type: string
                         description: The fingerprint of the API signing key.
-                      key_file:
-                        type: string
-                        description: The path to the private key file for API signing.
-                          Either key_file or key_content must be provided.
                       key_content:
                         type: string
-                        description: The content of the private key for API signing
-                          (base64 encoded). Either key_file or key_content must be
-                          provided.
+                        description: The content of the private key for API signing (base64
+                          encoded).
                       tenancy:
                         type: string
                         description: The OCID of the tenancy.
@@ -24028,6 +24016,7 @@ components:
                     required:
                     - user
                     - fingerprint
+                    - key_content
                     - tenancy
                     - region
                   - type: object
@@ -24467,14 +24456,10 @@ components:
                   fingerprint:
                     type: string
                     description: The fingerprint of the API signing key.
-                  key_file:
-                    type: string
-                    description: The path to the private key file for API signing.
-                      Either key_file or key_content must be provided.
                   key_content:
                     type: string
                     description: The content of the private key for API signing (base64
-                      encoded). Either key_file or key_content must be provided.
+                      encoded).
                   tenancy:
                     type: string
                     description: The OCID of the tenancy.
@@ -24487,6 +24472,7 @@ components:
                 required:
                 - user
                 - fingerprint
+                - key_content
                 - tenancy
                 - region
               - type: object

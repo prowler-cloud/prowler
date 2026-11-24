@@ -21,6 +21,8 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             "secrets_ignore_patterns", []
         )
         validate = autoscaling_client.audit_config.get("secrets_validate", False)
+
+        confidence = autoscaling_client.audit_config.get("secrets_confidence", "low")
         configurations = list(autoscaling_client.launch_configurations.values())
 
         # Collect the decoded User Data of each launch configuration and scan it
@@ -58,7 +60,10 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}
