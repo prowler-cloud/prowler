@@ -61,13 +61,13 @@ To create a Service Principal using the Azure CLI, follow these steps:
 
 3. Save the values of `appId`, `password` and `tenant`, as they will be used as credentials in Prowler.
 
-## Creating the Service Principal and Its Permissions With a Script (Optional)
+## Creating the Service Principal and Its Permissions with a Script (Optional)
 
 <VersionBadge version="5.52.0" />
 
 As an alternative to the manual steps on this page and in [Required Permissions](/user-guide/providers/azure/authentication#required-permissions), the Prowler repository includes a script that creates the Service Principal and assigns every permission in one run: [`permissions/prowler-azure-m365-scan-identity.sh`](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-m365-scan-identity.sh).
 
-The script is a single Bash file that only calls the Azure CLI. It uses the cloud and tenant the Azure CLI is signed in to; no endpoint is hardcoded. An administrator of the tenant runs it; Prowler never receives administrator access.
+The script is a single Bash file that only calls the Azure CLI. It uses the cloud and tenant the Azure CLI is signed in to, and no endpoint is hardcoded. A tenant administrator runs the script. Prowler never receives administrator access.
 
 ### What the Script Creates
 
