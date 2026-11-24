@@ -175,6 +175,7 @@ Prowler Local Server offers flexible installation methods tailored to various en
 #### Requirements
 
 - `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `Docker Engine` version 28.0.0 or later for production deployments: on older engines, hosts on the same local network can reach ports published to `127.0.0.1`, including the PostgreSQL and Neo4j ports.
 
 #### Commands
 
