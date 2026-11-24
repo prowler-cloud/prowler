@@ -183,6 +183,8 @@ _macOS/Linux:_
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+# Stop here if .env already exists so a rerun never replaces existing values.
+if [ -f .env ]; then echo ".env already exists; edit the existing file instead of regenerating it."; else
 cat > .env <<EOF
 # Required configuration. Replace the change-me values with strong values
 # before starting, and add any other variables you want to customize.
@@ -192,6 +194,7 @@ AUTH_TRUST_HOST=true
 AUTH_SECRET=$(openssl rand -base64 32)
 PROWLER_MCP_SERVER_URL=http://mcp-server:8000/mcp
 POSTGRES_HOST=postgres-db
+POSTGRES_PORT=5432
 POSTGRES_ADMIN_USER=prowler_admin
 POSTGRES_ADMIN_PASSWORD=change-me
 POSTGRES_USER=prowler
@@ -204,8 +207,9 @@ NEO4J_PASSWORD=change-me
 DJANGO_SETTINGS_MODULE=config.django.production
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api
+DJANGO_SECRETS_ENCRYPTION_KEY=$(openssl rand -base64 32)
 EOF
-docker compose up -d
+fi
 ```
 
 _Windows PowerShell:_
@@ -213,15 +217,18 @@ _Windows PowerShell:_
 ``` powershell
 $VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/prowler/releases/latest").tag_name
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
+# Stop here if .env already exists so a rerun never replaces existing values.
+if (Test-Path ".env") { Write-Output ".env already exists; edit the existing file instead of regenerating it." } else {
 @"
 # Required configuration. Replace the change-me values with strong values
 # before starting, and add any other variables you want to customize.
 AUTH_URL=http://localhost:3000
 UI_API_BASE_URL=http://prowler-api:8080/api/v1
 AUTH_TRUST_HOST=true
-AUTH_SECRET=$([Convert]::ToBase64String([byte[]](1..32 | ForEach-Object { Get-Random -Maximum 256 })))
+AUTH_SECRET=$([byte[]]$b = ,0 * 32; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b))
 PROWLER_MCP_SERVER_URL=http://mcp-server:8000/mcp
 POSTGRES_HOST=postgres-db
+POSTGRES_PORT=5432
 POSTGRES_ADMIN_USER=prowler_admin
 POSTGRES_ADMIN_PASSWORD=change-me
 POSTGRES_USER=prowler
@@ -234,7 +241,14 @@ NEO4J_PASSWORD=change-me
 DJANGO_SETTINGS_MODULE=config.django.production
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api
+DJANGO_SECRETS_ENCRYPTION_KEY=$([byte[]]$b = ,0 * 32; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b))
 "@ | Set-Content -Path ".env"
+}
+```
+
+Before starting the stack, replace every `change-me` password in `.env` with strong values, then run:
+
+``` console
 docker compose up -d
 ```
 
