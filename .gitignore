@@ -135,7 +135,8 @@ ai-config.json
 *.tfstate
 *.tfstate.*
 
-# .env
+# Local environment files (never commit real secrets)
+.env
 ui/.env*
 api/.env*
 mcp_server/.env*
