@@ -1,0 +1,1 @@
+- Azure Graph lookups now correctly authenticates to alternate Azure clouds (Azure China, Azure US Gov), using a newly added MS Graph Request adapter that passes the 'region' argument and correclty rewrites the /me URL path
