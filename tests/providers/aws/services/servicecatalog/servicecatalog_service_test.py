@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import botocore
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.servicecatalog.servicecatalog_service import (
@@ -106,3 +107,111 @@ class Test_ServiceCatalog_Service:
             "tag1": "value1",
             "tag2": "value2",
         }
+
+
+def _portfolio_detail(name):
+    return {
+        "Id": f"port-{name}",
+        "ARN": f"arn:aws:servicecatalog:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:portfolio/port-{name}",
+        "DisplayName": name,
+    }
+
+
+@mock_aws
+@patch(
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+    new=mock_generate_regional_clients,
+)
+def test_list_portfolios_includes_later_pages():
+    aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+    service_catalog = ServiceCatalog(aws_provider)
+    service_catalog.portfolios = {}
+    regional_client = service_catalog.regional_clients[AWS_REGION_EU_WEST_1]
+
+    with Stubber(regional_client) as stubber:
+        stubber.add_response(
+            "list_portfolios",
+            {
+                "PortfolioDetails": [_portfolio_detail("first")],
+                "NextPageToken": "second-page",
+            },
+            {},
+        )
+        stubber.add_response(
+            "list_portfolios",
+            {"PortfolioDetails": [_portfolio_detail("later")]},
+            {"PageToken": "second-page"},
+        )
+        service_catalog._list_portfolios(regional_client)
+        stubber.assert_no_pending_responses()
+
+    assert sorted(
+        portfolio.name for portfolio in service_catalog.portfolios.values()
+    ) == ["first", "later"]
+
+
+@mock_aws
+@patch(
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+    new=mock_generate_regional_clients,
+)
+def test_list_portfolios_keeps_pages_read_before_an_error():
+    aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+    service_catalog = ServiceCatalog(aws_provider)
+    service_catalog.portfolios = {}
+    regional_client = service_catalog.regional_clients[AWS_REGION_EU_WEST_1]
+
+    with Stubber(regional_client) as stubber:
+        stubber.add_response(
+            "list_portfolios",
+            {
+                "PortfolioDetails": [_portfolio_detail("first")],
+                "NextPageToken": "second-page",
+            },
+            {},
+        )
+        stubber.add_client_error(
+            "list_portfolios",
+            service_error_code="ThrottlingException",
+            expected_params={"PageToken": "second-page"},
+        )
+        service_catalog._list_portfolios(regional_client)
+        stubber.assert_no_pending_responses()
+
+    assert [portfolio.name for portfolio in service_catalog.portfolios.values()] == [
+        "first"
+    ]
+
+
+@mock_aws
+@patch(
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+    new=mock_generate_regional_clients,
+)
+def test_list_portfolios_filters_audited_resources_on_every_page():
+    aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+    service_catalog = ServiceCatalog(aws_provider)
+    service_catalog.portfolios = {}
+    audited = _portfolio_detail("audited-later")
+    service_catalog.audit_resources = [audited["ARN"]]
+    regional_client = service_catalog.regional_clients[AWS_REGION_EU_WEST_1]
+
+    with Stubber(regional_client) as stubber:
+        stubber.add_response(
+            "list_portfolios",
+            {
+                "PortfolioDetails": [_portfolio_detail("not-audited")],
+                "NextPageToken": "second-page",
+            },
+            {},
+        )
+        stubber.add_response(
+            "list_portfolios",
+            {"PortfolioDetails": [_portfolio_detail("other"), audited]},
+            {"PageToken": "second-page"},
+        )
+        service_catalog._list_portfolios(regional_client)
+        stubber.assert_no_pending_responses()
+
+    assert list(service_catalog.portfolios) == [audited["ARN"]]
+    assert service_catalog.portfolios[audited["ARN"]].region == AWS_REGION_EU_WEST_1

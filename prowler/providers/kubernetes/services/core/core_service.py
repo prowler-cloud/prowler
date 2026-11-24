@@ -40,6 +40,7 @@ class Core(KubernetesService):
                         labels=pod.metadata.labels,
                         annotations=pod.metadata.annotations,
                         node_name=pod.spec.node_name,
+                        os_name=pod.spec.os.name if pod.spec.os else None,
                         service_account=pod.spec.service_account_name,
                         status_phase=pod.status.phase,
                         pod_ip=pod.status.pod_ip,
@@ -64,6 +65,7 @@ class Core(KubernetesService):
 
     @staticmethod
     def _build_containers(containers) -> dict:
+        """Build container models while preserving container and host port values."""
         pod_containers = {}
         for container in containers or []:
             pod_containers[container.name] = Container(
@@ -71,7 +73,13 @@ class Core(KubernetesService):
                 image=container.image,
                 command=container.command if container.command else None,
                 ports=(
-                    [{"containerPort": port.container_port} for port in container.ports]
+                    [
+                        {
+                            "containerPort": port.container_port,
+                            "hostPort": port.host_port,
+                        }
+                        for port in container.ports
+                    ]
                     if container.ports
                     else None
                 ),
@@ -193,6 +201,7 @@ class Pod(BaseModel):
     labels: Optional[dict]
     annotations: Optional[dict]
     node_name: Optional[str]
+    os_name: Optional[str] = None
     service_account: Optional[str]
     status_phase: Optional[str]
     pod_ip: Optional[str]

@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+from azure.mgmt.databricks.models import Workspace
+
 from prowler.providers.azure.services.databricks.databricks_service import (
     Databricks,
     DatabricksWorkspace,
@@ -196,6 +198,54 @@ class Test_Databricks_get_workspaces:
 
         assert mock_client.workspaces.list_by_resource_group.call_count == 2
         assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_workspaces_private_endpoint_statuses(self):
+        workspace = Workspace.deserialize(
+            {
+                "id": "ws-id-1",
+                "name": "my-workspace",
+                "location": "eastus",
+                "properties": {
+                    "managedResourceGroupId": "managed-rg-id",
+                    "privateEndpointConnections": [
+                        {
+                            "properties": {
+                                "privateEndpoint": {"id": "pe-approved"},
+                                "privateLinkServiceConnectionState": {
+                                    "status": "Approved"
+                                },
+                            }
+                        },
+                        {
+                            "properties": {
+                                "privateEndpoint": {"id": "pe-pending"},
+                                "privateLinkServiceConnectionState": {
+                                    "status": "Pending"
+                                },
+                            }
+                        },
+                        {"properties": None},
+                    ],
+                },
+            }
+        )
+        mock_client = MagicMock()
+        mock_client.workspaces.list_by_subscription.return_value = [workspace]
+
+        with patch(
+            "prowler.providers.azure.services.databricks.databricks_service.Databricks._get_workspaces",
+            return_value={},
+        ):
+            databricks = Databricks(set_mocked_azure_provider())
+
+        databricks.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        databricks.resource_groups = None
+
+        result = databricks._get_workspaces()
+
+        assert result[AZURE_SUBSCRIPTION_ID][
+            "ws-id-1"
+        ].private_endpoint_connection_statuses == ["Approved", "Pending"]
 
     def test_get_workspaces_with_mixed_case_resource_group(self):
         mock_client = MagicMock()
