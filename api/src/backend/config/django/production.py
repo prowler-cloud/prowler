@@ -16,7 +16,7 @@ CORS_ALLOWED_ORIGINS = env.list(
 if not SECRET_KEY or SECRET_KEY == "secret":  # noqa: F405
     raise ImproperlyConfigured(
         "SECRET_KEY is missing or still set to the default 'secret'. Generate "
-        "one (for example `openssl rand -base64 50`) and export it as "
+        "one (for example `openssl rand -hex 32`) and export it as "
         "SECRET_KEY before starting the API in production."
     )
 
