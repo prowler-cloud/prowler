@@ -74,7 +74,7 @@ ui:
     # runAsNonRoot: true
     # runAsUser: 1000
 
-  # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+  # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   service:
     # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
     type: ClusterIP
@@ -173,6 +173,9 @@ api:
     # "*" out of production: with it, Django accepts any Host header.
     # Add your public hostnames here when deploying behind an ingress,
     # e.g. DJANGO_ALLOWED_HOSTS: "prowler.example.com"
+    # The chart always appends the in-cluster API service hostname
+    # (<fullname>-api) used by UI_API_BASE_URL, so server-side UI requests
+    # keep passing Django's Host validation.
     DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
     DJANGO_BIND_ADDRESS: "0.0.0.0"
     DJANGO_PORT: "8080"
@@ -241,7 +244,7 @@ api:
     # runAsNonRoot: true
     # runAsUser: 1000
 
-  # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+  # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   service:
     # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
     type: ClusterIP
@@ -286,17 +289,25 @@ api:
   # /health/live succeeds while the process answers; /health/ready also
   # checks PostgreSQL, Valkey and Neo4j connectivity and returns 503 when
   # any of them is unreachable.
+  # The Host header must be a host Django allows: the kubelet would
+  # otherwise send the pod IP, which DJANGO_ALLOWED_HOSTS rejects with 400.
   livenessProbe:
     failureThreshold: 10
     httpGet:
       path: /health/live
       port: http
+      httpHeaders:
+        - name: Host
+          value: localhost
     periodSeconds: 20
   readinessProbe:
     failureThreshold: 10
     httpGet:
       path: /health/ready
       port: http
+      httpHeaders:
+        - name: Host
+          value: localhost
     periodSeconds: 20
 
   # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/

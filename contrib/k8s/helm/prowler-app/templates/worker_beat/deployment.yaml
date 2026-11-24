@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       annotations:
-        secret-hash: "{{ printf "%s%s%s" (.Files.Get "templates/api/configmap.yaml" | sha256sum) (.Files.Get "templates/api/secret-valkey.yaml" | sha256sum) | sha256sum }}"
+        secret-hash: "{{ printf "%s%s" (include (print $.Template.BasePath "/api/configmap.yaml") . | sha256sum) (include (print $.Template.BasePath "/api/secret-valkey.yaml") . | sha256sum) | sha256sum }}"
       {{- with .Values.worker.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
