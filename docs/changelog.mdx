@@ -4,6 +4,104 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.52.0" description="November 23, 2026">
+  ### ☁️ Microsoft 365 — Sovereign and Custom Clouds
+
+  - The Microsoft 365 provider now signs in and sends Microsoft Graph requests through the Microsoft Entra ID authority and Graph endpoint of the selected region, and the Exchange Online and Microsoft Teams PowerShell checks use that region's sign-in endpoint and cloud environment. Scans of `M365USGovernment` (GCC High) and `M365China` no longer go to the commercial cloud. Azure CLI authentication keeps the cloud the Azure CLI is signed in to. See [Region Selection](/user-guide/providers/microsoft365/getting-started-m365#region-selection).
+  - A new `M365Custom` region, with `--m365-authority-host` and `--m365-graph-endpoint`, scans Microsoft clouds that have no built-in entry. The Microsoft Graph checks run against the supplied endpoints, and the checks that need the Exchange Online or Microsoft Teams PowerShell modules are skipped. See [Custom Cloud Endpoints](/user-guide/providers/microsoft365/getting-started-m365#custom-cloud-endpoints).
+  - A new script creates the Azure and Microsoft 365 scan identity, with its app registration, permissions and role assignments, and removes it again when it is no longer needed. See [Automated Setup With a Script](/user-guide/providers/microsoft365/authentication#automated-setup-with-a-script-optional) for Microsoft 365 and [Creating the Service Principal With a Script](/user-guide/providers/azure/create-prowler-service-principal#creating-the-service-principal-and-its-permissions-with-a-script-optional) for Azure.
+
+  ### 🆕 New Checks for AWS, Azure and Google Cloud
+
+  - `backup_vaults_lock_enabled` verifies that AWS Backup vaults have Vault Lock enabled to protect recovery points from deletion. Contributed by @UTKARSH698. Thank you!
+  - `sagemaker_full_access_policy_attached` verifies that no IAM role has the AWS managed `AmazonSageMakerFullAccess` policy attached, excluding service-linked roles. Contributed by @Aeshvarya. Thank you!
+  - `aks_cluster_kms_cmk_encryption_enabled` verifies that AKS clusters encrypt Kubernetes secrets in etcd with a customer-managed Azure Key Vault key, and `aks_cluster_node_os_upgrade_channel_enabled` verifies that AKS clusters use an AKS-managed node OS auto-upgrade channel (`SecurityPatch` or `NodeImage`). Contributed by @pouria-l. Thank you!
+  - `databricks_workspace_uses_private_endpoint` verifies that Azure Databricks workspaces have an approved private endpoint connection, and `cloudsql_instance_deletion_protection_enabled` verifies that Google Cloud SQL instances and read replicas have deletion protection enabled. Both are mapped to CIS. Contributed by @prawalpokharel. Thank you!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🌐 IPv6 Exposure Detection
+
+  Internet exposure checks now treat the IPv6 `::/0` source as unrestricted where they used to report a false PASS: the Alibaba Cloud ECS SSH and RDP checks and `rds_instance_no_public_access_whitelist`, the Oracle Cloud SSH and RDP checks for security lists and network security groups, the Google Cloud `compute_firewall_ssh_access_from_the_internet_allowed` and `compute_firewall_rdp_access_from_the_internet_allowed` checks, and `eks_cluster_not_publicly_accessible`. The Alibaba Cloud RDS check also reads the whitelist from `security_iplist`, so it no longer passes every instance. Contributed by @0xTaoZ, @sandiyochristan, @pouria-l and @jhyyuun. Thank you!
+
+  ### 🔧 Fixers That Keep the Rest of the Policy
+
+  - The EC2 security group fixers revoke only the `0.0.0.0/0` and `::/0` sources of the offending rule instead of the whole rule, keeping private CIDRs, prefix lists and security group references.
+  - The `s3_bucket_policy_public_write_access` and `sqs_queues_not_publicly_accessible` fixers remove only the public statements instead of deleting or replacing the whole policy.
+  - The IAM password policy fixers no longer fail with `ParamValidationError` when the account has no password policy, and the `cloudtrail_multi_region_enabled` fixer starts logging on the trail it creates.
+
+  Contributed by @yadlapatisathwik and @7-Bala. Thank you!
+
+  ### 🔐 Prowler App Changes That Need Action
+
+  - Oracle Cloud provider secrets reject `key_file`, which was a path read on the worker, and the private key must be supplied as `key_content`. `key_file` values stored earlier are ignored, so providers created through the API with `key_file` need their private key added as content before their next scan. See [Getting Started with OCI](/user-guide/providers/oci/getting-started-oci#step-3-add-oci-api-key-credentials).
+  - Sessions started through SAML single sign-on (SSO) or with an API key can no longer change the account password or email, even when the user belongs only to that organization. Change them from a session started with email and password. See [Sessions Started with SSO](/user-guide/tutorials/prowler-app-sso#sessions-started-with-sso).
+  - Mute rules follow the providers a role can see: roles without unlimited visibility can no longer list, change or delete rules covering findings on other providers, or create rules for findings they cannot read. See [Mute Rule Visibility](/user-guide/tutorials/prowler-app-rbac#mute-rule-visibility).
+
+  ### 🛠️ Improvements and Fixes
+
+  - Athena workgroups, Cognito user pool clients, IAM server certificates, Neptune DB clusters, Service Catalog portfolios and SNS topic subscriptions are now collected across every page of the AWS API response. Contributed by @leela-padala, @nighthawk-761, @Davmunrey and @Varshith-Kali. Thank you!
+  - The RDS event subscription checks no longer report FAIL for subscriptions of other source types; each check reports a single account-level FAIL per Region when no enabled subscription of its own source type covers it. Contributed by @Varshith-Kali. Thank you!
+  - AWS resource policy checks no longer treat `StringLike`, `ArnLike` or `ArnEquals` conditions whose wildcards match any AWS account as restricting public access, and `s3_bucket_secure_transport_policy` evaluates deny statements over insecure transport the way IAM does. Contributed by @ahmedhany-cys. Thank you!
+  - Security group internet exposure checks include the entries of customer managed prefix lists referenced by an ingress rule. Contributed by @harshrajdebug. Thank you!
+  - CloudWatch metric filter checks match CloudTrail log groups by full ARN, so a same-named log group in another Region no longer makes them pass. Contributed by @liangzaihuanyv. Thank you!
+  - `guardduty_no_high_severity_findings` includes both High severity groups, `sns_topics_not_publicly_accessible` keeps evaluating a policy after a statement restricted by `aws:SourceArn`, and the Kubernetes `core_minimize_allowPrivilegeEscalation_containers` and `core_minimize_admission_hostport_containers` checks require an explicit `allowPrivilegeEscalation: false` and detect nonzero HostPorts. Contributed by @jhyyuun. Thank you!
+  - Redshift automated snapshot findings check the configured retention period. Contributed by @ZainnQureshii. Thank you!
+  - ElastiCache replication groups are kept during resource-filtered scans, and Azure SQL servers, storage accounts and virtual machines are no longer dropped from the inventory when optional settings are missing or null. Azure API Management workspaces are detected when gateway logs are enabled through the `allLogs` category group. Contributed by @leela-padala. Thank you!
+  - Azure NSG checks detect SSH, RDP and HTTP ports listed in `destination_port_ranges` or set to `*`. Contributed by @anandhx. Thank you!
+  - `containerregistry_not_publicly_accessible` and `containerregistry_uses_private_link` no longer fail Azure Container Registries that disable public access and use private endpoints. Contributed by @davletd. Thank you!
+  - `recovery_vault_backup_policy_retention_adequate` reads the daily retention of SQL in Azure VM and SAP HANA backup policies from their Full sub-policy. Contributed by @Avavaziri. Thank you!
+  - Microsoft 365 Defender outbound spam checks no longer fail with `KeyError` on tenants with Standard or Strict preset security policies. Contributed by @0xTaoZ. Thank you!
+  - `repository_secret_scanning_enabled` no longer reports FAIL when the token cannot read the repository settings. Contributed by @bailoun. Thank you!
+  - `githubactions_workflow_security_scan` reads the workflow path from zizmor 1.27.0 and later, which it used to drop, reporting PASS for repositories with workflow issues. Contributed by @YoshiBigSmoke. Thank you!
+  - Security Hub exports in Prowler App report incomplete finding conversion or delivery and skip archival when the export is incomplete. Contributed by @danhpham1-finx. Thank you!
+  - Findings partitions past the retention window can be dropped again in Prowler App. Contributed by @wertelyu. Thank you!
+  - Production Docker Compose workers report unhealthy when their own Celery control endpoint stops responding. Contributed by @euvoor. Thank you!
+
+  ### 🔐 Security Updates
+
+  - Custom Attack Paths queries can no longer switch to another database with `USE` or list databases with `SHOW`, and database error messages are no longer returned in the response.
+  - Provider secrets keep only the fields their credential type declares, so undeclared fields such as file paths no longer reach the provider.
+  - Google Workspace service account keys are rejected unless their `token_uri` is one of Google's token endpoints.
+  - SAML configurations whose IdP entityID matches the name of a social login provider such as `github` or `google` are rejected.
+  - Container image scans and IaC scans route Trivy through a local proxy that rejects registry redirects, token endpoints, layer URLs and Terraform module sources resolving to non-public addresses, and image references pointing to such hosts are rejected before the scan starts. IaC scans fetch git modules only over HTTP and HTTPS and Trivy no longer receives the worker's cloud credentials.
+  - The outbound host guard rejects URLs whose host the guard and the HTTP client would read differently.
+  - The local dashboard CSV export neutralises formula injection in finding cells. Contributed by @bharathvemula. Thank you!
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @leela-padala: Athena pagination, ElastiCache filtered scans, Azure SQL, storage and VM inventory and APIM `allLogs` detection ([#13239](https://github.com/prowler-cloud/prowler/pull/13239), [#13502](https://github.com/prowler-cloud/prowler/pull/13502), [#13074](https://github.com/prowler-cloud/prowler/pull/13074), [#13031](https://github.com/prowler-cloud/prowler/pull/13031), [#13042](https://github.com/prowler-cloud/prowler/pull/13042), [#13503](https://github.com/prowler-cloud/prowler/pull/13503))
+  - @jhyyuun: EKS IPv6 endpoint access, GuardDuty High severity, SNS topic policies and Kubernetes privilege escalation and HostPort detection ([#13488](https://github.com/prowler-cloud/prowler/pull/13488), [#13474](https://github.com/prowler-cloud/prowler/pull/13474), [#13487](https://github.com/prowler-cloud/prowler/pull/13487), [#13486](https://github.com/prowler-cloud/prowler/pull/13486), [#13298](https://github.com/prowler-cloud/prowler/pull/13298))
+  - @yadlapatisathwik: EC2 security group, SQS, IAM password policy and CloudTrail fixers ([#13040](https://github.com/prowler-cloud/prowler/pull/13040), [#13046](https://github.com/prowler-cloud/prowler/pull/13046), [#13044](https://github.com/prowler-cloud/prowler/pull/13044), [#13060](https://github.com/prowler-cloud/prowler/pull/13060))
+  - @pouria-l: AKS CMK encryption and node OS upgrade channel checks and Google Cloud IPv6 firewall sources ([#12863](https://github.com/prowler-cloud/prowler/pull/12863), [#12657](https://github.com/prowler-cloud/prowler/pull/12657), [#12888](https://github.com/prowler-cloud/prowler/pull/12888))
+  - @0xTaoZ: Alibaba Cloud ECS IPv6 sources and RDS whitelist, and M365 Defender preset policies ([#12982](https://github.com/prowler-cloud/prowler/pull/12982), [#12980](https://github.com/prowler-cloud/prowler/pull/12980), [#12902](https://github.com/prowler-cloud/prowler/pull/12902))
+  - @Davmunrey: IAM server certificate, Service Catalog and SNS pagination ([#13466](https://github.com/prowler-cloud/prowler/pull/13466), [#13464](https://github.com/prowler-cloud/prowler/pull/13464), [#13462](https://github.com/prowler-cloud/prowler/pull/13462))
+  - @prawalpokharel: Databricks private endpoint and Cloud SQL deletion protection checks ([#13471](https://github.com/prowler-cloud/prowler/pull/13471), [#13473](https://github.com/prowler-cloud/prowler/pull/13473))
+  - @ahmedhany-cys: account-wide condition wildcards and S3 secure transport policy evaluation ([#13294](https://github.com/prowler-cloud/prowler/pull/13294), [#13227](https://github.com/prowler-cloud/prowler/pull/13227))
+  - @Varshith-Kali: RDS event subscription checks and Neptune pagination ([#13136](https://github.com/prowler-cloud/prowler/pull/13136), [#13506](https://github.com/prowler-cloud/prowler/pull/13506))
+  - @bharathvemula: dashboard CSV formula injection and dev log directory permissions ([#13075](https://github.com/prowler-cloud/prowler/pull/13075), [#13194](https://github.com/prowler-cloud/prowler/pull/13194))
+  - @UTKARSH698: AWS Backup Vault Lock check ([#12249](https://github.com/prowler-cloud/prowler/pull/12249))
+  - @Aeshvarya: SageMaker full access policy check ([#12587](https://github.com/prowler-cloud/prowler/pull/12587))
+  - @sandiyochristan: Oracle Cloud IPv6 exposure ([#12920](https://github.com/prowler-cloud/prowler/pull/12920))
+  - @7-Bala: S3 public write fixer ([#13081](https://github.com/prowler-cloud/prowler/pull/13081))
+  - @harshrajdebug: managed prefix lists in security group checks ([#13206](https://github.com/prowler-cloud/prowler/pull/13206))
+  - @liangzaihuanyv: CloudTrail log groups matched by full ARN ([#13193](https://github.com/prowler-cloud/prowler/pull/13193))
+  - @nighthawk-761: Cognito user pool client pagination ([#13493](https://github.com/prowler-cloud/prowler/pull/13493))
+  - @ZainnQureshii: Redshift automated snapshot retention ([#13514](https://github.com/prowler-cloud/prowler/pull/13514))
+  - @anandhx: Azure NSG destination port ranges ([#13301](https://github.com/prowler-cloud/prowler/pull/13301))
+  - @davletd: Azure Container Registry network collection ([#12652](https://github.com/prowler-cloud/prowler/pull/12652))
+  - @Avavaziri: Azure workload backup policy retention ([#13482](https://github.com/prowler-cloud/prowler/pull/13482))
+  - @bailoun: GitHub secret scanning unknown state ([#12744](https://github.com/prowler-cloud/prowler/pull/12744))
+  - @YoshiBigSmoke: zizmor workflow path ([#13026](https://github.com/prowler-cloud/prowler/pull/13026))
+  - @danhpham1-finx: Security Hub partial delivery ([#13022](https://github.com/prowler-cloud/prowler/pull/13022))
+  - @wertelyu: findings partition retention ([#13397](https://github.com/prowler-cloud/prowler/pull/13397))
+  - @euvoor: worker health checks ([#13307](https://github.com/prowler-cloud/prowler/pull/13307))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.52.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.51.0" description="November 19, 2026">
   ### 🇪🇸 ENS RD 311/2022 for Microsoft 365
 

@@ -3,6 +3,8 @@ import json
 import sys
 from unittest.mock import ANY, MagicMock, patch
 
+import pytest
+
 from prowler.providers.github.services.githubactions.githubactions_service import (
     GithubActions,
     GithubActionsWorkflowFinding,
@@ -56,6 +58,48 @@ class TestGithubActionsService:
         }
         result = GithubActions._extract_workflow_file_from_location(location)
         assert result == ".github/workflows/test.yml"
+
+    def test_extract_workflow_file_from_location_verbatim_path(self):
+        # zizmor >= 1.27.0 reports the local path as "verbatim_path"
+        location = {
+            "symbolic": {
+                "key": {"Local": {"verbatim_path": ".github/workflows/test.yml"}},
+            }
+        }
+        result = GithubActions._extract_workflow_file_from_location(location)
+        assert result == ".github/workflows/test.yml"
+
+    @pytest.mark.parametrize("unusable", [None, "", 123])
+    def test_extract_workflow_file_from_location_skips_unusable_verbatim_path(
+        self, unusable
+    ):
+        location = {
+            "symbolic": {
+                "key": {
+                    "Local": {
+                        "verbatim_path": unusable,
+                        "given_path": ".github/workflows/test.yml",
+                    }
+                },
+            }
+        }
+        result = GithubActions._extract_workflow_file_from_location(location)
+        assert result == ".github/workflows/test.yml"
+
+    def test_extract_workflow_file_from_location_warning_omits_location(self):
+        # Locations can carry workflow source text, which must not reach the logs
+        location = {
+            "symbolic": {"key": {"Local": {}}},
+            "concrete": {"feature": "run: echo zq7rk2mx9v"},
+        }
+        with patch(
+            "prowler.providers.github.services.githubactions.githubactions_service.logger"
+        ) as mock_logger:
+            result = GithubActions._extract_workflow_file_from_location(location)
+
+        assert result is None
+        mock_logger.warning.assert_called_once()
+        assert "zq7rk2mx9v" not in str(mock_logger.warning.call_args)
 
     def test_extract_workflow_file_from_location_missing_key(self):
         location = {"symbolic": {}}
@@ -280,7 +324,8 @@ class TestGithubActionsService:
             # Since zizmor is missing, _scan_repositories should not be called
             assert service.findings == {}
 
-    def test_scan_repositories_strips_temp_dir_prefix(self):
+    @pytest.mark.parametrize("path_key", ["given_path", "verbatim_path"])
+    def test_scan_repositories_strips_temp_dir_prefix(self, path_key):
         temp_dir = "/var/folders/xx/tmp48xjp_g0"
         zizmor_output = [
             {
@@ -293,7 +338,7 @@ class TestGithubActionsService:
                         "symbolic": {
                             "key": {
                                 "Local": {
-                                    "given_path": f"{temp_dir}/.github/workflows/release.yml"
+                                    path_key: f"{temp_dir}/.github/workflows/release.yml"
                                 }
                             },
                             "annotation": "Injection risk",

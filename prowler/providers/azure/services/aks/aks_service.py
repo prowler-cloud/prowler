@@ -64,6 +64,11 @@ class AKS(AzureService):
                                         "upgrade_channel",
                                         None,
                                     ),
+                                    node_os_upgrade_channel=getattr(
+                                        getattr(cluster, "auto_upgrade_profile", None),
+                                        "node_os_upgrade_channel",
+                                        None,
+                                    ),
                                     defender_enabled=bool(
                                         getattr(
                                             getattr(
@@ -109,6 +114,21 @@ class AKS(AzureService):
                                             cluster, "disable_local_accounts", False
                                         )
                                     ),
+                                    kms_cmk_encryption_enabled=bool(
+                                        getattr(
+                                            getattr(
+                                                getattr(
+                                                    cluster,
+                                                    "security_profile",
+                                                    None,
+                                                ),
+                                                "azure_key_vault_kms",
+                                                None,
+                                            ),
+                                            "enabled",
+                                            False,
+                                        )
+                                    ),
                                 )
                             }
                         )
@@ -137,6 +157,8 @@ class Cluster:
     rbac_enabled: bool
     location: str
     auto_upgrade_channel: Optional[str] = None
+    node_os_upgrade_channel: Optional[str] = None
     defender_enabled: bool = False
     azure_monitor_enabled: bool = False
     local_accounts_disabled: bool = False
+    kms_cmk_encryption_enabled: bool = False

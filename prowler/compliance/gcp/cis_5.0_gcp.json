@@ -1965,7 +1965,9 @@
     {
       "Id": "6.9",
       "Description": "Ensure Cloud SQL Database Instances Have Deletion Protection Enabled",
-      "Checks": [],
+      "Checks": [
+        "cloudsql_instance_deletion_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "6 Cloud SQL Database Services",

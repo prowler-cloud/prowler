@@ -170,18 +170,22 @@ class RecoveryBackup(AzureService):
 
     @staticmethod
     def _get_backup_policy_retention_days(policy) -> Optional[int]:
-        """Return the daily retention duration count for a backup policy."""
+        """Return the daily retention duration count for a backup policy.
+
+        AzureWorkload policies (SQL in Azure VM, SAP HANA) have no top-level
+        retention policy: their retention lives in the "Full" entry of
+        ``sub_protection_policy``.
+        """
+        properties = getattr(policy, "properties", None)
+        retention_policy = getattr(properties, "retention_policy", None)
+        if retention_policy is None:
+            for sub_policy in getattr(properties, "sub_protection_policy", None) or []:
+                if getattr(sub_policy, "policy_type", None) == "Full":
+                    retention_policy = getattr(sub_policy, "retention_policy", None)
+                    break
         return getattr(
             getattr(
-                getattr(
-                    getattr(
-                        getattr(policy, "properties", None),
-                        "retention_policy",
-                        None,
-                    ),
-                    "daily_schedule",
-                    None,
-                ),
+                getattr(retention_policy, "daily_schedule", None),
                 "retention_duration",
                 None,
             ),

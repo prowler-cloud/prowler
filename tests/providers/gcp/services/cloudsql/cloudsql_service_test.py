@@ -48,6 +48,7 @@ class TestCloudSQLService:
                 cloudsql_client.instances[0].cmek_key_name
                 == "projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1"
             )
+            assert cloudsql_client.instances[0].deletion_protection_enabled
             assert cloudsql_client.instances[0].project_id == GCP_PROJECT_ID
 
             assert cloudsql_client.instances[1].name == "instance2"
@@ -69,6 +70,7 @@ class TestCloudSQLService:
             assert cloudsql_client.instances[1].flags == []
             assert cloudsql_client.instances[1].instance_type == "CLOUD_SQL_INSTANCE"
             assert cloudsql_client.instances[1].cmek_key_name is None
+            assert not cloudsql_client.instances[1].deletion_protection_enabled
             assert cloudsql_client.instances[1].project_id == GCP_PROJECT_ID
 
     def test_instances_without_backup_configuration(self):
