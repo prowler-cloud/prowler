@@ -132,6 +132,75 @@ def test_repository_wildcard_passes_without_allowlist():
 
 
 @mock_aws
+def test_owner_only_subject_passes_without_allowlist():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:acme/*"}})],
+        }
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_owner_only_subject_passes_with_matching_allowlist():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:acme/*"}})],
+        },
+        audit_config={"iam_github_oidc_allowed_owners": ["acme"]},
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
+def test_owner_only_subject_fails_with_nonmatching_allowlist():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:acme/*"}})],
+        },
+        audit_config={"iam_github_oidc_allowed_owners": ["other"]},
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_empty_owner_fails():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:/infra:*"}})],
+        }
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_empty_repository_fails():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:acme/:*"}})],
+        }
+    )
+    assert_report(results, role_arn, "FAIL", FAIL_MESSAGE)
+
+
+@mock_aws
+def test_owner_allowlist_matching_is_case_insensitive():
+    results, role_arn = run_check(
+        {
+            "Version": "2012-10-17",
+            "Statement": [github_statement({"StringLike": {SUB_KEY: "repo:acme/*"}})],
+        },
+        audit_config={"iam_github_oidc_allowed_owners": ["Acme"]},
+    )
+    assert_report(results, role_arn, "PASS", PASS_MESSAGE)
+
+
+@mock_aws
 def test_any_specific_owner_passes_without_allowlist():
     results, role_arn = run_check(
         {

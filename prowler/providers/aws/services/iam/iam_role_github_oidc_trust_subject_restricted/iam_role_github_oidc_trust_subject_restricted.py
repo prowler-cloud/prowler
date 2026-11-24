@@ -66,24 +66,24 @@ def _subject_is_restricted(
     values = list(values)
     if not values:
         return False
-    allowed_owners = set(allowed_owners or [])
+    allowed_owners = {str(owner).casefold() for owner in allowed_owners or []}
     for value in values:
         if not isinstance(value, str) or not value.startswith("repo:"):
             return False
         parts = value[5:].split(":")
-        if len(parts) < 2 or not parts[0] or not parts[1]:
-            return False
-        owner_repo = parts[0].split("/")
-        if len(owner_repo) != 2:
+        owner_repo = parts[0].split("/", 1)
+        if (
+            len(owner_repo) != 2
+            or not owner_repo[0]
+            or not owner_repo[1]
+            or (len(parts) > 1 and not parts[1])
+        ):
             return False
         owner, repository = owner_repo
         if (
-            not owner
-            or not repository
-            or not parts[1]
-            or "*" in owner
+            "*" in owner
             or "?" in owner
-            or (allowed_owners and owner not in allowed_owners)
+            or (allowed_owners and owner.casefold() not in allowed_owners)
         ):
             return False
     return True
