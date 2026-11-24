@@ -769,8 +769,11 @@ def execute(
             elif global_provider.type == "kubernetes":
                 is_finding_muted_args["cluster"] = global_provider.identity.cluster
             elif global_provider.type == "github":
-                is_finding_muted_args["account_name"] = (
-                    global_provider.identity.account_name
+                # GithubIdentityInfo (PAT/OAuth) exposes account_name, while
+                # GithubAppIdentityInfo (GitHub App auth) does not, so the
+                # account is resolved per finding below. See #13524.
+                is_finding_muted_args["account_name"] = getattr(
+                    global_provider.identity, "account_name", None
                 )
             elif global_provider.type == "m365":
                 is_finding_muted_args["tenant_id"] = global_provider.identity.tenant_id
@@ -825,6 +828,17 @@ def execute(
                             finding.subscription, finding.subscription
                         )
                     )
+                if (
+                    global_provider.type == "github"
+                    and getattr(global_provider.identity, "account_name", None) is None
+                ):
+                    # GitHub App auth: GithubAppIdentityInfo has no
+                    # account_name, so the audited account is the finding's
+                    # owner (organization), falling back to the app name.
+                    # See #13524.
+                    is_finding_muted_args["account_name"] = getattr(
+                        finding, "owner", None
+                    ) or getattr(global_provider.identity, "app_name", None)
                 is_finding_muted_args["finding"] = finding
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args
