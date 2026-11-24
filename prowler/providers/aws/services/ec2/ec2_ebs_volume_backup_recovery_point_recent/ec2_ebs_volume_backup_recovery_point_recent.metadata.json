@@ -35,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check is opt-in. Its findings cover recovery point freshness in the scanned account's standard vaults in the EBS volume's Region."
+  "Notes": "This check is opt-in. Its findings cover recovery point freshness in the scanned account's standard vaults in the EBS volume's Region. The UTC time when Backup evidence is initialized is fixed per audit and anchors both CreationDate bounds. Points created later cannot support PASS. If they make the evidence uncertain, the check omits the finding. AWS resource states reflect observations made during collection."
 }

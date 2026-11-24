@@ -151,11 +151,11 @@ def setup_backup(monkeypatch):
                 fixer_config={},
                 session=SimpleNamespace(
                     current_session=SimpleNamespace(
-                        client=lambda _service, region: clients[EAST]
+                        client=lambda _service, region: clients[region]
                     )
                 ),
                 generate_regional_clients=lambda _service: clients,
-                get_default_region=lambda _service, global_service: EAST,
+                get_default_region=lambda _service, global_service: regions[0],
             )
 
             def collect():
@@ -287,6 +287,11 @@ def test_conflicting_vault_identity_cannot_pass_a_local_volume(setup_backup):
         ({"CreationDate": NOW + timedelta(microseconds=1)}, "SKIP"),
         ({"CreationDate": NOW.replace(tzinfo=None)}, "SKIP"),
         ({"CreationDate": None}, "SKIP"),
+        ({"Status": "DELETING", "CreationDate": None}, "FAIL"),
+        (
+            {"Status": "DELETING", "CreationDate": NOW + timedelta(microseconds=1)},
+            "FAIL",
+        ),
         ({"Status": "AVAILABLE"}, "PASS"),
         ({"Status": "CREATING"}, "FAIL"),
         ({"Status": "UNKNOWN"}, "SKIP"),
@@ -343,6 +348,8 @@ def test_conflicting_vault_identity_cannot_pass_a_local_volume(setup_backup):
         "future",
         "timezone-missing",
         "time-missing",
+        "deleting-time-missing",
+        "deleting-future",
         "available",
         "creating",
         "status-unknown",
@@ -490,6 +497,53 @@ def test_vault_discovery_reads_later_pages_after_legacy_model_error(
     assert calls["ListTags"] == 0
 
 
+@pytest.mark.parametrize(
+    ("status", "same_point", "expected"),
+    [
+        ("DELETING", False, "PASS"),
+        ("COMPLETED", False, "SKIP"),
+        ("DELETING", True, "SKIP"),
+    ],
+    ids=["distinct-ineligible", "distinct-unconfirmed", "conflicting-status"],
+)
+def test_confirmed_point_with_an_undated_candidate(
+    setup_backup, status, same_point, expected
+):
+    target = volume(1)
+    confirmed = point(1)
+    candidate = point(1 if same_point else 2, ResourceArn=target.arn, Status=status)
+    del candidate["CreationDate"]
+
+    env = setup_backup(resources=(target.arn,))
+    stub = env.stubs[EAST]
+    queue_legacy_init(stub, tags=False)
+    queue_points(stub, ((confirmed,), (candidate,)))
+
+    decision = scope_results(env.collect(), target)[target.arn]
+    assert decision.status == expected
+    if expected == "PASS":
+        assert decision.point.arn == confirmed["RecoveryPointArn"]
+    else:
+        assert decision.reason == "UnverifiedRecoveryPoint"
+
+
+def test_ineligible_point_without_origin_does_not_hide_regional_evidence(setup_backup):
+    protected, unprotected = volume(1), volume(2)
+    candidate = point(3, Status="DELETING")
+    del candidate["CreationDate"], candidate["ResourceArn"]
+
+    env = setup_backup(resources=(protected.arn, unprotected.arn))
+    stub = env.stubs[EAST]
+    queue_legacy_init(stub, tags=False)
+    queue_points(stub, ((point(1), candidate),))
+
+    results = scope_results(env.collect(), protected, unprotected)
+    assert {arn: decision.status for arn, decision in results.items()} == {
+        protected.arn: "PASS",
+        unprotected.arn: "FAIL",
+    }
+
+
 def test_duplicate_point_conflict_affects_only_its_volumes(setup_backup):
     first, second, third = volume(1), volume(2), volume(3)
     repeated = point(1)
@@ -507,17 +561,48 @@ def test_duplicate_point_conflict_affects_only_its_volumes(setup_backup):
     ]
 
 
-def test_unreadable_region_does_not_hide_another_regions_evidence(setup_backup):
+@pytest.mark.parametrize(
+    "east_has_backup_client", [True, False], ids=["denied", "no-client"]
+)
+def test_unreadable_region_does_not_hide_another_regions_evidence(
+    setup_backup, caplog, east_has_backup_client
+):
     east, west = volume(1), volume(1, WEST)
-    env = setup_backup(resources=(east.arn, west.arn), regions=(EAST, WEST))
-    queue_legacy_init(env.stubs[EAST], tags=False)
+    regions = (EAST, WEST) if east_has_backup_client else (WEST,)
+    env = setup_backup(resources=(east.arn, west.arn), regions=regions)
+    if east_has_backup_client:
+        queue_legacy_init(env.stubs[EAST], tags=False)
+        queue_points(env.stubs[EAST], ("AccessDeniedException",))
     queue_legacy_init(env.stubs[WEST], WEST, tags=False)
-    queue_points(env.stubs[EAST], ("AccessDeniedException",))
     queue_points(env.stubs[WEST], ((point(1, WEST),),))
 
     results = scope_results(env.collect(), east, west)
     assert results[east.arn].status == "SKIP"
     assert results[west.arn].status == "PASS"
+    if not east_has_backup_client:
+        assert results[east.arn].reason == "VaultDiscoveryIncomplete"
+        assert any("RegionUnavailable" in message for message in caplog.messages)
+        assert all(region == WEST for region, _, _ in env.calls)
+
+
+@pytest.mark.parametrize(
+    ("arn_region", "arn_account"),
+    [(EAST, "222233334444"), (WEST, ACCOUNT)],
+    ids=["other-account", "other-region"],
+)
+def test_target_volume_outside_audit_scope_is_skipped(
+    setup_backup, arn_region, arn_account
+):
+    target = volume(1)
+    target.arn = f"arn:aws:ec2:{arn_region}:{arn_account}:volume/{target.id}"
+    env = setup_backup(resources=(target.arn,))
+    queue_legacy_init(env.stubs[EAST], tags=False)
+
+    decision = scope_results(env.collect(), target)[target.arn]
+    assert (decision.status, decision.reason) == ("SKIP", "VolumeScopeMismatch")
+    assert all(
+        operation != "ListRecoveryPointsByBackupVault" for _, operation, _ in env.calls
+    )
 
 
 def test_repeated_token_is_unreadable_and_keeps_observed_points(setup_backup):

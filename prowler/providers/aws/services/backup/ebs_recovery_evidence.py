@@ -254,9 +254,11 @@ class EbsRecoveryPoint:
 
     def could_be_eligible(self, cutoff: datetime, observed_at: datetime) -> bool:
         """Keep recent and undated candidates whose outcome is still possible."""
+        if self.status in _INELIGIBLE_STATUS:
+            return False
         if self.creation_date is None or self.creation_date > observed_at:
             return True
-        return self.creation_date >= cutoff and self.status not in _INELIGIBLE_STATUS
+        return self.creation_date >= cutoff
 
     def has_unverified_origin(self, scope: Scope) -> bool:
         """Check whether an unidentified volume could originate in the audit scope."""
@@ -292,7 +294,12 @@ class EbsRecoveryEvidence:
     """Keep pre-limit Vault evidence for a single audit."""
 
     def __init__(self, partition: str, account: str):
-        """Initialize evidence for one audit and record its UTC observation time.
+        """Initialize Backup evidence and its UTC reference time for the audit.
+
+        This time stays fixed for the audit and anchors both bounds of the
+        CreationDate window. Points created later cannot support PASS. If they
+        make the evidence uncertain, the check omits the finding. Resource
+        states reflect observations made during collection.
 
         Args:
             partition: The audited AWS partition.

@@ -1,16 +1,20 @@
 """Run the freshness check through the AWS SDK scan and CLI."""
 
 import csv
+import json
 import sys
 from collections import Counter
 from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
 from importlib import import_module
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import boto3
 import pytest
 from botocore.exceptions import StubResponseError
+from botocore.parsers import create_parser
+from botocore.session import get_session
 from botocore.stub import Stubber
 from moto import mock_aws
 
@@ -109,6 +113,8 @@ def aws_inventory(monkeypatch):
         unexpected = []
         stubs = []
         inventory = SimpleNamespace(
+            ec2=ec2,
+            volume_pages=[],
             ids=ids,
             arns=arns,
             points=points,
@@ -119,8 +125,15 @@ def aws_inventory(monkeypatch):
         )
         generate = AwsProvider.generate_regional_clients
 
+        def record_volume_page(parsed, **_):
+            inventory.volume_pages.append(parsed["Volumes"])
+
         def generate_clients(self, service):
             clients = generate(self, service)
+            if service == "ec2":
+                clients[REGION].meta.events.register(
+                    "after-call.ec2.DescribeVolumes", record_volume_page
+                )
             if service not in ("backup", "resourcegroupstaggingapi"):
                 return clients
             assert set(clients) == {REGION}
@@ -327,6 +340,82 @@ def test_cli_audits_selected_volume_with_vault_evidence(
         "ListReportPlans": 1,
         "ListRecoveryPointsByBackupVault": 2,
     }
+
+
+def test_sdk_fails_volume_with_only_an_undated_deleting_point(aws_inventory):
+    point = aws_inventory.points[0] | {"Status": "DELETING"}
+    del point["CreationDate"]
+    # Parse the AWS wire shape before passing the row to the SDK scan's stub.
+    model = get_session().get_service_model("backup")
+    page = create_parser(model.protocol).parse(
+        {
+            "status_code": 200,
+            "headers": {},
+            "body": json.dumps({"RecoveryPoints": [point]}).encode(),
+        },
+        model.operation_model("ListRecoveryPointsByBackupVault").output_shape,
+    )
+    (aws_inventory.points[0],) = page["RecoveryPoints"]
+    provider = AwsProvider(
+        regions={REGION},
+        config_content={ENABLED: True, "max_backup_recovery_points": 1},
+    )
+
+    scan = Scan(provider, checks=[FRESHNESS])
+    results = {
+        finding.resource_uid: finding.status.value
+        for _, batch in scan.scan()
+        for finding in batch
+    }
+    assert [
+        params.get("NextToken")
+        for operation, params in aws_inventory.calls
+        if operation == "ListRecoveryPointsByBackupVault"
+    ] == [None, "page-2"]
+    deleting, recent, unprotected = aws_inventory.arns
+    assert results == {deleting: "FAIL", recent: "PASS", unprotected: "FAIL"}
+
+
+@pytest.mark.parametrize(
+    "hours",
+    ["24", True, 0, 8761, None],
+    ids=["string", "boolean", "below-range", "above-range", "null"],
+)
+def test_sdk_invalid_direct_age_uses_default(aws_inventory, hours):
+    aws_inventory.points[0]["CreationDate"] = NOW - timedelta(hours=47)
+    provider = AwsProvider(
+        regions={REGION},
+        config_content={ENABLED: True, HOURS: hours, "max_backup_recovery_points": 1},
+    )
+
+    scan = Scan(provider, checks=[FRESHNESS])
+    (finding,) = [
+        finding
+        for _, batch in scan.scan()
+        for finding in batch
+        if finding.resource_uid == aws_inventory.arns[0]
+    ]
+    assert finding.status.value == "PASS"
+    assert "within the previous 48 hours" in finding.status_extended
+
+
+def test_no_resources(aws_inventory):
+    for volume_id in aws_inventory.ids:
+        aws_inventory.ec2.delete_volume(VolumeId=volume_id)
+    provider = AwsProvider(regions={REGION}, config_content={ENABLED: True})
+
+    with patch.object(
+        Backup,
+        "__init__",
+        side_effect=AssertionError("Backup initialized with no volumes"),
+    ) as initialize_backup:
+        scan = Scan(provider, checks=[FRESHNESS])
+        assert [finding for _, batch in scan.scan() for finding in batch] == []
+
+    assert aws_inventory.volume_pages == [[]]
+    initialize_backup.assert_not_called()
+    assert CLIENT_MODULES[1] not in sys.modules
+    assert aws_inventory.calls == []
 
 
 def test_disabled_by_default_skips_backup_and_ec2(aws_inventory):
