@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_ebs_volume_backup_recovery_point_recent",
+  "CheckTitle": "EBS volume has a recent recovery point in a standard AWS Backup vault",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Destruction"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Volume",
+  "ResourceGroup": "compute",
+  "Description": "An EBS volume is evaluated for completed or available recovery points created within the configured period in standard AWS Backup vaults owned by the scanned account in the same Region and partition. The default period is 48 hours.",
+  "Risk": "A gap in recent recovery point coverage can increase data loss and delay recovery after deletion, corruption, or volume failure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/aws-backup/latest/APIReference/API_ListRecoveryPointsByBackupVault.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In AWS Backup, confirm the backup plan includes the EBS volume and targets a standard vault in the same account and Region.\n2. Review recent backup jobs and resolve failures.\n3. Verify the status and creation date of the resulting recovery point.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an AWS Backup plan that creates recovery points in a standard vault often enough to meet the configured age limit. Monitor backup job completion and verify recovery point retention.",
+      "Url": "https://hub.prowler.com/check/ec2_ebs_volume_backup_recovery_point_recent"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check is opt-in. Its findings cover recovery point freshness in the scanned account's standard vaults in the EBS volume's Region."
+}

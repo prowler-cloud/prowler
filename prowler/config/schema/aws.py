@@ -169,6 +169,20 @@ class AWSProviderConfig(ProviderConfigBase):
         description="Resource scan limit for CodeArtifact packages. Use 0 or -1 to disable.",
     )
 
+    # --- AWS Backup -------------------------------------------------------
+    aws_backup_ebs_recovery_evidence_enabled: Optional[bool] = Field(
+        default=None,
+        strict=True,
+        description="Enable the EBS recovery point freshness check for standard AWS Backup vaults.",
+    )
+    aws_backup_ebs_recovery_point_max_age_hours: Optional[int] = Field(
+        default=None,
+        strict=True,
+        ge=1,
+        le=8760,
+        description="Maximum age in hours of an eligible EBS recovery point in a standard vault.",
+    )
+
     # --- IAM ---------------------------------------------------------------
     mute_non_default_regions: Optional[bool] = None
     disallowed_regions: Optional[list[str]] = None

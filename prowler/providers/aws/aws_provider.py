@@ -434,6 +434,8 @@ class AwsProvider(Provider):
             logger.info(f"Excluding AWS regions from scan: {sorted(excluded_regions)}")
         self._excluded_regions = excluded_regions
 
+        self._resource_filter_requested = bool(resource_tags or resource_arn)
+
         # Parse Scan Tags after region exclusions are applied so tag discovery
         # also skips disallowed regions.
         if resource_tags:
@@ -486,6 +488,11 @@ class AwsProvider(Provider):
     @property
     def audit_resources(self):
         return self._audit_resources
+
+    @property
+    def resource_filter_requested(self) -> bool:
+        """Return whether the caller requested an ARN or tag resource filter."""
+        return self._resource_filter_requested
 
     @property
     def scan_unused_services(self):

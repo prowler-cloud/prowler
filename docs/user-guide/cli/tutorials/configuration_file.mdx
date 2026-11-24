@@ -183,6 +183,22 @@ This split is intentional. It reduces expensive per-resource analysis calls with
 
 Use limits when scan duration, API throttling, or cost are more important than exhaustive coverage for these high-volume resources. Keep limits disabled when you need complete evidence for every resource in the affected checks.
 
+### EBS Recovery Point Freshness
+
+<VersionBadge version="5.53.0" />
+
+The `ec2_ebs_volume_backup_recovery_point_recent` check is disabled by default. To enable it, include the check in an AWS scan and set `aws_backup_ebs_recovery_evidence_enabled` under `aws` in the configuration file. Set `aws_backup_ebs_recovery_point_max_age_hours` to an integer from 1 through 8,760 hours. The default is 48 hours.
+
+```yaml
+aws:
+  aws_backup_ebs_recovery_evidence_enabled: true
+  aws_backup_ebs_recovery_point_max_age_hours: 48
+```
+
+The check evaluates audited EBS volumes using completed or available recovery points in standard AWS Backup vaults owned by the scanned account in the same Region and partition. A FAIL means the completed scan of those vaults found no qualifying recovery point in the configured period. The check omits findings for volumes with incomplete or ambiguous evidence and logs the reason.
+
+The scan role needs `ec2:DescribeVolumes`, `backup:ListBackupVaults`, and `backup:ListRecoveryPointsByBackupVault`. The check uses vault list results before `max_backup_recovery_points` applies. When an ARN or tag filter excludes a standard vault in a selected volume's Region, the check can list its recovery points once for freshness evidence.
+
 ### Validating Discovered Secrets
 
 <VersionBadge version="5.32.0" />
@@ -394,6 +410,8 @@ aws:
   max_lambda_functions: null
   max_ecs_task_definitions: null
   max_codeartifact_packages: null
+  aws_backup_ebs_recovery_evidence_enabled: false
+  aws_backup_ebs_recovery_point_max_age_hours: 48
   # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
   # Mutelist:
   #  Accounts:
