@@ -183,8 +183,28 @@ _macOS/Linux:_
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
-# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
-curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+cat > .env <<EOF
+# Required configuration. Replace the change-me values with strong values
+# before starting, and add any other variables you want to customize.
+AUTH_URL=http://localhost:3000
+UI_API_BASE_URL=http://prowler-api:8080/api/v1
+AUTH_TRUST_HOST=true
+AUTH_SECRET=$(openssl rand -base64 32)
+PROWLER_MCP_SERVER_URL=http://mcp-server:8000/mcp
+POSTGRES_HOST=postgres-db
+POSTGRES_ADMIN_USER=prowler_admin
+POSTGRES_ADMIN_PASSWORD=change-me
+POSTGRES_USER=prowler
+POSTGRES_PASSWORD=change-me
+POSTGRES_DB=prowler_db
+NEO4J_HOST=neo4j
+NEO4J_PORT=7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=change-me
+DJANGO_SETTINGS_MODULE=config.django.production
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api
+EOF
 docker compose up -d
 ```
 
@@ -193,8 +213,28 @@ _Windows PowerShell:_
 ``` powershell
 $VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/prowler/releases/latest").tag_name
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
-# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
+@"
+# Required configuration. Replace the change-me values with strong values
+# before starting, and add any other variables you want to customize.
+AUTH_URL=http://localhost:3000
+UI_API_BASE_URL=http://prowler-api:8080/api/v1
+AUTH_TRUST_HOST=true
+AUTH_SECRET=$([Convert]::ToBase64String([byte[]](1..32 | ForEach-Object { Get-Random -Maximum 256 })))
+PROWLER_MCP_SERVER_URL=http://mcp-server:8000/mcp
+POSTGRES_HOST=postgres-db
+POSTGRES_ADMIN_USER=prowler_admin
+POSTGRES_ADMIN_PASSWORD=change-me
+POSTGRES_USER=prowler
+POSTGRES_PASSWORD=change-me
+POSTGRES_DB=prowler_db
+NEO4J_HOST=neo4j
+NEO4J_PORT=7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=change-me
+DJANGO_SETTINGS_MODULE=config.django.production
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,prowler-api
+"@ | Set-Content -Path ".env"
 docker compose up -d
 ```
 
