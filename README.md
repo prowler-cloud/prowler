@@ -200,6 +200,8 @@ docker compose up -d
 
 > [!WARNING]
 > 🔒 For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
+>
+> On Docker Engine versions older than 28.0.0, hosts on the same local network can reach ports published to `127.0.0.1`, including the Valkey port mapped with `VALKEY_PORT`. Run Docker Engine 28.0.0 or later, or apply a host firewall rule that blocks access to the Valkey port from other hosts.
 
 Once configured, access Prowler Local Server at http://localhost:3000. Sign up using your email and password to get started.
 
