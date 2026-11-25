@@ -15,9 +15,7 @@ class Domain(VercelService):
         self.domains: dict[str, VercelDomain] = {}
         self._list_domains()
         self.__threading_call__(self._fetch_dns_records, list(self.domains.values()))
-        self.__threading_call__(
-            self._fetch_ssl_certificate, list(self.domains.values())
-        )
+        self._fetch_ssl_certificates()
 
     def _list_domains(self):
         """List all domains."""
@@ -69,34 +67,81 @@ class Domain(VercelService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _fetch_ssl_certificate(self, domain: "VercelDomain"):
-        """Fetch SSL certificate for a domain via the certs endpoint."""
+    def _fetch_ssl_certificates(self):
+        """Fetch SSL certificates for all domains via the certs list endpoint.
+
+        ``GET /v8/certs/{domain}`` answers 404 for domains whose certificates
+        are issued by Vercel, even though the certificates exist and cover the
+        domains. ``GET /v4/certs`` lists those certificates, so match each
+        domain against the ``cns`` of the listed certificates instead.
+        """
         try:
-            data = self._get(f"/v8/certs/{domain.name}")
-            if data:
-                expires_at_ms = data.get("expiresAt")
-                created_at_ms = data.get("createdAt")
-                domain.ssl_certificate = VercelSSLCertificate(
-                    id=data.get("id", ""),
-                    created_at=(
-                        datetime.fromtimestamp(created_at_ms / 1000, tz=timezone.utc)
-                        if created_at_ms
-                        else None
-                    ),
-                    expires_at=(
-                        datetime.fromtimestamp(expires_at_ms / 1000, tz=timezone.utc)
-                        if expires_at_ms
-                        else None
-                    ),
-                    auto_renew=data.get("autoRenew", False),
-                    cns=data.get("cns", []),
-                )
-                logger.debug(f"Domain - Fetched SSL certificate for {domain.name}")
+            raw_certs = self._paginate("/v4/certs", "certs")
         except Exception as error:
             logger.error(
-                f"Domain - Error fetching SSL certificate for {domain.name}: "
+                "Domain - Error listing SSL certificates: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return
+
+        certs = [self._build_ssl_certificate(cert) for cert in raw_certs or []]
+        certs = [cert for cert in certs if cert is not None]
+
+        for domain in self.domains.values():
+            matches = [
+                cert for cert in certs if self._cert_covers_domain(cert, domain.name)
+            ]
+            if matches:
+                # Prefer the certificate valid for longest when several cover
+                # the domain (e.g. an old certificate next to its renewal).
+                domain.ssl_certificate = max(
+                    matches,
+                    key=lambda cert: cert.expires_at
+                    or datetime.min.replace(tzinfo=timezone.utc),
+                )
+                logger.debug(f"Domain - Fetched SSL certificate for {domain.name}")
+
+    @staticmethod
+    def _build_ssl_certificate(data: dict) -> "Optional[VercelSSLCertificate]":
+        """Build a VercelSSLCertificate from a certs API payload."""
+        if not data:
+            return None
+        expires_at_ms = data.get("expiresAt")
+        created_at_ms = data.get("createdAt")
+        return VercelSSLCertificate(
+            id=data.get("id", ""),
+            created_at=(
+                datetime.fromtimestamp(created_at_ms / 1000, tz=timezone.utc)
+                if created_at_ms
+                else None
+            ),
+            expires_at=(
+                datetime.fromtimestamp(expires_at_ms / 1000, tz=timezone.utc)
+                if expires_at_ms
+                else None
+            ),
+            auto_renew=data.get("autoRenew", False),
+            cns=data.get("cns", []),
+        )
+
+    @staticmethod
+    def _cert_covers_domain(cert: "VercelSSLCertificate", domain_name: str) -> bool:
+        """Check whether a certificate covers a domain.
+
+        Matches an exact ``cns`` entry or a single-level wildcard entry
+        (``*.example.com`` covers ``app.example.com`` but not
+        ``deep.app.example.com``).
+        """
+        for cn in cert.cns:
+            if cn == domain_name:
+                return True
+            if cn.startswith("*."):
+                parent = cn[1:]
+                if domain_name.endswith(parent) and domain_name.count(
+                    "."
+                ) == parent.count("."):
+                    return True
+        return False
 
 
 class VercelSSLCertificate(BaseModel):
