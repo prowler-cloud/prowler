@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "@/__tests__/render-browser";
 
 import { AiCompliance } from "./_components/ai-compliance";
-import { getAiSecurityOverview } from "./_lib/mock-overview";
+import type { AiFramework } from "./_types";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -11,11 +11,28 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+const framework = (
+  id: string,
+  shortName: string,
+  section: string,
+): AiFramework => ({
+  id,
+  shortName,
+  name: shortName,
+  version: "1",
+  unit: "requirements",
+  sections: [{ code: "", name: section, pass: 1, fail: 1, manual: 0 }],
+});
+
 describe("AI Security compliance frameworks", () => {
   it("shows the sections of the framework that is picked", async () => {
-    const overview = await getAiSecurityOverview();
     const screen = await render(
-      <AiCompliance frameworks={overview?.frameworks ?? []} />,
+      <AiCompliance
+        frameworks={[
+          framework("owasp_llm", "OWASP LLM Top 10", "Prompt injection"),
+          framework("nist_ai_rmf", "NIST AI RMF", "Govern"),
+        ]}
+      />,
     );
 
     await expect

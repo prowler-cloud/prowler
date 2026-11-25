@@ -12,6 +12,7 @@ import type {
 } from "@/app/(prowler)/ai-security/_types";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Button, Card, CardContent } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 
 import { ConnectProviderButton } from "./connect-provider-button";
 import { ResultBar, ResultLegend } from "./result-bar";
@@ -64,7 +65,12 @@ export const AiStack = ({ layers }: { layers: AiStackLayer[] }) => (
       aside={<ResultLegend />}
     />
     <CardContent>
-      <ul className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <ul
+        className={cn(
+          "grid grid-cols-1 gap-4",
+          layers.length > 1 && "xl:grid-cols-3",
+        )}
+      >
         {layers.map((layer) => (
           <li key={layer.id} className="min-w-0">
             <Card variant="inner" className="h-full gap-4">

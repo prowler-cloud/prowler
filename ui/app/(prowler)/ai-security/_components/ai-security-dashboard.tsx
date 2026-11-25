@@ -1,13 +1,13 @@
-import { getAiSecurityOverview } from "@/app/(prowler)/ai-security/_lib/mock-overview";
+import { getAiSecurityOverview } from "@/app/(prowler)/ai-security/_actions";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
   Skeleton,
 } from "@/components/shadcn";
+import type { ProviderProps } from "@/types/providers";
 
 import { AiCompliance } from "./ai-compliance";
-import { AiInventory } from "./ai-inventory";
 import { AiKpis } from "./ai-kpis";
 import { AiSecurityEmptyState } from "./ai-security-empty-state";
 import { AiStack } from "./ai-stack";
@@ -15,8 +15,6 @@ import { TopRisks } from "./top-risks";
 
 // Skeleton heights are the rendered cards' heights at tablet and desktop widths.
 const KPI_GRID = "grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4";
-// Top risks reads as a list and takes the wider share once both fit a row.
-const BOTTOM_GRID = "grid grid-cols-1 gap-6 xl:grid-cols-[7fr_5fr]";
 
 export function AiSecurityDashboardSkeleton() {
   return (
@@ -26,18 +24,27 @@ export function AiSecurityDashboardSkeleton() {
           <Skeleton key={index} className="h-[154px] rounded-xl xl:h-[186px]" />
         ))}
       </div>
-      <Skeleton className="h-[706px] w-full rounded-xl xl:h-[334px]" />
+      <Skeleton className="h-[314px] w-full rounded-xl" />
       <Skeleton className="h-[1155px] w-full rounded-xl lg:h-[660px]" />
-      <div className={BOTTOM_GRID}>
-        <Skeleton className="h-[469px] rounded-xl" />
-        <Skeleton className="h-[500px] rounded-xl" />
-      </div>
+      <Skeleton className="h-[469px] w-full rounded-xl" />
     </div>
   );
 }
 
-export async function AiSecurityDashboard({ preview }: { preview?: string }) {
-  const overview = await getAiSecurityOverview(preview);
+interface AiSecurityDashboardProps {
+  /** The page's provider filters narrowed to the AI providers. */
+  filters: Record<string, string>;
+  /** The AI providers in scope; none shows the empty state. */
+  providers: ProviderProps[];
+}
+
+export async function AiSecurityDashboard({
+  filters,
+  providers,
+}: AiSecurityDashboardProps) {
+  if (providers.length === 0) return <AiSecurityEmptyState />;
+
+  const overview = await getAiSecurityOverview(filters, providers);
 
   if (!overview) {
     return (
@@ -57,10 +64,7 @@ export async function AiSecurityDashboard({ preview }: { preview?: string }) {
       <AiKpis overview={overview} />
       <AiStack layers={overview.layers} />
       <AiCompliance frameworks={overview.frameworks} />
-      <div className={BOTTOM_GRID}>
-        <TopRisks risks={overview.topRisks} />
-        <AiInventory items={overview.inventory} />
-      </div>
+      <TopRisks risks={overview.topRisks} />
     </div>
   );
 }

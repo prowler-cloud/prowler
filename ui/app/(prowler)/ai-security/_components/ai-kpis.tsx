@@ -43,7 +43,10 @@ const NOTE = "text-text-neutral-tertiary text-xs";
 
 /** The four numbers that say how the AI estate is doing. */
 export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
-  const { pass, fail, manual, newFailed, fixed, severity } = overview;
+  const { pass, fail, manual, severity, layers } = overview;
+  const connected = layers
+    .flatMap((layer) => layer.providers)
+    .filter((provider) => provider.connected);
   const present = SEVERITY_LEVELS.filter((level) => severity[level] > 0);
 
   return (
@@ -104,28 +107,14 @@ export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
         </div>
       </KpiCard>
 
-      <KpiCard
-        label="New since the previous scan"
-        value={
-          <>
-            {newFailed.toLocaleString()}{" "}
-            <span className="text-text-neutral-tertiary text-sm font-medium">
-              new failures
-            </span>
-          </>
-        }
-      >
+      <KpiCard label="AI providers" value={connected.length.toLocaleString()}>
         <p className={NOTE}>
-          <span className="text-text-success-primary font-medium">
-            {fixed.toLocaleString()} fixed
-          </span>{" "}
-          since the previous scan.
+          {connected.map((provider) => provider.name).join(", ")} connected, out
+          of Claude, OpenAI and ChatGPT.
         </p>
         <div className="mt-auto">
           <Button asChild variant="link" size="link-xs">
-            <Link href={aiFindingsHref({ "filter[delta]": "new" })}>
-              View new findings
-            </Link>
+            <Link href="/providers">Manage providers</Link>
           </Button>
         </div>
       </KpiCard>

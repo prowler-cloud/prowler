@@ -9,6 +9,3 @@ export const aiFindingsHref = (filters: Record<string, string> = {}) =>
     "filter[muted]": "false",
     ...filters,
   })}`;
-
-export const aiResourcesHref = (filters: Record<string, string> = {}) =>
-  `/resources?${new URLSearchParams({ ...AI_CATEGORY, ...filters })}`;

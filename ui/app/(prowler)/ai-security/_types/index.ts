@@ -13,7 +13,7 @@ export type AiSeverityCounts = Record<SeverityLevel, number>;
 export interface AiStackProvider extends AiResultCounts {
   type: ProviderType;
   name: string;
-  /** What was scanned, such as "4 accounts". */
+  /** What was scanned, such as "2 accounts". */
   scope: string;
   connected: boolean;
 }
@@ -47,24 +47,13 @@ export interface AiTopRisk {
   title: string;
   severity: SeverityLevel;
   providerName: string;
-  /** How much it touches, such as "3 workflows". */
+  /** How much it touches, such as "3 resources". */
   affected: string;
 }
 
-export interface AiInventoryItem {
-  resourceType: string;
-  label: string;
-  count: number;
-  providers: string;
-  issue: string;
-}
-
 export interface AiSecurityOverview extends AiResultCounts {
-  newFailed: number;
-  fixed: number;
   severity: AiSeverityCounts;
   layers: AiStackLayer[];
   frameworks: AiFramework[];
   topRisks: AiTopRisk[];
-  inventory: AiInventoryItem[];
 }
