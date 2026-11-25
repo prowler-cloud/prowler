@@ -3,6 +3,7 @@
 import { Row } from "@tanstack/react-table";
 import {
   CalendarClock,
+  FileChartLine,
   KeyRound,
   Pencil,
   Rocket,
@@ -21,6 +22,7 @@ import {
   startProviderConnectionChecks,
 } from "@/actions/providers/providers";
 import { getSchedule } from "@/actions/schedules";
+import { PostureChangeReportModal } from "@/app/(prowler)/providers/_components/posture-change-report-modal";
 import { pollConnectionTasks } from "@/components/providers/organizations/org-account-selection.utils";
 import {
   ORG_WIZARD_INTENT,
@@ -350,6 +352,7 @@ export function DataTableRowActions({
   });
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isScanConfigOpen, setIsScanConfigOpen] = useState(false);
+  const [isPostureReportOpen, setIsPostureReportOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -693,6 +696,14 @@ export function DataTableRowActions({
           onSaved={() => router.refresh()}
         />
       )}
+      {isCloudProvider && (
+        <PostureChangeReportModal
+          open={isPostureReportOpen}
+          onOpenChange={setIsPostureReportOpen}
+          providerId={providerId}
+          providerLabel={providerAlias || providerUid}
+        />
+      )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
@@ -718,6 +729,14 @@ export function DataTableRowActions({
               icon={<CalendarClock />}
               label="Edit Scan Schedule"
               onSelect={() => void openScheduleEditor()}
+            />
+          )}
+          {isCloudProvider && (
+            <ActionDropdownItem
+              icon={<FileChartLine />}
+              label="Posture Change Report"
+              description="PDF of changes between two dates"
+              onSelect={() => setIsPostureReportOpen(true)}
             />
           )}
           {canManageScanConfig && (
