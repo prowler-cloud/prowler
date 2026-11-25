@@ -33,6 +33,7 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 #   apt/libapt-pkg7.0 3.0.4  CVE-2026-109518
 #   zlib1g 1:1.3.dfsg+really1.3.1-1+deb13u1  CVE-2026-76844, -85091
 #   libbrotli1 1.1.0-2+deb13u1  CVE-2026-111497
+#   libzstd1 1.5.7+dfsg-1+deb13u1  CVE-2026-124851
 # Taken as a targeted --only-upgrade rather than by moving the digest: the newest
 # published python:3.12-slim-trixie carries the same vulnerable versions. The three
 # openssl packages are flagged separately, so all are named.
@@ -45,7 +46,7 @@ RUN apt-get update --error-on=any && apt-get install -y --no-install-recommends 
     && apt-get install -y --no-install-recommends --only-upgrade \
        util-linux libssl3t64 openssl openssl-provider-legacy \
        libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 libbrotli1 \
-       apt libapt-pkg7.0 zlib1g \
+       apt libapt-pkg7.0 zlib1g libzstd1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
