@@ -1,6 +1,8 @@
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import boto3
 import neo4j.exceptions
 import pytest
 from tasks.jobs.attack_paths import aws
@@ -100,3 +102,25 @@ def test_sync_aws_account_warns_and_continues_for_other_exceptions(error):
     following_sync.assert_called_once_with()
     warning.assert_called_once()
     assert "Continuing to the next AWS sync function" in warning.call_args.args[0]
+
+
+def test_get_aioboto3_session_builds_async_clients_with_session_credentials():
+    boto3_session = boto3.Session(
+        aws_access_key_id="AKIAEXAMPLE",
+        aws_secret_access_key="secret",
+        aws_session_token="token",
+        region_name="eu-west-1",
+    )
+
+    async def open_ecr_client():
+        aioboto3_session = aws.get_aioboto3_session(boto3_session)
+        async with aioboto3_session.client("ecr") as client:
+            credentials = await aioboto3_session.get_credentials()
+            return client.meta.region_name, await credentials.get_frozen_credentials()
+
+    region, credentials = asyncio.run(open_ecr_client())
+
+    assert region == "eu-west-1"
+    assert credentials.access_key == "AKIAEXAMPLE"
+    assert credentials.secret_key == "secret"
+    assert credentials.token == "token"

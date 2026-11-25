@@ -40,6 +40,7 @@ from api.models import (
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -3511,17 +3512,6 @@ current-context: test-context
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
                 },
             ),
-            # OCI with API key credentials (with key_file)
-            (
-                Provider.ProviderChoices.ORACLECLOUD.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
-                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
-                    "key_file": "/path/to/oci_api_key.pem",
-                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                },
-            ),
             # OCI with API key credentials (with passphrase)
             (
                 Provider.ProviderChoices.ORACLECLOUD.value,
@@ -3614,7 +3604,7 @@ current-context: test-context
                 Provider.ProviderChoices.GOOGLEWORKSPACE.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
-                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
+                    "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789", "token_uri": "https://oauth2.googleapis.com/token"}',
                     "delegated_user": "admin@example.com",
                 },
             ),
@@ -3633,6 +3623,17 @@ current-context: test-context
                 {
                     "registry_username": "user",
                     "registry_password": "pass",
+                },
+            ),
+            # Image registry credentials with the scan filters the UI sends
+            (
+                Provider.ProviderChoices.IMAGE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "registry_username": "user",
+                    "registry_password": "pass",
+                    "image_filter": "^prod/",
+                    "tag_filter": "^v[0-9]+",
                 },
             ),
             # Okta with inline private key credentials
@@ -3687,6 +3688,104 @@ current-context: test-context
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+        if provider_type != Provider.ProviderChoices.ORACLECLOUD.value:
+            assert provider_secret.secret == secret_data
+
+    @staticmethod
+    def _secret_payload(attributes, provider=None, secret_id=None):
+        data = {"type": "provider-secrets", "attributes": attributes}
+        if provider is not None:
+            data["relationships"] = {
+                "provider": {"data": {"type": "providers", "id": str(provider.id)}}
+            }
+        if secret_id is not None:
+            data["id"] = str(secret_id)
+        return json.dumps({"data": data})
+
+    def test_provider_secrets_create_drops_undeclared_fields(
+        self, authenticated_client, provider_factory
+    ):
+        provider = provider_factory(Provider.ProviderChoices.GCP.value)
+        declared = {
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+            "refresh_token": "refresh-token",
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=self._secret_payload(
+                {
+                    "name": "GCP",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        **declared,
+                        "credentials_file": "/etc/passwd",
+                        "config_path": "/proc/self/environ",
+                    },
+                },
+                provider=provider,
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ProviderSecret.objects.get().secret == declared
+
+    def test_provider_secrets_update_drops_undeclared_fields(
+        self, authenticated_client, provider_factory
+    ):
+        provider = provider_factory(Provider.ProviderChoices.AWS.value)
+        declared = {
+            "aws_access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "aws_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        }
+        provider_secret = ProviderSecret.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            name="AWS",
+            secret_type=ProviderSecret.TypeChoices.STATIC,
+            secret=declared,
+        )
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=self._secret_payload(
+                {"secret": {**declared, "profile": "worker-profile"}},
+                secret_id=provider_secret.id,
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret == declared
+
+    @pytest.mark.parametrize(
+        "key_fields",
+        [
+            {"key_file": "/proc/self/environ"},
+            {"key_file": "/proc/self/environ", "key_content": "dGVzdC1rZXk="},
+        ],
+    )
+    def test_provider_secrets_create_oraclecloud_rejects_key_file(
+        self, authenticated_client, oraclecloud_provider, key_fields
+    ):
+        secret = {
+            key: value
+            for key, value in self._oraclecloud_secret().items()
+            if key != "key_content"
+        }
+
+        response = self._create_oraclecloud_secret(
+            authenticated_client, oraclecloud_provider, {**secret, **key_fields}
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/secret/key_file"
+        )
+        assert not ProviderSecret.objects.exists()
 
     def test_provider_secrets_create_oraclecloud_without_region_stores_no_region(
         self,
@@ -19973,6 +20072,275 @@ class TestMuteRuleViewSet:
         data = response.json()["data"]
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
+
+    @staticmethod
+    def _client_scoped_to(provider, tenant, factory):
+        user = User.objects.create_user(
+            name=f"scoped-{uuid4()}",
+            email=f"scoped-{uuid4()}@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        role = Role.objects.create(
+            name=f"scoped-{uuid4()}",
+            tenant_id=tenant.id,
+            manage_scans=True,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        group = ProviderGroup.objects.create(
+            name=f"group-{uuid4()}", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id, role=role, provider_group=group
+        )
+        return factory(user, tenant)
+
+    def test_mute_rules_scoped_role_sees_only_rules_on_its_providers(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, other_provider = aws_provider_pair
+        tenant = tenants_fixture[0]
+        factory = authenticated_client_for_tenant_factory
+        own_client = self._client_scoped_to(own_provider, tenant, factory)
+        other_client = self._client_scoped_to(other_provider, tenant, factory)
+
+        own = own_client.get(reverse("mute-rule-list"))
+        other = other_client.get(reverse("mute-rule-list"))
+
+        assert len(own.json()["data"]) == len(mute_rules_fixture)
+        assert other.json()["data"] == []
+
+    def test_mute_rules_scoped_role_cannot_touch_rules_outside_its_providers(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        _, other_provider = aws_provider_pair
+        client = self._client_scoped_to(
+            other_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        rule = mute_rules_fixture[0]
+        url = reverse("mute-rule-detail", kwargs={"pk": rule.id})
+        patch_body = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(rule.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        retrieved = client.get(url)
+        patched = client.patch(
+            url,
+            data=json.dumps(patch_body),
+            content_type="application/vnd.api+json",
+        )
+        deleted = client.delete(url)
+
+        assert retrieved.status_code == status.HTTP_404_NOT_FOUND
+        assert patched.status_code == status.HTTP_404_NOT_FOUND
+        assert deleted.status_code == status.HTTP_404_NOT_FOUND
+        assert MuteRule.objects.filter(id=rule.id, enabled=True).exists()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    def test_mute_rules_scoped_role_conflict_does_not_name_the_rule(
+        self,
+        mock_mute_task,
+        mute_rules_fixture,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, _ = aws_provider_pair
+        client = self._client_scoped_to(
+            own_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Overlapping rule",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert mute_rules_fixture[0].name not in response.content.decode()
+
+    def test_mute_rules_scoped_role_cannot_touch_a_rule_spanning_another_provider(
+        self,
+        findings_fixture,
+        scans_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+        create_test_user,
+    ):
+        own_provider, _ = aws_provider_pair
+        tenant = tenants_fixture[0]
+        other_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="other_provider_finding_uid",
+            scan=scans_fixture[1],
+            status=Status.FAIL,
+            severity=Severity.critical,
+            impact=Severity.critical,
+            check_id="test_check_id",
+            check_metadata={"CheckId": "test_check_id"},
+            raw_result={},
+        )
+        mixed = MuteRule.objects.create(
+            tenant_id=tenant.id,
+            name="Mixed rule",
+            reason="spans two providers",
+            created_by=create_test_user,
+            finding_uids=[findings_fixture[0].uid, other_finding.uid],
+        )
+        client = self._client_scoped_to(
+            own_provider, tenant, authenticated_client_for_tenant_factory
+        )
+        url = reverse("mute-rule-detail", kwargs={"pk": mixed.id})
+
+        listed = client.get(reverse("mute-rule-list"))
+        retrieved = client.get(url)
+        patched = client.patch(
+            url,
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "mute-rules",
+                        "id": str(mixed.id),
+                        "attributes": {"enabled": False},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+        deleted = client.delete(url)
+
+        assert str(mixed.id) not in {item["id"] for item in listed.json()["data"]}
+        assert retrieved.status_code == status.HTTP_404_NOT_FOUND
+        assert patched.status_code == status.HTTP_404_NOT_FOUND
+        assert deleted.status_code == status.HTTP_404_NOT_FOUND
+        assert MuteRule.objects.filter(id=mixed.id, enabled=True).exists()
+
+    def test_mute_rules_scoped_role_does_not_see_rules_without_findings(
+        self,
+        mute_rules_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+        create_test_user,
+    ):
+        own_provider, _ = aws_provider_pair
+        tenant = tenants_fixture[0]
+        orphan = MuteRule.objects.create(
+            tenant_id=tenant.id,
+            name="Orphan rule",
+            reason="provider deleted",
+            created_by=create_test_user,
+            finding_uids=["uid-with-no-finding"],
+        )
+        client = self._client_scoped_to(
+            own_provider, tenant, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("mute-rule-list"))
+
+        listed = {item["id"] for item in response.json()["data"]}
+        assert str(orphan.id) not in listed
+        assert listed == {str(rule.id) for rule in mute_rules_fixture}
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    def test_mute_rules_scoped_role_cannot_mute_a_finding_it_cannot_read(
+        self,
+        mock_mute_task,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        _, other_provider = aws_provider_pair
+        client = self._client_scoped_to(
+            other_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Hide another team",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert findings_fixture[0].uid not in response.content.decode()
+        assert not MuteRule.objects.filter(name="Hide another team").exists()
+        mock_mute_task.assert_not_called()
+
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
+    @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
+    def test_mute_rules_scoped_role_can_mute_its_own_finding(
+        self,
+        _mock_on_commit,
+        mock_mute_task,
+        findings_fixture,
+        tenants_fixture,
+        aws_provider_pair,
+        authenticated_client_for_tenant_factory,
+    ):
+        own_provider, _ = aws_provider_pair
+        client = self._client_scoped_to(
+            own_provider, tenants_fixture[0], authenticated_client_for_tenant_factory
+        )
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Own exception",
+                    "reason": "test",
+                    "finding_ids": [str(findings_fixture[0].id)],
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        mock_mute_task.assert_called_once()
 
     @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())

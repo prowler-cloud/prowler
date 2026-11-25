@@ -1051,7 +1051,7 @@
       ]
     },
     {
-      "Id": "op.ext.7.aws.am.1",
+      "Id": "op.exp.7.aws.am.1",
       "Description": "Gestión de incidentes",
       "Attributes": [
         {
@@ -2582,7 +2582,7 @@
         {
           "IdGrupoControl": "mp.com.4",
           "Marco": "medidas de protección",
-          "Categoria": "segregación de redes",
+          "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Se deberán abrir solo los puertos necesarios para el uso del servicio AWS WorkSpaces.",
           "Nivel": "alto",
           "Tipo": "requisito",
@@ -2924,7 +2924,7 @@
         {
           "IdGrupoControl": "mp.sw.2.r1",
           "Marco": "medidas de protección",
-          "Categoria": "protección de la información",
+          "Categoria": "protección de las aplicaciones informáticas",
           "DescripcionControl": "Habilitar Amazon CodeBuild para el apoyo de la realización de pruebas en entornos aisaldos.",
           "Nivel": "alto",
           "Tipo": "recomendacion",
@@ -3789,7 +3789,7 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automatico",
+          "ModoEjecucion": "automático",
           "Dependencias": []
         }
       ],
@@ -4009,7 +4009,7 @@
       "Description": "Acceso remoto (todos los niveles)",
       "Attributes": [
         {
-          "IdGrupoControl": "op.acc.6.9",
+          "IdGrupoControl": "op.acc.6.r9",
           "Marco": "operacional",
           "Categoria": "control de acceso",
           "DescripcionControl": "Deberá asegurarse que se está haciendo uso de HTTPS en todas las llamadas a API. Esto se puede lograr a través de una política IAM que rechace el tráfico que no sea HTTPS.",
@@ -4032,7 +4032,7 @@
       "Description": "Acceso remoto (todos los niveles)",
       "Attributes": [
         {
-          "IdGrupoControl": "op.acc.6.9",
+          "IdGrupoControl": "op.acc.6.r9",
           "Marco": "operacional",
           "Categoria": "control de acceso",
           "DescripcionControl": "En caso de que las llamadas a las APIs no se produzcan de manera constante, se recomienda condicionar su realización a aquellas franjas horarias en las que sean necesarias. ",
@@ -4075,7 +4075,7 @@
       "Checks": []
     },
     {
-      "Id": "op.exp.1.r3.aws.tag.1",
+      "Id": "op.exp.1.r4.aws.tag.1",
       "Description": "Lista de componentes software",
       "Attributes": [
         {
@@ -4099,7 +4099,7 @@
       "Checks": []
     },
     {
-      "Id": "op.exp.3.r4.aws.cfg.2",
+      "Id": "op.exp.3.r3.aws.cfg.2",
       "Description": "Copias de seguridad",
       "Attributes": [
         {
@@ -4328,9 +4328,7 @@
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "kms_key_enclave_attestation_not_enforced"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.exp.10.aws.cmk.7",
@@ -4354,9 +4352,7 @@
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "kms_key_enclave_attestation_bypassable_path"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.exp.10.aws.cmk.8",
@@ -4380,9 +4376,7 @@
           "Dependencias": []
         }
       ],
-      "Checks": [
-        "kms_key_enclave_attestation_pcr_mismatch"
-      ]
+      "Checks": []
     },
     {
       "Id": "op.cont.2.aws.az.1",
@@ -4564,13 +4558,13 @@
       "Checks": []
     },
     {
-      "Id": "mp.sw.2.r1.aws.cfgd.1",
+      "Id": "mp.sw.2.r2.aws.cfgd.1",
       "Description": "Aceptación y puesta en servicio",
       "Attributes": [
         {
           "IdGrupoControl": "mp.sw.2.r2",
           "Marco": "medidas de protección",
-          "Categoria": "protección de la información",
+          "Categoria": "protección de las aplicaciones informáticas",
           "DescripcionControl": "Habilitar CloudFormation Guard para el apoyo en las tareas de inspección de recursos no conformes implementados en el código fuente.",
           "Nivel": "alto",
           "Tipo": "recomendacion",

@@ -1,0 +1,1 @@
+`AzureCustom` region for the Azure provider, with `--azure-authority-host`, `--azure-resource-manager-endpoint`, `--azure-graph-endpoint` and `--azure-logs-endpoint`, to scan clouds without a built-in entry

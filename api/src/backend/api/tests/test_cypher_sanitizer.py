@@ -534,7 +534,48 @@ class TestValidation:
     @pytest.mark.parametrize(
         "cypher",
         [
+            "USE `db-tenant-other` MATCH (n) RETURN n",
+            "use `db-tenant-other` MATCH (n) RETURN n",
+            "USE/**/`db-tenant-other` MATCH (n) RETURN n",
+            "CALL { USE `db-tenant-other` MATCH (n) RETURN n } RETURN n",
+            "MATCH (n) RETURN n UNION USE `db-tenant-other` MATCH (n) RETURN n",
+            "USE graph.byName('db-tenant-other') MATCH (n) RETURN n",
+            "SHOW DATABASES YIELD name RETURN name",
+            "SHOW PROCEDURES YIELD name RETURN name",
+            "CYPHER 5USE `db-tenant-other` MATCH (n) RETURN n",
+            "CYPHER 5SHOW DATABASES YIELD name RETURN name",
+            "CYPHER 25USE `db-tenant-other` MATCH (n) RETURN n",
+            "CYPHER runtime=slotted MATCH (n) RETURN n",
+        ],
+        ids=[
+            "USE_backticked_database",
+            "USE_lowercase",
+            "USE_glued_by_comment",
+            "USE_inside_CALL_subquery",
+            "USE_after_UNION",
+            "USE_graph_byName",
+            "SHOW_DATABASES",
+            "SHOW_PROCEDURES",
+            "USE_glued_to_CYPHER_version",
+            "SHOW_glued_to_CYPHER_version",
+            "USE_glued_to_two_digit_CYPHER_version",
+            "CYPHER_query_options",
+        ],
+    )
+    def test_rejects_queries_that_leave_the_session_database(self, cypher):
+        with pytest.raises(ValidationError) as exc:
+            validate_custom_query(cypher)
+
+        assert "blocked operation" in str(exc.value.detail)
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [
             "MATCH (n:AWSAccount) RETURN n LIMIT 10",
+            "MATCH (n) WHERE n.name = 'USE db-tenant-other' RETURN n",
+            "MATCH (user:AWSUser) RETURN user",
+            "MATCH (n) RETURN n.`show`, n.`use`",
+            "MATCH (n) RETURN n.stage1use",
             "MATCH (a)-[r]->(b) RETURN a, r, b",
             "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
             "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
@@ -545,6 +586,10 @@ class TestValidation:
         ],
         ids=[
             "simple_match",
+            "use_inside_string",
+            "variable_starting_with_use",
+            "backticked_use_and_show_properties",
+            "identifier_ending_in_digit_and_use",
             "traversal",
             "contains_load_substring",
             "apoc_virtual_node",

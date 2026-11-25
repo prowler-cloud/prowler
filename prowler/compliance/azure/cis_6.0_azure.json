@@ -226,7 +226,9 @@
     {
       "Id": "2.1.11",
       "Description": "Ensure Private Endpoints are used to access Azure Databricks workspaces",
-      "Checks": [],
+      "Checks": [
+        "databricks_workspace_uses_private_endpoint"
+      ],
       "Attributes": [
         {
           "Section": "2 Analytics Services",

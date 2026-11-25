@@ -2,14 +2,22 @@ from datetime import UTC, datetime, timedelta
 from itertools import islice
 
 import pytest
+from api.models import Finding, ResourceFindingMapping
 from api.partitions import (
     PostgresUUIDv7PartitioningStrategy,
     relative_months_or_none,
 )
-from api.uuid_utils import uuid7_range_bound
+from api.uuid_utils import datetime_to_uuid7, uuid7_range_bound
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ImproperlyConfigured
-from psqlextra.partitioning import PostgresTimePartitionSize
+from django.db import connection
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
+from psqlextra.partitioning import (
+    PostgresPartitioningManager,
+    PostgresTimePartitionSize,
+)
+from psqlextra.partitioning.config import PostgresPartitioningConfig
 
 
 def build_strategy(max_age):
@@ -109,3 +117,135 @@ class TestToCreate:
         # Timestamp preserved, every field below it zero.
         assert bound.int >> 80 == int(moment.timestamp() * 1000)
         assert bound.int & ((1 << 76) - 1) == (0x2 << 62)
+
+
+def build_manager(start_date, count, max_age):
+    def config(model, rls_statements):
+        return PostgresPartitioningConfig(
+            model=model,
+            strategy=PostgresUUIDv7PartitioningStrategy(
+                size=PostgresTimePartitionSize(months=1),
+                count=count,
+                start_date=start_date,
+                max_age=max_age,
+                name_format="%Y_%b",
+                rls_statements=rls_statements,
+            ),
+        )
+
+    return PostgresPartitioningManager(
+        [
+            config(Finding, ["SELECT", "INSERT", "UPDATE", "DELETE"]),
+            config(ResourceFindingMapping, ["SELECT"]),
+        ]
+    )
+
+
+def table_exists(name):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT to_regclass(%s) IS NOT NULL", [name])
+        return cursor.fetchone()[0]
+
+
+def create_finding(scan, resource, finding_id, uid):
+    finding = Finding.objects.create(
+        id=finding_id,
+        tenant_id=scan.tenant_id,
+        uid=uid,
+        scan=scan,
+        status=Status.FAIL,
+        status_extended="status extended",
+        impact=Severity.low,
+        impact_extended="impact extended",
+        severity=Severity.low,
+        raw_result={},
+        check_id="test_check_id",
+        check_metadata={"CheckId": "test_check_id"},
+    )
+    finding.add_resources([resource])
+    return finding
+
+
+@pytest.mark.django_db
+class TestDeletePartitions:
+    @pytest.fixture(autouse=True)
+    def current_month(self, monkeypatch):
+        # The deletion cutoff and the expired month both derive from this one
+        # instant, so a test that straddles a month boundary cannot disagree.
+        month = datetime.now(UTC).replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        monkeypatch.setattr(
+            PostgresUUIDv7PartitioningStrategy,
+            "get_start_datetime",
+            lambda self: month,
+        )
+        return month
+
+    @pytest.fixture
+    def expired_month(self, current_month):
+        return current_month - relativedelta(months=3)
+
+    @pytest.fixture
+    def expired_partitions(self, expired_month):
+        build_manager(expired_month, 1, None).plan(skip_delete=True).apply()
+        name = expired_month.strftime("%Y_%b").lower()
+        assert table_exists(f"findings_{name}")
+        assert table_exists(f"resource_finding_mappings_{name}")
+        return name
+
+    def delete_expired(self):
+        # The test's own inserts leave deferred foreign key checks pending in
+        # the test transaction, which PostgreSQL refuses to drop a table under.
+        with connection.cursor() as cursor:
+            cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
+            cursor.execute("SET CONSTRAINTS ALL DEFERRED")
+        now = datetime.now(UTC)
+        manager = build_manager(now, 1, relativedelta(months=3))
+        manager.plan(skip_create=True).apply()
+
+    def test_expired_findings_partition_is_dropped_with_its_mappings(
+        self, scans_fixture, resources_fixture, expired_month, expired_partitions
+    ):
+        scan, *_ = scans_fixture
+        resource, *_ = resources_fixture
+        create_finding(
+            scan, resource, datetime_to_uuid7(expired_month + timedelta(days=3)), "old"
+        )
+        kept = create_finding(
+            scan, resource, datetime_to_uuid7(datetime.now(UTC)), "new"
+        )
+
+        self.delete_expired()
+
+        assert not table_exists(f"findings_{expired_partitions}")
+        assert not table_exists(f"resource_finding_mappings_{expired_partitions}")
+        assert Finding.objects.filter(id=kept.id).exists()
+        assert ResourceFindingMapping.objects.filter(finding_id=kept.id).exists()
+        assert not Finding.objects.filter(uid="old").exists()
+
+    def test_mappings_can_still_be_added_after_a_drop(
+        self, scans_fixture, resources_fixture, expired_partitions
+    ):
+        scan, *_ = scans_fixture
+        resource, *_ = resources_fixture
+
+        self.delete_expired()
+
+        finding = create_finding(
+            scan, resource, datetime_to_uuid7(datetime.now(UTC)), "after"
+        )
+        assert ResourceFindingMapping.objects.filter(finding_id=finding.id).exists()
+
+    def test_nothing_is_dropped_when_no_partition_is_expired(
+        self, scans_fixture, resources_fixture
+    ):
+        scan, *_ = scans_fixture
+        resource, *_ = resources_fixture
+        finding = create_finding(
+            scan, resource, datetime_to_uuid7(datetime.now(UTC)), "current"
+        )
+
+        self.delete_expired()
+
+        assert Finding.objects.filter(id=finding.id).exists()

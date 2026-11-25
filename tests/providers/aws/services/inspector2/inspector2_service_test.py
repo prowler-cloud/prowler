@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import botocore
 from botocore.exceptions import ClientError
 
 from prowler.providers.aws.services.inspector2.inspector2_service import (
-    Finding,
     Inspector,
     Inspector2,
 )
@@ -166,6 +166,52 @@ def mock_search_vulnerabilities_denied(self, operation_name, kwargs):
     return mock_make_api_call(self, operation_name, kwargs)
 
 
+def recording_list_findings(calls):
+    def _mock(self, operation_name, kwargs):
+        if operation_name == "ListFindings":
+            calls.append(kwargs)
+        return mock_make_api_call(self, operation_name, kwargs)
+
+    return _mock
+
+
+def list_findings_call(calls, kind):
+    """The ListFindings requests of one lookup: exists, oldest, kev or threat."""
+
+    def kind_of(call):
+        if "sortCriteria" in call:
+            return "oldest"
+        if call.get("maxResults") == 1:
+            return "exists"
+        if "resourceType" in call["filterCriteria"]:
+            return "threat"
+        return "kev"
+
+    return [call for call in calls if kind_of(call) == kind]
+
+
+def mock_list_findings_with_ghsa(self, operation_name, kwargs):
+    if operation_name == "ListFindings":
+        return {
+            "findings": [
+                {
+                    "findingArn": FINDING_ARN,
+                    "packageVulnerabilityDetails": {
+                        "vulnerabilityId": "GHSA-xxxx-yyyy-zzzz"
+                    },
+                }
+            ]
+        }
+    return mock_make_api_call(self, operation_name, kwargs)
+
+
+def with_signature_cves(*cves):
+    return patch(
+        "prowler.providers.aws.services.inspector2.inspector2_service.load_signatures",
+        return_value=[SimpleNamespace(cves=list(cves))],
+    )
+
+
 def mock_generate_regional_clients(provider, service):
     regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
@@ -184,16 +230,10 @@ def build_inspector(region, vulnerability_ids):
         ecr_status="ENABLED",
         lambda_status="ENABLED",
         lambda_code_status="ENABLED",
-        findings=[
-            Finding(
-                arn=f"arn:aws:inspector2:{region}:{AWS_ACCOUNT_NUMBER}:finding/{index}",
-                type="PACKAGE_VULNERABILITY",
-                severity="HIGH",
-                first_observed_at=FIRST_OBSERVED_AT,
-                vulnerability_id=vulnerability_id,
-            )
+        kev_candidates={
+            vulnerability_id: f"arn:aws:inspector2:{region}:{AWS_ACCOUNT_NUMBER}:finding/{index}"
             for index, vulnerability_id in enumerate(vulnerability_ids)
-        ],
+        },
     )
 
 
@@ -234,17 +274,119 @@ class Test_Inspector2_Service:
         inspector2 = Inspector2(aws_provider)
         assert inspector2.inspectors[0].active_findings
 
-    def test_list_findings(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        inspector2 = Inspector2(aws_provider)
-        findings = inspector2.inspectors[0].findings
-        assert len(findings) == 1
-        assert findings[0].arn == FINDING_ARN
-        assert findings[0].type == "PACKAGE_VULNERABILITY"
-        assert findings[0].severity == "MEDIUM"
-        assert findings[0].first_observed_at == FIRST_OBSERVED_AT
-        assert findings[0].vulnerability_id == VULNERABILITY_ID
-        assert findings[0].resource_ids == [INSTANCE_ID]
+    def test_list_oldest_finding(self):
+        calls = []
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=recording_list_findings(calls),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        oldest_findings = inspector2.inspectors[0].oldest_findings
+        assert len(oldest_findings) == 1
+        assert oldest_findings[0].arn == FINDING_ARN
+        assert oldest_findings[0].first_observed_at == FIRST_OBSERVED_AT
+        assert oldest_findings[0].vulnerability_id == VULNERABILITY_ID
+        assert oldest_findings[0].resource_ids == [INSTANCE_ID]
+        [call] = list_findings_call(calls, "oldest")
+        assert call["sortCriteria"] == {
+            "field": "FIRST_OBSERVED_AT",
+            "sortOrder": "ASC",
+        }
+        assert call["maxResults"] == 1
+        assert call["filterCriteria"] == {
+            "awsAccountId": [{"comparison": "EQUALS", "value": AWS_ACCOUNT_NUMBER}],
+            "findingStatus": [{"comparison": "EQUALS", "value": "ACTIVE"}],
+        }
+
+    def test_list_kev_candidates_only_reads_findings_with_an_exploit(self):
+        calls = []
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=recording_list_findings(calls),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.inspectors[0].kev_candidates == {
+            VULNERABILITY_ID: FINDING_ARN
+        }
+        [call] = list_findings_call(calls, "kev")
+        assert call["filterCriteria"]["exploitAvailable"] == [
+            {"comparison": "EQUALS", "value": "YES"}
+        ]
+        assert call["filterCriteria"]["awsAccountId"] == [
+            {"comparison": "EQUALS", "value": AWS_ACCOUNT_NUMBER}
+        ]
+
+    def test_list_kev_candidates_reads_every_finding_when_configured(self):
+        calls = []
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=recording_list_findings(calls),
+        ):
+            aws_provider = set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1],
+                audit_config={"inspector2_kev_include_findings_without_exploit": True},
+            )
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.inspectors[0].kev_candidates == {
+            VULNERABILITY_ID: FINDING_ARN
+        }
+        [call] = list_findings_call(calls, "kev")
+        assert "exploitAvailable" not in call["filterCriteria"]
+
+    def test_list_kev_candidates_skips_non_cve_vulnerabilities(self):
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_list_findings_with_ghsa,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.inspectors[0].kev_candidates == {}
+
+    def test_list_threat_findings_filters_ec2_and_signature_cves(self):
+        cves = [f"CVE-2026-{number:04d}" for number in range(1, 13)] + [
+            VULNERABILITY_ID
+        ]
+        calls = []
+        with (
+            patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=recording_list_findings(calls),
+            ),
+            with_signature_cves(*cves),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.inspectors[0].threat_findings == {
+            INSTANCE_ID: {VULNERABILITY_ID}
+        }
+        threat_calls = list_findings_call(calls, "threat")
+        assert len(threat_calls) == 2
+        requested = []
+        for call in threat_calls:
+            assert call["filterCriteria"]["resourceType"] == [
+                {"comparison": "EQUALS", "value": "AWS_EC2_INSTANCE"}
+            ]
+            assert len(call["filterCriteria"]["vulnerabilityId"]) <= 10
+            requested += [
+                item["value"] for item in call["filterCriteria"]["vulnerabilityId"]
+            ]
+        assert sorted(requested) == sorted(cves)
+
+    def test_list_threat_findings_skips_the_lookup_without_signature_cves(self):
+        calls = []
+        with (
+            patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=recording_list_findings(calls),
+            ),
+            with_signature_cves(),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.inspectors[0].threat_findings == {}
+        assert list_findings_call(calls, "threat") == []
 
     def test_list_coverage(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -265,13 +407,15 @@ class Test_Inspector2_Service:
 
     def test_resource_metadata_leaves_out_findings_and_coverage(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        inspector = Inspector2(aws_provider).inspectors[0]
-        assert inspector.findings
-        assert inspector.coverage
+        with with_signature_cves(VULNERABILITY_ID):
+            inspector = Inspector2(aws_provider).inspectors[0]
+        lookups = ("oldest_findings", "kev_candidates", "threat_findings", "coverage")
+        for lookup in lookups:
+            assert getattr(inspector, lookup)
         # Check_Report stores `resource.dict()` as the finding's resource metadata
         resource_metadata = inspector.dict()
-        assert "findings" not in resource_metadata
-        assert "coverage" not in resource_metadata
+        for lookup in lookups:
+            assert lookup not in resource_metadata
         assert resource_metadata["arn"] == inspector.arn
 
     def test_list_coverage_keeps_audited_resources(self):
@@ -330,13 +474,18 @@ class Test_Inspector2_Service:
         assert inspector2.vulnerability_lookup_failed == {VULNERABILITY_ID}
 
     def test_list_findings_and_coverage_denied(self):
-        with patch(
-            "botocore.client.BaseClient._make_api_call",
-            new=mock_make_api_call_list_denied,
+        with (
+            patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=mock_make_api_call_list_denied,
+            ),
+            with_signature_cves(VULNERABILITY_ID),
         ):
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             inspector2 = Inspector2(aws_provider)
-        assert inspector2.inspectors[0].findings is None
+        assert inspector2.inspectors[0].oldest_findings is None
+        assert inspector2.inspectors[0].kev_candidates is None
+        assert inspector2.inspectors[0].threat_findings is None
         assert inspector2.inspectors[0].coverage is None
         assert inspector2.known_exploited_vulnerabilities == {}
 
@@ -346,7 +495,7 @@ class Test_Inspector2_Service:
             [
                 build_inspector(
                     AWS_REGION_EU_WEST_1,
-                    vulnerability_ids + vulnerability_ids[:5] + ["GHSA-xxxx-yyyy-zzzz"],
+                    vulnerability_ids,
                 ),
                 build_inspector(AWS_REGION_US_EAST_1, vulnerability_ids[:3]),
             ]

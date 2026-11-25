@@ -20,7 +20,10 @@ class elbv2_internet_facing(Check):
                             sg_arn
                         ].ingress_rules:
                             if check_security_group(
-                                ingress_rule, "tcp", any_address=True
+                                ingress_rule,
+                                "tcp",
+                                any_address=True,
+                                prefix_lists=ec2_client.managed_prefix_lists,
                             ):
                                 report.status = "FAIL"
                                 report.status_extended = f"ELBv2 ALB {lb.name} is internet facing with domain {lb.dns} due to their security group {sg_id} is public."
