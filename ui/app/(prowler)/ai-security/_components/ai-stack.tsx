@@ -85,8 +85,8 @@ function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
 }
 
 /**
- * Where AI runs, layer by layer: the vendor accounts, the cloud services and
- * the developer platforms. A layer with a provider missing says what to add.
+ * Where AI runs, layer by layer: the model vendors' accounts and the clouds'
+ * AI services. A layer with a provider missing says what to add.
  * A connected provider filters the page to its type; picking it again clears it.
  */
 export function AiStack({ layers }: { layers: AiStackLayer[] }) {
@@ -116,7 +116,7 @@ export function AiStack({ layers }: { layers: AiStackLayer[] }) {
         <ul
           className={cn(
             "grid grid-cols-1 gap-4",
-            layers.length > 1 && "xl:grid-cols-3",
+            layers.length > 1 && "xl:grid-cols-2",
           )}
         >
           {layers.map((layer) => (

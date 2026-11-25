@@ -44,9 +44,8 @@ const NOTE = "text-text-neutral-tertiary text-xs";
 /** The four numbers that say how the AI estate is doing. */
 export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
   const { pass, fail, manual, severity, layers } = overview;
-  const connected = layers
-    .flatMap((layer) => layer.providers)
-    .filter((provider) => provider.connected);
+  const providers = layers.flatMap((layer) => layer.providers);
+  const connected = providers.filter((provider) => provider.connected);
   const present = SEVERITY_LEVELS.filter((level) => severity[level] > 0);
 
   return (
@@ -110,7 +109,7 @@ export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
       <KpiCard label="AI providers" value={connected.length.toLocaleString()}>
         <p className={NOTE}>
           {connected.map((provider) => provider.name).join(", ")} connected, out
-          of Claude, OpenAI and ChatGPT.
+          of {providers.length} AI provider types.
         </p>
         <div className="mt-auto">
           <Button asChild variant="link" size="link-xs">

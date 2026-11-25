@@ -1,19 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { FindingsStatusAttributes } from "@/actions/overview";
-import type { CrossProviderRequirementData } from "@/app/(prowler)/compliance/_types";
-import type {
-  AttributesItemData,
-  RequirementItemData,
-} from "@/types/compliance";
 import type { ProviderProps } from "@/types/providers";
 
 import {
   aiProvidersInScope,
   aiScopeFilters,
-  aiSectionChecks,
-  parseSection,
-  toAiRequirements,
+  isCloudAi,
+  isModelVendor,
+  narrowScope,
   toAiSecurityOverview,
 } from "./overview";
 
@@ -24,15 +19,6 @@ const status = (
   counts: Pick<FindingsStatusAttributes, "pass" | "fail" | "muted" | "total">,
 ) => counts as FindingsStatusAttributes;
 
-const requirement = (id: string, status: string) =>
-  ({ id, attributes: { status } }) as RequirementItemData;
-
-const attribute = (id: string, Section: string) =>
-  ({
-    id,
-    attributes: { attributes: { metadata: [{ Section }] } },
-  }) as never as AttributesItemData;
-
 const NO_SEVERITY = {
   critical: 0,
   high: 0,
@@ -42,25 +28,27 @@ const NO_SEVERITY = {
 };
 
 describe("aiScopeFilters", () => {
-  it("keeps only the AI provider types the page selects", () => {
+  it("keeps only the AI-SPM provider types the page selects", () => {
     expect(
       aiScopeFilters({
-        "filter[provider_type__in]": "aws,openai",
+        "filter[provider_type__in]": "aws,kubernetes,openai",
         "filter[provider_id__in]": "p1",
       }),
     ).toEqual({
-      "filter[provider_type__in]": "openai",
+      "filter[provider_type__in]": "openai,aws",
       "filter[provider_id__in]": "p1",
     });
   });
 
-  it("has no scope when the selection leaves out every AI provider", () => {
-    expect(aiScopeFilters({ "filter[provider_type__in]": "aws" })).toBeNull();
+  it("has no scope when the selection leaves out every AI-SPM provider", () => {
+    expect(
+      aiScopeFilters({ "filter[provider_type__in]": "kubernetes" }),
+    ).toBeNull();
   });
 });
 
 describe("aiProvidersInScope", () => {
-  it("keeps every AI provider type the account filter allows", () => {
+  it("keeps every AI-SPM provider type the account filter allows", () => {
     expect(
       aiProvidersInScope(
         [
@@ -68,24 +56,47 @@ describe("aiProvidersInScope", () => {
           provider("p2", "claude"),
           provider("p3", "aws"),
           provider("p4", "openai"),
+          provider("p5", "kubernetes"),
         ],
         {
           "filter[provider_type__in]": "openai",
-          "filter[provider_id__in]": "p1,p2,p3",
+          "filter[provider_id__in]": "p1,p2,p3,p5",
         },
       ).map(({ id }) => id),
-    ).toEqual(["p1", "p2"]);
+    ).toEqual(["p1", "p2", "p3"]);
   });
 });
 
-describe("parseSection", () => {
-  it("splits a numbered code from the section name", () => {
-    expect(parseSection("LLM01:2025 Prompt Injection")).toEqual({
-      code: "LLM01",
-      name: "Prompt Injection",
+describe("narrowScope", () => {
+  it("keeps the types that pass the test, or none at all", () => {
+    const filters = {
+      "filter[provider_type__in]": "openai,aws",
+      "filter[provider_id__in]": "p1",
+    };
+    expect(narrowScope(filters, isCloudAi)).toEqual({
+      "filter[provider_type__in]": "aws",
+      "filter[provider_id__in]": "p1",
     });
-    expect(parseSection("GOVERN")).toEqual({ code: "", name: "GOVERN" });
+    expect(
+      narrowScope({ "filter[provider_type__in]": "aws" }, isModelVendor),
+    ).toBeNull();
   });
+});
+
+const group = (
+  id: string,
+  severity: string,
+  resources: number,
+  provider = "openai",
+) => ({
+  id,
+  attributes: {
+    check_title: `${id} title`,
+    status: "FAIL" as const,
+    severity,
+    impacted_providers: [provider],
+    resources_fail: resources,
+  },
 });
 
 describe("toAiSecurityOverview", () => {
@@ -94,192 +105,101 @@ describe("toAiSecurityOverview", () => {
       provider("p1", "openai"),
       provider("p2", "openai"),
       provider("p3", "claude"),
+      provider("p4", "aws"),
     ],
-    types: ["openai"],
+    types: ["openai", "aws"],
     results: {
       openai: status({ pass: 3, fail: 2, muted: 1, total: 10 }),
       claude: status({ pass: 7, fail: 7, muted: 0, total: 14 }),
     },
+    cloudResults: {
+      aws: {
+        total_findings: 9,
+        failed_findings: 4,
+        new_failed_findings: 0,
+        severity: { ...NO_SEVERITY, critical: 1, high: 3 },
+      },
+    },
     severity: { ...NO_SEVERITY, high: 2 },
     frameworks: [
       {
-        overview: {
-          id: "owasp_llm_top_10_2025",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "OWASP-LLM-Top-10",
-            version: "2025",
-            requirements_passed: 1,
-            requirements_failed: 1,
-            requirements_manual: 1,
-            total_requirements: 3,
-          },
+        id: "owasp_llm_top_10_2025",
+        type: "compliance-overviews",
+        attributes: {
+          framework: "OWASP-LLM-Top-10",
+          version: "2025",
+          requirements_passed: 4,
+          requirements_failed: 2,
+          requirements_manual: 81,
+          total_requirements: 87,
         },
-        requirements: [
-          requirement("LLM01.1", "PASS"),
-          requirement("LLM01.2", "FAIL"),
-          requirement("LLM02.1", "MANUAL"),
-        ],
-        attributes: [
-          attribute("LLM01.1", "LLM01:2025 Prompt Injection"),
-          attribute("LLM01.2", "LLM01:2025 Prompt Injection"),
-          attribute("LLM02.1", "LLM02:2025 Sensitive Information Disclosure"),
-        ],
       },
     ],
     findingGroups: [
-      {
-        id: "apikey_rotated_regularly",
-        attributes: {
-          check_title: "API keys are rotated",
-          status: "FAIL",
-          severity: "high",
-          impacted_providers: ["openai"],
-          resources_fail: 1,
-        },
-      },
+      group("apikey_rotated_regularly", "high", 1),
+      group("bedrock_guardrails_configured", "critical", 2, "aws"),
+      group("project_hosted_tools_restricted", "high", 5),
     ],
   });
 
-  it("totals only the provider types the page is filtered to", () => {
-    expect(overview).toMatchObject({ pass: 3, fail: 2 });
+  it("totals the model vendors and the clouds' gen-ai findings the page is filtered to", () => {
+    expect(overview).toMatchObject({ pass: 3 + 5, fail: 2 + 4 });
+    expect(overview.severity).toMatchObject({ critical: 1, high: 2 + 3 });
   });
 
   it("counts what is neither pass, fail nor muted as manual", () => {
-    expect(overview).toMatchObject({ pass: 3, fail: 2, manual: 4 });
+    expect(overview.manual).toBe(4);
   });
 
-  it("lists every AI vendor and says which ones are connected", () => {
+  it("lists every model vendor and cloud, and says which ones are connected", () => {
     expect(
-      overview.layers[0].providers.map(({ name, scope, connected }) => [
-        name,
-        scope,
-        connected,
+      overview.layers.map((layer) =>
+        layer.providers.map(({ name, scope, connected, pass, fail }) => [
+          name,
+          scope,
+          connected,
+          pass,
+          fail,
+        ]),
+      ),
+    ).toEqual([
+      [
+        ["Claude", "1 account", true, 7, 7],
+        ["OpenAI", "2 accounts", true, 3, 2],
+        ["ChatGPT", "0 accounts", false, 0, 0],
+      ],
+      [
+        ["AWS", "1 account", true, 5, 4],
+        ["Azure", "0 accounts", false, 0, 0],
+        ["GCP", "0 accounts", false, 0, 0],
+      ],
+    ]);
+  });
+
+  it("scores each framework from its requirement counts and keeps its route title", () => {
+    expect(overview.frameworks).toEqual([
+      expect.objectContaining({
+        id: "owasp_llm_top_10_2025",
+        title: "OWASP-LLM-Top-10",
+        version: "2025",
+        pass: 4,
+        fail: 2,
+        manual: 81,
+      }),
+    ]);
+  });
+
+  it("ranks vendor and cloud risks together by severity, then by resources", () => {
+    expect(
+      overview.topRisks.map(({ checkId, providerName, affected }) => [
+        checkId,
+        providerName,
+        affected,
       ]),
     ).toEqual([
-      ["Claude", "1 account", true],
-      ["OpenAI", "2 accounts", true],
-      ["ChatGPT", "0 accounts", false],
-    ]);
-  });
-
-  it("groups each framework's requirements by section", () => {
-    expect(overview.frameworks[0].sections).toEqual([
-      {
-        id: "LLM01:2025 Prompt Injection",
-        code: "LLM01",
-        name: "Prompt Injection",
-        pass: 1,
-        fail: 1,
-        manual: 0,
-      },
-      {
-        id: "LLM02:2025 Sensitive Information Disclosure",
-        code: "LLM02",
-        name: "Sensitive Information Disclosure",
-        pass: 0,
-        fail: 0,
-        manual: 1,
-      },
-    ]);
-  });
-
-  it("names the provider and resources of each top risk", () => {
-    expect(overview.topRisks).toEqual([
-      {
-        checkId: "apikey_rotated_regularly",
-        title: "API keys are rotated",
-        severity: "high",
-        providerName: "OpenAI",
-        affected: "1 resource",
-      },
-    ]);
-  });
-});
-
-describe("toAiRequirements", () => {
-  const SECTION = "LLM02:2025 Sensitive Information Disclosure";
-  const crossRequirement = (
-    id: string,
-    Section: string,
-    status: CrossProviderRequirementData["status"],
-    checks: CrossProviderRequirementData["check_ids_by_provider"],
-  ): CrossProviderRequirementData => ({
-    id,
-    name: `${id} name`,
-    description: `${id} description`,
-    attributes: { Section },
-    status,
-    providers: {},
-    check_ids_by_provider: checks,
-  });
-  const requirements = [
-    crossRequirement("LLM01.1", "LLM01:2025 Prompt Injection", "FAIL", {
-      openai: ["prompt_check"],
-    }),
-    crossRequirement("LLM02.3", SECTION, "FAIL", {
-      openai: ["apikey_rotated_regularly", "apikey_recently_used"],
-      aws: ["iam_user_access_not_stale_to_bedrock"],
-    }),
-    crossRequirement("LLM02.9", SECTION, "MANUAL", {
-      aws: ["bedrock_guardrails_configured"],
-    }),
-  ];
-
-  it("lists the checks of the section for the provider types in scope", () => {
-    expect(aiSectionChecks(requirements, SECTION, ["openai"])).toEqual([
-      "apikey_rotated_regularly",
-      "apikey_recently_used",
-    ]);
-  });
-
-  it("gives each check its latest result and leaves manual requirements without checks", () => {
-    expect(
-      toAiRequirements({
-        requirements,
-        section: SECTION,
-        types: ["openai"],
-        findingGroups: [
-          {
-            id: "apikey_rotated_regularly",
-            attributes: {
-              check_title: "API keys are rotated",
-              status: "FAIL",
-              severity: "high",
-              impacted_providers: ["openai"],
-              resources_fail: 3,
-            },
-          },
-        ],
-      }),
-    ).toEqual([
-      {
-        id: "LLM02.3",
-        name: "LLM02.3 name",
-        description: "LLM02.3 description",
-        status: "FAIL",
-        checks: [
-          {
-            id: "apikey_rotated_regularly",
-            title: "API keys are rotated",
-            status: "FAIL",
-            failedResources: 3,
-          },
-          {
-            id: "apikey_recently_used",
-            title: "apikey_recently_used",
-            status: "No findings",
-            failedResources: 0,
-          },
-        ],
-      },
-      {
-        id: "LLM02.9",
-        name: "LLM02.9 name",
-        description: "LLM02.9 description",
-        status: "MANUAL",
-        checks: [],
-      },
+      ["bedrock_guardrails_configured", "AWS", "2 resources"],
+      ["project_hosted_tools_restricted", "OpenAI", "5 resources"],
+      ["apikey_rotated_regularly", "OpenAI", "1 resource"],
     ]);
   });
 });

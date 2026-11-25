@@ -117,23 +117,17 @@ export const getComplianceRequirements = async ({
   complianceId,
   scanId,
   region,
-  filters = {},
 }: {
   complianceId: string;
-  /** Without a scan, the API reads the latest scans of the providers the filters select. */
-  scanId?: string;
+  scanId: string;
   region?: string | string[];
-  filters?: Record<string, string>;
 }): Promise<ApiResult<ComplianceRequirementsApiResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
     const url = new URL(`${apiBaseUrl}/compliance-overviews/requirements`);
     url.searchParams.append("filter[compliance_id]", complianceId);
-    if (scanId) url.searchParams.append("filter[scan_id]", scanId);
-    Object.entries(filters).forEach(([key, value]) =>
-      url.searchParams.append(key, value),
-    );
+    url.searchParams.append("filter[scan_id]", scanId);
 
     if (region) {
       const regionValue = Array.isArray(region) ? region.join(",") : region;

@@ -19,7 +19,8 @@ export const AiSecurityEmptyState = () => (
     <StatusPanelBody>
       <StatusPanelTitle>No AI findings yet</StatusPanelTitle>
       <StatusPanelDescription>
-        Add a Claude, OpenAI or ChatGPT provider and scan it.
+        Add a Claude, OpenAI or ChatGPT provider, or an AWS, Azure or GCP
+        account running AI services, and scan it.
       </StatusPanelDescription>
     </StatusPanelBody>
     <StatusPanelActions>

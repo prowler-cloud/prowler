@@ -4,7 +4,7 @@ import { render } from "@/__tests__/render-browser";
 
 import { AiCompliance } from "./_components/ai-compliance";
 import { AiStack } from "./_components/ai-stack";
-import type { AiFramework, AiRequirement, AiStackLayer } from "./_types";
+import type { AiFramework, AiStackLayer } from "./_types";
 
 const navigation = vi.hoisted(() => ({
   push: vi.fn(),
@@ -21,104 +21,36 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(navigation.search),
 }));
 
-const getAiSectionRequirements = vi.hoisted(() =>
-  vi.fn<() => Promise<AiRequirement[] | null>>(),
-);
-vi.mock("./_actions", () => ({ getAiSectionRequirements }));
-
-const framework = (
-  id: string,
-  shortName: string,
-  section: string,
-): AiFramework => ({
-  id,
-  shortName,
-  name: shortName,
-  version: "1",
+const framework: AiFramework = {
+  id: "owasp_llm_top_10_2025",
+  title: "OWASP-LLM-Top-10",
+  shortName: "OWASP LLM Top 10",
+  name: "OWASP Top 10 for LLM Applications",
+  version: "2025",
   unit: "requirements",
-  sections: [
-    { id: section, code: "", name: section, pass: 1, fail: 1, manual: 0 },
-  ],
-});
+  pass: 4,
+  fail: 2,
+  manual: 81,
+};
 
 describe("AI Security compliance frameworks", () => {
-  it("shows the sections of the framework that is picked", async () => {
+  it("opens a framework in Compliance across the model vendors in scope", async () => {
     const screen = await render(
       <AiCompliance
-        frameworks={[
-          framework("owasp_llm", "OWASP LLM Top 10", "Prompt injection"),
-          framework("nist_ai_rmf", "NIST AI RMF", "Govern"),
-        ]}
-        filters={{}}
+        frameworks={[framework]}
+        filters={{
+          "filter[provider_type__in]": "openai,aws",
+          "filter[provider_groups__in]": "g1",
+        }}
       />,
     );
 
     await expect
-      .element(screen.getByText("Prompt injection"))
-      .toBeInTheDocument();
-
-    await screen.getByRole("button", { name: /NIST AI RMF/ }).click();
-
-    await expect.element(screen.getByText("Govern")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Prompt injection"))
-      .not.toBeInTheDocument();
-  });
-});
-
-describe("AI Security requirement drill-down", () => {
-  it("loads a section's requirements and checks when it is expanded", async () => {
-    getAiSectionRequirements.mockResolvedValue([
-      {
-        id: "LLM02.3",
-        name: "Enforce strict access controls",
-        description: "",
-        status: "FAIL",
-        checks: [
-          {
-            id: "apikey_rotated_regularly",
-            title: "API keys are rotated",
-            status: "FAIL",
-            failedResources: 3,
-          },
-        ],
-      },
-      {
-        id: "LLM02.9",
-        name: "Conceal system preamble",
-        description: "Keep the system prompt private.",
-        status: "MANUAL",
-        checks: [],
-      },
-    ]);
-    const screen = await render(
-      <AiCompliance
-        frameworks={[framework("owasp_llm", "OWASP LLM", "Disclosure")]}
-        filters={{ "filter[provider_type__in]": "openai" }}
-      />,
-    );
-    const section = screen.getByRole("button", { name: /Disclosure/ });
-
-    expect(getAiSectionRequirements).not.toHaveBeenCalled();
-    await expect.element(section).toHaveAttribute("aria-expanded", "false");
-
-    await section.click();
-
-    await expect.element(section).toHaveAttribute("aria-expanded", "true");
-    await expect
-      .element(screen.getByText("API keys are rotated"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("link", { name: "3 failed resources" }))
+      .element(screen.getByRole("link", { name: /OWASP LLM Top 10/ }))
       .toHaveAttribute(
         "href",
-        expect.stringContaining(
-          "filter%5Bcheck_id__in%5D=apikey_rotated_regularly&filter%5Bprovider_type__in%5D=openai",
-        ),
+        "/compliance/OWASP-LLM-Top-10?mode=cross-provider&complianceId=owasp_llm_top_10_2025&version=2025&filter%5Bprovider_type__in%5D=openai&filter%5Bprovider_groups__in%5D=g1",
       );
-    await expect
-      .element(screen.getByText(/Needs a manual review/))
-      .toHaveTextContent("Keep the system prompt private.");
   });
 });
 
@@ -136,6 +68,22 @@ describe("AI Security stack", () => {
           connected: true,
           pass: 1,
           fail: 1,
+          manual: 0,
+        },
+      ],
+    },
+    {
+      id: "cloud-ai-services",
+      name: "Cloud AI services",
+      description: "",
+      providers: [
+        {
+          type: "aws",
+          name: "AWS",
+          scope: "2 accounts",
+          connected: true,
+          pass: 5,
+          fail: 4,
           manual: 0,
         },
       ],
@@ -162,5 +110,24 @@ describe("AI Security stack", () => {
     expect(navigation.push).toHaveBeenLastCalledWith("/ai-security", {
       scroll: false,
     });
+  });
+
+  it("filters the page to a cloud's type and links to its gen-ai findings", async () => {
+    navigation.search = "";
+    const screen = await render(<AiStack layers={layers} />);
+
+    await screen.getByRole("button", { name: /AWS/ }).click();
+    expect(navigation.push).toHaveBeenLastCalledWith(
+      "/ai-security?filter%5Bprovider_type__in%5D=aws",
+      { scroll: false },
+    );
+    await expect
+      .element(screen.getByRole("link", { name: /^AWS: 56%/ }))
+      .toHaveAttribute(
+        "href",
+        expect.stringMatching(
+          /filter%5Bcategory__in%5D=gen-ai.*filter%5Bprovider_type__in%5D=aws/,
+        ),
+      );
   });
 });

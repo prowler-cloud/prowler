@@ -24,17 +24,17 @@ export function AiSecurityDashboardSkeleton() {
           <Skeleton key={index} className="h-[154px] rounded-xl xl:h-[186px]" />
         ))}
       </div>
-      <Skeleton className="h-[314px] w-full rounded-xl" />
-      <Skeleton className="h-[1155px] w-full rounded-xl lg:h-[660px]" />
+      <Skeleton className="h-[652px] w-full rounded-xl" />
+      <Skeleton className="h-[394px] w-full rounded-xl" />
       <Skeleton className="h-[469px] w-full rounded-xl" />
     </div>
   );
 }
 
 interface AiSecurityDashboardProps {
-  /** The page's provider filters narrowed to the AI providers. */
+  /** The page's provider filters narrowed to the AI-SPM providers. */
   filters: Record<string, string>;
-  /** The AI providers the stack lists; none of the filtered types shows the empty state. */
+  /** The AI-SPM providers the stack lists; none of the filtered types shows the empty state. */
   providers: ProviderProps[];
 }
 
@@ -68,7 +68,9 @@ export async function AiSecurityDashboard({
     <div className="flex flex-col gap-6">
       <AiKpis overview={overview} />
       <AiStack layers={overview.layers} />
-      <AiCompliance frameworks={overview.frameworks} filters={filters} />
+      {overview.frameworks.length > 0 && (
+        <AiCompliance frameworks={overview.frameworks} filters={filters} />
+      )}
       <TopRisks risks={overview.topRisks} />
     </div>
   );

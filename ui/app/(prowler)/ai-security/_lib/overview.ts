@@ -2,24 +2,20 @@ import type {
   FindingsSeverityAttributes,
   FindingsStatusAttributes,
 } from "@/actions/overview";
+import type { CategoryOverviewAttributes } from "@/actions/overview/risk-radar/types";
 import type {
   AiFramework,
-  AiFrameworkSection,
-  AiRequirement,
   AiSecurityOverview,
+  AiStackProvider,
   AiTopRisk,
 } from "@/app/(prowler)/ai-security/_types";
-import type { CrossProviderRequirementData } from "@/app/(prowler)/compliance/_types";
 import { splitCsvFilterValues } from "@/lib/findings-filters";
 import type { SearchParamsProps } from "@/types";
-import {
-  type AttributesItemData,
-  type ComplianceOverviewData,
-  REQUIREMENT_STATUS,
-  type RequirementItemData,
-  type RequirementStatus,
+import type {
+  ComplianceOverviewData,
+  RequirementStatus,
 } from "@/types/compliance";
-import type { ProviderProps, ProviderType } from "@/types/providers";
+import type { ProviderProps } from "@/types/providers";
 import { SEVERITY_LEVELS, type SeverityLevel } from "@/types/severities";
 
 export const AI_SECURITY_PREVIEW = {
@@ -28,18 +24,42 @@ export const AI_SECURITY_PREVIEW = {
 } as const;
 
 /** The model vendors installed from the Registry. Every check they run is an AI check. */
-const AI_PROVIDERS = {
+const MODEL_VENDORS = {
   claude: "Claude",
   openai: "OpenAI",
   chatgpt: "ChatGPT",
 } as const;
 
-type AiProviderType = keyof typeof AI_PROVIDERS;
+/** The clouds whose AI services (Bedrock, Azure AI, Vertex AI) checks tag as gen-ai. */
+const CLOUD_AI_SERVICES = {
+  aws: "AWS",
+  azure: "Azure",
+  gcp: "GCP",
+} as const;
 
-const AI_PROVIDER_TYPES = Object.keys(AI_PROVIDERS) as AiProviderType[];
+type ModelVendorType = keyof typeof MODEL_VENDORS;
+type CloudAiType = keyof typeof CLOUD_AI_SERVICES;
 
-type AiFrameworkInfo = Pick<AiFramework, "shortName" | "name" | "unit"> &
-  Partial<Pick<AiFramework, "note">>;
+const MODEL_VENDOR_TYPES = Object.keys(MODEL_VENDORS) as ModelVendorType[];
+const CLOUD_AI_TYPES = Object.keys(CLOUD_AI_SERVICES) as CloudAiType[];
+/** The provider types the page covers. */
+const AI_SPM_TYPES = [...MODEL_VENDOR_TYPES, ...CLOUD_AI_TYPES];
+
+const PROVIDER_NAMES: Record<string, string> = {
+  ...MODEL_VENDORS,
+  ...CLOUD_AI_SERVICES,
+};
+
+export const isModelVendor = (type: string): type is ModelVendorType =>
+  Object.hasOwn(MODEL_VENDORS, type);
+
+export const isCloudAi = (type: string): type is CloudAiType =>
+  Object.hasOwn(CLOUD_AI_SERVICES, type);
+
+/** The failed checks the page lists, most severe first. */
+export const TOP_RISKS = 6;
+
+type AiFrameworkInfo = Pick<AiFramework, "shortName" | "name" | "unit">;
 
 /** The AI frameworks the page shows when the tenant has them installed, keyed by compliance id. */
 export const AI_FRAMEWORKS: Record<string, AiFrameworkInfo> = {
@@ -72,7 +92,6 @@ export const AI_FRAMEWORKS: Record<string, AiFrameworkInfo> = {
     shortName: "EU AI Act",
     name: "EU AI Act, deployer obligations",
     unit: "requirements",
-    note: "Informative mapping. Prowler checks the parts of these articles that show up in configuration, mostly the deployer duties in Article 26. Whether a system is high-risk is your call and stays manual.",
   },
 };
 
@@ -82,8 +101,8 @@ const SCOPE_KEYS = [
 ] as const;
 
 /**
- * The page's provider filters narrowed to the AI providers, or null when the
- * selected provider types leave none of them.
+ * The page's provider filters narrowed to the AI-SPM provider types (model
+ * vendors and clouds), or null when the selected types leave none of them.
  */
 export function aiScopeFilters(
   searchParams: SearchParamsProps,
@@ -91,7 +110,7 @@ export function aiScopeFilters(
   const selected = splitCsvFilterValues(
     searchParams["filter[provider_type__in]"],
   );
-  const types = AI_PROVIDER_TYPES.filter(
+  const types = AI_SPM_TYPES.filter(
     (type) => selected.length === 0 || selected.includes(type),
   );
   if (types.length === 0) return null;
@@ -106,8 +125,19 @@ export function aiScopeFilters(
   return filters;
 }
 
+/** The scope filters narrowed to the provider types that pass the test, or null when none does. */
+export function narrowScope(
+  filters: Record<string, string>,
+  test: (type: string) => boolean,
+): Record<string, string> | null {
+  const types = filters["filter[provider_type__in]"].split(",").filter(test);
+  return types.length > 0
+    ? { ...filters, "filter[provider_type__in]": types.join(",") }
+    : null;
+}
+
 /**
- * The AI providers of every type the account filter allows. The AI stack
+ * The AI-SPM providers of every type the account filter allows. The AI stack
  * lists them all, so a row can switch the page to another provider type.
  */
 export function aiProvidersInScope(
@@ -117,7 +147,7 @@ export function aiProvidersInScope(
   const ids = filters["filter[provider_id__in]"]?.split(",");
   return providers.filter(
     (provider) =>
-      Object.hasOwn(AI_PROVIDERS, provider.attributes.provider) &&
+      Object.hasOwn(PROVIDER_NAMES, provider.attributes.provider) &&
       (!ids || ids.includes(provider.id)),
   );
 }
@@ -133,23 +163,19 @@ export interface AiFindingGroup {
   };
 }
 
-export interface AiFrameworkSource {
-  overview: ComplianceOverviewData;
-  requirements: RequirementItemData[];
-  attributes: AttributesItemData[];
-}
-
 export interface AiOverviewSources {
-  /** The AI providers the stack lists. */
+  /** The AI-SPM providers the stack lists. */
   providers: ProviderProps[];
   /** The provider types the page is filtered to; the totals count only these. */
   types: string[];
-  /** The latest scans' results of each AI provider type the stack lists. */
+  /** The latest scans' results of each model vendor type the stack lists. */
   results: Partial<Record<string, FindingsStatusAttributes>>;
-  /** Failed findings by severity. */
+  /** The latest scans' gen-ai findings of each cloud type the stack lists. */
+  cloudResults: Partial<Record<string, CategoryOverviewAttributes>>;
+  /** The model vendors' failed findings by severity. */
   severity: FindingsSeverityAttributes;
-  frameworks: AiFrameworkSource[];
-  /** Failed checks, most severe first. */
+  frameworks: ComplianceOverviewData[];
+  /** Failed checks of the model vendors and of the clouds' gen-ai, in any order. */
   findingGroups: AiFindingGroup[];
 }
 
@@ -159,64 +185,23 @@ const plural = (count: number, word: string) =>
 const isSeverityLevel = (value: string): value is SeverityLevel =>
   (SEVERITY_LEVELS as readonly string[]).includes(value);
 
-const providerName = (type: string) =>
-  AI_PROVIDERS[type as AiProviderType] ?? type;
+const providerName = (type: string) => PROVIDER_NAMES[type] ?? type;
 
-/** "LLM01:2025 Prompt Injection" → code "LLM01"; a label without a numbered code keeps it all as the name. */
-export function parseSection(
-  label: string,
-): Pick<AiFrameworkSection, "code" | "name"> {
-  const [first, ...rest] = label.split(" ");
-  if (rest.length === 0 || !/\d/.test(first)) return { code: "", name: label };
-  return { code: first.split(":")[0], name: rest.join(" ") };
-}
+const severityRank = (severity: string) =>
+  (SEVERITY_LEVELS as readonly string[]).indexOf(severity);
 
-function toFramework({
-  overview,
-  requirements,
+const toFramework = ({
+  id,
   attributes,
-}: AiFrameworkSource): AiFramework {
-  const sectionOf = new Map(
-    attributes.map((item) => {
-      const [metadata] = item.attributes.attributes.metadata as {
-        Section?: string;
-      }[];
-      return [item.id, metadata?.Section ?? ""];
-    }),
-  );
-  // Sections keep the framework's order; requirements without one go last.
-  const sections = new Map<string, AiFrameworkSection>(
-    Array.from(new Set([...Array.from(sectionOf.values()), ""])).map(
-      (label) => [
-        label,
-        {
-          id: label,
-          ...parseSection(label || "Other"),
-          pass: 0,
-          fail: 0,
-          manual: 0,
-        },
-      ],
-    ),
-  );
-  for (const requirement of requirements) {
-    const section = sections.get(sectionOf.get(requirement.id) ?? "");
-    const status = requirement.attributes.status;
-    if (!section) continue;
-    if (status === "PASS") section.pass += 1;
-    else if (status === "FAIL") section.fail += 1;
-    else section.manual += 1;
-  }
-
-  return {
-    id: overview.id,
-    version: overview.attributes.version,
-    ...AI_FRAMEWORKS[overview.id],
-    sections: Array.from(sections.values()).filter(
-      (section) => section.pass + section.fail + section.manual > 0,
-    ),
-  };
-}
+}: ComplianceOverviewData): AiFramework => ({
+  id,
+  title: attributes.framework,
+  version: attributes.version,
+  ...AI_FRAMEWORKS[id],
+  pass: attributes.requirements_passed,
+  fail: attributes.requirements_failed,
+  manual: attributes.requirements_manual,
+});
 
 const toTopRisk = ({ id, attributes }: AiFindingGroup): AiTopRisk | null =>
   isSeverityLevel(attributes.severity)
@@ -231,19 +216,21 @@ const toTopRisk = ({ id, attributes }: AiFindingGroup): AiTopRisk | null =>
       }
     : null;
 
+const accountsOf = (providers: ProviderProps[], type: string) =>
+  providers.filter((provider) => provider.attributes.provider === type).length;
+
 /** Maps the overview, compliance and finding-group responses to what the widgets show. */
 export function toAiSecurityOverview({
   providers,
   types,
   results,
+  cloudResults,
   severity,
   frameworks,
   findingGroups,
 }: AiOverviewSources): AiSecurityOverview {
-  const vendors = AI_PROVIDER_TYPES.map((type) => {
-    const accounts = providers.filter(
-      (provider) => provider.attributes.provider === type,
-    ).length;
+  const vendors: AiStackProvider[] = MODEL_VENDOR_TYPES.map((type) => {
+    const accounts = accountsOf(providers, type);
     const result = results[type];
     const pass = result?.pass ?? 0;
     const fail = result?.fail ?? 0;
@@ -253,7 +240,7 @@ export function toAiSecurityOverview({
       : 0;
     return {
       type,
-      name: AI_PROVIDERS[type],
+      name: MODEL_VENDORS[type],
       scope: plural(accounts, "account"),
       connected: accounts > 0,
       pass,
@@ -262,13 +249,42 @@ export function toAiSecurityOverview({
     };
   });
 
-  const inScope = vendors.filter((vendor) => types.includes(vendor.type));
+  const clouds: AiStackProvider[] = CLOUD_AI_TYPES.map((type) => {
+    const accounts = accountsOf(providers, type);
+    const result = cloudResults[type];
+    const fail = result?.failed_findings ?? 0;
+    return {
+      type,
+      name: CLOUD_AI_SERVICES[type],
+      scope: plural(accounts, "account"),
+      connected: accounts > 0,
+      // shortcut: the category totals have no manual count, so a manual gen-ai finding counts as pass; split it out if a cloud gen-ai check turns manual.
+      pass: Math.max((result?.total_findings ?? 0) - fail, 0),
+      fail,
+      manual: 0,
+    };
+  });
+
+  const inScope = [...vendors, ...clouds].filter((row) =>
+    types.includes(row.type),
+  );
+  const cloudSeverity = CLOUD_AI_TYPES.filter((type) => types.includes(type))
+    .map((type) => cloudResults[type]?.severity)
+    .filter((counts) => counts !== undefined);
 
   return {
-    pass: inScope.reduce((sum, vendor) => sum + vendor.pass, 0),
-    fail: inScope.reduce((sum, vendor) => sum + vendor.fail, 0),
-    manual: inScope.reduce((sum, vendor) => sum + vendor.manual, 0),
-    severity: { ...severity },
+    pass: inScope.reduce((sum, row) => sum + row.pass, 0),
+    fail: inScope.reduce((sum, row) => sum + row.fail, 0),
+    manual: inScope.reduce((sum, row) => sum + row.manual, 0),
+    severity: Object.fromEntries(
+      SEVERITY_LEVELS.map((level) => [
+        level,
+        cloudSeverity.reduce(
+          (sum, counts) => sum + counts[level],
+          severity[level],
+        ),
+      ]),
+    ) as AiSecurityOverview["severity"],
     layers: [
       {
         id: "model-vendors",
@@ -277,82 +293,26 @@ export function toAiSecurityOverview({
           "Organization settings, API keys, projects and connectors in the vendor accounts.",
         providers: vendors,
       },
+      {
+        id: "cloud-ai-services",
+        name: "Cloud AI services",
+        description:
+          "Bedrock and AgentCore, Azure AI services and OpenAI, Vertex AI: the gen-ai checks of your cloud accounts.",
+        providers: clouds,
+      },
     ],
     frameworks: frameworks
-      .filter(({ overview }) => Object.hasOwn(AI_FRAMEWORKS, overview.id))
+      .filter(({ id }) => Object.hasOwn(AI_FRAMEWORKS, id))
       .map(toFramework),
-    topRisks: findingGroups
+    topRisks: [...findingGroups]
+      .sort(
+        (a, b) =>
+          severityRank(a.attributes.severity) -
+            severityRank(b.attributes.severity) ||
+          b.attributes.resources_fail - a.attributes.resources_fail,
+      )
       .map(toTopRisk)
-      .filter((risk): risk is AiTopRisk => risk !== null),
+      .filter((risk): risk is AiTopRisk => risk !== null)
+      .slice(0, TOP_RISKS),
   };
-}
-
-const requirementSection = ({ attributes }: CrossProviderRequirementData) =>
-  typeof attributes.Section === "string" ? attributes.Section : "";
-
-const requirementChecks = (
-  requirement: CrossProviderRequirementData,
-  types: string[],
-) =>
-  Array.from(
-    new Set(
-      types.flatMap(
-        (type) =>
-          requirement.check_ids_by_provider?.[type as ProviderType] ?? [],
-      ),
-    ),
-  );
-
-/** The checks the provider types run for a framework section's requirements. */
-export const aiSectionChecks = (
-  requirements: CrossProviderRequirementData[],
-  section: string,
-  types: string[],
-) =>
-  Array.from(
-    new Set(
-      requirements
-        .filter((requirement) => requirementSection(requirement) === section)
-        .flatMap((requirement) => requirementChecks(requirement, types)),
-    ),
-  );
-
-/** A framework section's requirements with each check's result in the latest scans. */
-export function toAiRequirements({
-  requirements,
-  section,
-  types,
-  findingGroups,
-}: {
-  requirements: CrossProviderRequirementData[];
-  section: string;
-  /** The provider types in scope; a requirement without their checks is manual. */
-  types: string[];
-  /** The finding groups of the section's checks. */
-  findingGroups: AiFindingGroup[];
-}): AiRequirement[] {
-  const groups = new Map(
-    findingGroups.map((group) => [group.id, group.attributes]),
-  );
-  return requirements
-    .filter((requirement) => requirementSection(requirement) === section)
-    .map((requirement) => {
-      const checks = requirementChecks(requirement, types).map((id) => {
-        const group = groups.get(id);
-        return {
-          id,
-          title: group?.check_title ?? id,
-          status: group?.status ?? REQUIREMENT_STATUS.NO_FINDINGS,
-          failedResources: group?.resources_fail ?? 0,
-        };
-      });
-      return {
-        id: requirement.id,
-        name: requirement.name,
-        description: requirement.description,
-        status:
-          checks.length > 0 ? requirement.status : REQUIREMENT_STATUS.MANUAL,
-        checks,
-      };
-    });
 }
