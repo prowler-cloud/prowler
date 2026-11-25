@@ -75,10 +75,8 @@ export default async function RootLayout({
   const registryEligible =
     (await registryAccessPromise).status === REGISTRY_ACCESS.ELIGIBLE;
   // Streamed, not awaited: every provider icon of a dynamic type resolves its
-  // Registry logo from this, the same source the Providers page uses.
-  const registryLogos: Promise<Record<string, string>> = registryEligible
-    ? getRegistryProviderLogos().catch(() => ({}))
-    : Promise.resolve({});
+  // Registry logo from this. The action applies the Providers page's own gate.
+  const registryLogos = getRegistryProviderLogos().catch(() => ({}));
 
   return (
     <html suppressHydrationWarning lang="en">
