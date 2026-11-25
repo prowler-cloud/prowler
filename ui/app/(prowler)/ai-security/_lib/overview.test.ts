@@ -12,8 +12,14 @@ import {
   toAiSecurityOverview,
 } from "./overview";
 
-const provider = (id: string, type: string) =>
-  ({ id, attributes: { provider: type } }) as ProviderProps;
+const provider = (id: string, type: string, groups: string[] = []) =>
+  ({
+    id,
+    attributes: { provider: type },
+    relationships: {
+      provider_groups: { data: groups.map((group) => ({ id: group })) },
+    },
+  }) as ProviderProps;
 
 const status = (
   counts: Pick<FindingsStatusAttributes, "pass" | "fail" | "muted" | "total">,
@@ -64,6 +70,18 @@ describe("aiProvidersInScope", () => {
         },
       ).map(({ id }) => id),
     ).toEqual(["p1", "p2", "p3"]);
+  });
+
+  it("keeps only the providers in the selected groups", () => {
+    expect(
+      aiProvidersInScope(
+        [provider("p1", "claude", ["g1"]), provider("p2", "aws", ["g2"])],
+        {
+          "filter[provider_type__in]": "claude,aws",
+          "filter[provider_groups__in]": "g2",
+        },
+      ).map(({ id }) => id),
+    ).toEqual(["p2"]);
   });
 });
 
@@ -166,7 +184,7 @@ describe("toAiSecurityOverview", () => {
       [
         ["AWS", "1 account", true, true, 5, 4],
         ["Azure", "0 accounts", false, false, 0, 0],
-        ["GCP", "0 accounts", false, false, 0, 0],
+        ["Google Cloud", "0 accounts", false, false, 0, 0],
       ],
     ]);
   });

@@ -28,12 +28,6 @@ import {
   CROSS_PROVIDER_OVERVIEW_RESULT_STATUS,
   type CrossProviderFrameworkSummary,
 } from "@/app/(prowler)/compliance/_types";
-import {
-  apiBaseUrl,
-  FINDINGS_SEVERITY_HIGH_FIRST,
-  getAuthHeaders,
-} from "@/lib";
-import { handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
 import type { ProviderProps } from "@/types/providers";
 
@@ -52,52 +46,12 @@ const listOf = <T>(response: unknown): T[] => {
   return Array.isArray(data) ? (data as T[]) : [];
 };
 
-/**
- * The checks of the most severe failed gen-ai findings of the clouds. Finding
- * groups have no category filter, so their checks come from the findings.
- */
-async function getCloudAiFailedChecks(
-  filters: Record<string, string>,
-): Promise<string[]> {
-  const url = new URL(`${apiBaseUrl}/findings/latest`);
-  // shortcut: only the checks of the 100 most severe findings make the top risks; page on if a cloud's gen-ai failures crowd out less severe checks.
-  Object.entries({
-    ...filters,
-    "filter[category]": AI_CATEGORY,
-    "filter[status]": "FAIL",
-    "filter[muted]": "false",
-    "fields[findings]": "check_id",
-    sort: FINDINGS_SEVERITY_HIGH_FIRST,
-    "page[size]": "100",
-  }).forEach(([key, value]) => url.searchParams.set(key, value));
-  try {
-    const response = await fetch(url.toString(), {
-      headers: await getAuthHeaders({ contentType: false }),
-    });
-    const findings = listOf<{ attributes: { check_id: string } }>(
-      await handleApiResponse(response),
-    );
-    return Array.from(new Set(findings.map((f) => f.attributes.check_id)));
-  } catch (error) {
-    console.error("Error fetching cloud AI findings:", error);
-    return [];
-  }
-}
-
-async function getCloudAiFindingGroups(filters: Record<string, string>) {
-  const checks = await getCloudAiFailedChecks(filters);
-  if (checks.length === 0) return [];
-  return listOf<AiFindingGroup>(
-    await getLatestFindingGroups({
-      pageSize: TOP_RISKS,
-      filters: {
-        ...filters,
-        "filter[status]": "FAIL",
-        "filter[check_id__in]": checks.join(","),
-      },
-    }),
-  );
-}
+/** The unmuted failures in the scope, as Findings lists them by default. */
+const failedIn = (filters: Record<string, string>) => ({
+  ...filters,
+  "filter[status]": "FAIL",
+  "filter[muted]": "false",
+});
 
 /** Whether any of the providers has a completed scan. */
 async function hasCompletedScan(providerIds: string[]): Promise<boolean> {
@@ -158,10 +112,7 @@ export async function getAiSecurityOverview(
   const cloudTypes = types.filter(isCloudAi);
   const vendorScope = narrowScope(filters, isModelVendor);
   const cloudScope = narrowScope(filters, isCloudAi);
-  const vendorFailed = vendorScope && {
-    ...vendorScope,
-    "filter[status]": "FAIL",
-  };
+  const vendorFailed = vendorScope && failedIn(vendorScope);
 
   const [statuses, categories, scanned, severity, vendorGroups, cloudGroups] =
     await Promise.all([
@@ -198,7 +149,14 @@ export async function getAiSecurityOverview(
           pageSize: TOP_RISKS,
           filters: vendorFailed,
         }),
-      cloudScope ? getCloudAiFindingGroups(cloudScope) : [],
+      cloudScope &&
+        getLatestFindingGroups({
+          pageSize: TOP_RISKS,
+          filters: {
+            ...failedIn(cloudScope),
+            "filter[category__in]": AI_CATEGORY,
+          },
+        }),
     ]);
 
   // Object.fromEntries defines own properties, so a provider type cannot reach the prototype.
@@ -247,6 +205,9 @@ export async function getAiSecurityOverview(
     cloudResults,
     scannedTypes: types.filter((_, index) => scanned[index]),
     severity: severityCounts ?? NO_SEVERITY,
-    findingGroups: [...listOf<AiFindingGroup>(vendorGroups), ...cloudGroups],
+    findingGroups: [
+      ...listOf<AiFindingGroup>(vendorGroups),
+      ...listOf<AiFindingGroup>(cloudGroups),
+    ],
   });
 }

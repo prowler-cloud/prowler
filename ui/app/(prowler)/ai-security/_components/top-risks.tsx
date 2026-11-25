@@ -8,14 +8,21 @@ import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import { SectionHeader } from "./section-header";
 
 /** The failed AI checks to fix first, each linking to its findings. */
-export const TopRisks = ({ risks }: { risks: AiTopRisk[] }) => (
+export const TopRisks = ({
+  risks,
+  filters,
+}: {
+  risks: AiTopRisk[];
+  /** The page's scope, carried into the findings links. */
+  filters: Record<string, string>;
+}) => (
   <Card variant="base" className="w-full min-w-0">
     <SectionHeader
       title="Top risks"
       description="Failed checks, ranked as on Findings: by severity, then new and changed failures."
       aside={
         <Button asChild variant="link" size="link-sm">
-          <Link href={aiFindingsHref()}>View all AI findings</Link>
+          <Link href={aiFindingsHref(filters)}>View all AI findings</Link>
         </Button>
       }
     />
@@ -39,7 +46,7 @@ export const TopRisks = ({ risks }: { risks: AiTopRisk[] }) => (
                     className="min-w-0"
                   >
                     <Link
-                      href={aiFindingsHref({
+                      href={aiFindingsHref(filters, {
                         "filter[check_id__in]": risk.checkId,
                       })}
                       title={risk.title}

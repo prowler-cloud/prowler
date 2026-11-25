@@ -11,7 +11,11 @@ import type {
 import { splitCsvFilterValues } from "@/lib/findings-filters";
 import type { SearchParamsProps } from "@/types";
 import type { RequirementStatus } from "@/types/compliance";
-import type { ProviderProps } from "@/types/providers";
+import {
+  getProviderDisplayName,
+  type KnownProviderType,
+  type ProviderProps,
+} from "@/types/providers";
 import { SEVERITY_LEVELS, type SeverityLevel } from "@/types/severities";
 
 export const AI_SECURITY_PREVIEW = {
@@ -27,30 +31,28 @@ const MODEL_VENDORS = {
 } as const;
 
 /** The clouds whose AI services (Bedrock, Azure AI, Vertex AI) checks tag as gen-ai. */
-const CLOUD_AI_SERVICES = {
-  aws: "AWS",
-  azure: "Azure",
-  gcp: "GCP",
-} as const;
+const CLOUD_AI_TYPES = [
+  "aws",
+  "azure",
+  "gcp",
+] as const satisfies readonly KnownProviderType[];
 
 type ModelVendorType = keyof typeof MODEL_VENDORS;
-type CloudAiType = keyof typeof CLOUD_AI_SERVICES;
+type CloudAiType = (typeof CLOUD_AI_TYPES)[number];
 
 const MODEL_VENDOR_TYPES = Object.keys(MODEL_VENDORS) as ModelVendorType[];
-const CLOUD_AI_TYPES = Object.keys(CLOUD_AI_SERVICES) as CloudAiType[];
 /** The provider types the page covers. */
 const AI_SPM_TYPES = [...MODEL_VENDOR_TYPES, ...CLOUD_AI_TYPES];
-
-const PROVIDER_NAMES: Record<string, string> = {
-  ...MODEL_VENDORS,
-  ...CLOUD_AI_SERVICES,
-};
 
 export const isModelVendor = (type: string): type is ModelVendorType =>
   Object.hasOwn(MODEL_VENDORS, type);
 
 export const isCloudAi = (type: string): type is CloudAiType =>
-  Object.hasOwn(CLOUD_AI_SERVICES, type);
+  (CLOUD_AI_TYPES as readonly string[]).includes(type);
+
+// Registry vendors are not in the shared display names, which would humanize "openai" to "Openai".
+const providerName = (type: string) =>
+  isModelVendor(type) ? MODEL_VENDORS[type] : getProviderDisplayName(type);
 
 /** The failed checks the page lists, most severe first. */
 export const TOP_RISKS = 6;
@@ -107,7 +109,7 @@ export function narrowScope(
 }
 
 /**
- * The AI-SPM providers of every type the account filter allows. The AI stack
+ * The AI-SPM providers of every type the account and group filters allow. The AI stack
  * lists them all, so a row can switch the page to another provider type.
  */
 export function aiProvidersInScope(
@@ -115,10 +117,16 @@ export function aiProvidersInScope(
   filters: Record<string, string>,
 ) {
   const ids = filters["filter[provider_id__in]"]?.split(",");
+  const groups = filters["filter[provider_groups__in]"]?.split(",");
   return providers.filter(
     (provider) =>
-      Object.hasOwn(PROVIDER_NAMES, provider.attributes.provider) &&
-      (!ids || ids.includes(provider.id)),
+      (isModelVendor(provider.attributes.provider) ||
+        isCloudAi(provider.attributes.provider)) &&
+      (!ids || ids.includes(provider.id)) &&
+      (!groups ||
+        provider.relationships.provider_groups.data.some(({ id }) =>
+          groups.includes(id),
+        )),
   );
 }
 
@@ -159,8 +167,6 @@ const plural = (count: number, word: string) =>
 
 const isSeverityLevel = (value: string): value is SeverityLevel =>
   (SEVERITY_LEVELS as readonly string[]).includes(value);
-
-const providerName = (type: string) => PROVIDER_NAMES[type] ?? type;
 
 const severityRank = (severity: string) =>
   (SEVERITY_LEVELS as readonly string[]).indexOf(severity);
@@ -218,7 +224,7 @@ export function toAiSecurityOverview({
     const fail = result?.failed_findings ?? 0;
     return {
       type,
-      name: CLOUD_AI_SERVICES[type],
+      name: getProviderDisplayName(type),
       scope: plural(accounts, "account"),
       connected: accounts > 0,
       scanned: scannedTypes.includes(type),

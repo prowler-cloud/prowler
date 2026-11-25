@@ -1,1 +1,1 @@
-Add the AI Security page in Prowler Cloud, with the findings of the model vendors (Claude, OpenAI, ChatGPT) and of the AI services in AWS, Azure and GCP, the AI compliance frameworks as the Compliance page shows them, and top risks; a provider row filters the page to its type, and a cloud without a completed scan or without AI services says so
+AI Security page in Prowler Cloud with the posture of model vendors (Claude, OpenAI, ChatGPT) and cloud AI services (AWS, Azure, Google Cloud), the AI compliance frameworks and top risks

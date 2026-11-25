@@ -38,7 +38,14 @@ function KpiCard({ label, value, children }: KpiCardProps) {
 const NOTE = "text-text-neutral-tertiary text-xs";
 
 /** The four numbers that say how the AI estate is doing. */
-export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
+export function AiKpis({
+  overview,
+  filters,
+}: {
+  overview: AiSecurityOverview;
+  /** The page's scope, carried into the findings links. */
+  filters: Record<string, string>;
+}) {
   const { pass, fail, manual, severity, layers } = overview;
   const providers = layers.flatMap((layer) => layer.providers);
   const connected = providers.filter((provider) => provider.connected);
@@ -84,7 +91,11 @@ export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
           {present.map((level) => (
             <li key={level}>
               <Button asChild variant="link" size="link-xs">
-                <Link href={aiFindingsHref({ "filter[severity__in]": level })}>
+                <Link
+                  href={aiFindingsHref(filters, {
+                    "filter[severity__in]": level,
+                  })}
+                >
                   {severity[level].toLocaleString()}{" "}
                   {SEVERITY_DISPLAY_NAMES[level].toLowerCase()}
                 </Link>
@@ -101,7 +112,11 @@ export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
         </p>
         <div className="mt-auto">
           <Button asChild variant="link" size="link-xs">
-            <Link href={aiFindingsHref({ "filter[status__in]": "MANUAL" })}>
+            <Link
+              href={aiFindingsHref(filters, {
+                "filter[status__in]": "MANUAL",
+              })}
+            >
               Review settings
             </Link>
           </Button>

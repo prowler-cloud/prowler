@@ -24,11 +24,17 @@ const PROVIDER_TYPE_FILTER = "filter[provider_type__in]";
 
 interface StackProviderProps {
   provider: AiStackProvider;
+  filters: Record<string, string>;
   selected: boolean;
   onSelect: () => void;
 }
 
-function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
+function StackProvider({
+  provider,
+  filters,
+  selected,
+  onSelect,
+}: StackProviderProps) {
   const { type, name, scope, connected, scanned, pass, fail, manual } =
     provider;
   const hasResults = pass + fail + manual > 0;
@@ -59,7 +65,7 @@ function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
   if (!connected || !hasResults) {
     return (
       <div className="flex items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-3 p-3">
           {identity}
           {connected && (
             <Badge variant="tag">
@@ -85,7 +91,7 @@ function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
         title={
           selected ? "Show every AI provider" : `Show only ${name} results`
         }
-        className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
+        className="flex min-w-0 flex-1 items-center gap-3"
       >
         {identity}
         <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -101,7 +107,7 @@ function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
       </SelectableCard>
       <Button asChild variant="link" size="link-sm">
         <Link
-          href={aiFindingsHref({ "filter[provider_type__in]": type })}
+          href={aiFindingsHref(filters, { "filter[provider_type__in]": type })}
           aria-label={`${name}: ${score}%, ${fail} failed findings`}
         >
           {score}%
@@ -116,7 +122,14 @@ function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
  * AI services. A layer with a provider missing says what to add.
  * A connected provider filters the page to its type; picking it again clears it.
  */
-export function AiStack({ layers }: { layers: AiStackLayer[] }) {
+export function AiStack({
+  layers,
+  filters,
+}: {
+  layers: AiStackLayer[];
+  /** The page's scope, carried into the findings links. */
+  filters: Record<string, string>;
+}) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
   const selected = splitCsvFilterValues(
@@ -169,6 +182,7 @@ export function AiStack({ layers }: { layers: AiStackLayer[] }) {
                     <li key={provider.name}>
                       <StackProvider
                         provider={provider}
+                        filters={filters}
                         selected={selected.includes(provider.type)}
                         onSelect={() => toggle(provider.type)}
                       />
