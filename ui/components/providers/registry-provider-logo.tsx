@@ -1,20 +1,17 @@
-import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { GenericProviderBadge } from "@/components/icons/providers-badge/generic-provider-badge";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/shadcn/avatar";
-import type { ProviderType } from "@/types";
 
 interface RegistryProviderLogoProps {
-  type: ProviderType;
   logoUrl?: string;
   size: number;
 }
 
 /** The registry's logo, or the generic glyph while it loads or once its signed URL expires. */
 export function RegistryProviderLogo({
-  type,
   logoUrl,
   size,
 }: RegistryProviderLogoProps) {
@@ -26,7 +23,7 @@ export function RegistryProviderLogo({
         alt=""
       />
       <AvatarFallback>
-        <ProviderTypeIcon type={type} size={size} />
+        <GenericProviderBadge size={size} />
       </AvatarFallback>
     </Avatar>
   );

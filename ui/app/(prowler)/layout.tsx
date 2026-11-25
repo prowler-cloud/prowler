@@ -5,7 +5,9 @@ import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
+import { getRegistryProviderLogos } from "@/actions/registry/registry";
 import { auth } from "@/auth.config";
+import { RegistryLogosProvider } from "@/components/icons/providers-badge/provider-type-icon";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import { FirstRunRedirect } from "@/components/providers/first-run-redirect";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
@@ -72,6 +74,11 @@ export default async function RootLayout({
 
   const registryEligible =
     (await registryAccessPromise).status === REGISTRY_ACCESS.ELIGIBLE;
+  // Streamed, not awaited: every provider icon of a dynamic type resolves its
+  // Registry logo from this, the same source the Providers page uses.
+  const registryLogos: Promise<Record<string, string>> = registryEligible
+    ? getRegistryProviderLogos().catch(() => ({}))
+    : Promise.resolve({});
 
   return (
     <html suppressHydrationWarning lang="en">
@@ -96,11 +103,13 @@ export default async function RootLayout({
           <StoreInitializer values={{ hasProviders, registryEligible }} />
           {/* Every deployment: an empty tenant lands on the add-provider wizard once. */}
           <FirstRunRedirect hasProviders={hasProviders} tenantId={tenantId} />
-          <MainLayout>{children}</MainLayout>
-          {cloudEnabled && <FeedbackSurvey />}
-          {/* Always mounted: it hosts the detail (finding/resource) views in
-              every deployment; the AI tab inside is cloud-gated on its own. */}
-          <GlobalSidePanel />
+          <RegistryLogosProvider logos={registryLogos}>
+            <MainLayout>{children}</MainLayout>
+            {cloudEnabled && <FeedbackSurvey />}
+            {/* Always mounted: it hosts the detail (finding/resource) views in
+                every deployment; the AI tab inside is cloud-gated on its own. */}
+            <GlobalSidePanel />
+          </RegistryLogosProvider>
           {/* Resumes persisted background-task polling (e.g. cross-provider
               PDF generation) so completion toasts survive hard reloads. */}
           <TaskPollingWatcher />

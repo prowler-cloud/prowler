@@ -4,12 +4,12 @@ import { handleRegistryLogo } from "@/__tests__/msw/handlers/registry";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 
-import { RegistryLogosContext, RegistryRowLogo } from "./registry-row-logo";
+import { ProviderTypeIcon, RegistryLogosProvider } from "./provider-type-icon";
 
 // Keep even speculative browser requests on loopback; MSW serves the image.
 const LOGO_URL = "https://127.0.0.1/providers/vcf/logo.png";
 
-describe("registry row logo", () => {
+describe("ProviderTypeIcon for a dynamic provider", () => {
   it("shows the generic glyph until the streamed logos arrive, then the registry logo", async () => {
     // Given
     worker.use(handleRegistryLogo(LOGO_URL));
@@ -18,13 +18,13 @@ describe("registry row logo", () => {
       resolveLogos = resolve;
     });
     const screen = await render(
-      <RegistryLogosContext value={logos}>
-        <RegistryRowLogo type="vcf" />
-      </RegistryLogosContext>,
+      <RegistryLogosProvider logos={logos}>
+        <ProviderTypeIcon type="vcf" size={35} />
+      </RegistryLogosProvider>,
     );
     const logoImage = () => screen.container.querySelector("img");
 
-    // Then: the row renders while the registry has not answered.
+    // Then: the icon renders while the registry has not answered.
     expect(screen.container.querySelector("svg")).not.toBeNull();
     expect(logoImage()).toBeNull();
 
