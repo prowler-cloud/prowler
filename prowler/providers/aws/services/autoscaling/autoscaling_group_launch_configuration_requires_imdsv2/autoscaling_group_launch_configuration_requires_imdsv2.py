@@ -11,7 +11,10 @@ class autoscaling_group_launch_configuration_requires_imdsv2(Check):
             for (
                 launch_configuration
             ) in autoscaling_client.launch_configurations.values():
-                if launch_configuration.name == group.launch_configuration_name:
+                if (
+                    launch_configuration.name == group.launch_configuration_name
+                    and launch_configuration.region == group.region
+                ):
                     report = Check_Report_AWS(metadata=self.metadata(), resource=group)
 
                     report.status = "FAIL"

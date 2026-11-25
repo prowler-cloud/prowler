@@ -1,0 +1,1 @@
+`autoscaling_group_launch_configuration_no_public_ip` and `autoscaling_group_launch_configuration_requires_imdsv2` checks now match launch configurations to groups within the same region, so a same-named launch configuration in another region no longer produces a conflicting finding
