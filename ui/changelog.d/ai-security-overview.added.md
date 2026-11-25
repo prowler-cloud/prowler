@@ -1,1 +1,1 @@
-Add the AI Security page, with the posture of AI providers, AI compliance frameworks and top risks in Prowler Cloud
+Add the AI Security page, with the posture of AI providers, AI compliance frameworks and top risks in Prowler Cloud; a provider row filters the page to its type, and a framework section expands to its requirements' checks

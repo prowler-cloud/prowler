@@ -5,17 +5,21 @@ import type {
 import type {
   AiFramework,
   AiFrameworkSection,
+  AiRequirement,
   AiSecurityOverview,
   AiTopRisk,
 } from "@/app/(prowler)/ai-security/_types";
+import type { CrossProviderRequirementData } from "@/app/(prowler)/compliance/_types";
 import { splitCsvFilterValues } from "@/lib/findings-filters";
 import type { SearchParamsProps } from "@/types";
-import type {
-  AttributesItemData,
-  ComplianceOverviewData,
-  RequirementItemData,
+import {
+  type AttributesItemData,
+  type ComplianceOverviewData,
+  REQUIREMENT_STATUS,
+  type RequirementItemData,
+  type RequirementStatus,
 } from "@/types/compliance";
-import type { ProviderProps } from "@/types/providers";
+import type { ProviderProps, ProviderType } from "@/types/providers";
 import { SEVERITY_LEVELS, type SeverityLevel } from "@/types/severities";
 
 export const AI_SECURITY_PREVIEW = {
@@ -102,16 +106,18 @@ export function aiScopeFilters(
   return filters;
 }
 
-/** The providers the scope filters select. */
+/**
+ * The AI providers of every type the account filter allows. The AI stack
+ * lists them all, so a row can switch the page to another provider type.
+ */
 export function aiProvidersInScope(
   providers: ProviderProps[],
   filters: Record<string, string>,
 ) {
-  const types = filters["filter[provider_type__in]"].split(",");
   const ids = filters["filter[provider_id__in]"]?.split(",");
   return providers.filter(
     (provider) =>
-      types.includes(provider.attributes.provider) &&
+      Object.hasOwn(AI_PROVIDERS, provider.attributes.provider) &&
       (!ids || ids.includes(provider.id)),
   );
 }
@@ -120,6 +126,7 @@ export interface AiFindingGroup {
   id: string;
   attributes: {
     check_title: string | null;
+    status: RequirementStatus;
     severity: string;
     impacted_providers: string[];
     resources_fail: number;
@@ -133,9 +140,11 @@ export interface AiFrameworkSource {
 }
 
 export interface AiOverviewSources {
-  /** The AI providers in scope. */
+  /** The AI providers the stack lists. */
   providers: ProviderProps[];
-  /** The latest scans' results of each AI provider type in scope. */
+  /** The provider types the page is filtered to; the totals count only these. */
+  types: string[];
+  /** The latest scans' results of each AI provider type the stack lists. */
   results: Partial<Record<string, FindingsStatusAttributes>>;
   /** Failed findings by severity. */
   severity: FindingsSeverityAttributes;
@@ -180,7 +189,13 @@ function toFramework({
     Array.from(new Set([...Array.from(sectionOf.values()), ""])).map(
       (label) => [
         label,
-        { ...parseSection(label || "Other"), pass: 0, fail: 0, manual: 0 },
+        {
+          id: label,
+          ...parseSection(label || "Other"),
+          pass: 0,
+          fail: 0,
+          manual: 0,
+        },
       ],
     ),
   );
@@ -219,6 +234,7 @@ const toTopRisk = ({ id, attributes }: AiFindingGroup): AiTopRisk | null =>
 /** Maps the overview, compliance and finding-group responses to what the widgets show. */
 export function toAiSecurityOverview({
   providers,
+  types,
   results,
   severity,
   frameworks,
@@ -246,10 +262,12 @@ export function toAiSecurityOverview({
     };
   });
 
+  const inScope = vendors.filter((vendor) => types.includes(vendor.type));
+
   return {
-    pass: vendors.reduce((sum, vendor) => sum + vendor.pass, 0),
-    fail: vendors.reduce((sum, vendor) => sum + vendor.fail, 0),
-    manual: vendors.reduce((sum, vendor) => sum + vendor.manual, 0),
+    pass: inScope.reduce((sum, vendor) => sum + vendor.pass, 0),
+    fail: inScope.reduce((sum, vendor) => sum + vendor.fail, 0),
+    manual: inScope.reduce((sum, vendor) => sum + vendor.manual, 0),
     severity: { ...severity },
     layers: [
       {
@@ -267,4 +285,74 @@ export function toAiSecurityOverview({
       .map(toTopRisk)
       .filter((risk): risk is AiTopRisk => risk !== null),
   };
+}
+
+const requirementSection = ({ attributes }: CrossProviderRequirementData) =>
+  typeof attributes.Section === "string" ? attributes.Section : "";
+
+const requirementChecks = (
+  requirement: CrossProviderRequirementData,
+  types: string[],
+) =>
+  Array.from(
+    new Set(
+      types.flatMap(
+        (type) =>
+          requirement.check_ids_by_provider?.[type as ProviderType] ?? [],
+      ),
+    ),
+  );
+
+/** The checks the provider types run for a framework section's requirements. */
+export const aiSectionChecks = (
+  requirements: CrossProviderRequirementData[],
+  section: string,
+  types: string[],
+) =>
+  Array.from(
+    new Set(
+      requirements
+        .filter((requirement) => requirementSection(requirement) === section)
+        .flatMap((requirement) => requirementChecks(requirement, types)),
+    ),
+  );
+
+/** A framework section's requirements with each check's result in the latest scans. */
+export function toAiRequirements({
+  requirements,
+  section,
+  types,
+  findingGroups,
+}: {
+  requirements: CrossProviderRequirementData[];
+  section: string;
+  /** The provider types in scope; a requirement without their checks is manual. */
+  types: string[];
+  /** The finding groups of the section's checks. */
+  findingGroups: AiFindingGroup[];
+}): AiRequirement[] {
+  const groups = new Map(
+    findingGroups.map((group) => [group.id, group.attributes]),
+  );
+  return requirements
+    .filter((requirement) => requirementSection(requirement) === section)
+    .map((requirement) => {
+      const checks = requirementChecks(requirement, types).map((id) => {
+        const group = groups.get(id);
+        return {
+          id,
+          title: group?.check_title ?? id,
+          status: group?.status ?? REQUIREMENT_STATUS.NO_FINDINGS,
+          failedResources: group?.resources_fail ?? 0,
+        };
+      });
+      return {
+        id: requirement.id,
+        name: requirement.name,
+        description: requirement.description,
+        status:
+          checks.length > 0 ? requirement.status : REQUIREMENT_STATUS.MANUAL,
+        checks,
+      };
+    });
 }

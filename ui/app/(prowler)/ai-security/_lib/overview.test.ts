@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import type { FindingsStatusAttributes } from "@/actions/overview";
+import type { CrossProviderRequirementData } from "@/app/(prowler)/compliance/_types";
 import type {
   AttributesItemData,
   RequirementItemData,
 } from "@/types/compliance";
 import type { ProviderProps } from "@/types/providers";
 
-import { aiScopeFilters, parseSection, toAiSecurityOverview } from "./overview";
+import {
+  aiProvidersInScope,
+  aiScopeFilters,
+  aiSectionChecks,
+  parseSection,
+  toAiRequirements,
+  toAiSecurityOverview,
+} from "./overview";
 
 const provider = (id: string, type: string) =>
   ({ id, attributes: { provider: type } }) as ProviderProps;
@@ -51,6 +59,25 @@ describe("aiScopeFilters", () => {
   });
 });
 
+describe("aiProvidersInScope", () => {
+  it("keeps every AI provider type the account filter allows", () => {
+    expect(
+      aiProvidersInScope(
+        [
+          provider("p1", "openai"),
+          provider("p2", "claude"),
+          provider("p3", "aws"),
+          provider("p4", "openai"),
+        ],
+        {
+          "filter[provider_type__in]": "openai",
+          "filter[provider_id__in]": "p1,p2,p3",
+        },
+      ).map(({ id }) => id),
+    ).toEqual(["p1", "p2"]);
+  });
+});
+
 describe("parseSection", () => {
   it("splits a numbered code from the section name", () => {
     expect(parseSection("LLM01:2025 Prompt Injection")).toEqual({
@@ -63,9 +90,15 @@ describe("parseSection", () => {
 
 describe("toAiSecurityOverview", () => {
   const overview = toAiSecurityOverview({
-    providers: [provider("p1", "openai"), provider("p2", "openai")],
+    providers: [
+      provider("p1", "openai"),
+      provider("p2", "openai"),
+      provider("p3", "claude"),
+    ],
+    types: ["openai"],
     results: {
       openai: status({ pass: 3, fail: 2, muted: 1, total: 10 }),
+      claude: status({ pass: 7, fail: 7, muted: 0, total: 14 }),
     },
     severity: { ...NO_SEVERITY, high: 2 },
     frameworks: [
@@ -99,12 +132,17 @@ describe("toAiSecurityOverview", () => {
         id: "apikey_rotated_regularly",
         attributes: {
           check_title: "API keys are rotated",
+          status: "FAIL",
           severity: "high",
           impacted_providers: ["openai"],
           resources_fail: 1,
         },
       },
     ],
+  });
+
+  it("totals only the provider types the page is filtered to", () => {
+    expect(overview).toMatchObject({ pass: 3, fail: 2 });
   });
 
   it("counts what is neither pass, fail nor muted as manual", () => {
@@ -119,7 +157,7 @@ describe("toAiSecurityOverview", () => {
         connected,
       ]),
     ).toEqual([
-      ["Claude", "0 accounts", false],
+      ["Claude", "1 account", true],
       ["OpenAI", "2 accounts", true],
       ["ChatGPT", "0 accounts", false],
     ]);
@@ -127,8 +165,16 @@ describe("toAiSecurityOverview", () => {
 
   it("groups each framework's requirements by section", () => {
     expect(overview.frameworks[0].sections).toEqual([
-      { code: "LLM01", name: "Prompt Injection", pass: 1, fail: 1, manual: 0 },
       {
+        id: "LLM01:2025 Prompt Injection",
+        code: "LLM01",
+        name: "Prompt Injection",
+        pass: 1,
+        fail: 1,
+        manual: 0,
+      },
+      {
+        id: "LLM02:2025 Sensitive Information Disclosure",
         code: "LLM02",
         name: "Sensitive Information Disclosure",
         pass: 0,
@@ -146,6 +192,93 @@ describe("toAiSecurityOverview", () => {
         severity: "high",
         providerName: "OpenAI",
         affected: "1 resource",
+      },
+    ]);
+  });
+});
+
+describe("toAiRequirements", () => {
+  const SECTION = "LLM02:2025 Sensitive Information Disclosure";
+  const crossRequirement = (
+    id: string,
+    Section: string,
+    status: CrossProviderRequirementData["status"],
+    checks: CrossProviderRequirementData["check_ids_by_provider"],
+  ): CrossProviderRequirementData => ({
+    id,
+    name: `${id} name`,
+    description: `${id} description`,
+    attributes: { Section },
+    status,
+    providers: {},
+    check_ids_by_provider: checks,
+  });
+  const requirements = [
+    crossRequirement("LLM01.1", "LLM01:2025 Prompt Injection", "FAIL", {
+      openai: ["prompt_check"],
+    }),
+    crossRequirement("LLM02.3", SECTION, "FAIL", {
+      openai: ["apikey_rotated_regularly", "apikey_recently_used"],
+      aws: ["iam_user_access_not_stale_to_bedrock"],
+    }),
+    crossRequirement("LLM02.9", SECTION, "MANUAL", {
+      aws: ["bedrock_guardrails_configured"],
+    }),
+  ];
+
+  it("lists the checks of the section for the provider types in scope", () => {
+    expect(aiSectionChecks(requirements, SECTION, ["openai"])).toEqual([
+      "apikey_rotated_regularly",
+      "apikey_recently_used",
+    ]);
+  });
+
+  it("gives each check its latest result and leaves manual requirements without checks", () => {
+    expect(
+      toAiRequirements({
+        requirements,
+        section: SECTION,
+        types: ["openai"],
+        findingGroups: [
+          {
+            id: "apikey_rotated_regularly",
+            attributes: {
+              check_title: "API keys are rotated",
+              status: "FAIL",
+              severity: "high",
+              impacted_providers: ["openai"],
+              resources_fail: 3,
+            },
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        id: "LLM02.3",
+        name: "LLM02.3 name",
+        description: "LLM02.3 description",
+        status: "FAIL",
+        checks: [
+          {
+            id: "apikey_rotated_regularly",
+            title: "API keys are rotated",
+            status: "FAIL",
+            failedResources: 3,
+          },
+          {
+            id: "apikey_recently_used",
+            title: "apikey_recently_used",
+            status: "No findings",
+            failedResources: 0,
+          },
+        ],
+      },
+      {
+        id: "LLM02.9",
+        name: "LLM02.9 name",
+        description: "LLM02.9 description",
+        status: "MANUAL",
+        checks: [],
       },
     ]);
   });

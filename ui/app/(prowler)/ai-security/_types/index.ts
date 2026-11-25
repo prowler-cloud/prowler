@@ -1,3 +1,4 @@
+import type { RequirementStatus } from "@/types/compliance";
 import type { ProviderType } from "@/types/providers";
 import type { SeverityLevel } from "@/types/severities";
 
@@ -26,6 +27,8 @@ export interface AiStackLayer {
 }
 
 export interface AiFrameworkSection extends AiResultCounts {
+  /** The section as the framework labels it; empty for requirements without one. */
+  id: string;
   /** The section's code in the framework, such as "LLM01". Empty when it has none. */
   code: string;
   name: string;
@@ -40,6 +43,25 @@ export interface AiFramework {
   unit: string;
   note?: string;
   sections: AiFrameworkSection[];
+}
+
+/** One check of a requirement, as the latest scans left it. */
+export interface AiRequirementCheck {
+  id: string;
+  title: string;
+  /** "No findings" when the latest scans produced none for it. */
+  status: RequirementStatus;
+  failedResources: number;
+}
+
+/** A requirement of a framework section with the checks that evidence it. */
+export interface AiRequirement {
+  id: string;
+  name: string;
+  description: string;
+  status: RequirementStatus;
+  /** None for a manual requirement. */
+  checks: AiRequirementCheck[];
 }
 
 export interface AiTopRisk {

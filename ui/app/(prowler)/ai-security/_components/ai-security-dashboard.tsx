@@ -34,7 +34,7 @@ export function AiSecurityDashboardSkeleton() {
 interface AiSecurityDashboardProps {
   /** The page's provider filters narrowed to the AI providers. */
   filters: Record<string, string>;
-  /** The AI providers in scope; none shows the empty state. */
+  /** The AI providers the stack lists; none of the filtered types shows the empty state. */
   providers: ProviderProps[];
 }
 
@@ -42,7 +42,12 @@ export async function AiSecurityDashboard({
   filters,
   providers,
 }: AiSecurityDashboardProps) {
-  if (providers.length === 0) return <AiSecurityEmptyState />;
+  const types = filters["filter[provider_type__in]"]?.split(",") ?? [];
+  if (
+    !providers.some(({ attributes }) => types.includes(attributes.provider))
+  ) {
+    return <AiSecurityEmptyState />;
+  }
 
   const overview = await getAiSecurityOverview(filters, providers);
 
@@ -63,7 +68,7 @@ export async function AiSecurityDashboard({
     <div className="flex flex-col gap-6">
       <AiKpis overview={overview} />
       <AiStack layers={overview.layers} />
-      <AiCompliance frameworks={overview.frameworks} />
+      <AiCompliance frameworks={overview.frameworks} filters={filters} />
       <TopRisks risks={overview.topRisks} />
     </div>
   );

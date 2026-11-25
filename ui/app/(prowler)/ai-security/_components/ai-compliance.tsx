@@ -1,8 +1,10 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
+import { getAiSectionRequirements } from "@/app/(prowler)/ai-security/_actions";
 import {
   formatScore,
   passScore,
@@ -11,18 +13,105 @@ import {
 import type {
   AiFramework,
   AiFrameworkSection,
+  AiRequirement,
 } from "@/app/(prowler)/ai-security/_types";
 import { Button, Card, CardContent } from "@/components/shadcn";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/shadcn/collapsible";
 import { SelectableCard } from "@/components/shadcn/selectable-card/selectable-card";
 import { cn } from "@/lib/utils";
 
 import { ResultBar } from "./result-bar";
 import { SectionHeader } from "./section-header";
+import {
+  SectionRequirements,
+  SectionRequirementsSkeleton,
+} from "./section-requirements";
 
 const sectionStatus = ({ pass, fail }: AiFrameworkSection) =>
   fail > 0 ? `${fail} fail` : pass > 0 ? "Pass" : "Manual";
 
-function FrameworkDetail({ framework }: { framework: AiFramework }) {
+interface FrameworkSectionProps {
+  frameworkId: string;
+  section: AiFrameworkSection;
+  /** The page's provider filters narrowed to the AI providers. */
+  filters: Record<string, string>;
+}
+
+/** A section row; expanding it loads its requirements and their checks. */
+function FrameworkSection({
+  frameworkId,
+  section,
+  filters,
+}: FrameworkSectionProps) {
+  const [requirements, setRequirements] =
+    useState<Promise<AiRequirement[] | null>>();
+
+  // Every expand loads afresh, so expanding again retries a failed load.
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setRequirements(
+        getAiSectionRequirements(frameworkId, section.id, filters),
+      );
+    }
+  };
+
+  return (
+    <Collapsible onOpenChange={handleOpenChange}>
+      <CollapsibleTrigger className="group hover:bg-bg-neutral-tertiary focus-visible:ring-button-primary/50 flex w-full items-center gap-2.5 rounded-md text-left text-sm outline-none focus-visible:ring-2">
+        <ChevronRight
+          aria-hidden
+          className="text-text-neutral-tertiary size-4 shrink-0 transition-transform group-data-[state=open]:rotate-90"
+        />
+        {section.code && (
+          <span className="text-text-neutral-secondary w-12 shrink-0 font-mono text-xs">
+            {section.code}
+          </span>
+        )}
+        <span className="text-text-neutral-primary min-w-0 flex-1 truncate">
+          {section.name}
+        </span>
+        <ResultBar
+          label={section.name}
+          {...section}
+          className="w-24 shrink-0"
+        />
+        <span
+          className={cn(
+            "w-14 shrink-0 text-right text-xs font-medium",
+            section.fail > 0
+              ? "text-text-error-primary"
+              : section.pass > 0
+                ? "text-text-success-primary"
+                : "text-text-neutral-tertiary",
+          )}
+        >
+          {sectionStatus(section)}
+        </span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-border-neutral-secondary mt-2 mb-1 ml-2 border-l-2 pl-4">
+        {requirements && (
+          <Suspense fallback={<SectionRequirementsSkeleton />}>
+            <SectionRequirements
+              requirements={requirements}
+              providerTypes={filters["filter[provider_type__in]"] ?? ""}
+            />
+          </Suspense>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+interface FrameworkDetailProps {
+  framework: AiFramework;
+  filters: Record<string, string>;
+}
+
+function FrameworkDetail({ framework, filters }: FrameworkDetailProps) {
   const totals = sumResults(framework.sections);
   const count = totals.pass + totals.fail + totals.manual;
 
@@ -53,35 +142,12 @@ function FrameworkDetail({ framework }: { framework: AiFramework }) {
       )}
       <ul className="flex flex-col gap-2">
         {framework.sections.map((section) => (
-          <li
-            key={`${section.code}${section.name}`}
-            className="flex items-center gap-2.5 text-sm"
-          >
-            {section.code && (
-              <span className="text-text-neutral-secondary w-12 shrink-0 font-mono text-xs">
-                {section.code}
-              </span>
-            )}
-            <span className="text-text-neutral-primary min-w-0 flex-1 truncate">
-              {section.name}
-            </span>
-            <ResultBar
-              label={section.name}
-              {...section}
-              className="w-24 shrink-0"
+          <li key={section.id}>
+            <FrameworkSection
+              frameworkId={framework.id}
+              section={section}
+              filters={filters}
             />
-            <span
-              className={cn(
-                "w-14 shrink-0 text-right text-xs font-medium",
-                section.fail > 0
-                  ? "text-text-error-primary"
-                  : section.pass > 0
-                    ? "text-text-success-primary"
-                    : "text-text-neutral-tertiary",
-              )}
-            >
-              {sectionStatus(section)}
-            </span>
           </li>
         ))}
       </ul>
@@ -93,8 +159,17 @@ function FrameworkDetail({ framework }: { framework: AiFramework }) {
   );
 }
 
-/** The AI frameworks on the left; the picked one's sections on the right. */
-export function AiCompliance({ frameworks }: { frameworks: AiFramework[] }) {
+interface AiComplianceProps {
+  frameworks: AiFramework[];
+  /** The page's provider filters narrowed to the AI providers. */
+  filters: Record<string, string>;
+}
+
+/**
+ * The AI frameworks on the left; the picked one's sections on the right, each
+ * expanding to its requirements and checks.
+ */
+export function AiCompliance({ frameworks, filters }: AiComplianceProps) {
   const [selectedId, setSelectedId] = useState(frameworks[0]?.id);
   const selected =
     frameworks.find((framework) => framework.id === selectedId) ??
@@ -139,7 +214,13 @@ export function AiCompliance({ frameworks }: { frameworks: AiFramework[] }) {
             );
           })}
         </ul>
-        {selected && <FrameworkDetail framework={selected} />}
+        {selected && (
+          <FrameworkDetail
+            key={selected.id}
+            framework={selected}
+            filters={filters}
+          />
+        )}
       </CardContent>
     </Card>
   );
