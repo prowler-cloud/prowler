@@ -1,0 +1,1 @@
+Fix `apiserver_auth_mode_not_always_allow` false positive on clusters that configure authorization through `--authorization-config` (e.g. Talos Linux), which is mutually exclusive with `--authorization-mode`
