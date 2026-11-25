@@ -133,7 +133,7 @@ class Test_iam_subscription_roles_owner_custom_not_created:
             assert result[0].resource_name == role_name
 
     def test_iam_custom_role_with_not_actions_removing_owner_permissions(self):
-        defender_client = mock.MagicMock
+        defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_name = "test-role"
@@ -182,7 +182,7 @@ class Test_iam_subscription_roles_owner_custom_not_created:
             )
 
     def test_iam_custom_owner_role_with_unrelated_not_actions(self):
-        defender_client = mock.MagicMock
+        defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_name = "test-role"
