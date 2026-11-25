@@ -972,6 +972,68 @@ class TestCyberEssentialsFramework:
                 assert req.attributes["AssessmentStatus"] == "Manual"
 
 
+class TestSOC2OktaFramework:
+    """Schema and content checks for the SOC2 framework for Okta."""
+
+    @staticmethod
+    def _path(provider="okta"):
+        base = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "prowler",
+            "compliance",
+            provider,
+            f"soc2_{provider}.json",
+        )
+        return os.path.normpath(base)
+
+    def test_loads_for_okta(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+        assert fw.framework == "SOC2"
+        assert fw.get_providers() == ["okta"]
+
+    def test_has_the_same_criteria_as_the_other_soc2_frameworks(self):
+        okta = load_compliance_framework_universal(self._path())
+        gcp = load_compliance_framework_universal(self._path("gcp"))
+        assert [req.id for req in okta.requirements] == [
+            req.id for req in gcp.requirements
+        ]
+
+    def test_okta_check_ids_are_valid(self):
+        fw = load_compliance_framework_universal(self._path())
+        referenced = {
+            check for req in fw.requirements for check in req.checks.get("okta", [])
+        }
+        assert referenced, "expected at least one Okta check mapping"
+
+        available = set(CheckMetadata.get_bulk(provider="okta"))
+        assert (
+            referenced <= available
+        ), f"unknown Okta CheckIDs: {sorted(referenced - available)}"
+
+    def test_type_matches_check_mapping(self):
+        fw = load_compliance_framework_universal(self._path())
+        for req in fw.requirements:
+            expected = "automated" if req.checks.get("okta") else "manual"
+            assert req.attributes["Type"] == expected, req.id
+
+    def test_dod_specific_checks_are_not_mapped(self):
+        # SOC 2 does not require these DISA STIG settings, so they would fail
+        # orgs that meet SOC 2. They stay in the Okta IDaaS STIG framework.
+        fw = load_compliance_framework_universal(self._path())
+        referenced = {
+            check for req in fw.requirements for check in req.checks.get("okta", [])
+        }
+        assert not referenced & {
+            "signon_dod_warning_banner_configured",
+            "idp_smart_card_dod_approved_ca",
+            "authenticator_okta_verify_fips_compliant",
+        }
+
+
 class TestBackwardCompat:
     """Ensure Compliance.get_bulk still returns Compliance objects."""
 
