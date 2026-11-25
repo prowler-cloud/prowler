@@ -102,24 +102,41 @@ class Domain(VercelService):
                 logger.debug(f"Domain - Fetched SSL certificate for {domain.name}")
 
     @staticmethod
+    def _parse_iso_datetime(value) -> "Optional[datetime]":
+        """Parse an ISO 8601 timestamp string into an aware datetime.
+
+        The ``/v4/certs`` list response carries ``created`` and
+        ``expiration`` as ISO 8601 strings (e.g. ``2026-01-15T00:00:00.000Z``),
+        matching the ``Cert`` type in ``@vercel-internals/types``. Returns
+        ``None`` for missing or unparseable values.
+        """
+        if not value or not isinstance(value, str):
+            return None
+        try:
+            # fromisoformat() does not accept the "Z" suffix before 3.11.
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed
+        except ValueError:
+            return None
+
+    @staticmethod
     def _build_ssl_certificate(data: dict) -> "Optional[VercelSSLCertificate]":
-        """Build a VercelSSLCertificate from a certs API payload."""
+        """Build a VercelSSLCertificate from a certs list payload.
+
+        Reads the list-response fields ``uid``/``created``/``expiration``
+        (see the ``Cert`` type in ``@vercel-internals/types``): the
+        single-certificate ``id``/``createdAt``/``expiresAt`` fields do not
+        exist on this endpoint, so reading them left ``expires_at`` unset and
+        an expired certificate was reported as valid.
+        """
         if not data:
             return None
-        expires_at_ms = data.get("expiresAt")
-        created_at_ms = data.get("createdAt")
         return VercelSSLCertificate(
-            id=data.get("id", ""),
-            created_at=(
-                datetime.fromtimestamp(created_at_ms / 1000, tz=timezone.utc)
-                if created_at_ms
-                else None
-            ),
-            expires_at=(
-                datetime.fromtimestamp(expires_at_ms / 1000, tz=timezone.utc)
-                if expires_at_ms
-                else None
-            ),
+            id=data.get("uid", ""),
+            created_at=Domain._parse_iso_datetime(data.get("created")),
+            expires_at=Domain._parse_iso_datetime(data.get("expiration")),
             auto_renew=data.get("autoRenew", False),
             cns=data.get("cns", []),
         )

@@ -11,10 +11,10 @@ from tests.providers.vercel.vercel_fixtures import (
 )
 
 CERT = {
-    "id": "cert_abc123",
+    "uid": "cert_abc123",
     "cns": [DOMAIN_NAME, f"www.{DOMAIN_NAME}"],
-    "createdAt": 1750000000000,
-    "expiresAt": 1780000000000,
+    "created": "2025-06-15T00:00:00.000Z",
+    "expiration": "2027-06-15T00:00:00.000Z",
     "autoRenew": True,
 }
 DOMAIN = {
@@ -74,19 +74,19 @@ class TestDomainSSLCertificateLookup:
         assert domain.ssl_certificate.id == "cert_abc123"
         assert domain.ssl_certificate.cns == [DOMAIN_NAME, f"www.{DOMAIN_NAME}"]
         assert domain.ssl_certificate.auto_renew is True
-        assert domain.ssl_certificate.expires_at == datetime.fromtimestamp(
-            1780000000, tz=timezone.utc
+        assert domain.ssl_certificate.expires_at == datetime(
+            2027, 6, 15, tzinfo=timezone.utc
         )
-        assert domain.ssl_certificate.created_at == datetime.fromtimestamp(
-            1750000000, tz=timezone.utc
+        assert domain.ssl_certificate.created_at == datetime(
+            2025, 6, 15, tzinfo=timezone.utc
         )
 
     def test_cert_matches_wildcard_cn(self):
         wildcard_cert = {
-            "id": "cert_wild",
+            "uid": "cert_wild",
             "cns": [f"*.{DOMAIN_NAME}"],
-            "createdAt": 1750000000000,
-            "expiresAt": 1780000000000,
+            "created": "2025-06-15T00:00:00.000Z",
+            "expiration": "2027-06-15T00:00:00.000Z",
             "autoRenew": True,
         }
         app_domain = dict(DOMAIN, name=f"app.{DOMAIN_NAME}", id="dom_app")
@@ -100,17 +100,34 @@ class TestDomainSSLCertificateLookup:
         assert service.domains[f"deep.app.{DOMAIN_NAME}"].ssl_certificate is None
 
     def test_no_matching_cert_leaves_ssl_certificate_unset(self):
-        other_cert = dict(CERT, id="cert_other", cns=["other.com"])
+        other_cert = dict(CERT, uid="cert_other", cns=["other.com"])
         service = _make_domain_service([other_cert])
         assert service.domains[DOMAIN_NAME].ssl_certificate is None
+
+    def test_expired_cert_is_attached_with_past_expiry(self):
+        """Regression test for the CodeRabbit review on #13546: the
+        ``/v4/certs`` list response carries ``expiration`` as an ISO 8601
+        string, not ``expiresAt`` epoch milliseconds. An expired
+        certificate must be attached with a past ``expires_at`` so the
+        ``domain_ssl_certificate_valid`` check FAILs it, instead of getting
+        ``expires_at=None`` and passing through the missing-expiry branch."""
+        expired_cert = dict(
+            CERT, uid="cert_expired", expiration="2020-01-01T00:00:00.000Z"
+        )
+        service = _make_domain_service([expired_cert])
+        domain = service.domains[DOMAIN_NAME]
+        assert domain.ssl_certificate is not None
+        assert domain.ssl_certificate.id == "cert_expired"
+        assert domain.ssl_certificate.expires_at is not None
+        assert domain.ssl_certificate.expires_at < datetime.now(timezone.utc)
 
     def test_empty_certs_list_leaves_ssl_certificate_unset(self):
         service = _make_domain_service([])
         assert service.domains[DOMAIN_NAME].ssl_certificate is None
 
     def test_latest_expiry_wins_when_several_certs_cover_domain(self):
-        old_cert = dict(CERT, id="cert_old", expiresAt=1760000000000)
-        new_cert = dict(CERT, id="cert_new", expiresAt=1790000000000)
+        old_cert = dict(CERT, uid="cert_old", expiration="2028-01-01T00:00:00.000Z")
+        new_cert = dict(CERT, uid="cert_new", expiration="2029-01-01T00:00:00.000Z")
         service = _make_domain_service([old_cert, new_cert])
         assert service.domains[DOMAIN_NAME].ssl_certificate.id == "cert_new"
 
