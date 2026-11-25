@@ -11,14 +11,23 @@ class eks_cluster_not_publicly_accessible(Check):
             report.status_extended = (
                 f"EKS cluster {cluster.name} is not publicly accessible."
             )
-            if (
-                cluster.endpoint_public_access
-                and "0.0.0.0/0" in cluster.public_access_cidrs
-            ):
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"EKS cluster {cluster.name} is publicly accessible."
-                )
+            if cluster.endpoint_public_access:
+                unrestricted_cidrs = [
+                    cidr
+                    for cidr in ("0.0.0.0/0", "::/0")
+                    if cidr in cluster.public_access_cidrs
+                ]
+                if unrestricted_cidrs:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"EKS cluster {cluster.name} is publicly accessible from "
+                        f"{', '.join(unrestricted_cidrs)}."
+                    )
+                else:
+                    report.status_extended = (
+                        f"EKS cluster {cluster.name} has no unrestricted CIDR "
+                        "in its public access list."
+                    )
             findings.append(report)
 
         return findings

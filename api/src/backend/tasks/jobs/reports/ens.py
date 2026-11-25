@@ -879,8 +879,11 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
             # Tipo and Modo badges row
             tipo_display = f"☰ {tipo.capitalize()}" if tipo else "N/A"
             modo_display = f"☰ {modo.capitalize()}" if modo else "N/A"
+            # The catalogs write the mode with its accent ("automático").
             modo_color = (
-                COLOR_ENS_AUTO if modo.lower() == "automatico" else COLOR_ENS_MANUAL
+                COLOR_ENS_AUTO
+                if modo.lower() in ("automático", "automatico")
+                else COLOR_ENS_MANUAL
             )
 
             badges_row2 = [[tipo_display, "", modo_display]]

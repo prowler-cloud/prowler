@@ -21,6 +21,8 @@ class apigateway_restapi_no_secrets_in_stage_variables(Check):
         )
         validate = apigateway_client.audit_config.get("secrets_validate", False)
 
+        confidence = apigateway_client.audit_config.get("secrets_confidence", "low")
+
         # Collect one payload per stage (its variables) and scan them all in
         # batched Kingfisher invocations instead of one subprocess per stage.
         # Findings are keyed by (rest_api index, stage index).
@@ -38,6 +40,7 @@ class apigateway_restapi_no_secrets_in_stage_variables(Check):
                 payloads(),
                 excluded_secrets=secrets_ignore_patterns,
                 validate=validate,
+                confidence=confidence,
             )
         except SecretsScanError as error:
             batch_results = {}

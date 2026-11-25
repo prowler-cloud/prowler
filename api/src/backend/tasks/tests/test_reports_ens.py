@@ -6,6 +6,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
 from tasks.jobs.reports import ens as ens_report_module
+from tasks.jobs.reports.config import COLOR_ENS_AUTO, COLOR_ENS_MANUAL
 from tasks.jobs.reports.ens import ENSReportGenerator
 from tasks.tests.report_test_helpers import patch_chart_helpers
 
@@ -51,7 +52,7 @@ def mock_ens_requirement_attribute():
     mock.Tipo = "requisito"
     mock.Nivel = "alto"
     mock.Dimensiones = ["confidencialidad", "integridad"]
-    mock.ModoEjecucion = "automatico"
+    mock.ModoEjecucion = "automático"
     mock.IdGrupoControl = "op.ext.1"
     return mock
 
@@ -81,7 +82,7 @@ def mock_ens_requirement_attribute_bajo():
     mock.Tipo = "recomendacion"
     mock.Nivel = "bajo"
     mock.Dimensiones = ["disponibilidad"]
-    mock.ModoEjecucion = "automatico"
+    mock.ModoEjecucion = "automático"
     mock.IdGrupoControl = "mp.if.1"
     return mock
 
@@ -96,7 +97,7 @@ def mock_ens_requirement_attribute_opcional():
     mock.Tipo = "medida"
     mock.Nivel = "opcional"
     mock.Dimensiones = []
-    mock.ModoEjecucion = "automatico"
+    mock.ModoEjecucion = "automático"
     mock.IdGrupoControl = "org.1"
     return mock
 
@@ -865,6 +866,54 @@ class TestENSDetailedFindings:
 
         # Should generate without errors
         assert len(elements) > 0
+
+    @pytest.mark.parametrize(
+        "mode, expected_colour",
+        [
+            ("automático", COLOR_ENS_AUTO),
+            ("automatico", COLOR_ENS_AUTO),
+            ("manual", COLOR_ENS_MANUAL),
+        ],
+    )
+    def test_detailed_findings_colours_the_execution_mode_badge(
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        mode,
+        expected_colour,
+    ):
+        """Test that an automated requirement does not get the colour of manual ones."""
+        mock_ens_requirement_attribute.ModoEjecucion = mode
+        basic_ens_compliance_data.requirements = [
+            RequirementData(
+                id="REQ-001",
+                description="Failed requirement",
+                status=StatusChoices.FAIL,
+                passed_findings=0,
+                failed_findings=10,
+                total_findings=10,
+            ),
+        ]
+        basic_ens_compliance_data.attributes_by_requirement_id = {
+            "REQ-001": {
+                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
+            },
+        }
+
+        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
+
+        # The execution mode is the last badge of the row it shares with the type.
+        badge_row = next(
+            e
+            for e in elements
+            if isinstance(e, Table)
+            and e._cellvalues[0][-1] == f"☰ {mode.capitalize()}"
+        )
+        badge_colours = [
+            command[3] for command in badge_row._bkgrndcmds if command[1] == (2, 0)
+        ]
+        assert badge_colours == [expected_colour]
 
     def test_detailed_findings_shows_dimensiones_badges(
         self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute

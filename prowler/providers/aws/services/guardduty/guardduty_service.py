@@ -220,6 +220,7 @@ class GuardDuty(AWSService):
                             "Criterion": {
                                 "severity": {
                                     "Eq": [
+                                        "7",
                                         "8",
                                     ],
                                 },

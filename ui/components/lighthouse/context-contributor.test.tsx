@@ -77,4 +77,22 @@ describe("LighthouseContextContributor", () => {
       useLighthouseContextStore.getState().contributions["findings-total"],
     ).toMatchObject({ total: 17 });
   });
+
+  it("should never register sample records", () => {
+    render(
+      <LighthouseContextContributor
+        contributorId="finding-group-sample"
+        item={{
+          kind: "finding",
+          id: "sample-group-s3_bucket_public_access",
+          source: "selection",
+          scopeKey: "findings:/findings",
+          label: "Ensure S3 buckets are not publicly accessible",
+          findingId: "sample-group-s3_bucket_public_access",
+        }}
+      />,
+    );
+
+    expect(useLighthouseContextStore.getState().contributions).toEqual({});
+  });
 });
