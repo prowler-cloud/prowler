@@ -30,9 +30,11 @@ FROM python:3.13.18-alpine3.23@sha256:e4aeaca9081549f19bd5bc8605ed5ab257ba34f97e
 LABEL maintainer="https://github.com/prowler-cloud"
 
 # Targeted exception: zlib 1.4-r0 fixes critical CVE-2026-4738, but even the newest
-# python:3.13.18-alpine3.23 still ships 1.3.2-r1. Drop once the base image ships it.
+# python:3.13.18-alpine3.23 still ships 1.3.2-r1. Same for openssl 3.5.9-r1
+# (CVE-2026-88823, -95691, -95692, -107496): the base image ships 3.5.9-r0.
+# Drop once the base image ships them.
 #hadolint ignore=DL3018
-RUN apk add --no-cache --upgrade 'zlib>=1.4-r0'
+RUN apk add --no-cache --upgrade 'zlib>=1.4-r0' 'libssl3>=3.5.9-r1' 'libcrypto3>=3.5.9-r1'
 
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
