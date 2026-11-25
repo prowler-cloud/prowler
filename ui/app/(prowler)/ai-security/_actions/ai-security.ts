@@ -201,26 +201,34 @@ export async function getAiSecurityOverview(
       cloudScope ? getCloudAiFindingGroups(cloudScope) : [],
     ]);
 
-  const results: Record<string, FindingsStatusAttributes> = {};
-  statuses.forEach((status, index) => {
-    const attributes =
-      status && "data" in status ? status.data?.attributes : undefined;
-    if (attributes) results[vendorTypes[index]] = attributes;
-  });
-  const cloudResults: Record<string, CategoryOverviewAttributes> = {};
-  categories.forEach((category, index) => {
-    // No row for gen-ai means no gen-ai findings in the latest scans.
-    if (category && "data" in category && Array.isArray(category.data)) {
-      cloudResults[cloudTypes[index]] = category.data.find(
-        ({ id }) => id === AI_CATEGORY,
-      )?.attributes ?? {
-        total_findings: 0,
-        failed_findings: 0,
-        new_failed_findings: 0,
-        severity: NO_SEVERITY,
-      };
-    }
-  });
+  // Object.fromEntries defines own properties, so a provider type cannot reach the prototype.
+  const results: Record<string, FindingsStatusAttributes> = Object.fromEntries(
+    statuses.flatMap((status, index) => {
+      const attributes =
+        status && "data" in status ? status.data?.attributes : undefined;
+      return attributes ? [[vendorTypes[index], attributes]] : [];
+    }),
+  );
+  const cloudResults: Record<string, CategoryOverviewAttributes> =
+    Object.fromEntries(
+      categories.flatMap((category, index) =>
+        // No row for gen-ai means no gen-ai findings in the latest scans.
+        category && "data" in category && Array.isArray(category.data)
+          ? [
+              [
+                cloudTypes[index],
+                category.data.find(({ id }) => id === AI_CATEGORY)
+                  ?.attributes ?? {
+                  total_findings: 0,
+                  failed_findings: 0,
+                  new_failed_findings: 0,
+                  severity: NO_SEVERITY,
+                },
+              ],
+            ]
+          : [],
+      ),
+    );
   const severityCounts =
     severity && "data" in severity ? severity.data?.attributes : undefined;
   // Without the totals the page would show a misleading empty posture.
