@@ -7,13 +7,17 @@ import type {
 } from "@/types/compliance";
 import { isKnownProviderType, PROVIDER_TYPES } from "@/types/providers";
 
-import type {
-  CrossProviderOverviewAttributes,
-  CrossProviderRequirementExtras,
-  ProviderBreakdownEntry,
-  ProviderCheckIdsMap,
+import {
+  CROSS_PROVIDER_OVERVIEW_RESULT_STATUS,
+  type CrossProviderFrameworkSummary,
+  type CrossProviderOverviewAttributes,
+  type CrossProviderOverviewResult,
+  type CrossProviderRequirementExtras,
+  type ProviderBreakdownEntry,
+  type ProviderCheckIdsMap,
 } from "../_types";
 
+import type { CrossProviderFrameworkEntry } from "./cross-provider-frameworks";
 import { candidateRequirementNames } from "./requirement-names";
 
 /**
@@ -170,4 +174,53 @@ export const computeProviderBreakdown = (
         unscanned: !contributing.has(provider),
       };
     });
+};
+
+/** The card roll-up of one universal framework; zeroed with every provider
+ *  unscanned when the overview has no data for it. */
+export const toCrossProviderSummary = (
+  entry: CrossProviderFrameworkEntry,
+  result: CrossProviderOverviewResult,
+): CrossProviderFrameworkSummary => {
+  const attrs =
+    result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS
+      ? result.response.data?.attributes
+      : undefined;
+  const base = {
+    complianceId: entry.complianceId,
+    title: entry.title,
+    version: entry.version,
+    description: entry.description,
+  };
+
+  if (!attrs) {
+    return {
+      ...base,
+      requirementsPassed: 0,
+      requirementsFailed: 0,
+      requirementsManual: 0,
+      totalRequirements: 0,
+      // Chips need an icon and a label, which only known types have.
+      providerBreakdown: entry.providerTypes
+        .filter(isKnownProviderType)
+        .map((provider) => ({
+          provider,
+          pass: 0,
+          fail: 0,
+          manual: 0,
+          total: 0,
+          score: 0,
+          unscanned: true,
+        })),
+    };
+  }
+
+  return {
+    ...base,
+    requirementsPassed: attrs.requirements_passed,
+    requirementsFailed: attrs.requirements_failed,
+    requirementsManual: attrs.requirements_manual,
+    totalRequirements: attrs.total_requirements,
+    providerBreakdown: computeProviderBreakdown(attrs),
+  };
 };

@@ -16,6 +16,8 @@ export interface AiStackProvider extends AiResultCounts {
   /** What was scanned, such as "2 accounts". */
   scope: string;
   connected: boolean;
+  /** Has a completed scan; without one there are no results to show. */
+  scanned: boolean;
 }
 
 export interface AiStackLayer {
@@ -23,18 +25,6 @@ export interface AiStackLayer {
   name: string;
   description: string;
   providers: AiStackProvider[];
-}
-
-/** An AI framework with its requirements' results in the latest scans. */
-export interface AiFramework extends AiResultCounts {
-  id: string;
-  /** The framework's short name; the Compliance detail route is keyed by it. */
-  title: string;
-  shortName: string;
-  name: string;
-  version: string;
-  /** What the framework counts: "requirements", "controls"… */
-  unit: string;
 }
 
 export interface AiTopRisk {
@@ -49,6 +39,5 @@ export interface AiTopRisk {
 export interface AiSecurityOverview extends AiResultCounts {
   severity: AiSeverityCounts;
   layers: AiStackLayer[];
-  frameworks: AiFramework[];
   topRisks: AiTopRisk[];
 }

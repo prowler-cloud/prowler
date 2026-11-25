@@ -12,7 +12,7 @@ export const TopRisks = ({ risks }: { risks: AiTopRisk[] }) => (
   <Card variant="base" className="w-full min-w-0">
     <SectionHeader
       title="Top risks"
-      description="Failed checks, by severity and then by resources affected."
+      description="Failed checks, ranked as on Findings: by severity, then new and changed failures."
       aside={
         <Button asChild variant="link" size="link-sm">
           <Link href={aiFindingsHref()}>View all AI findings</Link>

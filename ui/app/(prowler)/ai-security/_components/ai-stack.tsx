@@ -4,24 +4,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { aiFindingsHref } from "@/app/(prowler)/ai-security/_lib/findings";
-import {
-  formatScore,
-  passScore,
-  sumResults,
-} from "@/app/(prowler)/ai-security/_lib/results";
 import type {
   AiStackLayer,
   AiStackProvider,
 } from "@/app/(prowler)/ai-security/_types";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
-import { Button, Card, CardContent } from "@/components/shadcn";
+import { Badge, Button, Card, CardContent } from "@/components/shadcn";
+import { Progress } from "@/components/shadcn/progress";
 import { SelectableCard } from "@/components/shadcn/selectable-card/selectable-card";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { getScoreColor } from "@/lib/compliance/score-utils";
 import { splitCsvFilterValues } from "@/lib/findings-filters";
-import { cn } from "@/lib/utils";
+import { calculatePercentage, cn } from "@/lib/utils";
 
 import { ConnectProviderButton } from "./connect-provider-button";
-import { ResultBar, ResultLegend } from "./result-bar";
 import { SectionHeader } from "./section-header";
 
 const PROVIDER_TYPE_FILTER = "filter[provider_type__in]";
@@ -33,10 +29,22 @@ interface StackProviderProps {
 }
 
 function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
-  const { type, name, scope, connected } = provider;
+  const { type, name, scope, connected, scanned, pass, fail, manual } =
+    provider;
+  const hasResults = pass + fail + manual > 0;
+  // Pass share of pass and fail findings, as the Compliance provider coverage rows.
+  const score = calculatePercentage(pass, pass + fail);
   const identity = (
     <>
-      <ProviderTypeIcon type={type} size={28} />
+      {/* Greyed out like the framework cards' providers without a completed scan. */}
+      <span
+        className={cn(
+          "inline-flex",
+          connected && !scanned && "opacity-35 grayscale",
+        )}
+      >
+        <ProviderTypeIcon type={type} size={28} />
+      </span>
       <span className="flex w-32 min-w-0 shrink-0 flex-col">
         <span className="text-text-neutral-primary truncate text-sm font-medium">
           {name}
@@ -48,38 +56,57 @@ function StackProvider({ provider, selected, onSelect }: StackProviderProps) {
     </>
   );
 
+  if (!connected || !hasResults) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2">
+          {identity}
+          {connected && (
+            <Badge variant="tag">
+              {scanned ? "No AI services found" : "No completed scan yet"}
+            </Badge>
+          )}
+        </div>
+        {!connected && <ConnectProviderButton />}
+        {connected && !scanned && (
+          <Button asChild variant="link" size="link-sm">
+            <Link href="/scans">Launch scan</Link>
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-3">
-      {connected ? (
-        <>
-          <SelectableCard
-            selected={selected}
-            onClick={onSelect}
-            title={
-              selected ? "Show every AI provider" : `Show only ${name} results`
-            }
-            className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
-          >
-            {identity}
-            <ResultBar label={name} {...provider} className="min-w-0 flex-1" />
-          </SelectableCard>
-          <Button asChild variant="link" size="link-sm">
-            <Link
-              href={aiFindingsHref({ "filter[provider_type__in]": type })}
-              aria-label={`${name}: ${formatScore(passScore(provider))}, ${provider.fail} failed findings`}
-            >
-              {formatScore(passScore(provider))}
-            </Link>
-          </Button>
-        </>
-      ) : (
-        <>
-          <div className="flex flex-1 items-center gap-3 px-3 py-2">
-            {identity}
-          </div>
-          <ConnectProviderButton />
-        </>
-      )}
+      <SelectableCard
+        selected={selected}
+        onClick={onSelect}
+        title={
+          selected ? "Show every AI provider" : `Show only ${name} results`
+        }
+        className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
+      >
+        {identity}
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <Progress
+            aria-label={`${name} pass findings`}
+            value={score}
+            variant={getScoreColor(score)}
+          />
+          <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
+            {pass}/{pass + fail} · {manual} manual
+          </span>
+        </span>
+      </SelectableCard>
+      <Button asChild variant="link" size="link-sm">
+        <Link
+          href={aiFindingsHref({ "filter[provider_type__in]": type })}
+          aria-label={`${name}: ${score}%, ${fail} failed findings`}
+        >
+          {score}%
+        </Link>
+      </Button>
     </div>
   );
 }
@@ -110,7 +137,6 @@ export function AiStack({ layers }: { layers: AiStackLayer[] }) {
       <SectionHeader
         title="Your AI stack"
         description="Each layer is scanned through its own provider. A gap in one layer stays open whatever the others score."
-        aside={<ResultLegend />}
       />
       <CardContent>
         <ul
@@ -128,7 +154,10 @@ export function AiStack({ layers }: { layers: AiStackLayer[] }) {
                       {layer.name}
                     </h3>
                     <span className="text-text-error-primary shrink-0 text-xs font-medium">
-                      {sumResults(layer.providers).fail.toLocaleString()} failed
+                      {layer.providers
+                        .reduce((sum, provider) => sum + provider.fail, 0)
+                        .toLocaleString()}{" "}
+                      failed
                     </span>
                   </div>
                   <p className="text-text-neutral-tertiary text-xs">

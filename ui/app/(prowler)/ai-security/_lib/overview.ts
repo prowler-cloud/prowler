@@ -4,17 +4,13 @@ import type {
 } from "@/actions/overview";
 import type { CategoryOverviewAttributes } from "@/actions/overview/risk-radar/types";
 import type {
-  AiFramework,
   AiSecurityOverview,
   AiStackProvider,
   AiTopRisk,
 } from "@/app/(prowler)/ai-security/_types";
 import { splitCsvFilterValues } from "@/lib/findings-filters";
 import type { SearchParamsProps } from "@/types";
-import type {
-  ComplianceOverviewData,
-  RequirementStatus,
-} from "@/types/compliance";
+import type { RequirementStatus } from "@/types/compliance";
 import type { ProviderProps } from "@/types/providers";
 import { SEVERITY_LEVELS, type SeverityLevel } from "@/types/severities";
 
@@ -59,41 +55,15 @@ export const isCloudAi = (type: string): type is CloudAiType =>
 /** The failed checks the page lists, most severe first. */
 export const TOP_RISKS = 6;
 
-type AiFrameworkInfo = Pick<AiFramework, "shortName" | "name" | "unit">;
-
-/** The AI frameworks the page shows when the tenant has them installed, keyed by compliance id. */
-export const AI_FRAMEWORKS: Record<string, AiFrameworkInfo> = {
-  owasp_llm_top_10_2025: {
-    shortName: "OWASP LLM Top 10",
-    name: "OWASP Top 10 for LLM Applications",
-    unit: "requirements",
-  },
-  owasp_agentic_top_10_2026: {
-    shortName: "OWASP Agentic Top 10",
-    name: "OWASP Top 10 for Agentic Applications",
-    unit: "requirements",
-  },
-  owasp_mcp_top_10_2025: {
-    shortName: "OWASP MCP Top 10",
-    name: "OWASP MCP Top 10",
-    unit: "requirements",
-  },
-  "nist_ai_rmf_1.0": {
-    shortName: "NIST AI RMF",
-    name: "NIST AI Risk Management Framework",
-    unit: "subcategories",
-  },
-  iso_42001_2023: {
-    shortName: "ISO/IEC 42001",
-    name: "ISO/IEC 42001 Annex A controls",
-    unit: "controls",
-  },
-  eu_ai_act_2024: {
-    shortName: "EU AI Act",
-    name: "EU AI Act, deployer obligations",
-    unit: "requirements",
-  },
-};
+/** The AI frameworks the page shows when the tenant has them installed. */
+export const AI_FRAMEWORK_IDS = [
+  "owasp_llm_top_10_2025",
+  "owasp_agentic_top_10_2026",
+  "owasp_mcp_top_10_2025",
+  "nist_ai_rmf_1.0",
+  "iso_42001_2023",
+  "eu_ai_act_2024",
+];
 
 const SCOPE_KEYS = [
   "filter[provider_id__in]",
@@ -160,6 +130,10 @@ export interface AiFindingGroup {
     severity: string;
     impacted_providers: string[];
     resources_fail: number;
+    new_fail_count: number;
+    changed_fail_count: number;
+    fail_count: number;
+    last_seen_at: string | null;
   };
 }
 
@@ -172,9 +146,10 @@ export interface AiOverviewSources {
   results: Partial<Record<string, FindingsStatusAttributes>>;
   /** The latest scans' gen-ai findings of each cloud type the stack lists. */
   cloudResults: Partial<Record<string, CategoryOverviewAttributes>>;
+  /** The provider types with a completed scan among the providers listed. */
+  scannedTypes: string[];
   /** The model vendors' failed findings by severity. */
   severity: FindingsSeverityAttributes;
-  frameworks: ComplianceOverviewData[];
   /** Failed checks of the model vendors and of the clouds' gen-ai, in any order. */
   findingGroups: AiFindingGroup[];
 }
@@ -189,19 +164,6 @@ const providerName = (type: string) => PROVIDER_NAMES[type] ?? type;
 
 const severityRank = (severity: string) =>
   (SEVERITY_LEVELS as readonly string[]).indexOf(severity);
-
-const toFramework = ({
-  id,
-  attributes,
-}: ComplianceOverviewData): AiFramework => ({
-  id,
-  title: attributes.framework,
-  version: attributes.version,
-  ...AI_FRAMEWORKS[id],
-  pass: attributes.requirements_passed,
-  fail: attributes.requirements_failed,
-  manual: attributes.requirements_manual,
-});
 
 const toTopRisk = ({ id, attributes }: AiFindingGroup): AiTopRisk | null =>
   isSeverityLevel(attributes.severity)
@@ -225,8 +187,8 @@ export function toAiSecurityOverview({
   types,
   results,
   cloudResults,
+  scannedTypes,
   severity,
-  frameworks,
   findingGroups,
 }: AiOverviewSources): AiSecurityOverview {
   const vendors: AiStackProvider[] = MODEL_VENDOR_TYPES.map((type) => {
@@ -243,6 +205,7 @@ export function toAiSecurityOverview({
       name: MODEL_VENDORS[type],
       scope: plural(accounts, "account"),
       connected: accounts > 0,
+      scanned: scannedTypes.includes(type),
       pass,
       fail,
       manual,
@@ -258,6 +221,7 @@ export function toAiSecurityOverview({
       name: CLOUD_AI_SERVICES[type],
       scope: plural(accounts, "account"),
       connected: accounts > 0,
+      scanned: scannedTypes.includes(type),
       // shortcut: the category totals have no manual count, so a manual gen-ai finding counts as pass; split it out if a cloud gen-ai check turns manual.
       pass: Math.max((result?.total_findings ?? 0) - fail, 0),
       fail,
@@ -301,15 +265,17 @@ export function toAiSecurityOverview({
         providers: clouds,
       },
     ],
-    frameworks: frameworks
-      .filter(({ id }) => Object.hasOwn(AI_FRAMEWORKS, id))
-      .map(toFramework),
     topRisks: [...findingGroups]
       .sort(
         (a, b) =>
           severityRank(a.attributes.severity) -
             severityRank(b.attributes.severity) ||
-          b.attributes.resources_fail - a.attributes.resources_fail,
+          b.attributes.new_fail_count - a.attributes.new_fail_count ||
+          b.attributes.changed_fail_count - a.attributes.changed_fail_count ||
+          b.attributes.fail_count - a.attributes.fail_count ||
+          (b.attributes.last_seen_at ?? "").localeCompare(
+            a.attributes.last_seen_at ?? "",
+          ),
       )
       .map(toTopRisk)
       .filter((risk): risk is AiTopRisk => risk !== null)

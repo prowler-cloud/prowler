@@ -87,6 +87,7 @@ const group = (
   id: string,
   severity: string,
   resources: number,
+  newFail: number,
   provider = "openai",
 ) => ({
   id,
@@ -96,6 +97,10 @@ const group = (
     severity,
     impacted_providers: [provider],
     resources_fail: resources,
+    new_fail_count: newFail,
+    changed_fail_count: 0,
+    fail_count: resources,
+    last_seen_at: "2026-11-01T00:00:00Z",
   },
 });
 
@@ -120,25 +125,12 @@ describe("toAiSecurityOverview", () => {
         severity: { ...NO_SEVERITY, critical: 1, high: 3 },
       },
     },
+    scannedTypes: ["openai", "aws"],
     severity: { ...NO_SEVERITY, high: 2 },
-    frameworks: [
-      {
-        id: "owasp_llm_top_10_2025",
-        type: "compliance-overviews",
-        attributes: {
-          framework: "OWASP-LLM-Top-10",
-          version: "2025",
-          requirements_passed: 4,
-          requirements_failed: 2,
-          requirements_manual: 81,
-          total_requirements: 87,
-        },
-      },
-    ],
     findingGroups: [
-      group("apikey_rotated_regularly", "high", 1),
-      group("bedrock_guardrails_configured", "critical", 2, "aws"),
-      group("project_hosted_tools_restricted", "high", 5),
+      group("apikey_rotated_regularly", "high", 1, 1),
+      group("bedrock_guardrails_configured", "critical", 2, 0, "aws"),
+      group("project_hosted_tools_restricted", "high", 5, 0),
     ],
   });
 
@@ -151,45 +143,35 @@ describe("toAiSecurityOverview", () => {
     expect(overview.manual).toBe(4);
   });
 
-  it("lists every model vendor and cloud, and says which ones are connected", () => {
+  it("lists every model vendor and cloud, and says which ones are connected and scanned", () => {
     expect(
       overview.layers.map((layer) =>
-        layer.providers.map(({ name, scope, connected, pass, fail }) => [
-          name,
-          scope,
-          connected,
-          pass,
-          fail,
-        ]),
+        layer.providers.map(
+          ({ name, scope, connected, scanned, pass, fail }) => [
+            name,
+            scope,
+            connected,
+            scanned,
+            pass,
+            fail,
+          ],
+        ),
       ),
     ).toEqual([
       [
-        ["Claude", "1 account", true, 7, 7],
-        ["OpenAI", "2 accounts", true, 3, 2],
-        ["ChatGPT", "0 accounts", false, 0, 0],
+        ["Claude", "1 account", true, false, 7, 7],
+        ["OpenAI", "2 accounts", true, true, 3, 2],
+        ["ChatGPT", "0 accounts", false, false, 0, 0],
       ],
       [
-        ["AWS", "1 account", true, 5, 4],
-        ["Azure", "0 accounts", false, 0, 0],
-        ["GCP", "0 accounts", false, 0, 0],
+        ["AWS", "1 account", true, true, 5, 4],
+        ["Azure", "0 accounts", false, false, 0, 0],
+        ["GCP", "0 accounts", false, false, 0, 0],
       ],
     ]);
   });
 
-  it("scores each framework from its requirement counts and keeps its route title", () => {
-    expect(overview.frameworks).toEqual([
-      expect.objectContaining({
-        id: "owasp_llm_top_10_2025",
-        title: "OWASP-LLM-Top-10",
-        version: "2025",
-        pass: 4,
-        fail: 2,
-        manual: 81,
-      }),
-    ]);
-  });
-
-  it("ranks vendor and cloud risks together by severity, then by resources", () => {
+  it("ranks vendor and cloud risks together by severity, then new failures, as on Findings", () => {
     expect(
       overview.topRisks.map(({ checkId, providerName, affected }) => [
         checkId,
@@ -198,8 +180,8 @@ describe("toAiSecurityOverview", () => {
       ]),
     ).toEqual([
       ["bedrock_guardrails_configured", "AWS", "2 resources"],
-      ["project_hosted_tools_restricted", "OpenAI", "5 resources"],
       ["apikey_rotated_regularly", "OpenAI", "1 resource"],
+      ["project_hosted_tools_restricted", "OpenAI", "5 resources"],
     ]);
   });
 });

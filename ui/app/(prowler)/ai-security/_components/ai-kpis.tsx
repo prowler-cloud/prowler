@@ -2,20 +2,16 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { aiFindingsHref } from "@/app/(prowler)/ai-security/_lib/findings";
-import {
-  formatScore,
-  passScore,
-} from "@/app/(prowler)/ai-security/_lib/results";
 import type { AiSecurityOverview } from "@/app/(prowler)/ai-security/_types";
 import { Button, Card, CardContent } from "@/components/shadcn";
-import { cn } from "@/lib/utils";
+import { Progress } from "@/components/shadcn/progress";
+import { getScoreColor } from "@/lib/compliance/score-utils";
+import { calculatePercentage, cn } from "@/lib/utils";
 import {
   SEVERITY_COLORS,
   SEVERITY_DISPLAY_NAMES,
   SEVERITY_LEVELS,
 } from "@/types/severities";
-
-import { ResultBar } from "./result-bar";
 
 interface KpiCardProps {
   label: string;
@@ -47,17 +43,23 @@ export function AiKpis({ overview }: { overview: AiSecurityOverview }) {
   const providers = layers.flatMap((layer) => layer.providers);
   const connected = providers.filter((provider) => provider.connected);
   const present = SEVERITY_LEVELS.filter((level) => severity[level] > 0);
+  // Pass share of pass and fail findings, as the Overview's Check Findings donut.
+  const passRate = calculatePercentage(pass, pass + fail);
 
   return (
     <section
       aria-label="Key figures"
       className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4"
     >
-      <KpiCard label="AI posture" value={formatScore(passScore(overview))}>
-        <ResultBar label="AI findings" pass={pass} fail={fail} manual={0} />
+      <KpiCard label="Pass findings" value={`${passRate}%`}>
+        <Progress
+          aria-label="Pass findings"
+          value={passRate}
+          variant={getScoreColor(passRate)}
+        />
         <p className={NOTE}>
-          {pass.toLocaleString()} passed, {fail.toLocaleString()} failed. Manual
-          results are left out of the score.
+          {pass.toLocaleString()} pass and {fail.toLocaleString()} fail
+          findings.
         </p>
       </KpiCard>
 

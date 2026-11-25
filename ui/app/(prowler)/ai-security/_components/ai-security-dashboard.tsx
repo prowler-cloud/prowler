@@ -1,4 +1,7 @@
-import { getAiSecurityOverview } from "@/app/(prowler)/ai-security/_actions";
+import {
+  getAiFrameworks,
+  getAiSecurityOverview,
+} from "@/app/(prowler)/ai-security/_actions";
 import {
   Alert,
   AlertDescription,
@@ -49,7 +52,10 @@ export async function AiSecurityDashboard({
     return <AiSecurityEmptyState />;
   }
 
-  const overview = await getAiSecurityOverview(filters, providers);
+  const [overview, frameworks] = await Promise.all([
+    getAiSecurityOverview(filters, providers),
+    getAiFrameworks(filters),
+  ]);
 
   if (!overview) {
     return (
@@ -68,9 +74,7 @@ export async function AiSecurityDashboard({
     <div className="flex flex-col gap-6">
       <AiKpis overview={overview} />
       <AiStack layers={overview.layers} />
-      {overview.frameworks.length > 0 && (
-        <AiCompliance frameworks={overview.frameworks} filters={filters} />
-      )}
+      {frameworks.length > 0 && <AiCompliance frameworks={frameworks} />}
       <TopRisks risks={overview.topRisks} />
     </div>
   );

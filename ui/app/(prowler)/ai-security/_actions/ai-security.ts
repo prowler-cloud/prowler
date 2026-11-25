@@ -1,6 +1,5 @@
 "use server";
 
-import { getCompliancesOverview } from "@/actions/compliances";
 import { getLatestFindingGroups } from "@/actions/finding-groups";
 import {
   type FindingsSeverityAttributes,
@@ -10,8 +9,9 @@ import {
   getFindingsByStatus,
 } from "@/actions/overview";
 import type { CategoryOverviewAttributes } from "@/actions/overview/risk-radar/types";
+import { getScans } from "@/actions/scans";
 import {
-  AI_FRAMEWORKS,
+  AI_FRAMEWORK_IDS,
   type AiFindingGroup,
   isCloudAi,
   isModelVendor,
@@ -20,17 +20,24 @@ import {
   toAiSecurityOverview,
 } from "@/app/(prowler)/ai-security/_lib/overview";
 import type { AiSecurityOverview } from "@/app/(prowler)/ai-security/_types";
+import { getCrossProviderComplianceOverview } from "@/app/(prowler)/compliance/_actions/cross-provider";
+import { toCrossProviderSummary } from "@/app/(prowler)/compliance/_lib/cross-provider-adapter";
+import { loadCrossProviderFrameworks } from "@/app/(prowler)/compliance/_lib/cross-provider-catalog";
+import { parseCrossProviderFilters } from "@/app/(prowler)/compliance/_lib/cross-provider-frameworks";
+import {
+  CROSS_PROVIDER_OVERVIEW_RESULT_STATUS,
+  type CrossProviderFrameworkSummary,
+} from "@/app/(prowler)/compliance/_types";
 import {
   apiBaseUrl,
   FINDINGS_SEVERITY_HIGH_FIRST,
   getAuthHeaders,
 } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
-import type { ComplianceOverviewData } from "@/types/compliance";
+import { SCAN_STATES } from "@/types/attack-paths";
 import type { ProviderProps } from "@/types/providers";
 
 const AI_CATEGORY = "gen-ai";
-const FINDINGS_SORT = "-severity,-resources_fail";
 const NO_SEVERITY: FindingsSeverityAttributes = {
   critical: 0,
   high: 0,
@@ -83,7 +90,6 @@ async function getCloudAiFindingGroups(filters: Record<string, string>) {
   return listOf<AiFindingGroup>(
     await getLatestFindingGroups({
       pageSize: TOP_RISKS,
-      sort: FINDINGS_SORT,
       filters: {
         ...filters,
         "filter[status]": "FAIL",
@@ -91,6 +97,48 @@ async function getCloudAiFindingGroups(filters: Record<string, string>) {
       },
     }),
   );
+}
+
+/** Whether any of the providers has a completed scan. */
+async function hasCompletedScan(providerIds: string[]): Promise<boolean> {
+  const scans = await getScans({
+    pageSize: 1,
+    fields: { scans: "state" },
+    filters: {
+      "filter[state]": SCAN_STATES.COMPLETED,
+      "filter[provider__in]": providerIds.join(","),
+    },
+  });
+  return listOf(scans).length > 0;
+}
+
+/**
+ * The AI frameworks as the Compliance page's universal framework cards show
+ * them, scoped to the AI-SPM providers the filters select.
+ */
+export async function getAiFrameworks(
+  filters: Record<string, string>,
+): Promise<CrossProviderFrameworkSummary[]> {
+  const catalog = await loadCrossProviderFrameworks();
+  const frameworks = catalog.frameworks.filter(({ complianceId }) =>
+    AI_FRAMEWORK_IDS.includes(complianceId),
+  );
+  const responses = await Promise.all(
+    frameworks.map(async (entry) => ({
+      entry,
+      result: await getCrossProviderComplianceOverview({
+        complianceId: entry.complianceId,
+        filters: parseCrossProviderFilters(filters),
+      }),
+    })),
+  );
+  // A framework that failed to load is left out rather than shown as unscanned.
+  return responses
+    .filter(
+      ({ result }) =>
+        result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS,
+    )
+    .map(({ entry, result }) => toCrossProviderSummary(entry, result));
 }
 
 /**
@@ -115,42 +163,43 @@ export async function getAiSecurityOverview(
     "filter[status]": "FAIL",
   };
 
-  const [
-    statuses,
-    categories,
-    severity,
-    compliances,
-    vendorGroups,
-    cloudGroups,
-  ] = await Promise.all([
-    Promise.all(
-      vendorTypes.map((type) =>
-        getFindingsByStatus({
-          filters: { ...filters, "filter[provider_type__in]": type },
-        }),
+  const [statuses, categories, scanned, severity, vendorGroups, cloudGroups] =
+    await Promise.all([
+      Promise.all(
+        vendorTypes.map((type) =>
+          getFindingsByStatus({
+            filters: { ...filters, "filter[provider_type__in]": type },
+          }),
+        ),
       ),
-    ),
-    Promise.all(
-      cloudTypes.map((type) =>
-        getCategoryOverview({
-          filters: {
-            ...filters,
-            "filter[provider_type__in]": type,
-            "filter[category]": AI_CATEGORY,
-          },
-        }),
+      Promise.all(
+        cloudTypes.map((type) =>
+          getCategoryOverview({
+            filters: {
+              ...filters,
+              "filter[provider_type__in]": type,
+              "filter[category]": AI_CATEGORY,
+            },
+          }),
+        ),
       ),
-    ),
-    vendorFailed && getFindingsBySeverity({ filters: vendorFailed }),
-    vendorScope && getCompliancesOverview({ filters: vendorScope }),
-    vendorFailed &&
-      getLatestFindingGroups({
-        pageSize: TOP_RISKS,
-        sort: FINDINGS_SORT,
-        filters: vendorFailed,
-      }),
-    cloudScope ? getCloudAiFindingGroups(cloudScope) : [],
-  ]);
+      Promise.all(
+        types.map((type) =>
+          hasCompletedScan(
+            providers
+              .filter((provider) => provider.attributes.provider === type)
+              .map((provider) => provider.id),
+          ),
+        ),
+      ),
+      vendorFailed && getFindingsBySeverity({ filters: vendorFailed }),
+      vendorFailed &&
+        getLatestFindingGroups({
+          pageSize: TOP_RISKS,
+          filters: vendorFailed,
+        }),
+      cloudScope ? getCloudAiFindingGroups(cloudScope) : [],
+    ]);
 
   const results: Record<string, FindingsStatusAttributes> = {};
   statuses.forEach((status, index) => {
@@ -188,10 +237,8 @@ export async function getAiSecurityOverview(
     types: filters["filter[provider_type__in]"].split(","),
     results,
     cloudResults,
+    scannedTypes: types.filter((_, index) => scanned[index]),
     severity: severityCounts ?? NO_SEVERITY,
-    frameworks: listOf<ComplianceOverviewData>(compliances).filter(
-      (compliance) => Object.hasOwn(AI_FRAMEWORKS, compliance.id),
-    ),
     findingGroups: [...listOf<AiFindingGroup>(vendorGroups), ...cloudGroups],
   });
 }
