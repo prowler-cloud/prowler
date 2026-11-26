@@ -1,0 +1,3473 @@
+
+ { "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://csrc.nist.gov/ns/oscal/1.2.3/oscal-ar-schema.json",
+  "$comment" : "OSCAL Assessment Results Model: JSON Schema",
+  "type" : "object",
+  "definitions" : 
+  { "json-schema-directive" : 
+   { "title" : "Schema Directive",
+    "description" : "A JSON Schema directive to bind a specific schema to its document instance.",
+    "$id" : "#/definitions/json-schema-directive",
+    "$ref" : "#/definitions/URIReferenceDatatype" },
+   "oscal-ar-oscal-ar:assessment-results" : 
+   { "title" : "Security Assessment Results (SAR)",
+    "description" : "Security assessment results, such as those provided by a FedRAMP assessor in the FedRAMP Security Assessment Report.",
+    "$id" : "#/definitions/oscal-ar-oscal-ar:assessment-results",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Assessment Results Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this assessment results instance in this or other OSCAL instances. The locally defined UUID of the assessment result can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "metadata" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:metadata" },
+     "import-ap" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-ar:import-ap" },
+     "local-definitions" : 
+     { "title" : "Local Definitions",
+      "description" : "Used to define data objects that are used in the assessment plan, that do not appear in the referenced SSP.",
+      "type" : "object",
+      "properties" : 
+      { "objectives-and-methods" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:local-objective" } },
+       "activities" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:activity" } },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "additionalProperties" : false },
+     "results" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-ar:result" } },
+     "back-matter" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:back-matter" } },
+    "required" : 
+    [ "uuid",
+     "metadata",
+     "import-ap",
+     "results" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-ar:result" : 
+   { "title" : "Assessment Result",
+    "description" : "Used by the assessment results and POA&M. In the assessment results, this identifies all of the assessment observations and findings, initial and residual risks, deviations, and disposition. In the POA&M, this identifies initial and residual risks, deviations, and disposition.",
+    "$id" : "#/definitions/oscal-ar-oscal-ar:result",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Results Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this set of results in this or other OSCAL instances. The locally defined UUID of the assessment result can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "title" : 
+     { "title" : "Results Title",
+      "description" : "The title for this set of results.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Results Description",
+      "description" : "A human-readable description of this set of test results.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "start" : 
+     { "title" : "start field",
+      "description" : "Date/time stamp identifying the start of the evidence collection reflected in these results.",
+      "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+     "end" : 
+     { "title" : "end field",
+      "description" : "Date/time stamp identifying the end of the evidence collection reflected in these results. In a continuous motoring scenario, this may contain the same value as start if appropriate.",
+      "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "local-definitions" : 
+     { "title" : "Local Definitions",
+      "description" : "Used to define data objects that are used in the assessment plan, that do not appear in the referenced SSP.",
+      "type" : "object",
+      "properties" : 
+      { "components" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:system-component" } },
+       "inventory-items" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:inventory-item" } },
+       "users" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:system-user" } },
+       "assessment-assets" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-assets" },
+       "tasks" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:task" } } },
+      "additionalProperties" : false },
+     "reviewed-controls" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:reviewed-controls" },
+     "attestations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Attestation Statements",
+       "description" : "A set of textual statements, typically written by the assessor.",
+       "type" : "object",
+       "properties" : 
+       { "responsible-parties" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+        "parts" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-part" } } },
+       "required" : 
+       [ "parts" ],
+       "additionalProperties" : false } },
+     "assessment-log" : 
+     { "title" : "Assessment Log",
+      "description" : "A log of all assessment-related actions taken.",
+      "type" : "object",
+      "properties" : 
+      { "entries" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "title" : "Assessment Log Entry",
+         "description" : "Identifies the result of an action and/or task that occurred as part of executing an assessment plan or an assessment event that occurred in producing the assessment results.",
+         "type" : "object",
+         "properties" : 
+         { "uuid" : 
+          { "title" : "Assessment Log Entry Universally Unique Identifier",
+           "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference an assessment event in this or other OSCAL instances. The locally defined UUID of the assessment log entry can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+           "$ref" : "#/definitions/UUIDDatatype" },
+          "title" : 
+          { "title" : "Action Title",
+           "description" : "The title for this event.",
+           "$ref" : "#/definitions/MarkupLineDatatype" },
+          "description" : 
+          { "title" : "Action Description",
+           "description" : "A human-readable description of this event.",
+           "$ref" : "#/definitions/MarkupMultilineDatatype" },
+          "start" : 
+          { "title" : "Start",
+           "description" : "Identifies the start date and time of an event.",
+           "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+          "end" : 
+          { "title" : "End",
+           "description" : "Identifies the end date and time of an event. If the event is a point in time, the start and end will be the same date and time.",
+           "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "logged-by" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:logged-by" } },
+          "related-tasks" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:related-task" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "required" : 
+         [ "uuid",
+          "start" ],
+         "additionalProperties" : false } } },
+      "required" : 
+      [ "entries" ],
+      "additionalProperties" : false },
+     "observations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:observation" } },
+     "risks" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:risk" } },
+     "findings" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:finding" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "title",
+     "description",
+     "start",
+     "reviewed-controls" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-ar:import-ap" : 
+   { "title" : "Import Assessment Plan",
+    "description" : "Used by assessment-results to import information about the original plan for assessing the system.",
+    "$id" : "#/definitions/oscal-ar-oscal-ar:import-ap",
+    "type" : "object",
+    "properties" : 
+    { "href" : 
+     { "title" : "Assessment Plan Reference",
+      "description" : "A resolvable URL reference to the assessment plan governing the assessment activities.",
+      "$ref" : "#/definitions/URIReferenceDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "href" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:metadata" : 
+   { "title" : "Document Metadata",
+    "description" : "Provides information about the containing document, and defines concepts that are shared across the document.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:metadata",
+    "type" : "object",
+    "properties" : 
+    { "title" : 
+     { "title" : "Document Title",
+      "description" : "A name given to the document, which may be used by a tool for display and navigation.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "published" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:published" },
+     "last-modified" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:last-modified" },
+     "version" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:version" },
+     "oscal-version" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:oscal-version" },
+     "revisions" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Revision History Entry",
+       "description" : "An entry in a sequential list of revisions to the containing document, expected to be in reverse chronological order (i.e. latest first).",
+       "type" : "object",
+       "properties" : 
+       { "title" : 
+        { "title" : "Document Title",
+         "description" : "A name given to the document revision, which may be used by a tool for display and navigation.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "published" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:published" },
+        "last-modified" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:last-modified" },
+        "version" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:version" },
+        "oscal-version" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:oscal-version" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "version" ],
+       "additionalProperties" : false } },
+     "document-ids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:document-id" } },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "roles" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Role",
+       "description" : "Defines a function, which might be assigned to a party in a specific situation.",
+       "type" : "object",
+       "properties" : 
+       { "id" : 
+        { "title" : "Role Identifier",
+         "description" : "A unique identifier for the role.",
+         "$ref" : "#/definitions/TokenDatatype" },
+        "title" : 
+        { "title" : "Role Title",
+         "description" : "A name given to the role, which may be used by a tool for display and navigation.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "short-name" : 
+        { "title" : "Role Short Name",
+         "description" : "A short common name, abbreviation, or acronym for the role.",
+         "$ref" : "#/definitions/StringDatatype" },
+        "description" : 
+        { "title" : "Role Description",
+         "description" : "A summary of the role's purpose and associated responsibilities.",
+         "$ref" : "#/definitions/MarkupMultilineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "id",
+        "title" ],
+       "additionalProperties" : false } },
+     "locations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Location",
+       "description" : "A physical point of presence, which may be associated with people, organizations, or other concepts within the current or linked OSCAL document.",
+       "type" : "object",
+       "properties" : 
+       { "uuid" : 
+        { "title" : "Location Universally Unique Identifier",
+         "description" : "A unique ID for the location, for reference.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "title" : 
+        { "title" : "Location Title",
+         "description" : "A name given to the location, which may be used by a tool for display and navigation.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "address" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:address" },
+        "email-addresses" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:email-address" } },
+        "telephone-numbers" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:telephone-number" } },
+        "urls" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "title" : "Location URL",
+          "description" : "The uniform resource locator (URL) for a web site or other resource associated with the location.",
+          "$ref" : "#/definitions/URIDatatype" } },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "uuid" ],
+       "additionalProperties" : false } },
+     "parties" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Party",
+       "description" : "An organization or person, which may be associated with roles or other concepts within the current or linked OSCAL document.",
+       "type" : "object",
+       "anyOf" : 
+       [ 
+        { "properties" : 
+         { "uuid" : 
+          { "title" : "Party Universally Unique Identifier",
+           "description" : "A unique identifier for the party.",
+           "$ref" : "#/definitions/UUIDDatatype" },
+          "type" : 
+          { "title" : "Party Type",
+           "description" : "A category describing the kind of party the object describes.",
+           "allOf" : 
+           [ 
+            { "$ref" : "#/definitions/StringDatatype" },
+            
+            { "enum" : 
+             [ "person",
+              "organization" ] } ] },
+          "name" : 
+          { "title" : "Party Name",
+           "description" : "The full name of the party. This is typically the legal name associated with the party.",
+           "$ref" : "#/definitions/StringDatatype" },
+          "short-name" : 
+          { "title" : "Party Short Name",
+           "description" : "A short common name, abbreviation, or acronym for the party.",
+           "$ref" : "#/definitions/StringDatatype" },
+          "external-ids" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "title" : "Party External Identifier",
+            "description" : "An identifier for a person or organization using a designated scheme. e.g. an Open Researcher and Contributor ID (ORCID).",
+            "type" : "object",
+            "properties" : 
+            { "scheme" : 
+             { "title" : "External Identifier Schema",
+              "description" : "Indicates the type of external identifier.",
+              "anyOf" : 
+              [ 
+               { "$ref" : "#/definitions/URIDatatype" },
+               
+               { "enum" : 
+                [ "http://orcid.org/" ] } ] },
+             "id" : 
+             { "$ref" : "#/definitions/StringDatatype" } },
+            "required" : 
+            [ "id",
+             "scheme" ],
+            "additionalProperties" : false } },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "email-addresses" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:email-address" } },
+          "telephone-numbers" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:telephone-number" } },
+          "addresses" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:address" } },
+          "member-of-organizations" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "title" : "Organizational Affiliation",
+            "description" : "A reference to another party by UUID, typically an organization, that this subject is associated with.",
+            "$ref" : "#/definitions/UUIDDatatype" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "additionalProperties" : false },
+        
+        { "properties" : 
+         { "uuid" : 
+          { "title" : "Party Universally Unique Identifier",
+           "description" : "A unique identifier for the party.",
+           "$ref" : "#/definitions/UUIDDatatype" },
+          "type" : 
+          { "title" : "Party Type",
+           "description" : "A category describing the kind of party the object describes.",
+           "allOf" : 
+           [ 
+            { "$ref" : "#/definitions/StringDatatype" },
+            
+            { "enum" : 
+             [ "person",
+              "organization" ] } ] },
+          "name" : 
+          { "title" : "Party Name",
+           "description" : "The full name of the party. This is typically the legal name associated with the party.",
+           "$ref" : "#/definitions/StringDatatype" },
+          "short-name" : 
+          { "title" : "Party Short Name",
+           "description" : "A short common name, abbreviation, or acronym for the party.",
+           "$ref" : "#/definitions/StringDatatype" },
+          "external-ids" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "title" : "Party External Identifier",
+            "description" : "An identifier for a person or organization using a designated scheme. e.g. an Open Researcher and Contributor ID (ORCID).",
+            "type" : "object",
+            "properties" : 
+            { "scheme" : 
+             { "title" : "External Identifier Schema",
+              "description" : "Indicates the type of external identifier.",
+              "anyOf" : 
+              [ 
+               { "$ref" : "#/definitions/URIDatatype" },
+               
+               { "enum" : 
+                [ "http://orcid.org/" ] } ] },
+             "id" : 
+             { "$ref" : "#/definitions/StringDatatype" } },
+            "required" : 
+            [ "id",
+             "scheme" ],
+            "additionalProperties" : false } },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "email-addresses" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:email-address" } },
+          "telephone-numbers" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:telephone-number" } },
+          "location-uuids" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:location-uuid" } },
+          "member-of-organizations" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "title" : "Organizational Affiliation",
+            "description" : "A reference to another party by UUID, typically an organization, that this subject is associated with.",
+            "$ref" : "#/definitions/UUIDDatatype" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "additionalProperties" : false } ] } },
+     "responsible-parties" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+     "actions" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:action" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "title",
+     "last-modified",
+     "version",
+     "oscal-version" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:location-uuid" : 
+   { "title" : "Location Universally Unique Identifier Reference",
+    "description" : "Reference to a location by UUID.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:location-uuid",
+    "$ref" : "#/definitions/UUIDDatatype" },
+   "oscal-ar-oscal-metadata:party-uuid" : 
+   { "title" : "Party Universally Unique Identifier Reference",
+    "description" : "Reference to a party by UUID.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:party-uuid",
+    "$ref" : "#/definitions/UUIDDatatype" },
+   "oscal-ar-oscal-metadata:role-id" : 
+   { "title" : "Role Identifier Reference",
+    "description" : "Reference to a role by UUID.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:role-id",
+    "$ref" : "#/definitions/TokenDatatype" },
+   "oscal-ar-oscal-metadata:back-matter" : 
+   { "title" : "Back matter",
+    "description" : "A collection of resources that may be referenced from within the OSCAL document instance.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:back-matter",
+    "type" : "object",
+    "properties" : 
+    { "resources" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Resource",
+       "description" : "A resource associated with content in the containing document instance. A resource may be directly included in the document using base64 encoding or may point to one or more equivalent internet resources.",
+       "type" : "object",
+       "properties" : 
+       { "uuid" : 
+        { "title" : "Resource Universally Unique Identifier",
+         "description" : "A unique identifier for a resource.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "title" : 
+        { "title" : "Resource Title",
+         "description" : "An optional name given to the resource, which may be used by a tool for display and navigation.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "description" : 
+        { "title" : "Resource Description",
+         "description" : "An optional short summary of the resource used to indicate the purpose of the resource.",
+         "$ref" : "#/definitions/MarkupMultilineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "document-ids" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:document-id" } },
+        "citation" : 
+        { "title" : "Citation",
+         "description" : "An optional citation consisting of end note text using structured markup.",
+         "type" : "object",
+         "properties" : 
+         { "text" : 
+          { "title" : "Citation Text",
+           "description" : "A line of citation text.",
+           "$ref" : "#/definitions/MarkupLineDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } } },
+         "required" : 
+         [ "text" ],
+         "additionalProperties" : false },
+        "rlinks" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "title" : "Resource link",
+          "description" : "A URL-based pointer to an external resource with an optional hash for verification and change detection.",
+          "type" : "object",
+          "properties" : 
+          { "href" : 
+           { "title" : "Hypertext Reference",
+            "description" : "A resolvable URL pointing to the referenced resource.",
+            "$ref" : "#/definitions/URIReferenceDatatype" },
+           "media-type" : 
+           { "title" : "Media Type",
+            "description" : "A label that indicates the nature of a resource, as a data serialization or format.",
+            "$ref" : "#/definitions/StringDatatype" },
+           "hashes" : 
+           { "type" : "array",
+            "minItems" : 1,
+            "items" : 
+            { "$ref" : "#/definitions/oscal-ar-oscal-metadata:hash" } } },
+          "required" : 
+          [ "href" ],
+          "additionalProperties" : false } },
+        "base64" : 
+        { "title" : "Base64",
+         "description" : "A resource encoded using the Base64 alphabet defined by RFC 2045.",
+         "type" : "object",
+         "properties" : 
+         { "filename" : 
+          { "title" : "File Name",
+           "description" : "Name of the file before it was encoded as Base64 to be embedded in a resource. This is the name that will be assigned to the file when the file is decoded.",
+           "$ref" : "#/definitions/TokenDatatype" },
+          "media-type" : 
+          { "title" : "Media Type",
+           "description" : "A label that indicates the nature of a resource, as a data serialization or format.",
+           "$ref" : "#/definitions/StringDatatype" },
+          "value" : 
+          { "$ref" : "#/definitions/Base64Datatype" } },
+         "required" : 
+         [ "value" ],
+         "additionalProperties" : false },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "uuid" ],
+       "additionalProperties" : false } } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:property" : 
+   { "title" : "Property",
+    "description" : "An attribute, characteristic, or quality of the containing object expressed as a namespace qualified name/value pair.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:property",
+    "type" : "object",
+    "properties" : 
+    { "name" : 
+     { "title" : "Property Name",
+      "description" : "A textual label, within a namespace, that identifies a specific attribute, characteristic, or quality of the property's containing object.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "uuid" : 
+     { "title" : "Property Universally Unique Identifier",
+      "description" : "A unique identifier for a property.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "ns" : 
+     { "title" : "Property Namespace",
+      "description" : "A namespace qualifying the property's name. This allows different organizations to associate distinct semantics with the same name.",
+      "$ref" : "#/definitions/URIDatatype" },
+     "value" : 
+     { "title" : "Property Value",
+      "description" : "Indicates the value of the attribute, characteristic, or quality.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "class" : 
+     { "title" : "Property Class",
+      "description" : "A textual label that provides a sub-type or characterization of the property's name.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "group" : 
+     { "title" : "Property Group",
+      "description" : "An identifier for relating distinct sets of properties.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "name",
+     "value" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:link" : 
+   { "title" : "Link",
+    "description" : "A reference to a local or remote resource, that has a specific relation to the containing object.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:link",
+    "type" : "object",
+    "properties" : 
+    { "href" : 
+     { "title" : "Hypertext Reference",
+      "description" : "A resolvable URL reference to a resource.",
+      "$ref" : "#/definitions/URIReferenceDatatype" },
+     "rel" : 
+     { "title" : "Link Relation Type",
+      "description" : "Describes the type of relationship provided by the link's hypertext reference. This can be an indicator of the link's purpose.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "reference" ] } ] },
+     "media-type" : 
+     { "title" : "Media Type",
+      "description" : "A label that indicates the nature of a resource, as a data serialization or format.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "resource-fragment" : 
+     { "title" : "Resource Fragment",
+      "description" : "In case where the href points to a back-matter/resource, this value will indicate the URI fragment to append to any rlink associated with the resource. This value MUST be URI encoded.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "text" : 
+     { "title" : "Link Text",
+      "description" : "A textual label to associate with the link, which may be used for presentation in a tool.",
+      "$ref" : "#/definitions/MarkupLineDatatype" } },
+    "required" : 
+    [ "href" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:responsible-party" : 
+   { "title" : "Responsible Party",
+    "description" : "A reference to a set of persons and/or organizations that have responsibility for performing the referenced role in the context of the containing object.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:responsible-party",
+    "type" : "object",
+    "properties" : 
+    { "role-id" : 
+     { "title" : "Responsible Role",
+      "description" : "A reference to a role performed by a party.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "party-uuids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:party-uuid" } },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "role-id",
+     "party-uuids" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:action" : 
+   { "title" : "Action",
+    "description" : "An action applied by a role within a given party to the content.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:action",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Action Universally Unique Identifier",
+      "description" : "A unique identifier that can be used to reference this defined action elsewhere in an OSCAL document. A UUID should be consistently used for a given location across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "date" : 
+     { "title" : "Action Occurrence Date",
+      "description" : "The date and time when the action occurred.",
+      "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+     "type" : 
+     { "title" : "Action Type",
+      "description" : "The type of action documented by the assembly, such as an approval.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "system" : 
+     { "title" : "Action Type System",
+      "description" : "Specifies the action type system used.",
+      "$ref" : "#/definitions/URIDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "responsible-parties" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "type",
+     "system" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:responsible-role" : 
+   { "title" : "Responsible Role",
+    "description" : "A reference to a role with responsibility for performing a function relative to the containing object, optionally associated with a set of persons and/or organizations that perform that role.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:responsible-role",
+    "type" : "object",
+    "properties" : 
+    { "role-id" : 
+     { "title" : "Responsible Role ID",
+      "description" : "A human-oriented identifier reference to a role performed.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "party-uuids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:party-uuid" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "role-id" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:hash" : 
+   { "title" : "Hash",
+    "description" : "A representation of a cryptographic digest generated over a resource using a specified hash algorithm.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:hash",
+    "type" : "object",
+    "properties" : 
+    { "algorithm" : 
+     { "title" : "Hash algorithm",
+      "description" : "The digest method by which a hash is derived.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/StringDatatype" },
+       
+       { "enum" : 
+        [ "SHA-224",
+         "SHA-256",
+         "SHA-384",
+         "SHA-512",
+         "SHA3-224",
+         "SHA3-256",
+         "SHA3-384",
+         "SHA3-512" ] } ] },
+     "value" : 
+     { "$ref" : "#/definitions/StringDatatype" } },
+    "required" : 
+    [ "value",
+     "algorithm" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:remarks" : 
+   { "title" : "Remarks",
+    "description" : "Additional commentary about the containing object.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:remarks",
+    "$ref" : "#/definitions/MarkupMultilineDatatype" },
+   "oscal-ar-oscal-metadata:published" : 
+   { "title" : "Publication Timestamp",
+    "description" : "The date and time the document was last made available.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:published",
+    "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+   "oscal-ar-oscal-metadata:last-modified" : 
+   { "title" : "Last Modified Timestamp",
+    "description" : "The date and time the document was last stored for later retrieval.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:last-modified",
+    "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+   "oscal-ar-oscal-metadata:version" : 
+   { "title" : "Document Version",
+    "description" : "Used to distinguish a specific revision of an OSCAL document from other previous and future versions.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:version",
+    "$ref" : "#/definitions/StringDatatype" },
+   "oscal-ar-oscal-metadata:oscal-version" : 
+   { "title" : "OSCAL Version",
+    "description" : "The OSCAL model version the document was authored against and will conform to as valid.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:oscal-version",
+    "$ref" : "#/definitions/StringDatatype" },
+   "oscal-ar-oscal-metadata:email-address" : 
+   { "title" : "Email Address",
+    "description" : "An email address as defined by RFC 5322 Section 3.4.1.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:email-address",
+    "$ref" : "#/definitions/EmailAddressDatatype" },
+   "oscal-ar-oscal-metadata:telephone-number" : 
+   { "title" : "Telephone Number",
+    "description" : "A telephone service number as defined by ITU-T E.164.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:telephone-number",
+    "type" : "object",
+    "properties" : 
+    { "type" : 
+     { "title" : "type flag",
+      "description" : "Indicates the type of phone number.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/StringDatatype" },
+       
+       { "enum" : 
+        [ "home",
+         "office",
+         "mobile" ] } ] },
+     "number" : 
+     { "$ref" : "#/definitions/StringDatatype" } },
+    "required" : 
+    [ "number" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:address" : 
+   { "title" : "Address",
+    "description" : "A postal address for the location.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:address",
+    "type" : "object",
+    "properties" : 
+    { "type" : 
+     { "title" : "Address Type",
+      "description" : "Indicates the type of address.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "home",
+         "work" ] } ] },
+     "addr-lines" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:addr-line" } },
+     "city" : 
+     { "title" : "City",
+      "description" : "City, town or geographical region for the mailing address.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "state" : 
+     { "title" : "State",
+      "description" : "State, province or analogous geographical region for a mailing address.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "postal-code" : 
+     { "title" : "Postal Code",
+      "description" : "Postal or ZIP code for mailing address.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "country" : 
+     { "title" : "Country Code",
+      "description" : "The ISO 3166-1 alpha-2 country code for the mailing address.",
+      "$ref" : "#/definitions/StringDatatype" } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-metadata:addr-line" : 
+   { "title" : "Address line",
+    "description" : "A single line of an address.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:addr-line",
+    "$ref" : "#/definitions/StringDatatype" },
+   "oscal-ar-oscal-metadata:document-id" : 
+   { "title" : "Document Identifier",
+    "description" : "A document identifier qualified by an identifier scheme.",
+    "$id" : "#/definitions/oscal-ar-oscal-metadata:document-id",
+    "type" : "object",
+    "properties" : 
+    { "scheme" : 
+     { "title" : "Document Identification Scheme",
+      "description" : "Qualifies the kind of document identifier using a URI. If the scheme is not provided the value of the element will be interpreted as a string of characters.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/URIDatatype" },
+       
+       { "enum" : 
+        [ "http://www.doi.org/" ] } ] },
+     "identifier" : 
+     { "$ref" : "#/definitions/StringDatatype" } },
+    "required" : 
+    [ "identifier" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:import-ssp" : 
+   { "title" : "Import System Security Plan",
+    "description" : "Used by the assessment plan and POA&M to import information about the system.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:import-ssp",
+    "type" : "object",
+    "properties" : 
+    { "href" : 
+     { "title" : "System Security Plan Reference",
+      "description" : "A resolvable URL reference to the system security plan for the system being assessed.",
+      "$ref" : "#/definitions/URIReferenceDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "href" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:local-objective" : 
+   { "title" : "Assessment-Specific Control Objective",
+    "description" : "A local definition of a control objective for this assessment. Uses catalog syntax for control objective and assessment actions.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:local-objective",
+    "type" : "object",
+    "properties" : 
+    { "control-id" : 
+     { "title" : "Control Identifier Reference",
+      "description" : "A reference to a control with a corresponding id value. When referencing an externally defined control, the Control Identifier Reference must be used in the context of the external / imported OSCAL instance (e.g., uri-reference).",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "description" : 
+     { "title" : "Objective Description",
+      "description" : "A human-readable description of this control objective.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "parts" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-control-common:part" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "control-id",
+     "parts" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:assessment-method" : 
+   { "title" : "Assessment Method",
+    "description" : "A local definition of a control objective. Uses catalog syntax for control objective and assessment activities.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-method",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Assessment Method Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this assessment method elsewhere in this or other OSCAL instances. The locally defined UUID of the assessment method can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "description" : 
+     { "title" : "Assessment Method Description",
+      "description" : "A human-readable description of this assessment method.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "part" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-part" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "part" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:activity" : 
+   { "title" : "Activity",
+    "description" : "Identifies an assessment or related process that can be performed. In the assessment plan, this is an intended activity which may be associated with an assessment task. In the assessment results, this an activity that was actually performed as part of an assessment.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:activity",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Assessment Activity Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this assessment activity elsewhere in this or other OSCAL instances. The locally defined UUID of the activity can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "title" : 
+     { "title" : "Included Activity Title",
+      "description" : "The title for this included activity.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Included Activity Description",
+      "description" : "A human-readable description of this included activity.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "steps" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Step",
+       "description" : "Identifies an individual step in a series of steps related to an activity, such as an assessment test or examination procedure.",
+       "type" : "object",
+       "properties" : 
+       { "uuid" : 
+        { "title" : "Step Universally Unique Identifier",
+         "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this step elsewhere in this or other OSCAL instances. The locally defined UUID of the step (in a series of steps) can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "title" : 
+        { "title" : "Step Title",
+         "description" : "The title for this step.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "description" : 
+        { "title" : "Step Description",
+         "description" : "A human-readable description of this step.",
+         "$ref" : "#/definitions/MarkupMultilineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "reviewed-controls" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:reviewed-controls" },
+        "responsible-roles" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-role" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "uuid",
+        "description" ],
+       "additionalProperties" : false } },
+     "related-controls" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:reviewed-controls" },
+     "responsible-roles" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-role" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "description" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:task" : 
+   { "title" : "Task",
+    "description" : "Represents a scheduled event or milestone, which may be associated with a series of assessment actions.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:task",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Task Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this task elsewhere in this or other OSCAL instances. The locally defined UUID of the task can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "type" : 
+     { "title" : "Task Type",
+      "description" : "The type of task.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "milestone",
+         "action" ] } ] },
+     "title" : 
+     { "title" : "Task Title",
+      "description" : "The title for this task.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Task Description",
+      "description" : "A human-readable description of this task.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "timing" : 
+     { "title" : "Event Timing",
+      "description" : "The timing under which the task is intended to occur.",
+      "type" : "object",
+      "anyOf" : 
+      [ 
+       { "properties" : 
+        { "on-date" : 
+         { "title" : "On Date Condition",
+          "description" : "The task is intended to occur on the specified date.",
+          "type" : "object",
+          "properties" : 
+          { "date" : 
+           { "title" : "On Date Condition",
+            "description" : "The task must occur on the specified date.",
+            "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+           "remarks" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+          "required" : 
+          [ "date" ],
+          "additionalProperties" : false } },
+        "required" : 
+        [ "on-date" ],
+        "additionalProperties" : false },
+       
+       { "properties" : 
+        { "within-date-range" : 
+         { "title" : "On Date Range Condition",
+          "description" : "The task is intended to occur within the specified date range.",
+          "type" : "object",
+          "properties" : 
+          { "start" : 
+           { "title" : "Start Date Condition",
+            "description" : "The task must occur on or after the specified date.",
+            "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+           "end" : 
+           { "title" : "End Date Condition",
+            "description" : "The task must occur on or before the specified date.",
+            "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+           "remarks" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+          "required" : 
+          [ "start",
+           "end" ],
+          "additionalProperties" : false } },
+        "required" : 
+        [ "within-date-range" ],
+        "additionalProperties" : false },
+       
+       { "properties" : 
+        { "at-frequency" : 
+         { "title" : "Frequency Condition",
+          "description" : "The task is intended to occur at the specified frequency.",
+          "type" : "object",
+          "properties" : 
+          { "period" : 
+           { "title" : "Period",
+            "description" : "The task must occur after the specified period has elapsed.",
+            "$ref" : "#/definitions/PositiveIntegerDatatype" },
+           "unit" : 
+           { "title" : "Time Unit",
+            "description" : "The unit of time for the period.",
+            "allOf" : 
+            [ 
+             { "$ref" : "#/definitions/StringDatatype" },
+             
+             { "enum" : 
+              [ "seconds",
+               "minutes",
+               "hours",
+               "days",
+               "months",
+               "years" ] } ] },
+           "remarks" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+          "required" : 
+          [ "period",
+           "unit" ],
+          "additionalProperties" : false } },
+        "required" : 
+        [ "at-frequency" ],
+        "additionalProperties" : false } ] },
+     "dependencies" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Task Dependency",
+       "description" : "Used to indicate that a task is dependent on another task.",
+       "type" : "object",
+       "properties" : 
+       { "task-uuid" : 
+        { "title" : "Task Universally Unique Identifier Reference",
+         "description" : "A machine-oriented identifier reference to a unique task.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "task-uuid" ],
+       "additionalProperties" : false } },
+     "tasks" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:task" } },
+     "associated-activities" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Associated Activity",
+       "description" : "Identifies an individual activity to be performed as part of a task.",
+       "type" : "object",
+       "properties" : 
+       { "activity-uuid" : 
+        { "title" : "Activity Universally Unique Identifier Reference",
+         "description" : "A machine-oriented identifier reference to an activity defined in the list of activities.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "responsible-roles" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-role" } },
+        "subjects" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-subject" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "activity-uuid",
+        "subjects" ],
+       "additionalProperties" : false } },
+     "subjects" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-subject" } },
+     "responsible-roles" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-role" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "type",
+     "title" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:reviewed-controls" : 
+   { "title" : "Reviewed Controls and Control Objectives",
+    "description" : "Identifies the controls being assessed and their control objectives.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:reviewed-controls",
+    "type" : "object",
+    "properties" : 
+    { "description" : 
+     { "title" : "Control Objective Description",
+      "description" : "A human-readable description of control objectives.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "control-selections" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Assessed Controls",
+       "description" : "Identifies the controls being assessed. In the assessment plan, these are the planned controls. In the assessment results, these are the actual controls, and reflects any changes from the plan.",
+       "type" : "object",
+       "anyOf" : 
+       [ 
+        { "properties" : 
+         { "description" : 
+          { "title" : "Assessed Controls Description",
+           "description" : "A human-readable description of in-scope controls specified for assessment.",
+           "$ref" : "#/definitions/MarkupMultilineDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "include-all" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-control-common:include-all" },
+          "exclude-controls" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-control-by-id" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "required" : 
+         [ "include-all" ],
+         "additionalProperties" : false },
+        
+        { "properties" : 
+         { "description" : 
+          { "title" : "Assessed Controls Description",
+           "description" : "A human-readable description of in-scope controls specified for assessment.",
+           "$ref" : "#/definitions/MarkupMultilineDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "include-controls" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-control-by-id" } },
+          "exclude-controls" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-control-by-id" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "required" : 
+         [ "include-controls" ],
+         "additionalProperties" : false } ] } },
+     "control-objective-selections" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Referenced Control Objectives",
+       "description" : "Identifies the control objectives of the assessment. In the assessment plan, these are the planned objectives. In the assessment results, these are the assessed objectives, and reflects any changes from the plan.",
+       "type" : "object",
+       "anyOf" : 
+       [ 
+        { "properties" : 
+         { "description" : 
+          { "title" : "Control Objectives Description",
+           "description" : "A human-readable description of this collection of control objectives.",
+           "$ref" : "#/definitions/MarkupMultilineDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "include-all" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-control-common:include-all" },
+          "exclude-objectives" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-objective-by-id" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "required" : 
+         [ "include-all" ],
+         "additionalProperties" : false },
+        
+        { "properties" : 
+         { "description" : 
+          { "title" : "Control Objectives Description",
+           "description" : "A human-readable description of this collection of control objectives.",
+           "$ref" : "#/definitions/MarkupMultilineDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "include-objectives" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-objective-by-id" } },
+          "exclude-objectives" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-objective-by-id" } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "required" : 
+         [ "include-objectives" ],
+         "additionalProperties" : false } ] } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "control-selections" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:select-control-by-id" : 
+   { "title" : "Select Control",
+    "description" : "Used to select a control for inclusion/exclusion based on one or more control identifiers. A set of statement identifiers can be used to target the inclusion/exclusion to only specific control statements providing more granularity over the specific statements that are within the assessment scope.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:select-control-by-id",
+    "type" : "object",
+    "properties" : 
+    { "control-id" : 
+     { "title" : "Control Identifier Reference",
+      "description" : "A reference to a control with a corresponding id value. When referencing an externally defined control, the Control Identifier Reference must be used in the context of the external / imported OSCAL instance (e.g., uri-reference).",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "statement-ids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Include Specific Statements",
+       "description" : "Used to constrain the selection to only specificity identified statements.",
+       "$ref" : "#/definitions/TokenDatatype" } } },
+    "required" : 
+    [ "control-id" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:select-objective-by-id" : 
+   { "title" : "Select Objective",
+    "description" : "Used to select a control objective for inclusion/exclusion based on the control objective's identifier.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:select-objective-by-id",
+    "type" : "object",
+    "properties" : 
+    { "objective-id" : 
+     { "title" : "Objective ID",
+      "description" : "Points to an assessment objective.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "objective-id" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:assessment-subject-placeholder" : 
+   { "title" : "Assessment Subject Placeholder",
+    "description" : "Used when the assessment subjects will be determined as part of one or more other assessment activities. These assessment subjects will be recorded in the assessment results in the assessment log.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-subject-placeholder",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Assessment Subject Placeholder Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier for a set of assessment subjects that will be identified by a task or an activity that is part of a task. The locally defined UUID of the assessment subject placeholder can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "description" : 
+     { "title" : "Assessment Subject Placeholder Description",
+      "description" : "A human-readable description of intent of this assessment subject placeholder.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "sources" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Assessment Subject Source",
+       "description" : "Assessment subjects will be identified while conducting the referenced activity-instance.",
+       "type" : "object",
+       "properties" : 
+       { "task-uuid" : 
+        { "title" : "Task Universally Unique Identifier",
+         "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference (in this or other OSCAL instances) an assessment activity to be performed as part of the event. The locally defined UUID of the task can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "task-uuid" ],
+       "additionalProperties" : false } },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "sources" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:assessment-subject" : 
+   { "title" : "Subject of Assessment",
+    "description" : "Identifies system elements being assessed, such as components, inventory items, and locations. In the assessment plan, this identifies a planned assessment subject. In the assessment results this is an actual assessment subject, and reflects any changes from the plan. exactly what will be the focus of this assessment. Any subjects not identified in this way are out-of-scope.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-subject",
+    "type" : "object",
+    "anyOf" : 
+    [ 
+     { "properties" : 
+      { "type" : 
+       { "title" : "Subject Type",
+        "description" : "Indicates the type of assessment subject, such as a component, inventory, item, location, or party represented by this selection statement.",
+        "anyOf" : 
+        [ 
+         { "$ref" : "#/definitions/TokenDatatype" },
+         
+         { "enum" : 
+          [ "component",
+           "inventory-item",
+           "location",
+           "party",
+           "user" ] } ] },
+       "description" : 
+       { "title" : "Include Subjects Description",
+        "description" : "A human-readable description of the collection of subjects being included in this assessment.",
+        "$ref" : "#/definitions/MarkupMultilineDatatype" },
+       "props" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+       "links" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+       "include-all" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-control-common:include-all" },
+       "exclude-subjects" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-subject-by-id" } },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "required" : 
+      [ "include-all" ],
+      "additionalProperties" : false },
+     
+     { "properties" : 
+      { "type" : 
+       { "title" : "Subject Type",
+        "description" : "Indicates the type of assessment subject, such as a component, inventory, item, location, or party represented by this selection statement.",
+        "anyOf" : 
+        [ 
+         { "$ref" : "#/definitions/TokenDatatype" },
+         
+         { "enum" : 
+          [ "component",
+           "inventory-item",
+           "location",
+           "party",
+           "user" ] } ] },
+       "description" : 
+       { "title" : "Include Subjects Description",
+        "description" : "A human-readable description of the collection of subjects being included in this assessment.",
+        "$ref" : "#/definitions/MarkupMultilineDatatype" },
+       "props" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+       "links" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+       "include-subjects" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-subject-by-id" } },
+       "exclude-subjects" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:select-subject-by-id" } },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "required" : 
+      [ "include-subjects" ],
+      "additionalProperties" : false } ] },
+   "oscal-ar-oscal-assessment-common:select-subject-by-id" : 
+   { "title" : "Select Assessment Subject",
+    "description" : "Identifies a set of assessment subjects to include/exclude by UUID.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:select-subject-by-id",
+    "type" : "object",
+    "properties" : 
+    { "subject-uuid" : 
+     { "title" : "Subject Universally Unique Identifier Reference",
+      "description" : "A machine-oriented identifier reference to a component, inventory-item, location, party, user, or resource using it's UUID.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "type" : 
+     { "title" : "Subject Universally Unique Identifier Reference Type",
+      "description" : "Used to indicate the type of object pointed to by the uuid-ref within a subject.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "component",
+         "inventory-item",
+         "location",
+         "party",
+         "user",
+         "resource" ] } ] },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "subject-uuid",
+     "type" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:subject-reference" : 
+   { "title" : "Identifies the Subject",
+    "description" : "A human-oriented identifier reference to a resource. Use type to indicate whether the identified resource is a component, inventory item, location, user, or something else.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:subject-reference",
+    "type" : "object",
+    "properties" : 
+    { "subject-uuid" : 
+     { "title" : "Subject Universally Unique Identifier Reference",
+      "description" : "A machine-oriented identifier reference to a component, inventory-item, location, party, user, or resource using it's UUID.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "type" : 
+     { "title" : "Subject Universally Unique Identifier Reference Type",
+      "description" : "Used to indicate the type of object pointed to by the uuid-ref within a subject.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "component",
+         "inventory-item",
+         "location",
+         "party",
+         "user",
+         "resource" ] } ] },
+     "title" : 
+     { "title" : "Subject Reference Title",
+      "description" : "The title or name for the referenced subject.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "subject-uuid",
+     "type" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:assessment-assets" : 
+   { "title" : "Assessment Assets",
+    "description" : "Identifies the assets used to perform this assessment, such as the assessment team, scanning tools, and assumptions.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-assets",
+    "type" : "object",
+    "properties" : 
+    { "components" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:system-component" } },
+     "assessment-platforms" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Assessment Platform",
+       "description" : "Used to represent the toolset used to perform aspects of the assessment.",
+       "type" : "object",
+       "properties" : 
+       { "uuid" : 
+        { "title" : "Assessment Platform Universally Unique Identifier",
+         "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this assessment platform elsewhere in this or other OSCAL instances. The locally defined UUID of the assessment platform can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "title" : 
+        { "title" : "Assessment Platform Title",
+         "description" : "The title or name for the assessment platform.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "uses-components" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "title" : "Uses Component",
+          "description" : "The set of components that are used by the assessment platform.",
+          "type" : "object",
+          "properties" : 
+          { "component-uuid" : 
+           { "title" : "Component Universally Unique Identifier Reference",
+            "description" : "A machine-oriented identifier reference to a component that is implemented as part of an inventory item.",
+            "$ref" : "#/definitions/UUIDDatatype" },
+           "props" : 
+           { "type" : "array",
+            "minItems" : 1,
+            "items" : 
+            { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+           "links" : 
+           { "type" : "array",
+            "minItems" : 1,
+            "items" : 
+            { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+           "responsible-parties" : 
+           { "type" : "array",
+            "minItems" : 1,
+            "items" : 
+            { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+           "remarks" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+          "required" : 
+          [ "component-uuid" ],
+          "additionalProperties" : false } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "uuid" ],
+       "additionalProperties" : false } } },
+    "required" : 
+    [ "assessment-platforms" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:finding-target" : 
+   { "title" : "Objective Status",
+    "description" : "Captures an assessor's conclusions regarding the degree to which an objective is satisfied.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:finding-target",
+    "type" : "object",
+    "properties" : 
+    { "type" : 
+     { "title" : "Finding Target Type",
+      "description" : "Identifies the type of the target.",
+      "allOf" : 
+      [ 
+       { "$ref" : "#/definitions/StringDatatype" },
+       
+       { "enum" : 
+        [ "statement-id",
+         "objective-id" ] } ] },
+     "target-id" : 
+     { "title" : "Finding Target Identifier Reference",
+      "description" : "A machine-oriented identifier reference for a specific target qualified by the type.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "title" : 
+     { "title" : "Objective Status Title",
+      "description" : "The title for this objective status.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Objective Status Description",
+      "description" : "A human-readable description of the assessor's conclusions regarding the degree to which an objective is satisfied.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "status" : 
+     { "title" : "Objective Status",
+      "description" : "A determination of if the objective is satisfied or not within a given system.",
+      "type" : "object",
+      "properties" : 
+      { "state" : 
+       { "title" : "Objective Status State",
+        "description" : "An indication as to whether the objective is satisfied or not.",
+        "allOf" : 
+        [ 
+         { "$ref" : "#/definitions/TokenDatatype" },
+         
+         { "enum" : 
+          [ "satisfied",
+           "not-satisfied" ] } ] },
+       "reason" : 
+       { "title" : "Objective Status Reason",
+        "description" : "The reason the objective was given it's status.",
+        "anyOf" : 
+        [ 
+         { "$ref" : "#/definitions/TokenDatatype" },
+         
+         { "enum" : 
+          [ "pass",
+           "fail",
+           "other" ] } ] },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "required" : 
+      [ "state" ],
+      "additionalProperties" : false },
+     "implementation-status" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:implementation-status" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "type",
+     "target-id",
+     "status" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:finding" : 
+   { "title" : "Finding",
+    "description" : "Describes an individual finding.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:finding",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Finding Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this finding in this or other OSCAL instances. The locally defined UUID of the finding can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "title" : 
+     { "title" : "Finding Title",
+      "description" : "The title for this finding.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Finding Description",
+      "description" : "A human-readable description of this finding.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "origins" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:origin" } },
+     "target" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:finding-target" },
+     "implementation-statement-uuid" : 
+     { "title" : "Implementation Statement UUID",
+      "description" : "A machine-oriented identifier reference to the implementation statement in the SSP to which this finding is related.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "related-observations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:related-observation" } },
+     "related-risks" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:associated-risk" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "title",
+     "description",
+     "target" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:related-observation" : 
+   { "title" : "Related Observation",
+    "description" : "Relates the identified element to a set of referenced observations that were used to support its determination.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:related-observation",
+    "type" : "object",
+    "properties" : 
+    { "observation-uuid" : 
+     { "title" : "Observation Universally Unique Identifier Reference",
+      "description" : "A machine-oriented identifier reference to an observation defined in the list of observations.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "observation-uuid" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:associated-risk" : 
+   { "title" : "Associated Risk",
+    "description" : "Relates the finding to a set of referenced risks that were used to determine the finding.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:associated-risk",
+    "type" : "object",
+    "properties" : 
+    { "risk-uuid" : 
+     { "title" : "Risk Universally Unique Identifier Reference",
+      "description" : "A machine-oriented identifier reference to a risk defined in the list of risks.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "risk-uuid" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:observation" : 
+   { "title" : "Observation",
+    "description" : "Describes an individual observation.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:observation",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Observation Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this observation elsewhere in this or other OSCAL instances. The locally defined UUID of the observation can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "title" : 
+     { "title" : "Observation Title",
+      "description" : "The title for this observation.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Observation Description",
+      "description" : "A human-readable description of this assessment observation.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "methods" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Observation Method",
+       "description" : "Identifies how the observation was made.",
+       "anyOf" : 
+       [ 
+        { "$ref" : "#/definitions/StringDatatype" },
+        
+        { "enum" : 
+         [ "EXAMINE",
+          "INTERVIEW",
+          "TEST",
+          "UNKNOWN" ] } ] } },
+     "types" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Observation Type",
+       "description" : "Identifies the nature of the observation. More than one may be used to further qualify and enable filtering.",
+       "anyOf" : 
+       [ 
+        { "$ref" : "#/definitions/TokenDatatype" },
+        
+        { "enum" : 
+         [ "ssp-statement-issue",
+          "control-objective",
+          "mitigation",
+          "finding",
+          "discovery",
+          "historic" ] } ] } },
+     "origins" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:origin" } },
+     "subjects" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:subject-reference" } },
+     "relevant-evidence" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Relevant Evidence",
+       "description" : "Links this observation to relevant evidence.",
+       "type" : "object",
+       "properties" : 
+       { "href" : 
+        { "title" : "Relevant Evidence Reference",
+         "description" : "A resolvable URL reference to relevant evidence.",
+         "$ref" : "#/definitions/URIReferenceDatatype" },
+        "description" : 
+        { "title" : "Relevant Evidence Description",
+         "description" : "A human-readable description of this evidence.",
+         "$ref" : "#/definitions/MarkupMultilineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "description" ],
+       "additionalProperties" : false } },
+     "collected" : 
+     { "title" : "Collected Field",
+      "description" : "Date/time stamp identifying when the finding information was collected.",
+      "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+     "expires" : 
+     { "title" : "Expires Field",
+      "description" : "Date/time identifying when the finding information is out-of-date and no longer valid. Typically used with continuous assessment scenarios.",
+      "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "description",
+     "methods",
+     "collected" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:origin" : 
+   { "title" : "Origin",
+    "description" : "Identifies the source of the finding, such as a tool, interviewed person, or activity.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:origin",
+    "type" : "object",
+    "properties" : 
+    { "actors" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:origin-actor" } },
+     "related-tasks" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:related-task" } } },
+    "required" : 
+    [ "actors" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:origin-actor" : 
+   { "title" : "Originating Actor",
+    "description" : "The actor that produces an observation, a finding, or a risk. One or more actor type can be used to specify a person that is using a tool.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:origin-actor",
+    "type" : "object",
+    "properties" : 
+    { "type" : 
+     { "title" : "Actor Type",
+      "description" : "The kind of actor.",
+      "allOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "tool",
+         "assessment-platform",
+         "party" ] } ] },
+     "actor-uuid" : 
+     { "title" : "Actor Universally Unique Identifier Reference",
+      "description" : "A machine-oriented identifier reference to the tool or person based on the associated type.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "role-id" : 
+     { "title" : "Actor Role",
+      "description" : "For a party, this can optionally be used to specify the role the actor was performing.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } } },
+    "required" : 
+    [ "type",
+     "actor-uuid" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:related-task" : 
+   { "title" : "Task Reference",
+    "description" : "Identifies an individual task for which the containing object is a consequence of.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:related-task",
+    "type" : "object",
+    "properties" : 
+    { "task-uuid" : 
+     { "title" : "Task Universally Unique Identifier Reference",
+      "description" : "A machine-oriented identifier reference to a unique task.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "responsible-parties" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+     "subjects" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-subject" } },
+     "identified-subject" : 
+     { "title" : "Identified Subject",
+      "description" : "Used to detail assessment subjects that were identified by this task.",
+      "type" : "object",
+      "properties" : 
+      { "subject-placeholder-uuid" : 
+       { "title" : "Assessment Subject Placeholder Universally Unique Identifier Reference",
+        "description" : "A machine-oriented identifier reference to a unique assessment subject placeholder defined by this task.",
+        "$ref" : "#/definitions/UUIDDatatype" },
+       "subjects" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-subject" } } },
+      "required" : 
+      [ "subject-placeholder-uuid",
+       "subjects" ],
+      "additionalProperties" : false },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "task-uuid" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:threat-id" : 
+   { "title" : "Threat ID",
+    "description" : "A pointer, by ID, to an externally-defined threat.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:threat-id",
+    "type" : "object",
+    "properties" : 
+    { "system" : 
+     { "title" : "Threat Type Identification System",
+      "description" : "Specifies the source of the threat information.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/URIDatatype" },
+       
+       { "enum" : 
+        [ "http://fedramp.gov",
+         "http://fedramp.gov/ns/oscal" ] } ] },
+     "href" : 
+     { "title" : "Threat Information Resource Reference",
+      "description" : "An optional location for the threat data, from which this ID originates.",
+      "$ref" : "#/definitions/URIReferenceDatatype" },
+     "id" : 
+     { "$ref" : "#/definitions/URIDatatype" } },
+    "required" : 
+    [ "id",
+     "system" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:risk" : 
+   { "title" : "Identified Risk",
+    "description" : "An identified risk.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:risk",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Risk Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this risk elsewhere in this or other OSCAL instances. The locally defined UUID of the risk can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "title" : 
+     { "title" : "Risk Title",
+      "description" : "The title for this risk.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Risk Description",
+      "description" : "A human-readable summary of the identified risk, to include a statement of how the risk impacts the system.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "statement" : 
+     { "title" : "Risk Statement",
+      "description" : "An summary of impact for how the risk affects the system.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "status" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:risk-status" },
+     "origins" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:origin" } },
+     "threat-ids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:threat-id" } },
+     "characterizations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:characterization" } },
+     "mitigating-factors" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Mitigating Factor",
+       "description" : "Describes an existing mitigating factor that may affect the overall determination of the risk, with an optional link to an implementation statement in the SSP.",
+       "type" : "object",
+       "properties" : 
+       { "uuid" : 
+        { "title" : "Mitigating Factor Universally Unique Identifier",
+         "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this mitigating factor elsewhere in this or other OSCAL instances. The locally defined UUID of the mitigating factor can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "implementation-uuid" : 
+        { "title" : "Implementation UUID",
+         "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this implementation statement elsewhere in this or other OSCAL instancess. The locally defined UUID of the implementation statement can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "description" : 
+        { "title" : "Mitigating Factor Description",
+         "description" : "A human-readable description of this mitigating factor.",
+         "$ref" : "#/definitions/MarkupMultilineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "subjects" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:subject-reference" } } },
+       "required" : 
+       [ "uuid",
+        "description" ],
+       "additionalProperties" : false } },
+     "deadline" : 
+     { "title" : "Risk Resolution Deadline",
+      "description" : "The date/time by which the risk must be resolved.",
+      "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+     "remediations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:response" } },
+     "risk-log" : 
+     { "title" : "Risk Log",
+      "description" : "A log of all risk-related tasks taken.",
+      "type" : "object",
+      "properties" : 
+      { "entries" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "title" : "Risk Log Entry",
+         "description" : "Identifies an individual risk response that occurred as part of managing an identified risk.",
+         "type" : "object",
+         "properties" : 
+         { "uuid" : 
+          { "title" : "Risk Log Entry Universally Unique Identifier",
+           "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this risk log entry elsewhere in this or other OSCAL instances. The locally defined UUID of the risk log entry can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+           "$ref" : "#/definitions/UUIDDatatype" },
+          "title" : 
+          { "title" : "Title",
+           "description" : "The title for this risk log entry.",
+           "$ref" : "#/definitions/MarkupLineDatatype" },
+          "description" : 
+          { "title" : "Risk Task Description",
+           "description" : "A human-readable description of what was done regarding the risk.",
+           "$ref" : "#/definitions/MarkupMultilineDatatype" },
+          "start" : 
+          { "title" : "Start",
+           "description" : "Identifies the start date and time of the event.",
+           "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+          "end" : 
+          { "title" : "End",
+           "description" : "Identifies the end date and time of the event. If the event is a point in time, the start and end will be the same date and time.",
+           "$ref" : "#/definitions/DateTimeWithTimezoneDatatype" },
+          "props" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+          "links" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+          "logged-by" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:logged-by" } },
+          "status-change" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:risk-status" },
+          "related-responses" : 
+          { "type" : "array",
+           "minItems" : 1,
+           "items" : 
+           { "title" : "Risk Response Reference",
+            "description" : "Identifies an individual risk response that this log entry is for.",
+            "type" : "object",
+            "properties" : 
+            { "response-uuid" : 
+             { "title" : "Response Universally Unique Identifier Reference",
+              "description" : "A machine-oriented identifier reference to a unique risk response.",
+              "$ref" : "#/definitions/UUIDDatatype" },
+             "props" : 
+             { "type" : "array",
+              "minItems" : 1,
+              "items" : 
+              { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+             "links" : 
+             { "type" : "array",
+              "minItems" : 1,
+              "items" : 
+              { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+             "related-tasks" : 
+             { "type" : "array",
+              "minItems" : 1,
+              "items" : 
+              { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:related-task" } },
+             "remarks" : 
+             { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+            "required" : 
+            [ "response-uuid" ],
+            "additionalProperties" : false } },
+          "remarks" : 
+          { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+         "required" : 
+         [ "uuid",
+          "start" ],
+         "additionalProperties" : false } } },
+      "required" : 
+      [ "entries" ],
+      "additionalProperties" : false },
+     "related-observations" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:related-observation" } } },
+    "required" : 
+    [ "uuid",
+     "title",
+     "description",
+     "statement",
+     "status" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:logged-by" : 
+   { "title" : "Logged By",
+    "description" : "Used to indicate who created a log entry in what role.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:logged-by",
+    "type" : "object",
+    "properties" : 
+    { "party-uuid" : 
+     { "title" : "Party UUID Reference",
+      "description" : "A machine-oriented identifier reference to the party who is making the log entry.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "role-id" : 
+     { "title" : "Actor Role",
+      "description" : "A point to the role-id of the role in which the party is making the log entry.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "party-uuid" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:risk-status" : 
+   { "title" : "Risk Status",
+    "description" : "Describes the status of the associated risk.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:risk-status",
+    "anyOf" : 
+    [ 
+     { "$ref" : "#/definitions/TokenDatatype" },
+     
+     { "enum" : 
+      [ "open",
+       "investigating",
+       "remediating",
+       "deviation-requested",
+       "deviation-approved",
+       "closed" ] } ] },
+   "oscal-ar-oscal-assessment-common:characterization" : 
+   { "title" : "Characterization",
+    "description" : "A collection of descriptive data about the containing object from a specific origin.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:characterization",
+    "type" : "object",
+    "properties" : 
+    { "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "origin" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:origin" },
+     "facets" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Facet",
+       "description" : "An individual characteristic that is part of a larger set produced by the same actor.",
+       "type" : "object",
+       "properties" : 
+       { "name" : 
+        { "title" : "Facet Name",
+         "description" : "The name of the risk metric within the specified system.",
+         "$ref" : "#/definitions/TokenDatatype" },
+        "system" : 
+        { "title" : "Naming System",
+         "description" : "Specifies the naming system under which this risk metric is organized, which allows for the same names to be used in different systems controlled by different parties. This avoids the potential of a name clash.",
+         "anyOf" : 
+         [ 
+          { "$ref" : "#/definitions/URIDatatype" },
+          
+          { "enum" : 
+           [ "http://fedramp.gov",
+            "http://fedramp.gov/ns/oscal",
+            "http://csrc.nist.gov/ns/oscal",
+            "http://csrc.nist.gov/ns/oscal/unknown",
+            "http://cve.mitre.org",
+            "http://www.first.org/cvss/v2.0",
+            "http://www.first.org/cvss/v3.0",
+            "http://www.first.org/cvss/v3.1",
+            "https://www.first.org/cvss/v4-0" ] } ] },
+        "value" : 
+        { "title" : "Facet Value",
+         "description" : "Indicates the value of the facet.",
+         "$ref" : "#/definitions/StringDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "name",
+        "system",
+        "value" ],
+       "additionalProperties" : false } } },
+    "required" : 
+    [ "origin",
+     "facets" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:response" : 
+   { "title" : "Risk Response",
+    "description" : "Describes either recommended or an actual plan for addressing the risk.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:response",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Remediation Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this remediation elsewhere in this or other OSCAL instances. The locally defined UUID of the risk response can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "lifecycle" : 
+     { "title" : "Remediation Intent",
+      "description" : "Identifies whether this is a recommendation, such as from an assessor or tool, or an actual plan accepted by the system owner.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "recommendation",
+         "planned",
+         "completed" ] } ] },
+     "title" : 
+     { "title" : "Response Title",
+      "description" : "The title for this response activity.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Response Description",
+      "description" : "A human-readable description of this response plan.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "origins" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:origin" } },
+     "required-assets" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Required Asset",
+       "description" : "Identifies an asset required to achieve remediation.",
+       "type" : "object",
+       "properties" : 
+       { "uuid" : 
+        { "title" : "Required Universally Unique Identifier",
+         "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this required asset elsewhere in this or other OSCAL instances. The locally defined UUID of the asset can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "subjects" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:subject-reference" } },
+        "title" : 
+        { "title" : "Title for Required Asset",
+         "description" : "The title for this required asset.",
+         "$ref" : "#/definitions/MarkupLineDatatype" },
+        "description" : 
+        { "title" : "Description of Required Asset",
+         "description" : "A human-readable description of this required asset.",
+         "$ref" : "#/definitions/MarkupMultilineDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "uuid",
+        "description" ],
+       "additionalProperties" : false } },
+     "tasks" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:task" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "lifecycle",
+     "title",
+     "description" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-assessment-common:assessment-part" : 
+   { "title" : "Assessment Part",
+    "description" : "A partition of an assessment plan or results or a child of another part.",
+    "$id" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-part",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Part Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this part elsewhere in this or other OSCAL instances. The locally defined UUID of the part can be used to reference the data item locally or globally (e.g., in an ported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "name" : 
+     { "title" : "Part Name",
+      "description" : "A textual label that uniquely identifies the part's semantic type.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "asset",
+         "method",
+         "objective" ] } ] },
+     "ns" : 
+     { "title" : "Part Namespace",
+      "description" : "A namespace qualifying the part's name. This allows different organizations to associate distinct semantics with the same name.",
+      "$ref" : "#/definitions/URIDatatype" },
+     "class" : 
+     { "title" : "Part Class",
+      "description" : "A textual label that provides a sub-type or characterization of the part's name. This can be used to further distinguish or discriminate between the semantics of multiple parts of the same control with the same name and ns.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "title" : 
+     { "title" : "Part Title",
+      "description" : "A name given to the part, which may be used by a tool for display and navigation.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "prose" : 
+     { "title" : "Part Text",
+      "description" : "Permits multiple paragraphs, lists, tables etc.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "parts" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-assessment-common:assessment-part" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } } },
+    "required" : 
+    [ "name" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:part" : 
+   { "title" : "Part",
+    "description" : "An annotated, markup-based textual element of a control's or catalog group's definition, or a child of another part.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:part",
+    "type" : "object",
+    "properties" : 
+    { "id" : 
+     { "title" : "Part Identifier",
+      "description" : "A unique identifier for the part.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "name" : 
+     { "title" : "Part Name",
+      "description" : "A textual label that uniquely identifies the part's semantic type, which exists in a value space qualified by the ns.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "ns" : 
+     { "title" : "Part Namespace",
+      "description" : "An optional namespace qualifying the part's name. This allows different organizations to associate distinct semantics with the same name.",
+      "$ref" : "#/definitions/URIDatatype" },
+     "class" : 
+     { "title" : "Part Class",
+      "description" : "An optional textual providing a sub-type or characterization of the part's name, or a category to which the part belongs.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "title" : 
+     { "title" : "Part Title",
+      "description" : "An optional name given to the part, which may be used by a tool for display and navigation.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "prose" : 
+     { "title" : "Part Text",
+      "description" : "Permits multiple paragraphs, lists, tables etc.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "parts" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-control-common:part" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } } },
+    "required" : 
+    [ "name" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:parameter" : 
+   { "title" : "Parameter",
+    "description" : "Parameters provide a mechanism for the dynamic assignment of value(s) in a control.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:parameter",
+    "type" : "object",
+    "anyOf" : 
+    [ 
+     { "properties" : 
+      { "id" : 
+       { "title" : "Parameter Identifier",
+        "description" : "A unique identifier for the parameter.",
+        "$ref" : "#/definitions/TokenDatatype" },
+       "class" : 
+       { "title" : "Parameter Class",
+        "description" : "A textual label that provides a characterization of the type, purpose, use or scope of the parameter.",
+        "$ref" : "#/definitions/TokenDatatype" },
+       "depends-on" : 
+       { "title" : "Depends on",
+        "description" : "(deprecated) Another parameter invoking this one. This construct has been deprecated and should not be used.",
+        "$ref" : "#/definitions/TokenDatatype" },
+       "props" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+       "links" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+       "label" : 
+       { "title" : "Parameter Label",
+        "description" : "A short, placeholder name for the parameter, which can be used as a substitute for a value if no value is assigned.",
+        "$ref" : "#/definitions/MarkupLineDatatype" },
+       "usage" : 
+       { "title" : "Parameter Usage Description",
+        "description" : "Describes the purpose and use of a parameter.",
+        "$ref" : "#/definitions/MarkupMultilineDatatype" },
+       "constraints" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-control-common:parameter-constraint" } },
+       "guidelines" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-control-common:parameter-guideline" } },
+       "values" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-control-common:parameter-value" } },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "additionalProperties" : false },
+     
+     { "properties" : 
+      { "id" : 
+       { "title" : "Parameter Identifier",
+        "description" : "A unique identifier for the parameter.",
+        "$ref" : "#/definitions/TokenDatatype" },
+       "class" : 
+       { "title" : "Parameter Class",
+        "description" : "A textual label that provides a characterization of the type, purpose, use or scope of the parameter.",
+        "$ref" : "#/definitions/TokenDatatype" },
+       "depends-on" : 
+       { "title" : "Depends on",
+        "description" : "(deprecated) Another parameter invoking this one. This construct has been deprecated and should not be used.",
+        "$ref" : "#/definitions/TokenDatatype" },
+       "props" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+       "links" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+       "label" : 
+       { "title" : "Parameter Label",
+        "description" : "A short, placeholder name for the parameter, which can be used as a substitute for a value if no value is assigned.",
+        "$ref" : "#/definitions/MarkupLineDatatype" },
+       "usage" : 
+       { "title" : "Parameter Usage Description",
+        "description" : "Describes the purpose and use of a parameter.",
+        "$ref" : "#/definitions/MarkupMultilineDatatype" },
+       "constraints" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-control-common:parameter-constraint" } },
+       "guidelines" : 
+       { "type" : "array",
+        "minItems" : 1,
+        "items" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-control-common:parameter-guideline" } },
+       "select" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-control-common:parameter-selection" },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "additionalProperties" : false } ] },
+   "oscal-ar-oscal-control-common:parameter-constraint" : 
+   { "title" : "Constraint",
+    "description" : "A formal or informal expression of a constraint or test.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:parameter-constraint",
+    "type" : "object",
+    "properties" : 
+    { "description" : 
+     { "title" : "Constraint Description",
+      "description" : "A textual summary of the constraint to be applied.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "tests" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Constraint Test",
+       "description" : "A test expression which is expected to be evaluated by a tool.",
+       "type" : "object",
+       "properties" : 
+       { "expression" : 
+        { "title" : "Constraint test",
+         "description" : "A formal (executable) expression of a constraint.",
+         "$ref" : "#/definitions/StringDatatype" },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "expression" ],
+       "additionalProperties" : false } } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:parameter-guideline" : 
+   { "title" : "Guideline",
+    "description" : "A prose statement that provides a recommendation for the use of a parameter.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:parameter-guideline",
+    "type" : "object",
+    "properties" : 
+    { "prose" : 
+     { "title" : "Guideline Text",
+      "description" : "Prose permits multiple paragraphs, lists, tables etc.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" } },
+    "required" : 
+    [ "prose" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:parameter-value" : 
+   { "title" : "Parameter Value",
+    "description" : "A parameter value or set of values.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:parameter-value",
+    "$ref" : "#/definitions/StringDatatype" },
+   "oscal-ar-oscal-control-common:parameter-selection" : 
+   { "title" : "Selection",
+    "description" : "Presenting a choice among alternatives.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:parameter-selection",
+    "type" : "object",
+    "properties" : 
+    { "how-many" : 
+     { "title" : "Parameter Cardinality",
+      "description" : "Describes the number of selections that must occur. Without this setting, only one value should be assumed to be permitted.",
+      "allOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "one",
+         "one-or-more" ] } ] },
+     "choice" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Choice",
+       "description" : "A value selection among several such options.",
+       "$ref" : "#/definitions/MarkupLineDatatype" } } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:include-all" : 
+   { "title" : "Include All",
+    "description" : "Include all controls from the imported catalog or profile resources.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:include-all",
+    "type" : "object",
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:with-id" : 
+   { "title" : "Match Controls by Identifier",
+    "description" : "Selecting a control by its ID given as a literal.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:with-id",
+    "$ref" : "#/definitions/TokenDatatype" },
+   "oscal-ar-oscal-control-common:matching" : 
+   { "title" : "Match Controls by Pattern",
+    "description" : "Selecting a set of controls by matching their IDs with a wildcard pattern.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:matching",
+    "type" : "object",
+    "properties" : 
+    { "pattern" : 
+     { "title" : "Pattern",
+      "description" : "A glob expression matching the IDs of one or more controls to be selected.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-control-common:select-control-by-id" : 
+   { "title" : "Select Control",
+    "description" : "Select a control or controls from an imported control set.",
+    "$id" : "#/definitions/oscal-ar-oscal-control-common:select-control-by-id",
+    "type" : "object",
+    "properties" : 
+    { "with-child-controls" : 
+     { "title" : "Include Contained Controls with Control",
+      "description" : "When a control is included, whether its child (dependent) controls are also included.",
+      "allOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "yes",
+         "no" ] } ] },
+     "with-ids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-control-common:with-id" } },
+     "matching" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-control-common:matching" } } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:system-component" : 
+   { "title" : "Component",
+    "description" : "A defined component that can be part of an implemented system.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:system-component",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Component Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this component elsewhere in this or other OSCAL instances. The locally defined UUID of the component can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "type" : 
+     { "title" : "Component Type",
+      "description" : "A category describing the purpose of the component.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/StringDatatype" },
+       
+       { "enum" : 
+        [ "this-system",
+         "system",
+         "interconnection",
+         "software",
+         "hardware",
+         "service",
+         "policy",
+         "physical",
+         "process-procedure",
+         "plan",
+         "guidance",
+         "standard",
+         "validation",
+         "region",
+         "zone",
+         "resource-container",
+         "network" ] } ] },
+     "title" : 
+     { "title" : "Component Title",
+      "description" : "A human readable name for the system component.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Component Description",
+      "description" : "A description of the component, including information about its function.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "purpose" : 
+     { "title" : "Purpose",
+      "description" : "A summary of the technological or business purpose of the component.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "status" : 
+     { "title" : "Status",
+      "description" : "Describes the operational status of the system component.",
+      "type" : "object",
+      "properties" : 
+      { "state" : 
+       { "title" : "State",
+        "description" : "The operational status.",
+        "allOf" : 
+        [ 
+         { "$ref" : "#/definitions/TokenDatatype" },
+         
+         { "enum" : 
+          [ "under-development",
+           "operational",
+           "disposition",
+           "other" ] } ] },
+       "remarks" : 
+       { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+      "required" : 
+      [ "state" ],
+      "additionalProperties" : false },
+     "responsible-roles" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-role" } },
+     "protocols" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:protocol" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "type",
+     "title",
+     "description",
+     "status" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:protocol" : 
+   { "title" : "Service Protocol Information",
+    "description" : "Information about the protocol used to provide a service.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:protocol",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Service Protocol Information Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this service protocol information elsewhere in this or other OSCAL instances. The locally defined UUID of the service protocol can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "name" : 
+     { "title" : "Protocol Name",
+      "description" : "The common name of the protocol, which should be the appropriate \"service name\" from the IANA Service Name and Transport Protocol Port Number Registry.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "title" : 
+     { "title" : "Protocol Title",
+      "description" : "A human readable name for the protocol (e.g., Transport Layer Security).",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "port-ranges" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:port-range" } } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:port-range" : 
+   { "title" : "Port Range",
+    "description" : "Where applicable this is the transport layer protocol port range an IPv4-based or IPv6-based service uses.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:port-range",
+    "type" : "object",
+    "properties" : 
+    { "start" : 
+     { "title" : "Start",
+      "description" : "Indicates the starting port number in a port range for a transport layer protocol",
+      "$ref" : "#/definitions/NonNegativeIntegerDatatype" },
+     "end" : 
+     { "title" : "End",
+      "description" : "Indicates the ending port number in a port range for a transport layer protocol",
+      "$ref" : "#/definitions/NonNegativeIntegerDatatype" },
+     "transport" : 
+     { "title" : "Transport",
+      "description" : "Indicates the transport type.",
+      "allOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "TCP",
+         "UDP" ] } ] },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:implementation-status" : 
+   { "title" : "Implementation Status",
+    "description" : "Indicates the degree to which the a given control is implemented.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:implementation-status",
+    "type" : "object",
+    "properties" : 
+    { "state" : 
+     { "title" : "Implementation State",
+      "description" : "Identifies the implementation status of the control or control objective.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/TokenDatatype" },
+       
+       { "enum" : 
+        [ "implemented",
+         "partial",
+         "planned",
+         "alternative",
+         "not-applicable" ] } ] },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "state" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:system-user" : 
+   { "title" : "System User",
+    "description" : "A type of user that interacts with the system based on an associated role.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:system-user",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "User Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this user class elsewhere in this or other OSCAL instances. The locally defined UUID of the system user can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "title" : 
+     { "title" : "User Title",
+      "description" : "A name given to the user, which may be used by a tool for display and navigation.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "short-name" : 
+     { "title" : "User Short Name",
+      "description" : "A short common name, abbreviation, or acronym for the user.",
+      "$ref" : "#/definitions/StringDatatype" },
+     "description" : 
+     { "title" : "User Description",
+      "description" : "A summary of the user's purpose within the system.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "role-ids" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:role-id" } },
+     "authorized-privileges" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:authorized-privilege" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:authorized-privilege" : 
+   { "title" : "Privilege",
+    "description" : "Identifies a specific system privilege held by the user, along with an associated description and/or rationale for the privilege.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:authorized-privilege",
+    "type" : "object",
+    "properties" : 
+    { "title" : 
+     { "title" : "Privilege Title",
+      "description" : "A human readable name for the privilege.",
+      "$ref" : "#/definitions/MarkupLineDatatype" },
+     "description" : 
+     { "title" : "Privilege Description",
+      "description" : "A summary of the privilege's purpose within the system.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "functions-performed" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-implementation-common:function-performed" } } },
+    "required" : 
+    [ "title",
+     "functions-performed" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:function-performed" : 
+   { "title" : "Functions Performed",
+    "description" : "Describes a function performed for a given authorized privilege by this user class.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:function-performed",
+    "$ref" : "#/definitions/StringDatatype" },
+   "oscal-ar-oscal-implementation-common:inventory-item" : 
+   { "title" : "Inventory Item",
+    "description" : "A single managed inventory item within the system.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:inventory-item",
+    "type" : "object",
+    "properties" : 
+    { "uuid" : 
+     { "title" : "Inventory Item Universally Unique Identifier",
+      "description" : "A machine-oriented, globally unique identifier with cross-instance scope that can be used to reference this inventory item elsewhere in this or other OSCAL instances. The locally defined UUID of the inventory item can be used to reference the data item locally or globally (e.g., in an imported OSCAL instance). This UUID should be assigned per-subject, which means it should be consistently used to identify the same subject across revisions of the document.",
+      "$ref" : "#/definitions/UUIDDatatype" },
+     "description" : 
+     { "title" : "Inventory Item Description",
+      "description" : "A summary of the inventory item stating its purpose within the system.",
+      "$ref" : "#/definitions/MarkupMultilineDatatype" },
+     "props" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+     "links" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+     "responsible-parties" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+     "implemented-components" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Implemented Component",
+       "description" : "The set of components that are implemented in a given system inventory item.",
+       "type" : "object",
+       "properties" : 
+       { "component-uuid" : 
+        { "title" : "Component Universally Unique Identifier Reference",
+         "description" : "A machine-oriented identifier reference to a component that is implemented as part of an inventory item.",
+         "$ref" : "#/definitions/UUIDDatatype" },
+        "props" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:property" } },
+        "links" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:link" } },
+        "responsible-parties" : 
+        { "type" : "array",
+         "minItems" : 1,
+         "items" : 
+         { "$ref" : "#/definitions/oscal-ar-oscal-metadata:responsible-party" } },
+        "remarks" : 
+        { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+       "required" : 
+       [ "component-uuid" ],
+       "additionalProperties" : false } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "uuid",
+     "description" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:set-parameter" : 
+   { "title" : "Set Parameter Value",
+    "description" : "Identifies the parameter that will be set by the enclosed value.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:set-parameter",
+    "type" : "object",
+    "properties" : 
+    { "param-id" : 
+     { "title" : "Parameter ID",
+      "description" : "A human-oriented reference to a parameter within a control, who's catalog has been imported into the current implementation context.",
+      "$ref" : "#/definitions/TokenDatatype" },
+     "values" : 
+     { "type" : "array",
+      "minItems" : 1,
+      "items" : 
+      { "title" : "Parameter Value",
+       "description" : "A parameter value or set of values.",
+       "$ref" : "#/definitions/StringDatatype" } },
+     "remarks" : 
+     { "$ref" : "#/definitions/oscal-ar-oscal-metadata:remarks" } },
+    "required" : 
+    [ "param-id",
+     "values" ],
+    "additionalProperties" : false },
+   "oscal-ar-oscal-implementation-common:system-id" : 
+   { "title" : "System Identification",
+    "description" : "A human-oriented, globally unique identifier with cross-instance scope that can be used to reference this system identification property elsewhere in this or other OSCAL instances. When referencing an externally defined system identification, the system identification must be used in the context of the external / imported OSCAL instance (e.g., uri-reference). This string should be assigned per-subject, which means it should be consistently used to identify the same system across revisions of the document.",
+    "$id" : "#/definitions/oscal-ar-oscal-implementation-common:system-id",
+    "type" : "object",
+    "properties" : 
+    { "identifier-type" : 
+     { "title" : "Identification System Type",
+      "description" : "Identifies the identification system from which the provided identifier was assigned.",
+      "anyOf" : 
+      [ 
+       { "$ref" : "#/definitions/URIDatatype" },
+       
+       { "enum" : 
+        [ "http://fedramp.gov",
+         "http://fedramp.gov/ns/oscal",
+         "https://ietf.org/rfc/rfc4122",
+         "http://ietf.org/rfc/rfc4122",
+         "http://datatracker.ietf.org/doc/html/rfc4122" ] } ] },
+     "id" : 
+     { "$ref" : "#/definitions/StringDatatype" } },
+    "required" : 
+    [ "id" ],
+    "additionalProperties" : false },
+   "Base64Datatype" : 
+   { "description" : "Binary data encoded using the Base 64 encoding algorithm as defined by RFC4648.",
+    "type" : "string",
+    "pattern" : "^[0-9A-Za-z+/]+={0,2}$",
+    "contentEncoding" : "base64" },
+   "DateTimeWithTimezoneDatatype" : 
+   { "description" : "A string representing a point in time with a required timezone.",
+    "type" : "string",
+    "format" : "date-time",
+    "pattern" : "^(((2000|2400|2800|(19|2[0-9](0[48]|[2468][048]|[13579][26])))-02-29)|(((19|2[0-9])[0-9]{2})-02-(0[1-9]|1[0-9]|2[0-8]))|(((19|2[0-9])[0-9]{2})-(0[13578]|10|12)-(0[1-9]|[12][0-9]|3[01]))|(((19|2[0-9])[0-9]{2})-(0[469]|11)-(0[1-9]|[12][0-9]|30)))T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z|(-((0[0-9]|1[0-2]):00|0[39]:30)|\\+((0[0-9]|1[0-4]):00|(0[34569]|10):30|(0[58]|12):45)))$" },
+   "EmailAddressDatatype" : 
+   { "description" : "An email address string formatted according to RFC 6531.",
+    "allOf" : 
+    [ 
+     { "$ref" : "#/definitions/StringDatatype" },
+     
+     { "type" : "string",
+      "format" : "email",
+      "pattern" : "^.+@.+$" } ] },
+   "IntegerDatatype" : 
+   { "description" : "A whole number value.",
+    "type" : "integer" },
+   "MarkupLineDatatype" : 
+   { "description" : "A single line of Markdown content conformant to the Commonmark specification.",
+    "type" : "string",
+    "pattern" : "^[^\n]+$" },
+   "MarkupMultilineDatatype" : 
+   { "description" : "A multiple lines of Markdown content conformant to the Commonmark specification.",
+    "type" : "string" },
+   "NonNegativeIntegerDatatype" : 
+   { "description" : "An integer value that is equal to or greater than 0.",
+    "allOf" : 
+    [ 
+     { "$ref" : "#/definitions/IntegerDatatype" },
+     
+     { "type" : "number",
+      "minimum" : 0 } ] },
+   "PositiveIntegerDatatype" : 
+   { "description" : "An integer value that is greater than 0.",
+    "allOf" : 
+    [ 
+     { "$ref" : "#/definitions/IntegerDatatype" },
+     
+     { "type" : "number",
+      "minimum" : 1 } ] },
+   "StringDatatype" : 
+   { "description" : "A non-empty string with leading and trailing whitespace disallowed. Whitespace is: U+9, U+10, U+32 or [ \n\t]+",
+    "type" : "string",
+    "pattern" : "^\\S(.*\\S)?$" },
+   "TokenDatatype" : 
+   { "description" : "A non-colonized name as defined by XML Schema Part 2: Datatypes Second Edition. https://www.w3.org/TR/xmlschema11-2/#NCName.",
+    "type" : "string",
+    "pattern" : "^(\\p{L}|_)(\\p{L}|\\p{N}|[.\\-_])*$" },
+   "URIDatatype" : 
+   { "description" : "A universal resource identifier (URI) formatted according to RFC3986.",
+    "type" : "string",
+    "format" : "uri",
+    "pattern" : "^[a-zA-Z][a-zA-Z0-9+\\-.]+:.+$" },
+   "URIReferenceDatatype" : 
+   { "description" : "A URI Reference, either a URI or a relative-reference, formatted according to section 4.1 of RFC3986.",
+    "type" : "string",
+    "format" : "uri-reference" },
+   "UUIDDatatype" : 
+   { "description" : "A type 4 ('random' or 'pseudorandom') or type 5 UUID per RFC 4122.",
+    "type" : "string",
+    "pattern" : "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[45][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}$" } },
+  "properties" : 
+  { "$schema" : 
+   { "$ref" : "#/definitions/json-schema-directive" },
+   "assessment-results" : 
+   { "$ref" : "#/definitions/oscal-ar-oscal-ar:assessment-results" } },
+  "required" : 
+  [ "assessment-results" ],
+  "additionalProperties" : false }
