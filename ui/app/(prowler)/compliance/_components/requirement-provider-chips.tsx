@@ -10,7 +10,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { PROVIDER_DISPLAY_NAMES, PROVIDER_TYPES } from "@/types/providers";
+import {
+  compareProviderTypes,
+  getProviderDisplayName,
+} from "@/types/providers";
 
 import type { ProviderStatusMap } from "../_types";
 
@@ -32,15 +35,17 @@ const MAX_INLINE_PROVIDER_CHIPS = 5;
 export const RequirementProviderChips = ({
   providers,
 }: RequirementProviderChipsProps) => {
-  // Iterate the canonical order so chips are stable across requirements.
-  const entries = PROVIDER_TYPES.filter((type) => providers[type]);
+  // Canonical order so chips are stable across requirements.
+  const entries = Object.keys(providers)
+    .filter((type) => providers[type])
+    .sort(compareProviderTypes);
 
   if (entries.length > MAX_INLINE_PROVIDER_CHIPS) {
     return (
       <RequirementStatusSummary
         entries={entries.map((type) => ({
           key: type,
-          label: PROVIDER_DISPLAY_NAMES[type],
+          label: getProviderDisplayName(type),
           icon: <ProviderTypeIcon type={type} size={14} />,
           status: providers[type]!,
         }))}
@@ -66,7 +71,7 @@ export const RequirementProviderChips = ({
               />
             </span>
           </TooltipTrigger>
-          <TooltipContent>{PROVIDER_DISPLAY_NAMES[type]}</TooltipContent>
+          <TooltipContent>{getProviderDisplayName(type)}</TooltipContent>
         </Tooltip>
       ))}
     </div>

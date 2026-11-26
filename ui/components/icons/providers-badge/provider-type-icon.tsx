@@ -1,7 +1,15 @@
 "use client";
 
-import { type ComponentType, lazy, Suspense } from "react";
+import {
+  type ComponentType,
+  createContext,
+  lazy,
+  type ReactNode,
+  Suspense,
+  use,
+} from "react";
 
+import { RegistryProviderLogo } from "@/components/providers/registry-provider-logo";
 import {
   Badge,
   Tooltip,
@@ -145,19 +153,66 @@ interface ProviderTypeIconProps {
   size?: number;
 }
 
+/** Registry logo URL per dynamic provider type; null outside a provider. */
+export const RegistryLogosContext = createContext<Promise<
+  Record<string, string>
+> | null>(null);
+
+/** Streams the Registry logos to every provider icon below it. */
+export const RegistryLogosProvider = ({
+  logos,
+  children,
+}: {
+  logos: Promise<Record<string, string>>;
+  children: ReactNode;
+}) => <RegistryLogosContext value={logos}>{children}</RegistryLogosContext>;
+
+const ResolvedRegistryLogo = ({
+  type,
+  size,
+  logos,
+}: {
+  type: ProviderType;
+  size: number;
+  logos: Promise<Record<string, string>>;
+}) => {
+  const byType = use(logos);
+  const logoUrl = Object.hasOwn(byType, type) ? byType[type] : undefined;
+  return <RegistryProviderLogo logoUrl={logoUrl} size={size} />;
+};
+
+/** A dynamic provider's Registry logo; the generic glyph until it arrives. */
+const DynamicProviderIcon = ({
+  type,
+  size,
+}: {
+  type: ProviderType;
+  size: number;
+}) => {
+  const logos = use(RegistryLogosContext);
+  const glyph = <GenericProviderBadge size={size} />;
+  if (!logos) return glyph;
+  return (
+    <Suspense fallback={glyph}>
+      <ResolvedRegistryLogo type={type} size={size} logos={logos} />
+    </Suspense>
+  );
+};
+
 /**
  * Renders a single provider-type badge.
  *
- * Providers outside the known set — a dynamic SDK plug-in — render the neutral
- * generic glyph instead of a bespoke brand badge. The widened `ProviderType`
- * forces this fallback branch to be handled at compile time.
+ * Providers outside the known set — a dynamic SDK plug-in — render their
+ * Registry logo, or the neutral generic glyph when Registry has none. The
+ * widened `ProviderType` forces this fallback branch to be handled at compile
+ * time.
  */
 export const ProviderTypeIcon = ({
   type,
   size = 18,
 }: ProviderTypeIconProps) => {
   if (!isKnownProviderType(type)) {
-    return <GenericProviderBadge size={size} />;
+    return <DynamicProviderIcon type={type} size={size} />;
   }
 
   const Icon = PROVIDER_TYPE_DATA[type].icon;

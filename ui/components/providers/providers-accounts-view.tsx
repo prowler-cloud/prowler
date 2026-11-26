@@ -4,12 +4,12 @@ import { Info } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { RegistryLogosContext } from "@/components/icons/providers-badge/provider-type-icon";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { NoProvidersAdded } from "@/components/providers/no-providers-added";
 import { ProvidersAccountsTable } from "@/components/providers/providers-accounts-table";
 import { ProvidersFilters } from "@/components/providers/providers-filters";
-import { RegistryLogosContext } from "@/components/providers/table/registry-row-logo";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import type {
   OrgWizardInitialData,

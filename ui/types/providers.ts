@@ -95,6 +95,16 @@ export function humanizeProviderId(id: string): string {
     .join(" ");
 }
 
+const providerTypeRank = (type: string): number => {
+  const index = (PROVIDER_TYPES as readonly string[]).indexOf(type);
+  return index === -1 ? PROVIDER_TYPES.length : index;
+};
+
+/** Sort order for provider types: the known set in its canonical order, then
+ *  dynamic (Registry) types alphabetically. */
+export const compareProviderTypes = (a: string, b: string): number =>
+  providerTypeRank(a) - providerTypeRank(b) || a.localeCompare(b);
+
 export function getProviderDisplayName(providerId: string): string {
   const normalized = providerId.toLowerCase();
   if (isKnownProviderType(normalized)) {

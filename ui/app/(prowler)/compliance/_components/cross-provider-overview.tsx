@@ -18,7 +18,6 @@ import {
 } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { SearchParamsProps } from "@/types";
-import { isKnownProviderType } from "@/types/providers";
 
 import { getCrossProviderComplianceOverview } from "../_actions/cross-provider";
 import { computeProviderBreakdown } from "../_lib/cross-provider-adapter";
@@ -51,18 +50,15 @@ const emptySummary = (
   requirementsFailed: 0,
   requirementsManual: 0,
   totalRequirements: 0,
-  // Chips need an icon and a label, which only known types have.
-  providerBreakdown: entry.providerTypes
-    .filter(isKnownProviderType)
-    .map((provider) => ({
-      provider,
-      pass: 0,
-      fail: 0,
-      manual: 0,
-      total: 0,
-      score: 0,
-      unscanned: true,
-    })),
+  providerBreakdown: entry.providerTypes.map((provider) => ({
+    provider,
+    pass: 0,
+    fail: 0,
+    manual: 0,
+    total: 0,
+    score: 0,
+    unscanned: true,
+  })),
 });
 
 export const CrossProviderOverview = async ({
@@ -152,9 +148,6 @@ export const CrossProviderOverview = async ({
   const coveredTypes = Array.from(
     new Set(frameworks.flatMap((entry) => entry.providerTypes)),
   ).sort();
-  // Externally registered types have no icon or label; their accounts still
-  // reach the account select below.
-  const selectableTypes = coveredTypes.filter(isKnownProviderType);
 
   const providerAccounts: CrossProviderAccountOption[] = (
     providersData?.data || []
@@ -209,7 +202,7 @@ export const CrossProviderOverview = async ({
           />
         ))}
       <CrossProviderFilters
-        providerTypes={selectableTypes}
+        providerTypes={coveredTypes}
         providerAccounts={providerAccounts}
         providerGroups={providerGroups}
       />
