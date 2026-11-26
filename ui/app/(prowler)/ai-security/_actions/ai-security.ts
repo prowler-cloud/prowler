@@ -79,6 +79,8 @@ export async function getAiFrameworks(
   const frameworks = catalog.frameworks.filter(({ complianceId }) =>
     AI_FRAMEWORK_IDS.includes(complianceId),
   );
+  // A failed catalog page may hold them, so none found is no answer either.
+  if (catalog.incomplete && frameworks.length === 0) return null;
   const responses = await Promise.all(
     frameworks.map(async (entry) => ({
       entry,
