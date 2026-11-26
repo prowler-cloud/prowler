@@ -1,4 +1,5 @@
 from boto3 import client
+from botocore.stub import Stubber
 from moto import mock_aws
 
 from prowler.providers.aws.services.mq.mq_service import MQ, DeploymentMode, EngineType
@@ -111,3 +112,89 @@ class Test_MQ_Service:
         assert mq.brokers[broker_arn].auto_minor_version_upgrade
         assert mq.brokers[broker_arn].publicly_accessible
         assert mq.brokers[broker_arn].tags == [{"key": "value"}]
+
+    @mock_aws
+    def test_list_brokers_pagination(self):
+        mq = MQ(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        regional_client = mq.regional_clients[AWS_REGION_EU_WEST_1]
+        brokers = [
+            {
+                "BrokerArn": f"arn:aws:mq:{AWS_REGION_EU_WEST_1}:123456789012:broker:broker-{i}:b-{i}",
+                "BrokerName": f"broker-{i}",
+                "BrokerId": f"b-{i}",
+                "DeploymentMode": "SINGLE_INSTANCE",
+                "EngineType": "ACTIVEMQ",
+            }
+            for i in range(2)
+        ]
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_brokers",
+                {"BrokerSummaries": [brokers[0]], "NextToken": "next"},
+                {},
+            )
+            stubber.add_response(
+                "list_brokers",
+                {"BrokerSummaries": [], "NextToken": "last"},
+                {"NextToken": "next"},
+            )
+            stubber.add_response(
+                "list_brokers", {"BrokerSummaries": [brokers[1]]}, {"NextToken": "last"}
+            )
+            mq._list_brokers(regional_client)
+            assert set(mq.brokers) == {broker["BrokerArn"] for broker in brokers}
+            assert mq.brokers[brokers[1]["BrokerArn"]].id == "b-1"
+            assert mq.brokers[brokers[1]["BrokerArn"]].region == AWS_REGION_EU_WEST_1
+            stubber.assert_no_pending_responses()
+
+    @mock_aws
+    def test_list_brokers_pagination_resource_filter(self):
+        mq = MQ(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        regional_client = mq.regional_clients[AWS_REGION_EU_WEST_1]
+        brokers = [
+            {
+                "BrokerArn": f"arn:aws:mq:{AWS_REGION_EU_WEST_1}:123456789012:broker:broker-{i}:b-{i}",
+                "BrokerName": f"broker-{i}",
+                "BrokerId": f"b-{i}",
+                "DeploymentMode": "SINGLE_INSTANCE",
+                "EngineType": "ACTIVEMQ",
+            }
+            for i in range(2)
+        ]
+        mq.audit_resources = [brokers[1]["BrokerArn"]]
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_brokers",
+                {"BrokerSummaries": [brokers[0]], "NextToken": "next"},
+                {},
+            )
+            stubber.add_response(
+                "list_brokers", {"BrokerSummaries": [brokers[1]]}, {"NextToken": "next"}
+            )
+            mq._list_brokers(regional_client)
+            assert set(mq.brokers) == {brokers[1]["BrokerArn"]}
+            stubber.assert_no_pending_responses()
+
+    @mock_aws
+    def test_list_brokers_keeps_previous_page_on_error(self):
+        mq = MQ(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        regional_client = mq.regional_clients[AWS_REGION_EU_WEST_1]
+        broker = {
+            "BrokerArn": f"arn:aws:mq:{AWS_REGION_EU_WEST_1}:123456789012:broker:broker-0:b-0",
+            "BrokerName": "broker-0",
+            "BrokerId": "b-0",
+            "DeploymentMode": "SINGLE_INSTANCE",
+            "EngineType": "ACTIVEMQ",
+        }
+        with Stubber(regional_client) as stubber:
+            stubber.add_response(
+                "list_brokers", {"BrokerSummaries": [broker], "NextToken": "next"}, {}
+            )
+            stubber.add_client_error(
+                "list_brokers",
+                service_error_code="AccessDeniedException",
+                expected_params={"NextToken": "next"},
+            )
+            mq._list_brokers(regional_client)
+            assert set(mq.brokers) == {broker["BrokerArn"]}
+            stubber.assert_no_pending_responses()

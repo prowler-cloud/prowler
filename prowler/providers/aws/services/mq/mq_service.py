@@ -19,17 +19,19 @@ class MQ(AWSService):
     def _list_brokers(self, regional_client):
         logger.info("MQ - Listing brokers...")
         try:
-            for broker in regional_client.list_brokers()["BrokerSummaries"]:
-                if not self.audit_resources or (
-                    is_resource_filtered(broker["BrokerArn"], self.audit_resources)
-                ):
-                    broker_arn = broker["BrokerArn"]
-                    self.brokers[broker_arn] = Broker(
-                        arn=broker_arn,
-                        name=broker["BrokerName"],
-                        id=broker["BrokerId"],
-                        region=regional_client.region,
-                    )
+            paginator = regional_client.get_paginator("list_brokers")
+            for page in paginator.paginate():
+                for broker in page["BrokerSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(broker["BrokerArn"], self.audit_resources)
+                    ):
+                        broker_arn = broker["BrokerArn"]
+                        self.brokers[broker_arn] = Broker(
+                            arn=broker_arn,
+                            name=broker["BrokerName"],
+                            id=broker["BrokerId"],
+                            region=regional_client.region,
+                        )
 
         except Exception as error:
             logger.error(
