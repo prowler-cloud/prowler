@@ -30,6 +30,7 @@ from api.models import (
     ProviderSecret,
     Resource,
     ResourceFindingMapping,
+    ResourceScanSummary,
     ResourceTag,
     Role,
     Scan,
@@ -554,8 +555,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     tags = CharFilter(method="filter_tag")
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
-    scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
-    scan__in = UUIDInFilter(field_name="provider__scan", lookup_expr="in")
+    scan = UUIDFilter(method="filter_scan")
+    scan__in = UUIDInFilter(method="filter_scan_in")
     groups = CharFilter(method="filter_groups")
     groups__in = CharInFilter(field_name="groups", lookup_expr="overlap")
 
@@ -572,6 +573,26 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }
+
+    def filter_scan(self, queryset, name, value):
+        return self.filter_scan_in(queryset, name, [value])
+
+    def filter_scan_in(self, queryset, name, value):
+        tenant_id = self.request.tenant_id
+        scan_ids = Scan.all_objects.filter(tenant_id=tenant_id, id__in=value).values(
+            "id"
+        )
+        summary_resources = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=scan_ids
+        ).values_list("resource_id", flat=True)
+        mapped_resources = ResourceFindingMapping.objects.filter(
+            tenant_id=tenant_id, finding__scan_id__in=scan_ids
+        ).values_list("resource_id", flat=True)
+        # Summaries survive finding retention; mappings also cover older scans
+        # and incomplete summary writes. IN keeps shared resources unique.
+        return queryset.filter(
+            id__in=summary_resources.union(mapped_resources, all=True)
+        )
 
     def filter_groups(self, queryset, name, value):
         return queryset.filter(groups__contains=[value])
