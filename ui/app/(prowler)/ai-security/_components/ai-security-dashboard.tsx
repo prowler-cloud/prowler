@@ -66,10 +66,6 @@ export async function AiSecurityDashboard({
     );
   }
 
-  if (overview.pass + overview.fail + overview.manual === 0) {
-    return <AiSecurityEmptyState />;
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <AiKpis overview={overview} filters={filters} />
