@@ -122,6 +122,7 @@ describe("getNavigationConfig", () => {
 
     // Then
     expect(labels).not.toContain("Exploitability issues");
+    expect(labels).not.toContain("Reports");
   });
 
   it("links Realtime in Cloud and offers it as a Cloud upgrade in Local Server", () => {
@@ -209,6 +210,10 @@ describe("getNavigationConfig", () => {
     expect(alerts).not.toHaveProperty("highlight");
     expect(scans).toMatchObject({ href: "/scans/config", active: true });
     expect(scans).not.toHaveProperty("highlight");
+    expect(items.find((item) => item.label === "Reports")).toMatchObject({
+      href: "/reports",
+      highlight: true,
+    });
     expect(items.find((item) => item.label === "Attack Paths")).not.toEqual(
       expect.objectContaining({ highlight: true }),
     );
