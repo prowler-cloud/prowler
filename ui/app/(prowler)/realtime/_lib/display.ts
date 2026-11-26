@@ -100,6 +100,10 @@ const DETECTION_STATUS_BADGES: Record<
     label: "Compliant",
     tone: BADGE_TONE.SUCCESS,
   },
+  [REALTIME_DETECTION_STATUS.FIXED]: {
+    label: "Fixed and verified",
+    tone: BADGE_TONE.SUCCESS,
+  },
   [REALTIME_DETECTION_STATUS.OUT_OF_SCOPE]: {
     label: "Out of scope",
     tone: BADGE_TONE.OUTLINE,

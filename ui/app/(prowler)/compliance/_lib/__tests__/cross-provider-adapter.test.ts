@@ -314,6 +314,15 @@ describe("invertCheckIdsByProvider", () => {
       iam_check_1: ["aws"],
     });
   });
+
+  it("labels checks of dynamic provider types after the known ones", () => {
+    expect(
+      invertCheckIdsByProvider({
+        openai: ["shared_check"],
+        aws: ["shared_check"],
+      }),
+    ).toEqual({ shared_check: ["aws", "openai"] });
+  });
 });
 
 describe("computeProviderBreakdown", () => {
@@ -360,16 +369,17 @@ describe("computeProviderBreakdown", () => {
     ]);
   });
 
-  it("ignores provider types the UI does not know", () => {
+  it("keeps dynamic (Registry) provider types", () => {
     const breakdown = computeProviderBreakdown(
       buildAttributes({
         framework: "CSA-CCM",
-        compatible_providers: ["aws", "not-a-provider"],
+        compatible_providers: ["aws", "openai"],
+        providers: ["openai"],
         requirements: [],
       }),
     );
 
-    expect(breakdown.map((entry) => entry.provider)).toEqual(["aws"]);
+    expect(breakdown.map((entry) => entry.provider)).toEqual(["openai", "aws"]);
   });
 });
 
@@ -402,7 +412,7 @@ describe("toCrossProviderSummary", () => {
     });
   });
 
-  it("zeroes a framework without data, its known providers unscanned", () => {
+  it("zeroes a framework without data, all its providers unscanned, Registry types included", () => {
     const summary = toCrossProviderSummary(entry, {
       status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
       message: "",
@@ -411,6 +421,7 @@ describe("toCrossProviderSummary", () => {
     expect(summary.totalRequirements).toBe(0);
     expect(summary.providerBreakdown).toEqual([
       expect.objectContaining({ provider: "aws", unscanned: true }),
+      expect.objectContaining({ provider: "not-a-provider", unscanned: true }),
     ]);
   });
 });
