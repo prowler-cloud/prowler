@@ -50,7 +50,6 @@ describe("getNavigationConfig", () => {
     ]);
     expect(sections[0]?.items.map((item) => item.label)).toEqual([
       "Overview",
-      "AI Security",
       "Lighthouse AI",
     ]);
     expect(sections[1]?.items.map((item) => item.label)).toEqual([
@@ -64,6 +63,7 @@ describe("getNavigationConfig", () => {
     expect(sections[2]?.items.map((item) => item.label)).toEqual([
       "Exploitability issues",
       "Realtime",
+      "AI Security",
       "Alerts",
       "Registry",
       "Import findings",
@@ -210,14 +210,12 @@ describe("getNavigationConfig", () => {
     }
 
     // Then
-    expect(sections[0]?.items.map((item) => item.label)).toEqual([
-      "Overview",
-      "AI Security",
+    expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
+    expect(sections[1]?.items.slice(0, 3)).toMatchObject([
+      { label: "Exploitability issues", href: "/issues", highlight: true },
+      { label: "Realtime", href: "/realtime", highlight: true },
+      { label: "AI Security", href: "/ai-security", highlight: true },
     ]);
-    expect(sections[1]?.items[0]).toMatchObject({
-      label: "Exploitability issues",
-      href: "/issues",
-    });
     expect(configuration.children).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "CLI Import" }),

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { render } from "@/__tests__/render-browser";
 
+import { AiCompliance } from "./_components/ai-compliance";
 import { AiStack } from "./_components/ai-stack";
 import type { AiStackLayer } from "./_types";
 
@@ -175,5 +176,16 @@ describe("AI Security stack", () => {
     await expect
       .element(screen.getByRole("button", { name: "Add Provider" }))
       .toBeVisible();
+  });
+
+  it("points to the Registry when no AI framework is installed", async () => {
+    const screen = await render(<AiCompliance frameworks={[]} />);
+
+    await expect
+      .element(screen.getByText("No AI frameworks installed"))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("link", { name: "Install from Registry" }))
+      .toHaveAttribute("href", "/registry?filter%5Bcapability%5D=compliance");
   });
 });
