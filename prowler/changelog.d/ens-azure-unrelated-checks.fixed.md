@@ -1,0 +1,1 @@
+`op.acc.1.az.eid.1`, `op.exp.8.az.md.1` and `op.cont.3.az.pd.1` in ENS RD 311/2022 for Azure no longer pass on App Service authentication, trusted named locations or SQL vulnerability scans, which move to the requirements they verify

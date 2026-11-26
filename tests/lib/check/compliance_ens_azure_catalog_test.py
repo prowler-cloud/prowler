@@ -1,5 +1,8 @@
 """The ENS RD 311/2022 catalog for Azure keeps the invariants of every ENS catalog."""
 
+import json
+import re
+
 from tests.lib.check.ens_catalog_invariants import (
     execution_mode_mismatches,
     load_requirements,
@@ -30,3 +33,76 @@ def test_measures_are_filed_under_their_block_and_group():
 
 def test_requirement_ids_name_their_measure():
     assert not misnamed_requirements(REQUIREMENTS, "az")
+
+
+# The measures in the summary table of CCN-STIC-884A, the CCN guide to configuring
+# Azure for the ENS (May 2024 edition). The guide gives its requirements no ids, so
+# the catalog keeps at least one requirement for each measure of the table.
+CCN_STIC_884A_SUMMARY_MEASURES = (
+    "op.acc.1",
+    "op.acc.2",
+    "op.acc.3",
+    "op.acc.5",
+    "op.acc.6",
+    "op.exp.8",
+    "op.exp.10",
+    "op.cont.2",
+    "op.cont.3",
+    "op.mon.1",
+    "op.mon.2",
+    "op.mon.3",
+    "mp.com.1",
+    "mp.com.2",
+    "mp.com.3",
+    "mp.com.4",
+    "mp.info.2",
+    "mp.info.6",
+    "mp.s.4",
+)
+
+
+def test_covers_the_summary_table_of_ccn_stic_884a():
+    measures = {
+        attribute["IdGrupoControl"]
+        for requirement in REQUIREMENTS
+        for attribute in requirement["Attributes"]
+    }
+    assert sorted(set(CCN_STIC_884A_SUMMARY_MEASURES) - measures) == []
+
+
+# Each of these checks verifies the configuration of one requirement. They were
+# also listed under unrelated requirements, which then passed on App Service
+# authentication, trusted named locations or SQL vulnerability scans.
+REQUIREMENTS_OF_CHECK = {
+    "app_ensure_auth_is_set_up": {"op.acc.1.az.eid.2"},
+    "entra_trusted_named_locations_exists": {"op.acc.2.az.ca.1"},
+    "sqlserver_va_periodic_recurring_scans_enabled": {"op.mon.3.r3.az.de.3"},
+}
+
+
+def test_checks_count_only_toward_the_requirement_they_verify():
+    listed = {
+        check: {
+            requirement["Id"]
+            for requirement in REQUIREMENTS
+            if check in requirement.get("Checks", [])
+        }
+        for check in REQUIREMENTS_OF_CHECK
+    }
+    assert listed == REQUIREMENTS_OF_CHECK
+
+
+OTHER_CLOUDS = re.compile(r"\b(?:GCP|Google Cloud|AWS|Amazon)\b")
+
+
+def test_requirements_describe_azure_services_only():
+    mentions = {
+        requirement["Id"]: OTHER_CLOUDS.findall(
+            json.dumps(
+                {key: value for key, value in requirement.items() if key != "Checks"},
+                ensure_ascii=False,
+            )
+        )
+        for requirement in REQUIREMENTS
+    }
+    assert {rid: found for rid, found in mentions.items() if found} == {}
