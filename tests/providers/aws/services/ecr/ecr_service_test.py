@@ -288,6 +288,35 @@ class Test_ECR_Service:
             {"Key": "test", "Value": "test"},
         ]
 
+    # Test ECR repository encryption configuration
+    @mock_aws
+    def test_describe_repositories_encryption_configuration(self):
+        """Repository encryption configuration is mapped from DescribeRepositories."""
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
+        key_arn = kms_client.create_key()["KeyMetadata"]["Arn"]
+        ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": True},
+            encryptionConfiguration={"encryptionType": "KMS", "kmsKey": key_arn},
+        )
+        ecr_client.create_repository(
+            repositoryName="default-encryption-repo",
+            imageScanningConfiguration={"scanOnPush": True},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+
+        repositories = {
+            repository.name: repository
+            for repository in ecr.registries[AWS_REGION_EU_WEST_1].repositories
+        }
+        assert repositories[repo_name].encryption_type == "KMS"
+        assert repositories[repo_name].kms_key == key_arn
+        # A repository left on the default is reported as AES256 with no key
+        assert repositories["default-encryption-repo"].encryption_type == "AES256"
+        assert repositories["default-encryption-repo"].kms_key is None
+
     # Test describe ECR repository policies
     @mock_aws
     def test_describe_repository_policies(self):
