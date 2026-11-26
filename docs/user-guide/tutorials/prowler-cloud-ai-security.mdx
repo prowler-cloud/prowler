@@ -24,11 +24,11 @@ In Prowler Private Cloud, the model vendor providers and the AI compliance frame
 
 ## Opening AI Security
 
-To open the page, sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) and select **AI Security** in the left navigation.
+To open the page, sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) and select **AI Security** in the **Security** section of the left navigation, below Realtime.
 
 The filters at the top work as on the Overview page: to narrow every section of the page, select providers, accounts or a provider group. Every link to the Findings page keeps these filters and shows the failing, unmuted findings in the `gen-ai` category.
 
-In Prowler Local Server, **AI Security** appears in the left navigation as a Prowler Cloud feature and opens the upgrade dialog.
+In Prowler Local Server, **AI Security** appears in the **Premium** section of the left navigation and opens the upgrade dialog.
 
 ## Key Figures
 
@@ -42,7 +42,7 @@ The three cards at the top summarize the latest scans of the providers in scope:
 
 This section lists each provider type of both layers, with the number of failing findings per layer. A row shows one of the following states:
 
-* **Not connected:** No provider of that type has been added. To add one, click "Add Provider". Adding a provider requires the "Manage Providers" permission.
+* **Not connected:** No provider of that type has been added. To add one, click "Add Provider". Adding a provider requires the "Manage Providers" permission. When a Claude, OpenAI or ChatGPT row shows "Install from Registry" instead, the provider package is not installed in the tenant yet: click it to open the Registry filtered to that vendor, install the package, and then add the provider.
 * **No completed scan yet:** The provider has been added but has no completed scan. To start one, click "Launch scan".
 * **No AI services found:** The provider has been scanned, but the scan returned no AI findings, for example because the cloud account runs none of the AI services that Prowler checks.
 * **Results:** A bar with the share of passing findings, the passing and total counts, and the number of findings that need manual review. To open the failing findings of that provider type, click the percentage.
@@ -66,7 +66,7 @@ This section shows the AI compliance frameworks installed in the tenant, with th
 
 Each card aggregates the framework across every compatible provider type, using the latest completed scan of each provider. To open the detail of a framework, click its card. To go to the Compliance page, click "Open in Compliance". See [Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance).
 
-The section is hidden when none of these frameworks is installed.
+When none of these frameworks is installed, the section shows "No AI frameworks installed". To install one, click "Install from Registry", which opens the Registry filtered to compliance packages. If the list of installed frameworks cannot be loaded, the section is hidden.
 
 ## Top Risks
 
