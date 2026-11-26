@@ -185,6 +185,8 @@ VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/la
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
 # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+# AUTH_SECRET is not shipped: set it in .env before the first start
+perl -pi -e "s|^AUTH_SECRET=.*|AUTH_SECRET=\"$(openssl rand -base64 32)\"|" .env
 docker compose up -d
 ```
 
@@ -195,6 +197,9 @@ $VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/p
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
 # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
+# AUTH_SECRET is not shipped: set it in .env before the first start
+$AuthSecret = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+(Get-Content .env) -replace '^AUTH_SECRET=.*', "AUTH_SECRET=`"$AuthSecret`"" | Set-Content .env
 docker compose up -d
 ```
 

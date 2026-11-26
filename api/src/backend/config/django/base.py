@@ -9,7 +9,7 @@ from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
 from django.core.exceptions import ImproperlyConfigured
 
-SECRET_KEY = env("SECRET_KEY", default="secret")
+SECRET_KEY = env("SECRET_KEY", default="")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
