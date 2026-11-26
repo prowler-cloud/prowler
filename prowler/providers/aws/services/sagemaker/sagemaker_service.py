@@ -22,12 +22,15 @@ class SageMaker(AWSService):
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
+        self.sagemaker_hyperparameter_tuning_jobs = []
+        self.sagemaker_hyperparameter_tuning_jobs_scan_errors = {}
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
         self.__threading_call__(self._list_processing_jobs)
+        self.__threading_call__(self._list_hyper_parameter_tuning_jobs)
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
@@ -50,6 +53,10 @@ class SageMaker(AWSService):
             self._describe_processing_job, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
+            self._describe_hyper_parameter_tuning_job,
+            self.sagemaker_hyperparameter_tuning_jobs,
+        )
+        self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._describe_domain, self.sagemaker_domains)
@@ -65,6 +72,10 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._list_tags_for_resource, self.sagemaker_processing_jobs
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource,
+            self.sagemaker_hyperparameter_tuning_jobs,
         )
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
@@ -201,6 +212,97 @@ class SageMaker(AWSService):
         except Exception as error:
             logger.error(
                 f"{processing_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_hyper_parameter_tuning_jobs(self, regional_client):
+        """List SageMaker hyperparameter tuning jobs in a region.
+
+        Populates ``self.sagemaker_hyperparameter_tuning_jobs`` with
+        `HyperParameterTuningJob` instances.
+
+        Args:
+            regional_client: Regional SageMaker boto3 client.
+        """
+        logger.info("SageMaker - listing hyperparameter tuning jobs...")
+        try:
+            list_tuning_jobs_paginator = regional_client.get_paginator(
+                "list_hyper_parameter_tuning_jobs"
+            )
+            for page in list_tuning_jobs_paginator.paginate():
+                for tuning_job in page["HyperParameterTuningJobSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            tuning_job["HyperParameterTuningJobArn"],
+                            self.audit_resources,
+                        )
+                    ):
+                        self.sagemaker_hyperparameter_tuning_jobs.append(
+                            HyperParameterTuningJob(
+                                name=tuning_job["HyperParameterTuningJobName"],
+                                region=regional_client.region,
+                                arn=tuning_job["HyperParameterTuningJobArn"],
+                            )
+                        )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            if code not in ("ValidationException", "UnsupportedOperationException"):
+                self.sagemaker_hyperparameter_tuning_jobs_scan_errors[
+                    regional_client.region
+                ] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            self.sagemaker_hyperparameter_tuning_jobs_scan_errors[
+                regional_client.region
+            ] = error.__class__.__name__
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_hyper_parameter_tuning_job(self, tuning_job):
+        """Describe a SageMaker hyperparameter tuning job and check volume encryption.
+
+        Inspects the training job definitions (both single and multi-definition)
+        and verifies that every definition specifies a VolumeKmsKeyId.
+
+        Args:
+            tuning_job: HyperParameterTuningJob model to enrich in-place.
+        """
+        logger.info("SageMaker - describing hyperparameter tuning jobs...")
+        try:
+            regional_client = self.regional_clients[tuning_job.region]
+            describe_tuning_job = regional_client.describe_hyper_parameter_tuning_job(
+                HyperParameterTuningJobName=tuning_job.name
+            )
+            definitions = []
+            if "TrainingJobDefinition" in describe_tuning_job:
+                definitions.append(describe_tuning_job["TrainingJobDefinition"])
+            if "TrainingJobDefinitions" in describe_tuning_job:
+                definitions.extend(describe_tuning_job["TrainingJobDefinitions"])
+
+            if definitions:
+                all_encrypted = True
+                for definition in definitions:
+                    resource_config = definition.get("ResourceConfig", {})
+                    tuning_resource_config = definition.get(
+                        "HyperParameterTuningResourceConfig", {}
+                    )
+                    kms_key_id = (
+                        resource_config.get("VolumeKmsKeyId")
+                        or tuning_resource_config.get("VolumeKmsKeyId")
+                        or definition.get("VolumeKmsKeyId")
+                    )
+                    if not kms_key_id:
+                        all_encrypted = False
+                        break
+                tuning_job.all_definitions_encrypted = all_encrypted
+            else:
+                tuning_job.all_definitions_encrypted = None
+            tuning_job.detail_retrieved = True
+        except Exception as error:
+            logger.error(
+                f"{tuning_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_notebook_instance(self, notebook_instance):
@@ -638,6 +740,26 @@ class ProcessingJob(BaseModel):
     region: str
     arn: str
     image_uri: Optional[str] = None
+    tags: Optional[list] = []
+
+
+class HyperParameterTuningJob(BaseModel):
+    """Represents a SageMaker hyperparameter tuning job.
+
+    Attributes:
+        name: Hyperparameter tuning job name.
+        region: AWS region where the job lives.
+        arn: Hyperparameter tuning job ARN.
+        all_definitions_encrypted: Whether all training definitions have volume KMS encryption configured.
+        detail_retrieved: Whether job details were successfully retrieved.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
+    name: str
+    region: str
+    arn: str
+    all_definitions_encrypted: Optional[bool] = None
+    detail_retrieved: bool = False
     tags: Optional[list] = []
 
 
