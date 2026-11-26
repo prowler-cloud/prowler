@@ -35,15 +35,17 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
 
                                 # Advanced event selectors
                                 elif event.is_advanced:
-                                    if event.event_selector.get(
-                                        "Name"
-                                    ) == "Management events selector" and all(
-                                        [
-                                            field["Field"] != "readOnly"
-                                            for field in event.event_selector[
-                                                "FieldSelectors"
-                                            ]
-                                        ]
+                                    # Name is optional, so rely on the field selectors
+                                    field_selectors = event.event_selector.get(
+                                        "FieldSelectors", []
+                                    )
+                                    if any(
+                                        field["Field"] == "eventCategory"
+                                        and "Management" in field.get("Equals", [])
+                                        for field in field_selectors
+                                    ) and all(
+                                        field["Field"] != "readOnly"
+                                        for field in field_selectors
                                     ):
                                         trail_is_logging_management_events = True
                     if trail_is_logging_management_events:
