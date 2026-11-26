@@ -175,6 +175,7 @@ Prowler Local Server offers flexible installation methods tailored to various en
 #### Requirements
 
 - `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `Docker Engine` version 28.3.3 or later for production deployments. Engines 28.2.0 through 28.3.2 can expose ports published to `127.0.0.1` to hosts with a route to the Docker bridge after a `firewalld` reload.
 
 #### Commands
 
