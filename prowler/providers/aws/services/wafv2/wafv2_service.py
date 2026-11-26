@@ -151,6 +151,25 @@ class WAFv2(AWSService):
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    @staticmethod
+    def _build_rule(rule: dict, statement: dict) -> "Rule":
+        managed_statement = statement.get("ManagedRuleGroupStatement")
+        return Rule(
+            name=rule.get("Name", ""),
+            cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
+                "CloudWatchMetricsEnabled", False
+            ),
+            managed_rule_group=(
+                ManagedRuleGroup(
+                    vendor_name=managed_statement.get("VendorName", ""),
+                    name=managed_statement.get("Name", ""),
+                    version=managed_statement.get("Version", ""),
+                )
+                if managed_statement
+                else None
+            ),
+        )
+
     def _get_web_acl(self, acl: str):
         logger.info("WAFv2 - Getting Web ACL...")
         try:
@@ -161,29 +180,9 @@ class WAFv2(AWSService):
             try:
                 rules = get_web_acl.get("WebACL", {}).get("Rules", [])
                 for rule in rules:
-                    managed_statement = rule.get("Statement", {}).get(
-                        "ManagedRuleGroupStatement"
-                    )
-                    new_rule = Rule(
-                        name=rule.get("Name", ""),
-                        cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
-                            "CloudWatchMetricsEnabled", False
-                        ),
-                        managed_rule_group=(
-                            ManagedRuleGroup(
-                                vendor_name=managed_statement.get("VendorName", ""),
-                                name=managed_statement.get("Name", ""),
-                                version=managed_statement.get("Version", ""),
-                            )
-                            if managed_statement
-                            else None
-                        ),
-                    )
-                    if (
-                        rule.get("Statement", {})
-                        .get("RuleGroupReferenceStatement", {})
-                        .get("ARN")
-                    ):
+                    statement = rule.get("Statement", {})
+                    new_rule = self._build_rule(rule, statement)
+                    if statement.get("RuleGroupReferenceStatement", {}).get("ARN"):
                         acl.rule_groups.append(new_rule)
                     else:
                         acl.rules.append(new_rule)
@@ -196,12 +195,7 @@ class WAFv2(AWSService):
 
                 for rule in firewall_manager_managed_rg:
                     acl.rule_groups.append(
-                        Rule(
-                            name=rule.get("Name", ""),
-                            cloudwatch_metrics_enabled=rule.get(
-                                "VisibilityConfig", {}
-                            ).get("CloudWatchMetricsEnabled", False),
-                        )
+                        self._build_rule(rule, rule.get("FirewallManagerStatement", {}))
                     )
 
             except Exception as error:

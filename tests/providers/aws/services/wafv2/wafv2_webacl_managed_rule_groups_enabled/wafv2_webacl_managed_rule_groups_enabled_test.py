@@ -15,7 +15,7 @@ CHECK_PATH = "prowler.providers.aws.services.wafv2.wafv2_webacl_managed_rule_gro
 WEB_ACL_ARN = f"arn:aws:wafv2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:regional/webacl/test-acl/abc"
 
 
-def _web_acl(rules):
+def _web_acl(rules, rule_groups=None):
     return WebAclv2(
         arn=WEB_ACL_ARN,
         name="test-acl",
@@ -25,6 +25,7 @@ def _web_acl(rules):
         region=AWS_REGION_US_EAST_1,
         tags=[],
         rules=rules,
+        rule_groups=rule_groups or [],
     )
 
 
@@ -86,4 +87,32 @@ class Test_wafv2_webacl_managed_rule_groups_enabled:
         assert (
             result[0].status_extended
             == "AWS WAFv2 Web ACL test-acl uses managed rule groups: AWS/AWSManagedRulesCommonRuleSet, AWS/AWSManagedRulesPHPRuleSet."
+        )
+
+    def test_firewall_manager_managed_rule_groups(self):
+        rule_groups = [
+            Rule(name="PREFMManaged-custom"),
+            Rule(
+                name="PREFMManaged-AWSManagedRulesCommonRuleSet",
+                managed_rule_group=ManagedRuleGroup(
+                    vendor_name="AWS", name="AWSManagedRulesCommonRuleSet"
+                ),
+            ),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl([], rule_groups=rule_groups)})
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "AWS WAFv2 Web ACL test-acl uses managed rule groups: AWS/AWSManagedRulesCommonRuleSet."
+        )
+
+    def test_firewall_manager_custom_rule_groups_only(self):
+        rule_groups = [Rule(name="PREFMManaged-custom")]
+        result = _run_check({WEB_ACL_ARN: _web_acl([], rule_groups=rule_groups)})
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "AWS WAFv2 Web ACL test-acl does not use any managed rule group."
         )

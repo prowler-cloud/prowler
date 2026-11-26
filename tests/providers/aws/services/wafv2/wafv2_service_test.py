@@ -4,7 +4,11 @@ import botocore
 from boto3 import client, resource
 from moto import mock_aws
 
-from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
+from prowler.providers.aws.services.wafv2.wafv2_service import (
+    Scope,
+    WAFv2,
+    WebAclv2,
+)
 from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
@@ -462,3 +466,78 @@ class Test_WAFv2_Service:
         assert [rule.name for rule in acl.rules] == ["rule-on"]
         assert acl.tags == [{"Key": "Name", "Value": "my-web-acl"}]
         assert acl.logging_enabled
+
+    @mock_aws
+    def test_get_web_acl_firewall_manager_managed_rule_groups(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        wafv2 = WAFv2(aws_provider)
+        acl = WebAclv2(
+            arn=f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:123456789012:regional/webacl/fm-acl/123",
+            name="fm-acl",
+            id="123",
+            albs=[],
+            user_pools=[],
+            scope=Scope.REGIONAL,
+            region=AWS_REGION_EU_WEST_1,
+        )
+        fm_response = {
+            "WebACL": {
+                "Rules": [],
+                "PreProcessFirewallManagerRuleGroups": [
+                    {
+                        "Name": "PREFMManaged-custom",
+                        "FirewallManagerStatement": {
+                            "RuleGroupReferenceStatement": {
+                                "ARN": f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:123456789012:regional/rulegroup/custom/abc"
+                            }
+                        },
+                        "VisibilityConfig": {"CloudWatchMetricsEnabled": True},
+                    },
+                    {
+                        "Name": "PREFMManaged-AWSManagedRulesCommonRuleSet",
+                        "FirewallManagerStatement": {
+                            "ManagedRuleGroupStatement": {
+                                "VendorName": "AWS",
+                                "Name": "AWSManagedRulesCommonRuleSet",
+                            }
+                        },
+                        "VisibilityConfig": {"CloudWatchMetricsEnabled": False},
+                    },
+                ],
+                "PostProcessFirewallManagerRuleGroups": [
+                    {
+                        "Name": "POSTFMManaged-AWSManagedRulesKnownBadInputsRuleSet",
+                        "FirewallManagerStatement": {
+                            "ManagedRuleGroupStatement": {
+                                "VendorName": "AWS",
+                                "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+                                "Version": "Version_1.0",
+                            }
+                        },
+                        "VisibilityConfig": {"CloudWatchMetricsEnabled": True},
+                    }
+                ],
+            }
+        }
+        with patch.object(
+            wafv2.regional_clients[AWS_REGION_EU_WEST_1],
+            "get_web_acl",
+            return_value=fm_response,
+        ):
+            wafv2._get_web_acl(acl)
+
+        assert len(acl.rule_groups) == 3
+        assert acl.rule_groups[0].managed_rule_group is None
+        assert acl.rule_groups[1].managed_rule_group is not None
+        assert acl.rule_groups[1].managed_rule_group.vendor_name == "AWS"
+        assert (
+            acl.rule_groups[1].managed_rule_group.name == "AWSManagedRulesCommonRuleSet"
+        )
+        assert acl.rule_groups[1].managed_rule_group.version == ""
+        assert acl.rule_groups[2].managed_rule_group is not None
+        assert acl.rule_groups[2].managed_rule_group.vendor_name == "AWS"
+        assert (
+            acl.rule_groups[2].managed_rule_group.name
+            == "AWSManagedRulesKnownBadInputsRuleSet"
+        )
+        assert acl.rule_groups[2].managed_rule_group.version == "Version_1.0"
