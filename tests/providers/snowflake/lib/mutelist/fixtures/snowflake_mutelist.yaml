@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "myorg-myaccount":
+      Checks:
+        "users_mfa_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "BREAKGLASS_ADMIN"

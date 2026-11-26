@@ -92,6 +92,11 @@ provider/linode:
       - any-glob-to-any-file: "prowler/providers/linode/**"
       - any-glob-to-any-file: "tests/providers/linode/**"
 
+provider/snowflake:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/snowflake/**"
+      - any-glob-to-any-file: "tests/providers/snowflake/**"
+
 provider/stackit:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/stackit/**"
