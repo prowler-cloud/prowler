@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.web import WebSiteManagementClient
 
 from prowler.lib.logger import logger
@@ -32,12 +33,8 @@ class App(AzureService):
                 for app in apps_list:
                     # Filter function apps
                     if getattr(app, "kind", "app").startswith("app"):
-                        platform_auth = getattr(
-                            client.web_apps.get_auth_settings_v2(
-                                resource_group_name=app.resource_group, name=app.name
-                            ),
-                            "platform",
-                            None,
+                        auth_enabled = self._get_app_auth_enabled(
+                            subscription_id, app.resource_group, app.name
                         )
 
                         # Get app configurations
@@ -50,11 +47,7 @@ class App(AzureService):
                                 app.id: WebApp(
                                     resource_id=app.id,
                                     name=app.name,
-                                    auth_enabled=(
-                                        getattr(platform_auth, "enabled", False)
-                                        if platform_auth
-                                        else False
-                                    ),
+                                    auth_enabled=auth_enabled,
                                     configurations=SiteConfigResource(
                                         id=app_configurations.id,
                                         name=app_configurations.name,
@@ -189,6 +182,25 @@ class App(AzureService):
 
         return functions
 
+    def _get_app_auth_enabled(
+        self, subscription: str, resource_group: str, name: str
+    ) -> Optional[bool]:
+        """Read authentication state without discarding apps on lookup failure."""
+        try:
+            settings = self.clients[subscription].web_apps.get_auth_settings_v2(
+                resource_group_name=resource_group, name=name
+            )
+            platform = getattr(settings, "platform", None)
+            return getattr(platform, "enabled", False) if platform else False
+        except ResourceNotFoundError:
+            return False
+        except Exception as error:
+            logger.warning(
+                f"Subscription ID: {subscription} -- Error getting authentication settings "
+                f"for {name} in {resource_group}: {error.__class__.__name__}: {error}"
+            )
+            return None
+
     def _get_client_cert_mode(self, client_cert_enabled: bool, client_cert_mode: str):
         cert_mode = "Ignore"
         if not client_cert_enabled and client_cert_mode == "OptionalInteractiveUser":
@@ -284,7 +296,7 @@ class WebApp:
     identity: ManagedServiceIdentity
     location: str
     client_cert_mode: str = "Ignore"
-    auth_enabled: bool = False
+    auth_enabled: Optional[bool] = False
     https_only: bool = False
     monitor_diagnostic_settings: List[DiagnosticSetting] = field(default_factory=list)
     kind: str = "app"
