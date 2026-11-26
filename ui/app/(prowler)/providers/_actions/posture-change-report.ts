@@ -14,17 +14,20 @@ export const generatePostureChangeReport = async ({
   dateFrom,
   dateTo,
   reportName,
+  language,
 }: {
   providerId: string;
   dateFrom: string;
   dateTo: string;
   reportName?: string;
+  language: string;
 }): Promise<{ taskId: string } | { error: string }> => {
   const url = new URL(`${apiBaseUrl}${POSTURE_CHANGE_API_PATH}`);
   url.searchParams.set("provider_id", providerId);
   url.searchParams.set("date_from", dateFrom);
   url.searchParams.set("date_to", dateTo);
   if (reportName) url.searchParams.set("report_name", reportName);
+  url.searchParams.set("language", language);
   return generateAggregatedCompliancePdf(
     url,
     `POST ${POSTURE_CHANGE_API_PATH}`,

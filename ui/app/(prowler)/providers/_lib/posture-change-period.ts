@@ -49,3 +49,19 @@ export const validatePostureChangePeriod = (
     dateTo: toLocalDateString(to) ?? "",
   };
 };
+
+export const POSTURE_CHANGE_LANGUAGE = {
+  EN: "en",
+  ES: "es",
+} as const;
+
+export type PostureChangeLanguage =
+  (typeof POSTURE_CHANGE_LANGUAGE)[keyof typeof POSTURE_CHANGE_LANGUAGE];
+
+export const POSTURE_CHANGE_LANGUAGE_LABELS: Record<
+  PostureChangeLanguage,
+  string
+> = {
+  [POSTURE_CHANGE_LANGUAGE.EN]: "English",
+  [POSTURE_CHANGE_LANGUAGE.ES]: "Español",
+};

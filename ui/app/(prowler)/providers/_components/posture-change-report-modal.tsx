@@ -7,12 +7,22 @@ import { Calendar } from "@/components/shadcn/calendar";
 import { FormButtons } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
 import { toast } from "@/components/shadcn/toast";
 import { trackAndPollTask } from "@/store/task-watcher/store";
 
 import { generatePostureChangeReport } from "../_actions/posture-change-report";
 import {
   defaultPostureChangePeriod,
+  POSTURE_CHANGE_LANGUAGE,
+  POSTURE_CHANGE_LANGUAGE_LABELS,
+  type PostureChangeLanguage,
   type PostureChangePeriod,
   utcToday,
   validatePostureChangePeriod,
@@ -63,6 +73,9 @@ const PostureChangeReportForm = ({
     defaultPostureChangePeriod(today),
   );
   const [reportName, setReportName] = useState("");
+  const [language, setLanguage] = useState<PostureChangeLanguage>(
+    POSTURE_CHANGE_LANGUAGE.EN,
+  );
   const [submitting, setSubmitting] = useState(false);
   const validation = validatePostureChangePeriod(period, today);
   const periodError = "error" in validation ? validation.error : null;
@@ -75,6 +88,7 @@ const PostureChangeReportForm = ({
         providerId,
         ...validation,
         reportName: reportName.trim() || undefined,
+        language,
       });
       if ("error" in result) {
         toast({
@@ -134,6 +148,27 @@ const PostureChangeReportForm = ({
             {periodError}
           </p>
         )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="posture-change-report-language">Language</Label>
+        <Select
+          value={language}
+          onValueChange={(value) => setLanguage(value as PostureChangeLanguage)}
+        >
+          <SelectTrigger
+            id="posture-change-report-language"
+            aria-label="Report language"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(POSTURE_CHANGE_LANGUAGE).map((value) => (
+              <SelectItem key={value} value={value}>
+                {POSTURE_CHANGE_LANGUAGE_LABELS[value]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="posture-change-report-name">Report name</Label>
