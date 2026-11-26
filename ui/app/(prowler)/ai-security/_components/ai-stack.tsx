@@ -4,17 +4,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { aiFindingsHref } from "@/app/(prowler)/ai-security/_lib/findings";
+import { isModelVendor } from "@/app/(prowler)/ai-security/_lib/overview";
 import type {
   AiStackLayer,
   AiStackProvider,
 } from "@/app/(prowler)/ai-security/_types";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { useRegistryProviderDiscovery } from "@/components/providers/workflow/forms/use-registry-provider-discovery";
 import { Badge, Button, Card, CardContent } from "@/components/shadcn";
 import { Progress } from "@/components/shadcn/progress";
 import { SelectableCard } from "@/components/shadcn/selectable-card/selectable-card";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { getScoreColor } from "@/lib/compliance/score-utils";
 import { splitCsvFilterValues } from "@/lib/findings-filters";
+import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
 import { calculatePercentage, cn } from "@/lib/utils";
 
 import { ConnectProviderButton } from "./connect-provider-button";
@@ -27,6 +30,8 @@ interface StackProviderProps {
   filters: Record<string, string>;
   selected: boolean;
   onSelect: () => void;
+  /** A model vendor the tenant has not installed from the Registry yet. */
+  notInstalled: boolean;
 }
 
 function StackProvider({
@@ -34,6 +39,7 @@ function StackProvider({
   filters,
   selected,
   onSelect,
+  notInstalled,
 }: StackProviderProps) {
   const { type, name, scope, connected, scanned, pass, fail, manual } =
     provider;
@@ -73,7 +79,19 @@ function StackProvider({
             </Badge>
           )}
         </div>
-        {!connected && <ConnectProviderButton />}
+        {!connected &&
+          (notInstalled ? (
+            // The wizard lists only installed Registry providers, so install it first.
+            <Button asChild>
+              <Link
+                href={`/registry?${new URLSearchParams({ "filter[search]": name })}`}
+              >
+                Install from Registry
+              </Link>
+            </Button>
+          ) : (
+            <ConnectProviderButton />
+          ))}
         {connected && !scanned && (
           <Button asChild variant="link" size="link-sm">
             <Link href="/scans">Launch scan</Link>
@@ -132,6 +150,12 @@ export function AiStack({
 }) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
+  const { result: discovery } = useRegistryProviderDiscovery();
+  // Unknown until discovery answers: keep Add Provider rather than guess.
+  const installedTypes =
+    discovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY
+      ? discovery.options.map((option) => option.type)
+      : null;
   const selected = splitCsvFilterValues(
     searchParams.get(PROVIDER_TYPE_FILTER) ?? undefined,
   );
@@ -185,6 +209,11 @@ export function AiStack({
                         filters={filters}
                         selected={selected.includes(provider.type)}
                         onSelect={() => toggle(provider.type)}
+                        notInstalled={
+                          isModelVendor(provider.type) &&
+                          installedTypes !== null &&
+                          !installedTypes.includes(provider.type)
+                        }
                       />
                     </li>
                   ))}
