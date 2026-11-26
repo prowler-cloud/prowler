@@ -28,6 +28,7 @@ class TestRDSService:
             id="rds-public",
             name="public-db",
             status="ACTIVE",
+            enable_ssl=True,
             public_ips=["1.2.3.4"],
             backup_strategy=SimpleNamespace(keep_days=7),
             datastore=SimpleNamespace(type="MySQL", version="8.0"),
@@ -37,6 +38,7 @@ class TestRDSService:
             id="rds-private",
             name="private-db",
             status="ACTIVE",
+            enable_ssl=False,
             public_ips=[],
             backup_strategy=SimpleNamespace(keep_days=0),
             datastore=SimpleNamespace(type="PostgreSQL", version="14"),
@@ -59,6 +61,7 @@ class TestRDSService:
         assert public_db.region == REGION
         assert public_db.engine == "MySQL"
         assert public_db.engine_version == "8.0"
+        assert public_db.enable_ssl is True
         # is_public derives from public_ips list
         assert public_db.is_public is True
         assert public_db.public_ip == "1.2.3.4"
@@ -71,6 +74,7 @@ class TestRDSService:
         assert private_db.public_ip == ""
         assert private_db.backup_enabled is False
         assert private_db.engine == "PostgreSQL"
+        assert private_db.enable_ssl is False
         assert private_db.disk_encryption_id == ""
 
     def test_list_instances_empty(self):
