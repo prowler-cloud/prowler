@@ -163,6 +163,7 @@
               },
               "user-guide/tutorials/prowler-cloud-realtime",
               "user-guide/tutorials/prowler-cloud-posture-change-report",
+              "user-guide/tutorials/prowler-cloud-ai-security",
               {
                 "group": "Compliance",
                 "pages": [
