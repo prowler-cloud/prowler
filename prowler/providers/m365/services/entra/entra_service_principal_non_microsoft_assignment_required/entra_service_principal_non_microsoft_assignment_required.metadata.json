@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_service_principal_non_microsoft_assignment_required",
+  "CheckTitle": "Explicit user assignment prevents unauthorized sign-in to non-Microsoft enterprise applications",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Non-Microsoft enterprise applications (service principals of type Application or Legacy) are evaluated for the **appRoleAssignmentRequired** property. When set to `true`, only users and groups explicitly assigned under \"Users and groups\" can obtain tokens for the application. When `false`, any tenant user including guests can sign in.",
+  "Risk": "With **appRoleAssignmentRequired** set to `false`, every user in the directory — including guests — can sign in to the application and exercise whatever delegated permissions were admin-consented. A single compromised account can access every such app, widening the blast radius of an account takeover and enabling data exfiltration through third-party SaaS integrations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity-platform/howto-restrict-your-app-to-a-set-of-users",
+    "https://learn.microsoft.com/entra/identity/enterprise-apps/application-properties",
+    "https://maester.dev/docs/tests/MT.1075"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az ad sp update --id <objectId> --set appRoleAssignmentRequired=true",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Identity > Applications > Enterprise applications\n3. Select the application\n4. Under Users and groups, assign the users or groups that need access\n5. Go to Properties and set \"Assignment required?\" to **Yes**\n6. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require **explicit assignment** on every non-Microsoft enterprise application to enforce **least privilege**. Before enabling, review the app's sign-in logs to identify users who need access, then assign them under \"Users and groups\" to avoid disruption.",
+      "Url": "https://hub.prowler.com/check/entra_service_principal_non_microsoft_assignment_required"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_policy_restricts_user_consent_for_apps",
+    "entra_thirdparty_integrated_apps_not_allowed"
+  ],
+  "Notes": "Apps that only use application permissions (daemons) with no interactive sign-in will also FAIL when assignment is not required. Setting assignment required on them is harmless, so they are not excluded. Disabled service principals receive a PASS with an advisory message. Microsoft first-party apps are excluded and handled by a separate check."
+}
