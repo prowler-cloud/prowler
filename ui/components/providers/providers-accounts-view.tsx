@@ -196,16 +196,7 @@ export function ProvidersAccountsView({
             actions={
               <>
                 <MutedFindingsConfigButton />
-                {isCloud && (
-                  <PostureChangeReportButton
-                    providers={providers.map((provider) => ({
-                      id: provider.id,
-                      label: provider.attributes.alias
-                        ? `${provider.attributes.alias} (${provider.attributes.uid})`
-                        : provider.attributes.uid,
-                    }))}
-                  />
-                )}
+                {isCloud && <PostureChangeReportButton providers={providers} />}
                 <AddProviderButton
                   onOpenWizard={() =>
                     openProviderWizard(WIZARD_OPEN_SOURCE.PAGE_BUTTON)

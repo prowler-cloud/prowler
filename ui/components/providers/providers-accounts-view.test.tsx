@@ -56,10 +56,11 @@ vi.mock(
     PostureChangeReportButton: ({
       providers,
     }: {
-      providers: { id: string; label: string }[];
+      providers: ProviderProps[];
     }) => (
       <button type="button">
-        Posture report for {providers.map((option) => option.label).join(", ")}
+        Posture report for{" "}
+        {providers.map((provider) => provider.attributes.uid).join(", ")}
       </button>
     ),
   }),
@@ -574,7 +575,7 @@ describe("ProvidersAccountsView", () => {
 
     // Then
     expect(
-      screen.getByText("Posture report for Production (123456789012)"),
+      screen.getByText("Posture report for 123456789012"),
     ).toBeInTheDocument();
   });
 

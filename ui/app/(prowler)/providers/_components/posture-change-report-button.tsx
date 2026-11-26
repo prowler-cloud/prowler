@@ -3,10 +3,10 @@
 import { FileChartLine } from "lucide-react";
 import { useState } from "react";
 
+import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { Button, Label } from "@/components/shadcn";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Calendar } from "@/components/shadcn/calendar";
-import { Combobox } from "@/components/shadcn/combobox";
 import { FormButtons } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal";
@@ -19,6 +19,7 @@ import {
 } from "@/components/shadcn/select/select";
 import { toast } from "@/components/shadcn/toast";
 import { trackAndPollTask } from "@/store/task-watcher/store";
+import type { ProviderProps } from "@/types/providers";
 
 import { generatePostureChangeReport } from "../_actions/posture-change-report";
 import {
@@ -32,15 +33,10 @@ import {
 } from "../_lib/posture-change-period";
 import { POSTURE_CHANGE_REPORT_TASK_KIND } from "../_lib/posture-change-report";
 
-export interface PostureChangeProviderOption {
-  id: string;
-  label: string;
-}
-
 export const PostureChangeReportButton = ({
   providers,
 }: {
-  providers: PostureChangeProviderOption[];
+  providers: ProviderProps[];
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -75,11 +71,14 @@ const PostureChangeReportForm = ({
   providers,
   onClose,
 }: {
-  providers: PostureChangeProviderOption[];
+  providers: ProviderProps[];
   onClose: () => void;
 }) => {
   const [providerId, setProviderId] = useState("");
   const provider = providers.find((option) => option.id === providerId);
+  const providerLabel = provider
+    ? provider.attributes.alias || provider.attributes.uid
+    : "";
   const [today] = useState(() => utcToday(new Date()));
   const [period, setPeriod] = useState<PostureChangePeriod | undefined>(() =>
     defaultPostureChangePeriod(today),
@@ -121,7 +120,7 @@ const PostureChangeReportForm = ({
         kind: POSTURE_CHANGE_REPORT_TASK_KIND,
         meta: {
           providerId,
-          reportLabel: reportName.trim() || provider.label,
+          reportLabel: reportName.trim() || providerLabel,
         },
       });
     } catch {
@@ -144,21 +143,16 @@ const PostureChangeReportForm = ({
       className="flex flex-col gap-6"
     >
       <div className="flex flex-col gap-2">
-        <Label>Provider</Label>
-        <Combobox
-          value={provider?.label ?? ""}
-          onValueChange={(label) =>
-            setProviderId(
-              providers.find((option) => option.label === label)?.id ?? "",
-            )
-          }
-          options={providers.map((option) => ({
-            value: option.label,
-            label: option.label,
-          }))}
-          placeholder="Select a provider"
-          searchPlaceholder="Search by alias or UID..."
-          emptyMessage="No provider found."
+        <Label htmlFor="posture-change-report-provider">Provider</Label>
+        <AccountsSelector
+          id="posture-change-report-provider"
+          providers={providers}
+          onBatchChange={(_, values) => setProviderId(values.at(-1) ?? "")}
+          selectedValues={providerId ? [providerId] : []}
+          closeOnSelect
+          placeholder="Select a Provider"
+          emptySelectionLabel="No provider selected"
+          clearSelectionLabel="Clear provider selection"
         />
       </div>
       <div className="flex flex-col gap-2">
