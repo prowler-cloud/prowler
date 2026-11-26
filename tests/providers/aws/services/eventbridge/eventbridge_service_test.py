@@ -195,3 +195,121 @@ class Test_EventBridge_Service:
         assert eventbridge.endpoints[endpoint_arn].replication_state == "DISABLED"
         assert eventbridge.endpoints[endpoint_arn].tags == []
         assert eventbridge.endpoints[endpoint_arn].region == AWS_REGION_US_EAST_1
+
+    # Test EventBridge List Event Buses follows pagination
+    @mock_aws
+    def test_list_event_buses_follows_next_token_pagination(self):
+        def bus(name):
+            return {
+                "Name": name,
+                "Arn": (
+                    f"arn:aws:events:{AWS_REGION_US_EAST_1}:"
+                    f"{AWS_ACCOUNT_NUMBER}:event-bus/{name}"
+                ),
+            }
+
+        pages = {
+            "ListEventBuses": (
+                {"EventBuses": [bus("test-bus-1")], "NextToken": "next"},
+                {"EventBuses": [bus("test-bus-2")]},
+            ),
+        }
+
+        def mock_paginated_api_call(self, operation_name, kwargs):
+            if operation_name in pages:
+                page_index = 1 if kwargs.get("NextToken") else 0
+                return pages[operation_name][page_index]
+            return mock_make_api_call(self, operation_name, kwargs)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_paginated_api_call,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+            eventbridge = EventBridge(aws_provider)
+
+        assert len(eventbridge.buses) == 2
+        assert sorted(b.name for b in eventbridge.buses.values()) == [
+            "test-bus-1",
+            "test-bus-2",
+        ]
+
+    # Test EventBridge List Endpoints follows pagination
+    @mock_aws
+    def test_list_endpoints_follows_next_token_pagination(self):
+        def endpoint(name):
+            return {
+                "Name": name,
+                "Arn": (
+                    f"arn:aws:events:{AWS_REGION_US_EAST_1}:"
+                    f"{AWS_ACCOUNT_NUMBER}:endpoint/{name}"
+                ),
+                "ReplicationConfig": {"State": "ENABLED"},
+            }
+
+        pages = {
+            "ListEndpoints": (
+                {"Endpoints": [endpoint("endpoint-1")], "NextToken": "next"},
+                {"Endpoints": [endpoint("endpoint-2")]},
+            ),
+        }
+
+        def mock_paginated_api_call(self, operation_name, kwargs):
+            if operation_name in pages:
+                page_index = 1 if kwargs.get("NextToken") else 0
+                return pages[operation_name][page_index]
+            return mock_make_api_call(self, operation_name, kwargs)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_paginated_api_call,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+            eventbridge = EventBridge(aws_provider)
+
+        assert len(eventbridge.endpoints) == 2
+        assert sorted(e.name for e in eventbridge.endpoints.values()) == [
+            "endpoint-1",
+            "endpoint-2",
+        ]
+        by_name = {e.name: e for e in eventbridge.endpoints.values()}
+        assert by_name["endpoint-2"].replication_state == "ENABLED"
+
+    # Test Schema List Registries follows pagination
+    @mock_aws
+    def test_list_registries_follows_next_token_pagination(self):
+        def registry(name):
+            return {
+                "RegistryArn": (
+                    f"arn:aws:schemas:{AWS_REGION_US_EAST_1}:"
+                    f"{AWS_ACCOUNT_NUMBER}:registry/{name}"
+                ),
+                "RegistryName": name,
+                "Tags": {"key1": "value1"},
+            }
+
+        pages = {
+            "ListRegistries": (
+                {"Registries": [registry("registry-1")], "NextToken": "next"},
+                {"Registries": [registry("registry-2")]},
+            ),
+        }
+
+        def mock_paginated_api_call(self, operation_name, kwargs):
+            if operation_name in pages:
+                page_index = 1 if kwargs.get("NextToken") else 0
+                return pages[operation_name][page_index]
+            return mock_make_api_call(self, operation_name, kwargs)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_paginated_api_call,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+            schema = Schema(aws_provider)
+
+        assert len(schema.registries) == 2
+        assert sorted(r.name for r in schema.registries.values()) == [
+            "registry-1",
+            "registry-2",
+        ]

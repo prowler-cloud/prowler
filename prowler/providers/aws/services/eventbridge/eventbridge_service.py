@@ -23,16 +23,23 @@ class EventBridge(AWSService):
     def _list_event_buses(self, regional_client):
         logger.info("EventBridge - Listing Event Buses...")
         try:
-            for bus in regional_client.list_event_buses()["EventBuses"]:
-                bus_arn = bus["Arn"]
-                if not self.audit_resources or (
-                    is_resource_filtered(bus_arn, self.audit_resources)
-                ):
-                    self.buses[bus_arn] = Bus(
-                        name=bus.get("Name", ""),
-                        arn=bus_arn,
-                        region=regional_client.region,
-                    )
+            next_token = None
+            while True:
+                params = {"NextToken": next_token} if next_token else {}
+                page = regional_client.list_event_buses(**params)
+                for bus in page["EventBuses"]:
+                    bus_arn = bus["Arn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(bus_arn, self.audit_resources)
+                    ):
+                        self.buses[bus_arn] = Bus(
+                            name=bus.get("Name", ""),
+                            arn=bus_arn,
+                            region=regional_client.region,
+                        )
+                next_token = page.get("NextToken")
+                if not next_token:
+                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -59,19 +66,26 @@ class EventBridge(AWSService):
     def _list_endpoints(self, regional_client):
         logger.info("EventBridge - Listing Endpoints...")
         try:
-            for endpoint in regional_client.list_endpoints()["Endpoints"]:
-                endpoint_arn = endpoint["Arn"]
-                if not self.audit_resources or (
-                    is_resource_filtered(endpoint_arn, self.audit_resources)
-                ):
-                    self.endpoints[endpoint_arn] = Endpoint(
-                        name=endpoint.get("Name", ""),
-                        arn=endpoint_arn,
-                        region=regional_client.region,
-                        replication_state=endpoint.get("ReplicationConfig", {}).get(
-                            "State", "DISABLED"
-                        ),
-                    )
+            next_token = None
+            while True:
+                params = {"NextToken": next_token} if next_token else {}
+                page = regional_client.list_endpoints(**params)
+                for endpoint in page["Endpoints"]:
+                    endpoint_arn = endpoint["Arn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(endpoint_arn, self.audit_resources)
+                    ):
+                        self.endpoints[endpoint_arn] = Endpoint(
+                            name=endpoint.get("Name", ""),
+                            arn=endpoint_arn,
+                            region=regional_client.region,
+                            replication_state=endpoint.get("ReplicationConfig", {}).get(
+                                "State", "DISABLED"
+                            ),
+                        )
+                next_token = page.get("NextToken")
+                if not next_token:
+                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -133,20 +147,24 @@ class Schema(AWSService):
     def _list_registries(self, regional_client):
         logger.info("EventBridge - Listing Schema Registries...")
         try:
-            for registry in regional_client.list_registries()["Registries"]:
-                registry_arn = registry.get(
-                    "RegistryArn",
-                    f"arn:{self.audited_partition}:schemas:{regional_client.region}:{self.audited_account}:registry/{registry.get('RegistryName', '')}",
-                )
-                if not self.audit_resources or (
-                    is_resource_filtered(registry_arn, self.audit_resources)
-                ):
-                    self.registries[registry_arn] = Registry(
-                        name=registry.get("RegistryName", ""),
-                        arn=registry_arn,
-                        region=regional_client.region,
-                        tags=[registry["Tags"]],
+            list_registries_paginator = regional_client.get_paginator(
+                "list_registries",
+            )
+            for page in list_registries_paginator.paginate():
+                for registry in page["Registries"]:
+                    registry_arn = registry.get(
+                        "RegistryArn",
+                        f"arn:{self.audited_partition}:schemas:{regional_client.region}:{self.audited_account}:registry/{registry.get('RegistryName', '')}",
                     )
+                    if not self.audit_resources or (
+                        is_resource_filtered(registry_arn, self.audit_resources)
+                    ):
+                        self.registries[registry_arn] = Registry(
+                            name=registry.get("RegistryName", ""),
+                            arn=registry_arn,
+                            region=regional_client.region,
+                            tags=[registry["Tags"]],
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
