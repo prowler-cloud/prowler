@@ -39,6 +39,7 @@ export const REALTIME_DETECTION_STATUS = {
   NEW: "new",
   VIOLATION: "violation",
   COMPLIANT: "compliant",
+  FIXED: "fixed",
   OUT_OF_SCOPE: "out_of_scope",
   ERROR: "error",
 } as const;

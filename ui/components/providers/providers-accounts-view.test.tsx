@@ -50,6 +50,22 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
   ),
 }));
 
+vi.mock(
+  "@/app/(prowler)/providers/_components/posture-change-report-button",
+  () => ({
+    PostureChangeReportButton: ({
+      providers,
+    }: {
+      providers: ProviderProps[];
+    }) => (
+      <button type="button">
+        Posture report for{" "}
+        {providers.map((provider) => provider.attributes.uid).join(", ")}
+      </button>
+    ),
+  }),
+);
+
 vi.mock("@/components/providers/providers-filters", () => ({
   ProvidersFilters: ({ actions }: { actions: ReactNode }) => (
     <div data-testid="providers-filters">
@@ -532,6 +548,35 @@ describe("ProvidersAccountsView", () => {
     expect(
       screen.queryByText("No Providers Configured"),
     ).not.toBeInTheDocument();
+  });
+
+  it("offers the posture change report next to the page actions only in Prowler Cloud", () => {
+    // Given
+    const renderView = (isCloud: boolean) =>
+      render(
+        <ProvidersAccountsView
+          isCloud={isCloud}
+          filters={filters}
+          metadata={metadata}
+          providers={disconnectedProviders}
+          rows={rows}
+        />,
+      );
+
+    // When self-hosted
+    const selfHosted = renderView(false);
+
+    // Then
+    expect(screen.queryByText(/Posture report/)).not.toBeInTheDocument();
+    selfHosted.unmount();
+
+    // When in Prowler Cloud
+    renderView(true);
+
+    // Then
+    expect(
+      screen.getByText("Posture report for 123456789012"),
+    ).toBeInTheDocument();
   });
 
   it("passes scan schedule capability to provider row actions", () => {

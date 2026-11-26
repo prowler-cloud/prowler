@@ -89,6 +89,10 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     return this.buttonByText(/Import Findings/) !== null;
   }
 
+  hasImportFindingsUpload(): boolean {
+    return this.container.querySelector('input[type="file"]') !== null;
+  }
+
   async openImportFindings(): Promise<void> {
     await this.clickButton(/Import Findings/);
     await this.waitForText(/Import findings/i);

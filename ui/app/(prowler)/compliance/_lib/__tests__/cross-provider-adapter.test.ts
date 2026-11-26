@@ -84,15 +84,17 @@ vi.mock(
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import type { Framework, Requirement } from "@/types/compliance";
 
-import type {
-  CrossProviderOverviewAttributes,
-  CrossProviderRequirementData,
+import {
+  CROSS_PROVIDER_OVERVIEW_RESULT_STATUS,
+  type CrossProviderOverviewAttributes,
+  type CrossProviderRequirementData,
 } from "../../_types";
 import {
   buildRequirementExtrasMap,
   computeProviderBreakdown,
   crossProviderToMapperInput,
   invertCheckIdsByProvider,
+  toCrossProviderSummary,
 } from "../cross-provider-adapter";
 
 const buildAttributes = (
@@ -312,6 +314,15 @@ describe("invertCheckIdsByProvider", () => {
       iam_check_1: ["aws"],
     });
   });
+
+  it("labels checks of dynamic provider types after the known ones", () => {
+    expect(
+      invertCheckIdsByProvider({
+        openai: ["shared_check"],
+        aws: ["shared_check"],
+      }),
+    ).toEqual({ shared_check: ["aws", "openai"] });
+  });
 });
 
 describe("computeProviderBreakdown", () => {
@@ -358,15 +369,59 @@ describe("computeProviderBreakdown", () => {
     ]);
   });
 
-  it("ignores provider types the UI does not know", () => {
+  it("keeps dynamic (Registry) provider types", () => {
     const breakdown = computeProviderBreakdown(
       buildAttributes({
         framework: "CSA-CCM",
-        compatible_providers: ["aws", "not-a-provider"],
+        compatible_providers: ["aws", "openai"],
+        providers: ["openai"],
         requirements: [],
       }),
     );
 
-    expect(breakdown.map((entry) => entry.provider)).toEqual(["aws"]);
+    expect(breakdown.map((entry) => entry.provider)).toEqual(["openai", "aws"]);
+  });
+});
+
+describe("toCrossProviderSummary", () => {
+  const entry = {
+    complianceId: "csa_ccm_4.0",
+    title: "CSA-CCM",
+    version: "4.0",
+    description: "Cloud Controls Matrix",
+    providerTypes: ["aws", "not-a-provider"],
+  };
+
+  it("rolls the overview up into the card's counts and breakdown", () => {
+    const summary = toCrossProviderSummary(entry, {
+      status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS,
+      response: {
+        data: {
+          type: "cross-provider-compliance-overviews",
+          id: "csa_ccm_4.0",
+          attributes: { ...csaAttributes, requirements_passed: 1 },
+        },
+      },
+    });
+
+    expect(summary).toMatchObject({
+      complianceId: "csa_ccm_4.0",
+      requirementsPassed: 1,
+      totalRequirements: csaAttributes.total_requirements,
+      providerBreakdown: computeProviderBreakdown(csaAttributes),
+    });
+  });
+
+  it("zeroes a framework without data, all its providers unscanned, Registry types included", () => {
+    const summary = toCrossProviderSummary(entry, {
+      status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
+      message: "",
+    });
+
+    expect(summary.totalRequirements).toBe(0);
+    expect(summary.providerBreakdown).toEqual([
+      expect.objectContaining({ provider: "aws", unscanned: true }),
+      expect.objectContaining({ provider: "not-a-provider", unscanned: true }),
+    ]);
   });
 });

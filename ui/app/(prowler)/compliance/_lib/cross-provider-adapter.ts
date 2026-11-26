@@ -5,15 +5,19 @@ import type {
   RequirementItemData,
   RequirementsData,
 } from "@/types/compliance";
-import { isKnownProviderType, PROVIDER_TYPES } from "@/types/providers";
+import { compareProviderTypes } from "@/types/providers";
 
-import type {
-  CrossProviderOverviewAttributes,
-  CrossProviderRequirementExtras,
-  ProviderBreakdownEntry,
-  ProviderCheckIdsMap,
+import {
+  CROSS_PROVIDER_OVERVIEW_RESULT_STATUS,
+  type CrossProviderFrameworkSummary,
+  type CrossProviderOverviewAttributes,
+  type CrossProviderOverviewResult,
+  type CrossProviderRequirementExtras,
+  type ProviderBreakdownEntry,
+  type ProviderCheckIdsMap,
 } from "../_types";
 
+import type { CrossProviderFrameworkEntry } from "./cross-provider-frameworks";
 import { candidateRequirementNames } from "./requirement-names";
 
 /**
@@ -112,15 +116,17 @@ export const buildRequirementExtrasMap = (
 
 /**
  * Invert a requirement's per-provider check split into check id → provider
- * types, so the combined checks list can label each check. Iterates
- * PROVIDER_TYPES for a stable icon order regardless of API key order.
+ * types, so the combined checks list can label each check. Sorted for a
+ * stable icon order regardless of API key order.
  */
 export const invertCheckIdsByProvider = (
   checkIdsByProvider: ProviderCheckIdsMap,
 ): CheckProviderTypesMap => {
   const byCheck: CheckProviderTypesMap = {};
 
-  for (const provider of PROVIDER_TYPES) {
+  for (const provider of Object.keys(checkIdsByProvider).sort(
+    compareProviderTypes,
+  )) {
     for (const checkId of checkIdsByProvider[provider] ?? []) {
       (byCheck[checkId] ??= []).push(provider);
     }
@@ -131,8 +137,7 @@ export const invertCheckIdsByProvider = (
 
 /**
  * Per-provider score summary for the coverage panel and framework cards.
- * Scanned providers come first, each group sorted alphabetically; entries the
- * UI cannot render (unknown provider types) are dropped. Score is the pass
+ * Scanned providers come first, each group sorted alphabetically. Score is the pass
  * percentage over non-manual requirements the provider contributed.
  */
 export const computeProviderBreakdown = (
@@ -140,8 +145,7 @@ export const computeProviderBreakdown = (
 ): ProviderBreakdownEntry[] => {
   const contributing = new Set(attrs.providers);
 
-  return attrs.compatible_providers
-    .filter(isKnownProviderType)
+  return [...attrs.compatible_providers]
     .sort((a, b) => {
       const aScanned = contributing.has(a);
       if (aScanned !== contributing.has(b)) return aScanned ? -1 : 1;
@@ -170,4 +174,50 @@ export const computeProviderBreakdown = (
         unscanned: !contributing.has(provider),
       };
     });
+};
+
+/** The card roll-up of one universal framework; zeroed with every provider
+ *  unscanned when the overview has no data for it. */
+export const toCrossProviderSummary = (
+  entry: CrossProviderFrameworkEntry,
+  result: CrossProviderOverviewResult,
+): CrossProviderFrameworkSummary => {
+  const attrs =
+    result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS
+      ? result.response.data?.attributes
+      : undefined;
+  const base = {
+    complianceId: entry.complianceId,
+    title: entry.title,
+    version: entry.version,
+    description: entry.description,
+  };
+
+  if (!attrs) {
+    return {
+      ...base,
+      requirementsPassed: 0,
+      requirementsFailed: 0,
+      requirementsManual: 0,
+      totalRequirements: 0,
+      providerBreakdown: entry.providerTypes.map((provider) => ({
+        provider,
+        pass: 0,
+        fail: 0,
+        manual: 0,
+        total: 0,
+        score: 0,
+        unscanned: true,
+      })),
+    };
+  }
+
+  return {
+    ...base,
+    requirementsPassed: attrs.requirements_passed,
+    requirementsFailed: attrs.requirements_failed,
+    requirementsManual: attrs.requirements_manual,
+    totalRequirements: attrs.total_requirements,
+    providerBreakdown: computeProviderBreakdown(attrs),
+  };
 };

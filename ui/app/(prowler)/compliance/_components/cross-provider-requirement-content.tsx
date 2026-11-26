@@ -1,7 +1,7 @@
 "use client";
 
 import type { Requirement } from "@/types/compliance";
-import { PROVIDER_TYPES } from "@/types/providers";
+import { compareProviderTypes } from "@/types/providers";
 
 import { invertCheckIdsByProvider } from "../_lib/cross-provider-adapter";
 import type { CrossProviderRequirementExtras } from "../_types";
@@ -28,9 +28,9 @@ export const CrossProviderRequirementContent = ({
   extras,
   framework,
 }: CrossProviderRequirementContentProps) => {
-  const contributingTypes = PROVIDER_TYPES.filter(
-    (type) => extras.providers[type],
-  );
+  const contributingTypes = Object.keys(extras.providers)
+    .filter((type) => extras.providers[type])
+    .sort(compareProviderTypes);
 
   const scanIds = Array.from(
     new Set(

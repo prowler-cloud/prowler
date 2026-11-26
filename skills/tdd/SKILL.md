@@ -7,7 +7,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "2.1"
+  version: "2.2"
   scope: [root, ui, api, sdk]
   auto_invoke:
     - "Implementing feature"
@@ -288,6 +288,15 @@ def test_private_ami(self):
 ```
 
 **Now fake BREAKS -> Real implementation required.**
+
+### UI: Test Value Gate
+
+In `ui/`, triangulate pure logic (helpers, adapters, schemas) where a second input breaks a fake. For components, actions and bug fixes, keep one focused test per behavior:
+
+- A test earns its place only when it is fast, uses few or no mocks, and fails without the change it accompanies.
+- Do not add a test whose only assertion restates the diff (a label, a class), echoes a mock (a stubbed `fetch` "was called with" the URL the code builds), or checks that a removed thing is gone.
+- Extend the closest existing suite before creating a file. When types, schemas or existing tests already cover the change, add no test and say so in the PR.
+- Compiler-sensitive behavior (forms, memoization) needs `*.integration.test.tsx`; the jsdom `unit` project does not run the React Compiler.
 
 ---
 

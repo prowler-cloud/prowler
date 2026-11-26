@@ -9,6 +9,8 @@ export const LIGHTHOUSE_OVERVIEW_PROMPT =
 export const LIGHTHOUSE_OVERVIEW_BANNER_HREF = {
   CHAT: `${LIGHTHOUSE_ROUTE.CHAT}?prompt=${encodeURIComponent(LIGHTHOUSE_OVERVIEW_PROMPT)}`,
   SETTINGS: LIGHTHOUSE_ROUTE.SETTINGS,
+  // Local Server runs Lighthouse v1, which takes no prefilled prompt.
+  LOCAL_SERVER: LIGHTHOUSE_ROUTE.CHAT,
 } as const;
 
 export type LighthouseOverviewBannerHref =
@@ -33,7 +35,7 @@ export async function getLighthouseOverviewBannerHref(
   loadConfigurations: LoadLighthouseV2Configurations,
 ): Promise<LighthouseOverviewBannerHref | null> {
   if (!cloud) {
-    return null;
+    return LIGHTHOUSE_OVERVIEW_BANNER_HREF.LOCAL_SERVER;
   }
 
   const result = await loadConfigurations();

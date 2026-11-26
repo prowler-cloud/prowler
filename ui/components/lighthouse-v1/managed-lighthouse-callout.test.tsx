@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { TooltipProvider } from "@/components/shadcn/tooltip";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
@@ -15,10 +16,14 @@ describe("ManagedLighthouseCallout", () => {
   it("opens the managed Lighthouse Cloud upgrade", async () => {
     // Given
     const user = userEvent.setup();
-    render(<ManagedLighthouseCallout />);
+    render(
+      <TooltipProvider>
+        <ManagedLighthouseCallout />
+      </TooltipProvider>,
+    );
 
     const upgradeButton = screen.getByRole("button", {
-      name: "Explore The Agentic Cloud Defender",
+      name: "See Managed Lighthouse AI",
     });
 
     // When
@@ -28,6 +33,21 @@ describe("ManagedLighthouseCallout", () => {
     expect(upgradeButton).toHaveClass("bg-button-primary");
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
+    );
+  });
+
+  it("compares bring-your-own-key and managed Lighthouse without naming one vendor", () => {
+    // Given / When
+    render(
+      <TooltipProvider>
+        <ManagedLighthouseCallout />
+      </TooltipProvider>,
+    );
+
+    // Then
+    expect(screen.getByText("Your Lighthouse AI")).toBeVisible();
+    expect(screen.getAllByText("Managed Lighthouse AI").length).toBeGreaterThan(
+      0,
     );
   });
 });

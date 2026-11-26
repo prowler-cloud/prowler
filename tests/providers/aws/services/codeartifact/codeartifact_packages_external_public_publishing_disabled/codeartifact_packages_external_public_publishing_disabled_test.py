@@ -203,3 +203,69 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
                 result[0].status_extended
                 == f"Internal package {package_name} is not vulnerable to dependency confusion in repository test."
             )
+
+    def test_finding_resource_holds_only_its_own_package(self):
+        codeartifact_client = mock.MagicMock
+        repository_arn = f"arn:aws:codeartifact:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:repository/test/test-repository"
+        packages = [
+            Package(
+                name=f"package-{index}",
+                format="npm",
+                origin_configuration=OriginConfiguration(
+                    restrictions=Restrictions(
+                        publish=RestrictionValues.ALLOW,
+                        upstream=RestrictionValues.BLOCK,
+                    )
+                ),
+                latest_version=LatestPackageVersion(
+                    version="1.0.0",
+                    status=LatestPackageVersionStatus.Published,
+                    origin=OriginInformation(
+                        origin_type=(
+                            OriginInformationValues.EXTERNAL
+                            if index == 0
+                            else OriginInformationValues.INTERNAL
+                        )
+                    ),
+                ),
+            )
+            for index in range(3)
+        ]
+        codeartifact_client.repositories = {
+            "test-repository": Repository(
+                name="test-repository",
+                arn=repository_arn,
+                domain_name="test",
+                domain_owner=AWS_ACCOUNT_NUMBER,
+                region=AWS_REGION,
+                packages=packages,
+                tags=[{"Key": "team", "Value": "platform"}],
+            )
+        }
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.codeartifact.codeartifact_service.CodeArtifact",
+                new=codeartifact_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
+                new=codeartifact_client,
+            ),
+        ):
+            from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled import (
+                codeartifact_packages_external_public_publishing_disabled,
+            )
+
+            check = codeartifact_packages_external_public_publishing_disabled()
+            result = check.execute()
+
+            assert [finding.resource_id for finding in result] == [
+                "test/package-1",
+                "test/package-2",
+            ]
+            for finding, package in zip(result, packages[1:]):
+                assert "packages" not in finding.resource
+                assert finding.resource["package"]["name"] == package.name
+                assert finding.resource["arn"] == repository_arn
+                assert finding.region == AWS_REGION
+                assert finding.resource_tags == [{"Key": "team", "Value": "platform"}]

@@ -92,12 +92,40 @@ class Databricks(AzureService):
                             else None
                         ),
                         managed_disk_encryption=managed_disk_encryption,
+                        private_endpoint_connection_statuses=self._private_endpoint_statuses(
+                            workspace
+                        ),
                     )
             except Exception as error:
                 logger.error(
                     f"Subscription: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return workspaces
+
+    @staticmethod
+    def _private_endpoint_statuses(workspace) -> list[str]:
+        """Get the connection status of each private endpoint on a workspace.
+
+        Args:
+            workspace: An `azure.mgmt.databricks.models.Workspace`.
+
+        Returns:
+            One status (`Approved`, `Pending`, `Rejected` or `Disconnected`)
+            per connection that reports one.
+        """
+        statuses = []
+        for connection in (
+            getattr(workspace, "private_endpoint_connections", None) or []
+        ):
+            state = getattr(
+                getattr(connection, "properties", None),
+                "private_link_service_connection_state",
+                None,
+            )
+            status = getattr(state, "status", None)
+            if status:
+                statuses.append(status)
+        return statuses
 
 
 class ManagedDiskEncryption(BaseModel):
@@ -127,6 +155,7 @@ class DatabricksWorkspace(BaseModel):
         no_public_ip_enabled: Whether secure cluster connectivity (no public IP) is enabled. None when the workspace does not expose this classic-compute setting (e.g. serverless workspaces).
         custom_managed_vnet_id: The ID of the custom managed virtual network, if configured.
         managed_disk_encryption: The encryption settings for the workspace's managed disks.
+        private_endpoint_connection_statuses: The connection status of each private endpoint on the workspace.
     """
 
     id: str
@@ -136,3 +165,4 @@ class DatabricksWorkspace(BaseModel):
     no_public_ip_enabled: Optional[bool] = None
     custom_managed_vnet_id: Optional[str] = None
     managed_disk_encryption: Optional[ManagedDiskEncryption] = None
+    private_endpoint_connection_statuses: list[str] = []

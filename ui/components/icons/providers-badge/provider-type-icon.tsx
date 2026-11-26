@@ -1,7 +1,15 @@
 "use client";
 
-import { type ComponentType, lazy, Suspense } from "react";
+import {
+  type ComponentType,
+  createContext,
+  lazy,
+  type ReactNode,
+  Suspense,
+  use,
+} from "react";
 
+import { RegistryProviderLogo } from "@/components/providers/registry-provider-logo";
 import {
   Badge,
   Tooltip,
@@ -10,6 +18,7 @@ import {
 } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 import {
+  getProviderDisplayName,
   isKnownProviderType,
   type KnownProviderType,
   type ProviderType,
@@ -144,19 +153,66 @@ interface ProviderTypeIconProps {
   size?: number;
 }
 
+/** Registry logo URL per dynamic provider type; null outside a provider. */
+export const RegistryLogosContext = createContext<Promise<
+  Record<string, string>
+> | null>(null);
+
+/** Streams the Registry logos to every provider icon below it. */
+export const RegistryLogosProvider = ({
+  logos,
+  children,
+}: {
+  logos: Promise<Record<string, string>>;
+  children: ReactNode;
+}) => <RegistryLogosContext value={logos}>{children}</RegistryLogosContext>;
+
+const ResolvedRegistryLogo = ({
+  type,
+  size,
+  logos,
+}: {
+  type: ProviderType;
+  size: number;
+  logos: Promise<Record<string, string>>;
+}) => {
+  const byType = use(logos);
+  const logoUrl = Object.hasOwn(byType, type) ? byType[type] : undefined;
+  return <RegistryProviderLogo logoUrl={logoUrl} size={size} />;
+};
+
+/** A dynamic provider's Registry logo; the generic glyph until it arrives. */
+const DynamicProviderIcon = ({
+  type,
+  size,
+}: {
+  type: ProviderType;
+  size: number;
+}) => {
+  const logos = use(RegistryLogosContext);
+  const glyph = <GenericProviderBadge size={size} />;
+  if (!logos) return glyph;
+  return (
+    <Suspense fallback={glyph}>
+      <ResolvedRegistryLogo type={type} size={size} logos={logos} />
+    </Suspense>
+  );
+};
+
 /**
  * Renders a single provider-type badge.
  *
- * Providers outside the known set — a dynamic SDK plug-in — render the neutral
- * generic glyph instead of a bespoke brand badge. The widened `ProviderType`
- * forces this fallback branch to be handled at compile time.
+ * Providers outside the known set — a dynamic SDK plug-in — render their
+ * Registry logo, or the neutral generic glyph when Registry has none. The
+ * widened `ProviderType` forces this fallback branch to be handled at compile
+ * time.
  */
 export const ProviderTypeIcon = ({
   type,
   size = 18,
 }: ProviderTypeIconProps) => {
   if (!isKnownProviderType(type)) {
-    return <GenericProviderBadge size={size} />;
+    return <DynamicProviderIcon type={type} size={size} />;
   }
 
   const Icon = PROVIDER_TYPE_DATA[type].icon;
@@ -179,8 +235,16 @@ interface ProviderTypeIconStackProps {
   items: ProviderTypeIconStackItem[];
   max?: number;
   size?: number;
+  /** Lets keyboard users reach each name; keep off inside buttons. */
+  focusable?: boolean;
   className?: string;
 }
+
+const providerName = (item: ProviderTypeIconStackItem) =>
+  item.tooltip ?? getProviderDisplayName(item.type);
+
+const FOCUSABLE_ICON_CLASS =
+  "focus-visible:outline-button-primary rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2";
 
 /**
  * Icon with a hover tooltip. `TooltipContent` (shadcn) already renders inside a
@@ -192,11 +256,22 @@ interface ProviderTypeIconStackProps {
 const IconWithTooltip = ({
   item,
   size,
+  focusable,
 }: {
   item: ProviderTypeIconStackItem;
   size: number;
+  focusable: boolean;
 }) => {
-  const icon = (
+  const icon = focusable ? (
+    <span
+      role="img"
+      aria-label={providerName(item)}
+      tabIndex={0}
+      className={cn("inline-flex shrink-0", FOCUSABLE_ICON_CLASS)}
+    >
+      <ProviderTypeIcon type={item.type} size={size} />
+    </span>
+  ) : (
     <span className="inline-flex shrink-0">
       <ProviderTypeIcon type={item.type} size={size} />
     </span>
@@ -221,26 +296,37 @@ export const ProviderTypeIconStack = ({
   items,
   max = 3,
   size = 18,
+  focusable = false,
   className,
 }: ProviderTypeIconStackProps) => {
   const visible = items.slice(0, max);
   const overflow = items.slice(max);
-  const overflowLabel = overflow
-    .map((item) => item.tooltip)
-    .filter(Boolean)
-    .join(", ");
+  const overflowLabel = overflow.map(providerName).join(", ");
 
   return (
     <span className={cn("flex shrink-0 items-center gap-1", className)}>
       <span className="flex items-center gap-1">
         {visible.map((item) => (
-          <IconWithTooltip key={item.key} item={item} size={size} />
+          <IconWithTooltip
+            key={item.key}
+            item={item}
+            size={size}
+            focusable={focusable}
+          />
         ))}
       </span>
       {overflow.length > 0 && (
         <Tooltip delayDuration={150}>
           <TooltipTrigger asChild>
-            <Badge variant="tag" className="px-1.5 py-0.5 text-xs font-medium">
+            <Badge
+              variant="tag"
+              className="px-1.5 py-0.5 text-xs font-medium"
+              {...(focusable && {
+                role: "img",
+                tabIndex: 0,
+                "aria-label": `${overflow.length} more: ${overflowLabel}`,
+              })}
+            >
               +{overflow.length}
             </Badge>
           </TooltipTrigger>

@@ -1,5 +1,4 @@
 import { ShieldAlert } from "lucide-react";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -7,7 +6,9 @@ import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { PremiumPreviewPage } from "@/components/shared/premium-preview-page";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
+import { PREMIUM_PREVIEW_FEATURE } from "@/lib/premium-preview";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
@@ -15,6 +16,10 @@ import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { IssuesList } from "./_components/issues-list";
+import {
+  IssuesPreviewHook,
+  IssuesPreviewHookSkeleton,
+} from "./_components/issues-preview-hook";
 
 const SAMPLE_PROVIDER_UIDS = {
   [SAMPLE_ACCOUNT.providerId]: SAMPLE_ACCOUNT.uid,
@@ -25,7 +30,20 @@ export default async function Issues({
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
-  if (!isCloud()) notFound();
+  if (!isCloud()) {
+    return (
+      <ContentLayout title="Exploitability issues" icon={<ShieldAlert />}>
+        <PremiumPreviewPage
+          feature={PREMIUM_PREVIEW_FEATURE.EXPLOITABILITY_ISSUES}
+          personalHook={
+            <Suspense fallback={<IssuesPreviewHookSkeleton />}>
+              <IssuesPreviewHook />
+            </Suspense>
+          }
+        />
+      </ContentLayout>
+    );
+  }
 
   const resolvedSearchParams = await searchParams;
   const samplePreview = await getSamplePreviewState();

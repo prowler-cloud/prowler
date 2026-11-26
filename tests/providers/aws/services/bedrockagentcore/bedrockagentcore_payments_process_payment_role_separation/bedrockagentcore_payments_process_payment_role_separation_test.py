@@ -86,11 +86,8 @@ class Test_bedrockagentcore_payments_process_payment_role_separation:
     def test_no_roles(self):
         assert _run(roles=[]) == []
 
-    def test_roles_not_listed_is_manual(self):
-        result = _run(roles="unlisted")
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+    def test_roles_not_listed_has_no_finding(self):
+        assert _run(roles="unlisted") == []
 
     def test_role_without_payment_actions_is_skipped(self):
         assert _run(inline={"s3": [_statement("s3:GetObject", resource="*")]}) == []
@@ -177,10 +174,8 @@ class Test_bedrockagentcore_payments_process_payment_role_separation:
         result = _run(inline={"allow": [_statement([CREATE, PROCESS])], "deny": [deny]})
         assert result[0].status == "FAIL"
 
-    def test_unreadable_policy_is_manual(self):
-        result = _run(inline={"allow": [_statement(CREATE)], "broken": None})
-        assert result[0].status == "MANUAL"
-        assert "broken" in result[0].status_extended
+    def test_unreadable_policy_has_no_finding(self):
+        assert _run(inline={"allow": [_statement(CREATE)], "broken": None}) == []
 
     def test_unreadable_policy_does_not_hide_a_fail(self):
         result = _run(inline={"allow": [_statement([CREATE, PROCESS])], "broken": None})

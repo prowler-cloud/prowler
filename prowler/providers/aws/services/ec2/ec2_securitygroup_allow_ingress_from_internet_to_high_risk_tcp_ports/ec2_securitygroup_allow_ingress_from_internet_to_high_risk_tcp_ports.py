@@ -37,7 +37,11 @@ class ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports(Check
                     for ingress_rule in security_group.ingress_rules:
                         for port in check_ports:
                             if check_security_group(
-                                ingress_rule, "tcp", [port], any_address=True
+                                ingress_rule,
+                                "tcp",
+                                [port],
+                                any_address=True,
+                                prefix_lists=ec2_client.managed_prefix_lists,
                             ):
                                 open_ports.append(port)
 

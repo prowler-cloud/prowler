@@ -22,6 +22,7 @@ from prowler.config.schema.validators import (
     validate_ip_networks,
     validate_port_range,
 )
+from prowler.lib.threats.models import ThreatSignatureList
 
 # ---- Reusable constants -----------------------------------------------------
 
@@ -198,12 +199,29 @@ class AWSProviderConfig(ProviderConfigBase):
             "(SageMaker tokens are usually high-privilege over S3/KMS)."
         ),
     )
+    iam_github_oidc_allowed_owners: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "GitHub repository owners allowed by the GitHub Actions OIDC trust check. "
+            "An empty list disables the allowlist."
+        ),
+    )
 
     # --- EC2 ---------------------------------------------------------------
     shodan_api_key: Optional[str] = Field(
         default=None,
         max_length=512,
         description="API key for Shodan lookups on EC2 public IPs.",
+    )
+
+    # --- Emerging threats -------------------------------------------------
+    threat_signatures: Optional[ThreatSignatureList] = Field(
+        default=None,
+        description=(
+            "Emerging threats to match compute instances against, in addition to "
+            "the signatures Prowler ships. A signature with the id of a built-in "
+            "one replaces it. See prowler/lib/threats/models.py for the format."
+        ),
     )
     max_security_group_rules: Optional[int] = Field(
         default=None,
@@ -368,6 +386,10 @@ class AWSProviderConfig(ProviderConfigBase):
         le=365,
         description="Days an Inspector2 finding can stay active since first observed. Range: 1..365.",
     )
+    inspector2_kev_include_findings_without_exploit: Optional[bool] = Field(
+        default=None,
+        description="Check every active Inspector2 finding against the CISA KEV catalog, not only the ones with a public exploit.",
+    )
 
     # --- Trusted Advisor --------------------------------------------------
     verify_premium_support_plans: Optional[bool] = None
@@ -497,6 +519,13 @@ class AWSProviderConfig(ProviderConfigBase):
             "Validate discovered secrets against the provider APIs (live check). "
             "Makes outbound network calls that authenticate with the discovered "
             "secret. Disabled by default."
+        ),
+    )
+    secrets_confidence: Optional[Literal["low", "medium", "high"]] = Field(
+        default=None,
+        description=(
+            "Minimum Kingfisher confidence level for reporting secret findings. "
+            "Possible values: low, medium, high. Default: low."
         ),
     )
     max_days_secret_unused: Optional[int] = Field(

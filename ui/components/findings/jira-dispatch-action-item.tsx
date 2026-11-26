@@ -2,10 +2,8 @@
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
-import {
-  isGroupedJiraDispatchEnabled,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "@/lib/deployment";
+import { PREMIUM_BADGE_TOOLTIP } from "@/lib/cloud-upgrade";
+import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import { getJiraDispatchActionState } from "@/lib/jira-dispatch-action";
 import { getJiraSelectionBatches } from "@/lib/jira-dispatch-selection";
 import {
@@ -66,9 +64,7 @@ export const JiraDispatchActionItem = ({
       aria-label={label}
       disabled={Boolean(reason)}
       disabledTooltip={reason}
-      tooltip={
-        !reason && requiresUpgrade ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined
-      }
+      tooltip={!reason && requiresUpgrade ? PREMIUM_BADGE_TOOLTIP : undefined}
       onSelect={handleSelect}
     />
   );
