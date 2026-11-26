@@ -550,6 +550,46 @@
       ]
     },
     {
+      "Id": "op.acc.6.r7.aws.iam.2",
+      "Description": "Suspensión por no utilización",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r7",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se recomienda que el periodo de no utilización tras el que se inhabilitan las credenciales no sea superior a 90 días.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90
+        }
+      ]
+    },
+    {
       "Id": "op.acc.6.r8.aws.iam.1",
       "Description": "Doble factor para acceso desde o a través de zonas no controladas",
       "Attributes": [
@@ -816,6 +856,84 @@
       ]
     },
     {
+      "Id": "op.exp.3.r4.aws.smexp.1",
+      "Description": "Aplicación de la configuración",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.3.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se recomienda usar AWS Systems Manager Explorer para mantener actualizada la configuración de seguridad del sistema operativo, como se describe en la medida de mantenimiento y actualizaciones de seguridad [op.exp.4].",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.3.r4.aws.patch.1",
+      "Description": "Aplicación de la configuración",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.3.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se recomienda usar AWS Systems Manager Patch Manager para mantener actualizada la configuración de seguridad del sistema operativo, como se describe en la medida de mantenimiento y actualizaciones de seguridad [op.exp.4].",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "op.exp.4.aws.sys.1",
+      "Description": "Mantenimiento y actualizaciones de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Activar AWS Systems Manager y gestionar la conformidad de los parches a través de Explorer, instalando el agente de AWS Systems Manager (SSM Agent) en las instancias de Amazon EC2, dispositivos periféricos, servidores en las instalaciones o máquinas virtuales.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
       "Id": "op.exp.4.aws.sys.2",
       "Description": "Mantenimiento y actualizaciones de seguridad",
       "Attributes": [
@@ -893,6 +1011,74 @@
       "Checks": [
         "inspector2_is_enabled",
         "inspector2_active_findings_exist"
+      ]
+    },
+    {
+      "Id": "op.exp.4.r4.aws.shub.1",
+      "Description": "Monitorización continua",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Monitorizar de forma continua las amenazas comprobando la configuración de los recursos con AWS Security Hub, que ingesta los datos de AWS Config, como se describe en la medida de vigilancia [op.mon.3].",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "Id": "op.exp.4.r4.aws.gd.1",
+      "Description": "Monitorización continua",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Monitorizar de forma continua las amenazas con Amazon GuardDuty, que informa de la actividad en el momento, como se describe en la medida de vigilancia [op.mon.3].",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1051,7 +1237,7 @@
       ]
     },
     {
-      "Id": "op.exp.7.aws.am.1",
+      "Id": "op.exp.7.aws.iam.1",
       "Description": "Gestión de incidentes",
       "Attributes": [
         {
@@ -1073,10 +1259,35 @@
         }
       ],
       "Checks": [
+        "account_maintain_different_contact_details_to_security_billing_and_operations",
         "account_maintain_current_contact_details",
         "account_security_contact_information_is_registered",
         "account_security_questions_are_registered_in_the_aws_account"
       ]
+    },
+    {
+      "Id": "op.exp.7.r4.aws.gd.1",
+      "Description": "Prevención y respuesta automática",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.7.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Implantar una respuesta automática a los eventos de seguridad que detecte Amazon GuardDuty, por ejemplo aislando la instancia de Amazon EC2 afectada y haciendo una instantánea de sus volúmenes antes de su revisión, tomando como orientación la solución de ejemplo que publica AWS.",
+          "Nivel": "opcional",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
     },
     {
       "Id": "op.exp.8.aws.ct.1",
@@ -1776,6 +1987,32 @@
       ]
     },
     {
+      "Id": "op.ext.2.aws.iam.1",
+      "Description": "Gestión diaria",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.ext.2",
+          "Marco": "operacional",
+          "Categoria": "recursos externos",
+          "DescripcionControl": "Para medir el cumplimiento de las obligaciones de servicio, deberá existir algún usuario, grupo o rol con la política AWSSupportAccess, que permite gestionar los incidentes con el soporte técnico de AWS.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_support_role_created"
+      ]
+    },
+    {
       "Id": "op.mon.1.aws.gd.1",
       "Description": "Detección de intrusión",
       "Attributes": [
@@ -2145,6 +2382,32 @@
       ]
     },
     {
+      "Id": "op.mon.3.r2.aws.adv.1",
+      "Description": "Análisis dinámico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r2",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se puede utilizar AWS Trusted Advisor, que inspecciona el entorno de AWS y ofrece recomendaciones para mejorar el rendimiento y la disponibilidad del sistema y para corregir deficiencias de configuración.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "trustedadvisor_errors_and_warnings"
+      ]
+    },
+    {
       "Id": "op.mon.3.r3.aws.gd.1",
       "Description": "Ciberamenazas avanzadas",
       "Attributes": [
@@ -2317,6 +2580,40 @@
       ],
       "Checks": [
         "ec2_securitygroup_not_used"
+      ]
+    },
+    {
+      "Id": "mp.com.1.aws.sg.4",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar en los Security Groups una configuración que permita llegar desde internet a los servicios que no lo precisen, como SSH (TCP/22), RDP (TCP/3389), Oracle (TCP/1521 y TCP/2483), MySQL (TCP/3306), Postgres (TCP/5432), Redis (TCP/6379), MongoDB (TCP/27017 y TCP/27018), Cassandra (TCP/7199, TCP/8888 y TCP/9160) y Memcached (TCP/11211).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211"
       ]
     },
     {
@@ -2872,7 +3169,7 @@
       ]
     },
     {
-      "Id": "mp.si.2.aws.elb.1",
+      "Id": "mp.si.2.aws.ebs.1",
       "Description": "Criptografía",
       "Attributes": [
         {
@@ -2891,7 +3188,30 @@
         }
       ],
       "Checks": [
-        "ec2_ebs_snapshots_encrypted"
+        "ec2_ebs_default_encryption"
+      ]
+    },
+    {
+      "Id": "mp.si.2.aws.cw.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Se recomienda integrar AWS KMS con Amazon CloudWatch para recopilar y procesar datos del uso de las claves y sus cambios, y generar alertas para eventos de seguridad como la fecha de vencimiento, el uso de una clave pendiente de eliminación, la rotación automática o la eliminación.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk"
       ]
     },
     {
@@ -3587,6 +3907,31 @@
         }
       ],
       "Checks": []
+    },
+    {
+      "Id": "op.acc.2.aws.imds.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Si se utiliza el servicio de metadatos de instancia (IMDS), se recomienda encarecidamente usar su versión 2 (IMDSv2) en lugar de la original, siempre que la arquitectura de la aplicación lo permita.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "ec2_instance_imdsv2_enabled"
+      ]
     },
     {
       "Id": "op.acc.2.r1.aws.iam.1",
