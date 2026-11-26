@@ -29,6 +29,7 @@ describe("cloud upgrade content", () => {
     // Then
     expect(titles).toEqual([
       "Keep Every Provider Checked Automatically",
+      "See the Security of Your AI Stack",
       "Turn Findings into Alerts",
       "Export Findings to Amazon S3",
       "Automate Prowler with API Keys",

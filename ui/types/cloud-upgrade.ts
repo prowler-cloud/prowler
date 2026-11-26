@@ -1,5 +1,6 @@
 export const CLOUD_UPGRADE_FEATURE = {
   ADVANCED_SCHEDULING: "advanced_scheduling",
+  AI_SECURITY: "ai_security_cloud",
   ALERTS: "alerts",
   AMAZON_S3: "amazon_s3",
   API_KEYS: "api_keys",
@@ -39,6 +40,7 @@ export type CloudUpgradeSurface =
 
 // Prowler Cloud features gated behind a paid plan.
 export const PAID_PLAN_UPGRADE_FEATURE = {
+  AI_SECURITY: "ai_security",
   FINDINGS_PREVIEW: "findings_preview",
   REGISTRY: "registry",
   REPORT_DOWNLOAD: "report_download",

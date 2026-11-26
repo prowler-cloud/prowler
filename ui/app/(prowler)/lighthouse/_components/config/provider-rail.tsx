@@ -6,7 +6,7 @@ import {
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Card } from "@/components/shadcn/card/card";
-import { cn } from "@/lib/utils";
+import { SelectableCard } from "@/components/shadcn/selectable-card/selectable-card";
 
 import { ProviderIcon } from "./provider-icon";
 import { StatusBadge } from "./status-badge";
@@ -44,17 +44,12 @@ export function LighthouseV2ProviderRail({
             const status = getConnectionStatus(config);
 
             return (
-              <button
+              <SelectableCard
                 key={provider.id}
-                type="button"
                 aria-label={provider.name}
-                aria-pressed={active}
+                selected={active}
                 onClick={() => onSelectProvider(provider.id)}
-                className={cn(
-                  "border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary group flex min-w-0 items-start gap-3 rounded-[12px] border p-3 text-left transition-colors",
-                  active &&
-                    "border-border-input-primary-press bg-bg-neutral-tertiary ring-border-input-primary-press ring-1",
-                )}
+                className="group flex min-w-0 items-start gap-3"
               >
                 <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-10 shrink-0 items-center justify-center rounded-[9px] border">
                   <ProviderIcon
@@ -73,7 +68,7 @@ export function LighthouseV2ProviderRail({
                     {formatLastChecked(config?.connectionLastCheckedAt)}
                   </p>
                 </div>
-              </button>
+              </SelectableCard>
             );
           })}
         </div>

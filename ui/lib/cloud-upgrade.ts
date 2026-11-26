@@ -49,6 +49,7 @@ const LOCAL_SERVER_UTM_SOURCE = "prowler-local-server";
 
 const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",
+  [CLOUD_UPGRADE_FEATURE.AI_SECURITY]: "ai-security",
   [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
   [CLOUD_UPGRADE_FEATURE.AMAZON_S3]: "amazon-s3",
   [CLOUD_UPGRADE_FEATURE.API_KEYS]: "api-keys",
@@ -86,6 +87,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Manage schedules alongside scan history",
     ],
     trialIncluded: false,
+  },
+  [CLOUD_UPGRADE_FEATURE.AI_SECURITY]: {
+    title: "See the Security of Your AI Stack",
+    description:
+      "One view of how your AI vendors, cloud AI services and AI workflows are configured.",
+    benefits: [
+      "Scan Claude, OpenAI and ChatGPT organizations next to your cloud accounts",
+      "Score them against OWASP LLM Top 10 and the other AI frameworks",
+      "Start from the riskiest AI findings across every provider",
+    ],
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.ALERTS]: {
     title: "Turn Findings into Alerts",
@@ -328,6 +340,7 @@ export const PAID_PLAN_UPGRADE_ADMIN_NOTE =
 const CLOUD_UTM_SOURCE = "prowler-cloud";
 
 const PAID_PLAN_UPGRADE_UTM_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.AI_SECURITY]: "ai-security",
   [PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]: "findings-preview",
   [PAID_PLAN_UPGRADE_FEATURE.REGISTRY]: "registry",
   [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: "report-download",
@@ -335,6 +348,16 @@ const PAID_PLAN_UPGRADE_UTM_CONTENT = {
 } as const satisfies Record<PaidPlanUpgradeFeature, string>;
 
 export const PAID_PLAN_UPGRADE_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.AI_SECURITY]: {
+    title: "Unlock AI Security",
+    description: "AI Security is included in paid plans.",
+    benefits: [
+      "Scan Claude, OpenAI and ChatGPT organizations next to your cloud accounts",
+      "Score them against OWASP LLM Top 10 and the other AI frameworks",
+      "The same checks stay free in the CLI with a Prowler Registry account",
+    ],
+    primaryCta: "Upgrade to Unlock AI Security",
+  },
   [PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]: {
     title: "See Every Finding in Your Account",
     description: `Trial accounts preview the ${FINDINGS_PREVIEW_ROW_LIMIT} most critical finding groups. Paid plans unlock the full list.`,
