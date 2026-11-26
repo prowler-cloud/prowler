@@ -102,7 +102,9 @@ export function narrowScope(
   filters: Record<string, string>,
   test: (type: string) => boolean,
 ): Record<string, string> | null {
-  const types = filters["filter[provider_type__in]"].split(",").filter(test);
+  const types = splitCsvFilterValues(
+    filters["filter[provider_type__in]"],
+  ).filter(test);
   return types.length > 0
     ? { ...filters, "filter[provider_type__in]": types.join(",") }
     : null;

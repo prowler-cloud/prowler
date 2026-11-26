@@ -119,6 +119,8 @@ describe("installedScope", () => {
       "filter[provider_id__in]": "p1,p2",
     });
     expect(installedScope(filters, [])).toBeNull();
+    // The page passes no filters when the selected types leave no AI provider.
+    expect(installedScope({}, [provider("p1", "claude")])).toBeNull();
   });
 });
 
