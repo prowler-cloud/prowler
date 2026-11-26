@@ -213,9 +213,11 @@ def _probe_workers() -> None:
     def inspect_queues():
         """Deliver the probe result and release its slot on every exit path."""
         try:
-            future.set_result(_check_worker_queues(required_queues))
-        except BaseException as exc:
+            _check_worker_queues(required_queues)
+        except Exception as exc:
             future.set_exception(exc)
+        else:
+            future.set_result(None)
         finally:
             _worker_probe_slot.release()
 
@@ -232,6 +234,8 @@ def _probe_workers() -> None:
     thread.join(timeout=WORKER_PROBE_TIMEOUT_SECONDS)
     if thread.is_alive():
         raise TimeoutError(f"worker probe exceeded {WORKER_PROBE_TIMEOUT_SECONDS}s")
+    if not future.done():
+        raise RuntimeError("Worker queue inspection exited without a result")
     future.result()
 
 

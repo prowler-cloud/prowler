@@ -663,6 +663,22 @@ class TestWorkerReadiness:
         assert "private-jobs" not in response.content.decode()
         assert "private-host" not in response.content.decode()
 
+    def test_inspection_thread_exit_fails_readiness_and_releases_slot(
+        self, api_client, settings, worker_inspector
+    ):
+        """An interrupted worker inspection must fail without blocking the next probe."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery"]
+        inspector, _ = worker_inspector
+        inspector.multi_call.side_effect = SystemExit()
+
+        with patch("threading.excepthook"):
+            assert api_client.get(reverse("health-ready")).status_code == 503
+
+        inspector.multi_call.side_effect = None
+        inspector.multi_call.return_value = [{"worker": [{"name": "celery"}]}]
+        health._readiness_cache = None
+        assert api_client.get(reverse("health-ready")).status_code == 200
+
     def test_stalled_inspection_is_bounded_and_does_not_accumulate(
         self, api_client, settings, worker_inspector
     ):
