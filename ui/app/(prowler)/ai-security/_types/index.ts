@@ -5,6 +5,8 @@ export interface AiResultCounts {
   pass: number;
   fail: number;
   manual: number;
+  /** Failed findings that were not in the previous scan. */
+  newFail: number;
 }
 
 export type AiSeverityCounts = Record<SeverityLevel, number>;

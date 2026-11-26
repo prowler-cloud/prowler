@@ -22,8 +22,9 @@ const provider = (id: string, type: string, groups: string[] = []) =>
   }) as ProviderProps;
 
 const status = (
-  counts: Pick<FindingsStatusAttributes, "pass" | "fail" | "muted" | "total">,
-) => counts as FindingsStatusAttributes;
+  counts: Pick<FindingsStatusAttributes, "pass" | "fail" | "muted" | "total"> &
+    Partial<Pick<FindingsStatusAttributes, "fail_new">>,
+) => ({ fail_new: 0, ...counts }) as FindingsStatusAttributes;
 
 const NO_SEVERITY = {
   critical: 0,
@@ -132,14 +133,14 @@ describe("toAiSecurityOverview", () => {
     ],
     types: ["openai", "aws"],
     results: {
-      openai: status({ pass: 3, fail: 2, muted: 1, total: 10 }),
-      claude: status({ pass: 7, fail: 7, muted: 0, total: 14 }),
+      openai: status({ pass: 3, fail: 2, muted: 1, total: 10, fail_new: 1 }),
+      claude: status({ pass: 7, fail: 7, muted: 0, total: 14, fail_new: 5 }),
     },
     cloudResults: {
       aws: {
         total_findings: 9,
         failed_findings: 4,
-        new_failed_findings: 0,
+        new_failed_findings: 2,
         severity: { ...NO_SEVERITY, critical: 1, high: 3 },
       },
     },
@@ -155,6 +156,10 @@ describe("toAiSecurityOverview", () => {
   it("totals the model vendors and the clouds' gen-ai findings the page is filtered to", () => {
     expect(overview).toMatchObject({ pass: 3 + 5, fail: 2 + 4 });
     expect(overview.severity).toMatchObject({ critical: 1, high: 2 + 3 });
+  });
+
+  it("totals the failures that are new since the previous scan, as the Overview does", () => {
+    expect(overview.newFail).toBe(1 + 2);
   });
 
   it("counts what is neither pass, fail nor muted as manual", () => {

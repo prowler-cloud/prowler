@@ -37,7 +37,7 @@ function KpiCard({ label, value, children }: KpiCardProps) {
 
 const NOTE = "text-text-neutral-tertiary text-xs";
 
-/** The four numbers that say how the AI estate is doing. */
+/** The three numbers that say how the AI estate is doing. */
 export function AiKpis({
   overview,
   filters,
@@ -46,9 +46,7 @@ export function AiKpis({
   /** The page's scope, carried into the findings links. */
   filters: Record<string, string>;
 }) {
-  const { pass, fail, manual, severity, layers } = overview;
-  const providers = layers.flatMap((layer) => layer.providers);
-  const connected = providers.filter((provider) => provider.connected);
+  const { pass, fail, newFail, severity } = overview;
   const present = SEVERITY_LEVELS.filter((level) => severity[level] > 0);
   // Pass share of pass and fail findings, as the Overview's Check Findings donut.
   const passRate = calculatePercentage(pass, pass + fail);
@@ -56,7 +54,7 @@ export function AiKpis({
   return (
     <section
       aria-label="Key figures"
-      className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4"
+      className="grid grid-cols-1 gap-6 lg:grid-cols-3"
     >
       <KpiCard label="Pass findings" value={`${passRate}%`}>
         <Progress
@@ -105,34 +103,20 @@ export function AiKpis({
         </ul>
       </KpiCard>
 
-      <KpiCard label="Manual review" value={manual.toLocaleString()}>
+      <KpiCard label="New failed findings" value={newFail.toLocaleString()}>
         <p className={NOTE}>
-          Settings only your policy can judge, like code execution or web search
-          in Claude. Each finding shows the value Prowler read.
+          Of {fail.toLocaleString()} failed findings, these were not in the
+          previous scan.
         </p>
-        <div className="mt-auto">
-          <Button asChild variant="link" size="link-xs">
-            <Link
-              href={aiFindingsHref(filters, {
-                "filter[status__in]": "MANUAL",
-              })}
-            >
-              Review settings
-            </Link>
-          </Button>
-        </div>
-      </KpiCard>
-
-      <KpiCard label="AI providers" value={connected.length.toLocaleString()}>
-        <p className={NOTE}>
-          {connected.map((provider) => provider.name).join(", ")} connected, out
-          of {providers.length} AI provider types.
-        </p>
-        <div className="mt-auto">
-          <Button asChild variant="link" size="link-xs">
-            <Link href="/providers">Manage providers</Link>
-          </Button>
-        </div>
+        {newFail > 0 && (
+          <div className="mt-auto">
+            <Button asChild variant="link" size="link-xs">
+              <Link href={aiFindingsHref(filters, { "filter[delta]": "new" })}>
+                View new findings
+              </Link>
+            </Button>
+          </div>
+        )}
       </KpiCard>
     </section>
   );

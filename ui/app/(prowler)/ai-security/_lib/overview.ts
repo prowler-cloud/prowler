@@ -215,6 +215,7 @@ export function toAiSecurityOverview({
       pass,
       fail,
       manual,
+      newFail: result?.fail_new ?? 0,
     };
   });
 
@@ -232,6 +233,7 @@ export function toAiSecurityOverview({
       pass: Math.max((result?.total_findings ?? 0) - fail, 0),
       fail,
       manual: 0,
+      newFail: result?.new_failed_findings ?? 0,
     };
   });
 
@@ -246,6 +248,7 @@ export function toAiSecurityOverview({
     pass: inScope.reduce((sum, row) => sum + row.pass, 0),
     fail: inScope.reduce((sum, row) => sum + row.fail, 0),
     manual: inScope.reduce((sum, row) => sum + row.manual, 0),
+    newFail: inScope.reduce((sum, row) => sum + row.newFail, 0),
     severity: Object.fromEntries(
       SEVERITY_LEVELS.map((level) => [
         level,

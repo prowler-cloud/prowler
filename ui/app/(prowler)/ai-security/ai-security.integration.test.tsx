@@ -36,6 +36,7 @@ describe("AI Security stack", () => {
           pass: 1,
           fail: 1,
           manual: 0,
+          newFail: 0,
         },
       ],
     },
@@ -53,6 +54,7 @@ describe("AI Security stack", () => {
           pass: 5,
           fail: 4,
           manual: 0,
+          newFail: 0,
         },
         {
           type: "azure",
@@ -63,6 +65,7 @@ describe("AI Security stack", () => {
           pass: 0,
           fail: 0,
           manual: 0,
+          newFail: 0,
         },
         {
           type: "gcp",
@@ -73,6 +76,7 @@ describe("AI Security stack", () => {
           pass: 0,
           fail: 0,
           manual: 0,
+          newFail: 0,
         },
       ],
     },
