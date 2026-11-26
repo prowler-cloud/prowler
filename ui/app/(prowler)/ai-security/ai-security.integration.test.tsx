@@ -21,6 +21,23 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(navigation.search),
 }));
 
+// Only OpenAI is installed from the Registry.
+vi.mock(
+  "@/components/providers/workflow/forms/use-registry-provider-discovery",
+  () => ({
+    useRegistryProviderDiscovery: () => ({
+      result: {
+        status: "ready",
+        options: [{ type: "openai", label: "OpenAI" }],
+      },
+    }),
+  }),
+);
+
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({ permissions: { manage_providers: true } }),
+}));
+
 describe("AI Security stack", () => {
   const layers: AiStackLayer[] = [
     {
@@ -122,6 +139,43 @@ describe("AI Security stack", () => {
     await expect
       .element(screen.getByRole("button", { name: /Azure|GCP/ }))
       .not.toBeInTheDocument();
+  });
+
+  it("sends a model vendor that is not installed to the Registry instead of Add Provider", async () => {
+    navigation.search = "";
+    const notConnected = {
+      scope: "0 accounts",
+      connected: false,
+      scanned: false,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      newFail: 0,
+    };
+    const screen = await render(
+      <AiStack
+        layers={[
+          {
+            id: "model-vendors",
+            name: "Model vendors",
+            description: "",
+            providers: [
+              { type: "claude", name: "Claude", ...notConnected },
+              { type: "openai", name: "OpenAI", ...notConnected },
+            ],
+          },
+        ]}
+        filters={{}}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("link", { name: "Install from Registry" }))
+      .toHaveAttribute("href", "/registry?filter%5Bsearch%5D=Claude");
+    // OpenAI is installed, so the wizard can connect it.
+    await expect
+      .element(screen.getByRole("button", { name: "Add Provider" }))
+      .toBeVisible();
   });
 
   it("points to the Registry when no AI framework is installed", async () => {
