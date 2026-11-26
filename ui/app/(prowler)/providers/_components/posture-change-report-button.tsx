@@ -42,9 +42,9 @@ export const PostureChangeReportButton = ({
 
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
         <FileChartLine size={20} />
-        Posture Change Report
+        Custom Scans and Reports
         <Badge variant="new" size="sm">
           New
         </Badge>

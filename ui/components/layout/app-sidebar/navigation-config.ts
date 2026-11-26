@@ -2,7 +2,6 @@ import {
   Code,
   CreditCard,
   Crosshair,
-  FileChartLine,
   FileText,
   GitBranch,
   LayoutGrid,
@@ -206,18 +205,6 @@ export function getNavigationConfig({
             isRouteActive(pathname, "/scans") &&
             !isRouteActive(pathname, "/scans/config"),
         },
-        ...(isCloudEnvironment
-          ? [
-              {
-                kind: NAVIGATION_ITEM_KIND.LINK,
-                href: "/reports",
-                label: "Reports",
-                icon: FileChartLine,
-                active: isRouteActive(pathname, "/reports"),
-                highlight: true,
-              } as const,
-            ]
-          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/resources",
