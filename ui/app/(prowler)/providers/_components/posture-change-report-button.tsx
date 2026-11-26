@@ -4,6 +4,7 @@ import { FileChartLine } from "lucide-react";
 import { useState } from "react";
 
 import { Button, Label } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Calendar } from "@/components/shadcn/calendar";
 import { Combobox } from "@/components/shadcn/combobox";
 import { FormButtons } from "@/components/shadcn/form";
@@ -48,6 +49,9 @@ export const PostureChangeReportButton = ({
       <Button variant="outline" onClick={() => setOpen(true)}>
         <FileChartLine size={20} />
         Posture Change Report
+        <Badge variant="new" size="sm">
+          New
+        </Badge>
       </Button>
       <Modal
         open={open}
