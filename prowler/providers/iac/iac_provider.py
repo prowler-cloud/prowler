@@ -237,7 +237,9 @@ class IacProvider(Provider):
         try:
             if "VulnerabilityID" in finding:
                 finding_id = finding["VulnerabilityID"]
-                finding_description = finding["Description"]
+                finding_description = finding.get("Description") or finding.get(
+                    "Title", ""
+                )
                 finding_status = finding.get("Status", "FAIL")
                 recommendation_url, additional_urls = (
                     resolve_vulnerability_reference_urls(
@@ -257,7 +259,10 @@ class IacProvider(Provider):
                 additional_urls = [recommendation_url]
             else:
                 finding_id = finding["ID"]
-                finding_description = finding["Description"]
+                # Trivy omits "Description" when the source has none (e.g. DIG-0008)
+                finding_description = finding.get("Description") or finding.get(
+                    "Title", ""
+                )
                 finding_status = finding["Status"]
                 recommendation_url = build_finding_reference_url(finding_id)
                 additional_urls = [recommendation_url]
