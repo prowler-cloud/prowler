@@ -67,6 +67,21 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+# moto does not store the entries of a managed prefix list, so tests set them here by ID
+PREFIX_LIST_ENTRIES = {}
+
+
+def mock_make_api_call_prefix_list_entries(self, operation_name, kwarg):
+    if operation_name == "GetManagedPrefixListEntries":
+        return {
+            "Entries": [
+                {"Cidr": cidr}
+                for cidr in PREFIX_LIST_ENTRIES.get(kwarg["PrefixListId"], [])
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
 def mock_make_api_call_with_state_transition_reason(self, operation_name, kwarg):
     response = make_api_call(self, operation_name, kwarg)
     if operation_name == "DescribeInstances":
@@ -265,6 +280,8 @@ class Test_EC2_Service:
         ec2.instances = [FakeInstance(image_id) for image_id in instance_image_ids]
         ec2.images = []
         ec2.images_by_id = {}
+        ec2.instance_images_by_id = {}
+        ec2.image_lookup_failures = set()
         ec2.audit_resources = []
         ec2.audited_partition = "aws"
         ec2.audited_account = AWS_ACCOUNT_NUMBER
@@ -279,6 +296,90 @@ class Test_EC2_Service:
         assert missing_image_id not in ec2.images_by_id
         assert set(ec2.images_by_id) == set(valid_image_ids)
         assert {image.owner for image in ec2.images} == {"amazon"}
+
+    @staticmethod
+    def _images_by_id_service(instance_image_ids, describe_images):
+        """An EC2 service built by hand around a fake ``describe_images``."""
+
+        class FakeInstance:
+            def __init__(self, image_id):
+                self.region = AWS_REGION_US_EAST_1
+                self.image_id = image_id
+
+        class FakeEC2Client:
+            region = AWS_REGION_US_EAST_1
+
+        client = FakeEC2Client()
+        client.describe_images = describe_images
+        ec2 = EC2.__new__(EC2)
+        ec2.instances = [FakeInstance(image_id) for image_id in instance_image_ids]
+        ec2.images = []
+        ec2.images_by_id = {}
+        ec2.instance_images_by_id = {}
+        ec2.image_lookup_failures = set()
+        ec2.audit_resources = []
+        ec2.audited_partition = "aws"
+        ec2.audited_account = AWS_ACCOUNT_NUMBER
+        ec2._describe_images(client)
+        return ec2
+
+    def test_describe_images_by_id_isolates_an_unavailable_ami(self):
+        unavailable = "ami-0000-unavailable"
+        valid = ["ami-0001", "ami-0002", "ami-0003"]
+
+        def describe_images(**kwargs):
+            if kwargs.get("Owners") == ["self"]:
+                return {"Images": []}
+            if unavailable in kwargs["ImageIds"]:
+                raise ClientError(
+                    {"Error": {"Code": "InvalidAMIID.Unavailable", "Message": "gone"}},
+                    "DescribeImages",
+                )
+            return {
+                "Images": [
+                    {"ImageId": i, "Public": True, "ImageOwnerAlias": "amazon"}
+                    for i in kwargs["ImageIds"]
+                ]
+            }
+
+        ec2 = self._images_by_id_service(valid + [unavailable], describe_images)
+
+        assert set(ec2.images_by_id) == set(valid)
+        assert ec2.image_lookup_failures == set()
+
+    def test_describe_images_by_id_records_a_denied_lookup(self):
+        image_ids = ["ami-0001", "ami-0002"]
+
+        def describe_images(**kwargs):
+            if kwargs.get("Owners") == ["self"]:
+                return {"Images": []}
+            raise ClientError(
+                {"Error": {"Code": "UnauthorizedOperation", "Message": "denied"}},
+                "DescribeImages",
+            )
+
+        ec2 = self._images_by_id_service(image_ids, describe_images)
+
+        assert ec2.image_lookup_failures == set(image_ids)
+        assert ec2.instance_images_by_id == {}
+
+    def test_describe_images_by_id_labels_this_accounts_ami_as_self(self):
+        def describe_images(**kwargs):
+            if kwargs.get("Owners") == ["self"]:
+                return {"Images": []}
+            return {
+                "Images": [
+                    {
+                        "ImageId": "ami-own",
+                        "Public": False,
+                        "OwnerId": AWS_ACCOUNT_NUMBER,
+                    }
+                ]
+            }
+
+        ec2 = self._images_by_id_service(["ami-own"], describe_images)
+
+        assert ec2.instance_images_by_id["ami-own"].owner == "self"
 
     def test_describe_images_ignores_non_amazon_public_images_returned_by_image_id(
         self,
@@ -319,6 +420,8 @@ class Test_EC2_Service:
         ]
         ec2.images = []
         ec2.images_by_id = {}
+        ec2.instance_images_by_id = {}
+        ec2.image_lookup_failures = set()
         ec2.audit_resources = []
         ec2.audited_partition = "aws"
         ec2.audited_account = AWS_ACCOUNT_NUMBER
@@ -327,6 +430,9 @@ class Test_EC2_Service:
 
         assert ec2.images == []
         assert ec2.images_by_id == {}
+        # Kept apart, for the provenance of the instances that run them.
+        assert set(ec2.instance_images_by_id) == {marketplace_image_id, vendor_image_id}
+        assert {i.owner for i in ec2.instance_images_by_id.values()} == {"third_party"}
 
     # Test EC2 Describe Instances
     @mock.patch(
@@ -504,6 +610,36 @@ class Test_EC2_Service:
                 assert security_group.tags == [
                     {"Key": "test", "Value": "test"},
                 ]
+
+    # Test EC2 Describe Managed Prefix Lists
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_prefix_list_entries,
+    )
+    @mock_aws
+    def test_describe_managed_prefix_lists(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        prefix_list = ec2_client.create_managed_prefix_list(
+            PrefixListName="test-prefix-list",
+            AddressFamily="IPv4",
+            MaxEntries=5,
+        )["PrefixList"]
+        PREFIX_LIST_ENTRIES[prefix_list["PrefixListId"]] = ["0.0.0.0/1", "128.0.0.0/1"]
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        # AWS-managed prefix lists, such as the S3 one moto creates, are skipped
+        assert list(ec2.managed_prefix_lists) == [prefix_list["PrefixListId"]]
+        managed_prefix_list = ec2.managed_prefix_lists[prefix_list["PrefixListId"]]
+        assert managed_prefix_list.id == prefix_list["PrefixListId"]
+        assert managed_prefix_list.arn == prefix_list["PrefixListArn"]
+        assert managed_prefix_list.name == "test-prefix-list"
+        assert managed_prefix_list.region == AWS_REGION_US_EAST_1
+        assert managed_prefix_list.entries == ["0.0.0.0/1", "128.0.0.0/1"]
 
     # Test EC2 Describe Nacls
     @mock_aws

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import tempfile
 from os import environ
@@ -55,6 +56,7 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
+from prowler.lib.network.ssrf import SKIP_OUTBOUND_CHECK_ENV
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
     ASDEssentialEightAWS,
@@ -87,6 +89,7 @@ from prowler.lib.outputs.compliance.compliance import (
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
+from prowler.lib.outputs.compliance.ens.ens_m365 import M365ENS
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
@@ -236,6 +239,11 @@ def _send_ocsf_to_cloud(file_path: str) -> dict | None:
 
 
 def prowler():
+    # On the CLI the operator supplies the target themselves, so the outbound host
+    # check defends nothing and would refuse their own private network. setdefault,
+    # so an operator who set the variable explicitly keeps their choice.
+    os.environ.setdefault(SKIP_OUTBOUND_CHECK_ENV, "true")
+
     # Parse Arguments
     # Refactor(CLI)
     parser = ProwlerArgumentParser()
@@ -691,6 +699,8 @@ def prowler():
                 html_output = HTML(
                     findings=finding_outputs,
                     file_path=f"{filename}{html_file_suffix}",
+                    # Only the OSS CLI shows the Prowler Cloud hand-off block
+                    show_cloud_cta=True,
                 )
                 generated_outputs["regular"].append(html_output)
                 html_output.batch_write_data_to_file(
@@ -1174,6 +1184,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name.startswith("ens_"):
+                # Generate ENS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ens = M365ENS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ens)
+                ens.batch_write_data_to_file()
             elif compliance_name == "prowler_threatscore_m365":
                 filename = (
                     f"{output_options.output_directory}/compliance/"

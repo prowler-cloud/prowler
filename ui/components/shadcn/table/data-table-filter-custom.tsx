@@ -10,6 +10,7 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  MultiSelectLoading,
   MultiSelectSelectAll,
   MultiSelectSeparator,
   MultiSelectTrigger,
@@ -89,10 +90,18 @@ export const DataTableFilterCustom = ({
 
   const buildSearchConfig = (filter: FilterOption) => {
     const label = filter.labelCheckboxGroup.toLowerCase();
+    const isLoadingEmptyList = filter.isLoading && filter.values.length === 0;
     return {
       placeholder: `Search ${label}...`,
-      emptyMessage: `No ${label} found.`,
+      emptyMessage: isLoadingEmptyList
+        ? `Loading ${label}...`
+        : `No ${label} found.`,
     };
+  };
+
+  const handleOpenChange = (filter: FilterOption, open: boolean) => {
+    setOpenFilterKey(open ? filter.key : null);
+    if (open) filter.onOpen?.();
   };
 
   // Helper function to get entity from valueLabelMapping
@@ -286,7 +295,7 @@ export const DataTableFilterCustom = ({
           <MultiSelect
             key={filter.key}
             open={openFilterKey === filter.key}
-            onOpenChange={(open) => setOpenFilterKey(open ? filter.key : null)}
+            onOpenChange={(open) => handleOpenChange(filter, open)}
             values={selectedValues}
             onValuesChange={(values) => pushDropdownFilter(filter, values)}
           >
@@ -317,6 +326,11 @@ export const DataTableFilterCustom = ({
                   </MultiSelectItem>
                 );
               })}
+              {filter.isLoading && filter.values.length > 0 && (
+                <MultiSelectLoading>
+                  Loading {filter.labelCheckboxGroup.toLowerCase()}...
+                </MultiSelectLoading>
+              )}
             </MultiSelectContent>
           </MultiSelect>
         );

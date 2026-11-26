@@ -2,13 +2,20 @@ import os
 import time
 from datetime import UTC, datetime
 from glob import glob
+from urllib.parse import quote
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
 from api.models import Finding, Integration, Provider
-from api.utils import initialize_prowler_integration, initialize_prowler_provider
+from api.rls import Tenant
+from api.utils import (
+    declared_provider_secret,
+    initialize_prowler_integration,
+    initialize_prowler_provider,
+)
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
+from django.conf import settings
 from django.db import OperationalError
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
@@ -16,6 +23,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding as FindingOutput
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.jira.exceptions.exceptions import JiraBaseException
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -194,7 +202,7 @@ def get_security_hub_client_from_integration(
                 is_connected=False, error="No provider associated with this integration"
             )
         provider_uid = provider_relationship.provider.uid
-        provider_secret = provider_relationship.provider.secret.secret
+        provider_secret = declared_provider_secret(provider_relationship.provider)
 
     credentials = (
         integration.credentials if integration.credentials else provider_secret
@@ -314,6 +322,9 @@ def upload_security_hub_integration(
                     try:
                         batch_number = 0
                         has_findings = False
+                        delivery_incomplete = False
+                        security_hub_client = None
+                        total_findings_sent[integration.id] = 0
                         with rls_transaction(
                             tenant_id,
                             using=read_alias,
@@ -328,6 +339,8 @@ def upload_security_hub_integration(
                             )
 
                             for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+                                if not batch:
+                                    continue
                                 batch_number += 1
                                 has_findings = True
 
@@ -345,10 +358,16 @@ def upload_security_hub_integration(
                                     file_path="",
                                     file_extension="json",
                                 )
-                                asff_transformer.transform(transformed_findings)
 
                                 # Get the batch of ASFF findings
                                 batch_asff_findings = asff_transformer.data
+                                expected_asff_findings = sum(
+                                    finding.status != "MANUAL"
+                                    for finding in transformed_findings
+                                )
+                                if len(batch_asff_findings) != expected_asff_findings:
+                                    # ASFF catches errors and can return only a converted prefix.
+                                    delivery_incomplete = True
 
                                 if batch_asff_findings:
                                     # Create Security Hub client for first batch or reuse existing
@@ -362,6 +381,7 @@ def upload_security_hub_integration(
                                         )
 
                                         if not connected:
+                                            delivery_incomplete = True
                                             if isinstance(
                                                 security_hub.error,
                                                 SecurityHubNoEnabledRegionsError,
@@ -390,6 +410,12 @@ def upload_security_hub_integration(
                                             )
                                         )
 
+                                    # Count the actual payload after the SDK applies filtering.
+                                    expected_findings = sum(
+                                        len(findings)
+                                        for findings in security_hub_client._findings_per_region.values()
+                                    )
+
                                     # Send this batch to Security Hub
                                     try:
                                         findings_sent = security_hub_client.batch_send_to_security_hub()
@@ -397,11 +423,15 @@ def upload_security_hub_integration(
                                             findings_sent
                                         )
 
+                                        if findings_sent != expected_findings:
+                                            delivery_incomplete = True
+
                                         if findings_sent > 0:
                                             logger.debug(
                                                 f"Sent batch {batch_number} with {findings_sent} findings to Security Hub"
                                             )
                                     except Exception as batch_error:
+                                        delivery_incomplete = True
                                         logger.error(
                                             f"Failed to send batch {batch_number} to Security Hub: {str(batch_error)}"
                                         )
@@ -429,18 +459,19 @@ def upload_security_hub_integration(
                     )
                     integration_executions += 1
                 elif security_hub_client:
-                    if total_findings_sent[integration.id] > 0:
+                    if not delivery_incomplete:
                         logger.info(
                             f"Successfully sent {total_findings_sent[integration.id]} total findings to Security Hub via integration {integration.id}"
                         )
                         integration_executions += 1
                     else:
                         logger.warning(
-                            f"No findings were sent to Security Hub via integration {integration.id}"
+                            f"Incomplete finding delivery to Security Hub via integration {integration.id}; "
+                            f"accepted {total_findings_sent[integration.id]} findings"
                         )
 
                     # Archive previous findings if configured to do so
-                    if integration.configuration.get(
+                    if not delivery_incomplete and integration.configuration.get(
                         "archive_previous_findings", False
                     ):
                         logger.info(
@@ -477,6 +508,55 @@ def upload_security_hub_integration(
         return False
 
 
+JIRA_LABEL_PREFIX = "prowler"
+
+
+def build_jira_finding_url(finding_uid: str) -> str:
+    """Build the Prowler UI link for a finding, or "" when no UI base URL is set.
+
+    The link filters by the finding ``uid`` rather than the per-scan record id so
+    it keeps resolving after the finding is seen again in later scans.
+    """
+    base_url = getattr(settings, "UI_BASE_URL", "")
+    if not base_url or not finding_uid:
+        return ""
+    return f"{base_url}/findings?filter[uid]={quote(finding_uid, safe='')}"
+
+
+def build_jira_issue_labels(
+    finding_uid: str, provider: str, severity: str, check_id: str
+) -> list[str]:
+    """Build the deterministic label set written to every Jira issue.
+
+    Labels are prefixed to avoid colliding with customer labels and sanitized so
+    Jira never rejects them; the finding-uid label is what lets a ticket be traced
+    back (or JQL-filtered) to its finding.
+    """
+    raw_labels = [
+        JIRA_LABEL_PREFIX,
+        f"{JIRA_LABEL_PREFIX}-{provider}" if provider else "",
+        f"{JIRA_LABEL_PREFIX}-{severity}" if severity else "",
+        f"{JIRA_LABEL_PREFIX}-{check_id}" if check_id else "",
+        Jira.build_finding_label(finding_uid),
+    ]
+    return Jira.sanitize_labels(raw_labels)
+
+
+def get_tenant_name(tenant_id: str) -> str:
+    """Return the tenant name for the Jira issue "Tenant Info" row, or "" if unknown.
+
+    The name is informational only, so a lookup failure must never block the send.
+    """
+    try:
+        return (
+            Tenant.objects.filter(id=tenant_id).values_list("name", flat=True).first()
+            or ""
+        )
+    except Exception:
+        logger.warning("Could not resolve tenant name for %s", tenant_id)
+        return ""
+
+
 def send_findings_to_jira(
     tenant_id: str,
     integration_id: str,
@@ -487,6 +567,7 @@ def send_findings_to_jira(
     with rls_transaction(tenant_id):
         integration = Integration.objects.get(id=integration_id)
         jira_integration = initialize_prowler_integration(integration)
+        tenant_info = get_tenant_name(tenant_id)
 
     num_tickets_created = 0
     error_messages = []
@@ -519,6 +600,15 @@ def send_findings_to_jira(
             recommendation = remediation.get("recommendation", {})
             remediation_code = remediation.get("code", {})
 
+            provider_type = finding_instance.scan.provider.provider
+            issue_labels = build_jira_issue_labels(
+                finding_uid=finding_instance.uid,
+                provider=provider_type,
+                severity=finding_instance.severity,
+                check_id=finding_instance.check_id,
+            )
+            finding_url = build_jira_finding_url(finding_instance.uid)
+
             try:
                 # Send the individual finding to Jira
                 result = jira_integration.send_finding(
@@ -527,7 +617,7 @@ def send_findings_to_jira(
                     severity=finding_instance.severity,
                     status=finding_instance.status,
                     status_extended=finding_instance.status_extended or "",
-                    provider=finding_instance.scan.provider.provider,
+                    provider=provider_type,
                     region=region,
                     resource_uid=resource_uid,
                     resource_name=resource_name,
@@ -542,6 +632,9 @@ def send_findings_to_jira(
                     compliance=finding_instance.compliance or {},
                     project_key=project_key,
                     issue_type=issue_type,
+                    issue_labels=issue_labels,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
                 )
             except JiraBaseException as error:
                 error_message = error.message or JIRA_GENERIC_SEND_ERROR
@@ -557,6 +650,11 @@ def send_findings_to_jira(
 
             if result:
                 num_tickets_created += 1
+                logger.info(
+                    "Finding %s sent to Jira as %s",
+                    finding_id,
+                    result.get("key") if isinstance(result, dict) else result,
+                )
             else:
                 error_message = JIRA_GENERIC_SEND_ERROR
                 logger.error(error_message)

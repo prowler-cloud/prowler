@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import defusedxml
 from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.providers import registry as social_provider_registry
 from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
@@ -617,9 +618,66 @@ class Task(RowLevelSecurityProtectedModel):
         resource_name = "tasks"
 
 
+class ScanQuerySet(models.QuerySet):
+    """Shared selectors for "the latest scan of a provider".
+
+    The queryset must already be scoped by the caller: manager, tenant, RBAC,
+    providers and database alias.
+    """
+
+    # How "which completed scan is the provider's current one" is ordered.
+    LATEST_ORDER_BY = (
+        models.F("completed_at").desc(nulls_last=True),
+        models.F("inserted_at").desc(),
+        models.F("id").desc(),
+    )
+
+    def _eligible_for_latest(self) -> "ScanQuerySet":
+        """Restrict to the scans that may be a provider's latest.
+
+        Returns:
+            ScanQuerySet: The completed scans.
+        """
+        return self.filter(state=StateChoices.COMPLETED)
+
+    def latest_per_provider(self) -> "ScanQuerySet":
+        """Pick each provider's latest scan with `DISTINCT ON (provider_id)`.
+
+        Returns:
+            ScanQuerySet: One scan per provider, the latest one.
+        """
+        return (
+            self._eligible_for_latest()
+            .order_by("provider_id", *self.LATEST_ORDER_BY)
+            .distinct("provider_id")
+        )
+
+    def latest_ids_per_provider(self) -> list[UUID]:
+        """Evaluate `latest_per_provider` and return the scan ids.
+
+        The ids are materialised so callers can pass them as a literal `IN`
+        list; as a subquery Postgres misestimates the row count and picks a
+        slow nested loop.
+
+        Returns:
+            list[UUID]: The id of each provider's latest scan.
+        """
+        return list(self.latest_per_provider().values_list("id", flat=True))
+
+    def latest_first(self) -> "ScanQuerySet":
+        """Order eligible scans newest first, without deduplicating per provider.
+
+        Expects the queryset to be already filtered to a single provider.
+
+        Returns:
+            ScanQuerySet: The eligible scans, latest first.
+        """
+        return self._eligible_for_latest().order_by(*self.LATEST_ORDER_BY)
+
+
 class Scan(RowLevelSecurityProtectedModel):
-    objects = ActiveProviderManager()
-    all_objects = models.Manager()
+    objects = ActiveProviderManager.from_queryset(ScanQuerySet)()
+    all_objects = ScanQuerySet.as_manager()
 
     _SCOPING_SCANNER_ARG_KEYS_CACHE: tuple[str, ...] | None = None
 
@@ -726,6 +784,12 @@ class Scan(RowLevelSecurityProtectedModel):
                 name="scans_prov_state_ins_desc_idx",
             ),
             # TODO This might replace `scans_prov_state_ins_desc_idx` completely. Review usage
+            # Since `ScanQuerySet`, no code path reads a provider's
+            # completed scans by `-inserted_at`. The only query left that
+            # matches this index (and `scans_prov_state_ins_desc_idx` above)
+            # is `GET /scans?filter[provider]=…&filter[state]=completed` with
+            # the default sort. Both are candidates to drop in a follow-up
+            # once production `pg_stat_user_indexes.idx_scan` confirms it.
             models.Index(
                 fields=["tenant_id", "provider_id", "-inserted_at"],
                 condition=Q(state=StateChoices.COMPLETED),
@@ -1379,6 +1443,15 @@ class Invitation(RowLevelSecurityProtectedModel):
         if self.email:
             self.email = self.email.strip().lower()
         super().save(*args, **kwargs)
+
+    @classmethod
+    def lapsed_q(cls):
+        """Pending invitations whose expiry date has already passed."""
+        return Q(state=cls.State.PENDING, expires_at__lte=datetime.now(UTC))
+
+    @property
+    def is_lapsed(self):
+        return self.state == self.State.PENDING and self.expires_at <= datetime.now(UTC)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "invitations"
@@ -2057,6 +2130,17 @@ class SAMLDomainIndex(models.Model):
         ]
 
 
+def saml_entity_id_names_social_provider(entity_id: str) -> bool:
+    """Whether an entityID equals a registered social provider id, ignoring case.
+
+    allauth stores SAML accounts under the entityID as their provider, so such an
+    entityID would match the accounts users linked through that provider.
+    """
+    return entity_id.casefold() in {
+        provider.id.casefold() for provider in social_provider_registry.get_class_list()
+    }
+
+
 class SAMLConfiguration(RowLevelSecurityProtectedModel):
     """
     Stores per-tenant SAML settings, including email domain and IdP metadata.
@@ -2140,6 +2224,11 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
         entity_id = idp_settings.get("entity_id")
 
         if entity_id:
+            if saml_entity_id_names_social_provider(entity_id):
+                raise ValidationError(
+                    {"metadata_xml": "There is a problem with your metadata."}
+                )
+
             # Find any SocialApp with this entityID
             q = SocialApp.objects.filter(provider="saml", provider_id=entity_id)
 

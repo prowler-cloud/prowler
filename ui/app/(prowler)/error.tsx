@@ -1,7 +1,7 @@
 "use client";
 
-import { Icon } from "@iconify/react";
 import * as Sentry from "@sentry/nextjs";
+import { RefreshCw, ServerOff, TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "@/components/shadcn";
@@ -84,10 +84,17 @@ export default function Error({
       <Card variant="base" className="w-full max-w-lg">
         <CardHeader>
           <div className="flex items-start gap-3">
-            <Icon
-              icon={is500Error ? "tabler:server-off" : "tabler:rocket-off"}
-              className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500"
-            />
+            {is500Error ? (
+              <ServerOff
+                aria-hidden="true"
+                className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500"
+              />
+            ) : (
+              <TriangleAlert
+                aria-hidden="true"
+                className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500"
+              />
+            )}
             <div className="flex flex-col gap-2">
               <CardTitle className="text-lg">
                 {is500Error
@@ -105,7 +112,7 @@ export default function Error({
         <CardContent>
           <div className="flex items-center justify-start gap-3">
             <Button onClick={reset} size="sm" className="gap-2">
-              <Icon icon="tabler:refresh" className="h-4 w-4" />
+              <RefreshCw aria-hidden="true" className="h-4 w-4" />
               Try Again
             </Button>
             <CustomLink href="/" target="_self" className="font-bold">

@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_listener_fips_tls_enabled",
+  "CheckTitle": "ELBv2 HTTPS/TLS listeners use a FIPS TLS security policy",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
+  "Description": "**ELBv2 HTTPS and TLS listeners** are assessed for use of a **FIPS** TLS security policy (`ELBSecurityPolicy-*-FIPS-*`). FIPS policies terminate TLS with the AWS-LC FIPS validated cryptographic module.",
+  "Risk": "Listeners without a FIPS policy terminate TLS with cryptographic modules that are not FIPS 140 validated, which does not meet requirements to protect federal or regulated data with **NIST CMVP validated cryptography**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/describe-ssl-policies.html",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/describe-ssl-policies.html",
+    "https://aws.amazon.com/compliance/fips/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elbv2 modify-listener --listener-arn <listener_arn> --ssl-policy ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::Listener\n    Properties:\n      LoadBalancerArn: <example_resource_arn>\n      Protocol: HTTPS\n      Port: 443\n      DefaultActions:\n        - Type: forward\n          TargetGroupArn: <example_resource_arn>\n      Certificates:\n        - CertificateArn: <example_certificate_arn>\n      SslPolicy: ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04  # FIX: uses a FIPS TLS policy\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Load Balancers\n2. Select the load balancer and open the Listeners tab\n3. Select each HTTPS/TLS listener and choose Edit\n4. Set Security policy to a FIPS policy such as ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_lb_listener\" \"<example_resource_name>\" {\n  load_balancer_arn = \"<example_resource_arn>\"\n  port              = 443\n  protocol          = \"HTTPS\"\n  ssl_policy        = \"ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04\" # FIX: FIPS TLS policy\n  certificate_arn   = \"<example_certificate_arn>\"\n\n  default_action {\n    type             = \"forward\"\n    target_group_arn = \"<example_resource_arn>\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Use a **FIPS** TLS security policy, such as `ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04`, on every HTTPS and TLS listener that carries federal or regulated data.",
+      "Url": "https://hub.prowler.com/check/elbv2_listener_fips_tls_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "elbv2_insecure_ssl_ciphers",
+    "elbv2_listener_pqc_tls_enabled"
+  ],
+  "Notes": ""
+}

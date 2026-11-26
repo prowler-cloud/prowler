@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "ecr_registry_scan_images_on_push_enabled",
-  "CheckTitle": "ECR registry has image scanning on push enabled for all repositories",
+  "CheckTitle": "ECR registry has automated image scanning enabled for all repositories",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
@@ -12,8 +12,8 @@
   "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "container",
-  "Description": "Amazon ECR registries with repositories are evaluated for image scanning configured as `scan on push` at the registry level, with scan rules that cover all repositories (no restrictive filters), for either **basic** or **enhanced** scanning.",
-  "Risk": "Absent or filtered `scan on push` lets **vulnerable images** be pushed and deployed without timely detection, enabling exploitation of known CVEs (RCE, privilege escalation), supply chain compromise, and lateral movement - threatening workload integrity and data confidentiality.",
+  "Description": "Amazon ECR registries with repositories are evaluated for automated image scanning at the registry level -- `scan on push` or `continuous scanning` -- with scan rules that cover all repositories (no restrictive filters), for either **basic** or **enhanced** scanning. A registry whose rules specify only `MANUAL` scanning does not scan pushed images.",
+  "Risk": "Without automated registry scanning, **vulnerable images** are pushed and deployed without timely detection, enabling exploitation of known CVEs (RCE, privilege escalation), supply chain compromise, and lateral movement - threatening workload integrity and data confidentiality. Repository filters narrow the same risk to whichever repositories they exclude.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html"

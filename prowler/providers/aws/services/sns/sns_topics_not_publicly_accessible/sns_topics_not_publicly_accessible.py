@@ -25,8 +25,8 @@ class sns_topics_not_publicly_accessible(Check):
                         statement
                     ):
                         if has_restrictive_source_arn_condition(statement):
-                            break
-                        elif "Condition" in statement:
+                            continue
+                        if "Condition" in statement:
                             condition_account = is_condition_block_restrictive(
                                 statement["Condition"], sns_client.audited_account
                             )

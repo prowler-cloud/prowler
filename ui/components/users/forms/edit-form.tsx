@@ -60,7 +60,7 @@ export const EditForm = ({
     if (values.name !== undefined) {
       formData.append("name", values.name);
     }
-    if (values.email !== undefined) {
+    if (values.email !== undefined && values.email !== userEmail) {
       formData.append("email", values.email);
     }
     if (values.company_name !== undefined) {

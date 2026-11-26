@@ -2,84 +2,112 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import {
-  ConnectAccountForm,
-  ConnectAccountSuccessData,
-} from "@/components/providers/workflow/forms";
-import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { OrgFlowType } from "@/types/organizations";
-import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
-import { ProviderType } from "@/types/providers";
+import { ProviderPicker } from "@/components/providers/workflow/forms";
+import type { OrgFlowType } from "@/types/organizations";
+import type { ProviderType } from "@/types/providers";
 
+import { ProviderConnectStep } from "./connect/provider-connect-step";
+import { CONNECT_ACTION_KIND, type ConnectUiState } from "./connect/types";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "./footer-controls";
 
+const FORM_ID = "provider-wizard-connect-form";
+
+const PICKER_UI_STATE: ConnectUiState = {
+  showBack: false,
+  showAction: false,
+  actionLabel: "",
+  actionDisabled: true,
+  isLoading: false,
+};
+
 interface ConnectStepProps {
-  onNext: () => void;
+  /** The provider being connected; null while the user is still picking one. */
+  providerType: ProviderType | null;
+  /** The wizard was opened on an existing account: only its credentials change. */
+  locked: boolean;
+  onProviderTypeChange: (providerType: ProviderType | null) => void;
+  /** The account is saved and its connection test passed. */
+  onConnected: () => void;
+  /** The footer offers it once a teammate has been invited instead, or to cancel an update. */
+  onClose: () => void;
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
-  onProviderTypeChange: (providerType: ProviderType | null) => void;
 }
 
+/** Pick a provider, then connect it: account, credentials and test in one step. */
 export function ConnectStep({
-  onNext,
+  providerType,
+  locked,
+  onProviderTypeChange,
+  onConnected,
+  onClose,
   onSelectOrganizations,
   onFooterChange,
-  onProviderTypeChange,
 }: ConnectStepProps) {
-  const { setProvider, setVia, setSecretId, setMode } =
-    useProviderWizardStore();
-  const backHandlerRef = useRef<(() => void) | null>(null);
-  const [uiState, setUiState] = useState({
-    showBack: false,
-    showAction: false,
-    actionLabel: "Next",
-    actionDisabled: true,
-    isLoading: false,
-  });
+  // Local state needed: the active form publishes what the footer shows.
+  const [uiState, setUiState] = useState<ConnectUiState>(PICKER_UI_STATE);
+  // The modal hands over fresh callbacks every render; the footer effect keeps
+  // one closure and reads the latest through refs.
+  const closeRef = useRef(onClose);
+  const providerChangeRef = useRef(onProviderTypeChange);
+  // Synced after render: render must not write refs.
+  useEffect(() => {
+    closeRef.current = onClose;
+    providerChangeRef.current = onProviderTypeChange;
+  }, [onClose, onProviderTypeChange]);
 
-  const formId = "provider-wizard-connect-form";
-
-  const handleSuccess = (data: ConnectAccountSuccessData) => {
-    setProvider({
-      id: data.id,
-      type: data.providerType,
-      uid: data.uid,
-      alias: data.alias,
-    });
-    setVia(null);
-    setSecretId(null);
-    setMode(PROVIDER_WIZARD_MODE.ADD);
-    onNext();
-  };
+  const isPicking = providerType === null;
 
   useEffect(() => {
+    if (isPicking) {
+      onFooterChange({
+        showBack: false,
+        backLabel: "Back",
+        showAction: false,
+        actionLabel: "",
+        actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      });
+      return;
+    }
+    // Nothing left to submit once a teammate has been invited: the action closes.
+    const closes = uiState.actionKind === CONNECT_ACTION_KIND.CLOSE;
     onFooterChange({
       showBack: uiState.showBack,
-      backLabel: "Back",
+      // An account opened from the list has nothing to go back to.
+      backLabel: locked ? "Cancel" : "Back",
       backDisabled: uiState.isLoading,
-      onBack: () => backHandlerRef.current?.(),
+      onBack: locked
+        ? () => closeRef.current()
+        : () => providerChangeRef.current(null),
       showAction: uiState.showAction,
       actionLabel: uiState.actionLabel,
+      actionLoading: uiState.isLoading,
       actionDisabled: uiState.actionDisabled || uiState.isLoading,
-      actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
-      actionFormId: formId,
+      actionType: closes
+        ? WIZARD_FOOTER_ACTION_TYPE.BUTTON
+        : WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
+      actionFormId: closes ? undefined : FORM_ID,
+      onAction: closes ? () => closeRef.current() : undefined,
     });
-  }, [onFooterChange, uiState]);
+  }, [isPicking, locked, onFooterChange, uiState]);
+
+  if (isPicking) {
+    return <ProviderPicker onProviderTypeChange={onProviderTypeChange} />;
+  }
 
   return (
-    <ConnectAccountForm
-      formId={formId}
-      hideNavigation
-      onSuccess={handleSuccess}
+    <ProviderConnectStep
+      // A different provider starts from a fresh form and footer.
+      key={providerType}
+      providerType={providerType}
+      formId={FORM_ID}
+      locked={locked}
+      onConnected={onConnected}
       onSelectOrganizations={onSelectOrganizations}
-      onProviderTypeChange={onProviderTypeChange}
       onUiStateChange={setUiState}
-      onBackHandlerChange={(handler) => {
-        backHandlerRef.current = handler;
-      }}
     />
   );
 }

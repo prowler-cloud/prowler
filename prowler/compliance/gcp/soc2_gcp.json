@@ -568,8 +568,7 @@
         "cloudstorage_bucket_uniform_bucket_level_access",
         "bigquery_dataset_cmk_encryption",
         "bigquery_table_cmk_encryption",
-        "compute_instance_confidential_computing_enabled",
-        "pubsub_topic_encryption_with_cmk"
+        "compute_instance_confidential_computing_enabled"
       ]
     },
     {

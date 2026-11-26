@@ -73,7 +73,7 @@ export interface SlackConnectionFixture {
 export interface SlackChannelFixture {
   id: string;
   name: string;
-  /** Private channels are listed only where `@Prowler` has been invited. */
+  /** Private channels are listed only where `@Prowler Cloud` has been invited. */
   isPrivate: boolean;
 }
 
@@ -332,7 +332,7 @@ export const SLACK_CHANNEL_NOT_FOUND_REFUSAL: SlackRefusalFixture = {
 
 /**
  * The channel is fine, the Prowler app is simply not in it — fixed with
- * `/invite @Prowler`. Identical `detail` to the refusal above, deliberately.
+ * `/invite @Prowler Cloud`. Identical `detail` to the refusal above, deliberately.
  */
 export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
   status: 400,

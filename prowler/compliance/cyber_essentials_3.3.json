@@ -136,6 +136,11 @@
         "alibabacloud": [
           "ecs_securitygroup_restrict_rdp_internet",
           "ecs_securitygroup_restrict_ssh_internet"
+        ],
+        "cloudflare": [
+          "dns_record_proxied",
+          "zone_firewall_blocking_rules_configured",
+          "zone_waf_enabled"
         ]
       }
     },
@@ -152,7 +157,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -179,7 +185,8 @@
           "rds_instance_no_public_access_whitelist",
           "ecs_securitygroup_restrict_rdp_internet",
           "ecs_securitygroup_restrict_ssh_internet"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -206,7 +213,8 @@
           "ecs_securitygroup_restrict_ssh_internet",
           "oss_bucket_not_publicly_accessible",
           "rds_instance_no_public_access_whitelist"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -222,7 +230,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -238,7 +247,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -254,7 +264,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -275,7 +286,8 @@
         ],
         "alibabacloud": [
           "ram_user_console_access_unused"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -293,7 +305,8 @@
         "azure": [
           "entra_security_defaults_enabled"
         ],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -309,7 +322,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -325,7 +339,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -352,7 +367,8 @@
           "oss_bucket_not_publicly_accessible",
           "rds_instance_ssl_enabled",
           "rds_instance_no_public_access_whitelist"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -368,7 +384,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -384,7 +401,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -400,7 +418,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -416,7 +435,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -438,7 +458,8 @@
         "alibabacloud": [
           "ecs_instance_latest_os_patches_applied",
           "securitycenter_vulnerability_scan_enabled"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -454,7 +475,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -475,7 +497,8 @@
         ],
         "alibabacloud": [
           "ram_no_root_access_key"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -491,7 +514,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     },
     {
@@ -515,7 +539,8 @@
         ],
         "alibabacloud": [
           "ram_user_mfa_enabled_console_access"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -537,7 +562,8 @@
         ],
         "alibabacloud": [
           "ram_policy_no_administrative_privileges"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -558,7 +584,8 @@
         ],
         "alibabacloud": [
           "ram_policy_no_administrative_privileges"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -580,6 +607,9 @@
         "alibabacloud": [
           "ram_password_policy_max_login_attempts",
           "ram_user_mfa_enabled_console_access"
+        ],
+        "cloudflare": [
+          "zone_rate_limiting_enabled"
         ]
       }
     },
@@ -603,7 +633,8 @@
         "alibabacloud": [
           "ram_password_policy_minimum_length",
           "ram_user_mfa_enabled_console_access"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -627,7 +658,8 @@
           "ecs_instance_endpoint_protection_installed",
           "securitycenter_all_assets_agent_installed",
           "securitycenter_advanced_or_enterprise_edition"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -650,7 +682,8 @@
         "alibabacloud": [
           "securitycenter_advanced_or_enterprise_edition",
           "securitycenter_all_assets_agent_installed"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -666,7 +699,8 @@
       },
       "checks": {
         "azure": [],
-        "alibabacloud": []
+        "alibabacloud": [],
+        "cloudflare": []
       }
     }
   ]

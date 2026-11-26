@@ -4,6 +4,427 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.52.0] (Prowler v5.52.0)
+
+### 🚀 Added
+
+- `backup_vaults_lock_enabled` check for AWS provider, verifying AWS Backup vaults have Vault Lock enabled to protect recovery points from deletion [(#12249)](https://github.com/prowler-cloud/prowler/pull/12249)
+- `sagemaker_full_access_policy_attached` checks that no IAM role has the AWS managed `AmazonSageMakerFullAccess` policy attached, excluding service-linked roles [(#12587)](https://github.com/prowler-cloud/prowler/pull/12587)
+- `aks_cluster_node_os_upgrade_channel_enabled` check for Azure provider, verifying that AKS clusters use an AKS-managed node OS auto-upgrade channel (`SecurityPatch` or `NodeImage`) so node operating system security updates are applied [(#12657)](https://github.com/prowler-cloud/prowler/pull/12657)
+- `aks_cluster_kms_cmk_encryption_enabled` check for Azure provider, verifying that AKS clusters encrypt Kubernetes secrets in etcd with a customer-managed Azure Key Vault key [(#12863)](https://github.com/prowler-cloud/prowler/pull/12863)
+- `M365Custom` region for the M365 provider, with `--m365-authority-host` and `--m365-graph-endpoint`, to scan Microsoft clouds without a built-in entry [(#13460)](https://github.com/prowler-cloud/prowler/pull/13460)
+- `databricks_workspace_uses_private_endpoint` check for Azure provider, verifying Azure Databricks workspaces have an approved private endpoint connection, mapped to CIS 5.0 and 6.0 [(#13471)](https://github.com/prowler-cloud/prowler/pull/13471)
+- `cloudsql_instance_deletion_protection_enabled` check for GCP provider, verifying Cloud SQL instances and read replicas have deletion protection enabled, mapped to CIS 5.0 [(#13473)](https://github.com/prowler-cloud/prowler/pull/13473)
+
+### 🐞 Fixed
+
+- `containerregistry_not_publicly_accessible` and `containerregistry_uses_private_link` checks no longer false-fail when Azure Container Registries disable public access and use Private Endpoints [(#12652)](https://github.com/prowler-cloud/prowler/pull/12652)
+- `repository_secret_scanning_enabled` check for GitHub provider no longer reports a false FAIL when the token cannot read the repository `security_and_analysis` settings [(#12744)](https://github.com/prowler-cloud/prowler/pull/12744)
+- `compute_firewall_ssh_access_from_the_internet_allowed` and `compute_firewall_rdp_access_from_the_internet_allowed` checks no longer report a false negative for firewall rules that allow ingress from IPv6 `::/0` [(#12888)](https://github.com/prowler-cloud/prowler/pull/12888)
+- `KeyError` in M365 Defender outbound spam checks when the tenant has Standard or Strict preset security policies [(#12902)](https://github.com/prowler-cloud/prowler/pull/12902)
+- Oracle Cloud SSH and RDP exposure checks now treat the IPv6 `::/0` source block as unrestricted, so ingress rules that expose a security list or network security group to the whole IPv6 internet no longer report a false PASS [(#12920)](https://github.com/prowler-cloud/prowler/pull/12920)
+- Alibaba Cloud `rds_instance_no_public_access_whitelist` read a whitelist attribute the SDK does not have, so every RDS instance passed; it now reads `security_iplist` and also treats `::/0` as open [(#12980)](https://github.com/prowler-cloud/prowler/pull/12980)
+- Alibaba Cloud ECS SSH and RDP internet checks now detect security group rules open to `::/0`, which were reported as PASS because IPv6 sources are returned in `Ipv6SourceCidrIp` [(#12982)](https://github.com/prowler-cloud/prowler/pull/12982)
+- `githubactions_workflow_security_scan` check for GitHub provider dropped every zizmor finding with zizmor 1.27.0 or later, which reports the workflow path as `verbatim_path`, and reported PASS for repositories with workflow issues [(#13026)](https://github.com/prowler-cloud/prowler/pull/13026)
+- Azure storage account inventory no longer stops when the SDK returns an omitted or null private endpoint connection list [(#13031)](https://github.com/prowler-cloud/prowler/pull/13031)
+- EC2 security group fixers revoke only the `0.0.0.0/0` and `::/0` sources of the offending rule instead of the whole rule, keeping private CIDRs, prefix lists and security group references; for a rule whose CIDRs together cover every IPv4 or IPv6 address, the covering CIDRs are revoked [(#13040)](https://github.com/prowler-cloud/prowler/pull/13040)
+- Azure virtual machine inventory retention when optional Linux SSH, Secure Boot, or vTPM flags are omitted or null [(#13042)](https://github.com/prowler-cloud/prowler/pull/13042)
+- IAM password policy fixers failing with `ParamValidationError` when the account has no password policy or the policy does not set `MaxPasswordAge`, `PasswordReusePrevention` or `HardExpiry` [(#13044)](https://github.com/prowler-cloud/prowler/pull/13044)
+- `sqs_queues_not_publicly_accessible` fixer keeps the non-public statements of the queue policy instead of replacing the whole policy [(#13046)](https://github.com/prowler-cloud/prowler/pull/13046)
+- `cloudtrail_multi_region_enabled` fixer now starts logging on the trail it creates, so the trail records events and the check passes after the fix [(#13060)](https://github.com/prowler-cloud/prowler/pull/13060)
+- Azure SQL Server inventory retained when vulnerability assessment recurring-scan settings are absent [(#13074)](https://github.com/prowler-cloud/prowler/pull/13074)
+- `s3_bucket_policy_public_write_access` fixer removes only the statements that grant public write access instead of deleting the whole bucket policy [(#13081)](https://github.com/prowler-cloud/prowler/pull/13081)
+- RDS event subscription checks (`rds_cluster_critical_event_subscription`, `rds_instance_critical_event_subscription`, `rds_instance_event_subscription_security_groups` and `rds_instance_event_subscription_parameter_groups`) no longer emit FAIL findings for subscriptions of other source types. Each check now reports a single account-level FAIL per region when no enabled subscription of its own source type covers that region (for `rds_instance_event_subscription_parameter_groups`, when no subscription of its source type exists), and that account-level finding no longer carries an unrelated subscription's data or tags [(#13136)](https://github.com/prowler-cloud/prowler/pull/13136)
+- CloudWatch metric filter checks match CloudTrail destination log groups by full ARN, preventing false passes from same-named log groups in other regions [(#13193)](https://github.com/prowler-cloud/prowler/pull/13193)
+- Security group internet exposure checks now include the entries of customer managed prefix lists referenced by an ingress rule [(#13206)](https://github.com/prowler-cloud/prowler/pull/13206)
+- `s3_bucket_secure_transport_policy` passing buckets whose deny over insecure transport applies only to some principals, actions or requests, or skips objects with `NotResource`, and failing buckets that write the `aws:SecureTransport` value as a list or a boolean, or that deny with `NotAction` [(#13227)](https://github.com/prowler-cloud/prowler/pull/13227)
+- Athena workgroup inventory now follows pagination tokens so workgroups after the first page are included in security checks [(#13239)](https://github.com/prowler-cloud/prowler/pull/13239)
+- AWS resource policy checks no longer treat `StringLike`, `ArnLike` or `ArnEquals` conditions whose wildcards match any AWS account, such as `aws:SourceAccount` set to `*` or `aws:PrincipalArn` set to `arn:aws:iam::*:root`, as restricting public access [(#13294)](https://github.com/prowler-cloud/prowler/pull/13294)
+- `core_minimize_admission_hostport_containers` detects nonzero HostPorts by preserving container host port values during collection while allowing omitted and zero values [(#13298)](https://github.com/prowler-cloud/prowler/pull/13298)
+- Detect Azure NSG rules that open SSH, RDP, or HTTP when the port is listed in destination_port_ranges or is * [(#13301)](https://github.com/prowler-cloud/prowler/pull/13301)
+- M365 provider now uses the selected region's Microsoft Entra ID authority and Microsoft Graph endpoint for Microsoft Graph sign-in and requests, instead of always using the commercial cloud (Azure CLI authentication keeps the cloud the Azure CLI is signed in to) [(#13456)](https://github.com/prowler-cloud/prowler/pull/13456)
+- M365 provider PowerShell checks (Exchange Online and Microsoft Teams) now use the selected region's sign-in endpoint and cloud environment for `M365USGovernment` (GCC High) and `M365China`, instead of always using the commercial cloud [(#13458)](https://github.com/prowler-cloud/prowler/pull/13458)
+- AWS SNS scans collect topic subscriptions across all pages returned by `ListSubscriptionsByTopic` [(#13462)](https://github.com/prowler-cloud/prowler/pull/13462)
+- AWS Service Catalog scans collect portfolios across all pages returned by `ListPortfolios` [(#13464)](https://github.com/prowler-cloud/prowler/pull/13464)
+- AWS IAM scans collect server certificates across all pages returned by `ListServerCertificates` [(#13466)](https://github.com/prowler-cloud/prowler/pull/13466)
+- `guardduty_no_high_severity_findings` includes both High severity groups [(#13474)](https://github.com/prowler-cloud/prowler/pull/13474)
+- Azure `recovery_vault_backup_policy_retention_adequate` reads daily retention from the Full sub-policy of SQL in Azure VM and SAP HANA backup policies instead of reporting them as having no daily retention [(#13482)](https://github.com/prowler-cloud/prowler/pull/13482)
+- The Kubernetes `core_minimize_allowPrivilegeEscalation_containers` check requires explicit `false` for regular, init, and ephemeral containers and skips Pods that declare Windows [(#13486)](https://github.com/prowler-cloud/prowler/pull/13486)
+- `sns_topics_not_publicly_accessible` detects public grants after a policy statement restricted by `aws:SourceArn` [(#13487)](https://github.com/prowler-cloud/prowler/pull/13487)
+- `eks_cluster_not_publicly_accessible` reports unrestricted IPv6 access to public EKS cluster endpoints [(#13488)](https://github.com/prowler-cloud/prowler/pull/13488)
+- `cognito_user_pool_client_prevent_user_existence_errors` and `cognito_user_pool_client_token_revocation_enabled` now evaluate every user pool client across paginated Cognito responses [(#13493)](https://github.com/prowler-cloud/prowler/pull/13493)
+- ElastiCache replication groups retained during resource-filtered scans with member engine versions preserved [(#13502)](https://github.com/prowler-cloud/prowler/pull/13502)
+- Azure API Management Log Analytics workspaces detected when gateway logs are enabled through the `allLogs` category group [(#13503)](https://github.com/prowler-cloud/prowler/pull/13503)
+- Neptune service now follows pagination when listing DB clusters, so regions with more than 100 clusters are fully scanned [(#13506)](https://github.com/prowler-cloud/prowler/pull/13506)
+- Correct Redshift automated snapshot findings by checking the configured retention period [(#13514)](https://github.com/prowler-cloud/prowler/pull/13514)
+
+### 🔐 Security
+
+- CSV formula injection in the local dashboard export; finding cells are now neutralised with `sanitize_csv_value` before download, as in the SDK CSV writers [(#13075)](https://github.com/prowler-cloud/prowler/pull/13075)
+- URLs whose host is read differently by the outbound guard and the HTTP client, such as a backslash before the userinfo, rejected before any connection is made [(#13449)](https://github.com/prowler-cloud/prowler/pull/13449)
+- Google Workspace service account keys supplied as content rejected before authentication unless they are service_account keys whose token_uri is one of Google's token endpoints [(#13452)](https://github.com/prowler-cloud/prowler/pull/13452)
+- Image references pulled from a registry host resolving to loopback, private or otherwise non-public addresses rejected before the scan starts, matching the check already applied to registry URLs [(#13453)](https://github.com/prowler-cloud/prowler/pull/13453)
+- Trivy image pulls routed through a local proxy that rejects registry redirects, token endpoints and layer URLs whose host resolves to a non-public address [(#13478)](https://github.com/prowler-cloud/prowler/pull/13478)
+- IaC scans in Prowler App route Trivy through the outbound host proxy, so Terraform module sources resolving to non-public addresses are rejected, git modules are fetched only over http and https, and Trivy no longer receives the worker's cloud credentials [(#13478)](https://github.com/prowler-cloud/prowler/pull/13478)
+
+---
+
+## [5.51.0] (Prowler v5.51.0)
+
+### 🚀 Added
+
+- `bedrock_imported_model_encrypted_with_cmk` check for AWS Bedrock imported models using customer-managed KMS keys [(#12668)](https://github.com/prowler-cloud/prowler/pull/12668)
+- `bedrockagentcore_runtime_jwt_identity_propagation_configured` check for AWS provider, verifying Amazon Bedrock AgentCore runtimes with a custom JWT authorizer forward the end-user `Authorization` header to the agent [(#12762)](https://github.com/prowler-cloud/prowler/pull/12762)
+- `bedrock_flow_guardrail_enabled` check for AWS provider, verifying Amazon Bedrock Flows apply a guardrail to applicable prompt and knowledge base nodes [(#12772)](https://github.com/prowler-cloud/prowler/pull/12772)
+- ENS RD 311/2022 compliance framework for the M365 provider, with a dedicated CSV output formatter [(#13394)](https://github.com/prowler-cloud/prowler/pull/13394)
+- SharePoint Online requirements from the CCN-STIC-885B guide in the ENS RD 311/2022 compliance framework for the M365 provider [(#13408)](https://github.com/prowler-cloud/prowler/pull/13408)
+- Microsoft Teams requirements from the CCN-STIC-885D guide in the ENS RD 311/2022 compliance framework for the M365 provider [(#13409)](https://github.com/prowler-cloud/prowler/pull/13409)
+- Exchange Online requirements from the CCN-STIC-885C guide in the ENS RD 311/2022 compliance framework for the M365 provider [(#13411)](https://github.com/prowler-cloud/prowler/pull/13411)
+
+### 🔄 Changed
+
+- ENS RD 311/2022 compliance framework for the M365 provider now follows the May 2024 edition of the CCN-STIC-885A guide: passwords that never expire, strong passwords and the banned-password list, MFA for external users and incident management [(#13413)](https://github.com/prowler-cloud/prowler/pull/13413)
+- `inspector2_active_findings_no_known_exploited_vulnerabilities` and `inspector2_active_findings_kev_within_due_date` now evaluate only active findings with a public exploit by default; set `inspector2_kev_include_findings_without_exploit` to `true` to evaluate every active finding [(#13435)](https://github.com/prowler-cloud/prowler/pull/13435)
+- `inspector2_active_findings_within_max_age` reports the age of the oldest stale finding without the number of stale findings [(#13435)](https://github.com/prowler-cloud/prowler/pull/13435)
+
+### 🐞 Fixed
+
+- `cloudtrail_s3_dataevents_read_enabled` and `cloudtrail_s3_dataevents_write_enabled` no longer pass on an advanced event selector whose `readOnly` field excludes the event type the check is for [(#13144)](https://github.com/prowler-cloud/prowler/pull/13144)
+- `network_default_security_list_restricts_traffic` now tests ingress sources against the VCN CIDR blocks by network containment instead of string prefix, so broader ranges such as `10.0.0.0/8` fail and subnets inside the VCN pass [(#13267)](https://github.com/prowler-cloud/prowler/pull/13267)
+- `compute_firewall_ssh_access_from_the_internet_allowed` and `compute_firewall_rdp_access_from_the_internet_allowed` checks no longer report disabled firewall rules as exposing SSH or RDP to the internet [(#13296)](https://github.com/prowler-cloud/prowler/pull/13296)
+- AWS Backup selections are now queried only in the matching Region, preventing cross-Region lookup failures and incomplete backup protection inventories in multi-Region scans [(#13341)](https://github.com/prowler-cloud/prowler/pull/13341)
+- The `apigatewayv2_api_access_logging_enabled` check reports an independent access logging finding for each stage [(#13347)](https://github.com/prowler-cloud/prowler/pull/13347)
+- `iam_policy_allows_privilege_escalation` and `iam_inline_policy_allows_privilege_escalation` no longer report every policy as PASS: the retired `codestar:CreateProject` combination is removed and an unknown action now skips only its own combination [(#13363)](https://github.com/prowler-cloud/prowler/pull/13363)
+- AWS SES scans collect email identities across all pages returned by `ListEmailIdentities` [(#13367)](https://github.com/prowler-cloud/prowler/pull/13367)
+- GCP Compute subnetworks are now discovered with `subnetworks().aggregatedList`, so subnets in every region are scanned, and `addresses` pagination no longer uses the `subnetworks` client [(#13390)](https://github.com/prowler-cloud/prowler/pull/13390)
+- Output writers no longer leave the file open and incomplete when the last streamed batch has no rows, which truncated CSV outputs and left OCSF and HTML outputs unterminated [(#13396)](https://github.com/prowler-cloud/prowler/pull/13396)
+- `bedrockagentcore_runtime_vpc_configured`, `bedrockagentcore_full_access_policy_attached` and `bedrockagentcore_payments_process_payment_role_separation` no longer report MANUAL findings when Bedrock AgentCore runtimes, IAM roles or role policies cannot be read; those resources now produce no finding [(#13401)](https://github.com/prowler-cloud/prowler/pull/13401)
+- Compliance CSV outputs no longer repeat every manual requirement once per batch when a writer streams the findings in batches, as the API does [(#13402)](https://github.com/prowler-cloud/prowler/pull/13402)
+- Inspector2 resource metadata no longer includes every active finding and covered resource of the Region, which made the stored resource grow to hundreds of megabytes on accounts with many findings [(#13406)](https://github.com/prowler-cloud/prowler/pull/13406)
+- Vercel preview, production, and Skew Protection checks read project protection settings from the Vercel API response [(#13414)](https://github.com/prowler-cloud/prowler/pull/13414)
+- ENS RD 311/2022 for AWS: three `op.exp.10` key policy requirements that CCN-STIC-887A leaves to manual review no longer list enclave attestation checks, `op.acc.6.r9` is no longer split into an `op.acc.6.9` group, `mp.com.4` and `mp.sw.2` requirements are filed under the category of their measure, and four requirement ids are renamed to name the measure they are filed under: `op.ext.7.aws.am.1` to `op.exp.7.aws.am.1`, `op.exp.1.r3.aws.tag.1` to `op.exp.1.r4.aws.tag.1`, `op.exp.3.r4.aws.cfg.2` to `op.exp.3.r3.aws.cfg.2` and `mp.sw.2.r1.aws.cfgd.1` to `mp.sw.2.r2.aws.cfgd.1` [(#13417)](https://github.com/prowler-cloud/prowler/pull/13417)
+- ENS RD 311/2022 for Azure: 29 requirements had a trailing space in `IdGrupoControl`, which reached the CSV, the PDF report and the UI, and seven malformed requirement ids are renamed to start with the measure they are filed under and the provider: `op.acc.1.az.r1.eid.1` to `op.acc.1.r1.az.eid.1`, `op.acc.2.az.r1.eid.1` to `op.acc.2.r1.az.eid.1`, `opc.acc.5.az.eid.1` to `op.acc.5.az.eid.1`, `op.acc.6.r9.az` to `op.acc.6.r9.az.eid.1`, `op.exp8.r2.az.wc.1` to `op.exp.8.r2.az.wc.1`, `op.con.3.az.pd.1` to `op.cont.3.az.pd.1` and `mp.com.4.r2..az.sa.1` to `mp.com.4.r2.az.sa.1` [(#13419)](https://github.com/prowler-cloud/prowler/pull/13419)
+- ENS RD 311/2022 for GCP: six requirement ids that were malformed or named another measure are renamed to follow `<measure>.gcp.<service>.<number>`: `opc.acc.1.r1.gcp.iam.2` to `op.acc.1.r1.gcp.iam.2`, `opc.acc.2.gcp.iap.1` to `op.acc.2.r1.gcp.iap.1`, `opc.acc.4.gcp.iam.1` to `op.acc.4.gcp.iam.1`, `op.exp.4.r2.gcp` to `op.exp.4.r2.gcp.ci.1`, `op.exp.6.gcp.app.1` to `op.exp.6.r3.gcp.app.1` and `op.mon.1.r3.gc.scc.1` to `op.mon.1.r3.gcp.scc.1` [(#13421)](https://github.com/prowler-cloud/prowler/pull/13421)
+- Local dashboard compliance sections no longer go blank after being expanded, nor lose their styles, when Dash does not render its dev tools UI [(#13430)](https://github.com/prowler-cloud/prowler/pull/13430)
+- Inspector2 service no longer lists every active finding of the account; Amazon Inspector now filters and sorts them server-side, so scans of accounts with a large volume of findings no longer stall on it [(#13435)](https://github.com/prowler-cloud/prowler/pull/13435)
+- The `core_minimize_privileged_containers` check now detects privileged init and ephemeral containers [(#13436)](https://github.com/prowler-cloud/prowler/pull/13436)
+
+### 🔐 Security
+
+- `opentelemetry-api` and `opentelemetry-sdk` 1.45.2 to close an open security advisory [(#13433)](https://github.com/prowler-cloud/prowler/pull/13433)
+
+---
+
+## [5.50.0] (Prowler v5.50.0)
+
+### 🚀 Added
+
+- `bedrock_model_invocation_job_output_encrypted_with_cmk` check for AWS provider, verifying that Bedrock model invocation job S3 output is encrypted with a customer managed KMS key [(#12801)](https://github.com/prowler-cloud/prowler/pull/12801)
+- `bedrock_guardrail_iam_condition_enforcement_enabled` check for AWS provider, verifying that customer-managed and inline IAM policies allowing Bedrock model invocation require a guardrail through the `bedrock:GuardrailIdentifier` condition key [(#13065)](https://github.com/prowler-cloud/prowler/pull/13065)
+- `cloudwatch_log_group_data_protection_policy_configured` check for AWS provider [(#13085)](https://github.com/prowler-cloud/prowler/pull/13085)
+- Seven Manual requirements in the AWS AI Security Framework for Bedrock data retention, RAG authorization, and agent governance [(#13338)](https://github.com/prowler-cloud/prowler/pull/13338)
+- `secrets_confidence` config to set the minimum Kingfisher confidence level in the secret-scanning checks of the AWS, Cloudflare, and OpenStack providers [(#13362)](https://github.com/prowler-cloud/prowler/pull/13362)
+
+### 🔄 Changed
+
+- `compute_instance_encryption_with_csek_enabled` FAIL message now explains why the finding is not remediable: Google disabled CSEK encryption on July 20, 2026, and the check will be deprecated on July 20, 2027 when CSEK is removed from Compute Engine [(#12735)](https://github.com/prowler-cloud/prowler/pull/12735)
+
+### 🐞 Fixed
+
+- `network_udp_internet_access_restricted` no longer reports a false negative for NSG rules that allow Any protocol (`*`) inbound from the Internet [(#12886)](https://github.com/prowler-cloud/prowler/pull/12886)
+- `dns_dnssec_disabled` for GCP no longer evaluates private Cloud DNS zones, which cannot enable DNSSEC [(#13334)](https://github.com/prowler-cloud/prowler/pull/13334)
+
+### 🔐 Security
+
+- Kubernetes kubeconfig cluster servers pointing at loopback, private or otherwise non-public addresses rejected before the client connects [(#12961)](https://github.com/prowler-cloud/prowler/pull/12961)
+- Image registry URLs resolving to loopback, private, shared or otherwise non-public addresses rejected before any request leaves the adapter, including every destination a redirect points to [(#12974)](https://github.com/prowler-cloud/prowler/pull/12974)
+- OpenStack redirects and Keystone catalog endpoints resolving to non-public hosts rejected on every request, not only the initial `auth_url` [(#13371)](https://github.com/prowler-cloud/prowler/pull/13371)
+- dnspython to 2.9.2 in the SDK for Python 3.11 and later, patching the high severity advisory reported by the container scan; Python 3.10 stays on 2.8.0, which the 2.9 series no longer supports [(#13374)](https://github.com/prowler-cloud/prowler/pull/13374)
+- dnspython from 2.9.0 to 2.9.2 in the SDK container image, patching CVE-2026-128089 [(#13376)](https://github.com/prowler-cloud/prowler/pull/13376)
+
+---
+
+## [5.49.0] (Prowler v5.49.0)
+
+### 🚀 Added
+
+- `oam_sink_not_publicly_accessible` check for AWS provider, reporting CloudWatch Observability Access Manager sinks whose resource policy lets any AWS account link to them [(#12562)](https://github.com/prowler-cloud/prowler/pull/12562)
+- `organizations_security_services_delegated_admin_not_management_account` check for AWS provider, verifying that security services with trusted access in the organization have a delegated administrator instead of being administered from the management account [(#12565)](https://github.com/prowler-cloud/prowler/pull/12565)
+- Threat signatures (`prowler/lib/threats`): emerging vulnerabilities described as data (affected image publishers, names and per-branch version ranges proven by examples, exposed ports, impact and remediation), supplied per scan under `threat_signatures` for AWS, Azure and GCP [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- Developer guide for writing an emerging threat signature, with a signature template [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- `Check_Report.raw`, a structured payload a check can attach to its finding raw result [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- `ec2_instance_emerging_threat_image`, `vm_emerging_threat_image` and `compute_instance_emerging_threat_image` checks for AWS, Azure and GCP, matching compute instances against threat signatures [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+- Image provenance for compute instances: owner and name of third-party AMIs in the EC2 service, the full image reference of Azure VMs, and the boot disk source image of GCP instances [(#13317)](https://github.com/prowler-cloud/prowler/pull/13317)
+
+### 🐞 Fixed
+
+- Organization condition parsing for AWS resource policy checks accepts `aws:PrincipalOrgPaths` and `ForAnyValue` operators as restrictive, and no longer treats a wildcard organization ID inside a list as restrictive [(#12562)](https://github.com/prowler-cloud/prowler/pull/12562)
+- `organizations_delegated_administrators` no longer reports PASS when an untrusted delegated administrator is listed before a trusted one [(#12565)](https://github.com/prowler-cloud/prowler/pull/12565)
+- `organizations_delegated_administrators` no longer reports PASS when delegated administrators cannot be listed because of throttling or service errors [(#12565)](https://github.com/prowler-cloud/prowler/pull/12565)
+- `compute_loadbalancer_logging_enabled` no longer reports FAIL for load balancers whose URL map default service is a global backend bucket, which has no `logConfig` and always logs requests [(#12904)](https://github.com/prowler-cloud/prowler/pull/12904)
+- CloudFormation scan role now grants `lambda:GetLayerVersion`, and its StackSet role `amplify:ListApps` and `amplify:ListBranches`, so `awslambda_layer_no_secrets_in_content` and `amplify_app_no_secrets_in_environment` can scan accounts onboarded with it [(#12923)](https://github.com/prowler-cloud/prowler/pull/12923)
+- False positives for secure non-PQ FIPS TLS policies in `elbv2_insecure_ssl_ciphers` [(#13292)](https://github.com/prowler-cloud/prowler/pull/13292)
+- GCP Cloud Storage buckets are still listed and evaluated when the IAM policy of one bucket cannot be read; `cloudstorage_bucket_public_access` reports that bucket as `MANUAL` [(#13333)](https://github.com/prowler-cloud/prowler/pull/13333)
+- `vm_emerging_threat_image` no longer misses VMs whose marketplace offer, SKU or gallery image name was given in a different case than the threat signature's `name_regex` [(#13336)](https://github.com/prowler-cloud/prowler/pull/13336)
+
+### 🔐 Security
+
+- `pyjwt` from 2.14.0 to 2.15.0, patching CVE-2026-101918 and CVE-2026-102275 [(#13297)](https://github.com/prowler-cloud/prowler/pull/13297)
+- zlib1g to 1:1.3.dfsg+really1.3.1-1+deb13u1 and Trivy from 0.76.1 to 0.76.2 in the SDK container image, patching CVE-2026-76844, CVE-2026-85091 and CVE-2026-78661 [(#13322)](https://github.com/prowler-cloud/prowler/pull/13322)
+- PowerShell from 7.5.13 to 7.6.10 (.NET runtime 10.0.15), uv from 0.13.4 to 0.13.7 and joserfc, multidict, opentelemetry and setuptools in the SDK container image, patching CVE-2026-109475, CVE-2026-104874, CVE-2026-114603, CVE-2026-119284, CVE-2026-59890 and the rustls advisories in uv [(#13342)](https://github.com/prowler-cloud/prowler/pull/13342)
+
+---
+
+## [5.48.0] (Prowler v5.48.0)
+
+### 🚀 Added
+
+- GDPR compliance framework for Azure provider, mapping Articles 25, 30 and 32 to existing Azure checks [(#11590)](https://github.com/prowler-cloud/prowler/pull/11590)
+- `bedrockagentcore` service for AWS provider, collecting AgentCore gateways, gateway targets, agent runtimes, memories, browsers, code interpreters and token vaults [(#12557)](https://github.com/prowler-cloud/prowler/pull/12557)
+- `bedrockagentcore_full_access_policy_attached` and `bedrockagentcore_payments_process_payment_role_separation` checks for AWS provider, flagging IAM roles with the AgentCore full access managed policies or allowed both `CreatePaymentSession` and `ProcessPayment` [(#12558)](https://github.com/prowler-cloud/prowler/pull/12558)
+- `cloudtrail_agentcore_data_events_enabled` check for AWS provider, verifying that actively logging trails record Amazon Bedrock AgentCore data events for every AgentCore resource type in use [(#12563)](https://github.com/prowler-cloud/prowler/pull/12563)
+- Cloudflare check mappings for the NCSC Cyber Essentials 3.3 compliance framework [(#12641)](https://github.com/prowler-cloud/prowler/pull/12641)
+- `bedrockagentcore_runtime_vpc_configured` check for AWS provider, verifying that Amazon Bedrock AgentCore runtimes use VPC network mode [(#12800)](https://github.com/prowler-cloud/prowler/pull/12800)
+- `repository_secret_scanning_push_protection_enabled` check for GitHub to flag repositories that accept pushes containing secrets because secret scanning push protection is disabled [(#13138)](https://github.com/prowler-cloud/prowler/pull/13138)
+- `project_environment_no_secrets_with_public_prefix` check for Vercel to flag secret-like environment variables that frontend frameworks inline into the browser bundle through public prefixes such as `NEXT_PUBLIC_` or `VITE_` [(#13139)](https://github.com/prowler-cloud/prowler/pull/13139)
+- `project_linked_to_git_repository` check for Vercel to flag projects that are not linked to a Git repository and can only receive unreviewed CLI deployments [(#13139)](https://github.com/prowler-cloud/prowler/pull/13139)
+- Prowler Cloud hand-off block after the assessment summary in OSS CLI HTML reports, controlled by an opt-in `show_cloud_cta` option that Prowler Cloud and Private Cloud exports leave disabled [(#13221)](https://github.com/prowler-cloud/prowler/pull/13221)
+- `zone_firewall_no_skip_all_traffic_rules` check for Cloudflare provider, flagging enabled firewall skip rules that match all traffic and bypass managed WAF, rate limiting or other security features [(#13237)](https://github.com/prowler-cloud/prowler/pull/13237)
+- `r2` service for Cloudflare provider with `r2_bucket_public_dev_url_disabled`, `r2_bucket_cors_no_wildcard_origin` and `r2_bucket_custom_domain_min_tls_secure` checks [(#13237)](https://github.com/prowler-cloud/prowler/pull/13237)
+- `workers` service for Cloudflare provider with `workers_script_observability_enabled`, `workers_script_workers_dev_disabled`, `workers_script_preview_urls_disabled` and `workers_script_no_secrets_in_plain_text_bindings` checks for Workers scripts [(#13237)](https://github.com/prowler-cloud/prowler/pull/13237)
+- `account` service for Cloudflare provider with `account_two_factor_enforced`, `account_member_two_factor_enabled`, `account_super_admins_limited`, `account_api_token_expiration_set`, `account_api_token_ip_restriction_enabled` and `account_api_token_recently_used` checks [(#13237)](https://github.com/prowler-cloud/prowler/pull/13237)
+
+### 🔄 Changed
+
+- `prowler dashboard` startup output now shows the Local Dashboard logo, the CSV directory, a brief Prowler Cloud hand-off block that `PROWLER_NO_PROMOTIONS=1` disables, and the local URL once the server is listening [(#13221)](https://github.com/prowler-cloud/prowler/pull/13221)
+- Scans run checks from highest to lowest severity, so critical and high findings are stored first [(#13255)](https://github.com/prowler-cloud/prowler/pull/13255)
+- `jsonschema` 4.26.0 for mutelist and custom checks metadata validation [(#13274)](https://github.com/prowler-cloud/prowler/pull/13274)
+
+### 🐞 Fixed
+
+- CloudTrail trail status and event selectors are now read per trail, so one unreadable trail no longer leaves the remaining trails unread [(#12563)](https://github.com/prowler-cloud/prowler/pull/12563)
+- WAFv2 CloudFront Web ACL rules, logging configuration and tags, so scans that exclude `us-east-1` no longer report those Web ACLs as having no rules [(#12658)](https://github.com/prowler-cloud/prowler/pull/12658)
+- WAFv2 `ListWebACLs` pagination, so scans of accounts with more than one page of Web ACLs no longer stop at the first page [(#12658)](https://github.com/prowler-cloud/prowler/pull/12658)
+- Zones without a challenge passage TTL are reported as non-compliant by `zone_challenge_passage_configured` [(#12693)](https://github.com/prowler-cloud/prowler/pull/12693)
+- `vpc_endpoint_connections_trust_boundaries` now skips VPC endpoints whose service AWS reports as not supporting endpoint policies (`VpcEndpointPolicySupported`), instead of failing endpoints like Amazon SES SMTP whose default policy cannot be changed [(#13169)](https://github.com/prowler-cloud/prowler/pull/13169)
+- MongoDB Atlas connection errors now include the HTTP status, error code and detail returned by Atlas instead of a generic HTTP error, and a custom exception message no longer persists into later errors of the same type [(#13214)](https://github.com/prowler-cloud/prowler/pull/13214)
+- `gen-ai` category for `guardduty_ai_protection_enabled` and `iam_user_access_not_stale_to_sagemaker` AWS checks [(#13246)](https://github.com/prowler-cloud/prowler/pull/13246)
+
+### 🔐 Security
+
+- Python base image from 3.12.15 to 3.12.16 in the SDK container image, patching CVE-2026-115557 [(#13215)](https://github.com/prowler-cloud/prowler/pull/13215)
+- pyasn1 to 0.6.5 and joserfc to 1.7.5 in the SDK, patching the ASN.1 decoding and JWE decryption denial of service advisories [(#13247)](https://github.com/prowler-cloud/prowler/pull/13247)
+- PowerShell from 7.5.12 to 7.5.13 in the SDK container image, bundling .NET runtime 9.0.22 [(#13253)](https://github.com/prowler-cloud/prowler/pull/13253)
+- h2 from 4.3.0 to 4.4.1 and werkzeug from 3.1.8 to 3.1.9, patching the duplicate Host header request smuggling and the Windows device name bypass in safe_join, plus pylint 4.0.9 and filelock 4.2.1 in the development dependencies [(#13257)](https://github.com/prowler-cloud/prowler/pull/13257)
+- GCP provider only loads `service_account_key` credentials of type `service_account` with a Google `token_uri`, blocking `external_account` configurations and custom token endpoints that could read local files or fetch arbitrary URLs [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- oauthlib from 4.0.0 to 4.0.1 in the SDK container image, patching the OAuth device flow bearer token disclosure [(#13263)](https://github.com/prowler-cloud/prowler/pull/13263)
+- apt and libapt-pkg7.0 3.0.4 in the SDK container image [(#13268)](https://github.com/prowler-cloud/prowler/pull/13268)
+
+---
+
+## [5.47.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- `iam_subscription_owners_between_2_and_3` check for Azure provider, verifying each subscription has between 2 and 3 principals with the Owner role, including owners inherited from management groups, mapped to CIS 5.0 and 6.0 [(#13145)](https://github.com/prowler-cloud/prowler/pull/13145)
+- `network_application_gateway_waf_enabled` and `network_application_gateway_http2_enabled` checks for Azure provider, with Application Gateway and WAF policy collection in the network service, mapped to CIS 5.0 and 6.0 [(#13160)](https://github.com/prowler-cloud/prowler/pull/13160)
+
+### 🐞 Fixed
+
+- Security group internet exposure checks now treat CIDRs in one ingress rule that together cover 0.0.0.0/0 or ::/0 as open to the internet [(#13191)](https://github.com/prowler-cloud/prowler/pull/13191)
+
+### 🔐 Security
+
+- pymongo to 4.18.3, dnspython to 2.9.0 and oauthlib to 4.0.0 in the SDK, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure; dnspython stays on 2.8.0 for Python 3.10, which 2.9.0 no longer supports [(#13185)](https://github.com/prowler-cloud/prowler/pull/13185)
+
+---
+
+## [5.46.0] (Prowler v5.46.0)
+
+### 🚀 Added
+
+- `cognito_user_pool_account_recovery_sms_not_preferred` check verifying Cognito user pools do not rank SMS first for account recovery [(#12251)](https://github.com/prowler-cloud/prowler/pull/12251)
+- `bedrock_guardrail_sensitive_information_filter_enforced` check for AWS provider, flagging Bedrock guardrails whose PII entities or custom regexes take no action on the output path, so a detected match is reported in the trace and still delivered to the caller [(#12663)](https://github.com/prowler-cloud/prowler/pull/12663)
+- `bedrock_model_invocation_logging_text_data_enabled` check for AWS provider, verifying that model invocation logging delivers prompt and response text rather than naming a destination while excluding request and response bodies [(#12663)](https://github.com/prowler-cloud/prowler/pull/12663)
+- Vertex AI service for GCP provider, including the `vertexai_workbench_instance_public_ip_disabled` and `vertexai_workbench_instance_root_access_disabled` checks mapped to PCI DSS 4.0 [(#13062)](https://github.com/prowler-cloud/prowler/pull/13062)
+- `vertexai_workbench_instance_terminal_access_disabled`, `vertexai_workbench_instance_file_download_disabled` and `vertexai_workbench_instance_auto_upgrade_enabled` checks for GCP provider, with Vertex AI Workbench checks mapped to CCC MLDE requirements [(#13077)](https://github.com/prowler-cloud/prowler/pull/13077)
+- Google Workspace findings state when a feature is not sold on the tenant edition: Drive DLP rules, Google session control and the shared drive sharing settings on Business Starter; reading editions needs the optional `apps.licensing` scope [(#13113)](https://github.com/prowler-cloud/prowler/pull/13113)
+- `wafv2_webacl_managed_rule_groups_enabled` check to verify WAFv2 Web ACLs reference at least one managed rule group [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- `appengine` GCP service and `appengine_version_php_runtime_supported` check to flag App Engine serving versions on PHP runtimes without security fixes [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- `elasticbeanstalk_environment_php_platform_updated` check to flag Elastic Beanstalk PHP environments on branches without security fixes or on platform versions older than the one bundling the fixed PHP release [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- `lightsail_instance_php_blueprint_updated` check to flag Lightsail instances created from PHP blueprints for manual verification of the PHP release [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+
+### 🔄 Changed
+
+- Google Workspace checks for Chat, Drive, Gmail, Calendar and Groups pass with the reason stated when the app is turned off for everyone and no organizational unit or group turns it back on. The rule covers settings that only act while the app is on: Drive sharing settings and the settings of existing groups keep being evaluated because existing shares and groups stay reachable, and only group creation is exempt when Groups for Business is off [(#13117)](https://github.com/prowler-cloud/prowler/pull/13117)
+- Default `php_latest_version` for `app_ensure_php_version_is_latest` raised from `8.2` to `8.5`, the newest PHP runtime on Azure App Service for Linux, following the PHP2Shell (CVE-2026-109618, CVE-2026-109619) security release [(#13128)](https://github.com/prowler-cloud/prowler/pull/13128)
+
+### 🐞 Fixed
+
+- `bedrock_api_key_no_long_term_credentials` now reports a Bedrock long-term API key that never expires; IAM only returns `ExpirationDate` for keys created with an expiration period, so keys created without one were skipped and produced no finding at all [(#12663)](https://github.com/prowler-cloud/prowler/pull/12663)
+- `drive_desktop_access_disabled` remediation steps for Google Workspace now point to the Google Drive for desktop card in the Admin console instead of Features and Applications [(#13113)](https://github.com/prowler-cloud/prowler/pull/13113)
+- Gmail spoofing checks read each protection action from its own Policy API field; the inbound domain spoofing check could never pass and the similar domain names check reported the inbound action [(#13114)](https://github.com/prowler-cloud/prowler/pull/13114)
+- Google Workspace `drive_publishing_files_disabled` passes when sharing outside the organization is limited to allowlisted domains or off, since publishing to the web only exists with sharing on [(#13115)](https://github.com/prowler-cloud/prowler/pull/13115)
+- Google Workspace checks now read the policy Google applies (greatest sortOrder) instead of the last policy the Cloud Identity Policy API lists, which reported default values over admin-configured ones [(#13117)](https://github.com/prowler-cloud/prowler/pull/13117)
+- Azure App Service runtime checks (`app_ensure_php_version_is_latest`, `app_ensure_python_version_is_latest`, `app_ensure_java_version_is_latest`) now pass any runtime at or above the configured minimum instead of failing every version newer than the configured one [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- Scan report generation parses each resource's metadata once per batch and sanitizes it once per finding, so providers with very large resource metadata no longer exhaust the worker memory [(#13149)](https://github.com/prowler-cloud/prowler/pull/13149)
+
+### 🔐 Security
+
+- OpenStack auth_url resolving to loopback, private or otherwise non-public hosts rejected before the SDK connects, on both the connection test and the scan [(#12962)](https://github.com/prowler-cloud/prowler/pull/12962)
+- Trivy from 0.75.0 to 0.76.0 in the SDK container image, built with Go 1.27.2 and x/net 0.60.0, patching the HTTP/2 and TLS CVEs bundled in Trivy 0.75.0 [(#13064)](https://github.com/prowler-cloud/prowler/pull/13064)
+- certifi to 2026.10.19 and aiohttp to 3.14.5 with yarl 1.25.1 in the SDK, plus uv 0.13.4 and Trivy 0.76.1 in its container image, patching the compromised emSign root CAs bundled in certifi and uv, the aiohttp resource exhaustion advisories and the Go 1.27.2 stdlib CVE in the Trivy binary [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+- Resource metadata attached to findings no longer carries the values that secrets checks scan (CloudFormation outputs, Lambda environment variables, EC2 user data and similar fields); they are replaced with `REDACTED` before reaching the Evidence tab, the API and the output files [(#13129)](https://github.com/prowler-cloud/prowler/pull/13129)
+- black from 26.3.1 to 26.10.1 and graphql-core from 3.2.8 to 3.2.12 in the SDK, and libbrotli1 1.1.0-2+deb13u1 in its container image, which no longer ships the MicrosoftTeams build SBOM that Trivy read as installed zod and body-parser [(#13135)](https://github.com/prowler-cloud/prowler/pull/13135)
+
+---
+
+## [5.45.0] (Prowler v5.45.0)
+
+### 🚀 Added
+
+- Azure AI Services service for Azure provider, including the `aiservices_account_public_network_access_disabled`, `aiservices_account_local_auth_disabled`, and `aiservices_account_encrypted_with_cmk` checks [(#12925)](https://github.com/prowler-cloud/prowler/pull/12925)
+- `aiservices_account_uses_private_endpoint`, `aiservices_account_outbound_network_restricted`, `aiservices_account_managed_identity_enabled`, and `aiservices_account_diagnostic_logging_enabled` checks for Azure provider [(#12926)](https://github.com/prowler-cloud/prowler/pull/12926)
+- `entra_policy_admin_self_service_password_reset_disabled` check for M365 provider, verifying that Self-Service Password Reset is disabled for administrators [(#12990)](https://github.com/prowler-cloud/prowler/pull/12990)
+- `entra_cross_tenant_access_default_outbound_restricted` check for M365 provider, verifying that default cross-tenant access does not let all users reach all external applications through B2B collaboration or B2B direct connect [(#12991)](https://github.com/prowler-cloud/prowler/pull/12991)
+- `entra_app_registration_redirect_uris_secure` check for M365 provider, flagging app registrations with HTTP, wildcard, malformed or `azurewebsites.net` redirect URIs [(#12993)](https://github.com/prowler-cloud/prowler/pull/12993)
+- `aiservices_account_network_acls_default_action_deny` and `aiservices_deployment_content_filter_prompt_shield_enabled` checks for Azure provider [(#12997)](https://github.com/prowler-cloud/prowler/pull/12997)
+- `entra_dynamic_group_member_of_rule_not_used` check for M365 provider, flagging dynamic groups whose membership rule uses the `memberOf` operator that Microsoft retires on November 3, 2026 [(#13003)](https://github.com/prowler-cloud/prowler/pull/13003)
+- `entra_policy_msol_powershell_blocked` check for M365 provider, verifying that the tenant authorization policy blocks the legacy MSOnline PowerShell module [(#13004)](https://github.com/prowler-cloud/prowler/pull/13004)
+
+### 🐞 Fixed
+
+- OCI API key credentials accept a home region to bootstrap identity calls, so tenancies not subscribed to us-ashburn-1 can connect [(#12865)](https://github.com/prowler-cloud/prowler/pull/12865)
+- AWS Organizations metadata is fetched from the partition of the audited account, using the region that answered the STS bootstrap, instead of the commercial `us-east-1` endpoint a session without a region resolves to, which timed out in GovCloud [(#12988)](https://github.com/prowler-cloud/prowler/pull/12988)
+
+### 🔐 Security
+
+- `pyjwt` from 2.13.0 to 2.14.0, patching GHSA-ffc3-869f-jxw9 [(#12911)](https://github.com/prowler-cloud/prowler/pull/12911)
+- `dulwich` from 1.2.5 to 1.2.9, patching GHSA-5fqc-mrg8-w798, GHSA-8mcx-5rqc-vhmf, GHSA-8w8g-wq8h-fq33 and GHSA-cm62-gvxx-vmxx [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `urllib3` from 2.7.0 to 2.8.0, patching CVE-2026-97687 and CVE-2026-97689 [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `pymongo` from 4.15.1 to 4.18.2, patching CVE-2026-96748 and CVE-2026-96749 [(#12955)](https://github.com/prowler-cloud/prowler/pull/12955)
+- IaC repository URLs resolving to loopback, private or otherwise non-public hosts rejected before both the connection test and the scan clone, including every destination a redirect points to, with raw errors no longer echoed to the caller or the logs [(#12960)](https://github.com/prowler-cloud/prowler/pull/12960)
+- HTML report compliance column is now escaped, so framework names and requirement IDs containing markup are shown as text instead of being rendered by the browser [(#12963)](https://github.com/prowler-cloud/prowler/pull/12963)
+- CSV outputs (findings, compliance and AWS quick inventory) prefix cells starting with `=`, `+`, `-`, `@`, tab or carriage return with a single quote so spreadsheet applications treat them as text instead of formulas; signed numbers such as `-1` are left untouched [(#12963)](https://github.com/prowler-cloud/prowler/pull/12963)
+- Python base image from 3.12.13 to 3.12.15 and Trivy from 0.74.0 to 0.75.0 in the SDK container image, patching CVE-2026-19445, CVE-2026-19553 and the grpc-go and x/crypto CVEs bundled in Trivy [(#13009)](https://github.com/prowler-cloud/prowler/pull/13009)
+- PowerShell from 7.5.11 to 7.5.12 in the SDK container image, bundling .NET runtime 9.0.21 [(#13037)](https://github.com/prowler-cloud/prowler/pull/13037)
+
+---
+
+## [5.44.0] (Prowler v5.44.0)
+
+### 🚀 Added
+
+- `PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS` environment variable to set the Boto3 retries for deployments without CLI flags [(#12870)](https://github.com/prowler-cloud/prowler/pull/12870)
+
+### 🐞 Fixed
+
+- STS calls after role assumption use the answering region, avoiding a second wait for an unreachable partition region [(#12870)](https://github.com/prowler-cloud/prowler/pull/12870)
+
+### 🔐 Security
+
+- Pass the E2E AWS credentials to the UI E2E workflow through environment variables instead of template expansion [(#12864)](https://github.com/prowler-cloud/prowler/pull/12864)
+
+---
+
+## [5.43.0] (Prowler v5.43.0)
+
+### 🚀 Added
+
+- `FedRAMP-20x-KSI` universal compliance framework (`fedramp_20x_ksi_2026`) with the 46 Key Security Indicators from the FedRAMP Consolidated Rules 2026 mapped for AWS, Azure, GCP, Kubernetes and M365 [(#11701)](https://github.com/prowler-cloud/prowler/pull/11701)
+- `smn_topic_subscriptions` check for Huawei Cloud provider: SMN topics have at least one subscription configured [(#12186)](https://github.com/prowler-cloud/prowler/pull/12186)
+- `inspector2_coverage_scan_status_active`, `inspector2_coverage_recently_scanned`, `inspector2_active_findings_no_known_exploited_vulnerabilities`, `inspector2_active_findings_kev_within_due_date`, `inspector2_active_findings_within_max_age`, `elbv2_listener_fips_tls_enabled` and `transfer_server_fips_security_policy_enabled` checks for AWS provider, covering FedRAMP 20x Class C vulnerability detection, CISA KEV remediation and FIPS cryptography rules; the KEV checks require `inspector2:BatchGetFindingDetails`, now in the Prowler additions policy [(#12808)](https://github.com/prowler-cloud/prowler/pull/12808)
+- `FedRAMP-20x-FRR-Class-C` universal compliance framework (`fedramp_20x_frr_class_c_2026`) with the 158 provider rules of the FedRAMP 20x Class C ruleset from the FedRAMP Consolidated Rules 2026 for AWS, Azure, GCP, Kubernetes and M365 [(#12808)](https://github.com/prowler-cloud/prowler/pull/12808)
+
+### 🔄 Changed
+
+- FedRAMP 20x Phase One pilot frameworks `fedramp_20x_ksi_low_aws`, `fedramp_20x_ksi_low_azure` and `fedramp_20x_ksi_low_gcp` replaced by `fedramp_20x_ksi_2026` [(#12855)](https://github.com/prowler-cloud/prowler/pull/12855)
+
+### 🐞 Fixed
+
+- `security_2sv_enforced` reports domain-wide 2-Step Verification failures as FAIL even when every failing setting is overridden for a group or organizational unit [(#12700)](https://github.com/prowler-cloud/prowler/pull/12700)
+- Bootstrap STS calls now try up to two more regions of the partition declared in `PROWLER_AWS_PARTITION` when the first one cannot be reached, so a deployment that routes to only one region of its partition no longer fails on an endpoint it has no path to. This covers validating credentials, assuming a role and getting an MFA session token [(#12799)](https://github.com/prowler-cloud/prowler/pull/12799)
+- `KeyError` in M365 Defender malware, anti-phishing and inbound anti-spam checks when the tenant has Standard or Strict preset security policies [(#12809)](https://github.com/prowler-cloud/prowler/pull/12809)
+- Azure Defender security contacts and Key Vault key rotation policies now use the endpoints of the selected cloud (`--azure-region`) instead of the hardcoded `management.azure.com` and `vault.azure.net` hosts, so both work on `AzureUSGovernment` and `AzureChinaCloud` [(#12813)](https://github.com/prowler-cloud/prowler/pull/12813)
+
+### 🔐 Security
+
+- `libsqlite3-0`, `gzip`, `perl-base`, `libssh2-1t64` and `libpcre2-8-0` upgraded in the SDK container image, patching nine high Debian CVEs [(#12804)](https://github.com/prowler-cloud/prowler/pull/12804)
+- PowerShell from 7.5.9 to 7.5.11 in the SDK container image, bundling .NET runtime 9.0.20 and patching CVE-2026-62901 [(#12811)](https://github.com/prowler-cloud/prowler/pull/12811)
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
+## [5.42.0] (Prowler v5.42.0)
+
+### 🚀 Added
+
+- AWS ISO partitions (`aws-iso`, `aws-iso-b`, `aws-iso-e` and `aws-iso-f`) to the AWS service region matrix, generated from the endpoints data bundled with botocore [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- `--aws-connect-timeout` and `--aws-read-timeout` CLI flags, plus `PROWLER_AWS_BOTO3_CONNECT_TIMEOUT` and `PROWLER_AWS_BOTO3_READ_TIMEOUT` environment variables, to bound how long each AWS API call waits for an endpoint [(#12774)](https://github.com/prowler-cloud/prowler/pull/12774)
+
+### 🔄 Changed
+
+- AWS provider default Boto3 connect timeout lowered from 60 to 10 seconds, so scans in restricted-egress networks (VPC endpoints for a subset of services, GovCloud, private deployments) no longer spend 4 minutes per region on every service whose endpoint is unreachable [(#12774)](https://github.com/prowler-cloud/prowler/pull/12774)
+
+### 🐞 Fixed
+
+- Duplicate requirement ids, checks listed twice in a requirement and references to non-existent checks across compliance frameworks, now guarded by a catalog integrity test [(#12717)](https://github.com/prowler-cloud/prowler/pull/12717)
+- Duplicate requirement `3.2.1` in ProwlerThreatScore for Azure (SQL auditing retention is now `3.2.4`) and doubled check id in requirement `1.2.1` of ProwlerThreatScore for GCP [(#12717)](https://github.com/prowler-cloud/prowler/pull/12717)
+- Jira connection checks no longer log an error when a single project has no issue types visible to the integration user (typically a missing "create issue" permission on that project), a case the caller already treats as non-fatal [(#12742)](https://github.com/prowler-cloud/prowler/pull/12742)
+- `Jira.test_connection()` now fetches each project's issue types concurrently instead of one request at a time, so accounts with many Jira projects no longer take tens of seconds (unbounded, scaling with the project count) to verify the connection [(#12742)](https://github.com/prowler-cloud/prowler/pull/12742)
+- `AwsProvider.get_available_aws_service_regions()` now returns an empty set for an unknown service or partition instead of raising `KeyError`, so a service unavailable in the audited partition is skipped [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- `AwsProvider.generate_regional_clients()` now returns an empty dict instead of `None` when the regional clients cannot be built, a failure that surfaced later as `AttributeError: 'NoneType' object has no attribute 'values'` [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- `AwsProvider.get_global_region()` now returns a real region for each ISO partition instead of the `aws-iso-global` pseudo endpoint, which collapsed the four partitions into one answer [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- Bootstrap STS calls now use the session region when `PROWLER_AWS_PARTITION` is set and the region belongs to that partition, instead of always going to the partition's global STS region, which a deployment reached only through its own region's VPC endpoints cannot route to [(#12764)](https://github.com/prowler-cloud/prowler/pull/12764)
+- The Image provider now uses the directory named by `TRIVY_CACHE_DIR` when one is set, instead of a fresh temporary directory it deletes afterwards, so a deployment can supply a vulnerability database it already holds and one with network access stops re-downloading the database for every image it scans [(#12773)](https://github.com/prowler-cloud/prowler/pull/12773)
+- `--aws-retries-max-attempts 0` now disables Boto3 retries instead of being silently ignored in favour of the default of 3 [(#12774)](https://github.com/prowler-cloud/prowler/pull/12774)
+- `rolesanywhere_profile_restricts_session_permissions`, `iam_role_service_trust_restricts_source_to_account` and `codebuild_project_uses_allowed_github_organizations` crashing with `TypeError` when `iam:ListRoles` is denied [(#12785)](https://github.com/prowler-cloud/prowler/pull/12785)
+
+---
+
+## [5.41.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- `memorydb_cluster_in_transit_encryption_enabled` check for AWS provider, verifying MemoryDB clusters have in-transit encryption (TLS) enabled [(#12246)](https://github.com/prowler-cloud/prowler/pull/12246)
+- `elasticbeanstalk_environment_no_secrets_in_configuration` check for AWS provider, scanning the option settings of every Elastic Beanstalk environment for hardcoded secrets [(#12378)](https://github.com/prowler-cloud/prowler/pull/12378)
+- CIS Google Workspace Foundations Benchmark v1.4.0 compliance framework [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `Jira.send_finding()` returns typed creation outcomes with the issue key, immutable ID and browse URL, and supports length-safe finding and delivery-attempt labels plus marker lookup for uncertain deliveries [(#12539)](https://github.com/prowler-cloud/prowler/pull/12539)
+- `Jira.get_issues_status()` resolves issue references by immutable ID in batches and returns explicit open, done, moved, missing, forbidden or unknown outcomes without treating missing issues as deleted [(#12539)](https://github.com/prowler-cloud/prowler/pull/12539)
+- `guardduty_ai_protection_enabled` check for AWS provider, flagging GuardDuty detectors without AI Protection, which analyzes AWS CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI; a detector that does not report the feature is `MANUAL` rather than `FAIL` [(#12564)](https://github.com/prowler-cloud/prowler/pull/12564)
+- `guardduty_runtime_monitoring_enabled` check for AWS provider, flagging GuardDuty detectors without unified Runtime Monitoring, the only feature that covers Amazon EC2 instances and Amazon ECS on AWS Fargate tasks in addition to Amazon EKS [(#12564)](https://github.com/prowler-cloud/prowler/pull/12564)
+- `ecr_registry_enhanced_scanning_enabled` check for AWS provider, verifying that the ECR registry scan type is enhanced (Amazon Inspector, covering programming language packages and continuous rescanning) instead of basic, and reporting MANUAL when the registry scanning configuration cannot be read [(#12660)](https://github.com/prowler-cloud/prowler/pull/12660)
+- `eks_cluster_vpc_cni_network_policy_enforced` check for AWS provider, flagging EKS clusters whose Amazon VPC CNI managed add-on does not enable Kubernetes network policy enforcement, and reporting MANUAL where the EKS API cannot show the setting [(#12661)](https://github.com/prowler-cloud/prowler/pull/12661)
+- `cloudwatch_log_group_agentcore_data_protection_policy_enabled` check for AWS provider, verifying that Bedrock AgentCore log groups mask sensitive data with a CloudWatch Logs data protection policy [(#12662)](https://github.com/prowler-cloud/prowler/pull/12662)
+- `iam_policy_no_agentcore_workload_access_token_wildcard` check for AWS provider, flagging customer-managed IAM policies that allow `bedrock-agentcore:GetWorkloadAccessToken`, `GetWorkloadAccessTokenForJWT` or `GetWorkloadAccessTokenForUserId` on resources reaching workload identities other than the caller's own, which AWS documents as the only binding on the unverified user ID the token is issued for [(#12664)](https://github.com/prowler-cloud/prowler/pull/12664)
+- `iam_policy_passrole_to_bedrock_agentcore_restricted` check for AWS provider, flagging customer-managed IAM policies that allow `iam:PassRole` over every role where the passed role can reach Bedrock AgentCore, so any principal holding the policy can run agent code under any role in the account [(#12664)](https://github.com/prowler-cloud/prowler/pull/12664)
+- `iam_role_service_trust_restricts_source_to_account` check for AWS provider, flagging IAM roles whose trust policy lets an AWS service principal assume the role without confining the request to a specific source account, including trust policies that `iam_role_cross_service_confused_deputy_prevention` does not evaluate [(#12664)](https://github.com/prowler-cloud/prowler/pull/12664)
+- `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` environment variable so the image provider can reach container registries on allowlisted private networks, keeping every other non-public address blocked [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- `PROWLER_AWS_PARTITION` environment variable to select the AWS partition used for STS credential validation and scan bootstrap, with a clear error when the account belongs to a different partition [(#12680)](https://github.com/prowler-cloud/prowler/pull/12680)
+
+### 🔄 Changed
+
+- Google Workspace checks mapped to CIS evaluate the full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `security_login_challenges_configured` and `security_2sv_enforced` unmapped from CIS Google Workspace 4.1.4.1 and CISA SCuBA 0.6 `GWS.COMMONCONTROLS.1.1`, whose Post-SSO verification and phishing-resistant MFA requirements neither check can prove [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+
+### 🐞 Fixed
+
+- GitHub repository discovery for unscoped scans now paginates beyond the first 100 accessible repositories instead of silently scanning only the first page [(#12460)](https://github.com/prowler-cloud/prowler/pull/12460)
+- `rules_*_alert_configured` checks no longer pass a rule whose delivery to the alert center is disabled, the setting behind the benchmark's "Ensure that Alerts is set to On" [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `security_password_policy_strong` no longer fails a domain that never touched the password strength setting: Google enforces strong passwords by default, so an unset value is the secure default and not a missing configuration [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `security_2sv_enforced` and `security_2sv_hardware_keys_admins` report MANUAL instead of judging domain-wide values that a group or a sub-organizational unit overrides, or that were dropped because the root organizational unit could not be resolved; a domain-wide failure is still reported as such, with the override noted [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `ecr_registry_scan_images_on_push_enabled` no longer passes a registry whose scanning rules are all `MANUAL`, nor describes a `CONTINUOUS_SCAN` registry as scanning on push; each rule's `scanFrequency` is now read instead of inferred from a rule's presence [(#12560)](https://github.com/prowler-cloud/prowler/pull/12560)
+- CloudWatch log metric filter checks no longer crash with `AttributeError` when the account has a metric filter whose log group was not retrieved [(#12561)](https://github.com/prowler-cloud/prowler/pull/12561)
+- `guardduty_eks_runtime_monitoring_enabled` no longer reports `FAIL` for detectors that use unified Runtime Monitoring; the GuardDuty service now reads the `RUNTIME_MONITORING` feature, which is mutually exclusive with `EKS_RUNTIME_MONITORING` and already covers Amazon EKS [(#12564)](https://github.com/prowler-cloud/prowler/pull/12564)
+- Checks no longer report `FAIL` when the scanning identity lacks permissions, an API is not enabled or a feature is not licensed; they now emit a single `MANUAL` finding naming what is required, across 28 M365, Azure, AWS and GCP checks [(#12645)](https://github.com/prowler-cloud/prowler/pull/12645)
+- `sagemaker_notebook_instance_without_direct_internet_access_configured` check logic to read the `DirectInternetAccess` setting instead of `RootAccess`, failing a notebook instance with direct internet access enabled even when root access is disabled [(#12659)](https://github.com/prowler-cloud/prowler/pull/12659)
+- Basic authentication fallback in the image provider when a registry rejects the negotiated bearer token, so registries like Harbor that guard catalog listing behind Basic can be enumerated [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- Registry catalog listing when the server answers with a Bearer challenge after negotiating Basic (or anonymous) authentication, switching to a bearer token obtained from the challenge instead of failing [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- `--registry-insecure` now propagates to Trivy via `TRIVY_INSECURE`, so images in registries with self-signed certificates can be pulled and scanned, not just enumerated [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- Registry scans in the Image provider now skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations) and no longer abort the whole scan when Trivy fails on a single discovered image; registry enumeration also runs in parallel instead of one request at a time [(#12695)](https://github.com/prowler-cloud/prowler/pull/12695)
+
+---
+
 ## [5.40.0] (Prowler v5.40.0)
 
 ### 🚀 Added

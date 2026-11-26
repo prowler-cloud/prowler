@@ -24,11 +24,9 @@
         "elbv2_deletion_protection",
         "rds_instance_backup_enabled",
         "rds_instance_deletion_protection",
-        "rds_instance_backup_enabled",
         "rds_instance_multi_az",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning",
-        "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
       ]
     },
@@ -46,7 +44,6 @@
       "Checks": [
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "rds_instance_storage_encrypted",
         "rds_instance_storage_encrypted",
         "rds_snapshots_public_access",
         "redshift_cluster_audit_logging",
@@ -80,7 +77,6 @@
         "iam_password_policy_minimum_length_14",
         "iam_password_policy_lowercase",
         "iam_password_policy_number",
-        "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
         "iam_policy_attached_only_to_group_or_roles",
@@ -92,7 +88,6 @@
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
-        "iam_user_mfa_enabled_console_access",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -103,13 +98,11 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "secretsmanager_automatic_rotation_enabled",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_confidential_workload_host_imdsv2_not_enforced",
         "ec2_confidential_workload_host_public_ip"
       ]
@@ -130,7 +123,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "elbv2_logging_enabled",
@@ -168,7 +160,6 @@
         "iam_password_policy_minimum_length_14",
         "iam_password_policy_lowercase",
         "iam_password_policy_number",
-        "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
         "iam_policy_attached_only_to_group_or_roles",
@@ -180,7 +171,6 @@
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
-        "iam_user_mfa_enabled_console_access",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -191,13 +181,11 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "secretsmanager_automatic_rotation_enabled",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_confidential_workload_host_imdsv2_not_enforced",
         "ec2_confidential_workload_host_public_ip"
       ]
@@ -215,7 +203,6 @@
       ],
       "Checks": [
         "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
       ]
     },
@@ -246,7 +233,6 @@
         "s3_bucket_policy_public_write_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_any_port"
       ]
     },
@@ -280,9 +266,7 @@
         "kms_cmk_rotation_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "rds_instance_storage_encrypted",
-        "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging",
-        "s3_bucket_default_encryption",
         "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy",
         "sagemaker_notebook_instance_encryption_enabled",
@@ -304,14 +288,12 @@
         "iam_password_policy_minimum_length_14",
         "iam_password_policy_lowercase",
         "iam_password_policy_number",
-        "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
-        "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access"
       ]
     },
@@ -329,7 +311,6 @@
       "Checks": [
         "iam_password_policy_minimum_length_14",
         "iam_password_policy_lowercase",
-        "iam_password_policy_number",
         "iam_password_policy_number",
         "iam_password_policy_symbol",
         "iam_password_policy_uppercase",

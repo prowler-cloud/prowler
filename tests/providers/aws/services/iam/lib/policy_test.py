@@ -4,10 +4,12 @@ from prowler.providers.aws.services.iam.lib.policy import (
     _get_patterns_from_standard_value,
     check_admin_access,
     check_full_service_access,
+    condition_value_matches_any_account,
     get_effective_actions,
     has_codebuild_trusted_principal,
     has_public_principal,
     has_restrictive_source_arn_condition,
+    iam_pattern_matches,
     is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
@@ -1714,9 +1716,70 @@ class Test_Policy:
         assert not is_condition_block_restrictive_organization(condition_statement)
 
     @pytest.mark.parametrize(
+        "condition_statement,expected",
+        [
+            (
+                {"ForAnyValue:StringEquals": {"aws:PrincipalOrgID": "o-a1b2c3d4e5"}},
+                True,
+            ),
+            (
+                {"StringLike": {"aws:PrincipalOrgPaths": "o-a1b2c3d4e5/r-ab12/*"}},
+                True,
+            ),
+            (
+                {
+                    "ForAnyValue:StringLike": {
+                        "aws:PrincipalOrgPaths": [
+                            "o-a1b2c3d4e5/r-ab12/ou-ab12-11111111/*"
+                        ]
+                    }
+                },
+                True,
+            ),
+            ({"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "*"}}, False),
+            ({"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "o-*"}}, False),
+            (
+                {"ForAnyValue:StringLike": {"aws:PrincipalOrgPaths": "o-a1b2c3d4e5*"}},
+                False,
+            ),
+            # ForAllValues is true when the key is absent, so it admits principals outside any org
+            (
+                {
+                    "ForAllValues:StringLike": {
+                        "aws:PrincipalOrgPaths": "o-a1b2c3d4e5/*"
+                    }
+                },
+                False,
+            ),
+            ({"StringEquals": {"aws:PrincipalOrgID": ["o-a1b2c3d4e5", "o-*"]}}, False),
+            # "?" is a single-character wildcard, so it does not name one organization
+            ({"StringLike": {"aws:PrincipalOrgID": "o-??????????"}}, False),
+            (
+                {"ForAnyValue:StringLike": {"aws:PrincipalOrgID": "o-??????????"}},
+                False,
+            ),
+            # StringEquals compares "?" literally, so the value names one (nonexistent) org
+            ({"StringEquals": {"aws:PrincipalOrgID": "o-??????????"}}, True),
+            (
+                {"ForAnyValue:StringEquals": {"aws:PrincipalOrgID": "o-??????????"}},
+                True,
+            ),
+        ],
+    )
+    def test_condition_parser_organization_paths_and_set_operators(
+        self, condition_statement: dict, expected: bool
+    ):
+        assert (
+            is_condition_block_restrictive_organization(condition_statement) == expected
+        )
+
+    @pytest.mark.parametrize(
         "condition_value,expected",
         [
             ("*@example.com", True),
+            (["a@example.com", "b@example.com"], True),
+            (["a@example.com", "*"], False),
+            ([], False),
             ("https://events.pagerduty.com/integration/<api-key>/enqueue", True),
             (
                 "arn:aws:sns:eu-west-2:123456789012:example-topic:995be20c-a7e3-44ca-8c18-77cb263d15e7",
@@ -1733,8 +1796,8 @@ class Test_Policy:
             ),
         ],
     )
-    def test_condition_parser_string_equals_sns_endpoint_str(
-        self, condition_value: str, expected: bool
+    def test_condition_parser_sns_endpoint(
+        self, condition_value: str | list[str], expected: bool
     ):
         condition_statement = {"StringEquals": {"SNS:Endpoint": condition_value}}
         assert (
@@ -3062,3 +3125,313 @@ class Test_has_restrictive_source_arn_condition:
             },
         }
         assert has_restrictive_source_arn_condition(statement) is True
+
+
+class Test_iam_pattern_matches:
+    """IAM wildcard matching: only * and ? are metacharacters, and it must stay linear."""
+
+    @pytest.mark.parametrize(
+        "pattern,value,expected",
+        [
+            ("bedrock-agentcore", "bedrock-agentcore", True),
+            ("bedrock-*", "bedrock-agentcore", True),
+            ("*-agentcore", "bedrock-agentcore", True),
+            ("*agentcore*", "bedrock-agentcore", True),
+            ("bedrock-agentcor?", "bedrock-agentcore", True),
+            ("bedrock?agentcore", "bedrock-agentcore", True),
+            ("*", "bedrock-agentcore", True),
+            ("**", "bedrock-agentcore", True),
+            ("s3", "bedrock-agentcore", False),
+            ("bedrock", "bedrock-agentcore", False),
+            ("bedrock-agentcore?", "bedrock-agentcore", False),
+            ("", "bedrock-agentcore", False),
+            ("*", "", True),
+            ("", "", True),
+            ("?", "", False),
+            ("  bedrock-*  ", "bedrock-agentcore", True),
+            ("BEDROCK-AGENTCORE", "bedrock-agentcore", True),
+            ("bedrock-agentcore", "BEDROCK-AGENTCORE", True),
+            ("a.c", "abc", False),
+            ("[bs]3", "b3", False),
+            ("[bs]3", "[bs]3", True),
+        ],
+    )
+    def test_semantics(self, pattern, value, expected):
+        """`*` and `?` are the only metacharacters; everything else is literal.
+
+        `a.c` against `abc` must be False or a regex dot has leaked in, and `[bs]3` against `b3`
+        must be False or bracket classes have -- the latter being the false PASS that a `fnmatch`
+        implementation shipped earlier in this campaign, where a Deny of
+        `agent-registry:[Dd]eleteRegistry` denied nothing while appearing to deny everything.
+        """
+        assert iam_pattern_matches(pattern, value) is expected
+
+    def test_adversarial_pattern_stays_fast(self):
+        """A wildcard-dense pattern must not blow up: this is a DoS guard, not a style preference.
+
+        Leading wildcards, a literal that cannot occur in the value, then more wildcards is the
+        shape that forces a backtracking engine to try every distribution of the value's characters
+        across the star groups. Translating to a regex and matching took 2287 ms on exactly this
+        31-character pattern, growing about sevenfold per added wildcard pair, and a hang raises
+        nothing so `check.py`'s bare `except Exception` cannot catch it -- the account's findings are
+        discarded in silence. Policy values reach this from the account and managed policy documents
+        allow 6144 characters.
+
+        The budget is deliberately loose: the linear form measures ~0.006 ms, so a 0.5 s ceiling
+        cannot flake under load while still failing hard on a regex reimplementation.
+        """
+        import time
+
+        pattern = "*" * 14 + "zzz" + "*" * 14
+        assert len(pattern) == 31
+        start = time.perf_counter()
+        assert iam_pattern_matches(pattern, "bedrock-agentcore") is False
+        assert time.perf_counter() - start < 0.5
+
+    @pytest.mark.parametrize(
+        "subject",
+        [
+            "bedrock-agentcore",
+            "iam",
+            "PassRole",
+            "GetWorkloadAccessTokenForUserId",
+            "bedrock-agentcore.amazonaws.com",
+            "workload-identity-directory/default/workload-identity/another-workload",
+        ],
+    )
+    def test_every_call_site_subject_stays_fast(self, subject):
+        """Each subject the iam checks match against must be fast, not just one of them.
+
+        These six are every distinct value passed as the second argument across the eight call sites
+        in the two AgentCore policy checks -- an Action's service and operation field, an ARN's
+        service and resource field, and an iam:PassedToService condition value. Probing once against
+        a single constant would not do: cost rises with the subject's length as well as the pattern's,
+        so the 3-character `iam` is cheap enough to come back clean while the 17- and 70-character
+        subjects were taking seconds.
+        """
+        import time
+
+        pattern = "*" * 14 + "zzz" + "*" * 14
+        start = time.perf_counter()
+        iam_pattern_matches(pattern, subject)
+        assert time.perf_counter() - start < 0.5
+
+    def test_long_pattern_stays_fast(self):
+        """Cost must grow with the product of the lengths, not as a power of them."""
+        import time
+
+        pattern = "*" * 2000 + "zzz" + "*" * 2000
+        start = time.perf_counter()
+        assert iam_pattern_matches(pattern, "bedrock-agentcore.amazonaws.com") is False
+        assert time.perf_counter() - start < 0.5
+
+
+class Test_condition_value_matches_any_account:
+    @pytest.mark.parametrize(
+        "condition_operator,condition_key,condition_value,expected",
+        [
+            # Values made only of wildcards match any account, whatever the key
+            ("StringLike", "aws:sourceaccount", "*", True),
+            ("StringLike", "aws:principalarn", "*", True),
+            ("ArnLike", "aws:sourcearn", "*", True),
+            ("StringLike", "aws:userid", "*", True),
+            ("StringLike", "kms:viaservice", "?*", True),
+            # Account, organization ID and network keys cannot hold a wildcard
+            ("StringLike", "aws:sourceaccount", "1234*", True),
+            ("StringLike", "aws:principalaccount", "12345678901?", True),
+            ("StringLike", "kms:calleraccount", "*12", True),
+            ("StringLike", "aws:principalorgid", "o-*", True),
+            ("StringLike", "aws:sourcevpce", "vpce-*", True),
+            ("StringLike", "aws:sourceaccount", TRUSTED_AWS_ACCOUNT_NUMBER, False),
+            ("StringLike", "aws:sourcevpce", "vpce-1234567890abcdef0", False),
+            # Organization paths need a literal organization ID
+            ("StringLike", "aws:principalorgpaths", "o-*/r-ab12/*", True),
+            ("StringLike", "aws:principalorgpaths", "o-a1b2c3d4e5/r-ab12/*", False),
+            # A path without wildcards matches only itself, even if malformed
+            ("StringLike", "aws:principalorgpaths", "o-invalid/r-ab12/", False),
+            # ARNs need a literal account field
+            ("StringLike", "aws:principalarn", "arn:aws:iam::*:root", True),
+            ("ArnLike", "aws:principalarn", "arn:aws:iam::*:role/admin", True),
+            ("ArnEquals", "aws:sourcearn", "arn:aws:sns:*:12345678901?:topic", True),
+            ("StringLike", "aws:sourcearn", "arn:aws:*", True),
+            (
+                "ArnLike",
+                "aws:sourcearn",
+                f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                False,
+            ),
+            (
+                "StringLike",
+                "aws:principalarn",
+                f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/*",
+                False,
+            ),
+            # ARNs without an account field are restricted by their resource name
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::*", True),
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::logs-*", True),
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::logs-bucket", False),
+            ("ArnLike", "aws:sourcearn", "arn:aws:s3:::logs-bucket/*", False),
+            # Other keys only match any account with a value made of wildcards
+            ("StringLike", "aws:userid", "AROAEXAMPLEROLEID:*", False),
+            # Only the Like and ArnEquals operators treat "*" as a wildcard
+            ("StringEquals", "aws:sourceaccount", "*", False),
+            ("StringEquals", "aws:principalarn", "arn:aws:iam::*:root", False),
+            # Non-string values are left to the caller
+            ("StringLike", "aws:sourceaccount", 123456789012, False),
+            # An empty value matches nothing
+            ("StringLike", "aws:sourcevpce", "", False),
+            ("ArnLike", "aws:sourcearn", "", False),
+        ],
+    )
+    def test_condition_value_matches_any_account(
+        self,
+        condition_operator: str,
+        condition_key: str,
+        condition_value,
+        expected: bool,
+    ):
+        assert (
+            condition_value_matches_any_account(
+                condition_operator, condition_key, condition_value
+            )
+            == expected
+        )
+
+
+class Test_is_condition_block_restrictive_wildcard_values:
+    @pytest.mark.parametrize(
+        "condition_statement",
+        [
+            {"StringLike": {"aws:SourceAccount": "*"}},
+            {"StringLike": {"aws:PrincipalAccount": "*"}},
+            {"StringLike": {"aws:SourceOwner": "1*"}},
+            {"StringLike": {"aws:ResourceAccount": "*"}},
+            {"StringLike": {"aws:PrincipalArn": "arn:aws:iam::*:root"}},
+            {"StringLike": {"aws:PrincipalArn": ["*"]}},
+            {"StringLike": {"aws:SourceArn": "*"}},
+            {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::*"}},
+            {"ArnLike": {"aws:PrincipalArn": "arn:aws:iam::*:role/admin"}},
+            {"ArnEquals": {"aws:PrincipalArn": "arn:aws:iam::*:role/admin"}},
+            {"StringLike": {"aws:PrincipalOrgID": "*"}},
+            {"StringLike": {"aws:SourceVpce": "vpce-*"}},
+            {"StringLike": {"aws:userid": "*"}},
+            {"StringLike": {"kms:CallerAccount": "*"}},
+            {
+                "StringLike": {
+                    "aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER, "*"],
+                }
+            },
+        ],
+    )
+    @pytest.mark.parametrize("is_cross_account_allowed", [True, False])
+    def test_wildcard_matching_any_account_is_not_restrictive(
+        self, condition_statement: dict, is_cross_account_allowed: bool
+    ):
+        assert not is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed,
+        )
+
+    @pytest.mark.parametrize(
+        "condition_statement",
+        [
+            {"StringLike": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}},
+            {"StringLike": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}},
+            {
+                "StringLike": {
+                    "aws:PrincipalArn": f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/*"
+                }
+            },
+            {
+                "ArnLike": {
+                    "aws:SourceArn": f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+                }
+            },
+            {"StringLike": {"aws:SourceVpce": "vpce-1234567890abcdef0"}},
+            # StringEquals compares "*" literally, so it only matches the value "*"
+            {"StringEquals": {"aws:SourceVpce": "*"}},
+        ],
+    )
+    @pytest.mark.parametrize("is_cross_account_allowed", [True, False])
+    def test_values_scoped_to_an_account_stay_restrictive(
+        self, condition_statement: dict, is_cross_account_allowed: bool
+    ):
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed,
+        )
+
+    def test_wildcard_value_does_not_hide_a_restrictive_key(self):
+        # Condition keys are ANDed, so one restrictive key still restricts the statement
+        condition_statement = {
+            "StringLike": {
+                "aws:PrincipalArn": "arn:aws:iam::*:root",
+                "aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+            }
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
+
+    def test_other_named_account_is_cross_account_not_public(self):
+        condition_statement = {
+            "StringLike": {
+                "aws:PrincipalArn": f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:root"
+            }
+        }
+        # Another named account is cross-account access, not public access
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, True
+        )
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER, False
+        )
+
+
+class Test_is_policy_public_wildcard_conditions:
+    @pytest.mark.parametrize(
+        "condition",
+        [
+            {"StringLike": {"aws:PrincipalAccount": "*"}},
+            {"StringLike": {"aws:SourceArn": "*"}},
+            {"StringLike": {"aws:PrincipalArn": ["*"]}},
+            {"StringLike": {"aws:SourceAccount": "*"}},
+            {"ArnLike": {"aws:PrincipalArn": "arn:aws:iam::*:root"}},
+            {"StringLike": {"aws:PrincipalOrgID": "o-??????????"}},
+        ],
+    )
+    def test_public_principal_with_wildcard_condition_is_public(self, condition):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::example-bucket/*",
+                    "Condition": condition,
+                }
+            ],
+        }
+        assert is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_public_principal_with_account_condition_is_not_public(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::example-bucket/*",
+                    "Condition": {
+                        "StringLike": {
+                            "aws:PrincipalArn": f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:role/*"
+                        }
+                    },
+                }
+            ],
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)

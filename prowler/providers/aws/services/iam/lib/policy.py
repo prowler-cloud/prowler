@@ -21,6 +21,60 @@ def _get_patterns_from_standard_value(value):
     return patterns
 
 
+def iam_pattern_matches(pattern: str, value: str) -> bool:
+    """Whether an IAM wildcard pattern from a policy document names a given value.
+
+    IAM honours exactly two metacharacters, ``*`` for any run of characters and ``?`` for exactly
+    one; every other character is literal, ``[seq]`` character classes included. Matching is
+    case-insensitive, as IAM matches action names.
+
+    Args:
+        pattern: A value taken from a policy document -- an Action's service or operation, a
+            Resource ARN field, a condition value. Surrounding whitespace is stripped, which IAM
+            tolerates.
+        value: The concrete string to test the pattern against.
+
+    Returns:
+        True when IAM would consider the pattern to name that value.
+
+    MATCHED WITH A TWO-POINTER SCAN RATHER THAN A TRANSLATED REGEX.
+    Building ``.*`` for every ``*`` and calling ``re``, which is what this file's callers previously
+    did, backtracks catastrophically on input the ACCOUNT controls: against the 17-character
+    ``bedrock-agentcore``, a pattern of N stars, a literal absent from the value, then N more stars
+    took 0.7 ms at N=6, 62 ms at N=10 and 2287 ms at N=14 -- a 31-character policy value, where a
+    managed policy document allows 6144. Cost rises with the number of quantifiers, which is the
+    account's side of the input, so a short value does not bound it. A hang raises nothing, so the
+    bare ``except Exception`` in ``prowler/lib/check/check.py`` cannot catch it and every finding for
+    the account is discarded in silence. This scan is O(len(pattern) x len(value)) with no
+    backtracking path at all: 0.006 ms on that same 31-character pattern, 0.214 ms at 4003.
+    """
+    # Normalised here rather than inside the scan, so the scan stays identical to the one already
+    # under review. IAM tolerates surrounding whitespace and matches case-insensitively, both of
+    # which the regex form this replaced provided through .strip() and re.IGNORECASE.
+    pattern = pattern.strip().lower()
+    action = value.lower()
+
+    p = a = 0
+    star = resume = -1
+    while a < len(action):
+        if p < len(pattern) and pattern[p] in ("?", action[a]):
+            p += 1
+            a += 1
+        elif p < len(pattern) and pattern[p] == "*":
+            star = p
+            resume = a
+            p += 1
+        elif star >= 0:
+            # Backtrack to the most recent star and let it absorb one more character. Only ever
+            # one star is reconsidered, which is what bounds this at a product rather than a power.
+            resume += 1
+            a = resume
+            p = star + 1
+        else:
+            return False
+    return all(char == "*" for char in pattern[p:])
+
+
 def get_effective_actions(policy: dict) -> set[str]:
     """
     Calculates the set of effectively allowed IAM actions from a policy document.
@@ -573,6 +627,77 @@ def is_policy_public(
     return is_public
 
 
+def condition_value_matches_any_account(
+    condition_operator: str, condition_key: str, condition_value
+) -> bool:
+    """
+    Check if a condition value uses wildcards that match requests from any AWS account.
+
+    Only StringLike, ArnLike and ArnEquals evaluate "*" and "?" as wildcards, so values
+    under other operators are always literal. A wildcard value matches any AWS account when:
+    - It is made only of wildcards, e.g. "*", whatever the condition key.
+    - The key holds an account, organization ID, VPC or VPC endpoint ID and the value has a
+      wildcard, e.g. "aws:SourceAccount": "1234*".
+    - The key holds an organization path whose organization ID is not literal,
+      e.g. "aws:PrincipalOrgPaths": "o-*/r-ab12/*".
+    - The key holds an ARN with a wildcard in its account field, e.g.
+      "arn:aws:iam::*:role/admin". ARNs without an account field, such as S3 buckets, match
+      any account when the resource name has a wildcard, e.g. "arn:aws:s3:::*".
+
+    Args:
+        condition_operator (str): The IAM condition operator, e.g. "StringLike"
+        condition_key (str): The lowercase condition key, e.g. "aws:sourceaccount"
+        condition_value: The condition value to check
+
+    Returns:
+        bool: True if the value matches requests from any AWS account, False otherwise
+    """
+    if condition_operator not in ("StringLike", "ArnLike", "ArnEquals"):
+        return False
+    # An empty value matches nothing, so it never matches any account
+    if not isinstance(condition_value, str) or not condition_value:
+        return False
+
+    def has_wildcard(value: str) -> bool:
+        return "*" in value or "?" in value
+
+    if not condition_value.strip("*?"):
+        return True
+
+    if condition_key in (
+        "aws:sourceaccount",
+        "aws:sourceowner",
+        "aws:principalaccount",
+        "aws:resourceaccount",
+        "kms:calleraccount",
+        "s3:resourceaccount",
+        "aws:principalorgid",
+        "aws:sourceorgid",
+        "aws:sourcevpc",
+        "aws:sourcevpce",
+    ):
+        return has_wildcard(condition_value)
+
+    if condition_key in ("aws:principalorgpaths", "aws:sourceorgpaths"):
+        # The organization ID must be literal; wildcards only make sense below it
+        return has_wildcard(condition_value) and not re.match(
+            r"o-[a-z0-9]{10,32}/", condition_value
+        )
+
+    if condition_key in ("aws:sourcearn", "aws:principalarn"):
+        arn_parts = condition_value.split(":", 5)
+        if len(arn_parts) < 6:
+            # A wildcard before the account field can stand for the rest of the ARN
+            return has_wildcard(condition_value)
+        account, resource = arn_parts[4], arn_parts[5]
+        if account:
+            return has_wildcard(account)
+        # Without an account field the resource name, e.g. an S3 bucket, is what is restricted
+        return has_wildcard(resource.split("/", 1)[0])
+
+    return False
+
+
 def is_condition_block_restrictive(
     condition_statement: dict,
     source_account: str = "",
@@ -667,10 +792,19 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         list,
                     ):
-                        is_condition_key_restrictive = True
+                        # a wildcard that matches any AWS account does not restrict access
+                        is_condition_key_restrictive = not any(
+                            condition_value_matches_any_account(
+                                condition_operator, value, item
+                            )
+                            for item in condition_statement[condition_operator][value]
+                        )
                         # if cross account is not allowed check for each condition block looking for accounts
                         # different than default
-                        if not is_cross_account_allowed:
+                        if (
+                            is_condition_key_restrictive
+                            and not is_cross_account_allowed
+                        ):
                             # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
@@ -710,7 +844,14 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         str,
                     ):
-                        if "aws:sourcevpc" == value or "aws:sourcevpce" == value:
+                        if condition_value_matches_any_account(
+                            condition_operator,
+                            value,
+                            condition_statement[condition_operator][value],
+                        ):
+                            # a wildcard that matches any AWS account does not restrict access
+                            pass
+                        elif "aws:sourcevpc" == value or "aws:sourcevpce" == value:
                             is_condition_valid = True
                         else:
                             if is_cross_account_allowed:
@@ -761,46 +902,45 @@ def is_condition_block_restrictive_organization(
     """
     is_condition_valid = False
 
+    # ForAnyValue is false when the key is absent, so it still excludes principals outside any
+    # organization. ForAllValues is true on an absent key and is deliberately not accepted.
+    valid_condition_operators = (
+        "StringEquals",
+        "StringLike",
+        "ForAnyValue:StringEquals",
+        "ForAnyValue:StringLike",
+    )
     # The conditions must be defined in lowercase since the context key names are not case-sensitive.
     # For example, including the aws:PrincipalOrgID context key is equivalent to testing for AWS:PrincipalOrgID
     # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
-    valid_condition_options = {
-        "StringEquals": [
-            "aws:principalorgid",
-        ],
-        "StringLike": [
-            "aws:principalorgid",
-        ],
-    }
+    valid_condition_keys = ("aws:principalorgid", "aws:principalorgpaths")
 
-    for condition_operator, condition_operator_key in valid_condition_options.items():
+    def names_one_organization(key: str, value, condition_operator: str) -> bool:
+        if not isinstance(value, str):
+            return False
+        if key == "aws:principalorgpaths":
+            # The organization ID must be literal; wildcards only make sense below it
+            return bool(re.match(r"o-[a-z0-9]{10,32}/", value))
+        if "*" in value:
+            return False
+        # "?" is a wildcard only for StringLike; StringEquals compares it literally
+        return not (condition_operator.endswith("StringLike") and "?" in value)
+
+    for condition_operator in valid_condition_operators:
         if condition_operator in condition_statement:
-            for value in condition_operator_key:
-                # We need to transform the condition_statement into lowercase
-                condition_statement[condition_operator] = {
-                    k.lower(): v
-                    for k, v in condition_statement[condition_operator].items()
-                }
-
-                if value in condition_statement[condition_operator]:
-                    # values are a list
-                    if isinstance(
-                        condition_statement[condition_operator][value],
-                        list,
+            # We need to transform the condition_statement into lowercase
+            condition_statement[condition_operator] = {
+                k.lower(): v for k, v in condition_statement[condition_operator].items()
+            }
+            for key in valid_condition_keys:
+                if key in condition_statement[condition_operator]:
+                    values = condition_statement[condition_operator][key]
+                    values = values if isinstance(values, list) else [values]
+                    if values and all(
+                        names_one_organization(key, value, condition_operator)
+                        for value in values
                     ):
                         is_condition_valid = True
-                        for item in condition_statement[condition_operator][value]:
-                            if item == "*":
-                                is_condition_valid = False
-                                break
-
-                    # value is a string
-                    elif isinstance(
-                        condition_statement[condition_operator][value],
-                        str,
-                    ):
-                        if "*" not in condition_statement[condition_operator][value]:
-                            is_condition_valid = True
 
     return is_condition_valid
 
@@ -846,8 +986,14 @@ def is_condition_block_restrictive_sns_endpoint(
                 }
 
                 if value in condition_statement[condition_operator]:
-                    if pattern.fullmatch(
-                        condition_statement[condition_operator][value]
+                    endpoints = condition_statement[condition_operator][value]
+                    endpoints = (
+                        endpoints if isinstance(endpoints, list) else [endpoints]
+                    )
+                    # A request can match any of the listed endpoint values.
+                    if endpoints and all(
+                        isinstance(endpoint, str) and pattern.fullmatch(endpoint)
+                        for endpoint in endpoints
                     ):
                         is_condition_valid = True
 

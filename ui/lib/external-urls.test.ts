@@ -114,20 +114,20 @@ describe("getAWSOrgDeploymentQuickLink", () => {
 });
 
 describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
-  it("keeps the Cloudflare User API Token URL under the profile route with the four required read scopes", () => {
+  it("keeps the Cloudflare User API Token URL under the profile route with the seven required read scopes", () => {
     // Snapshot check: fixes the exact URL so a stray edit to the permission
     // scopes, token name, account/zone selectors or console origin trips a
     // failing test instead of silently shipping a broken pre-configured
     // token flow to users. Matches the "User API Token" link in
     // docs/user-guide/providers/cloudflare/authentication.mdx.
     expect(PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN_USER).toBe(
-      "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
+      "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
     );
   });
 
-  it("carries the four Prowler read scopes as decoded permissionGroupKeys on the Cloudflare User API Token URL", () => {
+  it("carries the seven Prowler read scopes as decoded permissionGroupKeys on the Cloudflare User API Token URL", () => {
     // Semantic contract: the URL must request read on account_settings, zone,
-    // zone_settings and dns and reuse the shared Prowler token name.
+    // zone_settings, dns, ssl_and_certificates, bot_management and zone_waf and reuse the shared Prowler token name.
     const parsed = new URL(
       PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN_USER,
     );
@@ -140,6 +140,9 @@ describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
       { key: "zone", type: "read" },
       { key: "zone_settings", type: "read" },
       { key: "dns", type: "read" },
+      { key: "ssl_and_certificates", type: "read" },
+      { key: "bot_management", type: "read" },
+      { key: "zone_waf", type: "read" },
     ]);
     expect(parsed.searchParams.get("name")).toBe("Prowler Security Scanner");
   });
@@ -214,6 +217,9 @@ describe("buildCloudflareAccountOwnedApiTokenUrl", () => {
       { key: "zone", type: "read" },
       { key: "zone_settings", type: "read" },
       { key: "dns", type: "read" },
+      { key: "ssl_and_certificates", type: "read" },
+      { key: "bot_management", type: "read" },
+      { key: "zone_waf", type: "read" },
     ]);
   });
 
@@ -290,23 +296,10 @@ describe("getProviderHelpText", () => {
   const AWS_CREDENTIALS_STEP_DOCS =
     "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication";
 
-  it("returns the provider shortlink on the connect step", () => {
-    // Given the user is picking a provider (no deep-link into auth yet)
-    // When
+  it("points the connect step to the credentials section of the getting-started page", () => {
+    // The connect step holds the credentials form: with no method picked the
+    // link scrolls the getting-started page to the authentication step.
     const { link } = getProviderHelpText("aws", PROVIDER_WIZARD_STEP.CONNECT);
-
-    // Then
-    expect(link).toBe(AWS_SHORTLINK);
-  });
-
-  it("points to the credentials section of the getting-started page on the credentials step", () => {
-    // No method picked yet — link should scroll the getting-started page to
-    // the credentials/authentication step so the user reads about the choice
-    // in the same page they came from.
-    const { link } = getProviderHelpText(
-      "aws",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
-    );
 
     expect(link).toBe(AWS_CREDENTIALS_STEP_DOCS);
   });
@@ -314,7 +307,7 @@ describe("getProviderHelpText", () => {
   it("points AWS assume role credentials to the exact setup section", () => {
     const { link } = getProviderHelpText(
       "aws",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
       "role",
     );
 
@@ -326,7 +319,7 @@ describe("getProviderHelpText", () => {
   it("points AWS static credentials to the exact setup section", () => {
     const { link } = getProviderHelpText(
       "aws",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
       "credentials",
     );
 
@@ -341,7 +334,7 @@ describe("getProviderHelpText", () => {
     // resolves to the general credentials step anchor.
     const { link } = getProviderHelpText(
       "gcp",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
       "service-account",
     );
 
@@ -350,22 +343,14 @@ describe("getProviderHelpText", () => {
     );
   });
 
-  it("keeps the shortlink on the test connection step", () => {
-    // Credentials-step docs are only surfaced while the user is still
-    // supplying credentials; after that the shortlink landing is the useful
-    // destination.
-    const { link } = getProviderHelpText("aws", PROVIDER_WIZARD_STEP.TEST);
-
-    expect(link).toBe(AWS_SHORTLINK);
-  });
-
   it("keeps the shortlink on the launch step", () => {
+    // Credentials docs only help while credentials are being supplied.
     const { link } = getProviderHelpText("aws", PROVIDER_WIZARD_STEP.LAUNCH);
 
     expect(link).toBe(AWS_SHORTLINK);
   });
 
-  it("resolves the credentials-step link for every supported provider", () => {
+  it("resolves the connect-step credentials link for every supported provider", () => {
     // Guard against silently dropping a provider from
     // PROVIDER_CREDENTIALS_STEP_DOCS_URL. When no auth method is selected
     // yet, every provider should deep-link to its own getting-started
@@ -439,7 +424,7 @@ describe("getProviderHelpText", () => {
 
     for (const [provider, expected] of cases) {
       expect(
-        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CREDENTIALS).link,
+        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CONNECT).link,
       ).toBe(expected);
     }
   });
@@ -494,7 +479,7 @@ describe("getProviderHelpText", () => {
 
     for (const [provider, method, expected] of cases) {
       expect(
-        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CREDENTIALS, method)
+        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CONNECT, method)
           .link,
       ).toBe(expected);
     }
@@ -505,7 +490,7 @@ describe("getProviderHelpText", () => {
     // anchor would deep-link into nothing.
     const { link } = getProviderHelpText(
       "not-a-real-provider",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
     );
 
     expect(link).toBe("https://goto.prowler.com/provider-help");
@@ -519,7 +504,7 @@ describe("getProviderHelpText", () => {
       // When
       const { link } = getProviderHelpText(
         provider,
-        PROVIDER_WIZARD_STEP.CREDENTIALS,
+        PROVIDER_WIZARD_STEP.CONNECT,
       );
 
       // Then

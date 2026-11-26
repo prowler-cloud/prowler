@@ -18,7 +18,10 @@ import {
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
-import { useAppSidebarMode } from "./app-sidebar-mode-store";
+import {
+  useAppSidebarMode,
+  useHydratedAppSidebarMode,
+} from "./app-sidebar-mode-store";
 import {
   APP_SIDEBAR_MODE,
   type AppSidebarMode,
@@ -49,7 +52,7 @@ export function AppSidebarModeToggle({
 }: AppSidebarModeToggleProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const mode = useAppSidebarMode((state) => state.mode);
+  const mode = useHydratedAppSidebarMode();
   const setMode = useAppSidebarMode((state) => state.setMode);
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,

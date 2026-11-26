@@ -94,6 +94,7 @@ describe("getComplianceCatalog", () => {
         eligibleProviderTypes: [],
       },
       unavailable: true,
+      incomplete: false,
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -177,6 +178,7 @@ describe("getComplianceCatalog", () => {
         eligibleProviderTypes: [],
       },
       unavailable: true,
+      incomplete: false,
     });
   });
 
@@ -199,7 +201,7 @@ describe("getComplianceCatalog", () => {
     expect(catalog.entries).toEqual([]);
   });
 
-  it("flags the catalog as unavailable when a single page fails", async () => {
+  it("keeps the loaded pages and flags the catalog as incomplete when a single page fails", async () => {
     // Given - one of three catalog pages times out
     fetchMock
       .mockResolvedValueOnce(
@@ -218,7 +220,8 @@ describe("getComplianceCatalog", () => {
       "cis_1.4_aws",
       "iso27001_aws",
     ]);
-    expect(catalog.unavailable).toBe(true);
+    expect(catalog.unavailable).toBe(false);
+    expect(catalog.incomplete).toBe(true);
   });
 
   it("bounds how many pages it requests at once", async () => {

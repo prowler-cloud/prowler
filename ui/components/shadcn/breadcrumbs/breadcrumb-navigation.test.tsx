@@ -12,50 +12,41 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@iconify/react", () => ({
-  Icon: ({ icon }: { icon: string }) => <span aria-label={icon} />,
-}));
-
 describe("BreadcrumbNavigation", () => {
   afterEach(() => {
     navigationMock.pathname = "/findings";
   });
 
-  it("renders the title action next to the current breadcrumb title", () => {
+  it("renders the page icon next to a top-level title", () => {
     // Given / When
     render(
       <BreadcrumbNavigation
         mode="auto"
         title="Findings"
-        titleAction={<button type="button">Start product tour</button>}
+        icon={<svg data-testid="page-icon" />}
       />,
     );
 
     // Then
-    expect(
-      screen.getByRole("heading", { name: "Findings" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start product tour" }),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("page-icon")).toBeInTheDocument();
   });
 
-  it("does not render icons for secondary breadcrumb items", () => {
+  it("shows the bundled section icon only on the first breadcrumb", () => {
     // Given
     navigationMock.pathname = "/scans/config";
 
     // When
-    render(
+    const { container } = render(
       <BreadcrumbNavigation
         mode="auto"
         title="Configuration"
-        icon="lucide:sliders"
+        icon={<svg data-testid="page-icon" />}
       />,
     );
 
     // Then
-    expect(screen.getByLabelText("lucide:timer")).toBeInTheDocument();
-    expect(screen.queryByLabelText("lucide:sliders")).not.toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-timer")).toBeInTheDocument();
+    expect(screen.queryByTestId("page-icon")).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Configuration" }),
     ).toBeInTheDocument();

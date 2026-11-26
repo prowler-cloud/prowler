@@ -410,3 +410,65 @@ class Test_defender_antispam_policy_inbound_no_allowed_domains:
             check = defender_antispam_policy_inbound_no_allowed_domains()
             result = check.execute()
             assert len(result) == 0
+
+    def test_preset_policy_without_rule_is_skipped(self):
+        defender_client = mock.MagicMock()
+        defender_client.audited_tenant = "audited_tenant"
+        defender_client.audited_domain = DOMAIN
+        defender_client.audit_config = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defender.defender_antispam_policy_inbound_no_allowed_domains.defender_antispam_policy_inbound_no_allowed_domains.defender_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defender.defender_antispam_policy_inbound_no_allowed_domains.defender_antispam_policy_inbound_no_allowed_domains import (
+                defender_antispam_policy_inbound_no_allowed_domains,
+            )
+            from prowler.providers.m365.services.defender.defender_service import (
+                DefenderInboundSpamPolicy,
+                InboundSpamRule,
+            )
+
+            defender_client.inbound_spam_policies = [
+                DefenderInboundSpamPolicy(
+                    identity="Default",
+                    allowed_sender_domains=[],
+                    default=True,
+                ),
+                DefenderInboundSpamPolicy(
+                    identity="Standard Preset Security Policy1663355404982",
+                    allowed_sender_domains=[],
+                    default=False,
+                ),
+                DefenderInboundSpamPolicy(
+                    identity="Custom1",
+                    allowed_sender_domains=[],
+                    default=False,
+                ),
+            ]
+            defender_client.inbound_spam_rules = {
+                "Custom1": InboundSpamRule(
+                    state="Enabled",
+                    priority=1,
+                    users=["user1@example.com"],
+                    groups=None,
+                    domains=None,
+                )
+            }
+
+            check = defender_antispam_policy_inbound_no_allowed_domains()
+            result = check.execute()
+
+            assert len(result) == 2
+            assert "Standard Preset Security Policy1663355404982" not in [
+                finding.resource_id for finding in result
+            ]

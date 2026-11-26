@@ -18,11 +18,11 @@ class AzureIdentityInfo(BaseModel):
 class AzureRegionConfig(BaseModel):
     name: str = ""
     authority: Optional[str] = None
-    base_url: str = ""
-    credential_scopes: list = []
+    base_url: str = "https://management.azure.com"
+    credential_scopes: list = ["https://management.azure.com/.default"]
     graph_host: str = "https://graph.microsoft.com"
     graph_scope: str = "https://graph.microsoft.com/.default"
-    logs_endpoint: str = "https://api.loganalytics.io"
+    logs_endpoint: Optional[str] = "https://api.loganalytics.io"
 
 
 class AzureSubscription(BaseModel):

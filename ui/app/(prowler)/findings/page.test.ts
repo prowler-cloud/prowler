@@ -37,6 +37,29 @@ describe("findings page", () => {
     expect(source).toContain("applyDefaultMutedFilter(filtersWithScanDates)");
   });
 
+  it("pins a locked findings preview to the first page and hands the limit to the table", () => {
+    expect(source).toContain("await isFindingsPreviewLocked()");
+    expect(source).toContain("const page = previewLocked\n    ? 1");
+    expect(source).toContain(
+      "const pageSize = previewLocked\n    ? FINDINGS_PREVIEW_ROW_LIMIT * 2",
+    );
+    expect(source).toContain(
+      "previewRowLimit={previewLocked ? FINDINGS_PREVIEW_ROW_LIMIT : undefined}",
+    );
+  });
+
+  it("hands the sample preview over to early findings once the running first scan has some", () => {
+    expect(source).toContain(
+      "preview.active && (await shouldShowFindingsSample(preview))",
+    );
+  });
+
+  it("keeps the page up when the executing-scans lookup fails", () => {
+    expect(source).toMatch(
+      /"filter\[state\]": "executing" },\s*fields: \{ scans: "progress,started_at,completed_at" },\s*\}\)\.catch\(\(\) => undefined\)/,
+    );
+  });
+
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
   });
