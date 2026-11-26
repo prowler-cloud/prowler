@@ -13,7 +13,7 @@ import { COMPLIANCE_TAB, type ComplianceTab } from "@/types/compliance";
 interface CompliancePageTabsProps {
   activeTab: ComplianceTab;
   /** False in OSS: the Cross-Provider tab renders disabled with the
-   *  premium badge. */
+   *  premium tag. */
   crossProviderEnabled: boolean;
   perScanContent: ReactNode;
   crossProviderContent: ReactNode;

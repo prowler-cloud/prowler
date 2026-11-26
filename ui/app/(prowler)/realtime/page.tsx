@@ -4,8 +4,8 @@ import { Suspense } from "react";
 import { RealtimeDashboard } from "@/app/(prowler)/realtime/_components/dashboard/realtime-dashboard";
 import { RealtimeDashboardSkeleton } from "@/app/(prowler)/realtime/_components/dashboard/realtime-dashboard-skeleton";
 import type { RealtimeSearchParams } from "@/app/(prowler)/realtime/_lib/routes";
-import { PremiumPreviewPage } from "@/components/premium/premium-preview-page";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { PremiumPreviewPage } from "@/components/shared/premium-preview-page";
 import {
   getPremiumPreviewHook,
   PREMIUM_PREVIEW_FEATURE,

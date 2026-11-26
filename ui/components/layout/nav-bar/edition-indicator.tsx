@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 
 import { PREMIUM_PAGE_PATH } from "@/lib/premium";
@@ -21,7 +19,7 @@ export function EditionIndicator() {
         Local Server · Open Source
       </span>
       <span className="text-text-success-primary font-medium">
-        What&apos;s in Cloud?
+        Compare editions
       </span>
     </Link>
   );

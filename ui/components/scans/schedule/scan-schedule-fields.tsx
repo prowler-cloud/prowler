@@ -24,7 +24,10 @@ import {
   getNextScheduledRun,
 } from "@/lib/schedules";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 import {
   SCHEDULE_FREQUENCY,
   SCHEDULE_WEEKDAY_LABELS,
@@ -64,7 +67,7 @@ interface ScanScheduleFieldsProps {
    */
   canUseAdvancedSchedule?: boolean;
   /** Render the premium badge and the Local Server daily-scan explanation. */
-  showCloudUpgradeBadge?: boolean;
+  showPremiumUpsell?: boolean;
 }
 
 function NumberSelect({
@@ -131,7 +134,7 @@ export function ScanScheduleFields({
   showNextScheduledCopy = false,
   headerAction,
   canUseAdvancedSchedule = true,
-  showCloudUpgradeBadge = false,
+  showPremiumUpsell = false,
 }: ScanScheduleFieldsProps) {
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
@@ -154,7 +157,7 @@ export function ScanScheduleFields({
   // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
-  const cloudUpgradeBadge = showCloudUpgradeBadge ? (
+  const cloudUpgradeBadge = showPremiumUpsell ? (
     <PremiumBadge feature={CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING} compact />
   ) : null;
 
@@ -217,7 +220,7 @@ export function ScanScheduleFields({
         />
       </div>
 
-      {showCloudUpgradeBadge && (
+      {showPremiumUpsell && (
         <p className="text-text-neutral-secondary bg-bg-neutral-secondary rounded-lg px-3 py-2 text-xs">
           Local Server runs one daily scan at a fixed time. Prowler Cloud and
           Private Cloud let you pick the time and add interval, weekly, and
@@ -227,7 +230,11 @@ export function ScanScheduleFields({
             variant="link"
             size="link-xs"
             onClick={() =>
-              openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
+              openCloudUpgrade(
+                CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING,
+                undefined,
+                CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+              )
             }
           >
             See scheduling

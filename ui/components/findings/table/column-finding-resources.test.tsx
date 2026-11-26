@@ -214,6 +214,7 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+import { PREMIUM_BADGE_TOOLTIP } from "@/lib/cloud-upgrade";
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { usePartialScanStore } from "@/store/partial-scan/store";
 import type { FindingResourceRow } from "@/types";
@@ -224,10 +225,7 @@ import {
 } from "@/types/findings-triage";
 
 import { getColumnFindingResources } from "./column-finding-resources";
-import {
-  CLOUD_ONLY_TOOLTIP_COPY,
-  EDITING_UNAVAILABLE_COPY,
-} from "./finding-triage-cells";
+import { EDITING_UNAVAILABLE_COPY } from "./finding-triage-cells";
 
 function makeTriageSummary(
   overrides?: Partial<FindingTriageSummary>,
@@ -678,7 +676,7 @@ describe("column-finding-resources", () => {
     expect(
       screen.getByRole("button", { name: "Triage status" }),
     ).toBeDisabled();
-    expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
+    expect(screen.getByText(PREMIUM_BADGE_TOOLTIP)).toBeInTheDocument();
   });
 
   it("should open Jira dispatch with the finding UUID directly", async () => {

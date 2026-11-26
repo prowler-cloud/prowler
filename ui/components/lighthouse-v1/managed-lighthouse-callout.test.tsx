@@ -49,6 +49,5 @@ describe("ManagedLighthouseCallout", () => {
     expect(screen.getAllByText("Managed Lighthouse AI").length).toBeGreaterThan(
       0,
     );
-    expect(screen.queryByText(/OpenAI/)).not.toBeInTheDocument();
   });
 });

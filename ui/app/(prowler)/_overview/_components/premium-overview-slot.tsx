@@ -3,7 +3,10 @@ import Link from "next/link";
 import { Button } from "@/components/shadcn/button/button";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { PremiumBadge } from "@/components/shared/premium-badge";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 interface PremiumOverviewSlotProps {
   title: string;
@@ -27,6 +30,7 @@ export function PremiumOverviewSlot({
           </h3>
           <PremiumBadge
             feature={CLOUD_UPGRADE_FEATURE.EXPLOITABILITY_ISSUES}
+            surface={CLOUD_UPGRADE_SURFACE.OVERVIEW}
             compact
           />
         </div>

@@ -101,7 +101,7 @@ describe("AppSidebarContent", () => {
     );
     expect(screen.getAllByText("Premium").length).toBeGreaterThan(0);
     expect(
-      screen.getByRole("link", { name: /See premium features/ }),
+      screen.getByRole("link", { name: /Compare editions/ }),
     ).toHaveAttribute("href", "/premium");
   });
 
@@ -148,15 +148,15 @@ describe("AppSidebarContent", () => {
     ).toEqual(["/realtime"]);
   });
 
-  it("hides Issues navigation in Local Server", () => {
+  it("links Issues navigation to its premium preview in Local Server", () => {
     // Given / When
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
     render(<AppSidebarContent />);
 
     // Then
     expect(
-      screen.queryByRole("link", { name: /Exploitability issues/ }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: /Exploitability issues/ }),
+    ).toHaveAttribute("href", "/issues");
   });
 
   it("hides Registry navigation without a server eligibility decision", () => {

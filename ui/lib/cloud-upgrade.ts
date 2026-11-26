@@ -288,7 +288,7 @@ const buildCloudUpgradeUrl = (
   return url.toString();
 };
 
-export const isCloudUpgradeTrialIncluded = (feature: CloudUpgradeFeature) =>
+const isCloudUpgradeTrialIncluded = (feature: CloudUpgradeFeature) =>
   CLOUD_UPGRADE_CONTENT[feature].trialIncluded;
 
 // Paid-plan-only capabilities point to plans so nobody starts a trial to find them locked.

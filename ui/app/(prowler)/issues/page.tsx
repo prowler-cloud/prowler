@@ -2,17 +2,13 @@ import { ShieldAlert } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
-import { getFindingsBySeverity } from "@/actions/overview/findings/findings";
 import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
-import { PremiumPreviewPage } from "@/components/premium/premium-preview-page";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { PremiumPreviewPage } from "@/components/shared/premium-preview-page";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
-import {
-  getPremiumPreviewHook,
-  PREMIUM_PREVIEW_FEATURE,
-} from "@/lib/premium-preview";
+import { PREMIUM_PREVIEW_FEATURE } from "@/lib/premium-preview";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
@@ -20,6 +16,10 @@ import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { IssuesList } from "./_components/issues-list";
+import {
+  IssuesPreviewHook,
+  IssuesPreviewHookSkeleton,
+} from "./_components/issues-preview-hook";
 
 const SAMPLE_PROVIDER_UIDS = {
   [SAMPLE_ACCOUNT.providerId]: SAMPLE_ACCOUNT.uid,
@@ -31,25 +31,15 @@ export default async function Issues({
   searchParams: Promise<SearchParamsProps>;
 }) {
   if (!isCloud()) {
-    // The action rethrows 5xx; the preview must still render without counts.
-    const severity = await getFindingsBySeverity({
-      filters: { "filter[status]": "FAIL" },
-    }).catch(() => undefined);
-    const attributes = severity?.data?.attributes;
-
     return (
-      <ContentLayout title="Exploitability Issues" icon={<ShieldAlert />}>
+      <ContentLayout title="Exploitability issues" icon={<ShieldAlert />}>
         <PremiumPreviewPage
           feature={PREMIUM_PREVIEW_FEATURE.EXPLOITABILITY_ISSUES}
-          personalHook={getPremiumPreviewHook(
-            PREMIUM_PREVIEW_FEATURE.EXPLOITABILITY_ISSUES,
-            attributes
-              ? {
-                  critical: attributes.critical ?? 0,
-                  high: attributes.high ?? 0,
-                }
-              : null,
-          )}
+          personalHook={
+            <Suspense fallback={<IssuesPreviewHookSkeleton />}>
+              <IssuesPreviewHook />
+            </Suspense>
+          }
         />
       </ContentLayout>
     );

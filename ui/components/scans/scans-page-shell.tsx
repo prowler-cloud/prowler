@@ -3,7 +3,6 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
-import { PremiumNudgeBanner } from "@/components/premium/premium-nudge-banner";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -20,7 +19,10 @@ import {
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore, useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import type { ScanScheduleCapability } from "@/types/schedules";
@@ -28,6 +30,7 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 import { CliImportBanner } from "./cli-import-banner";
 import { ImportFindingsModal } from "./import-findings-modal";
 import { LaunchScanModal } from "./launch-scan-modal";
+import { PremiumNudgeBanner } from "./premium-nudge-banner";
 import { ScansFilterBar } from "./scans-filter-bar";
 import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
 import { useScansFilters } from "./use-scans-filters";
@@ -179,6 +182,7 @@ export function ScansPageShell({
                   openCloudUpgrade(
                     CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
                     event.currentTarget,
+                    CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
                   )
                 }
               >

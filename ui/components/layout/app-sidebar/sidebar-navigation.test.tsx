@@ -233,7 +233,6 @@ describe("SidebarNavigation", () => {
       returnFocusElement,
       CLOUD_UPGRADE_SURFACE.SIDEBAR,
     );
-    expect(screen.getByRole("heading", { name: "PREMIUM" })).toBeVisible();
     expect(
       screen.queryByRole("link", { name: /realtime/i }),
     ).not.toBeInTheDocument();

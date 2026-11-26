@@ -387,7 +387,7 @@ function LaunchScanForm({
           showLaunchInitialScan
           showNextScheduledCopy
           canUseAdvancedSchedule={isAdvanced}
-          showCloudUpgradeBadge={isDailyLegacy}
+          showPremiumUpsell={isDailyLegacy}
         />
       )}
 

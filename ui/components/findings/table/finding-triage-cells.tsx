@@ -41,7 +41,6 @@ import {
 } from "./finding-note-modal";
 import { FindingTriageStatusControl } from "./finding-triage-status-control";
 
-export const CLOUD_ONLY_TOOLTIP_COPY = PREMIUM_BADGE_TOOLTIP;
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
 export const SAMPLE_TRIAGE_COPY =
   "Sample data. Connect your cloud account to triage your own findings.";
@@ -56,7 +55,7 @@ const getDisabledCopy = ({
   lockResolved?: boolean;
 }): string | undefined => {
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
-    return CLOUD_ONLY_TOOLTIP_COPY;
+    return PREMIUM_BADGE_TOOLTIP;
   }
 
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.SAMPLE) {

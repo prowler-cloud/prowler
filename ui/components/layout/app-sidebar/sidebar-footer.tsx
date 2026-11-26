@@ -26,7 +26,7 @@ export function SidebarFooter({
           <Button asChild variant="outline" className="w-full">
             <Link href={PREMIUM_PAGE_PATH} onClick={onSelect}>
               <LockKeyhole aria-hidden="true" className="size-4" />
-              See premium features
+              Compare editions
             </Link>
           </Button>
         </div>

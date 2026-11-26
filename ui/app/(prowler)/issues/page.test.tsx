@@ -4,13 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   getAllProviders,
   getAllProviderGroups,
-  getFindingsBySeverity,
   getSamplePreviewState,
   notFound,
 } = vi.hoisted(() => ({
   getAllProviders: vi.fn(),
   getAllProviderGroups: vi.fn(),
-  getFindingsBySeverity: vi.fn(),
   getSamplePreviewState: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NOT_FOUND");
@@ -18,9 +16,6 @@ const {
 }));
 vi.mock("next/navigation", () => ({ notFound }));
 vi.mock("@/actions/providers", () => ({ getAllProviders }));
-vi.mock("@/actions/overview/findings/findings", () => ({
-  getFindingsBySeverity,
-}));
 vi.mock("@/actions/manage-groups/manage-groups", () => ({
   getAllProviderGroups,
 }));
@@ -35,12 +30,14 @@ vi.mock("@/components/shadcn/content-layout", () => ({
     <>{children}</>
   ),
 }));
-vi.mock("@/components/premium/premium-preview-page", () => ({
-  PremiumPreviewPage: ({ personalHook }: { personalHook: string }) => (
-    <p>{personalHook}</p>
-  ),
+vi.mock("@/components/shared/premium-preview-page", () => ({
+  PremiumPreviewPage: () => <section data-testid="premium-preview" />,
 }));
 vi.mock("./_components/issues-list", () => ({ IssuesList: () => null }));
+vi.mock("./_components/issues-preview-hook", () => ({
+  IssuesPreviewHook: () => null,
+  IssuesPreviewHookSkeleton: () => null,
+}));
 vi.mock("@/components/shared/sample-preview/sample-preview-banner", () => ({
   SamplePreviewBanner: () => null,
 }));
@@ -56,30 +53,18 @@ describe("Issues deployment availability", () => {
     getAllProviderGroups.mockResolvedValue({ data: [] });
     getSamplePreviewState.mockResolvedValue({ active: false });
   });
-  it("renders the premium preview from OSS data only in Local Server", async () => {
+  it("renders the premium preview without Cloud data in Local Server", async () => {
+    // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    getFindingsBySeverity.mockResolvedValue({
-      data: { attributes: { critical: 3, high: 5 } },
-    });
+
+    // When
     render(await Issues({ searchParams: Promise.resolve({}) }));
-    expect(
-      screen.getByText(/3 critical and 5 high FAIL findings/),
-    ).toBeInTheDocument();
-    expect(notFound).not.toHaveBeenCalled();
-    expect(getFindingsBySeverity).toHaveBeenCalledWith({
-      filters: { "filter[status]": "FAIL" },
-    });
+
+    // Then
+    expect(screen.getByTestId("premium-preview")).toBeInTheDocument();
     expect(getAllProviders).not.toHaveBeenCalled();
     expect(getAllProviderGroups).not.toHaveBeenCalled();
     expect(getSamplePreviewState).not.toHaveBeenCalled();
-  });
-  it("keeps the Local Server preview when the severity request fails", async () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    getFindingsBySeverity.mockRejectedValue(new Error("Server error (500)"));
-    render(await Issues({ searchParams: Promise.resolve({}) }));
-    expect(
-      screen.getByText(/Once your Local Server has scan results/),
-    ).toBeInTheDocument();
   });
   it("loads the scope controls in Cloud deployments", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

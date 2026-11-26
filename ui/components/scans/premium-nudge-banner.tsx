@@ -3,17 +3,15 @@
 import { LockKeyhole } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
-import { Alert, AlertTitle } from "@/components/shadcn";
+import { Alert, AlertDescription } from "@/components/shadcn";
 import { PremiumBadge } from "@/components/shared/premium-badge";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import {
-  dismissPremiumNudge,
-  isPremiumNudgeDismissed,
-} from "@/lib/premium-nudge";
 import {
   CLOUD_UPGRADE_SURFACE,
   type CloudUpgradeFeature,
 } from "@/types/cloud-upgrade";
+
+import { dismissPremiumNudge, isPremiumNudgeDismissed } from "./premium-nudge";
 
 interface PremiumNudgeBannerProps {
   nudgeId: string;
@@ -48,19 +46,20 @@ export function PremiumNudgeBanner({
   return (
     <Alert
       variant="info"
+      role="note"
       onClose={handleClose}
       closeLabel="Dismiss"
       className="animate-fade-in"
     >
       <LockKeyhole />
-      <AlertTitle className="flex flex-wrap items-center gap-2 font-normal">
-        <span>{children}</span>
+      <AlertDescription>
+        <p>{children}</p>
         <PremiumBadge
           feature={feature}
           surface={CLOUD_UPGRADE_SURFACE.NUDGE}
           compact
         />
-      </AlertTitle>
+      </AlertDescription>
     </Alert>
   );
 }

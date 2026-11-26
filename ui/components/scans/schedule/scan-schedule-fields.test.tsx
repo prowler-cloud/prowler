@@ -31,10 +31,10 @@ beforeAll(() => {
 
 function ScheduleFieldsHarness({
   canUseAdvancedSchedule = true,
-  showCloudUpgradeBadge = false,
+  showPremiumUpsell = false,
 }: {
   canUseAdvancedSchedule?: boolean;
-  showCloudUpgradeBadge?: boolean;
+  showPremiumUpsell?: boolean;
 } = {}) {
   const form = useForm<ScheduleFormValues>({
     defaultValues: getScheduleFormDefaults(),
@@ -45,7 +45,7 @@ function ScheduleFieldsHarness({
       form={form}
       showNextScheduledCopy
       canUseAdvancedSchedule={canUseAdvancedSchedule}
-      showCloudUpgradeBadge={showCloudUpgradeBadge}
+      showPremiumUpsell={showPremiumUpsell}
     />
   );
 }
@@ -108,7 +108,7 @@ describe("ScanScheduleFields", () => {
     render(
       <ScheduleFieldsHarness
         canUseAdvancedSchedule={false}
-        showCloudUpgradeBadge
+        showPremiumUpsell
       />,
     );
 

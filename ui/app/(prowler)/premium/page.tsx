@@ -1,24 +1,20 @@
 import { LockKeyhole } from "lucide-react";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
-import { PremiumCtas } from "@/components/premium/premium-ctas";
+import { PremiumComparison } from "@/app/(prowler)/premium/_components";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { PremiumCtas } from "@/components/shared/premium-ctas";
 import { isCloud } from "@/lib/shared/env";
 import {
   CLOUD_UPGRADE_FEATURE,
   CLOUD_UPGRADE_SURFACE,
 } from "@/types/cloud-upgrade";
 
-import { PremiumComparison } from "./_components/premium-comparison";
-
 export default function PremiumPage() {
-  if (isCloud()) redirect("/");
+  if (isCloud()) notFound();
 
   return (
-    <ContentLayout
-      title="Open Source, Cloud and Private Cloud"
-      icon={<LockKeyhole />}
-    >
+    <ContentLayout title="Compare editions" icon={<LockKeyhole />}>
       <div className="max-w-5xl space-y-6">
         <p className="text-text-neutral-secondary text-sm">
           All three editions run the same Prowler engine. Your Local Server

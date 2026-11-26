@@ -11,7 +11,10 @@ import {
 } from "@/components/shadcn/card/card";
 import { PremiumBadge } from "@/components/shared/premium-badge";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 const LIGHTHOUSE_EDITIONS = [
   {
@@ -61,7 +64,13 @@ export const ManagedLighthouseCallout = () => {
         <Button
           type="button"
           variant="default"
-          onClick={() => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI)}
+          onClick={(event) =>
+            openCloudUpgrade(
+              CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
+              event.currentTarget,
+              CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+            )
+          }
         >
           See Managed Lighthouse AI
         </Button>

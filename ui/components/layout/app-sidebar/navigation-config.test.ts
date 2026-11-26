@@ -61,7 +61,7 @@ describe("getNavigationConfig", () => {
     ]);
     expect(sections[2]?.premium).toBe(true);
     expect(sections[2]?.items.map((item) => item.label)).toEqual([
-      "Exploitability Issues",
+      "Exploitability issues",
       "Realtime",
       "Alerts",
       "Registry",
@@ -133,7 +133,7 @@ describe("getNavigationConfig", () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When / Then
-    expect(getItem("Exploitability Issues")).toEqual(
+    expect(getItem("Exploitability issues")).toEqual(
       expect.objectContaining({
         kind: NAVIGATION_ITEM_KIND.LINK,
         href: "/issues",

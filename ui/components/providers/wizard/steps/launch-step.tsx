@@ -367,7 +367,7 @@ export function LaunchStep({
           showLaunchInitialScan
           showNextScheduledCopy
           canUseAdvancedSchedule={isAdvanced}
-          showCloudUpgradeBadge={isDailyLegacy}
+          showPremiumUpsell={isDailyLegacy}
         />
       )}
     </div>

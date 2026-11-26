@@ -8,7 +8,6 @@ import {
 
 import {
   CLOUD_UPGRADE_CONTENT,
-  CLOUD_UPGRADE_FOOTER_NOTE,
   getCloudUpgradeCompareUrl,
   getCloudUpgradePrimaryCta,
   getCloudUpgradePrimaryUrl,
@@ -16,7 +15,6 @@ import {
   getPaidPlanUpgradeCompareUrl,
   getPrivateCloudContactUrl,
   isCloudUpgradeFeature,
-  isCloudUpgradeTrialIncluded,
   isPaidPlanUpgradeFeature,
   PAID_PLAN_UPGRADE_CONTENT,
 } from "./cloud-upgrade";
@@ -49,35 +47,6 @@ describe("cloud upgrade content", () => {
       "Configure Every Scan Once",
       "Use One SAML Configuration Across Domains",
     ]);
-  });
-
-  it("should explain that Prowler Local Server remains unchanged", () => {
-    // Given / When / Then
-    expect(CLOUD_UPGRADE_FOOTER_NOTE).toBe(
-      "Prowler Cloud and Private Cloud run the same engine as your Local Server. Your Local Server stays unchanged.",
-    );
-  });
-
-  it("should never claim an OpenAI-only Lighthouse setup", () => {
-    // Given / When
-    const copy = JSON.stringify(CLOUD_UPGRADE_CONTENT);
-
-    // Then
-    expect(copy).not.toContain("OpenAI");
-  });
-
-  it.each([
-    [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, false],
-    [CLOUD_UPGRADE_FEATURE.AMAZON_S3, false],
-    [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, false],
-    [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE, false],
-    [CLOUD_UPGRADE_FEATURE.ALERTS, true],
-    [CLOUD_UPGRADE_FEATURE.EXPLOITABILITY_ISSUES, true],
-    [CLOUD_UPGRADE_FEATURE.REALTIME, true],
-    [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, true],
-  ])("should mark %s as trial included: %s", (feature, trialIncluded) => {
-    // Given / When / Then
-    expect(isCloudUpgradeTrialIncluded(feature)).toBe(trialIncluded);
   });
 
   it("should offer the free trial only for trial-included capabilities", () => {

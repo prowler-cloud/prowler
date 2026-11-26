@@ -26,7 +26,9 @@ export type CloudUpgradeFeature =
 // Where a Local Server upgrade prompt was opened from, sent as utm_medium.
 export const CLOUD_UPGRADE_SURFACE = {
   BADGE: "badge",
+  FEATURE_CTA: "feature-cta",
   NUDGE: "nudge",
+  OVERVIEW: "overview",
   PREMIUM_PAGE: "premium-page",
   PREVIEW_PAGE: "preview-page",
   SIDEBAR: "sidebar",

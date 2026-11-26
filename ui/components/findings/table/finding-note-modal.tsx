@@ -25,7 +25,10 @@ import { UsageLimitError } from "@/lib/action-errors";
 import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -241,7 +244,11 @@ export function FindingNoteModal({
                 type="button"
                 size="sm"
                 onClick={() =>
-                  openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
+                  openCloudUpgrade(
+                    CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+                    undefined,
+                    CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+                  )
                 }
               >
                 Learn more
@@ -506,7 +513,11 @@ export function FindingNoteModal({
                   type="button"
                   size="lg"
                   onClick={() =>
-                    openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
+                    openCloudUpgrade(
+                      CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+                      undefined,
+                      CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+                    )
                   }
                 >
                   See plans

@@ -1,8 +1,8 @@
 import { Check, Minus } from "lucide-react";
 import Link from "next/link";
 
+import { PREMIUM_COMPARISON_ROWS } from "@/app/(prowler)/premium/_lib/comparison-rows";
 import { PremiumBadge } from "@/components/shared/premium-badge";
-import { PREMIUM_COMPARISON_ROWS } from "@/lib/premium";
 import { CLOUD_UPGRADE_SURFACE } from "@/types/cloud-upgrade";
 
 const EDITIONS = [

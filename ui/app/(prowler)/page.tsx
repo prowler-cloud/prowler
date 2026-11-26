@@ -10,7 +10,6 @@ import {
   APP_SIDEBAR_MODE,
   AppSidebarModeSync,
 } from "@/components/layout/app-sidebar";
-import { PremiumOverviewSlot } from "@/components/premium/premium-overview-slot";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
 import { DOCS_URLS } from "@/lib/external-urls";
@@ -23,6 +22,7 @@ import { SearchParamsProps } from "@/types";
 import { OverviewBanner } from "./_overview/_components/overview-banner";
 import { OverviewGrid } from "./_overview/_components/overview-grid";
 import { OverviewProviderContext } from "./_overview/_components/overview-provider-context";
+import { PremiumOverviewSlot } from "./_overview/_components/premium-overview-slot";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {

@@ -51,7 +51,7 @@ function getPremiumSection(pathname: string): NavigationSection {
       {
         kind: NAVIGATION_ITEM_KIND.LINK,
         href: "/issues",
-        label: "Exploitability Issues",
+        label: "Exploitability issues",
         icon: Crosshair,
         active: isRouteActive(pathname, "/issues"),
         premium: true,
