@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "intune_device_enrollment_personal_device_restricted",
+  "CheckTitle": "Default device enrollment restriction blocks personally owned devices",
+  "CheckType": [],
+  "ServiceName": "intune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The default (priority 0) Intune device platform restriction configuration should block **personally owned** devices for all platforms (**personalDeviceEnrollmentBlocked** set to true). This ensures only corporate-owned or otherwise managed devices can enroll into Intune.",
+  "Risk": "Allowing personally owned devices to enroll gives unmanaged, potentially non-compliant endpoints access to corporate resources, increasing the risk of data leakage and compromise from devices outside the organization's control.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/mem/intune/enrollment/enrollment-restrictions-set"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Intune admin center at https://intune.microsoft.com/\n2. Go to **Devices** > **Device onboarding** > **Enrollment** > **Device platform restriction**\n3. Open the **Default** priority policy > **All Users** > **Properties**\n4. Set every platform to **Block** in the **Personally owned** column\n5. Save the changes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Block personally owned device enrollment for all platforms in the default enrollment platform restriction so only corporate-owned devices can enroll into Intune.",
+      "Url": "https://hub.prowler.com/check/intune_device_enrollment_personal_device_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
