@@ -1,6 +1,6 @@
 import { toLocalDateString } from "@/lib/date-utils";
 
-export const POSTURE_CHANGE_DEFAULT_DAYS = 30;
+const POSTURE_CHANGE_DEFAULT_DAYS = 30;
 // Mirrors the API cap so the modal rejects what the API would 400.
 export const POSTURE_CHANGE_MAX_DAYS = 366;
 

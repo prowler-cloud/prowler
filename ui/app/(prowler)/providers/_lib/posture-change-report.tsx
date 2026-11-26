@@ -7,9 +7,7 @@ import type { TaskKindHandler } from "@/store/task-watcher/store";
 import { getPostureChangeReportBinary } from "../_actions/posture-change-report";
 
 export const POSTURE_CHANGE_REPORT_TASK_KIND = "posture-change-report";
-export const downloadPostureChangeReport = async (
-  taskId: string,
-): Promise<void> => {
+const downloadPostureChangeReport = async (taskId: string): Promise<void> => {
   try {
     const result = await getPostureChangeReportBinary(taskId);
     await downloadFile(

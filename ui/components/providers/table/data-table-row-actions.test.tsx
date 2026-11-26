@@ -119,25 +119,6 @@ vi.mock("../scan-config/manage-scan-config-modal", () => ({
     ) : null,
 }));
 
-vi.mock(
-  "@/app/(prowler)/providers/_components/posture-change-report-modal",
-  () => ({
-    PostureChangeReportModal: ({
-      open,
-      providerId,
-    }: {
-      open: boolean;
-      providerId: string;
-    }) =>
-      open ? (
-        <div
-          data-testid="posture-change-report-modal"
-          data-provider-id={providerId}
-        />
-      ) : null,
-  }),
-);
-
 vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
   EDIT_SCAN_SCHEDULE_STATE: {
     LOADING: "loading",
@@ -594,43 +575,6 @@ describe("DataTableRowActions", () => {
     expect(screen.getByTestId("manage-scan-config-modal")).toHaveAttribute(
       "data-current-config-id",
       "config-1",
-    );
-  });
-
-  it("offers the posture change report only in Prowler Cloud", async () => {
-    // Given
-    const user = userEvent.setup();
-    const renderRow = () =>
-      render(
-        <DataTableRowActions
-          row={createRow(true)}
-          hasSelection={false}
-          isRowSelected={false}
-          testableProviderIds={[]}
-          onClearSelection={vi.fn()}
-          onOpenProviderWizard={vi.fn()}
-          onOpenOrganizationWizard={vi.fn()}
-        />,
-      );
-
-    // When self-hosted
-    const selfHosted = renderRow();
-    await user.click(screen.getByRole("button"));
-
-    // Then
-    expect(screen.queryByText("Posture Change Report")).not.toBeInTheDocument();
-    selfHosted.unmount();
-
-    // When in Prowler Cloud
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    renderRow();
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Posture Change Report"));
-
-    // Then
-    expect(screen.getByTestId("posture-change-report-modal")).toHaveAttribute(
-      "data-provider-id",
-      createRow(true).original.id,
     );
   });
 

@@ -4,6 +4,7 @@ import { Info } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { PostureChangeReportButton } from "@/app/(prowler)/providers/_components/posture-change-report-button";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { NoProvidersAdded } from "@/components/providers/no-providers-added";
@@ -195,6 +196,16 @@ export function ProvidersAccountsView({
             actions={
               <>
                 <MutedFindingsConfigButton />
+                {isCloud && (
+                  <PostureChangeReportButton
+                    providers={providers.map((provider) => ({
+                      id: provider.id,
+                      label: provider.attributes.alias
+                        ? `${provider.attributes.alias} (${provider.attributes.uid})`
+                        : provider.attributes.uid,
+                    }))}
+                  />
+                )}
                 <AddProviderButton
                   onOpenWizard={() =>
                     openProviderWizard(WIZARD_OPEN_SOURCE.PAGE_BUTTON)

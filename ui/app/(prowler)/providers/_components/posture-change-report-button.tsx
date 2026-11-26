@@ -1,9 +1,11 @@
 "use client";
 
+import { FileChartLine } from "lucide-react";
 import { useState } from "react";
 
-import { Label } from "@/components/shadcn";
+import { Button, Label } from "@/components/shadcn";
 import { Calendar } from "@/components/shadcn/calendar";
+import { Combobox } from "@/components/shadcn/combobox";
 import { FormButtons } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal";
@@ -29,45 +31,51 @@ import {
 } from "../_lib/posture-change-period";
 import { POSTURE_CHANGE_REPORT_TASK_KIND } from "../_lib/posture-change-report";
 
-interface PostureChangeReportModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  providerId: string;
-  providerLabel: string;
+export interface PostureChangeProviderOption {
+  id: string;
+  label: string;
 }
 
-export const PostureChangeReportModal = ({
-  open,
-  onOpenChange,
-  providerId,
-  providerLabel,
-}: PostureChangeReportModalProps) => (
-  <Modal
-    open={open}
-    onOpenChange={onOpenChange}
-    title="Generate Posture Change Report"
-    description={`A PDF with how findings, inventory and compliance changed for ${providerLabel} between two dates (UTC).`}
-    size="xl"
-  >
-    {open && (
-      <PostureChangeReportForm
-        providerId={providerId}
-        providerLabel={providerLabel}
-        onClose={() => onOpenChange(false)}
-      />
-    )}
-  </Modal>
-);
+export const PostureChangeReportButton = ({
+  providers,
+}: {
+  providers: PostureChangeProviderOption[];
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <FileChartLine size={20} />
+        Posture Change Report
+      </Button>
+      <Modal
+        open={open}
+        onOpenChange={setOpen}
+        title="Generate Posture Change Report"
+        description="A PDF with how findings, inventory and compliance changed for one provider between two dates (UTC)."
+        size="xl"
+      >
+        {open && (
+          <PostureChangeReportForm
+            providers={providers}
+            onClose={() => setOpen(false)}
+          />
+        )}
+      </Modal>
+    </>
+  );
+};
 
 const PostureChangeReportForm = ({
-  providerId,
-  providerLabel,
+  providers,
   onClose,
 }: {
-  providerId: string;
-  providerLabel: string;
+  providers: PostureChangeProviderOption[];
   onClose: () => void;
 }) => {
+  const [providerId, setProviderId] = useState("");
+  const provider = providers.find((option) => option.id === providerId);
   const [today] = useState(() => utcToday(new Date()));
   const [period, setPeriod] = useState<PostureChangePeriod | undefined>(() =>
     defaultPostureChangePeriod(today),
@@ -81,7 +89,7 @@ const PostureChangeReportForm = ({
   const periodError = "error" in validation ? validation.error : null;
 
   const handleSubmit = async () => {
-    if ("error" in validation) return;
+    if ("error" in validation || !provider) return;
     setSubmitting(true);
     try {
       const result = await generatePostureChangeReport({
@@ -109,7 +117,7 @@ const PostureChangeReportForm = ({
         kind: POSTURE_CHANGE_REPORT_TASK_KIND,
         meta: {
           providerId,
-          reportLabel: reportName.trim() || providerLabel,
+          reportLabel: reportName.trim() || provider.label,
         },
       });
     } catch {
@@ -131,6 +139,24 @@ const PostureChangeReportForm = ({
       }}
       className="flex flex-col gap-6"
     >
+      <div className="flex flex-col gap-2">
+        <Label>Provider</Label>
+        <Combobox
+          value={provider?.label ?? ""}
+          onValueChange={(label) =>
+            setProviderId(
+              providers.find((option) => option.label === label)?.id ?? "",
+            )
+          }
+          options={providers.map((option) => ({
+            value: option.label,
+            label: option.label,
+          }))}
+          placeholder="Select a provider"
+          searchPlaceholder="Search by alias or UID..."
+          emptyMessage="No provider found."
+        />
+      </div>
       <div className="flex flex-col gap-2">
         <Label>Period</Label>
         <Calendar
@@ -183,7 +209,7 @@ const PostureChangeReportForm = ({
         onCancel={onClose}
         submitText="Generate"
         loadingText="Starting..."
-        isDisabled={submitting || Boolean(periodError)}
+        isDisabled={submitting || !provider || Boolean(periodError)}
       />
     </form>
   );
