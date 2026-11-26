@@ -1,0 +1,43 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_pim_tier0_roles_no_permanent_active_assignments",
+  "CheckTitle": "PIM just-in-time activation protects Tier 0 roles from standing privileged access",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Tier 0 (Control Plane) directory role assignments for users and groups are evaluated for **standing active assignments** versus **PIM just-in-time activations**. Standing assignments grant continuous privileged access without activation controls, while PIM eligible assignments enforce time-limited access with MFA, approval, and audit trails.",
+  "Risk": "A standing Tier 0 assignment gives full privileges continuously. If the account is **phished or its token stolen**, the attacker gains tenant-takeover permissions immediately, with no activation step, no MFA at elevation time, no approval, and no time limit. Standing assignments also indicate possible **attacker persistence**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-configure-security-alerts",
+    "https://learn.microsoft.com/en-us/graph/api/rbacapplication-list-roleassignmentscheduleinstances?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **ID Governance** > **Privileged Identity Management** > **Microsoft Entra roles** > **Roles**\n3. Select the Tier 0 role (e.g. Global Administrator) > **Active assignments**\n4. Click **Update** on the standing assignment > set **Assignment type** to **Eligible** > **Save** (or **Remove** the assignment)\n5. Configure the role setting to disallow permanent active assignments",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Convert all standing Tier 0 role assignments to **PIM eligible** assignments so that administrators must **activate** the role with MFA, approval, and a time limit before using privileged access. Keep no more than two cloud-only **break-glass** accounts with a permanent Global Administrator assignment.",
+      "Url": "https://hub.prowler.com/check/entra_pim_tier0_roles_no_permanent_active_assignments"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_pim_global_administrator_approval_required",
+    "entra_pim_privileged_role_administrator_approval_required",
+    "entra_service_principal_no_secrets_for_permanent_tier0_roles"
+  ],
+  "Notes": "Requires Microsoft Entra ID P2 or Entra ID Governance licence for PIM. Without PIM the check returns MANUAL. Directory Synchronization Accounts role is excluded because Entra Connect/Cloud Sync service accounts must hold it permanently. Service principals are out of scope. This check implements the intent of Maester MT.1031 and CIS Microsoft 365 Foundations v7.0 requirement 5.3.1 using v1.0 roleAssignmentScheduleInstances data."
+}
