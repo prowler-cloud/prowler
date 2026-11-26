@@ -79,13 +79,13 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
 </Warning>
 
-### Automated Setup With a Script (Optional)
+### Automated Setup with a Script (Optional)
 
 <VersionBadge version="5.52.0" />
 
 As an alternative to the manual steps in [Step-by-Step Permission Assignment](#step-by-step-permission-assignment), the Prowler repository includes a script that creates the application registration and assigns every permission in one run: [`permissions/prowler-azure-m365-scan-identity.sh`](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-m365-scan-identity.sh).
 
-The script is a single Bash file that only calls the Azure CLI. It uses the cloud and tenant the Azure CLI is signed in to; no endpoint is hardcoded, and each permission is looked up by name in that cloud. An administrator of the tenant runs it; Prowler never receives administrator access.
+The script is a single Bash file that only calls the Azure CLI. It uses the cloud and tenant the Azure CLI is signed in to. No endpoint is hardcoded, and the script looks up each permission by name in that cloud. A tenant administrator runs the script. Prowler never receives administrator access.
 
 #### What the Script Creates
 

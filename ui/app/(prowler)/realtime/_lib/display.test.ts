@@ -88,6 +88,10 @@ describe("realtime display helpers", () => {
   it("names detection verdicts", () => {
     expect(detectionStatusBadge("violation").tone).toBe("error");
     expect(detectionStatusBadge("compliant").tone).toBe("success");
+    expect(detectionStatusBadge("fixed")).toEqual({
+      label: "Fixed and verified",
+      tone: "success",
+    });
     expect(detectionStatusBadge("out_of_scope").label).toBe("Out of scope");
   });
 

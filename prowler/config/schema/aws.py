@@ -199,6 +199,13 @@ class AWSProviderConfig(ProviderConfigBase):
             "(SageMaker tokens are usually high-privilege over S3/KMS)."
         ),
     )
+    iam_github_oidc_allowed_owners: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "GitHub repository owners allowed by the GitHub Actions OIDC trust check. "
+            "An empty list disables the allowlist."
+        ),
+    )
 
     # --- EC2 ---------------------------------------------------------------
     shodan_api_key: Optional[str] = Field(

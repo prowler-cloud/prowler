@@ -28,18 +28,19 @@ class ServiceCatalog(AWSService):
     def _list_portfolios(self, regional_client):
         logger.info("ServiceCatalog - listing portfolios...")
         try:
-            response = regional_client.list_portfolios()
-            for portfolio in response["PortfolioDetails"]:
-                portfolio_arn = portfolio["ARN"]
-                if not self.audit_resources or (
-                    is_resource_filtered(portfolio_arn, self.audit_resources)
-                ):
-                    self.portfolios[portfolio_arn] = Portfolio(
-                        arn=portfolio_arn,
-                        id=portfolio["Id"],
-                        name=portfolio["DisplayName"],
-                        region=regional_client.region,
-                    )
+            paginator = regional_client.get_paginator("list_portfolios")
+            for page in paginator.paginate():
+                for portfolio in page["PortfolioDetails"]:
+                    portfolio_arn = portfolio["ARN"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(portfolio_arn, self.audit_resources)
+                    ):
+                        self.portfolios[portfolio_arn] = Portfolio(
+                            arn=portfolio_arn,
+                            id=portfolio["Id"],
+                            name=portfolio["DisplayName"],
+                            region=regional_client.region,
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

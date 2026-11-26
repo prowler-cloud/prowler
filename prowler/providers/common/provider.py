@@ -408,6 +408,12 @@ class Provider(ABC):
                         managed_identity_auth=arguments.managed_identity_auth,
                         tenant_id=arguments.tenant_id,
                         region=arguments.azure_region,
+                        region_endpoints={
+                            "authority_host": arguments.azure_authority_host,
+                            "resource_manager": arguments.azure_resource_manager_endpoint,
+                            "graph": arguments.azure_graph_endpoint,
+                            "logs": arguments.azure_logs_endpoint,
+                        },
                         subscription_ids=arguments.subscription_id,
                         resource_groups=arguments.resource_groups,
                         config_path=arguments.config_file,

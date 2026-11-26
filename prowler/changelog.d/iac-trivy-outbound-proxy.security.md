@@ -1,1 +1,0 @@
-IaC scans in Prowler App route Trivy through the outbound host proxy, so Terraform module sources resolving to non-public addresses are rejected, git modules are fetched only over http and https, and Trivy no longer receives the worker's cloud credentials

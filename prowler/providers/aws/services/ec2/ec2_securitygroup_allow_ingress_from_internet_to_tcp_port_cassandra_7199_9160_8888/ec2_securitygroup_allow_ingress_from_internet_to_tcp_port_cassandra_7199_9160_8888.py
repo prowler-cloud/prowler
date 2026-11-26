@@ -34,7 +34,11 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9
                     # Loop through every security group's ingress rule and check it
                     for ingress_rule in security_group.ingress_rules:
                         if check_security_group(
-                            ingress_rule, "tcp", check_ports, any_address=True
+                            ingress_rule,
+                            "tcp",
+                            check_ports,
+                            any_address=True,
+                            prefix_lists=ec2_client.managed_prefix_lists,
                         ):
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has Casandra ports 7199, 8888 and 9160 open to the Internet."
