@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -25,9 +26,18 @@ vi.mock("@/components/filters/provider-group-selector", () => ({
   ProviderGroupSelector: () => null,
 }));
 vi.mock("@/components/shadcn/content-layout", () => ({
-  ContentLayout: () => null,
+  ContentLayout: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+vi.mock("@/components/shared/premium-preview-page", () => ({
+  PremiumPreviewPage: () => <section data-testid="premium-preview" />,
 }));
 vi.mock("./_components/issues-list", () => ({ IssuesList: () => null }));
+vi.mock("./_components/issues-preview-hook", () => ({
+  IssuesPreviewHook: () => null,
+  IssuesPreviewHookSkeleton: () => null,
+}));
 vi.mock("@/components/shared/sample-preview/sample-preview-banner", () => ({
   SamplePreviewBanner: () => null,
 }));
@@ -43,13 +53,18 @@ describe("Issues deployment availability", () => {
     getAllProviderGroups.mockResolvedValue({ data: [] });
     getSamplePreviewState.mockResolvedValue({ active: false });
   });
-  it("returns not found before loading data in Local Server", async () => {
+  it("renders the premium preview without Cloud data in Local Server", async () => {
+    // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    await expect(Issues({ searchParams: Promise.resolve({}) })).rejects.toThrow(
-      "NOT_FOUND",
-    );
+
+    // When
+    render(await Issues({ searchParams: Promise.resolve({}) }));
+
+    // Then
+    expect(screen.getByTestId("premium-preview")).toBeInTheDocument();
     expect(getAllProviders).not.toHaveBeenCalled();
     expect(getAllProviderGroups).not.toHaveBeenCalled();
+    expect(getSamplePreviewState).not.toHaveBeenCalled();
   });
   it("loads the scope controls in Cloud deployments", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

@@ -108,7 +108,7 @@ describe("S3IntegrationsManager", () => {
     render(<S3IntegrationsManager integrations={[]} providers={[]} />);
 
     // Then
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
   });
 
   it("keeps existing integrations deletable on Local Server", async () => {

@@ -22,6 +22,7 @@ import { SearchParamsProps } from "@/types";
 import { OverviewBanner } from "./_overview/_components/overview-banner";
 import { OverviewGrid } from "./_overview/_components/overview-grid";
 import { OverviewProviderContext } from "./_overview/_components/overview-provider-context";
+import { PremiumOverviewSlot } from "./_overview/_components/premium-overview-slot";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {
@@ -102,8 +103,6 @@ export default async function Home({
         providers={providersData?.data ?? []}
         groups={providerGroupsData?.data ?? []}
       />
-      {/* Agents banner shows everywhere; Lighthouse is Cloud-only, so on a
-          local server the agents banner is the only child and fills the row. */}
       <div className="mb-6 flex flex-col gap-6 lg:flex-row">
         {lighthouseBannerHref ? (
           <div className="min-w-0 lg:flex-1">
@@ -138,7 +137,13 @@ export default async function Home({
             <Suspense fallback={<ExploitabilityChartSkeleton />}>
               <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
             </Suspense>
-          ) : undefined
+          ) : (
+            <PremiumOverviewSlot
+              title="Exploitability"
+              description="Exploitability Issues groups your failed findings into attack patterns ranked by how exploitable they are."
+              className="min-h-[372px] w-full min-w-0"
+            />
+          )
         }
         checkFindings={
           <Suspense fallback={<StatusChartSkeleton />}>
@@ -175,7 +180,13 @@ export default async function Home({
             <Suspense fallback={<TopIssuesSkeleton />}>
               <TopIssuesSSR searchParams={resolvedSearchParams} />
             </Suspense>
-          ) : undefined
+          ) : (
+            <PremiumOverviewSlot
+              title="Top Issues"
+              description="See the issues an attacker would chain first, including emerging threats."
+              className="w-full"
+            />
+          )
         }
         severityOverTime={
           <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>

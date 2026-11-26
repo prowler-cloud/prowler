@@ -34,6 +34,8 @@ export interface NavigationLink extends NavigationLabel {
   icon: IconComponent;
   active?: boolean;
   highlight?: boolean;
+  // Local Server preview of a Cloud & Private Cloud capability.
+  premium?: boolean;
   target?: string;
   tooltip?: string;
 }
@@ -72,6 +74,7 @@ export type NavigationItem =
 
 export interface NavigationSection {
   label?: string;
+  premium?: boolean;
   items: NavigationItem[];
 }
 

@@ -12,7 +12,10 @@ describe("S3IntegrationCard", () => {
     render(<S3IntegrationCard />);
 
     // Then
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
+    expect(
+      screen.getByText(/Existing S3 integrations keep working/),
+    ).toBeVisible();
     expect(screen.getByRole("link", { name: /Manage/ })).toHaveAttribute(
       "href",
       "/integrations/amazon-s3",

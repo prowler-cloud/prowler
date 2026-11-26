@@ -23,9 +23,9 @@ import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { CustomInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Form, FormButtons } from "@/components/shadcn/form";
+import { PremiumBadge } from "@/components/shared/premium-badge";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
-import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   getSamlConfigFormSchema,
@@ -158,9 +158,6 @@ export const SamlConfigForm = ({
   const activeFileReaderRef = useRef<FileReader | null>(null);
   const { toast } = useToast();
   const isCloudEnv = isCloud();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (storeState) => storeState.openCloudUpgrade,
-  );
   const additionalDomainsError =
     form.formState.errors.additional_email_domains?.message;
 
@@ -452,17 +449,10 @@ export const SamlConfigForm = ({
                 {MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} domains
               </span>
             ) : (
-              <Button
-                type="button"
-                variant="bare"
-                size="link-sm"
-                aria-label="Additional email domains are available in Prowler Cloud"
-                onClick={() =>
-                  openCloudUpgrade(CLOUD_UPGRADE_FEATURE.SAML_DOMAINS)
-                }
-              >
-                <Badge variant="cloud">Available in Prowler Cloud</Badge>
-              </Button>
+              <PremiumBadge
+                feature={CLOUD_UPGRADE_FEATURE.SAML_DOMAINS}
+                compact
+              />
             )}
           </div>
           <p className="text-text-neutral-tertiary text-xs">

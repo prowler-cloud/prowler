@@ -154,7 +154,7 @@ it("should open finding triage upgrade from a Cloud-only status cell", async () 
   // When
   await user.click(
     screen.getByRole("button", {
-      name: "Change triage status - available in Prowler Cloud",
+      name: "Change triage status - premium feature in Prowler Cloud and Private Cloud",
     }),
   );
 
@@ -178,7 +178,7 @@ it("should render the Cloud-only triage action with the shared button", () => {
   // Then
   expect(
     screen.getByRole("button", {
-      name: "Change triage status - available in Prowler Cloud",
+      name: "Change triage status - premium feature in Prowler Cloud and Private Cloud",
     }),
   ).toHaveAttribute("data-slot", "button");
 });
@@ -959,7 +959,7 @@ describe("finding triage cells", () => {
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
     const saveUpgrade = screen.getByRole("button", {
-      name: "Save - available in Prowler Cloud",
+      name: "See plans",
     });
     expect(saveUpgrade).not.toBeDisabled();
 
