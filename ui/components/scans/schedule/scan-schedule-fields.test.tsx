@@ -31,10 +31,10 @@ beforeAll(() => {
 
 function ScheduleFieldsHarness({
   canUseAdvancedSchedule = true,
-  showCloudUpgradeBadge = false,
+  showPremiumUpsell = false,
 }: {
   canUseAdvancedSchedule?: boolean;
-  showCloudUpgradeBadge?: boolean;
+  showPremiumUpsell?: boolean;
 } = {}) {
   const form = useForm<ScheduleFormValues>({
     defaultValues: getScheduleFormDefaults(),
@@ -45,7 +45,7 @@ function ScheduleFieldsHarness({
       form={form}
       showNextScheduledCopy
       canUseAdvancedSchedule={canUseAdvancedSchedule}
-      showCloudUpgradeBadge={showCloudUpgradeBadge}
+      showPremiumUpsell={showPremiumUpsell}
     />
   );
 }
@@ -102,34 +102,27 @@ describe("ScanScheduleFields", () => {
     );
   });
 
-  it("opens advanced scheduling from the Cloud badge when controls are locked", async () => {
+  it("opens advanced scheduling from the premium badge when controls are locked", async () => {
     // Given
     const user = userEvent.setup();
     render(
       <ScheduleFieldsHarness
         canUseAdvancedSchedule={false}
-        showCloudUpgradeBadge
+        showPremiumUpsell
       />,
     );
 
     // Then
-    expect(screen.getAllByText("Cloud")).toHaveLength(1);
+    expect(screen.getAllByText("Premium")).toHaveLength(1);
     expect(screen.getByText("Scan Schedule").parentElement).toHaveTextContent(
-      "Cloud",
+      "Premium",
     );
-    expect(screen.getByText("Scan Time").parentElement).not.toHaveTextContent(
-      "Cloud",
-    );
-    expect(screen.getByText("Repeats").parentElement).not.toHaveTextContent(
-      "Cloud",
-    );
+    expect(
+      screen.getByText(/Local Server runs one daily scan at a fixed time/),
+    ).toBeVisible();
 
     // When
-    await user.click(
-      screen.getByRole("button", {
-        name: "Explore advanced scheduling in Prowler Cloud",
-      }),
-    );
+    await user.click(screen.getByRole("button", { name: /Premium feature/ }));
 
     // Then
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(

@@ -18,9 +18,9 @@ import {
   CardContent,
   CardHeader,
 } from "@/components/shadcn";
-import { Badge } from "@/components/shadcn/badge/badge";
 import { Modal } from "@/components/shadcn/modal";
 import { DataTablePagination } from "@/components/shadcn/table/data-table-pagination";
+import { PremiumBadge } from "@/components/shared/premium-badge";
 import {
   executeIntegrationConnectionTest,
   triggerTestConnectionWithDelay,
@@ -304,9 +304,10 @@ export const S3IntegrationsManager = ({
                 Configured S3 Integrations
               </h3>
               {!canAddIntegrations && (
-                <Badge variant="cloud" size="sm">
-                  Cloud
-                </Badge>
+                <PremiumBadge
+                  feature={CLOUD_UPGRADE_FEATURE.AMAZON_S3}
+                  compact
+                />
               )}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-300">

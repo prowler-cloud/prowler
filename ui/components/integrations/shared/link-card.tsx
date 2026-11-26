@@ -2,6 +2,7 @@
 
 import { ExternalLinkIcon, LucideIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
@@ -9,6 +10,7 @@ import { CustomLink } from "@/components/shadcn/custom/custom-link";
 interface LinkCardProps {
   icon: LucideIcon;
   title: string;
+  titleBadge?: ReactNode;
   description: string;
   learnMoreUrl: string;
   learnMoreAriaLabel: string;
@@ -20,6 +22,7 @@ interface LinkCardProps {
 export const LinkCard = ({
   icon: Icon,
   title,
+  titleBadge,
   description,
   learnMoreUrl,
   learnMoreAriaLabel,
@@ -36,9 +39,12 @@ export const LinkCard = ({
               <Icon size={24} className="text-gray-700 dark:text-gray-200" />
             </div>
             <div className="flex flex-col gap-1">
-              <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                {title}
-              </h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {title}
+                </h4>
+                {titleBadge}
+              </div>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                 <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   {description}

@@ -1,16 +1,19 @@
 "use client";
 
-import { Check, Cloud } from "lucide-react";
+import { Check, Cloud, LockKeyhole, type LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Modal } from "@/components/shadcn/modal";
 import { useAuth } from "@/hooks/use-auth";
 import {
+  CLOUD_UPGRADE_COMPARE_CTA,
   CLOUD_UPGRADE_CONTENT,
   CLOUD_UPGRADE_FOOTER_NOTE,
+  CLOUD_UPGRADE_SALES_CTA,
   CLOUD_UPGRADE_SECONDARY_CTA,
   getCloudUpgradeCompareUrl,
+  getCloudUpgradePrimaryCta,
   getCloudUpgradePrimaryUrl,
   getPaidPlanUpgradeBillingHref,
   getPaidPlanUpgradeCompareUrl,
@@ -19,11 +22,14 @@ import {
   PAID_PLAN_UPGRADE_ADMIN_NOTE,
   PAID_PLAN_UPGRADE_BADGE,
   PAID_PLAN_UPGRADE_CONTENT,
+  PREMIUM_BADGE_LABEL,
+  getPrivateCloudContactUrl,
 } from "@/lib/cloud-upgrade";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import type {
   CloudUpgradeFeature,
+  CloudUpgradeSurface,
   PaidPlanUpgradeFeature,
 } from "@/types/cloud-upgrade";
 
@@ -48,9 +54,12 @@ interface UpgradeModalLayoutProps extends UpgradeModalVariantProps {
   title: string;
   description: string;
   badge: string;
+  icon?: LucideIcon;
   benefits: readonly string[];
   primaryCta?: UpgradeModalCta;
   secondaryCta: UpgradeModalCta;
+  ctaNote?: string;
+  compareCta?: UpgradeModalCta;
   footerNote?: string;
 }
 
@@ -85,9 +94,12 @@ const UpgradeModalLayout = ({
   title,
   description,
   badge,
+  icon: Icon = Cloud,
   benefits,
   primaryCta,
   secondaryCta,
+  ctaNote,
+  compareCta,
   footerNote,
 }: UpgradeModalLayoutProps) => (
   <Modal
@@ -105,7 +117,7 @@ const UpgradeModalLayout = ({
     <div className="min-w-0 space-y-6">
       <div className="flex items-center gap-3">
         <div className="bg-bg-neutral-tertiary text-text-neutral-primary flex size-10 items-center justify-center rounded-xl">
-          <Cloud aria-hidden="true" className="size-5" />
+          <Icon aria-hidden="true" className="size-5" />
         </div>
         <Badge variant="cloud">{badge}</Badge>
       </div>
@@ -130,6 +142,23 @@ const UpgradeModalLayout = ({
         <UpgradeModalLink cta={secondaryCta} isSecondary />
       </div>
 
+      {(ctaNote || compareCta) && (
+        <p className="text-text-neutral-secondary text-center text-xs">
+          {ctaNote}
+          {ctaNote && compareCta && " "}
+          {compareCta && (
+            <a
+              href={compareCta.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-neutral-primary underline underline-offset-2"
+            >
+              {compareCta.label}
+            </a>
+          )}
+        </p>
+      )}
+
       {footerNote && (
         <p className="text-text-neutral-tertiary text-center text-xs">
           {footerNote}
@@ -141,31 +170,45 @@ const UpgradeModalLayout = ({
 
 interface LocalServerUpgradeModalProps extends UpgradeModalVariantProps {
   feature: CloudUpgradeFeature;
+  surface: CloudUpgradeSurface;
 }
 
 const LocalServerUpgradeModal = ({
   feature,
+  surface,
   ...modalProps
 }: LocalServerUpgradeModalProps) => {
   const content = CLOUD_UPGRADE_CONTENT[feature];
+  const primaryCta = getCloudUpgradePrimaryCta(feature);
 
   return (
     <UpgradeModalLayout
       {...modalProps}
       title={content.title}
       description={content.description}
-      badge="Available in Prowler Cloud"
+      badge={PREMIUM_BADGE_LABEL}
+      icon={LockKeyhole}
       benefits={content.benefits}
       primaryCta={{
-        label: content.primaryCta,
-        href: getCloudUpgradePrimaryUrl(feature),
+        label: primaryCta.label,
+        href: getCloudUpgradePrimaryUrl(feature, surface),
         opensInNewTab: true,
       }}
       secondaryCta={{
-        label: CLOUD_UPGRADE_SECONDARY_CTA,
-        href: getCloudUpgradeCompareUrl(feature),
+        label: CLOUD_UPGRADE_SALES_CTA,
+        href: getPrivateCloudContactUrl(feature, surface),
         opensInNewTab: true,
       }}
+      ctaNote={primaryCta.note}
+      compareCta={
+        content.trialIncluded
+          ? {
+              label: CLOUD_UPGRADE_COMPARE_CTA,
+              href: getCloudUpgradeCompareUrl(feature, surface),
+              opensInNewTab: true,
+            }
+          : undefined
+      }
       footerNote={CLOUD_UPGRADE_FOOTER_NOTE}
     />
   );
@@ -221,6 +264,7 @@ export const CloudUpgradeModal = () => {
   const returnFocusElement = useCloudUpgradeStore(
     (state) => state.returnFocusElement,
   );
+  const surface = useCloudUpgradeStore((state) => state.surface);
 
   const feature = activeFeature ?? retainedFeature;
   const modalProps = {
@@ -237,6 +281,10 @@ export const CloudUpgradeModal = () => {
   }
 
   return isCloudUpgradeFeature(feature) ? (
-    <LocalServerUpgradeModal feature={feature} {...modalProps} />
+    <LocalServerUpgradeModal
+      feature={feature}
+      surface={surface}
+      {...modalProps}
+    />
   ) : null;
 };

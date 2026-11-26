@@ -5,9 +5,10 @@ import Link from "next/link";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
-import { Badge } from "@/components/shadcn/badge/badge";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { PremiumBadge } from "@/components/shared/premium-badge";
 import { isCloud } from "@/lib/shared/env";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 export const S3IntegrationCard = () => {
   // Adding S3 integrations needs Prowler Cloud; existing ones stay manageable.
@@ -25,14 +26,16 @@ export const S3IntegrationCard = () => {
                   Amazon S3
                 </h4>
                 {isCloudOnly && (
-                  <Badge variant="cloud" size="sm">
-                    Cloud
-                  </Badge>
+                  <PremiumBadge
+                    feature={CLOUD_UPGRADE_FEATURE.AMAZON_S3}
+                    compact
+                  />
                 )}
               </div>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                 <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Export security findings to Amazon S3 buckets.
+                  {isCloudOnly && " Existing S3 integrations keep working."}
                 </p>
                 <CustomLink
                   href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/"

@@ -8,6 +8,10 @@ import {
   CROSS_PROVIDER_PDF_TASK_KIND,
   crossProviderPdfHandler,
 } from "@/app/(prowler)/compliance/_lib/cross-provider-pdf";
+import {
+  POSTURE_CHANGE_REPORT_TASK_KIND,
+  postureChangeReportHandler,
+} from "@/app/(prowler)/providers/_lib/posture-change-report";
 import { jiraDispatchTaskHandler } from "@/components/findings/jira-dispatch-task-handler";
 import { integrationConnectionTaskHandler } from "@/components/integrations/integration-connection-task-handler";
 import { registryArtifactTaskHandler } from "@/components/registry/registry-artifact-task-handler";
@@ -29,6 +33,10 @@ import {
 // …) is one line here plus a handler next to the feature that owns it.
 registerTaskKindHandler(CROSS_PROVIDER_PDF_TASK_KIND, crossProviderPdfHandler);
 registerTaskKindHandler(CROSS_ACCOUNT_PDF_TASK_KIND, crossAccountPdfHandler);
+registerTaskKindHandler(
+  POSTURE_CHANGE_REPORT_TASK_KIND,
+  postureChangeReportHandler,
+);
 registerTaskKindHandler(JIRA_DISPATCH_TASK_KIND, jiraDispatchTaskHandler);
 registerTaskKindHandler(
   REGISTRY_ARTIFACT_TASK_KIND,

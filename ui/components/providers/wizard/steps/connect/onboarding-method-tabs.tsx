@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/shadcn/badge/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/shadcn/tabs/tabs";
+import { PremiumTag } from "@/components/shared/premium-badge";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import {
@@ -91,13 +91,7 @@ export function OnboardingMethodTabs({
         </TabsTrigger>
         <TabsTrigger
           value={ONBOARDING_METHOD.ORGANIZATION}
-          adornment={
-            !isCloudEnv && (
-              <Badge variant="cloud" size="sm">
-                Cloud
-              </Badge>
-            )
-          }
+          adornment={!isCloudEnv && <PremiumTag compact />}
         >
           {copy.organization}
         </TabsTrigger>

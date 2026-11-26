@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { FileText, Radar, Settings, ShieldCheck } from "lucide-react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 import { SidebarNavigation } from "./sidebar-navigation";
 import { NAVIGATION_ITEM_KIND, type NavigationSection } from "./types";
@@ -182,8 +185,9 @@ describe("SidebarNavigation", () => {
     expect(openCloudUpgradeMock).toHaveBeenCalledWith(
       CLOUD_UPGRADE_FEATURE.ALERTS,
       returnFocusElement,
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
     );
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
     expect(screen.getByRole("link", { name: "Documentation" })).toHaveAttribute(
       "target",
       "_blank",
@@ -203,7 +207,8 @@ describe("SidebarNavigation", () => {
       <SidebarNavigation
         sections={[
           {
-            label: "SECURITY",
+            label: "PREMIUM",
+            premium: true,
             items: [
               {
                 kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
@@ -226,8 +231,8 @@ describe("SidebarNavigation", () => {
     expect(openCloudUpgradeMock).toHaveBeenCalledWith(
       CLOUD_UPGRADE_FEATURE.REALTIME,
       returnFocusElement,
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
     );
-    expect(realtime).toHaveTextContent("Cloud");
     expect(
       screen.queryByRole("link", { name: /realtime/i }),
     ).not.toBeInTheDocument();

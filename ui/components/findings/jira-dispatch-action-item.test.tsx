@@ -68,13 +68,15 @@ describe("JiraDispatchActionItem", () => {
     await user.click(screen.getByRole("button", { name: "Actions" }));
     const jiraAction = screen.getByRole("menuitem", { name: "Send to Jira" });
     expect(
-      within(jiraAction).queryByText("Available only in Prowler Cloud"),
+      within(jiraAction).queryByText(
+        "Premium feature. Click to see what it does in Prowler Cloud and Private Cloud.",
+      ),
     ).not.toBeInTheDocument();
     await user.hover(jiraAction);
 
     // Then
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Available only in Prowler Cloud",
+      "Premium feature. Click to see what it does in Prowler Cloud and Private Cloud.",
     );
 
     // When

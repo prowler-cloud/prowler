@@ -2,8 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { useScansStore } from "@/store";
+import { useCloudUpgradeStore, useScansStore } from "@/store";
 import { ProviderProps } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { ScansPageShell } from "./scans-page-shell";
 
@@ -260,7 +261,7 @@ describe("ScansPageShell", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("hides Import Findings in OSS and Local Server", () => {
+  it("offers Import Findings as a premium upgrade in Local Server", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -275,9 +276,17 @@ describe("ScansPageShell", () => {
       </ScansPageShell>,
     );
 
+    // When
+    await userEvent.click(
+      screen.getByRole("button", { name: /import findings/i }),
+    );
+
     // Then
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+    );
     expect(
-      screen.queryByRole("button", { name: /import findings/i }),
+      screen.queryByText(/Upload a Prowler OCSF/i),
     ).not.toBeInTheDocument();
   });
 
@@ -299,16 +308,24 @@ describe("ScansPageShell", () => {
     );
   });
 
-  it("hides the CLI import banner outside Cloud", () => {
+  it("shows a dismissible push-to-cloud nudge outside Cloud", async () => {
+    // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
+    localStorage.clear();
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
         <div>Scans table</div>
       </ScansPageShell>,
     );
+    expect(screen.getByText(/Already use the Prowler CLI/)).toBeVisible();
 
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    // When
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+
+    // Then
+    expect(
+      screen.queryByText(/Already use the Prowler CLI/),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps launch scan, import findings, and mutelist with tabs", () => {

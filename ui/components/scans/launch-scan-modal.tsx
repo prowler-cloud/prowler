@@ -11,13 +11,7 @@ import { z } from "zod";
 import { scanOnDemand } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import {
-  Badge,
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/components/shadcn";
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import {
@@ -354,11 +348,6 @@ function LaunchScanForm({
                 disabled={!canUseScheduleMode}
               />
               On a schedule
-              {isDailyLegacy && (
-                <Badge variant="cloud" size="sm">
-                  Cloud
-                </Badge>
-              )}
             </label>
           </RadioGroup>
         </Field>
@@ -398,7 +387,7 @@ function LaunchScanForm({
           showLaunchInitialScan
           showNextScheduledCopy
           canUseAdvancedSchedule={isAdvanced}
-          showCloudUpgradeBadge={isDailyLegacy}
+          showPremiumUpsell={isDailyLegacy}
         />
       )}
 
