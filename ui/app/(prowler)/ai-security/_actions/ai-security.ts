@@ -72,8 +72,10 @@ async function hasCompletedScan(providerIds: string[]): Promise<boolean> {
  */
 export async function getAiFrameworks(
   filters: Record<string, string>,
-): Promise<CrossProviderFrameworkSummary[]> {
+): Promise<CrossProviderFrameworkSummary[] | null> {
   const catalog = await loadCrossProviderFrameworks();
+  // No answer is not "none installed": hide the section rather than prompt an install.
+  if (catalog.unavailable) return null;
   const frameworks = catalog.frameworks.filter(({ complianceId }) =>
     AI_FRAMEWORK_IDS.includes(complianceId),
   );
@@ -87,12 +89,14 @@ export async function getAiFrameworks(
     })),
   );
   // A framework that failed to load is left out rather than shown as unscanned.
-  return responses
+  const summaries = responses
     .filter(
       ({ result }) =>
         result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS,
     )
     .map(({ entry, result }) => toCrossProviderSummary(entry, result));
+  // Installed frameworks that all failed to load are no answer either.
+  return frameworks.length > 0 && summaries.length === 0 ? null : summaries;
 }
 
 /**
