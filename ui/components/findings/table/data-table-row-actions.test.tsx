@@ -38,7 +38,6 @@ vi.mock("@/components/icons/services/IconServices", () => ({
 
 vi.mock("@/lib/deployment", () => ({
   isGroupedJiraDispatchEnabled: () => true,
-  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("@/lib/shared/env", () => ({

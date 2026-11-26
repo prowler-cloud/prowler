@@ -377,7 +377,7 @@ describe("SeedFromFindingsButton", () => {
     expect(button).not.toBeDisabled();
     expect(button.className).not.toContain("min-w");
     expect(button).not.toHaveClass("justify-start");
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.ALERTS,

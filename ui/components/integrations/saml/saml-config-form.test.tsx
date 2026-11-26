@@ -186,7 +186,7 @@ describe("SamlConfigForm", () => {
 
     // When
     const cloudUpgradeButton = screen.getByRole("button", {
-      name: "Additional email domains are available in Prowler Cloud",
+      name: /Premium feature/,
     });
 
     await user.click(cloudUpgradeButton);
@@ -196,11 +196,10 @@ describe("SamlConfigForm", () => {
     expect(
       screen.queryByLabelText("Additional Email Domain"),
     ).not.toBeInTheDocument();
-    expect(cloudUpgradeButton).toHaveClass("border-0", "bg-transparent", "p-0");
     expect(
       screen.getByText("Additional Email Domains").parentElement,
     ).toContainElement(cloudUpgradeButton);
-    expect(screen.getByText("Available in Prowler Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.SAML_DOMAINS,
     );

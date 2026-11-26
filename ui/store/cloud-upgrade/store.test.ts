@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 import { useCloudUpgradeStore } from "./store";
 
@@ -9,8 +12,37 @@ describe("useCloudUpgradeStore", () => {
     useCloudUpgradeStore.setState({
       activeFeature: null,
       retainedFeature: CLOUD_UPGRADE_FEATURE.GENERAL,
+      surface: CLOUD_UPGRADE_SURFACE.BADGE,
       returnFocusElement: null,
     });
+  });
+
+  it("records the surface that opened the upgrade", () => {
+    // Given / When
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(
+        CLOUD_UPGRADE_FEATURE.REALTIME,
+        undefined,
+        CLOUD_UPGRADE_SURFACE.SIDEBAR,
+      );
+
+    // Then
+    expect(useCloudUpgradeStore.getState().surface).toBe(
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
+    );
+  });
+
+  it("defaults the surface to the badge", () => {
+    // Given / When
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);
+
+    // Then
+    expect(useCloudUpgradeStore.getState().surface).toBe(
+      CLOUD_UPGRADE_SURFACE.BADGE,
+    );
   });
 
   it("retains the opened feature when the modal closes", () => {

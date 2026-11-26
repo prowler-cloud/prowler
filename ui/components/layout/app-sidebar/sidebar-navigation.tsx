@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ChevronDown, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -17,8 +17,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { PremiumTag } from "@/components/shared/premium-badge";
 import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_SURFACE } from "@/types/cloud-upgrade";
 
 import {
   type AppSidebarSelectionHandler,
@@ -98,6 +100,7 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
             New
           </Badge>
         )}
+        {item.premium && <PremiumLockIcon />}
         {isExternal && <ArrowUpRight aria-hidden="true" className="size-4" />}
       </Link>
     </NavigationButton>
@@ -110,6 +113,15 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
       <TooltipTrigger asChild>{link}</TooltipTrigger>
       <TooltipContent side="right">{item.tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+function PremiumLockIcon() {
+  return (
+    <LockKeyhole
+      aria-label="Premium"
+      className="text-text-neutral-tertiary size-3.5 shrink-0"
+    />
   );
 }
 
@@ -128,14 +140,16 @@ function TopLevelCloudUpgrade({
   return (
     <NavigationButton
       onClick={() => {
-        openCloudUpgrade(item.cloudUpgradeFeature, onSelect?.() ?? undefined);
+        openCloudUpgrade(
+          item.cloudUpgradeFeature,
+          onSelect?.() ?? undefined,
+          CLOUD_UPGRADE_SURFACE.SIDEBAR,
+        );
       }}
     >
       <Icon aria-hidden="true" className="size-[18px] shrink-0" />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      <Badge variant="cloud" size="sm">
-        Cloud
-      </Badge>
+      <PremiumLockIcon />
     </NavigationButton>
   );
 }
@@ -155,13 +169,15 @@ function CloudUpgradeChild({
     <NavigationButton
       variant="subitem"
       onClick={() => {
-        openCloudUpgrade(item.cloudUpgradeFeature, onSelect?.() ?? undefined);
+        openCloudUpgrade(
+          item.cloudUpgradeFeature,
+          onSelect?.() ?? undefined,
+          CLOUD_UPGRADE_SURFACE.SIDEBAR,
+        );
       }}
     >
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      <Badge variant="cloud" size="sm">
-        Cloud
-      </Badge>
+      <PremiumTag compact />
     </NavigationButton>
   );
 }
@@ -292,12 +308,19 @@ function NavigationSectionList({
   return (
     <section
       aria-labelledby={section.label ? `sidebar-${section.label}` : undefined}
+      className={cn(
+        section.premium &&
+          "border-border-neutral-secondary bg-bg-neutral-secondary rounded-xl border py-2",
+      )}
     >
       {section.label && (
         <h2
           id={`sidebar-${section.label}`}
-          className="text-text-neutral-tertiary mb-1.5 px-3 text-[10px] font-semibold tracking-[0.14em]"
+          className="text-text-neutral-tertiary mb-1.5 flex items-center gap-1 px-3 text-[10px] font-semibold tracking-[0.14em]"
         >
+          {section.premium && (
+            <LockKeyhole aria-hidden="true" className="size-3" />
+          )}
           {section.label}
         </h2>
       )}

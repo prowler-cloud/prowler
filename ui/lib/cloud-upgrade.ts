@@ -1,7 +1,9 @@
 import { PRICING_URL } from "@/lib/external-urls";
 import {
   CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
   type CloudUpgradeFeature,
+  type CloudUpgradeSurface,
   PAID_PLAN_UPGRADE_FEATURE,
   type PaidPlanUpgradeFeature,
   type UpgradeFeature,
@@ -10,18 +12,39 @@ import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import { FINDINGS_PREVIEW_ROW_LIMIT } from "./findings-access";
 
-interface CloudUpgradeContent {
+interface UpgradeContent {
   title: string;
   description: string;
   benefits: readonly [string, string, string, ...string[]];
+}
+
+interface CloudUpgradeContent extends UpgradeContent {
+  // Whether the Prowler Cloud free trial unlocks this capability.
+  trialIncluded: boolean;
+}
+
+interface PaidPlanUpgradeContent extends UpgradeContent {
   primaryCta: string;
 }
 
+export const PREMIUM_BADGE_LABEL = "Cloud & Private Cloud";
+export const PREMIUM_BADGE_COMPACT_LABEL = "Premium";
+export const PREMIUM_BADGE_TOOLTIP =
+  "Premium feature. Click to see what it does in Prowler Cloud and Private Cloud.";
+
+const CLOUD_UPGRADE_TRIAL_CTA = "Start a 7-day free trial";
+const CLOUD_UPGRADE_TRIAL_NOTE = "No credit card required.";
+const CLOUD_UPGRADE_PLANS_CTA = "See plans";
+const CLOUD_UPGRADE_PLANS_NOTE =
+  "Included in paid plans. The free trial covers the rest of Prowler Cloud.";
+export const CLOUD_UPGRADE_SALES_CTA = "Talk to sales about Private Cloud";
 export const CLOUD_UPGRADE_SECONDARY_CTA = "View Plans & Pricing";
+export const CLOUD_UPGRADE_COMPARE_CTA = "Compare plans";
 export const CLOUD_UPGRADE_FOOTER_NOTE =
-  "Prowler Cloud opens in a new tab. Your Prowler Local Server remains unchanged.";
+  "Prowler Cloud and Private Cloud run the same engine as your Local Server. Your Local Server stays unchanged.";
 
 const CLOUD_SIGN_UP_URL = "https://cloud.prowler.com/sign-up";
+const PRIVATE_CLOUD_CONTACT_URL = "https://prowler.com/contact";
 const LOCAL_SERVER_UTM_SOURCE = "prowler-local-server";
 
 const CLOUD_UPGRADE_UTM_CONTENT = {
@@ -29,20 +52,28 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
   [CLOUD_UPGRADE_FEATURE.AMAZON_S3]: "amazon-s3",
   [CLOUD_UPGRADE_FEATURE.API_KEYS]: "api-keys",
-  [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "organization",
+  [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "aws-organization",
   [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: "azure-organization",
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: "cli-import",
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
-  [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.EXPLOITABILITY_ISSUES]: "exploitability-issues",
+  [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "finding-triage",
   [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: "gcp-organization",
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
   [CLOUD_UPGRADE_FEATURE.REALTIME]: "realtime",
+  [CLOUD_UPGRADE_FEATURE.REGISTRY]: "registry",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
   [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: "saml-domains",
 } as const satisfies Record<CloudUpgradeFeature, string>;
+
+const AMAZON_S3_BENEFITS = [
+  "Export findings after each scan",
+  "Choose the providers and output folder per bucket",
+  "Authenticate with an IAM role or static credentials",
+] as const;
 
 export const CLOUD_UPGRADE_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: {
@@ -54,7 +85,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Set scan times in your preferred timezone",
       "Manage schedules alongside scan history",
     ],
-    primaryCta: "Schedule Scans in Prowler Cloud",
+    trialIncluded: false,
   },
   [CLOUD_UPGRADE_FEATURE.ALERTS]: {
     title: "Turn Findings into Alerts",
@@ -65,29 +96,25 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Notify the right people after every scan",
       "Manage alert rules from one place",
     ],
-    primaryCta: "Create Alerts in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.AMAZON_S3]: {
     title: "Export Findings to Amazon S3",
     description:
-      "Send every scan's results to your own S3 buckets automatically.",
-    benefits: [
-      "Export findings after each scan",
-      "Choose the providers and output folder per bucket",
-      "Authenticate with an IAM role or static credentials",
-    ],
-    primaryCta: "Export to S3 in Prowler Cloud",
+      "Send every scan's results to your own S3 buckets automatically. Existing S3 integrations keep working.",
+    benefits: AMAZON_S3_BENEFITS,
+    trialIncluded: false,
   },
   [CLOUD_UPGRADE_FEATURE.API_KEYS]: {
     title: "Automate Prowler with API Keys",
     description:
-      "Give scripts, pipelines, and integrations programmatic access to Prowler Cloud.",
+      "Give scripts, pipelines, and integrations programmatic access to Prowler.",
     benefits: [
       "Create named keys with their own expiration",
       "Revoke a key without touching your user account",
       "See when each key was last used",
     ],
-    primaryCta: "Create API Keys in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: {
     title: "Add Your Entire AWS Organization",
@@ -98,7 +125,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Choose exactly which accounts to onboard",
       "Apply schedules across the selected accounts",
     ],
-    primaryCta: "Set Up AWS Organizations in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: {
     title: "Add Your Entire Azure Management Group",
@@ -109,7 +136,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Choose exactly which subscriptions to onboard",
       "Apply schedules across the selected subscriptions",
     ],
-    primaryCta: "Set Up Azure Management Groups in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: {
     title: "Add Your Entire GCP Organization",
@@ -120,18 +147,18 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Choose exactly which projects to onboard",
       "Apply schedules across the selected projects",
     ],
-    primaryCta: "Set Up GCP Organizations in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
-    title: "Bring CLI Findings into One Cloud View",
+    title: "Bring CLI Findings into One View",
     description:
-      "Send Prowler CLI scan results to Prowler Cloud for centralized analysis and collaboration.",
+      "Send Prowler CLI scan results to Prowler for centralized analysis and collaboration.",
     benefits: [
       "Push results directly with --push-to-cloud",
       "Track CLI and managed scans in one place",
       "Automate findings ingestion from CI/CD pipelines",
     ],
-    primaryCta: "Import CLI Findings in Prowler Cloud",
+    trialIncluded: false,
   },
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]: {
     title: "See Compliance Across Every Provider",
@@ -143,7 +170,18 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Find coverage gaps without switching scans",
       "Generate a consolidated compliance report",
     ],
-    primaryCta: "Consolidate Compliance in Prowler Cloud",
+    trialIncluded: true,
+  },
+  [CLOUD_UPGRADE_FEATURE.EXPLOITABILITY_ISSUES]: {
+    title: "Fix What an Attacker Can Actually Exploit",
+    description:
+      "Exploitability Issues groups related findings into attack patterns, adds a verdict on how exploitable each one is, and flags instances that match emerging threats.",
+    benefits: [
+      "Turn hundreds of findings into a short list of attack patterns",
+      "Rank each issue by how exploitable it is",
+      "Spot resources exposed to emerging threats",
+    ],
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: {
     title: "Coordinate Finding Remediation",
@@ -154,7 +192,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Track review and remediation status",
       "Keep triage history with future scans",
     ],
-    primaryCta: "Triage Findings in Prowler Cloud",
+    trialIncluded: false,
   },
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: {
     title: "Send Findings to Jira at Scale",
@@ -165,30 +203,31 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Choose between grouped and individual Jira issues",
       "Track dispatch progress and retry failed findings",
     ],
-    primaryCta: "Send Findings to Jira in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
-    title: "Use The Agent Cloud Defender",
+    title: "Use Managed Lighthouse AI",
     description:
       "Investigate and act on your security posture without operating an AI stack.",
     benefits: [
-      "Start without provisioning or managing OpenAI API keys",
+      "Start without provisioning or managing LLM API keys",
       "Automate security workflows through the hosted remote MCP server",
-      "Keep Lighthouse actions grounded in your Prowler Cloud data",
+      "Keep sessions and context grounded in your Prowler data",
     ],
-    primaryCta: "Open Lighthouse AI in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.GENERAL]: {
     title: "Scale Prowler Without Operating It",
     description:
-      "Add managed automation and collaboration while Prowler operates the platform.",
+      "Prowler Cloud and Private Cloud add premium capabilities on top of the open source engine you already run.",
     benefits: [
-      "Onboard AWS Organizations and automate scans and alerts",
+      "Prioritize with Exploitability Issues and catch risky AWS changes with Realtime",
+      "Onboard AWS, Azure, and GCP organizations and automate scans and alerts",
       "Triage findings and consolidate compliance across providers",
-      "Investigate and remediate with Lighthouse AI and Agentic View",
-      "Use managed infrastructure, support, and backups",
+      "Export to Amazon S3, automate with API keys, and use Managed Lighthouse AI",
+      "Get managed operations, enterprise support, and backups",
     ],
-    primaryCta: "Start a Prowler Cloud Trial",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.REALTIME]: {
     title: "Catch Risky AWS Changes as They Happen",
@@ -199,7 +238,18 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Alert, propose a Terraform pull request, or fix it automatically",
       "Review and revert every automatic fix",
     ],
-    primaryCta: "Set Up Realtime in Prowler Cloud",
+    trialIncluded: true,
+  },
+  [CLOUD_UPGRADE_FEATURE.REGISTRY]: {
+    title: "Extend Prowler with Registry",
+    description:
+      "Add third-party checks, compliance frameworks, and providers published in Prowler Registry.",
+    benefits: [
+      "Connect custom cloud providers",
+      "Extend your assessments with custom security checks",
+      "Use private compliance frameworks across your accounts",
+    ],
+    trialIncluded: false,
   },
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: {
     title: "Configure Every Scan Once",
@@ -210,7 +260,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Apply consistent configurations to providers",
       "Manage scan behavior from one place",
     ],
-    primaryCta: "Configure Scans in Prowler Cloud",
+    trialIncluded: true,
   },
   [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: {
     title: "Use One SAML Configuration Across Domains",
@@ -221,26 +271,51 @@ export const CLOUD_UPGRADE_CONTENT = {
       `Authorize up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains`,
       "Manage every domain from the same SAML configuration",
     ],
-    primaryCta: "Manage SAML Domains in Prowler Cloud",
+    trialIncluded: true,
   },
 } as const satisfies Record<CloudUpgradeFeature, CloudUpgradeContent>;
 
 const buildCloudUpgradeUrl = (
   baseUrl: string,
   feature: CloudUpgradeFeature,
+  surface: CloudUpgradeSurface,
 ) => {
   const url = new URL(baseUrl);
   url.searchParams.set("utm_source", LOCAL_SERVER_UTM_SOURCE);
+  url.searchParams.set("utm_medium", surface);
   url.searchParams.set("utm_content", CLOUD_UPGRADE_UTM_CONTENT[feature]);
 
   return url.toString();
 };
 
-export const getCloudUpgradePrimaryUrl = (feature: CloudUpgradeFeature) =>
-  buildCloudUpgradeUrl(CLOUD_SIGN_UP_URL, feature);
+export const isCloudUpgradeTrialIncluded = (feature: CloudUpgradeFeature) =>
+  CLOUD_UPGRADE_CONTENT[feature].trialIncluded;
 
-export const getCloudUpgradeCompareUrl = (feature: CloudUpgradeFeature) =>
-  buildCloudUpgradeUrl(PRICING_URL, feature);
+// Paid-plan-only capabilities point to plans so nobody starts a trial to find them locked.
+export const getCloudUpgradePrimaryUrl = (
+  feature: CloudUpgradeFeature,
+  surface: CloudUpgradeSurface = CLOUD_UPGRADE_SURFACE.BADGE,
+) =>
+  buildCloudUpgradeUrl(
+    isCloudUpgradeTrialIncluded(feature) ? CLOUD_SIGN_UP_URL : PRICING_URL,
+    feature,
+    surface,
+  );
+
+export const getCloudUpgradeCompareUrl = (
+  feature: CloudUpgradeFeature,
+  surface: CloudUpgradeSurface = CLOUD_UPGRADE_SURFACE.BADGE,
+) => buildCloudUpgradeUrl(PRICING_URL, feature, surface);
+
+export const getPrivateCloudContactUrl = (
+  feature: CloudUpgradeFeature,
+  surface: CloudUpgradeSurface = CLOUD_UPGRADE_SURFACE.BADGE,
+) => buildCloudUpgradeUrl(PRIVATE_CLOUD_CONTACT_URL, feature, surface);
+
+export const getCloudUpgradePrimaryCta = (feature: CloudUpgradeFeature) =>
+  isCloudUpgradeTrialIncluded(feature)
+    ? { label: CLOUD_UPGRADE_TRIAL_CTA, note: CLOUD_UPGRADE_TRIAL_NOTE }
+    : { label: CLOUD_UPGRADE_PLANS_CTA, note: CLOUD_UPGRADE_PLANS_NOTE };
 
 export const isCloudUpgradeFeature = (
   feature: UpgradeFeature,
@@ -293,14 +368,10 @@ export const PAID_PLAN_UPGRADE_CONTENT = {
   [PAID_PLAN_UPGRADE_FEATURE.S3_INTEGRATION]: {
     title: "Export Findings to Amazon S3",
     description: "Amazon S3 exports are included in Prowler Cloud paid plans.",
-    benefits: [
-      "Export findings after each scan",
-      "Choose the providers and output folder per bucket",
-      "Authenticate with an IAM role or static credentials",
-    ],
+    benefits: AMAZON_S3_BENEFITS,
     primaryCta: "Upgrade to Export to S3",
   },
-} as const satisfies Record<PaidPlanUpgradeFeature, CloudUpgradeContent>;
+} as const satisfies Record<PaidPlanUpgradeFeature, PaidPlanUpgradeContent>;
 
 export const isPaidPlanUpgradeFeature = (
   feature: UpgradeFeature,

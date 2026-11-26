@@ -182,7 +182,6 @@ vi.mock("@/lib/date-utils", () => ({
 
 vi.mock("@/lib/deployment", () => ({
   isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
-  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("@/lib/shared/env", () => ({

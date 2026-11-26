@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquareText } from "lucide-react";
+import { LockKeyhole, MessageSquareText } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
@@ -11,6 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { PREMIUM_BADGE_TOOLTIP } from "@/lib/cloud-upgrade";
 import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -40,7 +41,7 @@ import {
 } from "./finding-note-modal";
 import { FindingTriageStatusControl } from "./finding-triage-status-control";
 
-export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
+export const CLOUD_ONLY_TOOLTIP_COPY = PREMIUM_BADGE_TOOLTIP;
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
 export const SAMPLE_TRIAGE_COPY =
   "Sample data. Connect your cloud account to triage your own findings.";
@@ -312,11 +313,15 @@ export function FindingTriageStatusCell({
         <TooltipTrigger asChild>
           <span className="relative flex">
             {statusContent}
+            <LockKeyhole
+              aria-hidden="true"
+              className="text-text-neutral-tertiary pointer-events-none absolute top-1/2 right-8 size-3.5 -translate-y-1/2"
+            />
             <Button
               type="button"
               variant="bare"
               size="link-xs"
-              aria-label="Change triage status - available in Prowler Cloud"
+              aria-label="Change triage status - premium feature in Prowler Cloud and Private Cloud"
               className="absolute inset-0 h-auto w-auto rounded-lg"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {

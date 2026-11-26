@@ -3,6 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
+import { PremiumNudgeBanner } from "@/components/premium/premium-nudge-banner";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -11,13 +12,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import { PremiumTag } from "@/components/shared/premium-badge";
 import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
 import { isCloud } from "@/lib/shared/env";
-import { useScansStore } from "@/store";
+import { useCloudUpgradeStore, useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import type { ScanScheduleCapability } from "@/types/schedules";
@@ -72,6 +75,9 @@ export function ScansPageShell({
   // none connected). The table still renders below, so imported scans stay visible.
   const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
   const isCloudEnvironment = isCloud();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen =
     !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
@@ -123,7 +129,17 @@ export function ScansPageShell({
         />
       </div>
 
-      {isCloudEnvironment && <CliImportBanner />}
+      {isCloudEnvironment ? (
+        <CliImportBanner />
+      ) : (
+        <PremiumNudgeBanner
+          nudgeId="cli-import"
+          feature={CLOUD_UPGRADE_FEATURE.CLI_IMPORT}
+        >
+          Already use the Prowler CLI? Push results with{" "}
+          <code className="font-mono">--push-to-cloud</code>.
+        </PremiumNudgeBanner>
+      )}
 
       <Tabs
         value={filters.activeTab}
@@ -153,6 +169,22 @@ export function ScansPageShell({
             </Button>
             {isCloudEnvironment && hasManageIngestionsPermission && (
               <ImportFindingsModal />
+            )}
+            {!isCloudEnvironment && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={(event) =>
+                  openCloudUpgrade(
+                    CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+                    event.currentTarget,
+                  )
+                }
+              >
+                Import Findings
+                <PremiumTag compact />
+              </Button>
             )}
             <MutedFindingsConfigButton />
           </div>

@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   getAllProviders,
   getAllProviderGroups,
+  getFindingsBySeverity,
   getSamplePreviewState,
   notFound,
 } = vi.hoisted(() => ({
   getAllProviders: vi.fn(),
   getAllProviderGroups: vi.fn(),
+  getFindingsBySeverity: vi.fn(),
   getSamplePreviewState: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NOT_FOUND");
@@ -15,6 +17,9 @@ const {
 }));
 vi.mock("next/navigation", () => ({ notFound }));
 vi.mock("@/actions/providers", () => ({ getAllProviders }));
+vi.mock("@/actions/overview/findings/findings", () => ({
+  getFindingsBySeverity,
+}));
 vi.mock("@/actions/manage-groups/manage-groups", () => ({
   getAllProviderGroups,
 }));
@@ -43,13 +48,19 @@ describe("Issues deployment availability", () => {
     getAllProviderGroups.mockResolvedValue({ data: [] });
     getSamplePreviewState.mockResolvedValue({ active: false });
   });
-  it("returns not found before loading data in Local Server", async () => {
+  it("renders the premium preview from OSS data only in Local Server", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    await expect(Issues({ searchParams: Promise.resolve({}) })).rejects.toThrow(
-      "NOT_FOUND",
-    );
+    getFindingsBySeverity.mockResolvedValue({
+      data: { attributes: { critical: 3, high: 5 } },
+    });
+    await Issues({ searchParams: Promise.resolve({}) });
+    expect(notFound).not.toHaveBeenCalled();
+    expect(getFindingsBySeverity).toHaveBeenCalledWith({
+      filters: { "filter[status]": "FAIL" },
+    });
     expect(getAllProviders).not.toHaveBeenCalled();
     expect(getAllProviderGroups).not.toHaveBeenCalled();
+    expect(getSamplePreviewState).not.toHaveBeenCalled();
   });
   it("loads the scope controls in Cloud deployments", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

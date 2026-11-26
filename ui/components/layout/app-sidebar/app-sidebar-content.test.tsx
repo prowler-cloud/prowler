@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useUIStore } from "@/store/ui/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 import { AppSidebarContent } from "./app-sidebar-content";
 import { useAppSidebarMode } from "./app-sidebar-mode-store";
@@ -94,8 +97,12 @@ describe("AppSidebarContent", () => {
     expect(openCloudUpgradeMock).toHaveBeenCalledWith(
       CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
       undefined,
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
     );
-    expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Premium").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("link", { name: /See premium features/ }),
+    ).toHaveAttribute("href", "/premium");
   });
 
   it("shows Registry navigation when the server marked this request eligible", () => {

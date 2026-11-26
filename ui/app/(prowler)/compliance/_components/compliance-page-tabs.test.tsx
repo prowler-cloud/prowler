@@ -132,7 +132,7 @@ describe("CompliancePageTabs", () => {
 
     expect(crossProviderTab).not.toBeDisabled();
     expect(crossProviderTab).toHaveAttribute("aria-selected", "false");
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
     expect(pushMock).not.toHaveBeenCalled();
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
