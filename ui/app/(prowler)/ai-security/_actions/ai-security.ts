@@ -72,8 +72,10 @@ async function hasCompletedScan(providerIds: string[]): Promise<boolean> {
  */
 export async function getAiFrameworks(
   filters: Record<string, string>,
-): Promise<CrossProviderFrameworkSummary[]> {
+): Promise<CrossProviderFrameworkSummary[] | null> {
   const catalog = await loadCrossProviderFrameworks();
+  // No answer is not "none installed": hide the section rather than prompt an install.
+  if (catalog.unavailable) return null;
   const frameworks = catalog.frameworks.filter(({ complianceId }) =>
     AI_FRAMEWORK_IDS.includes(complianceId),
   );

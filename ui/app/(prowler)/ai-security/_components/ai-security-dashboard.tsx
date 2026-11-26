@@ -69,7 +69,7 @@ export async function AiSecurityDashboard({
     <div className="flex flex-col gap-6">
       <AiKpis overview={overview} filters={filters} />
       <AiStack layers={overview.layers} filters={filters} />
-      {frameworks.length > 0 && <AiCompliance frameworks={frameworks} />}
+      {frameworks && <AiCompliance frameworks={frameworks} />}
       <TopRisks risks={overview.topRisks} filters={filters} />
     </div>
   );
