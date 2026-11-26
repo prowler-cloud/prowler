@@ -1,0 +1,62 @@
+---
+title: 'AI Security'
+sidebarTitle: 'AI Security'
+description: 'Review the security posture of your AI stack in Prowler Cloud: Claude, OpenAI and ChatGPT organizations, cloud AI services, AI frameworks and top risks.'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+<VersionBadge version="5.53.0" />
+
+AI Security gathers the AI findings of every provider in one page. It covers two layers of the AI stack: the model vendors where your organization configures AI (Claude, OpenAI and ChatGPT) and the AI services of your AWS, Azure and Google Cloud accounts. Use it to see how your AI vendors and cloud AI services are configured, how they score against AI frameworks, and which failed checks to fix first.
+
+<SubscriptionBanner>
+In Prowler Cloud, tenants without a paid plan see **AI Security is available on paid plans** with an **Unlock AI Security** button instead of the dashboard. In Prowler Local Server, the **AI Security** sidebar item opens a Prowler Cloud upgrade dialog.
+</SubscriptionBanner>
+
+## Prerequisites
+
+* At least one Claude, OpenAI or ChatGPT provider, or an AWS, Azure or Google Cloud provider with AI services, connected to Prowler Cloud.
+* A completed scan of that provider. AI Security reads the latest completed scan of each provider.
+
+Without any of these provider types, the page shows **No AI findings yet** with an **Add Provider** button. Adding a provider requires the **Manage Providers** permission. See [RBAC Administrative Permissions](/user-guide/tutorials/prowler-app-rbac#rbac-administrative-permissions).
+
+## Open AI Security
+
+Select **AI Security** in the sidebar, below **Overview**.
+
+Use the provider account and provider group filters at the top of the page to narrow every section to the accounts you select.
+
+## What the Page Shows
+
+### Key Figures
+
+| Card | What it shows |
+|------|---------------|
+| **Pass findings** | The share of AI findings that pass, out of pass and fail findings. |
+| **Failed findings** | The number of failed AI findings, split by severity. Select a severity to open those findings. |
+| **New failed findings** | Failed AI findings that were not in the previous scan. Select **View new findings** to open them. |
+
+### Your AI Stack
+
+**Your AI stack** lists each provider type in its layer:
+
+* **Model vendors**: Claude, OpenAI and ChatGPT. Prowler checks organization settings, API keys, projects and connectors in the vendor accounts.
+* **Cloud AI services**: AWS, Azure and Google Cloud. Prowler counts the checks in the `gen-ai` category, such as those for Amazon Bedrock and AgentCore, Azure AI services and Azure OpenAI, and Vertex AI.
+
+Each row shows the number of connected accounts and the pass score of that provider type. Select a row to filter the whole page to that provider type, and select it again to clear the filter. Select the score to open the failed findings of that provider type.
+
+A row without results shows its state instead:
+
+* **Not connected**: no account of that type is connected. Select **Add Provider** to connect one.
+* **No completed scan yet**: the accounts have no completed scan. Select **Launch scan** to open the **Scans** page.
+* **No AI services found**: the latest scans found no AI resources to check.
+
+### Compliance Frameworks
+
+**Compliance frameworks** shows the AI frameworks that have results in your tenant, such as OWASP Top 10 for LLM Applications, NIST AI RMF, ISO/IEC 42001 and the EU AI Act. Each card aggregates the framework across every compatible provider type, using the latest completed scan of each provider, as in [Cross-Provider Type Compliance](/user-guide/compliance/tutorials/cross-provider-type-compliance). Select **Open in Compliance** to go to the **Compliance** page.
+
+### Top Risks
+
+**Top risks** lists up to six failed AI checks, ranked by severity, then by new and changed failures. Each row shows the severity, the check, the affected provider types and the number of failing resources. Select a check to open its findings, or select **View all AI findings** to open every failed AI finding on the **Findings** page.
