@@ -161,9 +161,28 @@ class _WorkerProbeProducerPool:
         return _WorkerProbeProducer(self.connection, auto_declare=False)
 
 
+class _WorkerQueuesCovered(Exception):
+    """Stop collecting Kombu replies once every required queue has a consumer."""
+
+
 def _check_worker_queues(required_queues: set[str]) -> None:
     """Require an active consumer for every queue used by this deployment."""
     from config.celery import celery_app
+
+    missing = required_queues.copy()
+
+    def collect_reply(reply: Any) -> None:
+        if not isinstance(reply, dict):
+            return
+        missing.difference_update(
+            queue["name"]
+            for queues in reply.values()
+            if isinstance(queues, list)
+            for queue in queues
+            if isinstance(queue, dict) and isinstance(queue.get("name"), str)
+        )
+        if not missing:
+            raise _WorkerQueuesCovered
 
     # Use a dedicated, short-lived connection without changing task-publishing
     # retries, timeouts, TLS configuration or the application's connection pool.
@@ -180,20 +199,18 @@ def _check_worker_queues(required_queues: set[str]) -> None:
         # the default pool would publish through a separate, retrying connection.
         mailbox = celery_app.control.mailbox(connection)
         mailbox.producer_pool = _WorkerProbeProducerPool(connection)
-        replies = mailbox.multi_call(
-            "active_queues", timeout=WORKER_REPLY_TIMEOUT_SECONDS
-        )
+        # Kombu restarts the receive timeout after each reply. Stop as soon as
+        # coverage is complete instead of waiting for another idle interval.
+        with suppress(_WorkerQueuesCovered):
+            replies = mailbox.multi_call(
+                "active_queues",
+                timeout=WORKER_REPLY_TIMEOUT_SECONDS,
+                callback=collect_reply,
+            )
+            # Kombu can return buffered replies without invoking the callback.
+            for reply in replies or ():
+                collect_reply(reply)
 
-    consumed_queues = {
-        queue.get("name")
-        for reply in replies or []
-        if isinstance(reply, dict)
-        for queues in reply.values()
-        if isinstance(queues, list)
-        for queue in queues
-        if isinstance(queue, dict) and isinstance(queue.get("name"), str)
-    }
-    missing = required_queues - consumed_queues
     if missing:
         raise RuntimeError(
             f"No active consumer for queues: {', '.join(sorted(missing))}"

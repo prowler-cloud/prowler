@@ -580,6 +580,22 @@ class TestWorkerReadiness:
         assert entry["componentType"] == "component"
         assert entry["componentId"] == "celery"
 
+    def test_readiness_stops_waiting_when_all_queues_have_replied(
+        self, api_client, settings, worker_inspector
+    ):
+        """A final, healthy reply must not start another broker wait."""
+        settings.HEALTHCHECK_WORKER_QUEUES = ["celery", "scans"]
+        inspector, _ = worker_inspector
+
+        def broadcast(_command, *, callback=None, **_kwargs):
+            if callback is not None:
+                callback({"general": [{"name": "celery"}]})
+                callback({"scanner": [{"name": "scans"}]})
+            raise TimeoutError("waited for an extra worker")
+
+        inspector.multi_call.side_effect = broadcast
+        assert api_client.get(reverse("health-ready")).status_code == 200
+
     def test_broker_failure_is_reported_without_private_details(
         self, api_client, settings, worker_inspector
     ):
