@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cumplimiento ENS RD 311/2022 · {{ account }}</title>
+<style>{% include "report.css" %}</style>
+</head>
+<body>
+
+<div class="run-hdr">
+  <span>{{ svg.logo_header | safe }}</span>
+  <span class="run-meta">Cumplimiento ENS RD 311/2022{% if account %} · {{ account }}{% endif %}</span>
+</div>
+<div class="run-ftr">Powered by Prowler{% if provider_type %} · {{ provider_type }} {{ provider_uid }}{% endif %}</div>
+
+<section class="cover">
+  <div class="cover-logo">{{ svg.logo_cover | safe }}</div>
+  <img class="cover-seal" src="img/ens_logo.png" alt="ENS">
+  <div class="cover-main">
+    <div class="kick">Informe de cumplimiento</div>
+    <h1>Esquema Nacional de Seguridad<br><span class="sub">RD 311/2022</span></h1>
+    <div class="bar"></div>
+    <p class="cover-lead">
+      Resultado del análisis{% if account %} de la cuenta <b>{{ account }}</b>{% endif %}{% if provider_type %} de {{ provider_type }}{% endif %}
+      frente a los {{ counts.total }} requisitos del marco <b>{{ data.compliance_id }}</b>.
+    </p>
+  </div>
+  <div class="facts">
+    <div><div class="k">Proveedor</div><div class="v">{{ provider_type or "N/A" }}</div></div>
+    <div><div class="k">Cuenta</div><div class="v">{{ provider_uid or "N/A" }}</div></div>
+    <div><div class="k">Fecha de emisión</div><div class="v">{{ issued }}</div></div>
+  </div>
+  <div class="cover-bottom">Generado con Prowler · Scan {{ data.scan_id }}</div>
+</section>
+
+<section class="page">
+  <div class="secnum">01</div>
+  <h1>Resumen ejecutivo</h1>
+  <p class="lead">
+    {% if share is not none %}
+    La cuenta cumple el <b>{{ (share * 100) | pct }}</b> de los requisitos del ENS que Prowler evalúa automáticamente.
+    {% else %}
+    Ningún requisito del ENS se ha podido evaluar automáticamente en este análisis.
+    {% endif %}
+    {% if top_categoria %}{{ top_categoria[0][1] }} es la categoría con más incumplimientos.{% endif %}
+  </p>
+
+  <div class="hero">
+    <div class="hero-ring">{{ svg.ring | safe }}</div>
+    <div class="hero-kpis">
+      <div class="kpis">
+        <div class="kpi-row">
+          <div class="kpi"><div class="k">Cumple</div><div class="v pass">{{ counts.pass }}</div><div class="d">requisitos</div></div>
+          <div class="kpi"><div class="k">No cumple</div><div class="v fail">{{ counts.fail }}</div><div class="d">requisitos</div></div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="k">Manual</div><div class="v">{{ counts.manual }}</div><div class="d">requieren evidencia</div></div>
+          <div class="kpi"><div class="k">Nivel alto no cumplidos</div><div class="v">{{ critical_failed | length }}</div><div class="d">prioridad máxima</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ttl">Estado de los requisitos</div>
+    <div class="sub">Cumple y No cumple se evalúan automáticamente · Manual requiere evidencia del responsable</div>
+    {{ svg.status_bar | safe }}
+  </div>
+
+  <h2>Mensajes clave</h2>
+  <ul class="msg">
+    <li><b>Cumplimiento automatizado.</b> Se cumplen {{ counts.pass }} de los {{ counts.pass + counts.fail }} requisitos con check automático{% if share is not none %} ({{ (share * 100) | pct }}){% endif %}.</li>
+    {% if top_categoria %}
+    <li><b>{{ top_categoria[0][1] }}.</b> Concentra {{ top_categoria[1] }} de los {{ counts.fail }} requisitos no cumplidos ({{ (top_categoria[1] / counts.fail * 100) | pct }}).</li>
+    {% endif %}
+    <li><b>Nivel alto.</b> {% if critical_failed %}{{ critical_failed | length }} requisitos de nivel alto no se cumplen. La sección 03 los lista.{% else %}Todos los requisitos de nivel alto evaluados se cumplen.{% endif %}</li>
+    <li><b>Verificación manual.</b> {{ counts.manual }} requisitos no tienen un check automático. No cuentan en el porcentaje, pero el auditor pedirá evidencias de ellos.</li>
+  </ul>
+
+  <div class="box warn">
+    <b>Aviso:</b> las estadísticas de este informe no incluyen los {{ counts.manual }} requisitos de ejecución manual de
+    <b>{{ data.compliance_id }}</b>. Se basan únicamente en los {{ counts.pass + counts.fail }} requisitos automatizados.
+  </div>
+</section>
+
+<section class="page">
+  <div class="secnum">02</div>
+  <h1>Cumplimiento por categoría</h1>
+  <p class="lead">Porcentaje de requisitos automatizados que se cumplen en cada categoría del ENS.</p>
+
+  <div class="card">
+    <div class="ttl">Requisitos por categoría</div>
+    <div class="legend"><span><i class="sw" style="background:#1F9D6B"></i>Cumple</span><span><i class="sw" style="background:#C8243F"></i>No cumple</span></div>
+    {{ svg.categorias | safe }}
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <div class="ttl">Dimensiones de seguridad</div>
+      <div class="sub">Un requisito puede afectar a varias dimensiones</div>
+      {{ svg.dimensiones | safe }}
+    </div>
+    <div class="card">
+      <div class="ttl">Nivel del requisito</div>
+      <div class="sub">Criticidad que asigna el ENS a cada requisito</div>
+      {{ svg.niveles | safe }}
+    </div>
+  </div>
+
+  <table class="t compact">
+    <thead><tr><th>Agrupación</th><th class="n">Cumple</th><th class="n">No cumple</th><th class="n">Cumplimiento</th></tr></thead>
+    <tbody>
+      {% for label, rows in [("Marco", marco_rows), ("Nivel", nivel_rows), ("Tipo", tipo_rows)] %}
+      <tr class="grp"><td colspan="4">{{ label }}</td></tr>
+      {% for name, p, f in rows %}
+      <tr><td>{{ name }}</td><td class="n">{{ p }}</td><td class="n">{{ f }}</td>
+        <td class="n b">{% if p + f %}{{ (p / (p + f) * 100) | pct }}{% else %}—{% endif %}</td></tr>
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="page">
+  <div class="secnum">03</div>
+  <h1>Requisitos críticos no cumplidos</h1>
+  {% if critical_failed %}
+  <p class="lead">{{ critical_failed | length }} requisitos de nivel alto no se cumplen y requieren atención inmediata. Ordenados por número de hallazgos fallidos.</p>
+  <table class="t">
+    <thead><tr><th>Requisito</th><th>Marco · Categoría</th><th>Tipo</th><th class="n">Hallazgos fallidos</th></tr></thead>
+    <tbody>
+      {% for r in critical_failed %}
+      <tr>
+        <td><div class="rid">{{ r.id }}</div>{{ r.title }}</td>
+        <td class="muted">{{ r.marco | capitalize }} · {{ r.categoria | capitalize }}</td>
+        <td class="muted">{{ r.tipo_label }}</td>
+        <td class="n b">{{ r.failed_findings | num }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="box">No hay requisitos de nivel alto que hayan fallado.</div>
+  {% endif %}
+</section>
+
+<section class="page">
+  <div class="secnum">04</div>
+  <h1>Índice de requisitos</h1>
+  <p class="lead">Los {{ counts.pass + counts.fail }} requisitos automatizados agrupados por marco y categoría.</p>
+  {% for marco, categorias in index.items() %}
+  <h2>{{ marco }}</h2>
+  {% for categoria, reqs in categorias.items() %}
+  <table class="t idx">
+    <thead>
+      <tr class="cap"><th colspan="4">{{ categoria }}</th></tr>
+      <tr><th class="c-id">ID</th><th>Requisito</th><th class="c-nv">Nivel</th><th class="c-st">Estado</th></tr>
+    </thead>
+    <tbody>
+      {% for r in reqs %}
+      <tr><td class="rid">{{ r.id }}</td><td>{{ r.title }}</td><td class="muted">{{ r.nivel | capitalize }}</td>
+        <td><span class="st st-{{ r.status | lower }}">{{ r.status_label }}</span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+  {% endfor %}
+</section>
+
+<section class="page">
+  <div class="secnum">05</div>
+  <h1>Detalle de requisitos</h1>
+  {% if detail %}
+  <p class="lead">{{ detail | length }} requisitos requieren atención{% if include_manual %}: los no cumplidos y los de verificación manual{% endif %}.</p>
+  {% for r in detail %}
+  <article class="req {{ r.status | lower }}">
+    <div class="req-hdr">
+      <span class="pill" style="background:{{ '#C8243F' if r.status == 'FAIL' else '#A3A9B3' }}">{{ r.status_label }}</span>
+      {% if r.nivel %}<span class="pill" style="background:{{ nivel_colors.get(r.nivel, '#7A8290') }}">Nivel {{ r.nivel }}</span>{% endif %}
+      <span class="rid">{{ r.id }}</span>
+    </div>
+    <h3>{{ r.title }}</h3>
+    <div class="req-meta">
+      {% if r.tipo %}{{ r.tipo_label }}{% endif %}{% if r.modo %} · Ejecución {{ r.modo }}{% endif %}
+      {% if r.dimensions %} · {% for d in r.dimensions %}<span class="dim" style="background:{{ d.color }}" title="{{ d.name }}">{{ d.abbr }}</span>{% endfor %}{% endif %}
+    </div>
+    {% if r.description %}<div class="req-desc">{{ r.description }}</div>{% endif %}
+    <table class="kv">
+      <tr><th>Marco</th><td>{{ r.marco | capitalize }}</td></tr>
+      <tr><th>Categoría</th><td>{{ r.categoria | capitalize }}</td></tr>
+      {% if r.grupo %}<tr><th>ID grupo de control</th><td>{{ r.grupo }}</td></tr>{% endif %}
+      {% if r.status != "MANUAL" %}<tr><th>Hallazgos</th><td>{{ r.failed_findings | num }} fallidos · {{ r.passed_findings | num }} superados</td></tr>{% endif %}
+    </table>
+  </article>
+  {% endfor %}
+  {% else %}
+  <div class="box">No hay requisitos fallidos para mostrar.</div>
+  {% endif %}
+</section>
+
+<section class="page">
+  <div class="secnum">06</div>
+  <h1>Acerca de este informe</h1>
+  <table class="kv">
+    {% for label, value in info_rows %}<tr><th>{{ label }}</th><td>{{ value }}</td></tr>{% endfor %}
+  </table>
+
+  <h2>Leyenda</h2>
+  <div class="glossary">
+    <div class="card">
+      <div class="ttl">Nivel</div>
+      <dl>
+        <dt>Alto</dt><dd>Requisitos críticos que deben cumplirse prioritariamente.</dd>
+        <dt>Medio</dt><dd>Requisitos importantes con impacto moderado.</dd>
+        <dt>Bajo</dt><dd>Requisitos complementarios de menor criticidad.</dd>
+        <dt>Opcional</dt><dd>Recomendaciones adicionales no obligatorias.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="ttl">Tipo</div>
+      <dl>
+        <dt>Requisito</dt><dd>Obligación establecida por el ENS.</dd>
+        <dt>Refuerzo</dt><dd>Medida adicional que refuerza un requisito.</dd>
+        <dt>Recomendación</dt><dd>Buena práctica sugerida.</dd>
+        <dt>Medida</dt><dd>Acción concreta de implementación.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="ttl">Dimensiones</div>
+      <dl>
+        {% set meaning = {
+          "trazabilidad": "Capacidad de rastrear acciones.",
+          "autenticidad": "Verificación de identidad.",
+          "integridad": "Garantía de exactitud y completitud.",
+          "confidencialidad": "Protección contra accesos no autorizados.",
+          "disponibilidad": "Acceso cuando se necesita.",
+        } %}
+        {% for key, abbr, name, color in dimensions %}
+        <dt><span class="dim" style="background:{{ color }}">{{ abbr }}</span> {{ name }}</dt><dd>{{ meaning[key] }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

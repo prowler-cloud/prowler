@@ -63,7 +63,8 @@ dependencies = [
   "werkzeug (==3.1.9)",
   "sqlparse (==0.6.0)",
   "fonttools (==4.62.1)",
-  "uvicorn-worker (==0.4.0)"
+  "uvicorn-worker (==0.4.0)",
+  "weasyprint (==70.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
@@ -194,6 +195,8 @@ constraint-dependencies = [
   "blinker==1.9.0",
   "boto3==1.40.61",
   "botocore==1.40.61",
+  "brotli==1.2.1",
+  "brotlicffi==1.2.1.0",
   "cartography==0.138.1",
   "celery==5.6.2",
   "certifi==2026.10.19",
@@ -212,6 +215,7 @@ constraint-dependencies = [
   "cron-descriptor==1.4.5",
   "crowdstrike-falconpy==1.6.0",
   "cryptography==50.0.0",
+  "cssselect2==0.10.1",
   "cycler==0.12.1",
   "darabonba-core==1.0.8",
   "dash==3.1.1",
@@ -373,6 +377,7 @@ constraint-dependencies = [
   "pycparser==3.0",
   "pydantic==2.12.5",
   "pydantic-core==2.41.5",
+  "pydyf==0.13.0",
   "pygithub==2.8.0",
   "pygments==2.20.0",
   "pyjwt==2.15.0",
@@ -381,6 +386,7 @@ constraint-dependencies = [
   "pynacl==1.6.2",
   "pyopenssl==26.4.0",
   "pyparsing==3.3.2",
+  "pyphen==0.18.1",
   "pyreadline3==3.5.4",
   "pysocks==1.7.1",
   "pytest==9.0.3",
@@ -429,6 +435,8 @@ constraint-dependencies = [
   "stevedore==5.6.0",
   "tabulate==0.9.0",
   "tenacity==9.1.2",
+  "tinycss2==1.5.1",
+  "tinyhtml5==2.1.0",
   "tldextract==5.3.1",
   "tomlkit==0.14.0",
   "tqdm==4.70.1",
@@ -446,6 +454,7 @@ constraint-dependencies = [
   "vine==5.1.0",
   "vulture==2.14",
   "wcwidth==0.5.3",
+  "webencodings==0.6.1",
   "websocket-client==1.9.0",
   "werkzeug==3.1.9",
   "workos==8.3.0",
@@ -457,6 +466,7 @@ constraint-dependencies = [
   "zipp==3.23.0",
   "zope-event==6.1",
   "zope-interface==8.2",
+  "zopfli==0.4.3",
   "zstd==1.5.7.2"
 ]
 # prowler@master needs okta==3.4.2, but cartography 0.138.1 requires okta<1.0.0.

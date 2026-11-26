@@ -54,7 +54,6 @@ from tasks.jobs.reports import (
 )
 from tasks.jobs.reports import cis as cis_report_module
 from tasks.jobs.reports import csa as csa_report_module
-from tasks.jobs.reports import ens as ens_report_module
 from tasks.jobs.reports import nis2 as nis2_report_module
 from tasks.jobs.reports import threatscore as threatscore_report_module
 from tasks.jobs.threatscore_utils import (
@@ -80,11 +79,6 @@ def patch_report_rendering(monkeypatch):
     )
     patch_chart_helpers(
         monkeypatch, csa_report_module, ("create_horizontal_bar_chart",)
-    )
-    patch_chart_helpers(
-        monkeypatch,
-        ens_report_module,
-        ("create_horizontal_bar_chart", "create_radar_chart"),
     )
     patch_chart_helpers(
         monkeypatch, nis2_report_module, ("create_horizontal_bar_chart",)

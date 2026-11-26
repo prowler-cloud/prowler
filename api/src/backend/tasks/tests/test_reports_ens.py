@@ -1,1378 +1,294 @@
-import io
+from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
-from reportlab.lib.units import inch
-from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
-from tasks.jobs.reports import ens as ens_report_module
-from tasks.jobs.reports.config import COLOR_ENS_AUTO, COLOR_ENS_MANUAL
-from tasks.jobs.reports.ens import ENSReportGenerator
-from tasks.tests.report_test_helpers import patch_chart_helpers
+from tasks.jobs.reports import ens as ens_module
+from tasks.jobs.reports.ens import ENSReportGenerator, build_ens_context
+from tasks.jobs.reports.html_renderer import (
+    ASSETS_DIR,
+    ensure_bundled_asset,
+    render_html,
+    stacked_bars_svg,
+)
+
+PASS, FAIL, MANUAL = "PASS", "FAIL", "MANUAL"
 
 
-# Use string status values directly to avoid Django DB initialization
-# These match api.models.StatusChoices values
-class StatusChoices:
-    """Mock StatusChoices to avoid Django DB initialization."""
-
-    PASS = "PASS"
-    FAIL = "FAIL"
-    MANUAL = "MANUAL"
-
-
-# =============================================================================
-# Fixtures
-# =============================================================================
-
-
-@pytest.fixture
-def ens_generator():
-    """Create an ENSReportGenerator instance for testing."""
-    config = FRAMEWORK_REGISTRY["ens"]
-    return ENSReportGenerator(config)
+def ens_attribute(**overrides):
+    values = {
+        "Marco": "operacional",
+        "Categoria": "control de acceso",
+        "DescripcionControl": "Descripción del control",
+        "Tipo": "requisito",
+        "Nivel": "alto",
+        "Dimensiones": ["confidencialidad", "integridad"],
+        "ModoEjecucion": "automático",
+        "IdGrupoControl": "op.acc.1",
+    }
+    values.update(overrides)
+    return SimpleNamespace(**values)
 
 
-@pytest.fixture
-def patched_ens_charts(monkeypatch):
-    return patch_chart_helpers(
-        monkeypatch,
-        ens_report_module,
-        ("create_horizontal_bar_chart", "create_radar_chart"),
-    )
-
-
-@pytest.fixture
-def mock_ens_requirement_attribute():
-    """Create a mock ENS requirement attribute with all fields."""
-    mock = Mock()
-    mock.Marco = "Operacional"
-    mock.Categoria = "Gestión de incidentes"
-    mock.DescripcionControl = "Control de gestión de incidentes de seguridad"
-    mock.Tipo = "requisito"
-    mock.Nivel = "alto"
-    mock.Dimensiones = ["confidencialidad", "integridad"]
-    mock.ModoEjecucion = "automático"
-    mock.IdGrupoControl = "op.ext.1"
-    return mock
-
-
-@pytest.fixture
-def mock_ens_requirement_attribute_medio():
-    """Create a mock ENS requirement attribute with nivel medio."""
-    mock = Mock()
-    mock.Marco = "Organizativo"
-    mock.Categoria = "Seguridad en los recursos humanos"
-    mock.DescripcionControl = "Control de seguridad del personal"
-    mock.Tipo = "refuerzo"
-    mock.Nivel = "medio"
-    mock.Dimensiones = "trazabilidad, autenticidad"  # String format
-    mock.ModoEjecucion = "manual"
-    mock.IdGrupoControl = "org.rh.1"
-    return mock
-
-
-@pytest.fixture
-def mock_ens_requirement_attribute_bajo():
-    """Create a mock ENS requirement attribute with nivel bajo."""
-    mock = Mock()
-    mock.Marco = "Medidas de Protección"
-    mock.Categoria = "Protección de las instalaciones"
-    mock.DescripcionControl = "Control de acceso físico"
-    mock.Tipo = "recomendacion"
-    mock.Nivel = "bajo"
-    mock.Dimensiones = ["disponibilidad"]
-    mock.ModoEjecucion = "automático"
-    mock.IdGrupoControl = "mp.if.1"
-    return mock
-
-
-@pytest.fixture
-def mock_ens_requirement_attribute_opcional():
-    """Create a mock ENS requirement attribute with nivel opcional."""
-    mock = Mock()
-    mock.Marco = "Marco de Organización"
-    mock.Categoria = "Política de seguridad"
-    mock.DescripcionControl = "Política de seguridad de la información"
-    mock.Tipo = "medida"
-    mock.Nivel = "opcional"
-    mock.Dimensiones = []
-    mock.ModoEjecucion = "automático"
-    mock.IdGrupoControl = "org.1"
-    return mock
-
-
-@pytest.fixture
-def basic_ens_compliance_data():
-    """Create basic ComplianceData for ENS testing."""
+def compliance_data(requirements, provider_obj=None):
+    reqs, attributes = [], {}
+    for req_id, status, attribute, failed in requirements:
+        reqs.append(
+            RequirementData(
+                id=req_id,
+                description=f"Requisito {req_id}",
+                status=status,
+                failed_findings=failed,
+                passed_findings=1,
+            )
+        )
+        attributes[req_id] = {"attributes": {"req_attributes": [attribute]}}
     return ComplianceData(
         tenant_id="tenant-123",
         scan_id="scan-456",
         provider_id="provider-789",
         compliance_id="ens_rd2022_aws",
-        framework="ENS RD2022",
+        framework="ENS",
         name="Esquema Nacional de Seguridad RD 311/2022",
-        version="2022",
-        description="Marco de seguridad para la administración electrónica española",
+        version="RD2022",
+        description="Marco de seguridad & cumplimiento",
+        requirements=reqs,
+        attributes_by_requirement_id=attributes,
+        provider_obj=provider_obj,
     )
 
 
-# =============================================================================
-# Generator Initialization Tests
-# =============================================================================
+@pytest.fixture
+def mixed_data():
+    return compliance_data(
+        [
+            ("op.acc.1", PASS, ens_attribute(), 0),
+            ("op.acc.2", FAIL, ens_attribute(), 3),
+            (
+                "op.exp.1",
+                FAIL,
+                ens_attribute(Categoria="explotación", Nivel="medio"),
+                9,
+            ),
+            ("op.exp.2", FAIL, ens_attribute(Categoria="explotación"), 12),
+            (
+                "mp.s.1",
+                MANUAL,
+                ens_attribute(Marco="medidas de protección", ModoEjecucion="manual"),
+                0,
+            ),
+        ],
+        provider_obj=SimpleNamespace(
+            provider="aws", uid="123456789012", alias="acme-prod"
+        ),
+    )
 
 
-class TestENSGeneratorInitialization:
-    """Test suite for ENS generator initialization."""
+class TestBuildENSContext:
+    def test_automated_share_excludes_manual_requirements(self, mixed_data):
+        context = build_ens_context(mixed_data)
 
-    def test_generator_creation(self, ens_generator):
-        """Test that ENS generator is created correctly."""
-        assert ens_generator is not None
-        assert ens_generator.config.name == "ens"
-        assert ens_generator.config.language == "es"
+        assert context["counts"] == {"pass": 1, "fail": 3, "manual": 1, "total": 5}
+        assert context["share"] == pytest.approx(0.25)
 
-    def test_generator_has_niveles(self, ens_generator):
-        """Test that ENS config has niveles enabled."""
-        assert ens_generator.config.has_niveles is True
+    def test_share_is_none_when_nothing_is_evaluable(self):
+        data = compliance_data([("mp.s.1", MANUAL, ens_attribute(), 0)])
 
-    def test_generator_has_dimensions(self, ens_generator):
-        """Test that ENS config has dimensions enabled."""
-        assert ens_generator.config.has_dimensions is True
+        assert build_ens_context(data)["share"] is None
 
-    def test_generator_no_risk_levels(self, ens_generator):
-        """Test that ENS config does not use risk levels."""
-        assert ens_generator.config.has_risk_levels is False
-
-    def test_generator_no_weight(self, ens_generator):
-        """Test that ENS config does not use weight."""
-        assert ens_generator.config.has_weight is False
-
-
-# =============================================================================
-# Cover Page Tests
-# =============================================================================
-
-
-class TestENSCoverPage:
-    """Test suite for ENS cover page generation."""
-
-    @patch("tasks.jobs.reports.ens.Image")
-    def test_cover_page_has_logos(
-        self, mock_image, ens_generator, basic_ens_compliance_data
+    def test_critical_failed_lists_only_failed_nivel_alto_by_failed_findings(
+        self, mixed_data
     ):
-        """Test that cover page contains logos."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
+        critical = build_ens_context(mixed_data)["critical_failed"]
 
-        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
+        assert [r["id"] for r in critical] == ["op.exp.2", "op.acc.2"]
 
-        assert len(elements) > 0
-        # Should have called Image at least twice (prowler + ens logos)
-        assert mock_image.call_count >= 2
+    def test_index_excludes_manual_requirements(self, mixed_data):
+        index = build_ens_context(mixed_data)["index"]
 
-    def test_cover_page_has_title(self, ens_generator, basic_ens_compliance_data):
-        """Test that cover page contains the ENS title."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
+        ids = [
+            r["id"]
+            for categorias in index.values()
+            for reqs in categorias.values()
+            for r in reqs
+        ]
+        assert "mp.s.1" not in ids
+        assert sorted(ids) == ["op.acc.1", "op.acc.2", "op.exp.1", "op.exp.2"]
 
-        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
+    def test_detail_includes_manual_requirements_when_requested(self, mixed_data):
+        ids = [
+            r["id"]
+            for r in build_ens_context(mixed_data, include_manual=True)["detail"]
+        ]
 
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "ENS" in content or "Informe" in content
+        assert ids == ["op.acc.2", "op.exp.1", "op.exp.2", "mp.s.1"]
 
-    def test_cover_page_has_info_table(self, ens_generator, basic_ens_compliance_data):
-        """Test that cover page contains info table with metadata."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
+    def test_detail_lists_only_failed_requirements_without_manual(self, mixed_data):
+        ids = [
+            r["id"]
+            for r in build_ens_context(mixed_data, include_manual=False)["detail"]
+        ]
 
-        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
+        assert ids == ["op.acc.2", "op.exp.1", "op.exp.2"]
 
-        tables = [e for e in elements if isinstance(e, Table)]
-        assert len(tables) >= 1  # At least info table
+    def test_nivel_rows_follow_ens_order_and_count_pass_fail(self, mixed_data):
+        assert build_ens_context(mixed_data)["nivel_rows"] == [
+            ("Alto", 1, 2),
+            ("Medio", 0, 1),
+        ]
 
-    def test_cover_page_wraps_long_account_id(
-        self, ens_generator, basic_ens_compliance_data
-    ):
-        provider = Mock()
-        provider.provider = "oraclecloud"
-        provider.uid = "ocid1.tenancy.oc1.." + "a" * 70
-        provider.alias = None
-        basic_ens_compliance_data.provider_obj = provider
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
-
-        table = next(
-            e
-            for e in elements
-            if isinstance(e, Table)
-            and any(row[0] == "Account ID:" for row in e._cellvalues)
+    def test_top_categoria_is_the_one_with_most_failures(self, mixed_data):
+        assert build_ens_context(mixed_data)["top_categoria"] == (
+            ("Operacional", "Explotación"),
+            2,
         )
-        values = [row[1] for row in table._cellvalues]
-        assert all(isinstance(v, Paragraph) for v in values)
-        account_id = next(v for v in values if v.text == provider.uid)
-        _, height = account_id.wrap(4 * inch, 1000)
-        assert height > account_id.style.leading
-
-    def test_cover_page_has_warning_about_manual(
-        self, ens_generator, basic_ens_compliance_data
-    ):
-        """Test that cover page has warning about manual requirements."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Manual requirement",
-                status=StatusChoices.MANUAL,
-                passed_findings=0,
-                failed_findings=0,
-                total_findings=0,
-            )
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
-
-        # Find paragraphs (including those inside tables) that mention manual
-        all_paragraphs = []
-        for e in elements:
-            if isinstance(e, Paragraph):
-                all_paragraphs.append(e)
-            elif isinstance(e, Table):
-                # Check table cells for Paragraph objects
-                cell_values = getattr(e, "_cellvalues", [])
-                for row in cell_values:
-                    for cell in row:
-                        if isinstance(cell, Paragraph):
-                            all_paragraphs.append(cell)
-        content = " ".join(str(p.text) for p in all_paragraphs)
-        assert "manual" in content.lower() or "AVISO" in content
-
-    def test_cover_page_has_legend(self, ens_generator, basic_ens_compliance_data):
-        """Test that cover page contains the ENS values legend."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
-
-        # Legend should be a table with explanations
-        tables = [e for e in elements if isinstance(e, Table)]
-        # At least 3 tables: logos, info, warning, legend
-        assert len(tables) >= 3
-
-
-# =============================================================================
-# Executive Summary Tests
-# =============================================================================
-
-
-class TestENSExecutiveSummary:
-    """Test suite for ENS executive summary generation."""
-
-    def test_executive_summary_has_title(
-        self, ens_generator, basic_ens_compliance_data
-    ):
-        """Test that executive summary has Spanish title."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_executive_summary(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Resumen Ejecutivo" in content
-
-    def test_executive_summary_calculates_compliance(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that executive summary calculates compliance percentage."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Passed requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Failed requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_executive_summary(basic_ens_compliance_data)
-
-        # Should contain tables with metrics
-        tables = [e for e in elements if isinstance(e, Table)]
-        assert len(tables) >= 1
-
-    def test_executive_summary_excludes_manual_from_compliance(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that manual requirements are excluded from compliance calculation."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Passed requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Manual requirement",
-                status=StatusChoices.MANUAL,
-                passed_findings=0,
-                failed_findings=0,
-                total_findings=0,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_executive_summary(basic_ens_compliance_data)
-
-        # Should calculate 100% compliance (only 1 auto requirement that passed)
-        assert len(elements) > 0
-
-    def test_executive_summary_has_nivel_table(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that executive summary includes compliance by nivel table."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Alto requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_executive_summary(basic_ens_compliance_data)
-
-        # Should have nivel table
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Nivel" in content or "nivel" in content.lower()
-
-
-# =============================================================================
-# Charts Section Tests
-# =============================================================================
-
-
-class TestENSChartsSection:
-    """Test suite for ENS charts section generation."""
-
-    def test_charts_section_has_page_breaks(
-        self, ens_generator, basic_ens_compliance_data, patched_ens_charts
-    ):
-        """Test that charts section has page breaks between charts."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_charts_section(basic_ens_compliance_data)
-
-        page_breaks = [e for e in elements if isinstance(e, PageBreak)]
-        assert len(page_breaks) >= 2  # At least 2 page breaks for different charts
-        assert any(isinstance(e, Image) for e in elements)
-        assert len(patched_ens_charts["create_horizontal_bar_chart"]) == 1
-        assert len(patched_ens_charts["create_radar_chart"]) == 1
-
-        marco_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
-        assert marco_kwargs["labels"] == []
-        assert marco_kwargs["values"] == []
-
-        radar_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
-        assert radar_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
-        assert radar_kwargs["values"] == [100, 100, 100, 100, 100]
-        assert radar_kwargs["color"] == "#2196F3"
-
-    def test_charts_section_has_marco_category_chart(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        patched_ens_charts,
-    ):
-        """Test that charts section contains Marco/Categoría chart."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_charts_section(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Marco" in content or "Categoría" in content
-        assert any(isinstance(e, Image) for e in elements)
-        chart_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
-        assert chart_kwargs["labels"] == ["Operacional - Gestión de incidentes"]
-        assert chart_kwargs["values"] == [100.0]
-        assert chart_kwargs["xlabel"] == "Porcentaje de Cumplimiento (%)"
-
-    def test_charts_section_has_dimensions_radar(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        patched_ens_charts,
-    ):
-        """Test that charts section contains dimensions radar chart."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_charts_section(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Dimensiones" in content or "dimensiones" in content.lower()
-        radar_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
-        assert radar_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
-        assert radar_kwargs["values"] == [100, 100, 100.0, 100.0, 100]
-        assert radar_kwargs["color"] == "#2196F3"
-
-    def test_charts_section_has_tipo_distribution(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        patched_ens_charts,
-    ):
-        """Test that charts section contains tipo distribution."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_charts_section(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Tipo" in content or "tipo" in content.lower()
-        assert len(patched_ens_charts["create_horizontal_bar_chart"]) == 1
-        assert len(patched_ens_charts["create_radar_chart"]) == 1
-
-
-# =============================================================================
-# Critical Failed Requirements Tests
-# =============================================================================
-
-
-class TestENSCriticalFailedRequirements:
-    """Test suite for ENS critical failed requirements (nivel alto)."""
-
-    def test_no_critical_failures_shows_success_message(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that no critical failures shows success message."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Passed alto requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator._create_critical_failed_section(
-            basic_ens_compliance_data
-        )
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "No hay" in content or "✅" in content
-
-    def test_critical_failures_shows_table(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that critical failures shows requirements table."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Failed alto requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator._create_critical_failed_section(
-            basic_ens_compliance_data
-        )
-
-        tables = [e for e in elements if isinstance(e, Table)]
-        assert len(tables) >= 1
-
-    def test_critical_failures_only_includes_alto(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        mock_ens_requirement_attribute_medio,
-    ):
-        """Test that only nivel alto failures are included."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Failed alto requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Failed medio requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=5,
-                total_findings=5,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_medio]}
-            },
-        }
-
-        elements = ens_generator._create_critical_failed_section(
-            basic_ens_compliance_data
-        )
-
-        # Should have table but only with alto requirement
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        # Should mention 1 critical requirement
-        assert "1" in content
-
-
-# =============================================================================
-# Requirements Index Tests
-# =============================================================================
-
-
-class TestENSRequirementsIndex:
-    """Test suite for ENS requirements index generation."""
-
-    def test_requirements_index_has_title(
-        self, ens_generator, basic_ens_compliance_data
-    ):
-        """Test that requirements index has Spanish title."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_requirements_index(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Índice" in content or "Requisitos" in content
-
-    def test_requirements_index_organized_by_marco(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        mock_ens_requirement_attribute_medio,
-    ):
-        """Test that requirements index is organized by Marco."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Operacional requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Organizativo requirement",
-                status=StatusChoices.PASS,
-                passed_findings=5,
-                failed_findings=0,
-                total_findings=5,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_medio]}
-            },
-        }
-
-        elements = ens_generator.create_requirements_index(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert (
-            "Operacional" in content or "Organizativo" in content or "Marco" in content
-        )
-
-    def test_requirements_index_excludes_manual(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that manual requirements are excluded from index."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Auto requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Manual requirement",
-                status=StatusChoices.MANUAL,
-                passed_findings=0,
-                failed_findings=0,
-                total_findings=0,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_requirements_index(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        # REQ-001 should be there, REQ-002 should not
-        assert "REQ-001" in content
-        assert "REQ-002" not in content
-
-    def test_requirements_index_shows_status_indicators(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that requirements index shows pass/fail indicators."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Passed requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Failed requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_requirements_index(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        # Should have status indicators
-        assert "✓" in content or "✗" in content
-
-
-# =============================================================================
-# Detailed Findings Tests
-# =============================================================================
-
-
-class TestENSDetailedFindings:
-    """Test suite for ENS detailed findings generation."""
-
-    def test_detailed_findings_has_title(
-        self, ens_generator, basic_ens_compliance_data
-    ):
-        """Test that detailed findings section has title."""
-        basic_ens_compliance_data.requirements = []
-        basic_ens_compliance_data.attributes_by_requirement_id = {}
-
-        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "Detalle" in content or "Requisitos" in content
-
-    def test_detailed_findings_no_failures_message(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test message when no failed requirements exist."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Passed requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
-
-        paragraphs = [e for e in elements if isinstance(e, Paragraph)]
-        content = " ".join(str(p.text) for p in paragraphs)
-        assert "No hay" in content or "requisitos fallidos" in content.lower()
-
-    def test_detailed_findings_shows_failed_requirements(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that failed requirements are shown in detail."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Failed requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
-
-        # Should have tables showing requirement details
-        tables = [e for e in elements if isinstance(e, Table)]
-        assert len(tables) >= 1
-
-    def test_detailed_findings_shows_nivel_badges(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that detailed findings show nivel badges."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Failed requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
-
-        # Should generate without errors
-        assert len(elements) > 0
 
     @pytest.mark.parametrize(
-        "mode, expected_colour",
+        "raw, expected",
         [
-            ("automático", COLOR_ENS_AUTO),
-            ("automatico", COLOR_ENS_AUTO),
-            ("manual", COLOR_ENS_MANUAL),
+            (["Trazabilidad", "disponibilidad"], ["T", "D"]),
+            ("trazabilidad, autenticidad", ["T", "A"]),
+            ([], []),
+            (None, []),
         ],
     )
-    def test_detailed_findings_colours_the_execution_mode_badge(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        mode,
-        expected_colour,
-    ):
-        """Test that an automated requirement does not get the colour of manual ones."""
-        mock_ens_requirement_attribute.ModoEjecucion = mode
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Failed requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
+    def test_dimensions_accept_list_string_or_empty(self, raw, expected):
+        data = compliance_data([("op.acc.1", FAIL, ens_attribute(Dimensiones=raw), 1)])
 
-        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
+        detail = build_ens_context(data)["detail"][0]
 
-        # The execution mode is the last badge of the row it shares with the type.
-        badge_row = next(
-            e
-            for e in elements
-            if isinstance(e, Table)
-            and e._cellvalues[0][-1] == f"☰ {mode.capitalize()}"
-        )
-        badge_colours = [
-            command[3] for command in badge_row._bkgrndcmds if command[1] == (2, 0)
-        ]
-        assert badge_colours == [expected_colour]
+        assert [d["abbr"] for d in detail["dimensions"]] == expected
 
-    def test_detailed_findings_shows_dimensiones_badges(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that detailed findings show dimension badges."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Failed requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator.create_detailed_findings(basic_ens_compliance_data)
-
-        # Should generate without errors with dimension badges
-        assert len(elements) > 0
-
-
-# =============================================================================
-# Dimension Handling Tests
-# =============================================================================
-
-
-class TestENSDimensionHandling:
-    """Test suite for ENS security dimension handling."""
-
-    def test_dimensions_as_list(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        patched_ens_charts,
-    ):
-        """Test handling dimensions as a list."""
-        # mock_ens_requirement_attribute has Dimensiones as list
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        # Should not raise any errors
-        chart_buffer = ens_generator._create_dimensions_radar_chart(
-            basic_ens_compliance_data
-        )
-        assert isinstance(chart_buffer, io.BytesIO)
-        chart_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
-        assert chart_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
-        assert chart_kwargs["values"] == [100, 100, 0.0, 0.0, 100]
-
-    def test_dimensions_as_string(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute_medio,
-        patched_ens_charts,
-    ):
-        """Test handling dimensions as comma-separated string."""
-        # mock_ens_requirement_attribute_medio has Dimensiones as string
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=10,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_medio]}
-            },
-        }
-
-        # Should not raise any errors
-        chart_buffer = ens_generator._create_dimensions_radar_chart(
-            basic_ens_compliance_data
-        )
-        assert isinstance(chart_buffer, io.BytesIO)
-        chart_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
-        assert chart_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
-        assert chart_kwargs["values"] == [0.0, 0.0, 100, 100, 100]
-
-    def test_dimensions_empty(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute_opcional,
-        patched_ens_charts,
-    ):
-        """Test handling empty dimensions."""
-        # mock_ens_requirement_attribute_opcional has empty Dimensiones
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {
-                    "req_attributes": [mock_ens_requirement_attribute_opcional]
-                }
-            },
-        }
-
-        # Should not raise any errors
-        chart_buffer = ens_generator._create_dimensions_radar_chart(
-            basic_ens_compliance_data
-        )
-        assert isinstance(chart_buffer, io.BytesIO)
-        chart_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
-        assert chart_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
-        assert chart_kwargs["values"] == [100, 100, 100, 100, 100]
-
-
-# =============================================================================
-# Footer Tests
-# =============================================================================
-
-
-class TestENSFooter:
-    """Test suite for ENS footer generation."""
-
-    def test_footer_is_spanish(self, ens_generator):
-        """Test that footer text is in Spanish."""
-        left, right = ens_generator.get_footer_text(1)
-
-        assert "Página" in left
-        assert "Prowler" in right
-
-    def test_footer_includes_page_number(self, ens_generator):
-        """Test that footer includes page number."""
-        left, right = ens_generator.get_footer_text(5)
-
-        assert "5" in left
-
-
-# =============================================================================
-# Nivel Table Tests
-# =============================================================================
-
-
-class TestENSNivelTable:
-    """Test suite for ENS nivel compliance table."""
-
-    def test_nivel_table_all_niveles(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        mock_ens_requirement_attribute_medio,
-        mock_ens_requirement_attribute_bajo,
-        mock_ens_requirement_attribute_opcional,
-    ):
-        """Test nivel table with all niveles represented."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Alto requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Medio requirement",
-                status=StatusChoices.PASS,
-                passed_findings=5,
-                failed_findings=0,
-                total_findings=5,
-            ),
-            RequirementData(
-                id="REQ-003",
-                description="Bajo requirement",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=5,
-                total_findings=5,
-            ),
-            RequirementData(
-                id="REQ-004",
-                description="Opcional requirement",
-                status=StatusChoices.PASS,
-                passed_findings=3,
-                failed_findings=0,
-                total_findings=3,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_medio]}
-            },
-            "REQ-003": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_bajo]}
-            },
-            "REQ-004": {
-                "attributes": {
-                    "req_attributes": [mock_ens_requirement_attribute_opcional]
-                }
-            },
-        }
-
-        elements = ens_generator._create_nivel_table(basic_ens_compliance_data)
-
-        # Should have at least one table
-        tables = [e for e in elements if isinstance(e, Table)]
-        assert len(tables) >= 1
-
-    def test_nivel_table_excludes_manual(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that manual requirements are excluded from nivel table."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Auto requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Manual requirement",
-                status=StatusChoices.MANUAL,
-                passed_findings=0,
-                failed_findings=0,
-                total_findings=0,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        elements = ens_generator._create_nivel_table(basic_ens_compliance_data)
-
-        # Should generate without errors
-        assert len(elements) > 0
-
-
-# =============================================================================
-# Marco Category Chart Tests
-# =============================================================================
-
-
-class TestENSMarcoCategoryChart:
-    """Test suite for ENS Marco/Categoría chart."""
-
-    def test_marco_category_chart_creation(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        patched_ens_charts,
-    ):
-        """Test that Marco/Categoría chart is created successfully."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
-
-        chart_buffer = ens_generator._create_marco_category_chart(
-            basic_ens_compliance_data
+    def test_requirements_without_metadata_are_skipped(self):
+        data = compliance_data([("op.acc.1", PASS, ens_attribute(), 0)])
+        data.requirements.append(
+            RequirementData(id="orphan", description="", status=FAIL)
         )
 
-        assert isinstance(chart_buffer, io.BytesIO)
-        assert chart_buffer.getvalue()  # Not empty
-        chart_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
-        assert chart_kwargs["labels"] == ["Operacional - Gestión de incidentes"]
-        assert chart_kwargs["values"] == [100.0]
-        assert chart_kwargs["xlabel"] == "Porcentaje de Cumplimiento (%)"
+        assert build_ens_context(data)["counts"]["total"] == 1
 
-    def test_marco_category_chart_excludes_manual(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        patched_ens_charts,
-    ):
-        """Test that manual requirements are excluded from chart."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Auto requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Manual requirement",
-                status=StatusChoices.MANUAL,
-                passed_findings=0,
-                failed_findings=0,
-                total_findings=0,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
+    def test_info_rows_include_provider_identity(self, mixed_data):
+        rows = dict(build_ens_context(mixed_data)["info_rows"])
 
-        # Should not raise any errors
-        chart_buffer = ens_generator._create_marco_category_chart(
-            basic_ens_compliance_data
+        assert rows["Proveedor"] == "AWS"
+        assert rows["Account ID"] == "123456789012"
+        assert rows["Alias"] == "acme-prod"
+        assert rows["Scan ID"] == "scan-456"
+
+    def test_issue_date_comes_from_generation_time(self, mixed_data):
+        context = build_ens_context(
+            mixed_data, generated_at=datetime(2026, 11, 26, tzinfo=UTC)
         )
-        assert isinstance(chart_buffer, io.BytesIO)
-        chart_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
-        assert chart_kwargs["labels"] == ["Operacional - Gestión de incidentes"]
-        assert chart_kwargs["values"] == [100.0]
+
+        assert context["issued"] == "26 nov 2026"
 
 
-# =============================================================================
-# Tipo Section Tests
-# =============================================================================
+class TestENSTemplate:
+    def test_renders_every_section(self, mixed_data):
+        html = render_html("ens.html.j2", build_ens_context(mixed_data))
+
+        for heading in (
+            "Resumen ejecutivo",
+            "Cumplimiento por categoría",
+            "Requisitos críticos no cumplidos",
+            "Índice de requisitos",
+            "Detalle de requisitos",
+            "Acerca de este informe",
+        ):
+            assert heading in html
+
+    def test_escapes_framework_text(self, mixed_data):
+        html = render_html("ens.html.j2", build_ens_context(mixed_data))
+
+        assert "Marco de seguridad &amp; cumplimiento" in html
+
+    def test_shows_success_message_without_critical_failures(self):
+        data = compliance_data([("op.acc.1", PASS, ens_attribute(), 0)])
+
+        html = render_html("ens.html.j2", build_ens_context(data))
+
+        assert "No hay requisitos de nivel alto que hayan fallado." in html
+
+    def test_chart_labels_are_escaped(self):
+        svg = stacked_bars_svg([("Audit & Assurance", 1, 1)])
+
+        assert "Audit &amp; Assurance" in svg
 
 
-class TestENSTipoSection:
-    """Test suite for ENS tipo distribution section."""
+class TestAssetGuard:
+    def test_allows_bundled_fonts(self):
+        ensure_bundled_asset(f"file://{ASSETS_DIR}/fonts/Inter-Regular.ttf")
 
-    def test_tipo_section_creation(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
-    ):
-        """Test that tipo section is created successfully."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Requisito type",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-        }
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://example.com/logo.png",
+            "file:///etc/passwd",
+            f"file://{ASSETS_DIR}/../../config/settings.py",
+        ],
+    )
+    def test_rejects_anything_outside_assets(self, url):
+        with pytest.raises(ValueError):
+            ensure_bundled_asset(url)
 
-        elements = ens_generator._create_tipo_section(basic_ens_compliance_data)
 
-        assert len(elements) > 0
-        # Should have a table with tipo distribution
-        tables = [e for e in elements if isinstance(e, Table)]
-        assert len(tables) >= 1
+class TestENSReportGenerator:
+    @pytest.fixture
+    def generator(self):
+        return ENSReportGenerator(FRAMEWORK_REGISTRY["ens"])
 
-    def test_tipo_section_all_types(
-        self,
-        ens_generator,
-        basic_ens_compliance_data,
-        mock_ens_requirement_attribute,
-        mock_ens_requirement_attribute_medio,
-        mock_ens_requirement_attribute_bajo,
-        mock_ens_requirement_attribute_opcional,
-    ):
-        """Test tipo section with all requirement types."""
-        basic_ens_compliance_data.requirements = [
-            RequirementData(
-                id="REQ-001",
-                description="Requisito type",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
-                total_findings=10,
-            ),
-            RequirementData(
-                id="REQ-002",
-                description="Refuerzo type",
-                status=StatusChoices.PASS,
-                passed_findings=5,
-                failed_findings=0,
-                total_findings=5,
-            ),
-            RequirementData(
-                id="REQ-003",
-                description="Recomendacion type",
-                status=StatusChoices.FAIL,
-                passed_findings=0,
-                failed_findings=5,
-                total_findings=5,
-            ),
-            RequirementData(
-                id="REQ-004",
-                description="Medida type",
-                status=StatusChoices.PASS,
-                passed_findings=3,
-                failed_findings=0,
-                total_findings=3,
-            ),
-        ]
-        basic_ens_compliance_data.attributes_by_requirement_id = {
-            "REQ-001": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute]}
-            },
-            "REQ-002": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_medio]}
-            },
-            "REQ-003": {
-                "attributes": {"req_attributes": [mock_ens_requirement_attribute_bajo]}
-            },
-            "REQ-004": {
-                "attributes": {
-                    "req_attributes": [mock_ens_requirement_attribute_opcional]
-                }
-            },
-        }
+    def test_rejects_non_string_output_path(self, generator):
+        with pytest.raises(TypeError):
+            generator.generate("t", "s", "ens_rd2022_aws", Mock(), "p")
 
-        elements = ens_generator._create_tipo_section(basic_ens_compliance_data)
+    def test_rejects_missing_output_directory(self, generator, tmp_path):
+        with pytest.raises(FileNotFoundError):
+            generator.generate(
+                "t", "s", "ens_rd2022_aws", str(tmp_path / "missing" / "r.pdf"), "p"
+            )
 
-        # Should generate without errors
-        assert len(elements) > 0
+    def test_renders_loaded_data_to_output_path(self, generator, mixed_data, tmp_path):
+        output = str(tmp_path / "ens.pdf")
+        with (
+            patch.object(
+                ens_module, "load_compliance_data", return_value=mixed_data
+            ) as load,
+            patch.object(ens_module, "render_pdf", return_value=6) as render,
+        ):
+            generator.generate(
+                "t", "s", "ens_rd2022_aws", output, "p", include_manual=False
+            )
+
+        load.assert_called_once()
+        html, path, metadata = render.call_args.args
+        assert path == output
+        assert "op.acc.2" in html and "mp.s.1" not in html
+        assert metadata["title"] == "ENS RD2022 Report - ENS"
+
+    def test_logs_and_reraises_render_errors(self, generator, mixed_data, tmp_path):
+        with (
+            patch.object(ens_module, "load_compliance_data", return_value=mixed_data),
+            patch.object(ens_module, "render_pdf", side_effect=RuntimeError("boom")),
+            patch.object(ens_module.logger, "exception") as log_exception,
+            pytest.raises(RuntimeError),
+        ):
+            generator.generate(
+                "t", "s", "ens_rd2022_aws", str(tmp_path / "ens.pdf"), "p"
+            )
+
+        assert "report_generation_failed" in log_exception.call_args.args[0]
+
+
+def test_writes_a_real_pdf(mixed_data, tmp_path):
+    from tasks.jobs.reports.html_renderer import render_pdf
+
+    output = tmp_path / "ens.pdf"
+    pages = render_pdf(
+        render_html("ens.html.j2", build_ens_context(mixed_data)),
+        str(output),
+        {"title": "ENS", "subject": "ENS", "keywords": "ens"},
+    )
+
+    assert output.read_bytes().startswith(b"%PDF")
+    assert pages >= 6

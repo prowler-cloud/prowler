@@ -273,6 +273,112 @@ def _adapt_universal_to_legacy(framework, provider_type: str) -> SimpleNamespace
 _PDF_STYLES_CACHE: dict[str, ParagraphStyle] | None = None
 
 
+def load_compliance_data(
+    tenant_id: str,
+    scan_id: str,
+    compliance_id: str,
+    provider_id: str,
+    provider_obj: Provider | None,
+    requirement_statistics: dict | None,
+    findings_cache: dict | None,
+    prowler_provider: Any | None = None,
+) -> ComplianceData:
+    """Load and aggregate compliance data from the database.
+
+    Args:
+        tenant_id: Tenant identifier
+        scan_id: Scan identifier
+        compliance_id: Compliance framework identifier
+        provider_id: Provider identifier
+        provider_obj: Optional pre-fetched Provider
+        requirement_statistics: Optional pre-aggregated statistics
+        findings_cache: Optional pre-loaded findings
+        prowler_provider: Optional provider metadata stub. When the
+            master function builds it once and passes it in, we skip
+            the per-report ``build_provider_metadata`` call.
+
+    Returns:
+        Aggregated ComplianceData object
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        # Load provider
+        if provider_obj is None:
+            provider_obj = Provider.objects.get(id=provider_id)
+
+        if prowler_provider is None:
+            prowler_provider = build_provider_metadata(provider_obj)
+        provider_type = provider_obj.provider
+
+        # Load compliance framework — fall back to the universal loader
+        # for top-level JSONs (e.g. csa_ccm_4.0) that Compliance.get_bulk
+        # does not scan.
+        compliance_obj = Compliance.get_bulk(provider_type).get(compliance_id)
+        if not compliance_obj:
+            universal_framework = get_bulk_compliance_frameworks_universal(
+                provider_type
+            ).get(compliance_id)
+            if universal_framework:
+                compliance_obj = _adapt_universal_to_legacy(
+                    universal_framework, provider_type
+                )
+
+        if not compliance_obj:
+            raise ValueError(f"Compliance framework not found: {compliance_id}")
+
+        framework = getattr(compliance_obj, "Framework", "N/A")
+        name = getattr(compliance_obj, "Name", "N/A")
+        version = getattr(compliance_obj, "Version", "N/A")
+        description = getattr(compliance_obj, "Description", "")
+
+    # Aggregate requirement statistics
+    if requirement_statistics is None:
+        logger.info("Aggregating requirement statistics for scan %s", scan_id)
+        requirement_statistics = _aggregate_requirement_statistics_from_database(
+            tenant_id, scan_id
+        )
+    else:
+        logger.info("Reusing pre-aggregated statistics for scan %s", scan_id)
+
+    # Calculate requirements data
+    attributes_by_requirement_id, requirements_list = (
+        _calculate_requirements_data_from_statistics(
+            compliance_obj, requirement_statistics
+        )
+    )
+
+    # Convert to RequirementData objects
+    requirements = []
+    for req_dict in requirements_list:
+        req = RequirementData(
+            id=req_dict["id"],
+            description=req_dict["attributes"].get("description", ""),
+            status=req_dict["attributes"].get("status", StatusChoices.MANUAL),
+            passed_findings=req_dict["attributes"].get("passed_findings", 0),
+            failed_findings=req_dict["attributes"].get("failed_findings", 0),
+            total_findings=req_dict["attributes"].get("total_findings", 0),
+            checks=attributes_by_requirement_id.get(req_dict["id"], {})
+            .get("attributes", {})
+            .get("checks", []),
+        )
+        requirements.append(req)
+
+    return ComplianceData(
+        tenant_id=tenant_id,
+        scan_id=scan_id,
+        provider_id=provider_id,
+        compliance_id=compliance_id,
+        framework=framework,
+        name=name,
+        version=version,
+        description=description,
+        requirements=requirements,
+        attributes_by_requirement_id=attributes_by_requirement_id,
+        findings_by_check_id=findings_cache if findings_cache is not None else {},
+        provider_obj=provider_obj,
+        prowler_provider=prowler_provider,
+    )
+
+
 def create_pdf_styles() -> dict[str, ParagraphStyle]:
     """Create and return PDF paragraph styles used throughout the report.
 
@@ -887,98 +993,14 @@ class BaseComplianceReportGenerator(ABC):
         findings_cache: dict | None,
         prowler_provider: Any | None = None,
     ) -> ComplianceData:
-        """Load and aggregate compliance data from the database.
-
-        Args:
-            tenant_id: Tenant identifier
-            scan_id: Scan identifier
-            compliance_id: Compliance framework identifier
-            provider_id: Provider identifier
-            provider_obj: Optional pre-fetched Provider
-            requirement_statistics: Optional pre-aggregated statistics
-            findings_cache: Optional pre-loaded findings
-            prowler_provider: Optional provider metadata stub. When the
-                master function builds it once and passes it in, we skip
-                the per-report ``build_provider_metadata`` call.
-
-        Returns:
-            Aggregated ComplianceData object
-        """
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            # Load provider
-            if provider_obj is None:
-                provider_obj = Provider.objects.get(id=provider_id)
-
-            if prowler_provider is None:
-                prowler_provider = build_provider_metadata(provider_obj)
-            provider_type = provider_obj.provider
-
-            # Load compliance framework — fall back to the universal loader
-            # for top-level JSONs (e.g. csa_ccm_4.0) that Compliance.get_bulk
-            # does not scan.
-            compliance_obj = Compliance.get_bulk(provider_type).get(compliance_id)
-            if not compliance_obj:
-                universal_framework = get_bulk_compliance_frameworks_universal(
-                    provider_type
-                ).get(compliance_id)
-                if universal_framework:
-                    compliance_obj = _adapt_universal_to_legacy(
-                        universal_framework, provider_type
-                    )
-
-            if not compliance_obj:
-                raise ValueError(f"Compliance framework not found: {compliance_id}")
-
-            framework = getattr(compliance_obj, "Framework", "N/A")
-            name = getattr(compliance_obj, "Name", "N/A")
-            version = getattr(compliance_obj, "Version", "N/A")
-            description = getattr(compliance_obj, "Description", "")
-
-        # Aggregate requirement statistics
-        if requirement_statistics is None:
-            logger.info("Aggregating requirement statistics for scan %s", scan_id)
-            requirement_statistics = _aggregate_requirement_statistics_from_database(
-                tenant_id, scan_id
-            )
-        else:
-            logger.info("Reusing pre-aggregated statistics for scan %s", scan_id)
-
-        # Calculate requirements data
-        attributes_by_requirement_id, requirements_list = (
-            _calculate_requirements_data_from_statistics(
-                compliance_obj, requirement_statistics
-            )
-        )
-
-        # Convert to RequirementData objects
-        requirements = []
-        for req_dict in requirements_list:
-            req = RequirementData(
-                id=req_dict["id"],
-                description=req_dict["attributes"].get("description", ""),
-                status=req_dict["attributes"].get("status", StatusChoices.MANUAL),
-                passed_findings=req_dict["attributes"].get("passed_findings", 0),
-                failed_findings=req_dict["attributes"].get("failed_findings", 0),
-                total_findings=req_dict["attributes"].get("total_findings", 0),
-                checks=attributes_by_requirement_id.get(req_dict["id"], {})
-                .get("attributes", {})
-                .get("checks", []),
-            )
-            requirements.append(req)
-
-        return ComplianceData(
+        return load_compliance_data(
             tenant_id=tenant_id,
             scan_id=scan_id,
-            provider_id=provider_id,
             compliance_id=compliance_id,
-            framework=framework,
-            name=name,
-            version=version,
-            description=description,
-            requirements=requirements,
-            attributes_by_requirement_id=attributes_by_requirement_id,
-            findings_by_check_id=findings_cache if findings_cache is not None else {},
+            provider_id=provider_id,
             provider_obj=provider_obj,
+            requirement_statistics=requirement_statistics,
+            findings_cache=findings_cache,
             prowler_provider=prowler_provider,
         )
 

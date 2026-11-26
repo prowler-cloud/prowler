@@ -42,6 +42,9 @@ RUN apt-get update --error-on=any && apt-get install -y --no-install-recommends 
     wget \
     git \
     libicu76 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz-subset0 \
     gcc \
     g++ \
     make \
