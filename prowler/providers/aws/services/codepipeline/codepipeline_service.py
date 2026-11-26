@@ -89,13 +89,30 @@ class CodePipeline(AWSService):
         try:
             regional_client = self.regional_clients[pipeline.region]
             pipeline_info = regional_client.get_pipeline(name=pipeline.name)
-            source_info = pipeline_info["pipeline"]["stages"][0]["actions"][0]
+            stages = pipeline_info["pipeline"]["stages"]
+
+            source_info = stages[0]["actions"][0]
             repository_id = source_info["configuration"].get("FullRepositoryId", "")
             pipeline.source = Source(
                 type=source_info["actionTypeId"]["provider"],
                 repository_id=repository_id,
                 configuration=source_info["configuration"],
             )
+
+            pipeline.stages = [
+                Stage(
+                    name=stage["name"],
+                    actions=[
+                        Action(
+                            name=action["name"],
+                            provider=action["actionTypeId"]["provider"],
+                            configuration=action.get("configuration", {}),
+                        )
+                        for action in stage.get("actions", [])
+                    ],
+                )
+                for stage in stages
+            ]
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -146,6 +163,34 @@ class Source(BaseModel):
     configuration: Optional[dict]
 
 
+class Action(BaseModel):
+    """Model representing a single action within a pipeline stage.
+
+    Attributes:
+        name: The name of the action.
+        provider: The action provider (e.g. CodeBuild, Manual, GitHub).
+        configuration: The action's configuration map, which may contain
+            plaintext values such as EnvironmentVariables (JSON string) or
+            provider-specific credential/token fields.
+    """
+
+    name: str
+    provider: str
+    configuration: dict = {}
+
+
+class Stage(BaseModel):
+    """Model representing a single stage within a pipeline.
+
+    Attributes:
+        name: The name of the stage.
+        actions: List of Action objects contained in this stage.
+    """
+
+    name: str
+    actions: list[Action] = []
+
+
 class Pipeline(BaseModel):
     """Model representing an AWS CodePipeline pipeline.
 
@@ -154,6 +199,8 @@ class Pipeline(BaseModel):
         arn: The ARN (Amazon Resource Name) of the pipeline.
         region: The AWS region where the pipeline exists.
         source: Optional Source object containing source configuration.
+        stages: List of all stages and their actions/configuration, used to
+            scan for embedded secrets across the full pipeline definition.
         tags: Optional list of pipeline tags.
     """
 
@@ -161,4 +208,5 @@ class Pipeline(BaseModel):
     arn: str
     region: str
     source: Optional[Source] = None
+    stages: list[Stage] = []
     tags: Optional[list] = []
