@@ -89,12 +89,14 @@ export async function getAiFrameworks(
     })),
   );
   // A framework that failed to load is left out rather than shown as unscanned.
-  return responses
+  const summaries = responses
     .filter(
       ({ result }) =>
         result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS,
     )
     .map(({ entry, result }) => toCrossProviderSummary(entry, result));
+  // Installed frameworks that all failed to load are no answer either.
+  return frameworks.length > 0 && summaries.length === 0 ? null : summaries;
 }
 
 /**
