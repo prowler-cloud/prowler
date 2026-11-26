@@ -4,6 +4,7 @@ Cover the IETF response envelope, status code mapping (200 / 503), the
 ``application/health+json`` media type and per-probe failure modes.
 """
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -823,6 +824,7 @@ class TestWorkerReadiness:
         )
         result = subprocess.run(
             [sys.executable, "-c", code, str(startup_delay)],
+            cwd=Path(health.__file__).resolve().parents[1],
             env={**os.environ, "CELERY_BROKER_READ_URL": "redis://localhost:6379/0"},
             capture_output=True,
             text=True,
