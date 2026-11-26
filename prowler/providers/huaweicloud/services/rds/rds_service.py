@@ -57,6 +57,9 @@ class RDS(HuaweiCloudService):
                             id=getattr(inst_data, "id", None) or "",
                             name=getattr(inst_data, "name", None) or "",
                             status=getattr(inst_data, "status", None) or "",
+                            is_ha=(
+                                (getattr(inst_data, "type", None) or "").lower() == "ha"
+                            ),
                             engine=engine,
                             engine_version=engine_version,
                             public_ip=public_ip,
@@ -81,6 +84,7 @@ class RDSInstance(HuaweiCloudBaseModel):
     id: str
     name: str
     status: str = ""
+    is_ha: bool = False
     engine: str = ""
     engine_version: str = ""
     public_ip: str = ""
