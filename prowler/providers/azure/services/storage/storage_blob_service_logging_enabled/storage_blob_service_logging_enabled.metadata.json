@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_blob_service_logging_enabled",
+  "CheckTitle": "Blob service diagnostic logging monitors storage account read, write, and delete operations",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Storage/storageAccounts",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Storage accounts** with Blob service diagnostic settings log **read**, **write** and **delete** operations (`StorageRead`, `StorageWrite`, `StorageDelete`) via Azure Monitor. These categories must be enabled on `blobServices/default`, either individually or through the `allLogs` category group.",
+  "Risk": "Without Blob service logging there is no record of who read, modified or deleted blobs and containers.\n\nAttackers can **exfiltrate or tamper** with data undetected, and incident responders cannot reconstruct timelines or prove what happened to the data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/azure/storage/blobs/monitor-blob-storage",
+    "https://learn.microsoft.com/azure/azure-monitor/essentials/diagnostic-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az monitor diagnostic-settings create --name diag-blob --resource \"<storageAccountId>/blobServices/default\" --workspace <logAnalyticsWorkspaceId> --logs '[{\"category\":\"StorageRead\",\"enabled\":true},{\"category\":\"StorageWrite\",\"enabled\":true},{\"category\":\"StorageDelete\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\n// Enable Blob service diagnostic logging for read, write and delete\nparam storageAccountName string\nparam workspaceId string\n\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {\n  name: storageAccountName\n}\n\nresource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' existing = {\n  parent: sa\n  name: 'default'\n}\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  scope: blobService\n  properties: {\n    workspaceId: workspaceId\n    logs: [\n      { category: 'StorageRead', enabled: true }   // Critical: enables read logging\n      { category: 'StorageWrite', enabled: true }   // Critical: enables write logging\n      { category: 'StorageDelete', enabled: true }  // Critical: enables delete logging\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Storage accounts and select the target account\n2. Under Monitoring, select Diagnostic settings\n3. Select blob (blobServices/default)\n4. Click Add diagnostic setting\n5. Enable StorageRead, StorageWrite and StorageDelete log categories\n6. Choose a destination (e.g., Send to Log Analytics workspace)\n7. Click Save",
+      "Terraform": "```hcl\n# Enable Blob service diagnostic logging\nresource \"azurerm_monitor_diagnostic_setting\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = \"${azurerm_storage_account.<example_resource_name>.id}/blobServices/default\"\n  log_analytics_workspace_id = \"<example_resource_id>\"\n\n  enabled_log {\n    category = \"StorageRead\"  # Critical: enables read logging\n  }\n  enabled_log {\n    category = \"StorageWrite\"  # Critical: enables write logging\n  }\n  enabled_log {\n    category = \"StorageDelete\"  # Critical: enables delete logging\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **diagnostic settings** on `blobServices/default` to capture `StorageRead`, `StorageWrite` and `StorageDelete` logs and route them to a central sink. Apply **least privilege** to log access, enforce **retention and immutability**, and review logs for anomalous access patterns. Classic Storage Analytics logging is not a substitute as it requires data-plane keys.",
+      "Url": "https://hub.prowler.com/check/storage_blob_service_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check evaluates Azure Monitor diagnostic settings on blobServices/default, not classic Storage Analytics logging (which requires account keys or data-plane RBAC). Accounts that rely solely on classic logging will report FAIL. Account kinds without Blob service support (e.g. FileStorage) are skipped."
+}
