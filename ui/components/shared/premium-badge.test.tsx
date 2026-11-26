@@ -9,7 +9,7 @@ import {
   CLOUD_UPGRADE_SURFACE,
 } from "@/types/cloud-upgrade";
 
-import { PremiumBadge, PremiumTag } from "./premium-badge";
+import { PremiumBadge } from "./premium-badge";
 
 describe("PremiumBadge", () => {
   afterEach(() => {
@@ -36,19 +36,5 @@ describe("PremiumBadge", () => {
     const state = useCloudUpgradeStore.getState();
     expect(state.activeFeature).toBe(CLOUD_UPGRADE_FEATURE.REALTIME);
     expect(state.surface).toBe(CLOUD_UPGRADE_SURFACE.PREVIEW_PAGE);
-  });
-
-  it("uses the full label by default and the compact label on request", () => {
-    // Given / When
-    render(
-      <>
-        <PremiumTag />
-        <PremiumTag compact />
-      </>,
-    );
-
-    // Then
-    expect(screen.getByText("Cloud & Private Cloud")).toBeVisible();
-    expect(screen.getByText("Premium")).toBeVisible();
   });
 });

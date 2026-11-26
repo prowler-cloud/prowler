@@ -31,9 +31,10 @@ export default async function Issues({
   searchParams: Promise<SearchParamsProps>;
 }) {
   if (!isCloud()) {
+    // The action rethrows 5xx; the preview must still render without counts.
     const severity = await getFindingsBySeverity({
       filters: { "filter[status]": "FAIL" },
-    });
+    }).catch(() => undefined);
     const attributes = severity?.data?.attributes;
 
     return (

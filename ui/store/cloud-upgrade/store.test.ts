@@ -33,8 +33,17 @@ describe("useCloudUpgradeStore", () => {
     );
   });
 
-  it("defaults the surface to the badge", () => {
-    // Given / When
+  it("resets the surface to the badge when none is given", () => {
+    // Given
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(
+        CLOUD_UPGRADE_FEATURE.REALTIME,
+        undefined,
+        CLOUD_UPGRADE_SURFACE.SIDEBAR,
+      );
+
+    // When
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);

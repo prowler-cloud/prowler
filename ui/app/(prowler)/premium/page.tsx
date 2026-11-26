@@ -1,7 +1,6 @@
 import { LockKeyhole } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { PremiumComparison } from "@/components/premium/premium-comparison";
 import { PremiumCtas } from "@/components/premium/premium-ctas";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { isCloud } from "@/lib/shared/env";
@@ -9,6 +8,8 @@ import {
   CLOUD_UPGRADE_FEATURE,
   CLOUD_UPGRADE_SURFACE,
 } from "@/types/cloud-upgrade";
+
+import { PremiumComparison } from "./_components/premium-comparison";
 
 export default function PremiumPage() {
   if (isCloud()) redirect("/");

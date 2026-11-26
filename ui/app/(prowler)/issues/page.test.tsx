@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -30,7 +31,14 @@ vi.mock("@/components/filters/provider-group-selector", () => ({
   ProviderGroupSelector: () => null,
 }));
 vi.mock("@/components/shadcn/content-layout", () => ({
-  ContentLayout: () => null,
+  ContentLayout: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+vi.mock("@/components/premium/premium-preview-page", () => ({
+  PremiumPreviewPage: ({ personalHook }: { personalHook: string }) => (
+    <p>{personalHook}</p>
+  ),
 }));
 vi.mock("./_components/issues-list", () => ({ IssuesList: () => null }));
 vi.mock("@/components/shared/sample-preview/sample-preview-banner", () => ({
@@ -53,7 +61,10 @@ describe("Issues deployment availability", () => {
     getFindingsBySeverity.mockResolvedValue({
       data: { attributes: { critical: 3, high: 5 } },
     });
-    await Issues({ searchParams: Promise.resolve({}) });
+    render(await Issues({ searchParams: Promise.resolve({}) }));
+    expect(
+      screen.getByText(/3 critical and 5 high FAIL findings/),
+    ).toBeInTheDocument();
     expect(notFound).not.toHaveBeenCalled();
     expect(getFindingsBySeverity).toHaveBeenCalledWith({
       filters: { "filter[status]": "FAIL" },
@@ -61,6 +72,14 @@ describe("Issues deployment availability", () => {
     expect(getAllProviders).not.toHaveBeenCalled();
     expect(getAllProviderGroups).not.toHaveBeenCalled();
     expect(getSamplePreviewState).not.toHaveBeenCalled();
+  });
+  it("keeps the Local Server preview when the severity request fails", async () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    getFindingsBySeverity.mockRejectedValue(new Error("Server error (500)"));
+    render(await Issues({ searchParams: Promise.resolve({}) }));
+    expect(
+      screen.getByText(/Once your Local Server has scan results/),
+    ).toBeInTheDocument();
   });
   it("loads the scope controls in Cloud deployments", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

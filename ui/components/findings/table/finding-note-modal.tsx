@@ -233,24 +233,21 @@ export function FindingNoteModal({
           the modal instead of truncating. */}
       <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
         {isCloudOnly && (
-          <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex items-center gap-3 rounded-lg border px-3 py-2">
-            <LockKeyhole
-              aria-hidden="true"
-              className="text-text-neutral-secondary size-4 shrink-0"
-            />
-            <p className="text-text-neutral-secondary flex-1 text-sm">
-              {TRIAGE_PREMIUM_NOTICE_COPY}
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() =>
-                openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
-              }
-            >
-              Learn more
-            </Button>
-          </div>
+          <Alert role="note">
+            <LockKeyhole aria-hidden="true" />
+            <AlertDescription className="gap-2">
+              <p>{TRIAGE_PREMIUM_NOTICE_COPY}</p>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
+                }
+              >
+                Learn more
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
         {!isManualPassDetails && (
           <div className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm">
