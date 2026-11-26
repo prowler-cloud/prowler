@@ -312,6 +312,15 @@ describe("invertCheckIdsByProvider", () => {
       iam_check_1: ["aws"],
     });
   });
+
+  it("labels checks of dynamic provider types after the known ones", () => {
+    expect(
+      invertCheckIdsByProvider({
+        openai: ["shared_check"],
+        aws: ["shared_check"],
+      }),
+    ).toEqual({ shared_check: ["aws", "openai"] });
+  });
 });
 
 describe("computeProviderBreakdown", () => {
@@ -358,15 +367,16 @@ describe("computeProviderBreakdown", () => {
     ]);
   });
 
-  it("ignores provider types the UI does not know", () => {
+  it("keeps dynamic (Registry) provider types", () => {
     const breakdown = computeProviderBreakdown(
       buildAttributes({
         framework: "CSA-CCM",
-        compatible_providers: ["aws", "not-a-provider"],
+        compatible_providers: ["aws", "openai"],
+        providers: ["openai"],
         requirements: [],
       }),
     );
 
-    expect(breakdown.map((entry) => entry.provider)).toEqual(["aws"]);
+    expect(breakdown.map((entry) => entry.provider)).toEqual(["openai", "aws"]);
   });
 });

@@ -13,7 +13,7 @@ import {
 import { formatComplianceFrameworkTitle } from "@/lib/compliance/framework-title";
 import type { ScoreColorVariant } from "@/lib/compliance/score-utils";
 import { cn } from "@/lib/utils";
-import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
+import { getProviderDisplayName } from "@/types/providers";
 
 import { buildCrossProviderDetailHref } from "../_lib/cross-provider-frameworks";
 import type { UniversalWatchlistState } from "../_lib/universal-watchlist";
@@ -127,7 +127,7 @@ export const CrossProviderFrameworkCard = ({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {PROVIDER_DISPLAY_NAMES[entry.provider]}
+                {getProviderDisplayName(entry.provider)}
                 {entry.unscanned
                   ? " — no completed scan yet"
                   : ` — ${entry.score}% passing`}

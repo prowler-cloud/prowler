@@ -9,7 +9,6 @@ import { ContentLayout } from "@/components/shadcn/content-layout";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
-import { isKnownProviderType } from "@/types/providers";
 
 import {
   getCrossProviderComplianceOverview,
@@ -147,9 +146,6 @@ export const CrossProviderDetail = async ({
   const compatibleTypes: string[] = attrs.compatible_providers.length
     ? attrs.compatible_providers
     : providerBreakdown.map((b) => b.provider);
-  // Select and breakdown both need an icon and a label; the summary above
-  // still counts the type as compatible.
-  const selectableTypes = compatibleTypes.filter(isKnownProviderType);
   const logoPath = getComplianceIcon(frameworkTitle);
 
   const providerAccounts: CrossProviderAccountOption[] = (
@@ -213,7 +209,7 @@ export const CrossProviderDetail = async ({
         }
         filters={
           <CrossProviderFilters
-            providerTypes={selectableTypes}
+            providerTypes={compatibleTypes}
             providerAccounts={providerAccounts}
             providerGroups={providerGroups}
           />

@@ -5,7 +5,7 @@ import type {
   RequirementItemData,
   RequirementsData,
 } from "@/types/compliance";
-import { isKnownProviderType, PROVIDER_TYPES } from "@/types/providers";
+import { compareProviderTypes } from "@/types/providers";
 
 import type {
   CrossProviderOverviewAttributes,
@@ -112,15 +112,17 @@ export const buildRequirementExtrasMap = (
 
 /**
  * Invert a requirement's per-provider check split into check id → provider
- * types, so the combined checks list can label each check. Iterates
- * PROVIDER_TYPES for a stable icon order regardless of API key order.
+ * types, so the combined checks list can label each check. Sorted for a
+ * stable icon order regardless of API key order.
  */
 export const invertCheckIdsByProvider = (
   checkIdsByProvider: ProviderCheckIdsMap,
 ): CheckProviderTypesMap => {
   const byCheck: CheckProviderTypesMap = {};
 
-  for (const provider of PROVIDER_TYPES) {
+  for (const provider of Object.keys(checkIdsByProvider).sort(
+    compareProviderTypes,
+  )) {
     for (const checkId of checkIdsByProvider[provider] ?? []) {
       (byCheck[checkId] ??= []).push(provider);
     }
@@ -131,8 +133,7 @@ export const invertCheckIdsByProvider = (
 
 /**
  * Per-provider score summary for the coverage panel and framework cards.
- * Scanned providers come first, each group sorted alphabetically; entries the
- * UI cannot render (unknown provider types) are dropped. Score is the pass
+ * Scanned providers come first, each group sorted alphabetically. Score is the pass
  * percentage over non-manual requirements the provider contributed.
  */
 export const computeProviderBreakdown = (
@@ -140,8 +141,7 @@ export const computeProviderBreakdown = (
 ): ProviderBreakdownEntry[] => {
   const contributing = new Set(attrs.providers);
 
-  return attrs.compatible_providers
-    .filter(isKnownProviderType)
+  return [...attrs.compatible_providers]
     .sort((a, b) => {
       const aScanned = contributing.has(a);
       if (aScanned !== contributing.has(b)) return aScanned ? -1 : 1;

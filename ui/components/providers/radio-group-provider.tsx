@@ -147,7 +147,6 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                     <div className="flex min-w-0 flex-1 items-center gap-1.5">
                       {provider.registry ? (
                         <RegistryProviderLogo
-                          type={provider.value}
                           logoUrl={provider.logoUrl}
                           size={26}
                         />

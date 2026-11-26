@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  compareProviderTypes,
   getProviderDisplayName,
   humanizeProviderId,
   isConfigurableProvider,
@@ -52,6 +53,14 @@ describe("getProviderDisplayName", () => {
   it("normalizes case for an unknown/dynamic provider id", () => {
     expect(getProviderDisplayName("AWS_THING")).toBe("Aws Thing");
     expect(getProviderDisplayName("Local-Template")).toBe("Local Template");
+  });
+});
+
+describe("compareProviderTypes", () => {
+  it("orders known types canonically, then dynamic ones alphabetically", () => {
+    expect(
+      ["openai", "gcp", "claude", "aws"].sort(compareProviderTypes),
+    ).toEqual(["aws", "gcp", "claude", "openai"]);
   });
 });
 
