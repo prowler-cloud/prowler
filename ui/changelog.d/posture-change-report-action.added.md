@@ -1,1 +1,1 @@
-Posture Change Report action in the provider menu for Prowler Cloud, which generates a PDF of how an account changed between two dates
+Posture Change Report button on the Providers page for Prowler Cloud, which generates a PDF in English or Spanish of how an account changed between two dates
