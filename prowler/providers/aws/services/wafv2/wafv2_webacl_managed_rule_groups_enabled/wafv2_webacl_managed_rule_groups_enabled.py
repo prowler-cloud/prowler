@@ -9,7 +9,7 @@ class wafv2_webacl_managed_rule_groups_enabled(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=web_acl)
             managed_rule_groups = [
                 f"{rule.managed_rule_group.vendor_name}/{rule.managed_rule_group.name}"
-                for rule in web_acl.rules
+                for rule in web_acl.rules + web_acl.rule_groups
                 if rule.managed_rule_group
             ]
             report.status = "FAIL"
