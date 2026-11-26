@@ -6,6 +6,7 @@ import type { ProviderProps } from "@/types/providers";
 import {
   aiProvidersInScope,
   aiScopeFilters,
+  installedScope,
   isCloudAi,
   isModelVendor,
   narrowScope,
@@ -99,6 +100,25 @@ describe("narrowScope", () => {
     expect(
       narrowScope({ "filter[provider_type__in]": "aws" }, isModelVendor),
     ).toBeNull();
+  });
+});
+
+describe("installedScope", () => {
+  it("asks only for the provider types the tenant has providers of", () => {
+    const filters = {
+      "filter[provider_type__in]": "claude,openai,chatgpt,aws",
+      "filter[provider_id__in]": "p1,p2",
+    };
+    expect(
+      installedScope(filters, [
+        provider("p1", "claude"),
+        provider("p2", "aws"),
+      ]),
+    ).toEqual({
+      "filter[provider_type__in]": "claude,aws",
+      "filter[provider_id__in]": "p1,p2",
+    });
+    expect(installedScope(filters, [])).toBeNull();
   });
 });
 

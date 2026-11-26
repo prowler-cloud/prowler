@@ -2,6 +2,7 @@ import {
   getAiFrameworks,
   getAiSecurityOverview,
 } from "@/app/(prowler)/ai-security/_actions";
+import { installedScope } from "@/app/(prowler)/ai-security/_lib/overview";
 import {
   Alert,
   AlertDescription,
@@ -42,13 +43,11 @@ interface AiSecurityDashboardProps {
 }
 
 export async function AiSecurityDashboard({
-  filters,
+  filters: pageFilters,
   providers,
 }: AiSecurityDashboardProps) {
-  const types = filters["filter[provider_type__in]"]?.split(",") ?? [];
-  if (
-    !providers.some(({ attributes }) => types.includes(attributes.provider))
-  ) {
+  const filters = installedScope(pageFilters, providers);
+  if (!filters) {
     return <AiSecurityEmptyState />;
   }
 

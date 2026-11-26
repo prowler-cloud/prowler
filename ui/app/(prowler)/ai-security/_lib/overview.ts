@@ -109,6 +109,18 @@ export function narrowScope(
 }
 
 /**
+ * The scope filters narrowed to the provider types the providers have, or null
+ * when none does. Cloud answers 400 to a Registry type the tenant never installed.
+ */
+export const installedScope = (
+  filters: Record<string, string>,
+  providers: ProviderProps[],
+) =>
+  narrowScope(filters, (type) =>
+    providers.some(({ attributes }) => attributes.provider === type),
+  );
+
+/**
  * The AI-SPM providers of every type the account and group filters allow. The AI stack
  * lists them all, so a row can switch the page to another provider type.
  */
