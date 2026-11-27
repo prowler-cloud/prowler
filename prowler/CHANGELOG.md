@@ -4,6 +4,24 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.53.0] (Prowler v5.53.0)
+
+### 🚀 Added
+
+- `iam_role_github_oidc_trust_subject_restricted` check for AWS provider [(#12867)](https://github.com/prowler-cloud/prowler/pull/12867)
+- `AzureCustom` region for the Azure provider, with `--azure-authority-host`, `--azure-resource-manager-endpoint`, `--azure-graph-endpoint` and `--azure-logs-endpoint`, to scan clouds without a built-in entry [(#13459)](https://github.com/prowler-cloud/prowler/pull/13459)
+
+### 🐞 Fixed
+
+- Azure Graph lookups now correctly authenticate to alternate Azure clouds (Azure China, Azure US Gov), using a newly added MS Graph request adapter that passes the 'region' argument and correctly rewrites the /me URL path [(#13243)](https://github.com/prowler-cloud/prowler/pull/13243)
+- `codeartifact_packages_external_public_publishing_disabled` findings no longer embed every package of the repository, which made scans of large CodeArtifact repositories quadratic in time and memory [(#13565)](https://github.com/prowler-cloud/prowler/pull/13565)
+
+### 🔐 Security
+
+- libzstd1 to 1.5.7+dfsg-1+deb13u1 in the SDK container image, patching CVE-2026-124851 [(#13551)](https://github.com/prowler-cloud/prowler/pull/13551)
+
+---
+
 ## [5.52.0] (Prowler v5.52.0)
 
 ### 🚀 Added

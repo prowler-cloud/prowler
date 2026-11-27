@@ -4,6 +4,18 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.54.0] (Prowler v5.53.0)
+
+### 🐞 Fixed
+
+- Attack Paths `ecr:image_layers` sync no longer fails on every AWS scan with `'ECR' object does not support the asynchronous context manager protocol`; the aioboto3 session is now built from the scan credentials instead of the sync botocore session [(#13550)](https://github.com/prowler-cloud/prowler/pull/13550)
+
+### 🔐 Security
+
+- libzstd1 to 1.5.7+dfsg-1+deb13u1 in the API container image, patching CVE-2026-124851 [(#13551)](https://github.com/prowler-cloud/prowler/pull/13551)
+
+---
+
 ## [1.53.0] (Prowler v5.52.0)
 
 ### 🐞 Fixed
