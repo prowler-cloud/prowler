@@ -13,7 +13,7 @@
   "Risk": "Allowing `*` as a **CORS** origin permits any third-party website to issue cross-origin requests to the OBS bucket from a user's browser, increasing the risk of **unauthorized data access** and cross-site data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0125.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/en-us_topic_0066036542.html"
   ],
   "Remediation": {
     "Code": {
