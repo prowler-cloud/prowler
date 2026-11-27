@@ -1,1 +1,0 @@
-`iam_role_github_oidc_trust_subject_restricted` check for AWS provider

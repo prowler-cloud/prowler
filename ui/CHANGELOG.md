@@ -4,6 +4,32 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.53.0] (Prowler v5.53.0)
+
+### 🚀 Added
+
+- AI Security page in Prowler Cloud with the posture of model vendors (Claude, OpenAI, ChatGPT) and cloud AI services (AWS, Azure, Google Cloud), the AI compliance frameworks and top risks [(#13432)](https://github.com/prowler-cloud/prowler/pull/13432)
+- Posture Change Report button on the Providers page for Prowler Cloud, which generates a PDF in English or Spanish of how an account changed between two dates [(#13559)](https://github.com/prowler-cloud/prowler/pull/13559)
+- Premium section, badge, comparison page and preview pages that show which capabilities come with Prowler Cloud and Private Cloud in Local Server [(#13562)](https://github.com/prowler-cloud/prowler/pull/13562)
+
+### 🔄 Changed
+
+- Local Server shows Exploitability issues and Realtime as premium previews instead of a 404, keeps only open source items under Configuration, and shows the Lighthouse banner on the Overview [(#13562)](https://github.com/prowler-cloud/prowler/pull/13562)
+- AI Security moves below Overview in the navigation, drops its filters, and each AI stack provider shows its failed findings by severity and failing services, opening Findings on click [(#13585)](https://github.com/prowler-cloud/prowler/pull/13585)
+- AI Security shows its posture, AI stack and top risks without waiting for the compliance frameworks, which load in their own card and show an error there instead of disappearing when they cannot be loaded [(#13586)](https://github.com/prowler-cloud/prowler/pull/13586)
+
+### 🐞 Fixed
+
+- Registry provider icons on every page and their chips in cross-provider Compliance, which also no longer reports "No scanned providers" when only a Registry provider was scanned [(#13554)](https://github.com/prowler-cloud/prowler/pull/13554)
+- AI Security sends Claude, OpenAI and ChatGPT to the Registry when they are not installed, instead of an Add Provider wizard that cannot list them, and no longer errors when they are missing [(#13570)](https://github.com/prowler-cloud/prowler/pull/13570)
+- AI Security keeps its Compliance frameworks section when no AI framework is installed and links to the Registry to install one [(#13571)](https://github.com/prowler-cloud/prowler/pull/13571)
+
+### 🔐 Security
+
+- Node.js to 24.22.3 and libssl3/libcrypto3 to 3.5.9-r1 in the UI container image, patching seven Node.js CVEs and CVE-2026-88823, CVE-2026-95691, CVE-2026-95692 and CVE-2026-107496 [(#13555)](https://github.com/prowler-cloud/prowler/pull/13555)
+
+---
+
 ## [1.51.0] (Prowler v5.51.0)
 
 ### 🔐 Security

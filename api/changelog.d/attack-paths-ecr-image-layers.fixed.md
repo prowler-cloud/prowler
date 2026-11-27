@@ -1,1 +1,0 @@
-Attack Paths `ecr:image_layers` sync no longer fails on every AWS scan with `'ECR' object does not support the asynchronous context manager protocol`; the aioboto3 session is now built from the scan credentials instead of the sync botocore session
