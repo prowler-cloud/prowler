@@ -4,6 +4,87 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.53.0" description="November 27, 2026">
+  ### 🤖 AI Security — Model Vendors, Cloud AI Services and AI Frameworks
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A new **AI Security** page, right below Overview, brings together every AI check that Prowler runs, whatever provider it belongs to. It covers two layers of the AI stack: the model vendors (Claude, OpenAI and ChatGPT organizations) and the cloud AI services (Amazon Bedrock and Amazon Bedrock AgentCore, Azure AI services and Azure OpenAI, and Vertex AI).
+
+  - Three key figures summarize the latest scans of the AI providers: the percentage of passing findings, the failed findings by severity and the failed findings that were not in the previous scan.
+  - **Your AI stack** lists each provider type of both layers with its failed findings by severity and the services that have them, and a click opens those findings. Rows without results say why: not connected, no completed scan yet, or no AI services found.
+  - **Compliance frameworks** shows the AI frameworks installed in the organization, aggregated across every compatible provider type: OWASP Top 10 for LLM Applications 2025, OWASP Top 10 for Agentic Applications 2026, OWASP MCP Top 10 2025, NIST AI RMF 1.0, ISO/IEC 42001:2023 and the EU AI Act. The section loads in its own card, so the rest of the page does not wait for it.
+  - **Top risks** lists up to six failed AI checks ranked by severity, then by new and changed failures.
+  - The Claude, OpenAI and ChatGPT providers and the six frameworks are distributed through the **Prowler Registry**, which is now enabled in Prowler Cloud. Organizations on a paid plan install them from the **Registry** page without a Registry key of their own, and a model vendor that is not installed yet shows "Install from Registry" instead of "Add Provider".
+  - Providers installed from the Registry show their icon on Scans, Findings, Compliance and the filters, and cross-provider Compliance no longer reports "No scanned providers" when only a Registry provider was scanned.
+
+  See the [AI Security](/user-guide/tutorials/prowler-cloud-ai-security) guide.
+
+  ### 📈 Posture Change Report
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A new PDF report explains how the security posture of one provider changed between two dates, in English or Spanish. It is generated from "Custom Scans and Reports" on the Providers page, or through `POST /api/v1/posture-change-reports`.
+
+  - It covers failed findings by severity day by day, the inventory and scan coverage, the ThreatScore pillars, every compliance framework the scans evaluated with the latest CIS benchmark first, and the exploitability issues of the final scan.
+  - Every sentence comes from fixed rules over the figures stored after each scan, so generating the same report twice over the same data returns the same text.
+  - When every complete scan of the period finished on the same day, each scan is its own data point, so a scan, fix and re-scan session is shown as a comparison.
+
+  See the [Posture Change Report](/user-guide/tutorials/prowler-cloud-posture-change-report) guide.
+
+  ### 📄 Compliance PDF Reports — New Design and Resource Evidence
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - The ENS, ThreatScore, NIS2, CSA CCM and CIS compliance PDF reports, and the cross-provider and cross-account ones, have a new design shared by all of them.
+  - Every report ends with a **Resource evidence** appendix with the configuration of the affected resources, the same data as the Evidence tab of a finding, and each finding references its entry. Values such as Lambda environment variables or EC2 user data can be part of that configuration, so review a report before sharing it outside the organization.
+  - The ENS report no longer shows zero failed findings for every requirement, and the per-scan CSA CCM report is generated again for AWS, Azure, Google Cloud, Oracle Cloud and Alibaba Cloud.
+
+  ### ☁️ Azure — Custom Clouds
+
+  - A new `AzureCustom` region, with `--azure-authority-host`, `--azure-resource-manager-endpoint`, `--azure-graph-endpoint` and `--azure-logs-endpoint`, scans Azure clouds that have no built-in entry, such as private, sovereign or air-gapped clouds. See [Scanning a Custom Azure Cloud](/user-guide/providers/azure/use-non-default-cloud#scanning-a-custom-azure-cloud).
+  - Microsoft Graph lookups for the Azure identity go to the Graph endpoint of the selected cloud, so scans of Azure China and Azure US Government resolve the tenant domain. Contributed by @alexkm-bleucloud. Thank you!
+  - **Prowler Private Cloud:** a deployment sets the cloud its Azure and Microsoft 365 providers sign in to with `PROWLER_AZURE_REGION` (`AzureCloud`, `AzureUSGovernment`, `AzureChinaCloud` or `AzureCustom`) and `PROWLER_M365_REGION` (`M365Global`, `M365USGovernment`, `M365China` or `M365Custom`), for connection tests and scans. A custom cloud takes its endpoints from `PROWLER_AZURE_AUTHORITY_HOST`, `PROWLER_AZURE_RESOURCE_MANAGER_ENDPOINT`, `PROWLER_AZURE_GRAPH_ENDPOINT` and `PROWLER_AZURE_LOGS_ENDPOINT`. Unset keeps the commercial clouds, and a value Prowler does not accept for `PROWLER_AZURE_REGION` stops the API at startup with the allowed list.
+
+  ### 🆕 New Check for AWS
+
+  `iam_role_github_oidc_trust_subject_restricted` verifies that IAM roles trusting the GitHub Actions OIDC provider restrict the token subject to specific repository owners, and fails on missing, wildcard or otherwise permissive conditions. The new `iam_github_oidc_allowed_owners` option limits the accepted owners; see the [configuration file](/user-guide/cli/tutorials/configuration_file) reference. Contributed by @FinalSunFlower. Thank you!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🏷️ Prowler Local Server — Premium Capabilities
+
+  Prowler Local Server now shows which capabilities come with Prowler Cloud and Prowler Private Cloud: a **Premium** section in the sidebar, a badge that opens the upgrade dialog and a page that compares the three editions. Exploitability issues and Realtime open a preview page instead of a 404, and the Configuration section keeps only open source items. Nothing that works in Local Server is blocked or removed. See [Premium capabilities](/getting-started/products/prowler-app#premium-capabilities).
+
+  ### 🛠️ Improvements and Fixes
+
+  - `codeartifact_packages_external_public_publishing_disabled` findings no longer embed every package of the repository, which made scans of large CodeArtifact repositories quadratic in time and memory.
+  - The Attack Paths `ecr:image_layers` sync no longer fails on every AWS scan in Prowler App.
+  - **Prowler Cloud:** Prowler Realtime detections that an automatic fix resolves and a re-check confirms show as "Fixed and verified" instead of staying a violation, and go back to violation if the fix is reverted. The Realtime detections tool of the MCP Server can filter by the new status.
+  - **Prowler Cloud:** muting a finding from its triage status uses the triage note as the mute rule reason. See [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage).
+  - **Prowler Cloud:** users provisioned through the Partner Portal are registered as alert recipients, and existing partner-managed organizations are backfilled.
+
+  ### 🔐 Security Updates
+
+  - `libzstd1` upgraded to 1.5.7+dfsg-1+deb13u1 in the SDK and API container images.
+  - `libssl3` and `libcrypto3` upgraded to 3.5.9-r1 in the MCP Server and Prowler App container images, and Node.js to 24.22.3 in the Prowler App one.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @FinalSunFlower: GitHub Actions OIDC trust subject check ([#12867](https://github.com/prowler-cloud/prowler/pull/12867))
+  - @alexkm-bleucloud: per-cloud Microsoft Graph endpoints for the Azure identity lookup ([#13243](https://github.com/prowler-cloud/prowler/pull/13243))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.53.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.52.0" description="November 23, 2026">
   ### ☁️ Microsoft 365 — Sovereign and Custom Clouds
 
