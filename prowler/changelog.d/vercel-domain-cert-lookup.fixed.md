@@ -1,0 +1,1 @@
+`domain_ssl_certificate_valid` check for Vercel provider now finds certificates through `GET /v4/certs` matching `cns`, instead of `GET /v8/certs/{domain}` which returns 404 for Vercel-issued certificates
