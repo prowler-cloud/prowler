@@ -1,5 +1,6 @@
 from config.django.base import *  # noqa
 from config.env import env
+from django.core.exceptions import ImproperlyConfigured
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
@@ -7,6 +8,17 @@ CORS_ALLOWED_ORIGINS = env.list(
     "DJANGO_CORS_ALLOWED_ORIGINS",
     default=["http://localhost", "http://127.0.0.1"],
 )
+
+# config.django.base falls back to SECRET_KEY = "secret" when the variable is
+# unset, and neither the example env files nor the entrypoint set it, so a
+# deployment following the default path would run production with a publicly
+# known key. Fail fast instead of booting with it.
+if not SECRET_KEY or SECRET_KEY == "secret":  # noqa: F405
+    raise ImproperlyConfigured(
+        "SECRET_KEY is missing or still set to the default 'secret'. Generate "
+        "one (for example `openssl rand -hex 32`) and export it as "
+        "SECRET_KEY before starting the API in production."
+    )
 
 # Database
 # TODO Use Django database routers https://docs.djangoproject.com/en/5.0/topics/db/multi-db/#automatic-database-routing
