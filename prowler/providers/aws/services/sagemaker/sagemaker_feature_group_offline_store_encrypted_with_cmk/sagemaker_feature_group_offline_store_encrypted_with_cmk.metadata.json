@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_feature_group_offline_store_encrypted_with_cmk",
+  "CheckTitle": "SageMaker Feature Group offline store is encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon SageMaker Feature Groups** with an offline store are assessed for a customer-managed KMS key. The finding reflects whether `OfflineStoreConfig.S3StorageConfig.KmsKeyId` is set, so the feature data written to Amazon S3 is encrypted with a key you control.",
+  "Risk": "Without a **customer-managed KMS key**, offline feature data in S3, which often holds training data derived from sensitive records, relies on default encryption. You lose control over **key policies**, **rotation** and **revocation**, and cannot restrict or audit who can decrypt the feature store.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-security.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_S3StorageConfig.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeFeatureGroup.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-feature-group --feature-group-name <feature-group-name> --record-identifier-feature-name <record-id> --event-time-feature-name <event-time> --feature-definitions <feature-definitions> --role-arn <role-arn> --offline-store-config 'S3StorageConfig={S3Uri=s3://<bucket>/<prefix>,KmsKeyId=<kms-key-arn>}'",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker FeatureGroup with a KMS-encrypted offline store\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::FeatureGroup\n    Properties:\n      FeatureGroupName: <example_resource_name>\n      RecordIdentifierFeatureName: <record_id>\n      EventTimeFeatureName: <event_time>\n      FeatureDefinitions:\n        - FeatureName: <record_id>\n          FeatureType: String\n        - FeatureName: <event_time>\n          FeatureType: String\n      RoleArn: <example_resource_arn>\n      OfflineStoreConfig:\n        S3StorageConfig:\n          S3Uri: s3://<bucket>/<prefix>\n          KmsKeyId: <example_resource_id>  # Critical: encrypts the offline store with a customer-managed key\n```",
+      "Other": "1. Offline store settings cannot be changed after a Feature Group is created\n2. Create a customer-managed KMS key and grant the Feature Store role access to it\n3. Open Amazon SageMaker > Feature Store and create a new Feature Group with the offline store enabled\n4. Under Offline store, choose the customer-managed KMS key\n5. Ingest data into the new Feature Group and delete the old one when safe",
+      "Terraform": "```hcl\n# SageMaker Feature Group with a KMS-encrypted offline store\nresource \"aws_sagemaker_feature_group\" \"<example_resource_name>\" {\n  feature_group_name             = \"<example_resource_name>\"\n  record_identifier_feature_name = \"<record_id>\"\n  event_time_feature_name        = \"<event_time>\"\n  role_arn                       = \"<example_resource_arn>\"\n\n  feature_definition {\n    feature_name = \"<record_id>\"\n    feature_type = \"String\"\n  }\n\n  feature_definition {\n    feature_name = \"<event_time>\"\n    feature_type = \"String\"\n  }\n\n  offline_store_config {\n    s3_storage_config {\n      s3_uri     = \"s3://<bucket>/<prefix>\"\n      kms_key_id = \"<example_resource_arn>\" # Critical: encrypts the offline store with a customer-managed key\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `KmsKeyId` in the offline store configuration of every Feature Group. Use a **customer-managed KMS key** with a least-privilege key policy and enable **rotation**.",
+      "Url": "https://hub.prowler.com/check/sagemaker_feature_group_offline_store_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "sagemaker_endpoint_config_kms_encryption_enabled",
+    "sagemaker_training_jobs_volume_and_output_encryption_enabled"
+  ],
+  "Notes": ""
+}

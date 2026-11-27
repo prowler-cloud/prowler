@@ -33,6 +33,8 @@ lifecycle_config_name = "test-lifecycle-config"
 lifecycle_on_create_b64 = "ZWNobyBPbkNyZWF0ZQ=="
 lifecycle_on_start_b64 = "ZWNobyBPblN0YXJ0"
 endpoint_config_name = "endpoint-config-test"
+feature_group_name = "feature-group-test"
+feature_group_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:feature-group/{feature_group_name}"
 endpoint_config_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:endpoint-config/{endpoint_config_name}"
 prod_variant_name = "Variant1"
 test_domain_name = "test-domain"
@@ -155,6 +157,26 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "InitialInstanceCount": 2,
                 },
             ]
+        }
+    if operation_name == "ListFeatureGroups":
+        return {
+            "FeatureGroupSummaries": [
+                {
+                    "FeatureGroupName": feature_group_name,
+                    "FeatureGroupArn": feature_group_arn,
+                },
+            ],
+        }
+    if operation_name == "DescribeFeatureGroup":
+        return {
+            "FeatureGroupName": feature_group_name,
+            "FeatureGroupArn": feature_group_arn,
+            "OfflineStoreConfig": {
+                "S3StorageConfig": {
+                    "S3Uri": "s3://bucket/prefix",
+                    "KmsKeyId": kms_key_id,
+                },
+            },
         }
     if operation_name == "ListDomains":
         return {
@@ -368,6 +390,36 @@ class Test_SageMaker_Service:
             else:
                 assert prod_variant.initial_instance_count == 2
 
+    # Test SageMaker list and describe feature groups
+    def test_list_and_describe_feature_groups(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.feature_groups) == 1
+        assert sagemaker.feature_groups_list_failed_regions == set()
+        feature_group = sagemaker.feature_groups[feature_group_arn]
+        assert feature_group.name == feature_group_name
+        assert feature_group.region == AWS_REGION_EU_WEST_1
+        assert feature_group.describe_succeeded
+        assert feature_group.offline_store_enabled
+        assert feature_group.offline_store_kms_key_id == kms_key_id
+
+    def test_describe_feature_group_error_leaves_it_undescribed(self):
+        def describe_fails(self, operation_name, kwarg):
+            if operation_name == "DescribeFeatureGroup":
+                raise botocore.exceptions.ClientError(
+                    {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+                    operation_name,
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=describe_fails):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            sagemaker = SageMaker(aws_provider)
+        feature_group = sagemaker.feature_groups[feature_group_arn]
+        assert not feature_group.describe_succeeded
+        assert not feature_group.offline_store_enabled
+        assert feature_group.offline_store_kms_key_id is None
+
     # Test SageMaker list domains
     def test_list_domains(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -465,13 +517,13 @@ class Test_SageMaker_Service:
                 sagemaker_service = SageMaker(audit_info)
 
                 # Check that __threading_call__ was called for _list_tags_for_resource
-                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains)
+                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains, feature groups)
                 tag_calls = [
                     c
                     for c in mock_threading_call.call_args_list
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
-                assert len(tag_calls) == 6
+                assert len(tag_calls) == 7
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):
