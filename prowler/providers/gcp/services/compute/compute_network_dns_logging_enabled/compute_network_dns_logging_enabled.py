@@ -17,7 +17,11 @@ class compute_network_dns_logging_enabled(Check):
                 f"Network {network.name} does not have DNS logging enabled."
             )
             for policy in dns_client.policies:
-                if network.name in policy.networks and policy.logging:
+                if (
+                    network.name in policy.networks
+                    and policy.project_id == network.project_id
+                    and policy.logging
+                ):
                     report.status = "PASS"
                     report.status_extended = (
                         f"Network {network.name} has DNS logging enabled."
