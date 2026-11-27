@@ -3,7 +3,14 @@ import { z } from "zod";
 import { isCloud } from "@/lib/shared/env";
 import { SPECIAL_CHARACTERS } from "@/lib/utils";
 
-export type AuthSocialProvider = "google" | "github";
+export const AUTH_SOCIAL_PROVIDER = {
+  GOOGLE: "google",
+  GITHUB: "github",
+  MICROSOFT: "microsoft",
+} as const;
+
+export type AuthSocialProvider =
+  (typeof AUTH_SOCIAL_PROVIDER)[keyof typeof AUTH_SOCIAL_PROVIDER];
 
 export const PASSWORD_REQUIREMENTS = {
   minLength: 12,

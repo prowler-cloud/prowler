@@ -10,12 +10,12 @@ import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <AppliesTo />
 
-Prowler supports social login using Google and GitHub OAuth providers. In **Prowler Cloud** social login is available out of the box. In **Prowler Local Server**, enable it by configuring the environment variables described in this guide.
+Prowler supports social login using Google, GitHub, and Microsoft Entra ID OAuth providers. In **Prowler Cloud** social login is available out of the box. In **Prowler Local Server**, enable it by configuring the environment variables described in this guide.
 
 <img src="/images/prowler-app/social-login/social_login_buttons.png" alt="Social login buttons" width="700"  />
 ## Configuring Social Login Credentials
 
-To enable social login with Google and GitHub, you must define the following environment variables:
+To enable social login with Google, GitHub, and Microsoft Entra ID, you must define the following environment variables:
 
 ### Google OAuth Configuration
 
@@ -35,10 +35,25 @@ SOCIAL_GITHUB_OAUTH_CLIENT_ID=""
 SOCIAL_GITHUB_OAUTH_CLIENT_SECRET=""
 ```
 
+### Microsoft Entra ID OAuth Configuration
+
+Set the following environment variables for Microsoft Entra ID (formerly Azure AD) OAuth:
+
+```env
+SOCIAL_MICROSOFT_OAUTH_CLIENT_ID=""
+SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET=""
+# Must match the redirect URI registered for the Entra ID app.
+SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL="${AUTH_URL}/api/auth/callback/microsoft"
+# "organizations" (default) or "common" for multi-tenant sign-in, or a specific
+# directory (tenant) ID to restrict login to a single Entra ID tenant.
+SOCIAL_MICROSOFT_OAUTH_TENANT="organizations"
+```
+
 ### Important Notes
 
 - If either `SOCIAL_GOOGLE_OAUTH_CLIENT_ID` or `SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET` is empty or not defined, the Google login button will be disabled.
 - If either `SOCIAL_GITHUB_OAUTH_CLIENT_ID` or `SOCIAL_GITHUB_OAUTH_CLIENT_SECRET` is empty or not defined, the GitHub login button will be disabled.
+- If either `SOCIAL_MICROSOFT_OAUTH_CLIENT_ID` or `SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET` is empty or not defined, the Microsoft login button will be disabled.
 
 <img src="/images/prowler-app/social-login/social_login_buttons_disabled.png" alt="Social login buttons disabled" width="700"  />
 ## Obtaining OAuth Credentials
@@ -47,10 +62,24 @@ To obtain `CLIENT_ID` and `CLIENT_SECRET` for each provider, follow their offici
 
 - **Google OAuth**: [Google OAuth Credentials Setup](https://developers.google.com/identity/protocols/oauth2)
 - **GitHub OAuth**: [GitHub OAuth App Setup](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+- **Microsoft Entra ID OAuth**: [Register an application with the Microsoft identity platform](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
+
+### Microsoft Entra ID App Registration
+
+To obtain the Microsoft credentials:
+
+1. In the [Microsoft Entra admin center](https://entra.microsoft.com/), go to **Applications > App registrations** and select **New registration**.
+2. Under **Supported account types**, choose the audience that matches `SOCIAL_MICROSOFT_OAUTH_TENANT`:
+   - **Accounts in any organizational directory** for `organizations` (default).
+   - **Accounts in any organizational directory and personal Microsoft accounts** for `common`.
+   - **Accounts in this organizational directory only** when restricting login to a single tenant (set `SOCIAL_MICROSOFT_OAUTH_TENANT` to that directory/tenant ID).
+3. Add a **Web** redirect URI pointing to `SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL` (for example, `https://<your-app>/api/auth/callback/microsoft`).
+4. Under **API permissions**, add the Microsoft Graph **delegated** permission `User.Read` (used to read the signed-in user's profile from `/me`).
+5. Under **Certificates & secrets**, create a **client secret** and copy its value into `SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET`. Copy the **Application (client) ID** into `SOCIAL_MICROSOFT_OAUTH_CLIENT_ID`.
 
 ### Overview of the Steps
 
-For both providers, the process generally involves:
+For all three providers, the process generally involves:
 
 1. Registering your application in the provider's developer portal.
 2. Defining the authorized redirect URL (`SOCIAL_<PROVIDER>_OAUTH_CALLBACK_URL`).
