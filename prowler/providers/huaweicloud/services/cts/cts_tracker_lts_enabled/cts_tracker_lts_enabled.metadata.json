@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cts_tracker_lts_enabled",
+  "CheckTitle": "CTS tracker has LTS log transfer enabled",
+  "CheckType": [],
+  "ServiceName": "cts",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "monitoring",
+  "Description": "**Huawei Cloud Trace Service (CTS)** trackers transfer audit traces to **Log Tank Service (LTS)** for real-time log search, alerting, and correlation.",
+  "Risk": "Without **LTS integration**, security teams cannot perform real-time alerting or fast log querying on CTS management events, delaying detection of unauthorized API activity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0002.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Cloud Trace Service (CTS)** > **Tracker List**.\n3. Click **Configure** on the target tracker.\n4. Enable **Transfer to LTS**.\n5. Click **OK**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **LTS log transfer** on CTS trackers to support real-time security monitoring and alerting.",
+      "Url": "https://hub.prowler.com/check/cts_tracker_lts_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

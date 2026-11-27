@@ -160,6 +160,91 @@ class TestVPCService:
         assert parsed_rule.description == ""
         assert parsed_rule.direction == ""
 
+    def test_list_flow_logs_parses_flow_logs(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[]
+        )
+        regional_client.list_flow_logs.return_value = SimpleNamespace(
+            flow_logs=[
+                SimpleNamespace(
+                    id="fl-1",
+                    name="vpc-fl",
+                    resource_type="vpc",
+                    resource_id="vpc-1",
+                    status="ACTIVE",
+                    admin_state=True,
+                )
+            ]
+        )
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        assert len(vpc_service.flow_logs) == 1
+        fl = vpc_service.flow_logs[0]
+        assert fl.id == "fl-1"
+        assert fl.resource_type == "vpc"
+        assert fl.resource_id == "vpc-1"
+        assert fl.status == "ACTIVE"
+        assert fl.admin_state is True
+        assert fl.region == REGION
+        assert vpc_service.flow_logs_failed_regions == set()
+
+    def test_list_flow_logs_error_tracks_failed_region(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[]
+        )
+        regional_client.list_flow_logs.side_effect = Exception("flow logs failed")
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        assert vpc_service.flow_logs == []
+        assert REGION in vpc_service.flow_logs_failed_regions
+
+    def test_list_flow_logs_paginates(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[]
+        )
+        page1 = [
+            SimpleNamespace(
+                id=f"fl-{i}",
+                name=f"fl-{i}",
+                resource_type="vpc",
+                resource_id="vpc-1",
+                status="ACTIVE",
+                admin_state=True,
+            )
+            for i in range(2000)
+        ]
+        page2 = [
+            SimpleNamespace(
+                id="fl-2000",
+                name="fl-2000",
+                resource_type="vpc",
+                resource_id="vpc-2",
+                status="ACTIVE",
+                admin_state=True,
+            )
+        ]
+        regional_client.list_flow_logs.side_effect = [
+            SimpleNamespace(flow_logs=page1),
+            SimpleNamespace(flow_logs=page2),
+        ]
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        assert len(vpc_service.flow_logs) == 2001
+        assert vpc_service.flow_logs[-1].id == "fl-2000"
+        assert regional_client.list_flow_logs.call_count == 2
+        assert (
+            regional_client.list_flow_logs.call_args_list[1].args[0].marker == "fl-1999"
+        )
+
     def test_list_security_groups_empty(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])

@@ -1,0 +1,1 @@
+`cts_tracker_file_validation_enabled`, `cts_tracker_obs_encryption_enabled`, `cts_tracker_lts_enabled`, `iam_user_access_key_rotation_90_days`, `iam_user_multiple_access_keys`, `rds_instance_ssl_enabled`, `rds_instance_multi_az_enabled`, `vpc_flow_logs_enabled`, `elb_listener_https_enabled`, and `elb_listener_secure_tls_policy` checks for Huawei Cloud

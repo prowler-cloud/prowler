@@ -79,3 +79,39 @@ class TestCTSService:
 
         # Errors are logged and swallowed; no partial/garbage resources.
         assert cts.trackers == []
+
+    def test_list_trackers_parses_validation_encryption_and_lts(self):
+        trackers = [
+            SimpleNamespace(
+                id="tracker-1",
+                tracker_name="system",
+                tracker_type="system",
+                status="enabled",
+                is_support_validate=True,
+                is_support_trace_files_encryption=True,
+                lts=SimpleNamespace(is_lts_enabled=True),
+                obs_info=None,
+            ),
+            SimpleNamespace(
+                id="tracker-2",
+                tracker_name="data",
+                tracker_type="data",
+                status="enabled",
+                is_support_validate=False,
+                is_support_trace_files_encryption=False,
+                lts=SimpleNamespace(is_lts_enabled=False),
+                obs_info=None,
+            ),
+        ]
+        service_client = mock.MagicMock(region=REGION)
+        service_client.list_trackers.return_value = SimpleNamespace(trackers=trackers)
+
+        cts = _build_cts(service_client)
+        by_id = {tracker.id: tracker for tracker in cts.trackers}
+
+        assert by_id["tracker-1"].is_support_validate is True
+        assert by_id["tracker-1"].is_support_trace_files_encryption is True
+        assert by_id["tracker-1"].is_lts_enabled is True
+        assert by_id["tracker-2"].is_support_validate is False
+        assert by_id["tracker-2"].is_support_trace_files_encryption is False
+        assert by_id["tracker-2"].is_lts_enabled is False

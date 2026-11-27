@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "iam_user_multiple_access_keys",
+  "CheckTitle": "IAM user has at most one active permanent access key",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Huawei Cloud IAM** users should have at most **one active permanent access key** at a time, except briefly during planned credential rotation.",
+  "Risk": "Having multiple active permanent access keys per user expands the credential attack surface and makes key inventory, auditing, and emergency revocation harder.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_02_0003.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Identity and Access Management (IAM)** > **Users**.\n3. Select the user and open **Security Settings** > **Access Keys**.\n4. Disable or delete redundant active access keys so at most one remains active.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep at most **one active access key** per IAM user and delete superseded keys immediately after rotation.",
+      "Url": "https://hub.prowler.com/check/iam_user_multiple_access_keys"
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

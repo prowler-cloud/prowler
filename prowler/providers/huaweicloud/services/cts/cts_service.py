@@ -34,12 +34,28 @@ class CTS(HuaweiCloudService):
             if response and response.trackers:
                 for tracker_data in response.trackers:
                     obs_info = getattr(tracker_data, "obs_info", None)
+                    lts_info = getattr(tracker_data, "lts", None)
                     self.trackers.append(
                         Tracker(
                             id=getattr(tracker_data, "id", None) or "",
                             name=getattr(tracker_data, "tracker_name", None) or "",
                             tracker_type=getattr(tracker_data, "tracker_type", ""),
                             is_enabled=getattr(tracker_data, "status", "") == "enabled",
+                            is_support_validate=bool(
+                                getattr(tracker_data, "is_support_validate", False)
+                            ),
+                            is_support_trace_files_encryption=bool(
+                                getattr(
+                                    tracker_data,
+                                    "is_support_trace_files_encryption",
+                                    False,
+                                )
+                            ),
+                            is_lts_enabled=(
+                                bool(getattr(lts_info, "is_lts_enabled", False))
+                                if lts_info
+                                else False
+                            ),
                             bucket_name=(
                                 getattr(obs_info, "bucket_name", "") if obs_info else ""
                             ),
@@ -65,6 +81,9 @@ class Tracker(HuaweiCloudBaseModel):
     name: str
     tracker_type: str = ""
     is_enabled: bool = False
+    is_support_validate: bool = False
+    is_support_trace_files_encryption: bool = False
+    is_lts_enabled: bool = False
     bucket_name: str = ""
     file_prefix_name: str = ""
     region: str = ""

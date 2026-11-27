@@ -19,9 +19,12 @@ class VPC(HuaweiCloudService):
 
         self.vpcs = {}
         self.security_groups = {}
+        self.flow_logs: List[FlowLog] = []
+        self.flow_logs_failed_regions: set[str] = set()
 
         self.__threading_call__(self._list_vpcs)
         self.__threading_call__(self._list_security_groups)
+        self.__threading_call__(self._list_flow_logs)
 
     def _list_vpcs(self, regional_client):
         """List all VPCs in the region."""
@@ -138,6 +141,51 @@ class VPC(HuaweiCloudService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_flow_logs(self, regional_client):
+        """List all VPC flow logs in the region."""
+        region = getattr(regional_client, "region", "unknown")
+        logger.info(f"VPC - Listing Flow Logs in {region}...")
+
+        try:
+            from huaweicloudsdkvpc.v2 import ListFlowLogsRequest
+
+            limit = 2000
+            marker = None
+
+            while True:
+                request = ListFlowLogsRequest(limit=limit, marker=marker)
+                response = self._call_with_retries(
+                    regional_client.list_flow_logs, request
+                )
+                flow_logs = (
+                    getattr(response, "flow_logs", None) or [] if response else []
+                )
+
+                for fl_data in flow_logs:
+                    self.flow_logs.append(
+                        FlowLog(
+                            id=getattr(fl_data, "id", None) or "",
+                            name=getattr(fl_data, "name", None) or "",
+                            resource_type=getattr(fl_data, "resource_type", None) or "",
+                            resource_id=getattr(fl_data, "resource_id", None) or "",
+                            status=getattr(fl_data, "status", None) or "",
+                            admin_state=bool(getattr(fl_data, "admin_state", False)),
+                            region=region,
+                        )
+                    )
+
+                if len(flow_logs) < limit:
+                    break
+                marker = getattr(flow_logs[-1], "id", None)
+                if not marker:
+                    break
+
+        except Exception as error:
+            self.flow_logs_failed_regions.add(region)
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class VPCs(HuaweiCloudBaseModel):
     """VPC model."""
@@ -176,6 +224,18 @@ class SecurityGroups(HuaweiCloudBaseModel):
     vpc_id: str = ""
     description: str = ""
     rules: List[SecurityGroupRule] = []
+
+
+class FlowLog(HuaweiCloudBaseModel):
+    """VPC Flow Log model."""
+
+    id: str
+    name: str = ""
+    resource_type: str = ""
+    resource_id: str = ""
+    status: str = ""
+    admin_state: bool = False
+    region: str = ""
 
 
 # Names Huawei Cloud uses for the auto-created default security group. It is

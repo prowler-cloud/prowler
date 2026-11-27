@@ -100,3 +100,111 @@ class TestELBService:
 
         # Errors are logged and swallowed; no partial/garbage resources.
         assert elb.load_balancers == []
+
+    def test_list_listeners_parses_listeners(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_load_balancers.return_value = SimpleNamespace(
+            loadbalancers=[]
+        )
+        regional_client.list_listeners.return_value = SimpleNamespace(
+            listeners=[
+                SimpleNamespace(
+                    id="lis-1",
+                    name="https-lis",
+                    protocol="HTTPS",
+                    protocol_port=443,
+                    tls_ciphers_policy="tls-1-2-strict",
+                    security_policy_id="sp-1",
+                )
+            ],
+            page_info=SimpleNamespace(next_marker=None),
+        )
+        regional_client.show_security_policy.return_value = SimpleNamespace(
+            security_policy=SimpleNamespace(protocols=["TLSv1.2", "TLSv1.3"])
+        )
+
+        elb = ELB(_provider_with_client(regional_client))
+
+        assert len(elb.listeners) == 1
+        lis = elb.listeners[0]
+        assert lis.id == "lis-1"
+        assert lis.name == "https-lis"
+        assert lis.protocol == "HTTPS"
+        assert lis.protocol_port == 443
+        assert lis.tls_ciphers_policy == "tls-1-2-strict"
+        assert lis.security_policy_id == "sp-1"
+        assert lis.security_policy_protocols == ["TLSv1.2", "TLSv1.3"]
+        assert lis.region == REGION
+
+    def test_list_listeners_paginates(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_load_balancers.return_value = SimpleNamespace(
+            loadbalancers=[]
+        )
+        page1 = [
+            SimpleNamespace(
+                id=f"lis-{i}",
+                name=f"lis-{i}",
+                protocol="HTTPS",
+                protocol_port=443,
+                tls_ciphers_policy="tls-1-2-strict",
+                security_policy_id="",
+            )
+            for i in range(2000)
+        ]
+        page2 = [
+            SimpleNamespace(
+                id="lis-2000",
+                name="lis-2000",
+                protocol="HTTPS",
+                protocol_port=443,
+                tls_ciphers_policy="tls-1-3",
+                security_policy_id="",
+            )
+        ]
+        regional_client.list_listeners.side_effect = [
+            SimpleNamespace(
+                listeners=page1,
+                page_info=SimpleNamespace(next_marker="lis-1999"),
+            ),
+            SimpleNamespace(
+                listeners=page2,
+                page_info=SimpleNamespace(next_marker=None),
+            ),
+        ]
+
+        elb = ELB(_provider_with_client(regional_client))
+
+        assert len(elb.listeners) == 2001
+        assert elb.listeners[-1].id == "lis-2000"
+        assert regional_client.list_listeners.call_count == 2
+        assert (
+            regional_client.list_listeners.call_args_list[1].args[0].marker
+            == "lis-1999"
+        )
+
+    def test_list_listeners_security_policy_error_sets_none(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_load_balancers.return_value = SimpleNamespace(
+            loadbalancers=[]
+        )
+        regional_client.list_listeners.return_value = SimpleNamespace(
+            listeners=[
+                SimpleNamespace(
+                    id="lis-err",
+                    name="custom-lis",
+                    protocol="HTTPS",
+                    protocol_port=443,
+                    tls_ciphers_policy="tls-1-2-strict",
+                    security_policy_id="sp-missing",
+                )
+            ],
+            page_info=SimpleNamespace(next_marker=None),
+        )
+        regional_client.show_security_policy.side_effect = Exception("boom")
+
+        elb = ELB(_provider_with_client(regional_client))
+
+        assert len(elb.listeners) == 1
+        assert elb.listeners[0].security_policy_id == "sp-missing"
+        assert elb.listeners[0].security_policy_protocols is None

@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_instance_multi_az_enabled",
+  "CheckTitle": "RDS instance has high availability (Primary/Standby) enabled",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Huawei Cloud Relational Database Service (RDS)** instances are deployed in **Primary/Standby (HA)** mode across availability zones to maintain database **availability** during hardware or AZ failures.",
+  "Risk": "Single-node RDS instances lack automated standby failover, creating a single point of failure that can cause extended service outages.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/rds-mysql_faq/rds_faq_0073.html",
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_05_0060.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Relational Database Service (RDS)** > **Instances**.\n3. Select the single-node DB instance and choose **More** > **Change Type to Primary/Standby**.\n4. Select a standby AZ and confirm the change.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy production RDS instances in **Primary/Standby** mode across different availability zones.",
+      "Url": "https://hub.prowler.com/check/rds_instance_multi_az_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
