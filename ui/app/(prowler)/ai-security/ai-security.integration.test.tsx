@@ -182,6 +182,18 @@ describe("AI Security stack", () => {
       .toHaveAttribute("href", "/registry?filter%5Bcapability%5D=compliance");
   });
 
+  it("keeps the card with an error when the frameworks could not be loaded", async () => {
+    const screen = await render(<AiCompliance frameworks={null} />);
+
+    await expect
+      .element(screen.getByText("Compliance frameworks"))
+      .toBeVisible();
+    await expect.element(screen.getByRole("alert")).toBeVisible();
+    await expect
+      .element(screen.getByRole("link", { name: "Install from Registry" }))
+      .not.toBeInTheDocument();
+  });
+
   it("keeps a long check title inside its row on a narrow screen", async () => {
     const screen = await render(
       <div data-responsive-container className="@container w-[480px]">

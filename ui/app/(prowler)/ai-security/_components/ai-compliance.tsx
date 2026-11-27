@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
+import { CrossProviderErrorAlert } from "@/app/(prowler)/compliance/_components/cross-provider-error-alert";
 import { CrossProviderFrameworkCard } from "@/app/(prowler)/compliance/_components/cross-provider-framework-card";
 import type { CrossProviderFrameworkSummary } from "@/app/(prowler)/compliance/_types";
 import { ComplianceFrameworkGrid } from "@/components/compliance/compliance-framework-grid";
@@ -22,11 +23,11 @@ import { SectionHeader } from "./section-header";
 /** The Registry's compliance packages, where the AI frameworks install from. */
 const REGISTRY_COMPLIANCE_HREF = "/registry?filter%5Bcapability%5D=compliance";
 
-/** The AI frameworks as the Compliance page's universal framework cards. */
+/** The AI frameworks as the Compliance page's universal framework cards; null when they could not be loaded. */
 export const AiCompliance = ({
   frameworks,
 }: {
-  frameworks: CrossProviderFrameworkSummary[];
+  frameworks: CrossProviderFrameworkSummary[] | null;
 }) => (
   <Card variant="base" className="w-full min-w-0">
     <SectionHeader
@@ -34,7 +35,7 @@ export const AiCompliance = ({
       description="Universal frameworks aggregated across every compatible provider type, using the latest completed scan of each provider."
       aside={
         <Button asChild variant="link" size="link-sm">
-          {frameworks.length > 0 ? (
+          {!frameworks || frameworks.length > 0 ? (
             <Link href="/compliance">Open in Compliance</Link>
           ) : (
             <Link href={REGISTRY_COMPLIANCE_HREF}>Browse Registry</Link>
@@ -43,7 +44,9 @@ export const AiCompliance = ({
       }
     />
     <CardContent>
-      {frameworks.length > 0 ? (
+      {!frameworks ? (
+        <CrossProviderErrorAlert />
+      ) : frameworks.length > 0 ? (
         <ComplianceFrameworkGrid>
           {frameworks.map((framework) => (
             <CrossProviderFrameworkCard
