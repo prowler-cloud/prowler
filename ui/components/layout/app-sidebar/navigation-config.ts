@@ -164,6 +164,19 @@ export function getNavigationConfig({
           icon: SquareChartGantt,
           active: pathname === "/",
         },
+        // Right below Overview: it is the overview of the AI estate.
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/ai-security",
+                label: "AI Security",
+                icon: Bot,
+                active: isRouteActive(pathname, "/ai-security"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         ...(!isCloudEnvironment
           ? [
               {
@@ -203,18 +216,6 @@ export function getNavigationConfig({
                 label: "Realtime",
                 icon: Radar,
                 active: isRouteActive(pathname, "/realtime"),
-                highlight: true,
-              } as const,
-            ]
-          : []),
-        ...(isCloudEnvironment
-          ? [
-              {
-                kind: NAVIGATION_ITEM_KIND.LINK,
-                href: "/ai-security",
-                label: "AI Security",
-                icon: Bot,
-                active: isRouteActive(pathname, "/ai-security"),
                 highlight: true,
               } as const,
             ]

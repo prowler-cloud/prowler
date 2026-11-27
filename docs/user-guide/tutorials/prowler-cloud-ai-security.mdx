@@ -24,15 +24,15 @@ In Prowler Private Cloud, the model vendor providers and the AI compliance frame
 
 ## Opening AI Security
 
-To open the page, sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) and select **AI Security** in the **Security** section of the left navigation, below Realtime.
+To open the page, sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) and select **AI Security** in the left navigation, right below **Overview**.
 
-The filters at the top work as on the Overview page: to narrow every section of the page, select providers, accounts or a provider group. Every link to the Findings page keeps these filters and shows the failing, unmuted findings in the `gen-ai` category.
+The page always covers every AI provider of the tenant. Every link to the Findings page shows the failing, unmuted findings in the `gen-ai` category.
 
 In Prowler Local Server, **AI Security** appears in the **Premium** section of the left navigation and opens the upgrade dialog.
 
 ## Key Figures
 
-The three cards at the top summarize the latest scans of the providers in scope:
+The three cards at the top summarize the latest scans of the AI providers:
 
 * **Pass findings:** The percentage of passing findings among the passing and failing ones, with the totals of each.
 * **Failed findings:** The number of failing findings, split by severity. To open the findings of a severity, click it.
@@ -45,9 +45,7 @@ This section lists each provider type of both layers, with the number of failing
 * **Not connected:** No provider of that type has been added. To add one, click "Add Provider". Adding a provider requires the "Manage Providers" permission. When a Claude, OpenAI or ChatGPT row shows "Install from Registry" instead, the provider package is not installed in the tenant yet: click it to open the Registry filtered to that vendor, install the package, and then add the provider.
 * **No completed scan yet:** The provider has been added but has no completed scan. To start one, click "Launch scan".
 * **No AI services found:** The provider has been scanned, but the scan returned no AI findings, for example because the cloud account runs none of the AI services that Prowler checks.
-* **Results:** A bar with the share of passing findings, the passing and total counts, and the number of findings that need manual review. To open the failing findings of that provider type, click the percentage.
-
-To filter the whole page to one provider type, click its row. To show every AI provider again, click the same row.
+* **Results:** A bar with the failing findings split by severity, from critical to informational, the services that have failing findings, and the number of failing findings. To open the failing findings of that provider type on the Findings page, click the row.
 
 <Note>
 Each layer is scanned through its own provider. A gap in one layer stays open, however well the other layer scores.
@@ -72,8 +70,8 @@ When none of these frameworks is installed, the section shows "No AI frameworks 
 
 This section lists up to six failed AI checks, ranked as on the Findings page: by severity first, then by new and changed failures. Each row shows the severity, the check title and identifier, the affected provider types and the number of failing resources.
 
-To open the failing findings of a check, click its title. To open every failing AI finding in scope, click "View all AI findings".
+To open the failing findings of a check, click its title. To open every failing AI finding, click "View all AI findings".
 
 ## When the Page Shows No Results
 
-When no Claude, OpenAI, ChatGPT, AWS, Azure or Google Cloud provider is in scope, the page shows "No AI findings yet". To fill the page, add one of these providers and scan it, or widen the filters.
+When no Claude, OpenAI, ChatGPT, AWS, Azure or Google Cloud provider is connected, the page shows "No AI findings yet". To fill the page, add one of these providers and scan it.

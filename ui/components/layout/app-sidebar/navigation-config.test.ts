@@ -210,11 +210,13 @@ describe("getNavigationConfig", () => {
     }
 
     // Then
-    expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
-    expect(sections[1]?.items.slice(0, 3)).toMatchObject([
+    expect(sections[0]?.items).toMatchObject([
+      { label: "Overview", href: "/" },
+      { label: "AI Security", href: "/ai-security", highlight: true },
+    ]);
+    expect(sections[1]?.items.slice(0, 2)).toMatchObject([
       { label: "Exploitability issues", href: "/issues", highlight: true },
       { label: "Realtime", href: "/realtime", highlight: true },
-      { label: "AI Security", href: "/ai-security", highlight: true },
     ]);
     expect(configuration.children).not.toEqual(
       expect.arrayContaining([

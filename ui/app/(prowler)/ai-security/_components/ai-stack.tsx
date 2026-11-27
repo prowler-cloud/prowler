@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 import { aiFindingsHref } from "@/app/(prowler)/ai-security/_lib/findings";
 import { isModelVendor } from "@/app/(prowler)/ai-security/_lib/overview";
@@ -12,24 +11,20 @@ import type {
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { useRegistryProviderDiscovery } from "@/components/providers/workflow/forms/use-registry-provider-discovery";
 import { Badge, Button, Card, CardContent } from "@/components/shadcn";
-import { Progress } from "@/components/shadcn/progress";
-import { SelectableCard } from "@/components/shadcn/selectable-card/selectable-card";
-import { useUrlFilters } from "@/hooks/use-url-filters";
-import { getScoreColor } from "@/lib/compliance/score-utils";
-import { splitCsvFilterValues } from "@/lib/findings-filters";
 import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
-import { calculatePercentage, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import {
+  SEVERITY_COLORS,
+  SEVERITY_DISPLAY_NAMES,
+  SEVERITY_LEVELS,
+} from "@/types/severities";
 
 import { ConnectProviderButton } from "./connect-provider-button";
 import { SectionHeader } from "./section-header";
 
-const PROVIDER_TYPE_FILTER = "filter[provider_type__in]";
-
 interface StackProviderProps {
   provider: AiStackProvider;
   filters: Record<string, string>;
-  selected: boolean;
-  onSelect: () => void;
   /** A model vendor the tenant has not installed from the Registry yet. */
   notInstalled: boolean;
 }
@@ -37,15 +32,22 @@ interface StackProviderProps {
 function StackProvider({
   provider,
   filters,
-  selected,
-  onSelect,
   notInstalled,
 }: StackProviderProps) {
-  const { type, name, scope, connected, scanned, pass, fail, manual } =
-    provider;
+  const {
+    type,
+    name,
+    scope,
+    connected,
+    scanned,
+    pass,
+    fail,
+    manual,
+    severity,
+    services,
+  } = provider;
   const hasResults = pass + fail + manual > 0;
-  // Pass share of pass and fail findings, as the Compliance provider coverage rows.
-  const score = calculatePercentage(pass, pass + fail);
+  const present = SEVERITY_LEVELS.filter((level) => severity[level] > 0);
   const identity = (
     <>
       {/* Greyed out like the framework cards' providers without a completed scan. */}
@@ -102,43 +104,47 @@ function StackProvider({
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <SelectableCard
-        selected={selected}
-        onClick={onSelect}
-        title={
-          selected ? "Show every AI provider" : `Show only ${name} results`
-        }
-        className="flex min-w-0 flex-1 items-center gap-3"
-      >
-        {identity}
-        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <Progress
-            aria-label={`${name} pass findings`}
-            value={score}
-            variant={getScoreColor(score)}
-          />
-          <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
-            {pass}/{pass + fail} · {manual} manual
-          </span>
+    <Link
+      href={aiFindingsHref(filters, { "filter[provider_type__in]": type })}
+      aria-label={`${name}: ${fail.toLocaleString()} failed findings`}
+      className="border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary focus-visible:ring-ring/50 flex items-center gap-3 rounded-[12px] border p-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    >
+      {identity}
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {/* Failed findings by severity, most severe first, sized by share. */}
+        <span className="bg-bg-neutral-tertiary flex h-2 overflow-hidden rounded-full">
+          {present.map((level) => (
+            <span
+              key={level}
+              title={`${severity[level].toLocaleString()} ${SEVERITY_DISPLAY_NAMES[level].toLowerCase()}`}
+              style={{
+                width: `${(severity[level] / fail) * 100}%`,
+                background: SEVERITY_COLORS[level],
+              }}
+            />
+          ))}
         </span>
-      </SelectableCard>
-      <Button asChild variant="link" size="link-sm">
-        <Link
-          href={aiFindingsHref(filters, { "filter[provider_type__in]": type })}
-          aria-label={`${name}: ${score}%, ${fail} failed findings`}
-        >
-          {score}%
-        </Link>
-      </Button>
-    </div>
+        {services.length > 0 && (
+          <span className="flex flex-wrap gap-1">
+            {services.map((service) => (
+              <Badge key={service} variant="tag">
+                {service}
+              </Badge>
+            ))}
+          </span>
+        )}
+      </span>
+      <span className="text-text-neutral-secondary shrink-0 text-xs font-medium tabular-nums">
+        {fail.toLocaleString()} failed
+      </span>
+    </Link>
   );
 }
 
 /**
  * Where AI runs, layer by layer: the model vendors' accounts and the clouds'
  * AI services. A layer with a provider missing says what to add.
- * A connected provider filters the page to its type; picking it again clears it.
+ * A provider with results opens its failed AI findings.
  */
 export function AiStack({
   layers,
@@ -148,27 +154,12 @@ export function AiStack({
   /** The page's scope, carried into the findings links. */
   filters: Record<string, string>;
 }) {
-  const searchParams = useSearchParams();
-  const { navigateWithParams } = useUrlFilters();
   const { result: discovery } = useRegistryProviderDiscovery();
   // Unknown until discovery answers: keep Add Provider rather than guess.
   const installedTypes =
     discovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY
       ? discovery.options.map((option) => option.type)
       : null;
-  const selected = splitCsvFilterValues(
-    searchParams.get(PROVIDER_TYPE_FILTER) ?? undefined,
-  );
-
-  const toggle = (type: string) =>
-    navigateWithParams((params) => {
-      if (selected.length === 1 && selected[0] === type) {
-        params.delete(PROVIDER_TYPE_FILTER);
-      } else {
-        params.set(PROVIDER_TYPE_FILTER, type);
-      }
-    });
-
   return (
     <Card variant="base" className="w-full min-w-0">
       <SectionHeader
@@ -207,8 +198,6 @@ export function AiStack({
                       <StackProvider
                         provider={provider}
                         filters={filters}
-                        selected={selected.includes(provider.type)}
-                        onSelect={() => toggle(provider.type)}
                         notInstalled={
                           isModelVendor(provider.type) &&
                           installedTypes !== null &&

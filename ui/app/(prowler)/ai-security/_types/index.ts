@@ -20,6 +20,10 @@ export interface AiStackProvider extends AiResultCounts {
   connected: boolean;
   /** Has a completed scan; without one there are no results to show. */
   scanned: boolean;
+  /** Its failed findings by severity. */
+  severity: AiSeverityCounts;
+  /** The services with failed findings. */
+  services: string[];
 }
 
 export interface AiStackLayer {

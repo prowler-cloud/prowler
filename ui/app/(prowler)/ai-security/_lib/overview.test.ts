@@ -4,8 +4,7 @@ import type { FindingsStatusAttributes } from "@/actions/overview";
 import type { ProviderProps } from "@/types/providers";
 
 import {
-  aiProvidersInScope,
-  aiScopeFilters,
+  aiProviders,
   installedScope,
   isCloudAi,
   isModelVendor,
@@ -35,55 +34,15 @@ const NO_SEVERITY = {
   informational: 0,
 };
 
-describe("aiScopeFilters", () => {
-  it("keeps only the AI-SPM provider types the page selects", () => {
+describe("aiProviders", () => {
+  it("keeps the model vendors and the clouds with AI services", () => {
     expect(
-      aiScopeFilters({
-        "filter[provider_type__in]": "aws,kubernetes,openai",
-        "filter[provider_id__in]": "p1",
-      }),
-    ).toEqual({
-      "filter[provider_type__in]": "openai,aws",
-      "filter[provider_id__in]": "p1",
-    });
-  });
-
-  it("has no scope when the selection leaves out every AI-SPM provider", () => {
-    expect(
-      aiScopeFilters({ "filter[provider_type__in]": "kubernetes" }),
-    ).toBeNull();
-  });
-});
-
-describe("aiProvidersInScope", () => {
-  it("keeps every AI-SPM provider type the account filter allows", () => {
-    expect(
-      aiProvidersInScope(
-        [
-          provider("p1", "openai"),
-          provider("p2", "claude"),
-          provider("p3", "aws"),
-          provider("p4", "openai"),
-          provider("p5", "kubernetes"),
-        ],
-        {
-          "filter[provider_type__in]": "openai",
-          "filter[provider_id__in]": "p1,p2,p3,p5",
-        },
-      ).map(({ id }) => id),
-    ).toEqual(["p1", "p2", "p3"]);
-  });
-
-  it("keeps only the providers in the selected groups", () => {
-    expect(
-      aiProvidersInScope(
-        [provider("p1", "claude", ["g1"]), provider("p2", "aws", ["g2"])],
-        {
-          "filter[provider_type__in]": "claude,aws",
-          "filter[provider_groups__in]": "g2",
-        },
-      ).map(({ id }) => id),
-    ).toEqual(["p2"]);
+      aiProviders([
+        provider("p1", "openai"),
+        provider("p2", "aws"),
+        provider("p3", "kubernetes"),
+      ]).map(({ id }) => id),
+    ).toEqual(["p1", "p2"]);
   });
 });
 
@@ -119,8 +78,6 @@ describe("installedScope", () => {
       "filter[provider_id__in]": "p1,p2",
     });
     expect(installedScope(filters, [])).toBeNull();
-    // The page passes no filters when the selected types leave no AI provider.
-    expect(installedScope({}, [provider("p1", "claude")])).toBeNull();
   });
 });
 
@@ -153,7 +110,6 @@ describe("toAiSecurityOverview", () => {
       provider("p3", "claude"),
       provider("p4", "aws"),
     ],
-    types: ["openai", "aws"],
     results: {
       openai: status({ pass: 3, fail: 2, muted: 1, total: 10, fail_new: 1 }),
       claude: status({ pass: 7, fail: 7, muted: 0, total: 14, fail_new: 5 }),
@@ -167,7 +123,10 @@ describe("toAiSecurityOverview", () => {
       },
     },
     scannedTypes: ["openai", "aws"],
-    severity: { ...NO_SEVERITY, high: 2 },
+    severities: {
+      openai: { ...NO_SEVERITY, high: 2 },
+      claude: { ...NO_SEVERITY, medium: 7 },
+    },
     findingGroups: [
       group("apikey_rotated_regularly", "high", 1, 1),
       group("bedrock_guardrails_configured", "critical", 2, 0, "aws"),
@@ -175,17 +134,41 @@ describe("toAiSecurityOverview", () => {
     ],
   });
 
-  it("totals the model vendors and the clouds' gen-ai findings the page is filtered to", () => {
-    expect(overview).toMatchObject({ pass: 3 + 5, fail: 2 + 4 });
-    expect(overview.severity).toMatchObject({ critical: 1, high: 2 + 3 });
+  it("totals the model vendors and the clouds' gen-ai findings", () => {
+    expect(overview).toMatchObject({ pass: 3 + 7 + 5, fail: 2 + 7 + 4 });
+    expect(overview.severity).toMatchObject({
+      critical: 1,
+      high: 2 + 3,
+      medium: 7,
+    });
   });
 
   it("totals the failures that are new since the previous scan, as the Overview does", () => {
-    expect(overview.newFail).toBe(1 + 2);
+    expect(overview.newFail).toBe(1 + 5 + 2);
   });
 
   it("counts what is neither pass, fail nor muted as manual", () => {
     expect(overview.manual).toBe(4);
+  });
+
+  it("gives each provider its failed findings by severity and the services that fail", () => {
+    const [vendors, clouds] = overview.layers.map((layer) => layer.providers);
+    expect(
+      [vendors[1], clouds[0], clouds[1]].map(({ severity, services }) => ({
+        severity,
+        services,
+      })),
+    ).toEqual([
+      {
+        severity: { ...NO_SEVERITY, high: 2 },
+        services: ["apikey", "project"],
+      },
+      {
+        severity: { ...NO_SEVERITY, critical: 1, high: 3 },
+        services: ["bedrock"],
+      },
+      { severity: NO_SEVERITY, services: [] },
+    ]);
   });
 
   it("lists every model vendor and cloud, and says which ones are connected and scanned", () => {

@@ -5,11 +5,11 @@ import type {
 import type { CategoryOverviewAttributes } from "@/actions/overview/risk-radar/types";
 import type {
   AiSecurityOverview,
+  AiSeverityCounts,
   AiStackProvider,
   AiTopRisk,
 } from "@/app/(prowler)/ai-security/_types";
 import { splitCsvFilterValues } from "@/lib/findings-filters";
-import type { SearchParamsProps } from "@/types";
 import type { RequirementStatus } from "@/types/compliance";
 import {
   getProviderDisplayName,
@@ -55,7 +55,7 @@ const providerName = (type: string) =>
   isModelVendor(type) ? MODEL_VENDORS[type] : getProviderDisplayName(type);
 
 /** The failed checks the page lists, most severe first. */
-export const TOP_RISKS = 6;
+const TOP_RISKS = 6;
 
 /** The AI frameworks the page shows when the tenant has them installed. */
 export const AI_FRAMEWORK_IDS = [
@@ -67,35 +67,10 @@ export const AI_FRAMEWORK_IDS = [
   "eu_ai_act_2024",
 ];
 
-const SCOPE_KEYS = [
-  "filter[provider_id__in]",
-  "filter[provider_groups__in]",
-] as const;
-
-/**
- * The page's provider filters narrowed to the AI-SPM provider types (model
- * vendors and clouds), or null when the selected types leave none of them.
- */
-export function aiScopeFilters(
-  searchParams: SearchParamsProps,
-): Record<string, string> | null {
-  const selected = splitCsvFilterValues(
-    searchParams["filter[provider_type__in]"],
-  );
-  const types = AI_SPM_TYPES.filter(
-    (type) => selected.length === 0 || selected.includes(type),
-  );
-  if (types.length === 0) return null;
-
-  const filters: Record<string, string> = {
-    "filter[provider_type__in]": types.join(","),
-  };
-  for (const key of SCOPE_KEYS) {
-    const value = splitCsvFilterValues(searchParams[key]).join(",");
-    if (value) filters[key] = value;
-  }
-  return filters;
-}
+/** The page's scope: every AI-SPM provider type (model vendors and clouds). */
+export const AI_SCOPE: Record<string, string> = {
+  "filter[provider_type__in]": AI_SPM_TYPES.join(","),
+};
 
 /** The scope filters narrowed to the provider types that pass the test, or null when none does. */
 export function narrowScope(
@@ -122,27 +97,12 @@ export const installedScope = (
     providers.some(({ attributes }) => attributes.provider === type),
   );
 
-/**
- * The AI-SPM providers of every type the account and group filters allow. The AI stack
- * lists them all, so a row can switch the page to another provider type.
- */
-export function aiProvidersInScope(
-  providers: ProviderProps[],
-  filters: Record<string, string>,
-) {
-  const ids = filters["filter[provider_id__in]"]?.split(",");
-  const groups = filters["filter[provider_groups__in]"]?.split(",");
-  return providers.filter(
-    (provider) =>
-      (isModelVendor(provider.attributes.provider) ||
-        isCloudAi(provider.attributes.provider)) &&
-      (!ids || ids.includes(provider.id)) &&
-      (!groups ||
-        provider.relationships.provider_groups.data.some(({ id }) =>
-          groups.includes(id),
-        )),
+/** The tenant's AI-SPM providers, the ones the AI stack lists. */
+export const aiProviders = (providers: ProviderProps[]) =>
+  providers.filter(
+    ({ attributes }) =>
+      isModelVendor(attributes.provider) || isCloudAi(attributes.provider),
   );
-}
 
 export interface AiFindingGroup {
   id: string;
@@ -162,16 +122,14 @@ export interface AiFindingGroup {
 export interface AiOverviewSources {
   /** The AI-SPM providers the stack lists. */
   providers: ProviderProps[];
-  /** The provider types the page is filtered to; the totals count only these. */
-  types: string[];
   /** The latest scans' results of each model vendor type the stack lists. */
   results: Partial<Record<string, FindingsStatusAttributes>>;
   /** The latest scans' gen-ai findings of each cloud type the stack lists. */
   cloudResults: Partial<Record<string, CategoryOverviewAttributes>>;
   /** The provider types with a completed scan among the providers listed. */
   scannedTypes: string[];
-  /** The model vendors' failed findings by severity. */
-  severity: FindingsSeverityAttributes;
+  /** The failed findings by severity of each model vendor type the stack lists. */
+  severities: Partial<Record<string, FindingsSeverityAttributes>>;
   /** Failed checks of the model vendors and of the clouds' gen-ai, in any order. */
   findingGroups: AiFindingGroup[];
 }
@@ -198,17 +156,39 @@ const toTopRisk = ({ id, attributes }: AiFindingGroup): AiTopRisk | null =>
       }
     : null;
 
+const NO_SEVERITY: AiSeverityCounts = {
+  critical: 0,
+  high: 0,
+  medium: 0,
+  low: 0,
+  informational: 0,
+};
+
+/**
+ * The services with failed checks of a provider type, from the check ids:
+ * the SDK requires every check id to start with its service name.
+ */
+const servicesOf = (findingGroups: AiFindingGroup[], type: string) =>
+  Array.from(
+    new Set(
+      findingGroups
+        .filter(({ attributes }) =>
+          attributes.impacted_providers.includes(type),
+        )
+        .map(({ id }) => id.split("_")[0]),
+    ),
+  ).sort();
+
 const accountsOf = (providers: ProviderProps[], type: string) =>
   providers.filter((provider) => provider.attributes.provider === type).length;
 
 /** Maps the overview, compliance and finding-group responses to what the widgets show. */
 export function toAiSecurityOverview({
   providers,
-  types,
   results,
   cloudResults,
   scannedTypes,
-  severity,
+  severities,
   findingGroups,
 }: AiOverviewSources): AiSecurityOverview {
   const vendors: AiStackProvider[] = MODEL_VENDOR_TYPES.map((type) => {
@@ -230,6 +210,8 @@ export function toAiSecurityOverview({
       fail,
       manual,
       newFail: result?.fail_new ?? 0,
+      severity: severities[type] ?? NO_SEVERITY,
+      services: servicesOf(findingGroups, type),
     };
   });
 
@@ -248,30 +230,24 @@ export function toAiSecurityOverview({
       fail,
       manual: 0,
       newFail: result?.new_failed_findings ?? 0,
+      severity: result?.severity ?? NO_SEVERITY,
+      services: servicesOf(findingGroups, type),
     };
   });
 
-  const inScope = [...vendors, ...clouds].filter((row) =>
-    types.includes(row.type),
-  );
-  const cloudSeverity = CLOUD_AI_TYPES.filter((type) => types.includes(type))
-    .map((type) => cloudResults[type]?.severity)
-    .filter((counts) => counts !== undefined);
+  const rows = [...vendors, ...clouds];
 
   return {
-    pass: inScope.reduce((sum, row) => sum + row.pass, 0),
-    fail: inScope.reduce((sum, row) => sum + row.fail, 0),
-    manual: inScope.reduce((sum, row) => sum + row.manual, 0),
-    newFail: inScope.reduce((sum, row) => sum + row.newFail, 0),
+    pass: rows.reduce((sum, row) => sum + row.pass, 0),
+    fail: rows.reduce((sum, row) => sum + row.fail, 0),
+    manual: rows.reduce((sum, row) => sum + row.manual, 0),
+    newFail: rows.reduce((sum, row) => sum + row.newFail, 0),
     severity: Object.fromEntries(
       SEVERITY_LEVELS.map((level) => [
         level,
-        cloudSeverity.reduce(
-          (sum, counts) => sum + counts[level],
-          severity[level],
-        ),
+        rows.reduce((sum, row) => sum + row.severity[level], 0),
       ]),
-    ) as AiSecurityOverview["severity"],
+    ) as AiSeverityCounts,
     layers: [
       {
         id: "model-vendors",
