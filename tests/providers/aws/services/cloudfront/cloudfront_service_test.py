@@ -2,6 +2,9 @@ from unittest import mock
 from unittest.mock import patch
 
 import botocore
+import pytest
+from boto3 import client
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
@@ -182,6 +185,95 @@ def mock_make_api_call(self, operation_name, kwarg):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_CloudFront_Service:
+    @mock_aws
+    @pytest.mark.parametrize("failed_index", [0, 1, 2])
+    @pytest.mark.parametrize("error_code", ["AccessDenied", "NoSuchDistribution"])
+    def test_get_distribution_config_continues_after_error(
+        self, failed_index, error_code
+    ):
+        cloudfront_client = client("cloudfront", region_name=AWS_REGION_US_EAST_1)
+        distribution_ids = [
+            cloudfront_client.create_distribution(
+                DistributionConfig=example_distribution_config(f"config-{index}")
+            )["Distribution"]["Id"]
+            for index in range(3)
+        ]
+        failed_id = distribution_ids[failed_index]
+
+        def config_error(api_client, operation_name, parameters):
+            if (
+                operation_name == "GetDistributionConfig"
+                and parameters["Id"] == failed_id
+            ):
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": error_code,
+                            "Message": "Unavailable distribution",
+                        }
+                    },
+                    operation_name,
+                )
+            return mock_make_api_call(api_client, operation_name, parameters)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=config_error):
+            cloudfront = CloudFront(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+
+        assert set(cloudfront.distributions) == set(distribution_ids)
+        for distribution_id in distribution_ids:
+            distribution = cloudfront.distributions[distribution_id]
+            if distribution_id == failed_id:
+                assert distribution.default_cache_config is None
+            else:
+                assert distribution.logging_enabled is True
+                assert distribution.web_acl_id == "test-web-acl"
+                assert (
+                    distribution.default_cache_config.viewer_protocol_policy
+                    == ViewerProtocolPolicy.https_only
+                )
+
+    @mock_aws
+    @pytest.mark.parametrize("failed_index", [0, 1, 2])
+    @pytest.mark.parametrize("error_code", ["AccessDenied", "NoSuchResource"])
+    def test_list_tags_continues_after_error(self, failed_index, error_code):
+        cloudfront_client = client("cloudfront", region_name=AWS_REGION_US_EAST_1)
+        distribution_ids = [
+            cloudfront_client.create_distribution(
+                DistributionConfig=example_distribution_config(f"tags-{index}")
+            )["Distribution"]["Id"]
+            for index in range(3)
+        ]
+        failed_id = distribution_ids[failed_index]
+
+        def tags_error(api_client, operation_name, parameters):
+            if (
+                api_client.meta.service_model.service_name == "cloudfront"
+                and operation_name == "ListTagsForResource"
+                and parameters["Resource"].endswith(f"/{failed_id}")
+            ):
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": error_code,
+                            "Message": "Unavailable distribution",
+                        }
+                    },
+                    operation_name,
+                )
+            return mock_make_api_call(api_client, operation_name, parameters)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=tags_error):
+            cloudfront = CloudFront(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+
+        assert set(cloudfront.distributions) == set(distribution_ids)
+        for distribution_id in distribution_ids:
+            distribution = cloudfront.distributions[distribution_id]
+            assert distribution.logging_enabled is True
+            if distribution_id == failed_id:
+                assert distribution.tags == []
+            else:
+                assert distribution.tags == [{"Key": "test", "Value": "test"}]
+
     # Test CloudFront Client
     @mock_aws
     def test_get_client(self):

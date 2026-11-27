@@ -92,9 +92,10 @@ class CloudFront(AWSService):
             )
 
     def _get_distribution_config(self, client, distributions, region) -> dict:
+        """Collect configuration independently for each distribution."""
         logger.info("CloudFront - Getting Distributions...")
-        try:
-            for distribution_id in distributions.keys():
+        for distribution_id in distributions.keys():
+            try:
                 distribution_config = client.get_distribution_config(Id=distribution_id)
 
                 # Global Config
@@ -140,23 +141,24 @@ class CloudFront(AWSService):
                     default_cache_config
                 )
 
-        except Exception as error:
-            logger.error(
-                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _list_tags_for_resource(self, client, distributions, region):
+        """Collect tags independently for each distribution."""
         logger.info("CloudFront - List Tags...")
-        try:
-            for distribution in distributions.values():
+        for distribution in distributions.values():
+            try:
                 response = client.list_tags_for_resource(Resource=distribution.arn)[
                     "Tags"
                 ]
                 distribution.tags = response.get("Items")
-        except Exception as error:
-            logger.error(
-                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _get_log_delivery_sources(self, distributions, region):
         """Check for Standard Logging v2 via CloudWatch Logs delivery sources.
