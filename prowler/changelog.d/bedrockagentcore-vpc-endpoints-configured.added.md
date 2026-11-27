@@ -1,0 +1,1 @@
+`bedrockagentcore_vpc_endpoints_configured` check for AWS provider, verifying that VPCs containing Amazon Bedrock AgentCore runtimes have interface VPC endpoints for the AgentCore data plane, control plane, and gateway services
