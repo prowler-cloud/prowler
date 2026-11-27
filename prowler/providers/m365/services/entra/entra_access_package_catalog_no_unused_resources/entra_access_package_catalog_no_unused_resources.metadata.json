@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_access_package_catalog_no_unused_resources",
+  "CheckTitle": "Entitlement management ensures catalog resources are governed by access packages",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Entitlement management **catalog resources** are evaluated to confirm every resource (group, application) is referenced by at least one access package via a `resourceRoleScope`. Resources present in a catalog but not used by any package are **delegated access surface with no business purpose** and are not covered by any access package policy or access review.",
+  "Risk": "Adding a resource to a catalog delegates control to catalog owners and access package managers, who can grant membership or app roles to requestors **without owning** the underlying group or application. Unused resources widen the **delegated attack surface** without justification, violate **least privilege**, and represent **configuration drift** from deleted or modified packages.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/id-governance/entitlement-management-catalog-create",
+    "https://learn.microsoft.com/entra/id-governance/entitlement-management-delegate",
+    "https://maester.dev/docs/tests/MT.1110"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "New-MgEntitlementManagementResourceRequest -BodyParameter @{ requestType = 'adminRemove'; resource = @{ originId = '<originId>'; originSystem = 'AadGroup' }; catalog = @{ id = '<catalogId>' } }",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to ID Governance > Entitlement management > Catalogs\n3. Select the catalog with unused resources\n4. Navigate to Resources\n5. Select each unused resource and click Remove (or add it to an access package if it is still needed)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review each entitlement management catalog and remove resources that are not referenced by any access package. If a resource is still needed, create or update an access package to include it. Apply the **principle of least privilege** by keeping catalogs lean and only delegating resources that are actively governed by access packages and their associated policies and access reviews.",
+      "Url": "https://hub.prowler.com/check/entra_access_package_catalog_no_unused_resources"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "SharePoint Online resources are not returned by GET /catalogs/{id}/resources with application permissions (documented Microsoft limitation) and are therefore not evaluated by this check. Requires EntitlementManagement.Read.All permission and Microsoft Entra ID P2 or Entra ID Governance license."
+}
