@@ -142,7 +142,7 @@ class TestRDSInstanceMultiAzEnabled:
             assert result[0].status == "FAIL"
             assert "single availability zone" in result[0].status_extended
 
-    def test_rds_ha_instance_without_node_azs_skipped(self):
+    def test_rds_ha_instance_without_node_azs_fails(self):
         rds_client = mock.MagicMock()
 
         with (
@@ -176,4 +176,6 @@ class TestRDSInstanceMultiAzEnabled:
 
             result = rds_instance_multi_az_enabled().execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "cannot be verified" in result[0].status_extended
