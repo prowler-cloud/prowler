@@ -34,6 +34,11 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
     Analyzer,
 )
+from prowler.providers.github.lib.mutelist.mutelist import GithubMutelist
+from prowler.providers.github.models import (
+    GithubAppIdentityInfo,
+    GithubIdentityInfo,
+)
 from tests.lib.check.fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
@@ -1181,6 +1186,153 @@ class TestCheck:
             subscription_name=subscription_name,
             finding=finding,
         )
+        assert findings[0].muted is True
+
+    def test_execute_github_app_mutelist_passes_finding_owner(self):
+        """Test that execute() passes the finding owner as account_name for GitHub App auth."""
+        finding = Mock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.owner = "my-org"
+
+        check = Mock()
+        check.CheckID = "organization_members_mfa_required"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "github"
+        provider.identity = GithubAppIdentityInfo(
+            app_id="12345",
+            app_name="my-prowler-app",
+            installations=["my-org"],
+        )
+        provider.mutelist.mutelist = {"Accounts": {"my-org": {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            account_name="my-org",
+            finding=finding,
+        )
+        assert findings[0].muted is True
+
+    def test_execute_github_app_mutelist_falls_back_to_app_name(self):
+        """Test that execute() falls back to the app name when the finding has no owner."""
+        finding = Mock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.owner = ""
+
+        check = Mock()
+        check.CheckID = "organization_members_mfa_required"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "github"
+        provider.identity = GithubAppIdentityInfo(
+            app_id="12345",
+            app_name="my-prowler-app",
+            installations=["my-org"],
+        )
+        provider.mutelist.mutelist = {"Accounts": {"my-prowler-app": {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            account_name="my-prowler-app",
+            finding=finding,
+        )
+        assert findings[0].muted is True
+
+    def test_execute_github_pat_mutelist_passes_account_name(self):
+        """Test that execute() still passes the identity account_name for PAT auth."""
+        finding = Mock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.owner = "some-org"
+
+        check = Mock()
+        check.CheckID = "organization_members_mfa_required"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "github"
+        provider.identity = GithubIdentityInfo(
+            account_id="1",
+            account_name="my-user",
+            account_url="https://github.com/my-user",
+        )
+        provider.mutelist.mutelist = {"Accounts": {"my-user": {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            account_name="my-user",
+            finding=finding,
+        )
+        assert findings[0].muted is True
+
+    def test_execute_github_app_mutelist_mutes_finding(self):
+        """Test that a GitHub App finding is muted with a real mutelist (fixes #13524)."""
+        mutelist_content = {
+            "Accounts": {
+                "my-org": {
+                    "Checks": {
+                        "organization_members_mfa_required": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                        }
+                    }
+                }
+            }
+        }
+
+        finding = Mock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.check_metadata.CheckID = "organization_members_mfa_required"
+        finding.resource_name = "my-org"
+        finding.owner = "my-org"
+        finding.resource_tags = []
+
+        check = Mock()
+        check.CheckID = "organization_members_mfa_required"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "github"
+        provider.identity = GithubAppIdentityInfo(
+            app_id="12345",
+            app_name="my-prowler-app",
+            installations=["my-org"],
+        )
+        provider.mutelist = GithubMutelist(mutelist_content=mutelist_content)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
         assert findings[0].muted is True
 
     def test_execute_check_exception_only_logs(self, caplog):
