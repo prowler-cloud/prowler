@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "obs_bucket_event_notification_enabled",
+  "CheckTitle": "OBS bucket has event notifications enabled",
+  "CheckType": [],
+  "ServiceName": "obs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "**Huawei Cloud Object Storage Service (OBS)** buckets have **event notifications** configured (via SMN or FunctionGraph) to alert or trigger workflows on object operations.",
+  "Risk": "Without **event notifications**, suspicious object uploads, deletions, or overwrites on sensitive OBS buckets may go undetected, delaying **incident response** and forensic investigation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/ugobs-obs/obs_41_0045.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Object Storage Service (OBS)**.\n3. Select the target **bucket**.\n4. In the navigation pane, choose **Basic Configurations** > **Event Notification**.\n5. Click **Create** and configure an **SMN topic** or **FunctionGraph** trigger for critical object events.\n6. Click **OK**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **OBS event notifications** for critical buckets to monitor object creation and deletion events in near real time.",
+      "Url": "https://hub.prowler.com/check/obs_bucket_event_notification_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,1 @@
+`obs_bucket_object_lock`, `obs_bucket_multi_az_redundancy`, `obs_bucket_cors_wildcard_origin`, `obs_bucket_event_notification_enabled`, and `obs_bucket_acl_everyone_access` checks for Huawei Cloud OBS buckets

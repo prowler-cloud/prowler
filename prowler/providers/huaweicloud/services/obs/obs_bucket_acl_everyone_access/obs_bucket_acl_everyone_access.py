@@ -1,0 +1,30 @@
+from prowler.lib.check.models import Check, CheckReportHuaweiCloud
+from prowler.providers.huaweicloud.services.obs.obs_client import obs_client
+
+
+class obs_bucket_acl_everyone_access(Check):
+    """Check if OBS bucket ACLs do not grant permissions to Everyone."""
+
+    def execute(self) -> list[CheckReportHuaweiCloud]:
+        findings = []
+
+        for bucket in obs_client.buckets:
+            if bucket.acl_everyone_permissions is None:
+                continue
+
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=bucket)
+            report.region = bucket.region
+            report.resource_id = bucket.name
+            report.resource_arn = f"huaweicloud:obs:{bucket.region}:{obs_client.audited_account}:bucket/{bucket.name}"
+
+            if bucket.acl_everyone_permissions:
+                perms = ", ".join(bucket.acl_everyone_permissions)
+                report.status = "FAIL"
+                report.status_extended = f"OBS bucket {bucket.name} grants ACL permissions ({perms}) to Everyone."
+            else:
+                report.status = "PASS"
+                report.status_extended = f"OBS bucket {bucket.name} does not grant ACL permissions to Everyone."
+
+            findings.append(report)
+
+        return findings
