@@ -56,7 +56,7 @@ describe("OnboardingMethodTabs", () => {
     );
 
     expect(onSelectOrganizations).not.toHaveBeenCalled();
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS,
     );

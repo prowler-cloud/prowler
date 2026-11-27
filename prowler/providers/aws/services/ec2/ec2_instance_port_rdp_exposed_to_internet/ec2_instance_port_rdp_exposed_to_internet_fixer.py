@@ -1,6 +1,9 @@
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
+from prowler.providers.aws.services.ec2.lib.security_groups import (
+    check_security_group,
+    get_any_address_ip_permission,
+)
 
 
 def fixer(resource_id: str, region: str) -> bool:
@@ -39,7 +42,9 @@ def fixer(resource_id: str, region: str) -> bool:
                             ):
                                 regional_client.revoke_security_group_ingress(
                                     GroupId=sg.id,
-                                    IpPermissions=[ingress_rule],
+                                    IpPermissions=[
+                                        get_any_address_ip_permission(ingress_rule)
+                                    ],
                                 )
 
     except Exception as error:

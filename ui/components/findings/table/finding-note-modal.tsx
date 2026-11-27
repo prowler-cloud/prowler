@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Info } from "lucide-react";
+import { ExternalLink, Info, LockKeyhole } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
@@ -25,7 +25,10 @@ import { UsageLimitError } from "@/lib/action-errors";
 import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -72,6 +75,11 @@ export type FindingNoteModalMode =
 
 const REMEDIATING_INFO_COPY =
   "Once this finding is remediated, if in the following scan its status changes to Pass, it will be automatically changed to Resolved";
+
+const TRIAGE_PREMIUM_NOTICE_COPY =
+  "Triage notes and status are a premium feature. They stay attached to the finding across scans.";
+const TRIAGE_PREMIUM_PLACEHOLDER_COPY =
+  "Notes can be saved in Prowler Cloud and Private Cloud.";
 
 export function FindingNoteModal({
   open,
@@ -227,6 +235,27 @@ export function FindingNoteModal({
           unbreakable content (e.g. resource UIDs) widens the grid track past
           the modal instead of truncating. */}
       <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
+        {isCloudOnly && (
+          <Alert role="note">
+            <LockKeyhole aria-hidden="true" />
+            <AlertDescription className="gap-2">
+              <p>{TRIAGE_PREMIUM_NOTICE_COPY}</p>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  openCloudUpgrade(
+                    CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+                    undefined,
+                    CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+                  )
+                }
+              >
+                Learn more
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         {!isManualPassDetails && (
           <div className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm">
             <Info className="size-4 shrink-0" />
@@ -447,6 +476,9 @@ export function FindingNoteModal({
                   ref={noteTextareaRef}
                   id="finding-triage-note"
                   aria-label="Note text"
+                  placeholder={
+                    isCloudOnly ? TRIAGE_PREMIUM_PLACEHOLDER_COPY : undefined
+                  }
                   value={note}
                   maxLength={triage.maxNoteLength}
                   disabled={!canEdit}
@@ -474,37 +506,35 @@ export function FindingNoteModal({
                 disabled={isSubmitting}
                 onClick={() => handleOpenChange(false)}
               >
-                Cancel
+                {isCloudOnly ? "Close" : "Cancel"}
               </Button>
-              <span className="relative inline-flex">
-                {isCloudOnly && (
-                  <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-                    <Badge variant="cloud">Cloud</Badge>
-                  </span>
-                )}
+              {isCloudOnly ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() =>
+                    openCloudUpgrade(
+                      CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+                      undefined,
+                      CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+                    )
+                  }
+                >
+                  See plans
+                </Button>
+              ) : (
                 <Button
                   type={canSubmit ? "submit" : "button"}
                   size="lg"
-                  aria-label={
-                    isCloudOnly
-                      ? "Save - available in Prowler Cloud"
-                      : undefined
-                  }
-                  disabled={!canSubmit && !isCloudOnly}
-                  onClick={
-                    isCloudOnly
-                      ? () =>
-                          openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
-                      : undefined
-                  }
+                  disabled={!canSubmit}
                 >
                   {isSubmitting
                     ? "Saving..."
-                    : canEdit || isCloudOnly
+                    : canEdit
                       ? "Save"
                       : "Unavailable"}
                 </Button>
-              </span>
+              )}
             </div>
           </>
         )}

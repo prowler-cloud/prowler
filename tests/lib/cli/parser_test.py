@@ -1421,11 +1421,13 @@ class Test_Parser:
             "AzureChinaCloud",
             "AzureUSGovernment",
             "AzureCloud",
+            "AzureCustom",
         ]
         input_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
             "AzureCloud",
+            "AzureCustom",
         ]
         for region in input_regions:
             assert validate_azure_region(region) in expected_regions
@@ -1435,6 +1437,7 @@ class Test_Parser:
             "AzureChinaCloud",
             "AzureUSGovernment",
             "AzureCloud",
+            "AzureCustom",
         ]
         invalid_region = "non-valid-region"
         with pytest.raises(

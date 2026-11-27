@@ -31,9 +31,9 @@ output:
 
 upstream:
   # Directory containing the cached FINOS catalog YAMLs. Populate via
-  # SKILL.md Workflow A Step 1 (gh api raw download commands).
+  # references/upstream-sync.md Step 1 (gh api raw download commands).
   dir: /tmp/ccc_upstream
-  fetch_docs: "See SKILL.md Workflow A Step 1 for gh api fetch commands"
+  fetch_docs: "See references/upstream-sync.md Step 1 for gh api fetch commands"
 
 parser:
   # Name of the parser module under parsers/ (loaded dynamically by the

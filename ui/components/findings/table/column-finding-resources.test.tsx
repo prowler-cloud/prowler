@@ -182,7 +182,6 @@ vi.mock("@/lib/date-utils", () => ({
 
 vi.mock("@/lib/deployment", () => ({
   isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
-  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("@/lib/shared/env", () => ({
@@ -215,6 +214,7 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+import { PREMIUM_BADGE_TOOLTIP } from "@/lib/cloud-upgrade";
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { usePartialScanStore } from "@/store/partial-scan/store";
 import type { FindingResourceRow } from "@/types";
@@ -225,10 +225,7 @@ import {
 } from "@/types/findings-triage";
 
 import { getColumnFindingResources } from "./column-finding-resources";
-import {
-  CLOUD_ONLY_TOOLTIP_COPY,
-  EDITING_UNAVAILABLE_COPY,
-} from "./finding-triage-cells";
+import { EDITING_UNAVAILABLE_COPY } from "./finding-triage-cells";
 
 function makeTriageSummary(
   overrides?: Partial<FindingTriageSummary>,
@@ -282,6 +279,74 @@ function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
       (column as { id?: string; accessorKey?: string }).accessorKey,
   );
 }
+
+describe("sample resource actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isCloudMock.mockReturnValue(true);
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  const sampleResource = () =>
+    makeResource({
+      id: "sample-resource-s3_bucket-1",
+      findingId: "sample-finding-s3_bucket_public_access-1",
+      checkId: "s3_bucket_public_access",
+      providerUid: "123456789012",
+      providerAlias: "Sample AWS account",
+      resourceName: "acme-customer-exports",
+      resourceUid: "arn:aws:s3:::acme-customer-exports",
+      triage: makeTriageSummary({
+        findingId: "sample-finding-s3_bucket_public_access-1",
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.SAMPLE,
+      }),
+    });
+
+  it("does not send sample IDs to Lighthouse from a resource row", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Lighthouse Skills" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(launchSkillMock).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch sample findings to the real Jira workflow", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: /Send.*Jira/ });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
+  });
+
+  it("does not start the real re-check workflow for a sample resource", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderResourceActionsCell({ resource: sampleResource() });
+    const action = screen.getByRole("button", { name: "Re-check resource" });
+
+    // When
+    expect(action).toBeDisabled();
+    await user.click(action);
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toBeNull();
+  });
+});
 
 function renderResourceActionsCell({
   resource = makeResource(),
@@ -611,7 +676,7 @@ describe("column-finding-resources", () => {
     expect(
       screen.getByRole("button", { name: "Triage status" }),
     ).toBeDisabled();
-    expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
+    expect(screen.getByText(PREMIUM_BADGE_TOOLTIP)).toBeInTheDocument();
   });
 
   it("should open Jira dispatch with the finding UUID directly", async () => {

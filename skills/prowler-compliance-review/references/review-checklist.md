@@ -2,52 +2,49 @@
 
 ## Related Skills
 
-- [prowler-compliance](../../prowler-compliance/SKILL.md) - Creating compliance frameworks
+- [prowler-compliance](../../prowler-compliance/SKILL.md) - Authoring frameworks, schema references
 - [prowler-pr](../../prowler-pr/SKILL.md) - PR conventions and checklist
+- [prowler-changelog](../../prowler-changelog/SKILL.md) - Changelog fragments
 
-## Documentation
+## Documentation (local)
 
-- [Prowler Developer Guide](https://docs.prowler.com/developer-guide/introduction)
-- [Compliance Framework Structure](https://docs.prowler.com/developer-guide/compliance)
+- `docs/developer-guide/security-compliance-framework.mdx` - both schemas, guardrails, validation
+- `docs/user-guide/compliance/tutorials/compliance.mdx`, `cross-provider-compliance.mdx`
 
 ## File Locations
 
 | File Type | Location |
-|-----------|----------|
-| Compliance JSON | `prowler/compliance/{provider}/{framework}.json` |
-| Dashboard | `dashboard/compliance/{framework}_{provider}.py` |
-| Changelog fragment | `prowler/changelog.d/` |
-| Checks | `prowler/providers/{provider}/services/{service}/{check}/` |
-
-## Validation Script
-
-Run the validation script from the project root:
-
-```bash
-python3 skills/prowler-compliance-review/assets/validate_compliance.py \
-  prowler/compliance/{provider}/{framework}.json
-```
+|---|---|
+| Universal framework | `prowler/compliance/<framework>_<version>.json` |
+| Legacy framework | `prowler/compliance/<provider>/<framework>_<version>_<provider>.json` |
+| Models / loaders | `prowler/lib/check/compliance_models.py` |
+| Legacy formatters | `prowler/lib/outputs/compliance/<framework>/` |
+| API CSV exporter map (legacy only) | `api/src/backend/tasks/jobs/export.py` (`COMPLIANCE_CLASS_MAP`) |
+| UI mapper (optional) | `ui/lib/compliance/compliance-mapper.ts` |
+| Dashboard (optional) | `dashboard/compliance/<key with dots as underscores>.py`, fallback `generic.py` |
+| Changelog fragment | `prowler/changelog.d/<slug>.<type>.md` |
+| Checks | `prowler/providers/<provider>/services/<service>/<check>/` |
+| Integrity tests | `tests/lib/check/compliance_catalog_integrity_test.py`, `tests/lib/check/universal_compliance_models_test.py` |
 
 ## PR Review Summary Template
-
-When completing a compliance framework review, use this summary format:
 
 ```markdown
 ## Compliance Framework Review Summary
 
 | Check | Result |
 |-------|--------|
-| JSON Valid | PASS/FAIL |
-| All Checks Exist | PASS/FAIL (N missing) |
-| No Duplicate IDs | PASS/FAIL |
+| Schema (universal / legacy) and justified | PASS/FAIL |
+| Loads with real model | PASS/FAIL |
+| Catalog integrity test | PASS/FAIL (N missing checks) |
+| Validator | PASS/FAIL |
+| Mapping quality (sampled) | PASS/FAIL |
 | Changelog fragment | PASS/FAIL |
-| Dashboard File | PASS/FAIL |
 
 ### Statistics
-- Total Requirements: N
-- Automated: N
-- Manual: N
-- Unique Checks: N
+- Total requirements: N
+- Providers: ...
+- Requirements without checks (manual): N
+- Unique checks referenced: N
 
 ### Recommendation
 APPROVE / REQUEST CHANGES / FAIL

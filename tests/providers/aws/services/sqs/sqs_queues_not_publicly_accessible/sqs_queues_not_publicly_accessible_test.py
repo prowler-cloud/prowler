@@ -88,6 +88,21 @@ test_public_policy_with_condition_diff_account = {
     ],
 }
 
+test_public_policy_with_wildcard_account_condition = {
+    "Version": "2012-10-17",
+    "Id": "Queue1_Policy_UUID",
+    "Statement": [
+        {
+            "Sid": "Queue1_AnonymousAccess_ReceiveMessage",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sqs:ReceiveMessage",
+            "Resource": test_queue_arn,
+            "Condition": {"StringLike": {"aws:SourceAccount": "*"}},
+        }
+    ],
+}
+
 test_public_policy_with_invalid_condition_block = {
     "Version": "2012-10-17",
     "Id": "Queue1_Policy_UUID",
@@ -243,6 +258,44 @@ class Test_sqs_queues_not_publicly_accessible:
             assert result[0].resource_arn == test_queue_arn
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_queues_public_with_wildcard_account_condition(self):
+        sqs_client = mock.MagicMock
+        sqs_client.queues = []
+        sqs_client.audited_account = AWS_ACCOUNT_NUMBER
+        sqs_client.queues.append(
+            Queue(
+                id=test_queue_url,
+                name=test_queue_name,
+                region=AWS_REGION_EU_WEST_1,
+                policy=test_public_policy_with_wildcard_account_condition,
+                arn=test_queue_arn,
+            )
+        )
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_service.SQS",
+                new=sqs_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+                new=sqs_client,
+            ),
+        ):
+            from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
+                sqs_queues_not_publicly_accessible,
+            )
+
+            check = sqs_queues_not_publicly_accessible()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"SQS queue {test_queue_url} is public because its policy allows public access, and the condition does not limit access to resources within the same account."
+            )
+            assert result[0].resource_id == test_queue_url
+            assert result[0].resource_arn == test_queue_arn
 
     def test_queues_public_with_condition_valid(self):
         sqs_client = mock.MagicMock

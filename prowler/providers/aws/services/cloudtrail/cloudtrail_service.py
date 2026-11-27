@@ -97,55 +97,82 @@ class Cloudtrail(AWSService):
             )
 
     def _get_trail_status(self):
+        """Retrieve the logging status of every named trail, one ``GetTrailStatus`` call per trail.
+
+        Sets ``is_logging`` from the response, and ``latest_cloudwatch_delivery_time``
+        when the trail reports a ``LatestCloudWatchLogsDeliveryTime``.
+
+        A trail whose status cannot be read keeps its ``is_logging`` default of ``False``
+        and records the exception class name in ``status_error``, so a check can report an
+        undetermined result instead of reading that default as "not logging".
+        """
         logger.info("Cloudtrail - Getting trail status")
-        try:
-            for trail in self.trails.values():
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
+        for trail in self.trails.values():
+            for region, client in self.regional_clients.items():
+                if trail.region == region and trail.name:
+                    # Per trail, so that one unreadable trail neither aborts the scan of the
+                    # remaining trails nor leaves them looking like they are not logging.
+                    # `status_error` is what lets a check tell "could not read" apart from the
+                    # False default of is_logging: a missing IsLogging raises here too.
+                    try:
                         status = client.get_trail_status(Name=trail.arn)
                         trail.is_logging = status["IsLogging"]
                         if "LatestCloudWatchLogsDeliveryTime" in status:
                             trail.latest_cloudwatch_delivery_time = status[
                                 "LatestCloudWatchLogsDeliveryTime"
                             ]
-
-        except Exception as error:
-            logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                    except Exception as error:
+                        trail.status_error = error.__class__.__name__
+                        logger.error(
+                            f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
     def _get_event_selectors(self):
-        logger.info("Cloudtrail - Getting event selector")
-        try:
-            for trail in self.trails.values():
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
-                        data_events = client.get_event_selectors(TrailName=trail.arn)
-                        # EventSelectors
-                        if (
-                            "EventSelectors" in data_events
-                            and data_events["EventSelectors"]
-                        ):
-                            for event in data_events["EventSelectors"]:
-                                event_selector = Event_Selector(
-                                    is_advanced=False, event_selector=event
-                                )
-                                trail.data_events.append(event_selector)
-                        # AdvancedEventSelectors
-                        elif (
-                            "AdvancedEventSelectors" in data_events
-                            and data_events["AdvancedEventSelectors"]
-                        ):
-                            for event in data_events["AdvancedEventSelectors"]:
-                                event_selector = Event_Selector(
-                                    is_advanced=True, event_selector=event
-                                )
-                                trail.data_events.append(event_selector)
+        """Retrieve the event selectors of every named trail, one ``GetEventSelectors`` call per trail.
 
-        except Exception as error:
-            logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        Appends every selector the trail returns to its ``data_events``, as basic
+        (``EventSelectors``) or advanced (``AdvancedEventSelectors``) entries. A trail
+        carries one kind or the other, never both.
+
+        A trail whose selectors cannot be read records the exception class name in
+        ``event_selectors_error`` and is skipped, so the empty ``data_events`` left behind
+        is not read as "this trail selects no data events".
+        """
+        logger.info("Cloudtrail - Getting event selector")
+        for trail in self.trails.values():
+            for region, client in self.regional_clients.items():
+                if trail.region == region and trail.name:
+                    # Per trail: an empty data_events list means "this trail selects no data
+                    # events" to every check that reads it, so a failed read must be recorded
+                    # rather than left to look like an answer.
+                    try:
+                        data_events = client.get_event_selectors(TrailName=trail.arn)
+                    except Exception as error:
+                        trail.event_selectors_error = error.__class__.__name__
+                        logger.error(
+                            f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
+                    # EventSelectors
+                    if (
+                        "EventSelectors" in data_events
+                        and data_events["EventSelectors"]
+                    ):
+                        for event in data_events["EventSelectors"]:
+                            event_selector = Event_Selector(
+                                is_advanced=False, event_selector=event
+                            )
+                            trail.data_events.append(event_selector)
+                    # AdvancedEventSelectors
+                    elif (
+                        "AdvancedEventSelectors" in data_events
+                        and data_events["AdvancedEventSelectors"]
+                    ):
+                        for event in data_events["AdvancedEventSelectors"]:
+                            event_selector = Event_Selector(
+                                is_advanced=True, event_selector=event
+                            )
+                            trail.data_events.append(event_selector)
 
     def _get_insight_selectors(self):
         logger.info("Cloudtrail - Getting trail insight selectors...")
@@ -294,3 +321,7 @@ class Trail(BaseModel):
     data_events: list[Event_Selector] = []
     tags: Optional[list] = []
     has_insight_selectors: str = None
+    # Short exception names when GetTrailStatus / GetEventSelectors could not be read, so a
+    # check can report an undetermined result instead of a verdict built on a default value.
+    status_error: Optional[str] = None
+    event_selectors_error: Optional[str] = None

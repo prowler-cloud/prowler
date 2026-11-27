@@ -2,6 +2,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import botocore
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -34,14 +35,6 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "LoggingEnabled": True,
             "BucketName": test_bucket_name,
-        }
-    if operation_name == "DescribeClusterSnapshots":
-        return {
-            "Snapshots": [
-                {
-                    "SnapshotIdentifier": uuid4(),
-                },
-            ]
         }
     if operation_name == "DescribeClusterParameters":
         return {
@@ -176,36 +169,53 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].logging_enabled
         assert redshift.clusters[0].bucket == test_bucket_name
 
+    @pytest.mark.parametrize(
+        ("retention_days", "snapshots", "enabled"),
+        [
+            (
+                0,
+                [{"SnapshotIdentifier": "manual-snapshot", "SnapshotType": "manual"}],
+                False,
+            ),
+            (1, [], True),
+            (None, [], None),
+        ],
+        ids=["manual-only", "first-snapshot-pending", "retention-unreported"],
+    )
     @mock_aws
-    def test_describe_describe_cluster_snapshot(self):
+    def test_describe_describe_cluster_snapshot(
+        self, retention_days, snapshots, enabled
+    ):
         redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
-        response = redshift_client.create_cluster(
+        redshift_client.create_cluster(
             DBName="test",
             ClusterIdentifier=cluster_id,
             ClusterType="single-node",
-            NodeType="ds2.xlarge",
+            NodeType="dc2.large",
             MasterUsername="user",
             MasterUserPassword="password",
-            PubliclyAccessible=True,
         )
+
+        def mock_snapshot_api_call(client, operation_name, kwargs):
+            if operation_name == "DescribeClusterSnapshots":
+                return {"Snapshots": snapshots}
+            response = mock_make_api_call(client, operation_name, kwargs)
+            if operation_name == "DescribeClusters":
+                for cluster in response["Clusters"]:
+                    if retention_days is None:
+                        cluster.pop("AutomatedSnapshotRetentionPeriod")
+                    else:
+                        cluster["AutomatedSnapshotRetentionPeriod"] = retention_days
+            return response
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        redshift = Redshift(aws_provider)
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_snapshot_api_call
+        ):
+            redshift = Redshift(aws_provider)
 
         assert len(redshift.clusters) == 1
-        assert redshift.clusters[0].id == cluster_id
-        assert redshift.clusters[0].region == AWS_REGION_EU_WEST_1
-        assert redshift.clusters[0].public_access
-        assert (
-            redshift.clusters[0].endpoint_address
-            == response["Cluster"]["Endpoint"]["Address"]
-        )
-        assert (
-            redshift.clusters[0].allow_version_upgrade
-            == response["Cluster"]["AllowVersionUpgrade"]
-        )
-        assert redshift.clusters[0].logging_enabled
-        assert redshift.clusters[0].bucket == test_bucket_name
-        assert redshift.clusters[0].cluster_snapshots
+        assert redshift.clusters[0].cluster_snapshots is enabled
 
     @mock_aws
     def test_describe_cluster_parameter_groups(self):

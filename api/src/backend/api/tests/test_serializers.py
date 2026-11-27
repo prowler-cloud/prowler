@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from api.v1.serializer_utils.integrations import (
     JiraCredentialSerializer,
@@ -7,6 +9,7 @@ from api.v1.serializer_utils.providers import ProviderSecretField
 from api.v1.serializers import (
     KUBERNETES_KUBECONFIG_INVALID_ERROR,
     KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+    GoogleWorkspaceProviderSecret,
     ImageProviderSecret,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
@@ -241,6 +244,57 @@ class TestOracleCloudProviderSecret:
 
         assert serializer.is_valid(), serializer.errors
         assert "region" not in serializer.validated_data
+
+
+class TestGoogleWorkspaceProviderSecret:
+    def secret(self, **key_overrides):
+        key = {
+            "type": "service_account",
+            "client_email": "prowler@project.iam.gserviceaccount.com",
+            "token_uri": "https://oauth2.googleapis.com/token",
+        }
+        key.update(key_overrides)
+        return {
+            "credentials_content": json.dumps(key),
+            "delegated_user": "admin@example.com",
+        }
+
+    def test_accepts_a_service_account_key_with_google_token_uri(self):
+        serializer = GoogleWorkspaceProviderSecret(data=self.secret())
+
+        assert serializer.is_valid(), serializer.errors
+
+    @pytest.mark.parametrize(
+        "key_overrides",
+        [
+            {"token_uri": "http://169.254.169.254/latest/meta-data/"},
+            {"token_uri": "https://attacker.example.com/token"},
+            {"token_uri": None},
+            {"type": "external_account"},
+        ],
+        ids=["metadata", "external_host", "missing", "external_account"],
+    )
+    def test_rejects_an_unsafe_service_account_key(self, key_overrides):
+        serializer = GoogleWorkspaceProviderSecret(data=self.secret(**key_overrides))
+
+        assert not serializer.is_valid()
+        assert "credentials_content" in serializer.errors
+
+    def test_rejects_content_that_is_not_json(self):
+        serializer = GoogleWorkspaceProviderSecret(
+            data={"credentials_content": "{ nope", "delegated_user": "a@example.com"}
+        )
+
+        assert not serializer.is_valid()
+        assert "credentials_content" in serializer.errors
+
+    def test_rejects_fields_the_provider_would_read_as_arguments(self):
+        serializer = GoogleWorkspaceProviderSecret(
+            data={**self.secret(), "credentials_file": "/dev/zero"}
+        )
+
+        assert not serializer.is_valid()
+        assert "credentials_file" in str(serializer.errors)
 
 
 class TestProviderSecretFieldSchema:

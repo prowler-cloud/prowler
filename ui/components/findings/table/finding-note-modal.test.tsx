@@ -476,8 +476,19 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
+    expect(screen.getByLabelText("Note text")).toHaveAttribute(
+      "placeholder",
+      "Notes can be saved in Prowler Cloud and Private Cloud.",
+    );
+    const notice = screen.getByText(
+      /Triage notes and status are a premium feature/,
+    );
+    expect(
+      notice.compareDocumentPosition(screen.getByLabelText("Note text")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     const saveUpgrade = screen.getByRole("button", {
-      name: "Save - available in Prowler Cloud",
+      name: "See plans",
     });
     expect(saveUpgrade).not.toBeDisabled();
 

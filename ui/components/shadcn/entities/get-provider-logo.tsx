@@ -16,7 +16,7 @@ import {
   OracleCloudProviderBadge,
   VercelProviderBadge,
 } from "@/components/icons/providers-badge";
-import { GenericProviderBadge } from "@/components/icons/providers-badge/generic-provider-badge";
+import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { ProviderType } from "@/types";
 import { getProviderDisplayName } from "@/types/providers";
 
@@ -55,7 +55,7 @@ export const getProviderLogo = (provider: ProviderType) => {
     case "okta":
       return <OktaProviderBadge width={35} height={35} />;
     default:
-      return <GenericProviderBadge width={35} height={35} />;
+      return <ProviderTypeIcon type={provider} size={35} />;
   }
 };
 

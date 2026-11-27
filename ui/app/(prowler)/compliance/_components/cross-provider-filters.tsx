@@ -13,11 +13,7 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import {
-  type KnownProviderType,
-  PROVIDER_DISPLAY_NAMES,
-  type ProviderType,
-} from "@/types/providers";
+import { getProviderDisplayName, type ProviderType } from "@/types/providers";
 
 export interface CrossProviderAccountOption {
   id: string;
@@ -34,7 +30,7 @@ interface CrossProviderFiltersProps {
   /** Provider types offered by the visible universal frameworks. Omit (or
    *  pass empty) to hide the type select — the cross-account detail does,
    *  since its provider type is fixed by the framework being viewed. */
-  providerTypes?: readonly KnownProviderType[];
+  providerTypes?: readonly ProviderType[];
   providerAccounts: CrossProviderAccountOption[];
   providerGroups: CrossProviderGroupOption[];
 }
@@ -97,7 +93,7 @@ export const CrossProviderFilters = ({
           placeholder="Provider type"
           options={providerTypes.map((type) => ({
             value: type,
-            label: PROVIDER_DISPLAY_NAMES[type],
+            label: getProviderDisplayName(type),
           }))}
         />
       )}

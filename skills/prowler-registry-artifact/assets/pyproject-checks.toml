@@ -1,0 +1,25 @@
+# Checks-only artifact: adds checks to an existing provider (built-in or external).
+# Layout: src/{pkg}/services/{service}/{check_id}/{__init__.py, {check_id}.py, {check_id}.metadata.json}
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{org}-prowler-checks"
+version = "0.1.0"
+description = "{Org} custom Prowler checks for {provider}"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = "Apache-2.0"
+dependencies = []
+
+[project.optional-dependencies]
+# Registry install commands use "<package-name>[runtime]"
+runtime = ["prowler>=5.48.0"]
+
+# Group name contains dots -> must be quoted. Name = CheckID, value = module path.
+[project.entry-points."prowler.checks.{provider}"]
+{check_id} = "{pkg}.services.{service}.{check_id}.{check_id}"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{pkg}"]

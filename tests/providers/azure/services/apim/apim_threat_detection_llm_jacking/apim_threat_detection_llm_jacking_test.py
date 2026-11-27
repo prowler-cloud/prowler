@@ -369,6 +369,37 @@ class Test_apim_threat_detection_llm_jacking:
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
+    def test_region_without_logs_endpoint(self):
+        """Test the check is not evaluated when the region has no Log Analytics endpoint"""
+        apim_client = mock.MagicMock()
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        apim_client.instances = {
+            AZURE_SUBSCRIPTION_ID: [
+                mock.MagicMock(log_analytics_workspace_id="workspace-id")
+            ]
+        }
+        apim_client.region_config.logs_endpoint = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.apim.apim_threat_detection_llm_jacking.apim_threat_detection_llm_jacking.apim_client",
+                new=apim_client,
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_threat_detection_llm_jacking.apim_threat_detection_llm_jacking import (
+                apim_threat_detection_llm_jacking,
+            )
+
+            check = apim_threat_detection_llm_jacking()
+            result = check.execute()
+
+            assert result == []
+            apim_client.get_llm_operations_logs.assert_not_called()
+
     def test_instance_without_workspace(self):
         """Test when APIM instance has no Log Analytics workspace configured"""
         apim_client = mock.MagicMock()

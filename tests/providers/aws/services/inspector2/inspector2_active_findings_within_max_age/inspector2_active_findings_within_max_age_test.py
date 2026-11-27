@@ -18,7 +18,7 @@ FINDING_ARN = f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:f
 CHECK_MODULE = "prowler.providers.aws.services.inspector2.inspector2_active_findings_within_max_age.inspector2_active_findings_within_max_age"
 
 
-def build_inspector(findings=None, status="ENABLED"):
+def build_inspector(oldest_findings=None, status="ENABLED"):
     return Inspector(
         id="Inspector2",
         arn=INSPECTOR_ARN,
@@ -28,21 +28,17 @@ def build_inspector(findings=None, status="ENABLED"):
         ecr_status="ENABLED",
         lambda_status="ENABLED",
         lambda_code_status="ENABLED",
-        findings=findings,
+        oldest_findings=oldest_findings,
     )
 
 
 def build_finding(age_days):
-    first_observed_at = (
-        datetime.now(timezone.utc) - timedelta(days=age_days, hours=1)
-        if age_days is not None
-        else None
-    )
     return Finding(
         arn=FINDING_ARN,
         type="PACKAGE_VULNERABILITY",
         severity="HIGH",
-        first_observed_at=first_observed_at,
+        first_observed_at=datetime.now(timezone.utc)
+        - timedelta(days=age_days, hours=1),
         vulnerability_id="CVE-2022-40897",
         resource_ids=["i-0123456789abcdef0"],
     )
@@ -71,10 +67,13 @@ class Test_inspector2_active_findings_within_max_age:
         assert execute_check([]) == []
 
     def test_inspector_disabled(self):
-        assert execute_check([build_inspector(findings=[], status="DISABLED")]) == []
+        assert (
+            execute_check([build_inspector(oldest_findings=[], status="DISABLED")])
+            == []
+        )
 
     def test_no_active_findings(self):
-        result = execute_check([build_inspector(findings=[])])
+        result = execute_check([build_inspector(oldest_findings=[])])
 
         assert len(result) == 1
         assert result[0].status == "PASS"
@@ -86,55 +85,42 @@ class Test_inspector2_active_findings_within_max_age:
         assert result[0].resource_arn == INSPECTOR_ARN
         assert result[0].region == AWS_REGION_EU_WEST_1
 
-    def test_recent_findings(self):
-        result = execute_check([build_inspector(findings=[build_finding(30)])])
+    def test_oldest_finding_within_max_age(self):
+        result = execute_check([build_inspector(oldest_findings=[build_finding(30)])])
 
         assert len(result) == 1
         assert result[0].status == "PASS"
 
-    def test_stale_findings(self):
-        result = execute_check(
-            [
-                build_inspector(
-                    findings=[
-                        build_finding(30),
-                        build_finding(200),
-                        build_finding(400),
-                    ]
-                )
-            ]
-        )
+    def test_finding_just_over_max_age(self):
+        result = execute_check([build_inspector(oldest_findings=[build_finding(192)])])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    def test_stale_finding(self):
+        result = execute_check([build_inspector(oldest_findings=[build_finding(400)])])
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
         assert (
             result[0].status_extended
-            == f"Inspector2 has 2 active findings in region {AWS_REGION_EU_WEST_1} first observed more than 192 days ago, the oldest 400 days ago."
+            == f"Inspector2 has active findings in region {AWS_REGION_EU_WEST_1} first observed more than 192 days ago, the oldest 400 days ago."
         )
 
-    def test_finding_just_over_max_age(self):
-        result = execute_check([build_inspector(findings=[build_finding(192)])])
-
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
-
-    def test_custom_max_age(self):
+    def test_custom_max_age_in_message(self):
         result = execute_check(
-            [build_inspector(findings=[build_finding(30)])],
+            [build_inspector(oldest_findings=[build_finding(30)])],
             audit_config={"inspector2_active_finding_max_age_days": 14},
         )
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
-
-    def test_finding_without_first_observed_date_is_ignored(self):
-        result = execute_check([build_inspector(findings=[build_finding(None)])])
-
-        assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert "first observed more than 14 days ago, the oldest 30 days ago" in (
+            result[0].status_extended
+        )
 
     def test_findings_not_retrieved(self):
-        result = execute_check([build_inspector(findings=None)])
+        result = execute_check([build_inspector(oldest_findings=None)])
 
         assert len(result) == 1
         assert result[0].status == "MANUAL"

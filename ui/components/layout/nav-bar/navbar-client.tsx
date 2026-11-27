@@ -10,6 +10,8 @@ import { ThemeSwitch } from "@/components/ThemeSwitch";
 
 import { UserNav } from "../user-nav/user-nav";
 
+import { EditionIndicator } from "./edition-indicator";
+
 interface NavbarClientProps {
   title: string;
   icon?: ReactElement;
@@ -38,6 +40,7 @@ export function NavbarClient({ title, icon, feedsSlot }: NavbarClientProps) {
           </Suspense>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
+          <EditionIndicator />
           <SidePanelTrigger />
           <ThemeSwitch />
           {feedsSlot}

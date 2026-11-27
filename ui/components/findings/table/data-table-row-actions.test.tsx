@@ -38,7 +38,6 @@ vi.mock("@/components/icons/services/IconServices", () => ({
 
 vi.mock("@/lib/deployment", () => ({
   isGroupedJiraDispatchEnabled: () => true,
-  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("@/lib/shared/env", () => ({
@@ -177,6 +176,25 @@ describe("DataTableRowActions", () => {
     vi.clearAllMocks();
     isCloudMock.mockReturnValue(false);
     useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("blocks sample group actions even though their target check IDs are real", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          id: "sample-group-s3_bucket_public_access",
+          rowType: "group",
+          checkId: "s3_bucket_public_access",
+        })}
+      />,
+    );
+    const jira = screen.getByRole("button", { name: /Jira/ });
+    const mute = screen.getByRole("button", { name: /Mute Finding Group/ });
+    expect(jira).toBeDisabled();
+    expect(mute).toBeDisabled();
+    await user.click(jira);
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
   });
 
   it("offers a Cloud re-check of the row's resource with its provider id", async () => {

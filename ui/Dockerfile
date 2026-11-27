@@ -1,5 +1,5 @@
 # Keep in sync with ui/.nvmrc.
-FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
+FROM node:24.22.3-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
@@ -9,6 +9,13 @@ LABEL maintainer="https://github.com/prowler-cloud"
 # above would not make the image reproducible. Move the digest forward instead, or
 # take a named package as a targeted, commented exception.
 RUN corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+# Targeted exception: zlib 1.4-r0 fixes critical CVE-2026-4738, but even the newest
+# node:24.22.3-alpine still ships 1.3.2-r1. Same for openssl 3.5.9-r1
+# (CVE-2026-88823, -95691, -95692, -107496): the base image ships 3.5.9-r0.
+# Drop once the base image ships them.
+#hadolint ignore=DL3018
+RUN apk add --no-cache --upgrade 'zlib>=1.4-r0' 'libssl3>=3.5.9-r1' 'libcrypto3>=3.5.9-r1'
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -72,7 +79,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-USER nextjs
+# Numeric UID (1001 = nextjs) so runAsNonRoot can verify it; no :GID, so groups still come from /etc/group.
+USER 1001
 
 EXPOSE 3000
 

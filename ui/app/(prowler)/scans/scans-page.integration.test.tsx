@@ -35,12 +35,15 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionStatusPollCount).toBeGreaterThanOrEqual(2);
   });
 
-  it("hides Import Findings in Local Server", async ({ seedRuntimeConfig }) => {
+  it("offers Import Findings as a premium upgrade in Local Server", async ({
+    seedRuntimeConfig,
+  }) => {
     seedRuntimeConfig({ cloudEnabled: false });
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount();
 
-    expect(harness.hasImportFindingsAction()).toBe(false);
+    expect(harness.hasImportFindingsAction()).toBe(true);
+    expect(harness.hasImportFindingsUpload()).toBe(false);
   });
 
   it("hides Import Findings without Manage Ingestions", async () => {
@@ -274,6 +277,18 @@ describe("Scans page import findings", () => {
     await harness.waitForFailedImport();
     await harness.waitForFailedImportSummary();
     expect(harness.ingestionPostCount).toBe(1);
+  });
+
+  it("ignores a status poll left over from a previous import", async () => {
+    const harness = new ScansPageHarness(partiallyProcessedIngestionFixture());
+    await harness.mount({ statusSequence: ["failed"] });
+    await harness.receiveLeftoverStatusPoll();
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+
+    await harness.waitForFailedImport();
+    await harness.waitForFailedImportSummary();
   });
 
   it("clears a terminal result after closing the dialog", async () => {

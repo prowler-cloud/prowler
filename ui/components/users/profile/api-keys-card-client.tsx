@@ -11,9 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { Badge } from "@/components/shadcn/badge/badge";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { DataTable } from "@/components/shadcn/table";
+import { PremiumBadge } from "@/components/shared/premium-badge";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import { MetaDataProps } from "@/types";
@@ -94,9 +94,10 @@ export const ApiKeysCardClient = ({
             <div className="flex items-center gap-2">
               <CardTitle>API Keys</CardTitle>
               {!canCreateApiKeys && (
-                <Badge variant="cloud" size="sm">
-                  Cloud
-                </Badge>
+                <PremiumBadge
+                  feature={CLOUD_UPGRADE_FEATURE.API_KEYS}
+                  compact
+                />
               )}
             </div>
             <p className="text-xs text-gray-500">

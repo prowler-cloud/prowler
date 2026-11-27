@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_runtime_jwt_identity_propagation_configured",
+  "CheckTitle": "Amazon Bedrock AgentCore runtime with a JWT authorizer forwards the end-user token to the agent",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon Bedrock AgentCore runtimes** that authenticate callers with a **custom JWT authorizer** are evaluated for forwarding the `Authorization` header to the agent through `requestHeaderAllowlist`. Without it, the end-user token is validated at the runtime endpoint and then dropped, so the agent code never sees who the caller is.",
+  "Risk": "When the token is dropped, every downstream tool call runs under the **agent execution role** instead of the originating user. This creates **confused-deputy** risk, where any authenticated user can reach data the role can reach, and removes **per-user authorization and audit trails** in downstream services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-oauth.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_GetAgentRuntime.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_RequestHeaderConfiguration.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Amazon Bedrock AgentCore console\n2. Open Agent Runtimes and select the runtime\n3. Under Request header configuration, add `Authorization` to the request header allowlist\n4. Save the runtime configuration\n5. In the agent code, pass the incoming token (or a token exchanged for it) to downstream tools",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add `Authorization` to the **request header allowlist** of every AgentCore runtime that uses a **custom JWT authorizer**, and have the agent use that token, or a token exchanged for it, when calling downstream tools so each action is authorized as the originating user.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_runtime_jwt_identity_propagation_configured"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Runtimes that use IAM (SigV4) inbound authorization produce no finding, because their callers are IAM principals rather than end users. PASS confirms the token reaches the agent; whether the agent code passes it on to downstream tools cannot be verified from the control plane."
+}

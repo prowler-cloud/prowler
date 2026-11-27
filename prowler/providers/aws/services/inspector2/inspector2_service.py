@@ -1,13 +1,16 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
+from prowler.lib.threats import load_signatures
 from prowler.providers.aws.lib.service.service import AWSService
 
 FINDING_DETAILS_BATCH_SIZE = 10
+# Inspector2 StringFilterList accepts at most 10 values
+VULNERABILITY_FILTER_SIZE = 10
 
 
 class Inspector2(AWSService):
@@ -17,12 +20,15 @@ class Inspector2(AWSService):
         self.inspectors = []
         self.known_exploited_vulnerabilities = {}
         self.vulnerability_lookup_failed = set()
+        self._vulnerability_database = {}
         self.__threading_call__(self._batch_get_account_status)
         self.__threading_call__(self._list_active_findings, self.inspectors)
         enabled_inspectors = [
             inspector for inspector in self.inspectors if inspector.status == "ENABLED"
         ]
-        self.__threading_call__(self._list_findings, enabled_inspectors)
+        self.__threading_call__(self._list_oldest_finding, enabled_inspectors)
+        self.__threading_call__(self._list_kev_candidates, enabled_inspectors)
+        self.__threading_call__(self._list_threat_findings, enabled_inspectors)
         self.__threading_call__(self._list_coverage, enabled_inspectors)
         self.__threading_call__(
             self._batch_get_finding_details,
@@ -76,45 +82,122 @@ class Inspector2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_findings(self, inspector):
-        """Store the active findings of the audited account for an enabled Region."""
-        logger.info("Inspector2 - Listing active findings details...")
+    def _active_findings_filter(self, **criteria) -> dict:
+        """Filter criteria for the active findings of the audited account."""
+        return {
+            "awsAccountId": [{"comparison": "EQUALS", "value": self.audited_account}],
+            "findingStatus": [{"comparison": "EQUALS", "value": "ACTIVE"}],
+            **criteria,
+        }
+
+    def _list_oldest_finding(self, inspector):
+        """Store the active finding first observed the longest ago."""
+        logger.info("Inspector2 - Getting the oldest active finding...")
         try:
-            paginator = self.regional_clients[inspector.region].get_paginator(
-                "list_findings"
+            response = self.regional_clients[inspector.region].list_findings(
+                filterCriteria=self._active_findings_filter(),
+                sortCriteria={"field": "FIRST_OBSERVED_AT", "sortOrder": "ASC"},
+                maxResults=1,
             )
-            findings = []
-            for page in paginator.paginate(
-                filterCriteria={
-                    "awsAccountId": [
-                        {"comparison": "EQUALS", "value": self.audited_account},
-                    ],
-                    "findingStatus": [{"comparison": "EQUALS", "value": "ACTIVE"}],
-                },
-                PaginationConfig={"PageSize": 100},
-            ):
-                for finding in page.get("findings", []):
-                    findings.append(
-                        Finding(
-                            arn=finding.get("findingArn", ""),
-                            type=finding.get("type", ""),
-                            severity=finding.get("severity", ""),
-                            first_observed_at=finding.get("firstObservedAt"),
-                            vulnerability_id=finding.get(
-                                "packageVulnerabilityDetails", {}
-                            ).get("vulnerabilityId"),
-                            resource_ids=[
-                                resource["id"]
-                                for resource in finding.get("resources", [])
-                                if resource.get("id")
-                            ],
-                        )
-                    )
-            inspector.findings = findings
+            inspector.oldest_findings = [
+                self._build_finding(finding) for finding in response.get("findings", [])
+            ]
         except Exception as error:
             logger.error(
                 f"{inspector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _list_kev_candidates(self, inspector):
+        """Store one active finding ARN per CVE that could be a CISA KEV."""
+        logger.info("Inspector2 - Listing CISA KEV candidate findings...")
+        try:
+            criteria = {}
+            if not self.audit_config.get(
+                "inspector2_kev_include_findings_without_exploit", False
+            ):
+                criteria["exploitAvailable"] = [
+                    {"comparison": "EQUALS", "value": "YES"}
+                ]
+            paginator = self.regional_clients[inspector.region].get_paginator(
+                "list_findings"
+            )
+            candidates = {}
+            for page in paginator.paginate(
+                filterCriteria=self._active_findings_filter(**criteria),
+                PaginationConfig={"PageSize": 100},
+            ):
+                for finding in page.get("findings", []):
+                    vulnerability_id = finding.get(
+                        "packageVulnerabilityDetails", {}
+                    ).get("vulnerabilityId")
+                    if vulnerability_id and vulnerability_id.startswith("CVE-"):
+                        candidates.setdefault(
+                            vulnerability_id, finding.get("findingArn", "")
+                        )
+            inspector.kev_candidates = candidates
+        except Exception as error:
+            logger.error(
+                f"{inspector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_threat_findings(self, inspector):
+        """Store the emerging threat CVEs Inspector2 reports per EC2 instance."""
+        logger.info("Inspector2 - Listing emerging threat findings...")
+        try:
+            cves = sorted(
+                {
+                    cve
+                    for signature in load_signatures(self.audit_config)
+                    for cve in signature.cves
+                }
+            )
+            paginator = self.regional_clients[inspector.region].get_paginator(
+                "list_findings"
+            )
+            threat_findings = {}
+            for index in range(0, len(cves), VULNERABILITY_FILTER_SIZE):
+                chunk = cves[index : index + VULNERABILITY_FILTER_SIZE]
+                for page in paginator.paginate(
+                    filterCriteria=self._active_findings_filter(
+                        resourceType=[
+                            {"comparison": "EQUALS", "value": "AWS_EC2_INSTANCE"}
+                        ],
+                        vulnerabilityId=[
+                            {"comparison": "EQUALS", "value": cve} for cve in chunk
+                        ],
+                    ),
+                    PaginationConfig={"PageSize": 100},
+                ):
+                    for finding in page.get("findings", []):
+                        built = self._build_finding(finding)
+                        if built.vulnerability_id:
+                            for resource_id in built.resource_ids:
+                                threat_findings.setdefault(resource_id, set()).add(
+                                    built.vulnerability_id
+                                )
+            inspector.threat_findings = threat_findings
+        except Exception as error:
+            logger.error(
+                f"{inspector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    @staticmethod
+    def _build_finding(finding: dict) -> "Finding":
+        """Build a Finding from a ListFindings item."""
+        return Finding(
+            arn=finding.get("findingArn", ""),
+            type=finding.get("type", ""),
+            severity=finding.get("severity", ""),
+            first_observed_at=finding.get("firstObservedAt"),
+            vulnerability_id=finding.get("packageVulnerabilityDetails", {}).get(
+                "vulnerabilityId"
+            ),
+            resource_ids=[
+                resource["id"]
+                for resource in finding.get("resources", [])
+                if resource.get("id")
+            ],
+        )
 
     def _list_coverage(self, inspector):
         """Store the resources Inspector2 covers in an enabled Region, respecting audit resources."""
@@ -161,6 +244,49 @@ class Inspector2(AWSService):
                 f"{inspector.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def vulnerability_known(self, vulnerability_id: str) -> bool:
+        """Whether Amazon Inspector's vulnerability database lists the CVE.
+
+        No finding for a CVE on a scanned host means the host is not affected
+        only when Inspector can detect that CVE, which a brand new CVE may not
+        be yet. Looked up on first use and cached for the scan.
+
+        Returns:
+            ``True`` when the database lists it; ``False`` when it does not, or
+            when the lookup is not possible (Inspector off, access denied).
+        """
+        if vulnerability_id not in self._vulnerability_database:
+            self._vulnerability_database[vulnerability_id] = self._search_vulnerability(
+                vulnerability_id
+            )
+        return self._vulnerability_database[vulnerability_id]
+
+    def _search_vulnerability(self, vulnerability_id: str) -> bool:
+        """Look a CVE up in the vulnerability database of an enabled Region."""
+        region = next(
+            (
+                inspector.region
+                for inspector in self.inspectors
+                if inspector.status == "ENABLED"
+            ),
+            None,
+        )
+        if region is None:
+            return False
+        try:
+            response = self.regional_clients[region].search_vulnerabilities(
+                filterCriteria={"vulnerabilityIds": [vulnerability_id]}
+            )
+            return any(
+                vulnerability.get("id") == vulnerability_id
+                for vulnerability in response.get("vulnerabilities", [])
+            )
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return False
+
     def _get_covered_resource_arn(self, resource_type, resource_id, region):
         """Return the ARN of a covered resource, building it for EC2 instance IDs."""
         if resource_type == "AWS_EC2_INSTANCE" and not resource_id.startswith("arn:"):
@@ -172,13 +298,12 @@ class Inspector2(AWSService):
         """Group one active finding per CVE into finding details batches per Region."""
         representatives = {}
         for inspector in inspectors:
-            for finding in inspector.findings or []:
-                if finding.vulnerability_id and finding.vulnerability_id.startswith(
-                    "CVE-"
-                ):
-                    representatives.setdefault(
-                        finding.vulnerability_id, (inspector.region, finding.arn)
-                    )
+            for vulnerability_id, finding_arn in (
+                inspector.kev_candidates or {}
+            ).items():
+                representatives.setdefault(
+                    vulnerability_id, (inspector.region, finding_arn)
+                )
         findings_by_region = {}
         for vulnerability_id, (region, finding_arn) in representatives.items():
             findings_by_region.setdefault(region, []).append(
@@ -269,5 +394,11 @@ class Inspector(BaseModel):
     lambda_status: str
     lambda_code_status: str
     active_findings: bool = None
-    findings: Optional[list[Finding]] = None
-    coverage: Optional[list[CoveredResource]] = None
+    # Lookups below: None means it failed; excluded from the resource metadata
+    # Only the oldest active finding, empty when there is none
+    oldest_findings: Optional[list[Finding]] = Field(default=None, exclude=True)
+    # CVE id -> one active finding ARN for it
+    kev_candidates: Optional[dict[str, str]] = Field(default=None, exclude=True)
+    # EC2 instance id -> emerging threat CVEs with an active finding on it
+    threat_findings: Optional[dict[str, set[str]]] = Field(default=None, exclude=True)
+    coverage: Optional[list[CoveredResource]] = Field(default=None, exclude=True)

@@ -169,9 +169,12 @@ const columns: ColumnDef<IssueRow>[] = [
 export const IssuesTable = ({
   issues,
   metadata,
+  providerUids,
 }: {
   issues: IssueRow[];
   metadata?: MetaDataProps;
+  /** Provider uid by provider id, shown in the panel's Provider field. */
+  providerUids?: Record<string, string>;
 }) => {
   const [openId, setOpenId] = useState<string | null>(null);
   const openIssue = issues.find((issue) => issue.id === openId);
@@ -190,6 +193,9 @@ export const IssuesTable = ({
         <IssuePanel
           key={openIssue.id}
           issue={openIssue}
+          providerUid={
+            providerUids?.[openIssue.relationships?.provider?.data?.id ?? ""]
+          }
           open
           onOpenChange={(open) => {
             if (!open) setOpenId(null);

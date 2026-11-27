@@ -3,21 +3,22 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useUIStore } from "@/store/ui/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 import { AppSidebarContent } from "./app-sidebar-content";
 import { useAppSidebarMode } from "./app-sidebar-mode-store";
 import { APP_SIDEBAR_MODE } from "./types";
 
 const {
-  issuesFlagValue,
   openCloudUpgradeMock,
   openLaunchScanModalMock,
   pathnameValue,
   permissionsValue,
   pushMock,
 } = vi.hoisted(() => ({
-  issuesFlagValue: { current: false },
   openCloudUpgradeMock: vi.fn(),
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
@@ -36,11 +37,6 @@ vi.mock("@/hooks", () => ({
 
 vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
-}));
-
-vi.mock("@/lib/feature-flags", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
-  useFeatureFlag: () => issuesFlagValue.current,
 }));
 
 vi.mock("@/store", () => ({
@@ -64,7 +60,6 @@ describe("AppSidebarContent", () => {
   beforeEach(() => {
     pathnameValue.current = "/findings";
     permissionsValue.current = { manage_providers: true };
-    issuesFlagValue.current = false;
     pushMock.mockClear();
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
@@ -102,8 +97,12 @@ describe("AppSidebarContent", () => {
     expect(openCloudUpgradeMock).toHaveBeenCalledWith(
       CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
       undefined,
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
     );
-    expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Premium").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("link", { name: /Compare editions/ }),
+    ).toHaveAttribute("href", "/premium");
   });
 
   it("shows Registry navigation when the server marked this request eligible", () => {
@@ -121,10 +120,9 @@ describe("AppSidebarContent", () => {
     );
   });
 
-  it("shows Issues navigation in Cloud once the feature flag is on", () => {
+  it("shows Issues navigation in Cloud", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    issuesFlagValue.current = true;
 
     // When
     render(<AppSidebarContent />);
@@ -135,15 +133,30 @@ describe("AppSidebarContent", () => {
     ).toHaveAttribute("href", "/issues");
   });
 
-  it("hides Issues navigation in Cloud while the feature flag is off", () => {
-    // Given / When
+  it("shows Realtime navigation to every Cloud user", () => {
+    // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
     render(<AppSidebarContent />);
 
     // Then
     expect(
-      screen.queryByRole("link", { name: /Exploitability issues/ }),
-    ).not.toBeInTheDocument();
+      screen
+        .getAllByRole("link", { name: /Realtime/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/realtime"]);
+  });
+
+  it("links Issues navigation to its premium preview in Local Server", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.getByRole("link", { name: /Exploitability issues/ }),
+    ).toHaveAttribute("href", "/issues");
   });
 
   it("hides Registry navigation without a server eligibility decision", () => {

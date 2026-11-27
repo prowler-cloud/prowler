@@ -30,12 +30,14 @@ interface AlertProps
   extends React.ComponentProps<"div">,
     VariantProps<typeof alertVariants> {
   onClose?: () => void;
+  closeLabel?: string;
 }
 
 function Alert({
   className,
   variant,
   onClose,
+  closeLabel = "Close",
   children,
   ...props
 }: AlertProps) {
@@ -51,7 +53,7 @@ function Alert({
         <button
           onClick={onClose}
           className="absolute top-3 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100"
-          aria-label="Close"
+          aria-label={closeLabel}
         >
           <X className="size-4" />
         </button>

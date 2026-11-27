@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ChevronDown, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -17,8 +17,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { PremiumTag } from "@/components/shared/premium-badge";
 import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_SURFACE } from "@/types/cloud-upgrade";
 
 import {
   type AppSidebarSelectionHandler,
@@ -27,8 +29,10 @@ import {
   type NavigationChildLink,
   type NavigationCloudUpgrade,
   type NavigationCollapsible,
+  type NavigationItem,
   type NavigationLink,
   type NavigationSection,
+  type NavigationTopLevelCloudUpgrade,
 } from "./types";
 
 interface SidebarNavigationProps {
@@ -43,6 +47,11 @@ interface NavigationLinkProps {
 
 interface NavigationCollapsibleProps {
   item: NavigationCollapsible;
+  onSelect?: AppSidebarSelectionHandler;
+}
+
+interface NavigationItemProps {
+  item: NavigationItem;
   onSelect?: AppSidebarSelectionHandler;
 }
 
@@ -91,6 +100,7 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
             New
           </Badge>
         )}
+        {item.premium && <PremiumLockIcon />}
         {isExternal && <ArrowUpRight aria-hidden="true" className="size-4" />}
       </Link>
     </NavigationButton>
@@ -103,6 +113,44 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
       <TooltipTrigger asChild>{link}</TooltipTrigger>
       <TooltipContent side="right">{item.tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+function PremiumLockIcon() {
+  return (
+    <LockKeyhole
+      aria-label="Premium"
+      className="text-text-neutral-tertiary size-3.5 shrink-0"
+    />
+  );
+}
+
+function TopLevelCloudUpgrade({
+  item,
+  onSelect,
+}: {
+  item: NavigationTopLevelCloudUpgrade;
+  onSelect?: AppSidebarSelectionHandler;
+}) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
+  const Icon = item.icon;
+
+  return (
+    <NavigationButton
+      onClick={() => {
+        openCloudUpgrade(
+          item.cloudUpgradeFeature,
+          onSelect?.() ?? undefined,
+          CLOUD_UPGRADE_SURFACE.SIDEBAR,
+        );
+      }}
+    >
+      <Icon aria-hidden="true" className="size-[18px] shrink-0" />
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <PremiumLockIcon />
+    </NavigationButton>
   );
 }
 
@@ -121,13 +169,15 @@ function CloudUpgradeChild({
     <NavigationButton
       variant="subitem"
       onClick={() => {
-        openCloudUpgrade(item.cloudUpgradeFeature, onSelect?.() ?? undefined);
+        openCloudUpgrade(
+          item.cloudUpgradeFeature,
+          onSelect?.() ?? undefined,
+          CLOUD_UPGRADE_SURFACE.SIDEBAR,
+        );
       }}
     >
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      <Badge variant="cloud" size="sm">
-        Cloud
-      </Badge>
+      <PremiumTag compact />
     </NavigationButton>
   );
 }
@@ -168,6 +218,24 @@ function LinkChild({
       </Link>
     </NavigationButton>
   );
+}
+
+function TopLevelItem({ item, onSelect }: NavigationItemProps) {
+  if (item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE) {
+    return (
+      <CollapsibleNavigationItem
+        key={getCollapsibleActivationKey(item)}
+        item={item}
+        onSelect={onSelect}
+      />
+    );
+  }
+
+  if (item.kind === NAVIGATION_ITEM_KIND.CLOUD_UPGRADE) {
+    return <TopLevelCloudUpgrade item={item} onSelect={onSelect} />;
+  }
+
+  return <TopLevelLink item={item} onSelect={onSelect} />;
 }
 
 function NavigationChildItem({ item, onSelect }: NavigationChildProps) {
@@ -240,27 +308,26 @@ function NavigationSectionList({
   return (
     <section
       aria-labelledby={section.label ? `sidebar-${section.label}` : undefined}
+      className={cn(
+        section.premium &&
+          "border-border-neutral-secondary bg-bg-neutral-secondary rounded-xl border py-2",
+      )}
     >
       {section.label && (
         <h2
           id={`sidebar-${section.label}`}
-          className="text-text-neutral-tertiary mb-1.5 px-3 text-[10px] font-semibold tracking-[0.14em]"
+          className="text-text-neutral-tertiary mb-1.5 flex items-center gap-1 px-3 text-[10px] font-semibold tracking-[0.14em]"
         >
+          {section.premium && (
+            <LockKeyhole aria-hidden="true" className="size-3" />
+          )}
           {section.label}
         </h2>
       )}
       <ul className="space-y-1">
         {section.items.map((item) => (
           <li key={item.label}>
-            {item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE ? (
-              <CollapsibleNavigationItem
-                key={getCollapsibleActivationKey(item)}
-                item={item}
-                onSelect={onSelect}
-              />
-            ) : (
-              <TopLevelLink item={item} onSelect={onSelect} />
-            )}
+            <TopLevelItem item={item} onSelect={onSelect} />
           </li>
         ))}
       </ul>

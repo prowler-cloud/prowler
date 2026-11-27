@@ -89,6 +89,10 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     return this.buttonByText(/Import Findings/) !== null;
   }
 
+  hasImportFindingsUpload(): boolean {
+    return this.container.querySelector('input[type="file"]') !== null;
+  }
+
   async openImportFindings(): Promise<void> {
     await this.clickButton(/Import Findings/);
     await this.waitForText(/Import findings/i);
@@ -291,6 +295,11 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
       5000,
       "the first status poll",
     );
+  }
+
+  /** A previous test's status poll still in flight when this test's handlers take over. */
+  async receiveLeftoverStatusPoll(): Promise<void> {
+    await fetch(`/api/ingestions/${this.fixture.id}`);
   }
 
   /** Outlast an uncancelled poll: its response lands, then the modal's 5s interval passes and the next would fire. */
