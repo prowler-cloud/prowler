@@ -48,17 +48,48 @@ def check_cloudwatch_log_metric_filter(
     metric_filters: list,
     metric_alarms: list,
     metadata: dict,
-):
+) -> Check_Report_AWS | None:
+    """Report whether a trail's log group has a matching metric filter and an alarm.
+
+    Only metric filters attached to the exact log group that a CloudTrail trail
+    delivers to are considered, and only those whose own pattern matches
+    ``metric_filter_pattern``. Trail destinations and collected log groups are
+    compared by full ARN, with only the API-equivalent terminal ``:*`` removed
+    from either form. A filter whose log group was not retrieved is skipped
+    rather than dereferenced. One compliant filter anywhere short-circuits to PASS;
+    otherwise the last matching filter found without an alarm is returned as FAIL.
+
+    Args:
+        metric_filter_pattern: regex from ``build_metric_filter_pattern``, matched
+            against each filter's pattern with ``re.DOTALL``.
+        trails: CloudTrail trails keyed by ARN; only those with a log group count.
+        metric_filters: CloudWatch Logs metric filters to evaluate.
+        metric_alarms: CloudWatch alarms, matched to a filter by metric name and
+            region, and by namespace when both sides expose one.
+        metadata: check metadata for the emitted report.
+
+    Returns:
+        A ``Check_Report_AWS`` for the deciding log group, or ``None`` when no
+        filter matched or an inventory was not collected.
+    """
     report = None
     # 1. Iterate for CloudWatch Log Group in CloudTrail trails
-    log_groups = []
+    log_group_arns = set()
     if trails is not None and metric_filters is not None and metric_alarms is not None:
         for trail in trails.values():
             if trail.log_group_arn:
-                log_groups.append(trail.log_group_arn.split(":")[6])
+                # The trail destination and DescribeLogGroups may expose the
+                # same log group with or without the terminal ``:*``.
+                log_group_arns.add(trail.log_group_arn.removesuffix(":*"))
         # 2. Describe metric filters for previous log groups
         for metric_filter in metric_filters:
-            if metric_filter.log_group.name in log_groups and re.search(
+            # A filter whose log group was not retrieved cannot be matched against
+            # the trail log groups, so it cannot satisfy the requirement.
+            if metric_filter.log_group is None:
+                continue
+            if metric_filter.log_group.arn.removesuffix(
+                ":*"
+            ) in log_group_arns and re.search(
                 metric_filter_pattern, metric_filter.pattern, flags=re.DOTALL
             ):
                 report = Check_Report_AWS(
@@ -66,9 +97,20 @@ def check_cloudwatch_log_metric_filter(
                 )
                 report.status = "FAIL"
                 report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."
-                # 3. Check if there is an alarm for the metric
+                # 3. Check if there is an alarm for the metric. The alarm must
+                # watch the same metric name in the same region, and the same
+                # namespace when both sides expose one — a same-named metric
+                # in another namespace or region is a different metric.
                 for alarm in metric_alarms:
-                    if alarm.metric == metric_filter.metric:
+                    if (
+                        alarm.metric == metric_filter.metric
+                        and alarm.region == metric_filter.region
+                        and (
+                            not metric_filter.metric_namespace
+                            or not alarm.name_space
+                            or alarm.name_space == metric_filter.metric_namespace
+                        )
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} and alarms set."
                         break

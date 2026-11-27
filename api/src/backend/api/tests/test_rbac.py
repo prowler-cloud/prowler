@@ -12,6 +12,7 @@ from api.models import (
     ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
     Scan,
     User,
     UserRoleRelationship,
@@ -1894,6 +1895,90 @@ class TestUserRoleLinkPermissions:
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+SAML_METADATA_XML = """<?xml version='1.0' encoding='UTF-8'?>
+<md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+<md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+    <md:KeyDescriptor use='signing'>
+    <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+        <ds:X509Data>
+        <ds:X509Certificate>TEST</ds:X509Certificate>
+        </ds:X509Data>
+    </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+    <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+</md:IDPSSODescriptor>
+</md:EntityDescriptor>
+"""
+
+
+@pytest.mark.django_db
+class TestSAMLConfigurationPermissions:
+    def _create(self, client, email_domain):
+        return client.post(
+            reverse("saml-config-list"),
+            data={"email_domain": email_domain, "metadata_xml": SAML_METADATA_XML},
+            format="json",
+        )
+
+    def test_manage_integrations_only_cannot_create(
+        self, authenticated_client_rbac_manage_integrations_only
+    ):
+        response = self._create(
+            authenticated_client_rbac_manage_integrations_only,
+            "integrations-only-create.com",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert not SAMLConfiguration.objects.filter(
+            email_domain="integrations-only-create.com"
+        ).exists()
+
+    def test_manage_integrations_only_cannot_read_or_replace(
+        self, authenticated_client_rbac_manage_integrations_only
+    ):
+        client = authenticated_client_rbac_manage_integrations_only
+        tenant = Membership.objects.filter(user=client.user).first().tenant
+        config = SAMLConfiguration.objects.create(
+            tenant_id=str(tenant.id),
+            email_domain="integrations-only-replace.com",
+            metadata_xml=SAML_METADATA_XML,
+        )
+
+        list_response = client.get(reverse("saml-config-list"))
+        patch_response = client.patch(
+            reverse("saml-config-detail", kwargs={"pk": config.id}),
+            data={"metadata_xml": SAML_METADATA_XML},
+            format="json",
+        )
+        delete_response = client.delete(
+            reverse("saml-config-detail", kwargs={"pk": config.id})
+        )
+
+        assert list_response.status_code == status.HTTP_403_FORBIDDEN
+        assert patch_response.status_code == status.HTTP_403_FORBIDDEN
+        assert delete_response.status_code == status.HTTP_403_FORBIDDEN
+        assert SAMLConfiguration.objects.filter(id=config.id).exists()
+
+    def test_manage_account_only_can_create_and_delete(
+        self, authenticated_client_rbac_manage_account
+    ):
+        client = authenticated_client_rbac_manage_account
+
+        create_response = self._create(client, "account-only.com")
+
+        assert create_response.status_code == status.HTTP_201_CREATED
+        config = SAMLConfiguration.objects.get(email_domain="account-only.com")
+
+        delete_response = client.delete(
+            reverse("saml-config-detail", kwargs={"pk": config.id})
+        )
+
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+        assert not SAMLConfiguration.objects.filter(id=config.id).exists()
 
 
 @pytest.mark.django_db

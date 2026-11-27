@@ -8,6 +8,7 @@ def check_security_group(
     ports: list | None = None,
     any_address: bool = False,
     all_ports: bool = False,
+    prefix_lists: dict | None = None,
 ) -> bool:
     """
     Check if the security group ingress rule has public access to the check_ports using the protocol.
@@ -29,23 +30,42 @@ def check_security_group(
             },
         ],
         'ToPort': 123,
+        'PrefixListIds': [
+            {
+                'PrefixListId': 'string',
+                'Description': 'string'
+            },
+        ],
     }
 
     @param protocol: Protocol to check. If -1, all protocols will be checked.
 
     @param ports: List of ports to check. If not provided all ports will be checked unless all_ports is False. (Default: None)
 
-    @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
+    @param any_address: If True, only 0.0.0.0/0 or "::/0", or CIDRs in the same ingress rule that together cover every address of one IP version, will be public and do not search for public addresses. (Default: False)
 
     @param all_ports: If True, empty ports list will be treated as all ports. (Default: False)
+
+    @param prefix_lists: Managed prefix lists by ID, whose entries are checked as CIDRs of the rules that reference them. (Default: None)
 
     @return: True if the security group has public access to the check_ports using the protocol
     """
     if ports is None:
         ports = []
 
+    # Check the CIDRs of referenced managed prefix lists as if they were in the rule.
+    # The caller's rule is not changed, since fixers pass it back to AWS.
+    if prefix_lists and ingress_rule.get("PrefixListIds"):
+        ingress_rule = _add_prefix_list_cidrs(ingress_rule, prefix_lists)
+
+    # With any_address, CIDRs that together cover every address in one rule, such as
+    # 0.0.0.0/1 and 128.0.0.0/1, are as open as 0.0.0.0/0.
+    rule_covers_all_addresses = any_address and _covers_all_addresses(ingress_rule)
+
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
+        if rule_covers_all_addresses:
+            return True
         for ip_ingress_rule in ingress_rule["IpRanges"]:
             if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 return True
@@ -79,7 +99,7 @@ def check_security_group(
 
         for ip_ingress_rule in all_ingress_rules:
             # We only check public CIDRs
-            if _is_cidr_public(
+            if rule_covers_all_addresses or _is_cidr_public(
                 ip_ingress_rule.get("CidrIp", ip_ingress_rule.get("CidrIpv6")),
                 any_address,
             ):
@@ -100,6 +120,106 @@ def check_security_group(
                 return all_ports_open or empty_ports_same_as_all_ports_open
 
     return False
+
+
+def _add_prefix_list_cidrs(ingress_rule: Any, prefix_lists: dict) -> dict:
+    """
+    Return a copy of the ingress rule with the entries of its managed prefix lists added to its IP ranges
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+
+    @param prefix_lists: Managed prefix lists by ID
+    """
+    ip_ranges = list(ingress_rule.get("IpRanges", []))
+    ipv6_ranges = list(ingress_rule.get("Ipv6Ranges", []))
+    for prefix_list_id in ingress_rule.get("PrefixListIds", []):
+        prefix_list = prefix_lists.get(prefix_list_id.get("PrefixListId"))
+        if not prefix_list:
+            continue
+        for cidr in prefix_list.entries:
+            if ":" in cidr:
+                ipv6_ranges.append({"CidrIpv6": cidr})
+            else:
+                ip_ranges.append({"CidrIp": cidr})
+    return {**ingress_rule, "IpRanges": ip_ranges, "Ipv6Ranges": ipv6_ranges}
+
+
+def _covers_all_addresses(ingress_rule: Any) -> bool:
+    """
+    Check if the CIDRs of one IP version in the ingress rule together cover the whole address space
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+    """
+    for key, cidr_key in (("IpRanges", "CidrIp"), ("Ipv6Ranges", "CidrIpv6")):
+        try:
+            networks = [
+                ipaddress.ip_network(ip_range[cidr_key], strict=False)
+                for ip_range in ingress_rule.get(key, [])
+            ]
+        except ValueError:
+            continue
+        if any(
+            network.prefixlen == 0 for network in ipaddress.collapse_addresses(networks)
+        ):
+            return True
+    return False
+
+
+def get_any_address_ip_permission(ingress_rule: Any) -> dict:
+    """
+    Build an IpPermission that only contains the any-address sources of the given ingress rule.
+
+    The any-address sources are 0.0.0.0/0 and ::/0. While the other CIDRs of one IP
+    version still cover every address of that version together, such as 0.0.0.0/1 and
+    128.0.0.0/1, the widest of them (those not inside another one) are added too, so
+    the rule never stays open to every address. Narrower CIDRs not needed for that,
+    such as 10.0.0.0/8 next to 0.0.0.0/1 and 128.0.0.0/1, stay.
+
+    Revoking the original rule would also remove the other sources that share it
+    (private CIDRs, other IPv6 ranges, prefix lists and security group references).
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+
+    @return: IpPermission with the same protocol and ports and only the any-address ranges
+    """
+    ip_permission = {
+        key: ingress_rule[key]
+        for key in ("IpProtocol", "FromPort", "ToPort")
+        if key in ingress_rule
+    }
+    for key, cidr_key, any_cidr in (
+        ("IpRanges", "CidrIp", "0.0.0.0/0"),
+        ("Ipv6Ranges", "CidrIpv6", "::/0"),
+    ):
+        ip_ranges = ingress_rule.get(key, [])
+        revoked = {
+            index
+            for index, ip_range in enumerate(ip_ranges)
+            if ip_range.get(cidr_key) == any_cidr
+        }
+        remaining = [index for index in range(len(ip_ranges)) if index not in revoked]
+        while remaining and _covers_all_addresses(
+            {key: [ip_ranges[index] for index in remaining]}
+        ):
+            networks = {
+                index: ipaddress.ip_network(ip_ranges[index][cidr_key], strict=False)
+                for index in remaining
+            }
+            widest = [
+                index
+                for index in remaining
+                if not any(
+                    networks[index] != other and networks[index].subnet_of(other)
+                    for other in networks.values()
+                )
+            ]
+            revoked.update(widest)
+            remaining = [index for index in remaining if index not in revoked]
+        any_address_ranges = [
+            ip_range for index, ip_range in enumerate(ip_ranges) if index in revoked
+        ]
+        ip_permission[key] = any_address_ranges
+    return ip_permission
 
 
 def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:

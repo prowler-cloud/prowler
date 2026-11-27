@@ -56,11 +56,19 @@ aws:
   max_console_access_days: 45
   # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
   max_unused_sagemaker_access_days: 90
+  # aws.iam_role_github_oidc_trust_subject_restricted
+  # Set GitHub repository owners allowed by GitHub Actions OIDC trust policies.
+  # Leave empty to accept any non-wildcard owner.
+  iam_github_oidc_allowed_owners: []
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
@@ -119,6 +127,14 @@ aws:
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
   log_group_retention_days: 365
 
+  # aws.cloudwatch_log_group_agentcore_data_protection_policy_enabled
+  # Log group name prefixes that hold Bedrock AgentCore agent telemetry. This list REPLACES
+  # the defaults rather than adding to them, so keep both entries below when adding your own
+  # or the log groups AgentCore creates itself stop being assessed.
+  agentcore_log_group_name_prefixes:
+    - "/aws/bedrock-agentcore/"
+    - "/aws/vendedlogs/bedrock-agentcore/"
+
   # AWS CloudFormation Configuration
   # cloudformation_stack_cdktoolkit_bootstrap_version --> by default is 21
   recommended_cdk_bootstrap_version: 21
@@ -131,6 +147,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -181,6 +219,17 @@ aws:
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
+
+  # AWS Inspector2
+  # aws.inspector2_coverage_recently_scanned
+  # Maximum days since Inspector2 last scanned an actively covered resource
+  inspector2_max_days_since_last_scan: 3
+  # aws.inspector2_active_findings_within_max_age
+  # Maximum days an Inspector2 finding can stay active since it was first observed
+  inspector2_active_finding_max_age_days: 192
+  # aws.inspector2_active_findings_no_known_exploited_vulnerabilities, aws.inspector2_active_findings_kev_within_due_date
+  # Check every active finding against the CISA KEV catalog, not only the ones with a public exploit (slower on accounts with many findings)
+  inspector2_kev_include_findings_without_exploit: False
 
   # AWS Trusted Advisor
   # aws.trustedadvisor_premium_support_plan_subscribed
@@ -491,6 +540,13 @@ aws:
   # trigger its monitoring). Disabled by default (scans stay fully offline).
   secrets_validate: False
 
+  # Minimum Kingfisher confidence level for reporting secret findings.
+  # "low" enables generic rules (Generic Password / Secret / API Key) that
+  # preserve keyword-based coverage; at "medium" those generic rules do not
+  # fire, which reduces false positives at the cost of some coverage.
+  # Possible values: "low", "medium", "high".
+  secrets_confidence: "low"
+
   # AWS Secrets Manager Configuration
   # aws.secretsmanager_secret_unused
   # Maximum number of days a secret can be unused
@@ -528,14 +584,19 @@ azure:
   # azure.network_public_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
 
   # Configurable minimal risk level for attack path notifications
   # azure.defender_attack_path_notifications_properly_configured
   defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
@@ -618,6 +679,10 @@ gcp:
   # GCP Compute Configuration
   # gcp.compute_public_address_shodan
   shodan_api_key: null
+  # Emerging threats matched against compute instance images.
+  # Format: prowler/lib/threats/models.py
+  # Template: prowler/lib/threats/signatures/TEMPLATE.yaml.example
+  threat_signatures: []
   # gcp.compute_instance_group_multiple_zones
   # Minimum number of zones a MIG should span for high availability
   mig_min_zones: 2
@@ -634,6 +699,10 @@ gcp:
   # GCP Secret Manager Rotation Period
   # gcp.secretmanager_secret_rotation_enabled
   secretmanager_max_rotation_days: 90
+  # GCP App Engine PHP runtime
+  # gcp.appengine_version_php_runtime_supported
+  # Oldest PHP branch still receiving security fixes
+  appengine_php_min_version: "8.2"
 
 # Kubernetes Configuration
 kubernetes:
@@ -715,6 +784,29 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+  # cloudflare.account_super_admins_limited
+  # Maximum number of Super Administrators allowed per account
+  max_super_admins: 3
+  # cloudflare.account_api_token_recently_used
+  # Days without use after which an active API token is flagged
+  max_unused_api_token_days: 90
+  # cloudflare.workers_script_no_secrets_in_plain_text_bindings
+  # Regex patterns to exclude from secret scanning
+  secrets_ignore_patterns: []
+
+  # Validate discovered secrets by checking whether they are live against the
+  # provider APIs. WARNING: this makes outbound network calls that authenticate
+  # with the discovered secret itself; the credential is exercised against the
+  # provider and the call will appear in the audited account's logs (and may
+  # trigger its monitoring). Disabled by default (scans stay fully offline).
+  secrets_validate: False
+
+  # Minimum Kingfisher confidence level for reporting secret findings.
+  # "low" enables generic rules (Generic Password / Secret / API Key) that
+  # preserve keyword-based coverage; at "medium" those generic rules do not
+  # fire, which reduces false positives at the cost of some coverage.
+  # Possible values: "low", "medium", "high".
+  secrets_confidence: "low"
 
 # Vercel Configuration
 vercel:
@@ -737,7 +829,7 @@ vercel:
   max_owner_percentage: 20
   # Maximum number of owners allowed (overrides percentage for large teams)
   max_owners: 3
-  # vercel.project_environment_no_secrets_in_plain_type
+  # vercel.project_environment_no_secrets_in_plain_type & vercel.project_environment_no_secrets_with_public_prefix
   # Suffixes that identify secret-like environment variable names
   secret_suffixes:
     - "_KEY"
@@ -746,6 +838,17 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+  # vercel.project_environment_no_secrets_with_public_prefix
+  # Prefixes that frontend frameworks inline into the browser bundle
+  public_env_prefixes:
+    - "NEXT_PUBLIC_"
+    - "NUXT_PUBLIC_"
+    - "VITE_"
+    - "REACT_APP_"
+    - "VUE_APP_"
+    - "GATSBY_"
+    - "EXPO_PUBLIC_"
+    - "PUBLIC_"
 
 okta:
   # Okta Sign-On Policies
@@ -822,6 +925,18 @@ openstack:
   # Regex patterns whose matches are excluded from secret scanning of
   # resource metadata.
   secrets_ignore_patterns: []
+  # Validate discovered secrets by checking whether they are live against the
+  # provider APIs. WARNING: this makes outbound network calls that authenticate
+  # with the discovered secret itself; the credential is exercised against the
+  # provider and the call will appear in the audited account's logs (and may
+  # trigger its monitoring). Disabled by default (scans stay fully offline).
+  secrets_validate: False
+  # Minimum Kingfisher confidence level for reporting secret findings.
+  # "low" enables generic rules (Generic Password / Secret / API Key) that
+  # preserve keyword-based coverage; at "medium" those generic rules do not
+  # fire, which reduces false positives at the cost of some coverage.
+  # Possible values: "low", "medium", "high".
+  secrets_confidence: "low"
 
 # E2E Networks Configuration
 e2enetworks:

@@ -11,6 +11,7 @@ from .base import (
     get_requirement_metadata,
 )
 from .charts import create_horizontal_bar_chart, get_chart_color_for_percentage
+from .components import escape_html
 from .config import (
     COLOR_BORDER_GRAY,
     COLOR_DARK_GRAY,
@@ -111,15 +112,10 @@ class NIS2ReportGenerator(BaseComplianceReportGenerator):
 
         # Compliance metadata table - use base class helper for consistency
         info_rows = self._build_info_rows(data, language="en")
-        # Convert tuples to lists and wrap long text in Paragraphs
-        metadata_data = []
-        for label, value in info_rows:
-            if label in ("Name:", "Description:") and value:
-                metadata_data.append(
-                    [label, Paragraph(value, self.styles["normal_center"])]
-                )
-            else:
-                metadata_data.append([label, value])
+        metadata_data = [
+            [label, Paragraph(escape_html(str(value)), self.styles["normal_center"])]
+            for label, value in info_rows
+        ]
 
         metadata_table = Table(metadata_data, colWidths=[2 * inch, 4 * inch])
         metadata_table.setStyle(

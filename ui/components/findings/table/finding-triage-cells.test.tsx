@@ -80,6 +80,8 @@ beforeAll(() => {
   });
 });
 
+import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
@@ -92,7 +94,6 @@ import {
 
 import {
   FindingNoteActionItem,
-  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 
@@ -153,7 +154,7 @@ it("should open finding triage upgrade from a Cloud-only status cell", async () 
   // When
   await user.click(
     screen.getByRole("button", {
-      name: "Change triage status - available in Prowler Cloud",
+      name: "Change triage status - premium feature in Prowler Cloud and Private Cloud",
     }),
   );
 
@@ -177,7 +178,7 @@ it("should render the Cloud-only triage action with the shared button", () => {
   // Then
   expect(
     screen.getByRole("button", {
-      name: "Change triage status - available in Prowler Cloud",
+      name: "Change triage status - premium feature in Prowler Cloud and Private Cloud",
     }),
   ).toHaveAttribute("data-slot", "button");
 });
@@ -803,22 +804,6 @@ describe("finding triage cells", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders a read-only triage status badge with the status color", () => {
-    // Given / When
-    render(
-      <FindingTriageStatusBadge
-        triage={makeTriageSummary({
-          status: FINDING_TRIAGE_STATUS.REMEDIATING,
-          label: "Remediating",
-        })}
-      />,
-    );
-
-    // Then
-    expect(screen.getByText("Triage:")).toBeInTheDocument();
-    expect(screen.getByText("Remediating")).toHaveClass("text-bg-data-info");
-  });
-
   it("should disable table status mutation when no update handler is wired", async () => {
     // Given
     const user = userEvent.setup();
@@ -974,7 +959,7 @@ describe("finding triage cells", () => {
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
     const saveUpgrade = screen.getByRole("button", {
-      name: "Save - available in Prowler Cloud",
+      name: "See plans",
     });
     expect(saveUpgrade).not.toBeDisabled();
 
@@ -1295,6 +1280,37 @@ describe("finding triage cells", () => {
       }),
     );
     expect(statusControl).toHaveTextContent("Open");
+  });
+
+  it("should offer the plans when the usage limit refuses the status update", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi
+      .fn()
+      .mockRejectedValue(new UsageLimitError());
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Remediating" }));
+
+    // Then
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+    const toastOptions = toastMock.mock.calls[0][0];
+    expect(toastOptions.description).toBe(USAGE_LIMIT_MESSAGE);
+    render(<>{toastOptions.action}</>);
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
   });
 
   it("should not confirm when moving between Mutelist shortcut statuses", async () => {

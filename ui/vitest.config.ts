@@ -73,6 +73,7 @@ export default defineConfig(() => {
             setupFiles: ["./vitest.setup.ts"],
             include: ["**/*.test.{ts,tsx}"],
             exclude: [
+              ".claude/**",
               "node_modules",
               ".next",
               "tests/**/*",
@@ -87,7 +88,7 @@ export default defineConfig(() => {
             name: "integration",
             setupFiles: ["./vitest.integration.setup.ts"],
             include: ["**/*.integration.test.{ts,tsx}"],
-            exclude: ["node_modules", ".next", "tests/**/*"],
+            exclude: [".claude/**", "node_modules", ".next", "tests/**/*"],
             browser: {
               enabled: true,
               // Vitest's browser default viewport is 414×896 (phone-sized),
@@ -95,7 +96,9 @@ export default defineConfig(() => {
               // vertically and ends up overlapping the graph, so Playwright
               // can't click nodes. Use a standard desktop viewport.
               viewport: { width: 1280, height: 800 },
-              provider: playwright(),
+              // Playwright waits forever for an actionable element by default;
+              // fail inside the test budget so the log names the blocker.
+              provider: playwright({ actionTimeout: 10_000 }),
               headless: true,
               instances: [{ browser: "chromium" }],
             },
@@ -146,7 +149,9 @@ export default defineConfig(() => {
         "next-themes",
 
         // App component lib
-        "@iconify/react",
+        "react-day-picker",
+        "posthog-js",
+        "posthog-js/react",
 
         // Radix
         "@radix-ui/react-alert-dialog",
@@ -174,6 +179,11 @@ export default defineConfig(() => {
         "@xyflow/react",
         "@dagrejs/dagre",
 
+        // Charts (the Overview sample's graph tabs)
+        "recharts",
+        "d3",
+        "topojson-client",
+
         // Forms / state
         "react-hook-form",
         "@hookform/resolvers/zod",
@@ -194,7 +204,6 @@ export default defineConfig(() => {
         "@react-aria/visually-hidden",
         "framer-motion",
         "cmdk",
-        "driver.js",
         "react-markdown",
         "streamdown",
         "jwt-decode",

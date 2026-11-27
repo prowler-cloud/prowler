@@ -4,8 +4,7 @@ import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-ty
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { Progress } from "@/components/shadcn/progress";
 import { getScoreColor } from "@/lib/compliance/score-utils";
-import type { KnownProviderType } from "@/types/providers";
-import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
+import { getProviderDisplayName, type ProviderType } from "@/types/providers";
 
 import type { ProviderBreakdownEntry } from "../_types";
 
@@ -14,7 +13,7 @@ import type { ProviderBreakdownEntry } from "../_types";
 export interface CoverageRow {
   key: string;
   label: string;
-  iconType: KnownProviderType;
+  iconType: ProviderType;
   pass: number;
   fail: number;
   manual: number;
@@ -45,7 +44,7 @@ export const ProviderCoverageCard = ({
       .filter((entry) => !entry.unscanned)
       .map((entry) => ({
         key: entry.provider,
-        label: PROVIDER_DISPLAY_NAMES[entry.provider],
+        label: getProviderDisplayName(entry.provider),
         iconType: entry.provider,
         pass: entry.pass,
         fail: entry.fail,

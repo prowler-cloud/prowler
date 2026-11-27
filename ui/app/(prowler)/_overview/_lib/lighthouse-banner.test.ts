@@ -40,7 +40,7 @@ describe("resolveLighthouseOverviewBannerHref", () => {
 });
 
 describe("getLighthouseOverviewBannerHref", () => {
-  it("hides the banner outside cloud without loading configurations", async () => {
+  it("points the Local Server banner to Lighthouse without loading configurations", async () => {
     // Given
     const loadConfigurations = vi.fn(async () => ({
       data: [configuration("openai", true)],
@@ -53,7 +53,7 @@ describe("getLighthouseOverviewBannerHref", () => {
     );
 
     // Then
-    expect(href).toBeNull();
+    expect(href).toBe("/lighthouse");
     expect(loadConfigurations).not.toHaveBeenCalled();
   });
 

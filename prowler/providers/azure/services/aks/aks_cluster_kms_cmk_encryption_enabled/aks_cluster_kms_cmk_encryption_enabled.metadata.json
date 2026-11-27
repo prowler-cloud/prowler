@@ -1,0 +1,41 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_kms_cmk_encryption_enabled",
+  "CheckTitle": "AKS cluster encrypts Kubernetes secrets in etcd with a customer-managed Key Vault key",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.containerservice/managedclusters",
+  "ResourceGroup": "container",
+  "Description": "**AKS clusters** are evaluated for **Azure Key Vault KMS encryption of Kubernetes Secrets** with a customer-managed key (`securityProfile.azureKeyVaultKms.enabled=true`). The API server envelope-encrypts each Secret with a key held in the customer's own Key Vault before writing it to etcd. AKS platform-managed keys do not satisfy this control, because Microsoft still holds the key.",
+  "Risk": "Kubernetes **Secrets** hold database passwords, API tokens, and TLS private keys. Without a customer-managed key they are protected only by platform-managed keys inside the Microsoft-operated AKS control plane, leaving the subscription owner no independent control: access cannot be revoked, key use is not auditable in the customer tenant, and CMK obligations go unmet (**confidentiality**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/kms-data-encryption-concepts",
+    "https://learn.microsoft.com/en-us/azure/aks/kms-data-encryption",
+    "https://learn.microsoft.com/en-us/azure/aks/use-kms-etcd-encryption",
+    "https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --enable-azure-keyvault-kms --azure-keyvault-kms-key-id <KEY_VAULT_KEY_ID> --azure-keyvault-kms-key-vault-network-access Public --assign-identity <USER_ASSIGNED_IDENTITY_RESOURCE_ID>",
+      "NativeIaC": "```bicep\n// AKS cluster encrypting etcd Secrets with a customer-managed Key Vault key.\n// KMS requires a user-assigned managed identity; system-assigned is not supported.\nresource aks 'Microsoft.ContainerService/managedClusters@2024-09-01' = {\n  name: '<CLUSTER_NAME>'\n  location: resourceGroup().location\n  identity: {\n    type: 'UserAssigned'\n    userAssignedIdentities: {\n      '<USER_ASSIGNED_IDENTITY_RESOURCE_ID>': {}\n    }\n  }\n  properties: {\n    dnsPrefix: '<DNS_PREFIX>'\n    securityProfile: {\n      azureKeyVaultKms: {\n        enabled: true // Critical: envelope-encrypts etcd Secrets with a customer-managed key\n        keyId: '<KEY_VAULT_KEY_ID>'\n        keyVaultNetworkAccess: 'Public'\n      }\n    }\n    agentPoolProfiles: [\n      {\n        name: 'systempool'\n        count: 3\n        vmSize: '<VM_SIZE>'\n        mode: 'System'\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. Create or select an Azure Key Vault with soft delete and purge protection enabled\n2. Create a key in the vault with encrypt and decrypt operations enabled, and copy its key identifier\n3. Create a user-assigned managed identity, which this feature requires because system-assigned identity is not supported\n4. Grant that identity the Key Vault Crypto User role on the vault\n5. Run az aks update with --enable-azure-keyvault-kms, the key identifier and --assign-identity\n6. Confirm that securityProfile.azureKeyVaultKms.enabled is true on the managed cluster",
+      "Terraform": "```hcl\nresource \"azurerm_kubernetes_cluster\" \"example\" {\n  name                = \"<cluster-name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<resource-group>\"\n  dns_prefix          = \"<dns-prefix>\"\n\n  default_node_pool {\n    name       = \"systempool\"\n    node_count = 3\n    vm_size    = \"<vm-size>\"\n  }\n\n  # KMS requires a user-assigned managed identity; system-assigned is not supported\n  identity {\n    type         = \"UserAssigned\"\n    identity_ids = [\"<user-assigned-identity-resource-id>\"]\n  }\n\n  key_management_service {\n    key_vault_key_id         = \"<key-vault-key-id>\" # Critical: customer-managed key for etcd encryption\n    key_vault_network_access = \"Public\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable Azure Key Vault KMS with a customer-managed key and a user-assigned managed identity, which this feature requires. The vault must have soft delete and purge protection enabled, because deleting the key makes every Secret already written to etcd unrecoverable. Rotate the key on a schedule and audit Key Vault logs for its use.",
+      "Url": "https://hub.prowler.com/check/aks_cluster_kms_cmk_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Azure requires the Key Vault to have soft delete and purge protection enabled, because deleting or purging the key makes every Secret already written to etcd permanently unrecoverable. KMS does not work with a system-assigned managed identity, so a user-assigned identity must exist before the feature is turned on. `keyVaultNetworkAccess` may be `Public` or `Private`, and `Private` additionally requires `keyVaultResourceId`; this check evaluates only whether a customer-managed key is in use and does not judge the vault's network access. AKS also offers KMS with platform-managed keys, which sets `securityProfile.kubernetesResourceObjectEncryptionProfile.infrastructureEncryption` instead of `azureKeyVaultKms`. Platform-managed keys are reported as a finding because Microsoft continues to hold the key, which is the control this check verifies."
+}

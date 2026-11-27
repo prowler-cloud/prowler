@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_role_github_oidc_trust_subject_restricted",
+  "CheckTitle": "IAM role trusting GitHub Actions OIDC restricts subjects to specific repository owners",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Initial Access"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:iam::account-id:role/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "An IAM role trusting GitHub Actions OIDC restricts `token.actions.githubusercontent.com:sub` to a non-wildcard repository owner. The repository may be specific (`repo:<owner>/<repo>:*`) or wildcarded (`repo:<owner>/*:*`).",
+  "Risk": "Without a trusted-owner constraint, workflows from repositories owned by untrusted GitHub accounts may assume the role and use its AWS permissions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html",
+    "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam update-assume-role-policy --role-name <ROLE_NAME> --policy-document file://updated-trust-policy.json",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              Federated: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'\n            Action: sts:AssumeRoleWithWebIdentity\n            Condition:\n              StringLike:\n                token.actions.githubusercontent.com:sub: repo:ORG/REPOSITORY:* # Restrict to this repository\n```",
+      "Other": "1. Open IAM > Roles and select the role.\n2. Edit its trust policy so every GitHub Actions OIDC statement restricts `token.actions.githubusercontent.com:sub` to an approved `repo:<owner>/<repository>:...` value.\n3. Save the policy and retain all other required statements.",
+      "Terraform": "```hcl\ndata \"aws_caller_identity\" \"example_resource\" {}\n\ndata \"aws_iam_policy_document\" \"example_resource\" {\n  statement {\n    effect = \"Allow\"\n\n    principals {\n      type = \"Federated\"\n      identifiers = [\"arn:aws:iam::${data.aws_caller_identity.example_resource.account_id}:oidc-provider/token.actions.githubusercontent.com\"]\n    }\n\n    actions = [\"sts:AssumeRoleWithWebIdentity\"]\n\n    condition {\n      test     = \"StringLike\"\n      variable = \"token.actions.githubusercontent.com:sub\"\n      values   = [\"repo:ORG/REPOSITORY:*\"] # Restrict to this repository\n    }\n  }\n}\n\nresource \"aws_iam_role\" \"example_resource\" {\n  name               = \"example_resource\"\n  assume_role_policy = data.aws_iam_policy_document.example_resource.json\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Restrict GitHub Actions OIDC trust to repositories and owners that your organization controls.",
+      "Url": "https://hub.prowler.com/check/iam_role_github_oidc_trust_subject_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check only passes trust policies that constrain `token.actions.githubusercontent.com:sub` using the `repo:<owner>/<repository>:...` format. Policies using `token.actions.githubusercontent.com:repository_owner` or a custom GitHub OIDC subject, such as `repository_owner_id:...`, are outside the pass criteria and will be reported as FAIL. Configure `iam_github_oidc_allowed_owners` to restrict the check to an owner allowlist; an empty list preserves the default behavior."
+}

@@ -1,3 +1,4 @@
+import { Radar } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -43,6 +44,7 @@ describe("getNavigationConfig", () => {
     expect(sections.map((section) => section.label ?? null)).toEqual([
       null,
       "SECURITY",
+      "PREMIUM",
       "SETTINGS",
       "HELP",
     ]);
@@ -57,11 +59,22 @@ describe("getNavigationConfig", () => {
       "Scans",
       "Resources",
     ]);
+    expect(sections[2]?.premium).toBe(true);
     expect(sections[2]?.items.map((item) => item.label)).toEqual([
+      "Exploitability issues",
+      "Realtime",
+      "AI Security",
+      "Alerts",
+      "Registry",
+      "Import findings",
+      "Scan configurations",
+      "Cross-provider compliance",
+    ]);
+    expect(sections[3]?.items.map((item) => item.label)).toEqual([
       "Configuration",
       "Organization",
     ]);
-    expect(sections[3]?.items.map((item) => item.label)).toEqual([
+    expect(sections[4]?.items.map((item) => item.label)).toEqual([
       "Documentation",
       "API Reference",
       "Community Support",
@@ -69,7 +82,7 @@ describe("getNavigationConfig", () => {
     ]);
   });
 
-  it("models Local Server Cloud features as contextual upgrade actions", () => {
+  it("keeps only open source items under Local Server Configuration", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -79,34 +92,108 @@ describe("getNavigationConfig", () => {
     // Then
     expect(children.map((item) => item.label)).toEqual([
       "Providers",
-      "Alerts",
       "Mutelist",
-      "Scans",
-      "CLI Import",
       "Integrations",
       "Lighthouse AI",
     ]);
-    expect(children.find((item) => item.label === "Alerts")).toEqual(
+  });
+
+  it("models Local Server premium capabilities as upgrade actions", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When / Then
+    expect(getItem("Alerts")).toEqual(
       expect.objectContaining({
         kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
       }),
     );
-    expect(children.find((item) => item.label === "Scans")).toEqual(
+    expect(getItem("Scan configurations")).toEqual(
       expect.objectContaining({
         kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
       }),
     );
-    expect(children.find((item) => item.label === "CLI Import")).toEqual(
+    expect(getItem("Import findings")).toEqual(
       expect.objectContaining({
         kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
       }),
     );
+    expect(getItem("Registry")).toEqual(
+      expect.objectContaining({
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REGISTRY,
+      }),
+    );
   });
 
-  it("uses Cloud destinations and current New badges", () => {
+  it("links Exploitability Issues and Realtime to their Local Server previews", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When / Then
+    expect(getItem("Exploitability issues")).toEqual(
+      expect.objectContaining({
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/issues",
+        premium: true,
+      }),
+    );
+    expect(getItem("Realtime")).toEqual({
+      kind: NAVIGATION_ITEM_KIND.LINK,
+      href: "/realtime",
+      label: "Realtime",
+      icon: Radar,
+      active: false,
+      premium: true,
+    });
+  });
+
+  it("links Realtime in Cloud", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When / Then
+    expect(
+      getNavigationConfig({ pathname: "/realtime" })
+        .flatMap((section) => section.items)
+        .find((item) => item.label === "Realtime"),
+    ).toEqual(
+      expect.objectContaining({
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/realtime",
+      }),
+    );
+  });
+
+  it("has one Realtime entry, active on the dashboard and its configuration", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const realtimeItems = (pathname: string) =>
+      getNavigationConfig({ pathname })
+        .flatMap((section) => section.items)
+        .flatMap((item) =>
+          item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
+            ? [item, ...item.children]
+            : [item],
+        )
+        .filter((item) => "href" in item && item.href.startsWith("/realtime"));
+
+    // When / Then
+    expect(realtimeItems("/realtime")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/realtime/configuration")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/providers")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: false }),
+    ]);
+  });
+
+  it("uses Cloud destinations and keeps Configuration children unbadged", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
@@ -124,17 +211,24 @@ describe("getNavigationConfig", () => {
 
     // Then
     expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
+    expect(sections[1]?.items.slice(0, 3)).toMatchObject([
+      { label: "Exploitability issues", href: "/issues", highlight: true },
+      { label: "Realtime", href: "/realtime", highlight: true },
+      { label: "AI Security", href: "/ai-security", highlight: true },
+    ]);
     expect(configuration.children).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "CLI Import" }),
       ]),
     );
-    expect(
-      configuration.children.find((item) => item.label === "Alerts"),
-    ).toEqual(expect.objectContaining({ highlight: true }));
-    expect(
-      configuration.children.find((item) => item.label === "Scans"),
-    ).toEqual(expect.objectContaining({ active: true, highlight: true }));
+    const alerts = configuration.children.find(
+      (item) => item.label === "Alerts",
+    );
+    const scans = configuration.children.find((item) => item.label === "Scans");
+    expect(alerts).toMatchObject({ href: "/alerts" });
+    expect(alerts).not.toHaveProperty("highlight");
+    expect(scans).toMatchObject({ href: "/scans/config", active: true });
+    expect(scans).not.toHaveProperty("highlight");
     expect(items.find((item) => item.label === "Attack Paths")).not.toEqual(
       expect.objectContaining({ highlight: true }),
     );

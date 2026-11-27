@@ -10,17 +10,18 @@ import { cn } from "@/lib/utils";
 const CONNECTION_BADGE = {
   connected: {
     label: "Connected",
-    className:
-      "bg-bg-pass-secondary text-text-success-primary border-transparent",
+    variant: "success",
+    dotClassName: "bg-bg-pass",
   },
   disconnected: {
     label: "Disconnected",
-    className:
-      "bg-bg-fail-secondary text-text-error-primary border-transparent",
+    variant: "error",
+    dotClassName: "bg-bg-fail",
   },
   unchecked: {
     label: "Not checked yet",
-    className: "border-border-tag bg-bg-tag text-text-neutral-secondary",
+    variant: "tag",
+    dotClassName: "bg-bg-data-muted",
   },
 } as const;
 
@@ -45,30 +46,57 @@ interface IntegrationCardHeaderProps {
   icon: ReactNode;
   title: string;
   subtitle?: string;
+  /**
+   * A quiet third line under the subtitle, for a fact about the integration
+   * rather than a claim about it — when its connection was last checked, say.
+   */
+  meta?: ReactNode;
   chips?: IntegrationCardChip[];
   connectionStatus?: IntegrationConnectionStatus;
   navigationUrl?: string;
+  /** The integration's own controls, pinned to the end of the row. */
+  actions?: ReactNode;
 }
 
 export const IntegrationCardHeader = ({
   icon,
   title,
   subtitle,
+  meta,
   chips = [],
   connectionStatus,
   navigationUrl,
+  actions,
 }: IntegrationCardHeaderProps) => {
   const badgeState = connectionStatus
     ? connectionBadgeState(connectionStatus.connected)
     : null;
   const badge = badgeState ? CONNECTION_BADGE[badgeState] : null;
 
+  // The end of the row belongs to the controls wherever there are any, so the
+  // status travels with the name it qualifies instead of across the card.
+  const statusBesideTitle = Boolean(actions);
+
+  const statusBadge =
+    badge && badgeState ? (
+      <Badge variant={badge.variant} data-connection-status={badgeState}>
+        <span
+          aria-hidden="true"
+          className={cn("size-1.5 rounded-full", badge.dotClassName)}
+        />
+        {connectionStatus?.label || badge.label}
+      </Badge>
+    ) : null;
+
+  const hasAside =
+    chips.length > 0 || Boolean(actions) || (statusBadge && !statusBesideTitle);
+
   return (
     <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         {icon}
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex flex-wrap items-center gap-2">
             <h4 className="text-md font-semibold">{title}</h4>
             {navigationUrl && (
               <a
@@ -81,37 +109,32 @@ export const IntegrationCardHeader = ({
                 <ExternalLink size={16} />
               </a>
             )}
+            {statusBesideTitle && statusBadge}
           </div>
           {subtitle && (
-            <p className="text-xs text-gray-500 dark:text-gray-300">
-              {subtitle}
-            </p>
+            <p className="text-text-neutral-tertiary text-xs">{subtitle}</p>
           )}
+          {meta}
         </div>
       </div>
-      {(chips.length > 0 || badge) && (
+      {hasAside && (
         <div className="flex flex-wrap items-center gap-2">
           {chips.map((chip, index) => (
             <Badge
               key={index}
               variant="outline"
+              // Weight left to the Badge, so a chip and the status pill beside
+              // it are never set differently.
               className={cn(
-                "border-border-neutral-secondary bg-bg-neutral-secondary text-text-neutral-primary text-xs font-normal",
+                "border-border-neutral-secondary bg-bg-neutral-secondary text-text-neutral-primary text-xs",
                 chip.className,
               )}
             >
               {chip.label}
             </Badge>
           ))}
-          {badge && badgeState && (
-            <Badge
-              variant="outline"
-              data-connection-status={badgeState}
-              className={cn("text-xs font-normal", badge.className)}
-            >
-              {connectionStatus?.label || badge.label}
-            </Badge>
-          )}
+          {!statusBesideTitle && statusBadge}
+          {actions}
         </div>
       )}
     </div>

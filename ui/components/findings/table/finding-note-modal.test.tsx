@@ -86,7 +86,8 @@ afterAll(() => {
   }
 });
 
-import { DOCS_URLS } from "@/lib/external-urls";
+import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
+import { DOCS_URLS, PRICING_URL } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
@@ -338,6 +339,31 @@ describe("FindingNoteModal", () => {
     expect(toastMock).not.toHaveBeenCalled();
   });
 
+  it("should keep the modal open and offer the plans when the usage limit refuses the note", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const onTriageUpdateAction = vi
+      .fn()
+      .mockRejectedValue(new UsageLimitError());
+    renderNoteModal({ onOpenChange, onTriageUpdateAction });
+
+    // When
+    await user.clear(screen.getByLabelText("Note text"));
+    await user.type(screen.getByLabelText("Note text"), "Changed note");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Then
+    expect(
+      await screen.findByText(USAGE_LIMIT_MESSAGE, { exact: false }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   it("should expose a pending manual pass submission and keep controls disabled", async () => {
     // Given
     const user = userEvent.setup();
@@ -450,8 +476,19 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
+    expect(screen.getByLabelText("Note text")).toHaveAttribute(
+      "placeholder",
+      "Notes can be saved in Prowler Cloud and Private Cloud.",
+    );
+    const notice = screen.getByText(
+      /Triage notes and status are a premium feature/,
+    );
+    expect(
+      notice.compareDocumentPosition(screen.getByLabelText("Note text")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     const saveUpgrade = screen.getByRole("button", {
-      name: "Save - available in Prowler Cloud",
+      name: "See plans",
     });
     expect(saveUpgrade).not.toBeDisabled();
 

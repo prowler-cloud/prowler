@@ -1,22 +1,29 @@
 import {
+  Bell,
+  Bot,
   Code,
   CreditCard,
+  Crosshair,
   FileText,
   GitBranch,
+  Layers,
   LayoutGrid,
   MessageCircleQuestion,
+  Package,
+  Radar,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   SquareChartGantt,
   Tag,
   Timer,
+  Upload,
   Users,
   Warehouse,
 } from "lucide-react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { isCloud } from "@/lib/shared/env";
-import type { CloudUpgradeFeature } from "@/types/cloud-upgrade";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { RolePermissionAttributes } from "@/types/users";
 
@@ -32,38 +39,69 @@ interface NavigationConfigOptions {
   pathname: string;
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
+  registryEligible?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
-interface CloudFeatureOptions {
-  isCloudEnvironment: boolean;
-  href: string;
-  label: string;
-  active: boolean;
-  feature: CloudUpgradeFeature;
-}
-
-function getCloudFeature({
-  isCloudEnvironment,
-  href,
-  label,
-  active,
-  feature,
-}: CloudFeatureOptions): NavigationChild {
-  if (!isCloudEnvironment) {
-    return {
-      kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-      label,
-      cloudUpgradeFeature: feature,
-    };
-  }
-
+// Local Server only: every Cloud & Private Cloud capability in one place.
+function getPremiumSection(pathname: string): NavigationSection {
   return {
-    kind: NAVIGATION_ITEM_KIND.LINK,
-    href,
-    label,
-    active,
-    highlight: true,
+    label: "PREMIUM",
+    premium: true,
+    items: [
+      {
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/issues",
+        label: "Exploitability issues",
+        icon: Crosshair,
+        active: isRouteActive(pathname, "/issues"),
+        premium: true,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/realtime",
+        label: "Realtime",
+        icon: Radar,
+        active: isRouteActive(pathname, "/realtime"),
+        premium: true,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        label: "AI Security",
+        icon: Bot,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.AI_SECURITY,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        label: "Alerts",
+        icon: Bell,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        label: "Registry",
+        icon: Package,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REGISTRY,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        label: "Import findings",
+        icon: Upload,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        label: "Scan configurations",
+        icon: SlidersHorizontal,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+      },
+      {
+        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+        label: "Cross-provider compliance",
+        icon: Layers,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
+      },
+    ],
   };
 }
 
@@ -108,6 +146,7 @@ export function getNavigationConfig({
   pathname,
   apiDocsUrl = null,
   cloudBillingEnabled = false,
+  registryEligible = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -143,6 +182,43 @@ export function getNavigationConfig({
     {
       label: "SECURITY",
       items: [
+        // First: the exploitable issues are what to fix before anything else.
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Exploitability issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/realtime",
+                label: "Realtime",
+                icon: Radar,
+                active: isRouteActive(pathname, "/realtime"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/ai-security",
+                label: "AI Security",
+                icon: Bot,
+                active: isRouteActive(pathname, "/ai-security"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/compliance",
@@ -180,8 +256,21 @@ export function getNavigationConfig({
           icon: Warehouse,
           active: isRouteActive(pathname, "/resources"),
         },
+        ...(registryEligible
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/registry",
+                label: "Registry",
+                icon: Package,
+                active: isRouteActive(pathname, "/registry"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
       ],
     },
+    ...(!isCloudEnvironment ? [getPremiumSection(pathname)] : []),
     {
       label: "SETTINGS",
       items: [
@@ -197,32 +286,29 @@ export function getNavigationConfig({
               label: "Providers",
               active: isRouteActive(pathname, "/providers"),
             },
-            getCloudFeature({
-              isCloudEnvironment,
-              href: "/alerts",
-              label: "Alerts",
-              active: isRouteActive(pathname, "/alerts"),
-              feature: CLOUD_UPGRADE_FEATURE.ALERTS,
-            }),
+            ...(isCloudEnvironment
+              ? [
+                  {
+                    kind: NAVIGATION_ITEM_KIND.LINK,
+                    href: "/alerts",
+                    label: "Alerts",
+                    active: isRouteActive(pathname, "/alerts"),
+                  } as const,
+                ]
+              : []),
             {
               kind: NAVIGATION_ITEM_KIND.LINK,
               href: "/mutelist",
               label: "Mutelist",
               active: pathname === "/mutelist",
             },
-            getCloudFeature({
-              isCloudEnvironment,
-              href: "/scans/config",
-              label: "Scans",
-              active: isRouteActive(pathname, "/scans/config"),
-              feature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
-            }),
-            ...(!isCloudEnvironment
+            ...(isCloudEnvironment
               ? [
                   {
-                    kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-                    label: "CLI Import",
-                    cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+                    kind: NAVIGATION_ITEM_KIND.LINK,
+                    href: "/scans/config",
+                    label: "Scans",
+                    active: isRouteActive(pathname, "/scans/config"),
                   } as const,
                 ]
               : []),

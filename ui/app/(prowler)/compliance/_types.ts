@@ -133,9 +133,7 @@ export interface CrossProviderFrameworkSummary {
 }
 
 export interface ProviderBreakdownEntry {
-  /** Narrowed to the known set: the breakdown only renders providers the UI
-   *  ships display names and icons for. */
-  provider: KnownProviderType;
+  provider: ProviderType;
   pass: number;
   fail: number;
   manual: number;

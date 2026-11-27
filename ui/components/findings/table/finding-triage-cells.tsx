@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquareText } from "lucide-react";
+import { LockKeyhole, MessageSquareText } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
@@ -11,8 +11,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { PREMIUM_BADGE_TOOLTIP } from "@/lib/cloud-upgrade";
 import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
-import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
@@ -39,13 +39,11 @@ import {
   FindingNoteModal,
   type FindingNoteModalMode,
 } from "./finding-note-modal";
-import {
-  FindingTriageStatusControl,
-  TRIAGE_STATUS_TEXT_CLASS,
-} from "./finding-triage-status-control";
+import { FindingTriageStatusControl } from "./finding-triage-status-control";
 
-export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
+export const SAMPLE_TRIAGE_COPY =
+  "Sample data. Connect your cloud account to triage your own findings.";
 
 const getDisabledCopy = ({
   triage,
@@ -57,7 +55,11 @@ const getDisabledCopy = ({
   lockResolved?: boolean;
 }): string | undefined => {
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
-    return CLOUD_ONLY_TOOLTIP_COPY;
+    return PREMIUM_BADGE_TOOLTIP;
+  }
+
+  if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.SAMPLE) {
+    return SAMPLE_TRIAGE_COPY;
   }
 
   // Status-picker only: notes stay available on resolved findings.
@@ -310,11 +312,15 @@ export function FindingTriageStatusCell({
         <TooltipTrigger asChild>
           <span className="relative flex">
             {statusContent}
+            <LockKeyhole
+              aria-hidden="true"
+              className="text-text-neutral-tertiary pointer-events-none absolute top-1/2 right-8 size-3.5 -translate-y-1/2"
+            />
             <Button
               type="button"
               variant="bare"
               size="link-xs"
-              aria-label="Change triage status - available in Prowler Cloud"
+              aria-label="Change triage status - premium feature in Prowler Cloud and Private Cloud"
               className="absolute inset-0 h-auto w-auto rounded-lg"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
@@ -337,28 +343,6 @@ export function FindingTriageStatusCell({
       </TooltipTrigger>
       <TooltipContent>{disabledCopy}</TooltipContent>
     </Tooltip>
-  );
-}
-
-// Read-only triage status indicator, e.g. for the side drawer header where the
-// editable picker would be out of place among the status/severity badges.
-export function FindingTriageStatusBadge({
-  triage,
-}: {
-  triage: FindingTriageSummary;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <span className="text-text-neutral-tertiary text-xs">Triage:</span>
-      <span
-        className={cn(
-          "text-xs font-medium",
-          TRIAGE_STATUS_TEXT_CLASS[triage.status],
-        )}
-      >
-        {triage.label}
-      </span>
-    </div>
   );
 }
 

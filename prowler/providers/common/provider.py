@@ -382,6 +382,8 @@ class Provider(ABC):
                     )
                     provider_class(
                         retries_max_attempts=arguments.aws_retries_max_attempts,
+                        connect_timeout=arguments.aws_connect_timeout,
+                        read_timeout=arguments.aws_read_timeout,
                         role_arn=arguments.role,
                         session_duration=arguments.session_duration,
                         external_id=arguments.external_id,
@@ -406,6 +408,12 @@ class Provider(ABC):
                         managed_identity_auth=arguments.managed_identity_auth,
                         tenant_id=arguments.tenant_id,
                         region=arguments.azure_region,
+                        region_endpoints={
+                            "authority_host": arguments.azure_authority_host,
+                            "resource_manager": arguments.azure_resource_manager_endpoint,
+                            "graph": arguments.azure_graph_endpoint,
+                            "logs": arguments.azure_logs_endpoint,
+                        },
                         subscription_ids=arguments.subscription_id,
                         resource_groups=arguments.resource_groups,
                         config_path=arguments.config_file,
@@ -439,6 +447,10 @@ class Provider(ABC):
                 elif arguments.provider == "m365":
                     provider_class(
                         region=arguments.region,
+                        region_endpoints={
+                            "authority_host": arguments.m365_authority_host,
+                            "graph": arguments.m365_graph_endpoint,
+                        },
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,

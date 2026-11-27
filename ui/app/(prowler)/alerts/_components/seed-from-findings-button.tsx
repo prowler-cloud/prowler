@@ -23,7 +23,6 @@ import type {
 } from "@/app/(prowler)/alerts/_types/alert-form";
 import { buildFindingsFilterChips } from "@/components/findings/findings-filters.utils";
 import {
-  Badge,
   Button,
   Tooltip,
   TooltipContent,
@@ -31,6 +30,7 @@ import {
   ToastAction,
   useToast,
 } from "@/components/shadcn";
+import { PremiumTag } from "@/components/shared/premium-badge";
 import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -249,7 +249,7 @@ export const SeedFromFindingsButton = ({
       <span className="relative inline-flex">
         {button}
         <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-          <Badge variant="cloud">Cloud</Badge>
+          <PremiumTag compact />
         </span>
       </span>
     );

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CloudCog, Loader2, Rocket } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -11,13 +11,7 @@ import { z } from "zod";
 import { scanOnDemand } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import {
-  Badge,
-  Field,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/components/shadcn";
+import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
 import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import {
@@ -25,8 +19,16 @@ import {
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
 import { toast, ToastAction } from "@/components/shadcn/toast";
-import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import {
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+  USAGE_LIMIT_ERROR_TYPE,
+} from "@/lib/action-errors";
 import {
   buildScheduleAttributesFromProvider,
   getScanScheduleCapability,
@@ -45,7 +47,6 @@ import {
 } from "@/types/schedules";
 
 import { scanAliasSchema } from "./scan-alias-validation";
-import { getScanJobsTab } from "./scans.utils";
 import {
   SAVE_SCHEDULE_STATUS,
   saveScheduleWithInitialScan,
@@ -99,7 +100,6 @@ function LaunchScanForm({
   isScanLimitReached,
 }: LaunchScanFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const form = useForm<LaunchScanFormValues>({
     resolver: zodResolver(launchScanSchema),
     defaultValues: { providerId: "", scanAlias: "" },
@@ -126,8 +126,6 @@ function LaunchScanForm({
 
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const providerId = useWatch({ control: form.control, name: "providerId" });
-  const activeTab = getScanJobsTab(searchParams.get("tab") ?? undefined);
-  const shouldShowActiveTabAction = activeTab !== SCAN_JOBS_TAB.ACTIVE;
   const disconnectedProviderIds = providers
     .filter((provider) => provider.attributes.connection.connected !== true)
     .map((provider) => provider.id);
@@ -200,7 +198,10 @@ function LaunchScanForm({
     const result = await scanOnDemand(formData);
 
     if (hasActionError(result)) {
-      form.setError("root", { message: getActionErrorMessage(result) });
+      form.setError("root", {
+        type: isUsageLimitError(result) ? USAGE_LIMIT_ERROR_TYPE : "server",
+        message: getActionErrorMessage(result),
+      });
       return;
     }
 
@@ -214,11 +215,12 @@ function LaunchScanForm({
     toast({
       title: "Scan launched",
       description: "The scan was launched successfully.",
-      action: shouldShowActiveTabAction ? (
-        <ToastAction altText="View scan in progress" asChild>
-          <Link href="/scans?tab=active">View scan</Link>
+      // Findings are stored as the scan runs, so they are the next stop.
+      action: (
+        <ToastAction altText="View findings" asChild>
+          <Link href="/findings">View findings</Link>
         </ToastAction>
-      ) : undefined,
+      ),
     });
     onClose();
     router.refresh();
@@ -238,7 +240,10 @@ function LaunchScanForm({
       });
 
       if (result.status === SAVE_SCHEDULE_STATUS.ERROR) {
-        form.setError("root", { message: result.message });
+        form.setError("root", {
+          type: result.usageLimited ? USAGE_LIMIT_ERROR_TYPE : "server",
+          message: result.message,
+        });
         return;
       }
 
@@ -254,7 +259,15 @@ function LaunchScanForm({
             : launched
               ? "The schedule was saved and the initial scan was launched."
               : "The scan schedule was saved successfully.",
-        action: (
+        // Over the limit, the plans unblock the scan; the schedule would not.
+        // A running scan already stores findings; a schedule only lists on Scans.
+        action: result.usageLimited ? (
+          usageLimitToastAction()
+        ) : launched ? (
+          <ToastAction altText="View findings" asChild>
+            <Link href="/findings">View findings</Link>
+          </ToastAction>
+        ) : (
           <ToastAction altText="View scheduled scans" asChild>
             <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>
               View schedule
@@ -281,6 +294,8 @@ function LaunchScanForm({
   const providerError = form.formState.errors.providerId?.message;
   const aliasError = form.formState.errors.scanAlias?.message;
   const rootError = form.formState.errors.root?.message;
+  const isRootUsageLimit =
+    form.formState.errors.root?.type === USAGE_LIMIT_ERROR_TYPE;
   const isSubmitting =
     form.formState.isSubmitting || scheduleForm.formState.isSubmitting;
   const isScheduleLoading = scheduleLoad === SCHEDULE_LOAD_STATE.LOADING;
@@ -333,11 +348,6 @@ function LaunchScanForm({
                 disabled={!canUseScheduleMode}
               />
               On a schedule
-              {isDailyLegacy && (
-                <Badge variant="cloud" size="sm">
-                  Cloud
-                </Badge>
-              )}
             </label>
           </RadioGroup>
         </Field>
@@ -377,11 +387,16 @@ function LaunchScanForm({
           showLaunchInitialScan
           showNextScheduledCopy
           canUseAdvancedSchedule={isAdvanced}
-          showCloudUpgradeBadge={isDailyLegacy}
+          showPremiumUpsell={isDailyLegacy}
         />
       )}
 
-      {rootError && <FieldError>{rootError}</FieldError>}
+      {rootError &&
+        (isRootUsageLimit ? (
+          <UsageLimitMessage />
+        ) : (
+          <FieldError>{rootError}</FieldError>
+        ))}
 
       <FormButtons
         onCancel={onClose}

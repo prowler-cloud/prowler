@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
@@ -45,6 +49,22 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
     <button type="button">Muted findings config</button>
   ),
 }));
+
+vi.mock(
+  "@/app/(prowler)/providers/_components/posture-change-report-button",
+  () => ({
+    PostureChangeReportButton: ({
+      providers,
+    }: {
+      providers: ProviderProps[];
+    }) => (
+      <button type="button">
+        Posture report for{" "}
+        {providers.map((provider) => provider.attributes.uid).join(", ")}
+      </button>
+    ),
+  }),
+);
 
 vi.mock("@/components/providers/providers-filters", () => ({
   ProvidersFilters: ({ actions }: { actions: ReactNode }) => (
@@ -132,9 +152,22 @@ const disconnectedProviders: ProviderProps[] = [
 ];
 
 describe("ProvidersAccountsView", () => {
+  const funnelSignals: ProviderFunnelDetail[] = [];
+  const recordFunnelSignal: EventListener = (event) => {
+    funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+  };
+
+  beforeEach(() => {
+    funnelSignals.length = 0;
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+  });
+
   afterEach(() => {
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.restoreAllMocks();
     providersAccountsTableSpy.mockClear();
+    replaceMock.mockClear();
+    refreshMock.mockClear();
     searchParamsValue.current = "";
     window.history.replaceState({}, "", "/");
   });
@@ -273,6 +306,226 @@ describe("ProvidersAccountsView", () => {
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
+  it("sends a new tenant to the sample Overview when the first-run wizard closes", async () => {
+    // Given: the first-run redirect opened the wizard while the sample is shown.
+    searchParamsValue.current = "addProvider=true&addProviderSource=first_run";
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then: an empty Providers page shows nothing; the Overview shows the sample.
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("sends the tenant to the sample Overview after launching a scan from the sidebar CTA", async () => {
+    // Given: the sidebar Launch Scan CTA opened the wizard, which closes after the launch.
+    searchParamsValue.current =
+      "addProvider=true&addProviderSource=sidebar_cta";
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("sends a new tenant to the sample Overview when the empty-state wizard closes", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("keeps the user on Providers when a row action wizard closes", async () => {
+    // Given: a row action opens the wizard to edit an existing provider.
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+    const { onOpenProviderWizard } = providersAccountsTableSpy.mock
+      .lastCall![0] as {
+      onOpenProviderWizard: () => void;
+    };
+
+    // When
+    act(() => onOpenProviderWizard());
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the tenant to the sample Overview when the page-button wizard closes", async () => {
+    // Given: a provider exists but no scan has completed yet.
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Provider" }));
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("signals which control opened the wizard", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Provider" }));
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_opened", source: "page_button" },
+    ]);
+  });
+
+  it("signals the empty-state CTA as the wizard entry point", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_opened", source: "empty_state" },
+    ]);
+  });
+
+  it("signals the entry point carried in the URL and cleans it on close", async () => {
+    // Given
+    searchParamsValue.current =
+      "tab=connected&addProvider=true&addProviderSource=sidebar_cta";
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_opened", source: "sidebar_cta" },
+    ]);
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/providers?tab=connected",
+    );
+  });
+
+  it("treats an unknown URL entry point as a plain URL open", () => {
+    // Given
+    searchParamsValue.current = "addProvider=true&addProviderSource=made_up";
+
+    // When
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then
+    expect(funnelSignals).toEqual([{ step: "wizard_opened", source: "url" }]);
+  });
+
   it("keeps filters and table visible when providers are disconnected", () => {
     // Given/When
     render(
@@ -295,6 +548,35 @@ describe("ProvidersAccountsView", () => {
     expect(
       screen.queryByText("No Providers Configured"),
     ).not.toBeInTheDocument();
+  });
+
+  it("offers the posture change report next to the page actions only in Prowler Cloud", () => {
+    // Given
+    const renderView = (isCloud: boolean) =>
+      render(
+        <ProvidersAccountsView
+          isCloud={isCloud}
+          filters={filters}
+          metadata={metadata}
+          providers={disconnectedProviders}
+          rows={rows}
+        />,
+      );
+
+    // When self-hosted
+    const selfHosted = renderView(false);
+
+    // Then
+    expect(screen.queryByText(/Posture report/)).not.toBeInTheDocument();
+    selfHosted.unmount();
+
+    // When in Prowler Cloud
+    renderView(true);
+
+    // Then
+    expect(
+      screen.getByText("Posture report for 123456789012"),
+    ).toBeInTheDocument();
   });
 
   it("passes scan schedule capability to provider row actions", () => {

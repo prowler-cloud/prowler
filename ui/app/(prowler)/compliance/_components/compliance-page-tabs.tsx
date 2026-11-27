@@ -3,13 +3,8 @@
 import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
-import {
-  Badge,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/shadcn";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
+import { PremiumTag } from "@/components/shared/premium-badge";
 import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -18,7 +13,7 @@ import { COMPLIANCE_TAB, type ComplianceTab } from "@/types/compliance";
 interface CompliancePageTabsProps {
   activeTab: ComplianceTab;
   /** False in OSS: the Cross-Provider tab renders disabled with the
-   *  "Available in Prowler Cloud" upsell badge. */
+   *  premium tag. */
   crossProviderEnabled: boolean;
   perScanContent: ReactNode;
   crossProviderContent: ReactNode;
@@ -66,14 +61,12 @@ export const CompliancePageTabs = ({
         {/* Wraps below the tabs on narrow viewports instead of squeezing the
             triggers, which are the primary navigation of the page. */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
+          <div className="overflow-x-auto">
             <TabsList>
               <TabsTrigger
                 value={COMPLIANCE_TAB.CROSS_PROVIDER}
                 adornment={
-                  !crossProviderEnabled ? (
-                    <Badge variant="cloud">Cloud</Badge>
-                  ) : undefined
+                  !crossProviderEnabled ? <PremiumTag compact /> : undefined
                 }
               >
                 Multiple Scans

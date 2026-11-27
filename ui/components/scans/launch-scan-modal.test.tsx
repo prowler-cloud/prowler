@@ -130,7 +130,9 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { ProviderProps } from "@/types";
+import { SCAN_JOBS_TAB } from "@/types/scans";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -266,7 +268,7 @@ describe("LaunchScanModal", () => {
     expect(formData.get("scanName")).toBe(alias);
   });
 
-  it("adds a toast action to view the scan in progress when another tab is active", async () => {
+  it("points the toast action at the findings the scan is storing", async () => {
     const user = userEvent.setup();
     searchParamsValue.current =
       "tab=completed&filter%5Bstate__in%5D=failed&page=3";
@@ -282,27 +284,10 @@ describe("LaunchScanModal", () => {
 
     const toastPayload = toastMock.mock.calls[0]?.[0];
     expect(toastPayload.action).toBeDefined();
-    expect(toastPayload.action.props.children.props.href).toBe(
-      "/scans?tab=active",
+    expect(toastPayload.action.props.children.props.href).toBe("/findings");
+    expect(toastPayload.action.props.children.props.children).toBe(
+      "View findings",
     );
-    expect(toastPayload.action.props.children.props.children).toBe("View scan");
-  });
-
-  it("does not add a toast action when the in progress tab is active", async () => {
-    const user = userEvent.setup();
-    searchParamsValue.current = "tab=active";
-
-    render(
-      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
-    );
-
-    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
-    await user.click(screen.getByRole("button", { name: /launch scan/i }));
-
-    await waitFor(() => expect(toastMock).toHaveBeenCalled());
-
-    const toastPayload = toastMock.mock.calls[0]?.[0];
-    expect(toastPayload.action).toBeUndefined();
   });
 
   it("rejects scan aliases over the API limit of 100 characters", async () => {
@@ -386,6 +371,10 @@ describe("LaunchScanModal", () => {
         ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       ),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
     expect(toastMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
@@ -454,6 +443,8 @@ describe("LaunchScanModal", () => {
       expect(toastMock).toHaveBeenCalledWith(
         expect.objectContaining({ title: "Scan schedule saved" }),
       );
+      const link = toastMock.mock.calls[0]?.[0].action.props.children;
+      expect(link.props.href).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
     });
 
     it("keeps the upcoming local hour when provider scan fields say there is no schedule", async () => {
@@ -534,6 +525,50 @@ describe("LaunchScanModal", () => {
           title: "Scan schedule saved and initial scan launched",
         }),
       );
+      // The running scan is not on the scheduled tab, but its findings are stored.
+      const link = toastMock.mock.calls[0]?.[0].action.props.children;
+      expect(link.props.href).toBe("/findings");
+      expect(link.props.children).toBe("View findings");
+    });
+
+    it("offers the plans when the usage limit refuses the schedule", async () => {
+      const user = userEvent.setup();
+      updateScheduleMock.mockResolvedValueOnce({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      renderAdvanced();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      expect(
+        await screen.findByRole("link", { name: "View plans" }),
+      ).toHaveAttribute("href", PRICING_URL);
+      expect(toastMock).not.toHaveBeenCalled();
+    });
+
+    it("offers the plans when the schedule saved but the limit refused its first scan", async () => {
+      const user = userEvent.setup();
+      scanOnDemandMock.mockResolvedValueOnce({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      renderAdvanced();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      await user.click(
+        await screen.findByLabelText(
+          "Launch an initial scan now for immediate findings",
+        ),
+      );
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      await waitFor(() => expect(toastMock).toHaveBeenCalled());
+      const action = toastMock.mock.calls[0]?.[0].action;
+      expect(action.props.children.props.href).toBe(PRICING_URL);
     });
 
     it("disables Save Schedule until a provider is selected", async () => {

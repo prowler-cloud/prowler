@@ -133,6 +133,11 @@
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted"
         ],
+        "cloudflare": [
+          "dns_record_proxied",
+          "zone_firewall_blocking_rules_configured",
+          "zone_waf_enabled"
+        ],
         "gcp": [
           "compute_firewall_rdp_access_from_the_internet_allowed",
           "compute_firewall_ssh_access_from_the_internet_allowed"
@@ -152,6 +157,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -174,6 +180,7 @@
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
         ],
+        "cloudflare": [],
         "gcp": [
           "cloudstorage_bucket_public_access",
           "compute_firewall_rdp_access_from_the_internet_allowed",
@@ -202,6 +209,7 @@
           "network_http_internet_access_restricted",
           "storage_account_public_network_access_disabled"
         ],
+        "cloudflare": [],
         "gcp": [
           "cloudsql_instance_public_access",
           "cloudstorage_bucket_public_access",
@@ -224,6 +232,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -240,6 +249,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -256,6 +266,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -275,6 +286,7 @@
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
         ],
+        "cloudflare": [],
         "gcp": [
           "iam_service_account_unused"
         ]
@@ -295,6 +307,7 @@
         "azure": [
           "entra_security_defaults_enabled"
         ],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -311,6 +324,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -327,6 +341,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -349,6 +364,7 @@
           "storage_ensure_minimum_tls_version_12",
           "keyvault_rbac_enabled"
         ],
+        "cloudflare": [],
         "gcp": [
           "bigquery_dataset_public_access",
           "cloudfunction_function_not_publicly_accessible",
@@ -372,6 +388,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -388,6 +405,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -404,6 +422,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -420,6 +439,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -439,6 +459,7 @@
           "defender_ensure_system_updates_are_applied",
           "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
         ],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -455,6 +476,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -474,6 +496,7 @@
           "entra_security_defaults_enabled",
           "storage_default_to_entra_authorization_enabled"
         ],
+        "cloudflare": [],
         "gcp": [
           "compute_instance_block_project_wide_ssh_keys_disabled",
           "compute_project_os_login_enabled"
@@ -493,6 +516,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -515,6 +539,7 @@
           "entra_conditional_access_policy_require_mfa_for_management_api",
           "entra_user_with_vm_access_has_mfa"
         ],
+        "cloudflare": [],
         "gcp": [
           "compute_project_os_login_2fa_enabled"
         ]
@@ -537,6 +562,7 @@
           "iam_role_user_access_admin_restricted",
           "iam_subscription_roles_owner_custom_not_created"
         ],
+        "cloudflare": [],
         "gcp": [
           "compute_instance_default_service_account_in_use_with_full_api_access",
           "iam_role_kms_enforce_separation_of_duties",
@@ -561,6 +587,7 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
         ],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -579,6 +606,9 @@
         "azure": [
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa"
+        ],
+        "cloudflare": [
+          "zone_rate_limiting_enabled"
         ],
         "gcp": [
           "compute_project_os_login_2fa_enabled"
@@ -602,6 +632,7 @@
           "entra_privileged_user_has_mfa",
           "entra_non_privileged_user_has_mfa"
         ],
+        "cloudflare": [],
         "gcp": [
           "compute_project_os_login_2fa_enabled"
         ]
@@ -624,6 +655,7 @@
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on"
         ],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -644,6 +676,7 @@
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
         ],
+        "cloudflare": [],
         "gcp": []
       }
     },
@@ -660,6 +693,7 @@
       },
       "checks": {
         "azure": [],
+        "cloudflare": [],
         "gcp": []
       }
     }

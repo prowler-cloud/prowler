@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
-import { isCloud } from "@/lib/shared/env";
-import { endActiveTour } from "@/lib/tours/use-driver-tour";
-import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_METHOD,
+  PROVIDER_FUNNEL_STEP,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
@@ -25,6 +27,7 @@ import {
 import { ProviderType } from "@/types/providers";
 
 import { getProviderWizardModalTitle } from "../provider-wizard-modal.utils";
+import { resolveConnectMethod } from "../steps/connect/connect-methods";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
@@ -43,6 +46,21 @@ const ORG_DOCS_URL = {
   [ORGANIZATION_TYPE.AZURE]: DOCS_URLS.AZURE_ORGANIZATIONS,
   [ORGANIZATION_TYPE.GCP]: DOCS_URLS.GCP_ORGANIZATIONS,
 } as const satisfies Record<OrgFlowType, string>;
+
+// Stable names for the abandonment signal; the numeric step ids are not a contract.
+const PROVIDER_STEP_NAME = {
+  [PROVIDER_WIZARD_STEP.CONNECT]: "connect",
+  [PROVIDER_WIZARD_STEP.LAUNCH]: "launch",
+} as const satisfies Record<ProviderWizardStep, string>;
+
+const ORG_STEP_NAME = {
+  [ORG_WIZARD_STEP.SETUP]: "organizations_setup",
+  [ORG_WIZARD_STEP.VALIDATE]: "organizations_validate",
+  [ORG_WIZARD_STEP.LAUNCH]: "organizations_launch",
+} as const satisfies Record<OrgWizardStep, string>;
+
+// What Lighthouse is told an organization is connected with.
+const ORGANIZATIONS_CONNECTION_METHOD = "organizations";
 
 const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   showBack: false,
@@ -109,6 +127,7 @@ export function useProviderWizardController({
     providerType,
     via,
   } = useProviderWizardStore();
+  const connectDraft = useProviderWizardStore((state) => state.connectDraft);
   const {
     reset: resetOrgWizard,
     setOrganization,
@@ -159,7 +178,7 @@ export function useProviderWizardController({
             ? PROVIDER_WIZARD_MODE.UPDATE
             : PROVIDER_WIZARD_MODE.ADD),
       );
-      setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
+      setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
       setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
       setFooterConfig(EMPTY_FOOTER_CONFIG);
       setProviderTypeHint(initialProviderType);
@@ -196,14 +215,26 @@ export function useProviderWizardController({
   ]);
 
   const isOrgDirectEntry = Boolean(orgInitialData);
+  // Opened on an existing account's credentials, so the one-step AWS flow is not
+  // in play. Same three fields the hydration above requires to start on CREDENTIALS.
+  const isDirectCredentialsEntry = Boolean(
+    initialProviderId && initialProviderType && initialProviderUid,
+  );
+
+  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
+  const stepName = isProviderFlow
+    ? PROVIDER_STEP_NAME[currentStep]
+    : ORG_STEP_NAME[orgCurrentStep];
 
   const handleClose = () => {
-    // Closing the wizard at any point ends the add-provider tour; the checkpoint
-    // logic below still drives the handoff to scans. No-op off-onboarding.
-    endActiveTour();
-
     // Read providerId before reset clears it — non-null means a provider was connected.
     const connectedProviderId = useProviderWizardStore.getState().providerId;
+
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.WIZARD_CLOSED,
+      lastStep: stepName,
+      providerCreated: connectedProviderId !== null,
+    });
 
     resetProviderWizard();
     resetOrgWizard();
@@ -214,13 +245,6 @@ export function useProviderWizardController({
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
-
-    // Cloud-only; only fires if the store is armed (user started onboarding).
-    if (isCloud()) {
-      useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
-        providerConnected: connectedProviderId !== null,
-      });
-    }
 
     if (refreshOnClose) {
       router.refresh();
@@ -248,9 +272,11 @@ export function useProviderWizardController({
   const openOrganizationsFlow = (
     orgType: OrgFlowType = ORGANIZATION_TYPE.AWS,
   ) => {
-    // Organizations diverges from the credentials path the tour guides toward; end
-    // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
-    endActiveTour();
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.METHOD_SELECTED,
+      providerType: orgType,
+      method: PROVIDER_FUNNEL_METHOD.ORGANIZATION,
+    });
     resetOrgWizard();
     setOrganizationType(orgType);
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
@@ -261,32 +287,47 @@ export function useProviderWizardController({
   };
 
   const backToProviderFlow = () => {
+    // Organizations are entered from the connect step's tabs, so going back
+    // lands on that provider's connect step instead of the provider picker.
+    const cameFromProvider = organizationType;
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
+    setProviderTypeHint(cameFromProvider);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 
-  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
+  const activeProviderType = providerTypeHint ?? providerType ?? null;
+  // The method the connect step shows: picked in this wizard, else the one the
+  // account was stored with, else the first listed. Only the method leaves the
+  // draft; its values may hold secrets.
+  const draftMethod =
+    activeProviderType && connectDraft?.providerType === activeProviderType
+      ? connectDraft.method
+      : null;
+  const providerMethod = activeProviderType
+    ? resolveConnectMethod(activeProviderType, draftMethod ?? via).via
+    : null;
+  const connectionMethod = isProviderFlow
+    ? providerMethod
+    : ORGANIZATIONS_CONNECTION_METHOD;
   const docsLink = isProviderFlow
-    ? getProviderHelpText(
-        providerTypeHint ?? providerType ?? "",
-        currentStep,
-        via,
-      ).link
+    ? getProviderHelpText(activeProviderType ?? "", currentStep, providerMethod)
+        .link
     : ORG_DOCS_URL[organizationType];
   const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
   return {
+    connectionMethod,
     currentStep,
     docsLink,
     footerConfig,
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isDirectCredentialsEntry,
     isOrgDirectEntry,
     isProviderFlow,
     mode,
@@ -302,6 +343,7 @@ export function useProviderWizardController({
     setOrgCurrentStep,
     setOrgSetupPhase,
     setProviderTypeHint,
+    stepName,
     backToProviderFlow,
     wizardVariant,
   };

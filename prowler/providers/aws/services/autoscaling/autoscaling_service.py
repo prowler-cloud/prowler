@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -155,6 +157,7 @@ class ApplicationAutoScaling(AWSService):
 class LaunchConfiguration(BaseModel):
     arn: str
     name: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("user_data",)
     user_data: str
     image_id: str
     region: str

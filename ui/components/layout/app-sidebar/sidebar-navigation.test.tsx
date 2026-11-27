@@ -1,9 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FileText, Settings, ShieldCheck } from "lucide-react";
+import { FileText, Radar, Settings, ShieldCheck } from "lucide-react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 
 import { SidebarNavigation } from "./sidebar-navigation";
 import { NAVIGATION_ITEM_KIND, type NavigationSection } from "./types";
@@ -182,8 +185,9 @@ describe("SidebarNavigation", () => {
     expect(openCloudUpgradeMock).toHaveBeenCalledWith(
       CLOUD_UPGRADE_FEATURE.ALERTS,
       returnFocusElement,
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
     );
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.getByText("Premium")).toBeVisible();
     expect(screen.getByRole("link", { name: "Documentation" })).toHaveAttribute(
       "target",
       "_blank",
@@ -192,5 +196,45 @@ describe("SidebarNavigation", () => {
       "rel",
       "noopener noreferrer",
     );
+  });
+
+  it("opens the Cloud upgrade from a top-level Cloud feature instead of linking", async () => {
+    // Given
+    const user = userEvent.setup();
+    const returnFocusElement = document.createElement("button");
+    const onSelect = vi.fn(() => returnFocusElement);
+    render(
+      <SidebarNavigation
+        sections={[
+          {
+            label: "PREMIUM",
+            premium: true,
+            items: [
+              {
+                kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
+                label: "Realtime",
+                icon: Radar,
+                cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.REALTIME,
+              },
+            ],
+          },
+        ]}
+        onSelect={onSelect}
+      />,
+    );
+    const realtime = screen.getByRole("button", { name: /realtime/i });
+
+    // When
+    await user.click(realtime);
+
+    // Then
+    expect(openCloudUpgradeMock).toHaveBeenCalledWith(
+      CLOUD_UPGRADE_FEATURE.REALTIME,
+      returnFocusElement,
+      CLOUD_UPGRADE_SURFACE.SIDEBAR,
+    );
+    expect(
+      screen.queryByRole("link", { name: /realtime/i }),
+    ).not.toBeInTheDocument();
   });
 });

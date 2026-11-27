@@ -18,18 +18,13 @@ import {
 } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { SearchParamsProps } from "@/types";
-import { isKnownProviderType } from "@/types/providers";
 
 import { getCrossProviderComplianceOverview } from "../_actions/cross-provider";
-import { computeProviderBreakdown } from "../_lib/cross-provider-adapter";
+import { toCrossProviderSummary } from "../_lib/cross-provider-adapter";
 import { loadCrossProviderFrameworks } from "../_lib/cross-provider-catalog";
-import {
-  type CrossProviderFrameworkEntry,
-  parseCrossProviderFilters,
-} from "../_lib/cross-provider-frameworks";
+import { parseCrossProviderFilters } from "../_lib/cross-provider-frameworks";
 import { resolveUniversalWatchlistState } from "../_lib/universal-watchlist";
 import { loadComplianceWatchlistContext } from "../_lib/watchlist-context";
-import type { CrossProviderFrameworkSummary } from "../_types";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
 
 import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
@@ -39,31 +34,6 @@ import type {
 } from "./cross-provider-filters";
 import { CrossProviderFilters } from "./cross-provider-filters";
 import { CrossProviderFrameworkGrid } from "./cross-provider-framework-grid";
-
-const emptySummary = (
-  entry: CrossProviderFrameworkEntry,
-): CrossProviderFrameworkSummary => ({
-  complianceId: entry.complianceId,
-  title: entry.title,
-  version: entry.version,
-  description: entry.description,
-  requirementsPassed: 0,
-  requirementsFailed: 0,
-  requirementsManual: 0,
-  totalRequirements: 0,
-  // Chips need an icon and a label, which only known types have.
-  providerBreakdown: entry.providerTypes
-    .filter(isKnownProviderType)
-    .map((provider) => ({
-      provider,
-      pass: 0,
-      fail: 0,
-      manual: 0,
-      total: 0,
-      score: 0,
-      unscanned: true,
-    })),
-});
 
 export const CrossProviderOverview = async ({
   searchParams,
@@ -122,39 +92,16 @@ export const CrossProviderOverview = async ({
     return <CrossProviderErrorAlert message={loadErrors[0].result.message} />;
   }
 
-  const summaries: CrossProviderFrameworkSummary[] = responses
+  const summaries = responses
     .filter(
       ({ result }) =>
         result.status !== CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
     )
-    .map(({ entry, result }) => {
-      if (result.status !== CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS) {
-        return emptySummary(entry);
-      }
-
-      const data = result.response.data;
-      if (!data?.attributes) return emptySummary(entry);
-
-      const attrs = data.attributes;
-      return {
-        complianceId: entry.complianceId,
-        title: entry.title,
-        version: entry.version,
-        description: entry.description,
-        requirementsPassed: attrs.requirements_passed,
-        requirementsFailed: attrs.requirements_failed,
-        requirementsManual: attrs.requirements_manual,
-        totalRequirements: attrs.total_requirements,
-        providerBreakdown: computeProviderBreakdown(attrs),
-      };
-    });
+    .map(({ entry, result }) => toCrossProviderSummary(entry, result));
 
   const coveredTypes = Array.from(
     new Set(frameworks.flatMap((entry) => entry.providerTypes)),
   ).sort();
-  // Externally registered types have no icon or label; their accounts still
-  // reach the account select below.
-  const selectableTypes = coveredTypes.filter(isKnownProviderType);
 
   const providerAccounts: CrossProviderAccountOption[] = (
     providersData?.data || []
@@ -209,10 +156,20 @@ export const CrossProviderOverview = async ({
           />
         ))}
       <CrossProviderFilters
-        providerTypes={selectableTypes}
+        providerTypes={coveredTypes}
         providerAccounts={providerAccounts}
         providerGroups={providerGroups}
       />
+
+      {catalog.incomplete && (
+        <Alert variant="warning">
+          <AlertTriangle className="size-4" />
+          <AlertDescription>
+            Some compliance frameworks could not be listed. Showing the ones
+            that loaded — try again later.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {loadErrors.length > 0 && (
         <Alert variant="warning">
@@ -226,6 +183,7 @@ export const CrossProviderOverview = async ({
       )}
 
       {loadErrors.length === 0 &&
+        !catalog.incomplete &&
         summaries.every((summary) => summary.totalRequirements === 0) && (
           <Alert variant="info">
             <Info className="size-4" />

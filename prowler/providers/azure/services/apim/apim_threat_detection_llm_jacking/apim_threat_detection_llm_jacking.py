@@ -9,6 +9,10 @@ class apim_threat_detection_llm_jacking(Check):
     def execute(self):
         findings = []
 
+        # Without a Log Analytics endpoint the logs cannot be queried
+        if not apim_client.region_config.logs_endpoint:
+            return findings
+
         # Get configuration from audit config with defaults
         threshold = float(
             getattr(apim_client, "audit_config", {}).get(

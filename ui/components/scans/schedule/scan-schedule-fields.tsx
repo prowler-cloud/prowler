@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
-  Badge,
   Button,
   Checkbox,
   Field,
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
+import { PremiumBadge } from "@/components/shared/premium-badge";
 import {
   formatDayOfMonth,
   formatScheduleHour,
@@ -24,7 +24,10 @@ import {
   getNextScheduledRun,
 } from "@/lib/schedules";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  CLOUD_UPGRADE_SURFACE,
+} from "@/types/cloud-upgrade";
 import {
   SCHEDULE_FREQUENCY,
   SCHEDULE_WEEKDAY_LABELS,
@@ -63,8 +66,8 @@ interface ScanScheduleFieldsProps {
    * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
    */
   canUseAdvancedSchedule?: boolean;
-  /** Render the "Available in Prowler Cloud" upsell badge in the header. */
-  showCloudUpgradeBadge?: boolean;
+  /** Render the premium badge and the Local Server daily-scan explanation. */
+  showPremiumUpsell?: boolean;
 }
 
 function NumberSelect({
@@ -131,7 +134,7 @@ export function ScanScheduleFields({
   showNextScheduledCopy = false,
   headerAction,
   canUseAdvancedSchedule = true,
-  showCloudUpgradeBadge = false,
+  showPremiumUpsell = false,
 }: ScanScheduleFieldsProps) {
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
@@ -154,20 +157,8 @@ export function ScanScheduleFields({
   // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
-  const cloudUpgradeBadge = showCloudUpgradeBadge ? (
-    <Button
-      type="button"
-      variant="bare"
-      size="link-xs"
-      aria-label="Explore advanced scheduling in Prowler Cloud"
-      onClick={() =>
-        openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
-      }
-    >
-      <Badge variant="cloud" size="sm">
-        Cloud
-      </Badge>
-    </Button>
+  const cloudUpgradeBadge = showPremiumUpsell ? (
+    <PremiumBadge feature={CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING} compact />
   ) : null;
 
   return (
@@ -228,6 +219,28 @@ export function ScanScheduleFields({
           )}
         />
       </div>
+
+      {showPremiumUpsell && (
+        <p className="text-text-neutral-secondary bg-bg-neutral-secondary rounded-lg px-3 py-2 text-xs">
+          Local Server runs one daily scan at a fixed time. Prowler Cloud and
+          Private Cloud let you pick the time and add interval, weekly, and
+          monthly schedules with time zones.{" "}
+          <Button
+            type="button"
+            variant="link"
+            size="link-xs"
+            onClick={() =>
+              openCloudUpgrade(
+                CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING,
+                undefined,
+                CLOUD_UPGRADE_SURFACE.FEATURE_CTA,
+              )
+            }
+          >
+            See scheduling
+          </Button>
+        </p>
+      )}
 
       {frequency === SCHEDULE_FREQUENCY.WEEKLY && (
         <Controller

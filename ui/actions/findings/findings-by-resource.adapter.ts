@@ -64,6 +64,7 @@ export interface ResourceDrawerFinding {
   resourceDetails: string | null;
   resourceMetadata: Record<string, unknown> | string | null;
   // Provider
+  providerId: string;
   providerType: ProviderType;
   providerAlias: string;
   providerUid: string;
@@ -280,6 +281,7 @@ export function adaptFindingsByResourceResponse(
           | null
           | undefined) ?? null,
       // Provider
+      providerId: providerRelId ?? "",
       providerType: ((providerAttrs.provider as string | undefined) ||
         "aws") as ProviderType,
       providerAlias: (providerAttrs.alias as string | undefined) || "",

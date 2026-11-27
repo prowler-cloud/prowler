@@ -6,6 +6,7 @@ import {
   getAttributionParamsFromCallbackPath,
   getInvitationTokenFromCallbackPath,
   getSafeCallbackPath,
+  isSelfRegistrationDisabledResponse,
 } from "@/lib/auth-callback-url";
 
 describe("auth callback URL helpers", () => {
@@ -148,5 +149,42 @@ describe("auth callback URL helpers", () => {
         ),
       ).toEqual({});
     });
+  });
+});
+
+describe("isSelfRegistrationDisabledResponse", () => {
+  it("is true for a 403 carrying the self_registration_disabled code", async () => {
+    const response = Response.json(
+      { errors: [{ code: "self_registration_disabled", status: "403" }] },
+      { status: 403 },
+    );
+
+    await expect(isSelfRegistrationDisabledResponse(response)).resolves.toBe(
+      true,
+    );
+  });
+
+  it("is false for a 403 with another code", async () => {
+    const response = Response.json(
+      { errors: [{ code: "partner_provisioned", status: "403" }] },
+      { status: 403 },
+    );
+
+    await expect(isSelfRegistrationDisabledResponse(response)).resolves.toBe(
+      false,
+    );
+  });
+
+  it("is false for non-403 responses and unparsable bodies", async () => {
+    await expect(
+      isSelfRegistrationDisabledResponse(
+        new Response("self_registration_disabled", { status: 400 }),
+      ),
+    ).resolves.toBe(false);
+    await expect(
+      isSelfRegistrationDisabledResponse(
+        new Response("not json", { status: 403 }),
+      ),
+    ).resolves.toBe(false);
   });
 });

@@ -1,0 +1,33 @@
+# External provider artifact: Provider subclass + its services/checks (+ optional compliance).
+# Layout: src/{pkg}/provider.py                       (class {Name}Provider(Provider))
+#         src/{pkg}/services/{service}/{service}_service.py, {service}_client.py
+#         src/{pkg}/services/{service}/{check_id}/...
+#         src/{pkg}/compliance/{framework}_{version}_{provider}.json
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prowler-{provider}"
+version = "0.1.0"
+description = "Prowler provider for {Platform}"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = "Apache-2.0"
+dependencies = []  # the platform SDK your service clients import
+
+[project.optional-dependencies]
+runtime = ["prowler>=5.48.0"]
+
+# Name = provider name used on the CLI (`prowler {provider} ...`); value = module:Class.
+[project.entry-points."prowler.providers"]
+{provider} = "{pkg}.provider:{Name}Provider"
+
+[project.entry-points."prowler.checks.{provider}"]
+{check_id} = "{pkg}.services.{service}.{check_id}.{check_id}"
+
+[project.entry-points."prowler.compliance"]
+{provider} = "{pkg}.compliance"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{pkg}"]

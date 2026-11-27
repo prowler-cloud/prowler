@@ -194,7 +194,7 @@ def parse_upstream(config: dict) -> list[dict]:
             # dropped, defeating the whole point of a canonical sync.
             raise FileNotFoundError(
                 f"upstream catalog file not found: {path}\n"
-                f"  hint: refresh the upstream cache (see SKILL.md Workflow A "
+                f"  hint: refresh the upstream cache (see references/upstream-sync.md "
                 f"Step 1), or remove {filename!r} from parser.catalog_files "
                 f"if it has been retired upstream."
             )

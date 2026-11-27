@@ -9,11 +9,11 @@ from prowler.providers.googleworkspace.services.security.security_client import 
 class security_login_challenges_configured(Check):
     """Check that login challenges are configured correctly.
 
-    This check verifies that the employee ID login challenge is disabled,
-    as recommended by CIS. Note: CIS 4.1.4.1 also requires Post-SSO
-    verification to be enabled, but that setting is not exposed by the
-    Cloud Identity Policy API. This check only covers the employee ID
-    challenge portion of the control.
+    This check verifies that the employee ID login challenge is disabled.
+
+    It is not mapped to CIS 4.1.4.1: that recommendation also requires Post-SSO
+    verification, a setting the Cloud Identity Policy API does not expose, so
+    the requirement cannot be evaluated end to end and is reported as manual.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:

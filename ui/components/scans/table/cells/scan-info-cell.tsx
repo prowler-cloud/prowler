@@ -27,12 +27,25 @@ export function ScanInfoCell({ scan }: { scan: ScanProps }) {
   }
 
   return (
-    <div className="max-w-[240px] min-w-0">
+    <div className="flex max-w-[240px] min-w-0 items-center gap-2">
       <EntityInfo
         entityAlias={getScanAlias(scan)}
         entityId={scan.id}
         idLabel="ID"
       />
+      {scan.attributes.is_partial && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="tag" tabIndex={0}>
+              Partial
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            Re-checked a few resources. Overviews still reflect the latest full
+            scan.
+          </TooltipContent>
+        </Tooltip>
+      )}
     </div>
   );
 }

@@ -286,7 +286,16 @@ def resolve_aws_regions(
 
 
 def get_aioboto3_session(boto3_session: boto3.Session) -> aioboto3.Session:
-    return aioboto3.Session(botocore_session=boto3_session._session)
+    """Build an `aioboto3.Session` from the current credentials of `boto3_session`."""
+    # Passing `boto3_session._session` would hand aioboto3 a sync botocore session,
+    # whose clients cannot be used with `async with`.
+    credentials = boto3_session.get_credentials().get_frozen_credentials()
+    return aioboto3.Session(
+        aws_access_key_id=credentials.access_key,
+        aws_secret_access_key=credentials.secret_key,
+        aws_session_token=credentials.token,
+        region_name=boto3_session.region_name,
+    )
 
 
 def sync_aws_account(

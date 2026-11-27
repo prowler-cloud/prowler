@@ -10,6 +10,10 @@ import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
+import {
+  ONBOARDING_METHOD,
+  OnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/connect/onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -71,6 +75,8 @@ interface OrgSetupFormProps {
   onBack: () => void;
   onClose?: () => void;
   onNext: () => void;
+  /** Keeps the single/organization tabs on screen; absent when the flow was entered directly. */
+  onSelectSingleAccount?: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
   initialPhase?: OrgSetupPhase;
@@ -82,6 +88,7 @@ export function OrgSetupForm({
   onBack,
   onClose,
   onNext,
+  onSelectSingleAccount,
   onFooterChange,
   onPhaseChange,
   initialPhase = ORG_SETUP_PHASE.DETAILS,
@@ -325,6 +332,14 @@ export function OrgSetupForm({
                 Amazon Web Services (AWS) / Organization Details
               </h3>
             </div>
+
+            {onSelectSingleAccount && (
+              <OnboardingMethodTabs
+                orgType={ORGANIZATION_TYPE.AWS}
+                value={ONBOARDING_METHOD.ORGANIZATION}
+                onSelectSingle={onSelectSingleAccount}
+              />
+            )}
 
             <p className="text-muted-foreground text-sm">
               Enter the Organization ID for the accounts you want to add to

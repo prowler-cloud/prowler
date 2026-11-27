@@ -26,7 +26,13 @@ class gmail_mail_delegation_disabled(Check):
 
             delegation_enabled = gmail_client.policies.enable_mail_delegation
 
-            if delegation_enabled is False:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no mailbox can be delegated."
+                )
+            elif delegation_enabled is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Mail delegation is disabled "

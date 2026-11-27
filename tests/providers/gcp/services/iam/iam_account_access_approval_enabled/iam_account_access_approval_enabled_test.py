@@ -8,6 +8,9 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 class Test_iam_account_access_approval_enabled:
     def test_iam_no_settings(self):
         accessapproval_client = mock.MagicMock()
+        accessapproval_client.api_disabled_project_ids = set()
+        accessapproval_client.api_state_unknown_project_ids = set()
+        accessapproval_client.settings_lookup_failed = set()
         accessapproval_client.settings = {}
         accessapproval_client.project_ids = [GCP_PROJECT_ID]
         accessapproval_client.region = "global"
@@ -51,6 +54,9 @@ class Test_iam_account_access_approval_enabled:
     def test_iam_project_with_settings(self):
         cloudresourcemanager_client = mock.MagicMock()
         accessapproval_client = mock.MagicMock()
+        accessapproval_client.api_disabled_project_ids = set()
+        accessapproval_client.api_state_unknown_project_ids = set()
+        accessapproval_client.settings_lookup_failed = set()
         accessapproval_client.project_ids = [GCP_PROJECT_ID]
         accessapproval_client.region = "global"
         accessapproval_client.projects = {
@@ -103,6 +109,9 @@ class Test_iam_account_access_approval_enabled:
     def test_iam_project_with_settings_empty_project_name(self):
         cloudresourcemanager_client = mock.MagicMock()
         accessapproval_client = mock.MagicMock()
+        accessapproval_client.api_disabled_project_ids = set()
+        accessapproval_client.api_state_unknown_project_ids = set()
+        accessapproval_client.settings_lookup_failed = set()
         accessapproval_client.project_ids = [GCP_PROJECT_ID]
         accessapproval_client.region = "global"
         accessapproval_client.projects = {
@@ -151,3 +160,126 @@ class Test_iam_account_access_approval_enabled:
             assert result[0].resource_name == "GCP Project"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == "global"
+
+    def test_iam_settings_lookup_failed(self):
+        """Permission/API error reading the settings -> MANUAL, not FAIL."""
+        accessapproval_client = mock.MagicMock()
+        accessapproval_client.api_disabled_project_ids = set()
+        accessapproval_client.api_state_unknown_project_ids = set()
+        accessapproval_client.settings = {}
+        accessapproval_client.settings_lookup_failed = {GCP_PROJECT_ID}
+        accessapproval_client.project_ids = [GCP_PROJECT_ID]
+        accessapproval_client.region = "global"
+        accessapproval_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled.accessapproval_client",
+                new=accessapproval_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled import (
+                iam_account_access_approval_enabled,
+            )
+
+            check = iam_account_access_approval_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert search(
+                "Access Approval settings could not be read",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].project_id == GCP_PROJECT_ID
+
+    def test_iam_api_disabled_project_is_fail(self):
+        """API definitively disabled -> Access Approval cannot be enabled -> FAIL."""
+        accessapproval_client = mock.MagicMock()
+        accessapproval_client.settings = {}
+        accessapproval_client.settings_lookup_failed = set()
+        accessapproval_client.api_disabled_project_ids = {GCP_PROJECT_ID}
+        accessapproval_client.api_state_unknown_project_ids = set()
+        accessapproval_client.project_ids = []
+        accessapproval_client.region = "global"
+        accessapproval_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled.accessapproval_client",
+                new=accessapproval_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled import (
+                iam_account_access_approval_enabled,
+            )
+
+            result = iam_account_access_approval_enabled().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "API is disabled" in result[0].status_extended
+            assert result[0].project_id == GCP_PROJECT_ID
+
+    def test_iam_api_state_unknown_project_is_manual(self):
+        """API activation state undetermined -> evidence gap -> MANUAL."""
+        accessapproval_client = mock.MagicMock()
+        accessapproval_client.settings = {}
+        accessapproval_client.settings_lookup_failed = set()
+        accessapproval_client.api_disabled_project_ids = set()
+        accessapproval_client.api_state_unknown_project_ids = {GCP_PROJECT_ID}
+        accessapproval_client.project_ids = []
+        accessapproval_client.region = "global"
+        accessapproval_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled.accessapproval_client",
+                new=accessapproval_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled import (
+                iam_account_access_approval_enabled,
+            )
+
+            result = iam_account_access_approval_enabled().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "could not be determined" in result[0].status_extended
