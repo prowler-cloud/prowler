@@ -75,7 +75,7 @@ export async function getAiFrameworks(
   filters: Record<string, string>,
 ): Promise<CrossProviderFrameworkSummary[] | null> {
   const catalog = await loadCrossProviderFrameworks();
-  // No answer is not "none installed": hide the section rather than prompt an install.
+  // No answer is not "none installed": the card shows an error rather than prompt an install.
   if (catalog.unavailable) return null;
   const frameworks = catalog.frameworks.filter(({ complianceId }) =>
     AI_FRAMEWORK_IDS.includes(complianceId),

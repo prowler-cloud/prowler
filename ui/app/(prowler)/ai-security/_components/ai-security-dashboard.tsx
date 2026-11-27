@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import {
   getAiFrameworks,
   getAiSecurityOverview,
@@ -20,6 +22,10 @@ import { TopRisks } from "./top-risks";
 // Skeleton heights are the rendered cards' heights at tablet and desktop widths.
 const KPI_GRID = "grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4";
 
+const AiComplianceSkeleton = () => (
+  <Skeleton className="h-[394px] w-full rounded-xl" />
+);
+
 export function AiSecurityDashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6">
@@ -29,7 +35,7 @@ export function AiSecurityDashboardSkeleton() {
         ))}
       </div>
       <Skeleton className="h-[652px] w-full rounded-xl" />
-      <Skeleton className="h-[394px] w-full rounded-xl" />
+      <AiComplianceSkeleton />
       <Skeleton className="h-[469px] w-full rounded-xl" />
     </div>
   );
@@ -42,6 +48,15 @@ interface AiSecurityDashboardProps {
   providers: ProviderProps[];
 }
 
+/** Streams on its own, so the slower compliance calls hold back only this card. */
+async function AiComplianceSSR({
+  frameworksPromise,
+}: {
+  frameworksPromise: ReturnType<typeof getAiFrameworks>;
+}) {
+  return <AiCompliance frameworks={await frameworksPromise} />;
+}
+
 export async function AiSecurityDashboard({
   filters: pageFilters,
   providers,
@@ -51,10 +66,10 @@ export async function AiSecurityDashboard({
     return <AiSecurityEmptyState />;
   }
 
-  const [overview, frameworks] = await Promise.all([
-    getAiSecurityOverview(filters, providers),
-    getAiFrameworks(filters),
-  ]);
+  // Started before the overview is awaited, so both load in parallel. A failed
+  // overview never awaits it, so a rejection is caught here: the card's error state.
+  const frameworksPromise = getAiFrameworks(filters).catch(() => null);
+  const overview = await getAiSecurityOverview(filters, providers);
 
   if (!overview) {
     return (
@@ -69,7 +84,9 @@ export async function AiSecurityDashboard({
     <div className="flex flex-col gap-6">
       <AiKpis overview={overview} filters={filters} />
       <AiStack layers={overview.layers} filters={filters} />
-      {frameworks && <AiCompliance frameworks={frameworks} />}
+      <Suspense fallback={<AiComplianceSkeleton />}>
+        <AiComplianceSSR frameworksPromise={frameworksPromise} />
+      </Suspense>
       <TopRisks risks={overview.topRisks} filters={filters} />
     </div>
   );
