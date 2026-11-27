@@ -25,6 +25,10 @@ RUNTIME_ARN = (
     f":runtime/{RUNTIME_ID}"
 )
 KMS_KEY_ARN = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/test-key-id"
+WEB_ACL_ARN = (
+    f"arn:aws:wafv2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}"
+    ":regional/webacl/gateway-acl/a1b2c3d4-5678-90ab-cdef-example11111"
+)
 
 
 def mock_make_api_call_agentcore(self, operation_name, kwarg):
@@ -51,6 +55,8 @@ def mock_make_api_call_agentcore(self, operation_name, kwarg):
                 "customJWTAuthorizer": {"allowedClients": ["client-1"]}
             },
         }
+    if operation_name == "GetWebACLForResource":
+        return {"WebACL": {"Name": "gateway-acl", "ARN": WEB_ACL_ARN}}
     if operation_name == "ListAgentRuntimes":
         return {
             "agentRuntimes": [
@@ -175,6 +181,8 @@ class Test_Bedrock_AgentCore_Service:
         assert gateway.arn.endswith(f":gateway/{GATEWAY_ID}")
         assert gateway.authorizer_type == "CUSTOM_JWT"
         assert gateway.custom_jwt_allowed_clients == ["client-1"]
+        assert gateway.web_acl_arn == WEB_ACL_ARN
+        assert gateway.web_acl_retrieved is True
 
         assert len(ac.agent_runtimes) == 1
         runtime = next(iter(ac.agent_runtimes.values()))
@@ -193,6 +201,37 @@ class Test_Bedrock_AgentCore_Service:
 
         assert len(ac.token_vaults) == 1
         assert next(iter(ac.token_vaults.values())).kms_key_type == "CustomerManagedKey"
+
+    @mock_aws
+    def test_gateway_web_acl_lookup(self):
+        """No web ACL is a known answer; a failed WAF lookup stays unknown."""
+        from prowler.providers.aws.services.bedrockagentcore.bedrockagentcore_service import (
+            BedrockAgentCore,
+        )
+
+        def _no_acl(self, operation_name, kwarg):
+            if operation_name == "GetWebACLForResource":
+                return {}
+            return mock_make_api_call_agentcore(self, operation_name, kwarg)
+
+        def _waf_denied(self, operation_name, kwarg):
+            if operation_name == "GetWebACLForResource":
+                raise ClientError(
+                    {"Error": {"Code": "AccessDeniedException"}}, operation_name
+                )
+            return mock_make_api_call_agentcore(self, operation_name, kwarg)
+
+        with mock.patch("botocore.client.BaseClient._make_api_call", new=_no_acl):
+            ac = BedrockAgentCore(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+        gateway = next(iter(ac.gateways.values()))
+        assert gateway.web_acl_arn is None
+        assert gateway.web_acl_retrieved is True
+
+        with mock.patch("botocore.client.BaseClient._make_api_call", new=_waf_denied):
+            ac = BedrockAgentCore(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+        gateway = next(iter(ac.gateways.values()))
+        assert gateway.web_acl_retrieved is False
+        assert gateway.detail_retrieved is True
 
     @mock_aws
     def test_tags_are_read_only_for_resources_the_account_owns(self):
@@ -994,6 +1033,7 @@ class Test_AgentCore_Unexpected_Listing_Errors:
 
         ac = _collect_unexpected(_call)
         assert ac.gateways[GATEWAY_ARN_unexpected].detail_retrieved is False
+        assert ac.gateways[GATEWAY_ARN_unexpected].web_acl_retrieved is False
         assert (
             ac.gateway_targets[f"{GATEWAY_ARN_unexpected}/target/t-1"].detail_retrieved
             is False

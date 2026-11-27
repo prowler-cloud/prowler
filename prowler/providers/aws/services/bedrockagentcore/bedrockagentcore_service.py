@@ -37,6 +37,9 @@ class BedrockAgentCore(AWSService):
         self.__threading_call__(self._get_memory, self.memories.values())
         self.__threading_call__(self._list_gateways)
         self.__threading_call__(self._get_gateway, self.gateways.values())
+        if self.gateways:
+            self.wafv2_regional_clients = provider.generate_regional_clients("wafv2")
+            self.__threading_call__(self._get_gateway_web_acl, self.gateways.values())
         self.__threading_call__(self._list_gateway_targets, self.gateways.values())
         self.__threading_call__(self._get_gateway_target, self.gateway_targets.values())
         self.__threading_call__(self._list_agent_runtimes)
@@ -209,6 +212,27 @@ class BedrockAgentCore(AWSService):
                 "allowedAudience", []
             )
             gateway.detail_retrieved = True
+        except Exception as error:
+            logger.error(
+                f"{gateway.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_gateway_web_acl(self, gateway):
+        """Look up the AWS WAF web ACL associated with one gateway.
+
+        Args:
+            gateway: The ``AgentCoreGateway`` to enrich in place.
+
+        The pinned botocore doesn't model ``webAclArn`` on GetGateway, so ask WAF directly.
+        Leaves ``web_acl_retrieved`` False when the call fails.
+        """
+        logger.info("Bedrock AgentCore - Getting Gateway Web ACL...")
+        try:
+            web_acl = self.wafv2_regional_clients[
+                gateway.region
+            ].get_web_acl_for_resource(ResourceArn=gateway.arn)
+            gateway.web_acl_arn = web_acl.get("WebACL", {}).get("ARN")
+            gateway.web_acl_retrieved = True
         except Exception as error:
             logger.error(
                 f"{gateway.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -600,6 +624,9 @@ class AgentCoreGateway(BaseModel):
     authorizer_type: Optional[str] = None
     custom_jwt_allowed_clients: list = []
     custom_jwt_allowed_audience: list = []
+    web_acl_arn: Optional[str] = None
+    # False when GetWebACLForResource failed, so no web ACL means "unknown".
+    web_acl_retrieved: bool = False
     # False when GetGateway failed (AccessDenied, throttle), so an absent field
     # means "unknown" rather than "not configured".
     detail_retrieved: bool = False
