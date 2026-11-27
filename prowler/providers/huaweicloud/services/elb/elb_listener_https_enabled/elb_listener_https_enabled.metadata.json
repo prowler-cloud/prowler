@@ -13,7 +13,7 @@
   "Risk": "Plaintext **HTTP** listeners transmit requests, session tokens, and sensitive payloads unencrypted, exposing traffic to eavesdropping and man-in-the-middle attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_jt_000001.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_ug_jt_0009.html"
   ],
   "Remediation": {
     "Code": {

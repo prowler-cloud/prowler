@@ -120,3 +120,31 @@ class TestRDSService:
         assert inst.instance_type == "Ha"
         assert inst.ha_mode == "ha"
         assert inst.availability_zones == ["cn-north-4a", "cn-north-4b"]
+
+    def test_list_instances_filters_non_ha_node_roles_from_azs(self):
+        ha_instance = SimpleNamespace(
+            id="rds-ha-single-az",
+            name="ha-single-az",
+            status="ACTIVE",
+            public_ips=[],
+            backup_strategy=None,
+            datastore=None,
+            enable_ssl=False,
+            type="Ha",
+            ha=SimpleNamespace(mode="ha"),
+            nodes=[
+                SimpleNamespace(role="master", availability_zone="cn-north-4a"),
+                SimpleNamespace(role="slave", availability_zone="cn-north-4a"),
+                SimpleNamespace(role="readreplica", availability_zone="cn-north-4b"),
+            ],
+            disk_encryption_id="",
+        )
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_instances.return_value = SimpleNamespace(
+            instances=[ha_instance]
+        )
+
+        rds = RDS(_provider_with_client(regional_client))
+
+        assert len(rds.instances) == 1
+        assert rds.instances[0].availability_zones == ["cn-north-4a"]

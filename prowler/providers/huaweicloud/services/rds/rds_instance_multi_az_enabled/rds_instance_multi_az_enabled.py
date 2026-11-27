@@ -12,15 +12,18 @@ class rds_instance_multi_az_enabled(Check):
             if instance.instance_type.lower() == "replica":
                 continue
 
+            is_ha = (
+                instance.instance_type.lower() == "ha"
+                or instance.ha_mode.lower() == "ha"
+            )
+            if is_ha and not instance.availability_zones:
+                continue
+
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=instance)
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = f"huaweicloud:rds:{instance.region}:{rds_client.audited_account}:instance/{instance.id}"
 
-            is_ha = (
-                instance.instance_type.lower() == "ha"
-                or instance.ha_mode.lower() == "ha"
-            )
             is_multi_az = is_ha and len(instance.availability_zones) >= 2
             if is_multi_az:
                 report.status = "PASS"

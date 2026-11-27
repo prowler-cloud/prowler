@@ -13,7 +13,7 @@
   "Risk": "Deprecated **TLS 1.0** and **TLS 1.1** protocols contain known cryptographic weaknesses and are non-compliant with modern security standards.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_jt_000001.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_ug_jt_0022.html"
   ],
   "Remediation": {
     "Code": {

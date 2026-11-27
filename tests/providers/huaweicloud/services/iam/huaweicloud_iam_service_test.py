@@ -193,3 +193,40 @@ class TestIAMService:
 
         assert iam.access_keys_collected is False
         assert iam.access_keys == []
+
+    def test_list_access_keys_partial_error_continues_and_sets_collected_false(self):
+        client = _build_client(
+            users=[
+                SimpleNamespace(id="user-1", name="alice", enabled=True),
+                SimpleNamespace(id="user-2", name="bob", enabled=True),
+                SimpleNamespace(id="user-3", name="carol", enabled=True),
+            ]
+        )
+        client.list_permanent_access_keys.side_effect = [
+            SimpleNamespace(
+                credentials=[
+                    SimpleNamespace(
+                        access="AK1",
+                        user_id="user-1",
+                        status="active",
+                        create_time="2026-01-01T00:00:00Z",
+                    )
+                ]
+            ),
+            Exception("boom"),
+            SimpleNamespace(
+                credentials=[
+                    SimpleNamespace(
+                        access="AK3",
+                        user_id="user-3",
+                        status="active",
+                        create_time="2026-01-02T00:00:00Z",
+                    )
+                ]
+            ),
+        ]
+
+        iam = IAM(_provider_with_client(client))
+
+        assert iam.access_keys_collected is False
+        assert [k.access for k in iam.access_keys] == ["AK1", "AK3"]

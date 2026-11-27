@@ -25,6 +25,7 @@ class TestVPCFlowLogsEnabled:
 
             vpc_client.vpcs = {}
             vpc_client.flow_logs = []
+            vpc_client.flow_logs_failed_regions = set()
             vpc_client.audited_account = "123456789012"
 
             result = vpc_flow_logs_enabled().execute()
@@ -70,6 +71,7 @@ class TestVPCFlowLogsEnabled:
                     region="cn-north-4",
                 )
             ]
+            vpc_client.flow_logs_failed_regions = set()
             vpc_client.audited_account = "123456789012"
 
             result = vpc_flow_logs_enabled().execute()
@@ -105,6 +107,7 @@ class TestVPCFlowLogsEnabled:
                 )
             }
             vpc_client.flow_logs = []
+            vpc_client.flow_logs_failed_regions = set()
             vpc_client.audited_account = "123456789012"
 
             result = vpc_flow_logs_enabled().execute()

@@ -13,7 +13,7 @@
   "Risk": "Without **SSL encryption**, database traffic—including credentials and sensitive query results—can be intercepted or tampered with over the network.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_05_0041.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_mysql_0001.html"
   ],
   "Remediation": {
     "Code": {

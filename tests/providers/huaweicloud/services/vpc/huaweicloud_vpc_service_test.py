@@ -204,6 +204,47 @@ class TestVPCService:
         assert vpc_service.flow_logs == []
         assert REGION in vpc_service.flow_logs_failed_regions
 
+    def test_list_flow_logs_paginates(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[]
+        )
+        page1 = [
+            SimpleNamespace(
+                id=f"fl-{i}",
+                name=f"fl-{i}",
+                resource_type="vpc",
+                resource_id="vpc-1",
+                status="ACTIVE",
+                admin_state=True,
+            )
+            for i in range(2000)
+        ]
+        page2 = [
+            SimpleNamespace(
+                id="fl-2000",
+                name="fl-2000",
+                resource_type="vpc",
+                resource_id="vpc-2",
+                status="ACTIVE",
+                admin_state=True,
+            )
+        ]
+        regional_client.list_flow_logs.side_effect = [
+            SimpleNamespace(flow_logs=page1),
+            SimpleNamespace(flow_logs=page2),
+        ]
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        assert len(vpc_service.flow_logs) == 2001
+        assert vpc_service.flow_logs[-1].id == "fl-2000"
+        assert regional_client.list_flow_logs.call_count == 2
+        assert (
+            regional_client.list_flow_logs.call_args_list[1].args[0].marker == "fl-1999"
+        )
+
     def test_list_security_groups_empty(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])

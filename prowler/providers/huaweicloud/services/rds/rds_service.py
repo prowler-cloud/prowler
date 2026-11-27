@@ -58,6 +58,10 @@ class RDS(HuaweiCloudService):
                             az
                             for node in nodes
                             if (az := getattr(node, "availability_zone", None))
+                            and (
+                                not (role := getattr(node, "role", None))
+                                or role.lower() in ("master", "slave")
+                            )
                         }
                     )
 

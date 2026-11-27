@@ -201,8 +201,16 @@ class IAM(HuaweiCloudService):
 
         try:
             from huaweicloudsdkiam.v3 import ListPermanentAccessKeysRequest
+        except Exception as error:
+            self.access_keys_collected = False
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return
 
-            for user in self.users:
+        all_collected = True
+        for user in self.users:
+            try:
                 request = ListPermanentAccessKeysRequest(user_id=user.id)
                 response = self._call_with_retries(
                     client.list_permanent_access_keys, request
@@ -218,14 +226,13 @@ class IAM(HuaweiCloudService):
                                 create_time=getattr(cred, "create_time", None),
                             )
                         )
+            except Exception as error:
+                all_collected = False
+                logger.error(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
-            self.access_keys_collected = True
-
-        except Exception as error:
-            self.access_keys_collected = False
-            logger.error(
-                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        self.access_keys_collected = all_collected
 
 
 class PasswordPolicy(HuaweiCloudBaseModel):

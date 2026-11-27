@@ -83,6 +83,7 @@ class TestIAMUserMultipleAccessKeys:
                 AccessKey(access="AK1", user_id="user-1", status="active"),
                 AccessKey(access="AK2", user_id="user-1", status="inactive"),
             ]
+            iam_client.access_keys_collected = True
             iam_client.audited_account = "123456789012"
             iam_client.region = "cn-north-4"
 
@@ -120,6 +121,7 @@ class TestIAMUserMultipleAccessKeys:
                 AccessKey(access="AK1", user_id="user-1", status="active"),
                 AccessKey(access="AK2", user_id="user-1", status="active"),
             ]
+            iam_client.access_keys_collected = True
             iam_client.audited_account = "123456789012"
             iam_client.region = "cn-north-4"
 
