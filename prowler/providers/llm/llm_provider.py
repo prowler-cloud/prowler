@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from typing import List
 
 import yaml
@@ -249,7 +250,10 @@ class LlmProvider(Provider):
                 logger.info(f"Using provided config file: {config_path}")
 
             # Set output path for the scan results
-            report_path = "/tmp/prowler_promptfoo_results.jsonl"
+            report_fd, report_path = tempfile.mkstemp(
+                prefix="prowler_promptfoo_results_", suffix=".jsonl"
+            )
+            os.close(report_fd)
 
             promptfoo_command = [
                 "promptfoo",
