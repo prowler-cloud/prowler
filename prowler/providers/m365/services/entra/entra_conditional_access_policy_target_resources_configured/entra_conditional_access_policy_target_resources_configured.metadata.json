@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_target_resources_configured",
+  "CheckTitle": "Conditional Access policy targets at least one resource to enforce access controls",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Each Conditional Access policy targets at least one resource: **cloud apps**, **user actions**, **authentication context class references**, or an **application filter**. A policy without any target resources is accepted by Microsoft Entra but enforces nothing, creating a false sense of security.",
+  "Risk": "A Conditional Access policy with no target resources silently applies to nothing. An administrator may believe critical controls such as MFA or device compliance are enforced, when in reality the policy **never triggers**. This gap is typically caused by unfinished drafts or by accidentally removing the last application from a policy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity/conditional-access/concept-conditional-access-cloud-apps",
+    "https://learn.microsoft.com/graph/api/resources/conditionalaccessapplications?view=graph-rest-1.0",
+    "https://maester.dev/docs/tests/MT.1184"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Go to **Protection** > **Conditional Access** > **Policies**.\n3. Select the policy that has no target resources.\n4. Under **Target resources**, select **Resources (formerly cloud apps)**, **User actions**, or **Authentication context** and configure at least one target.\n5. Click **Save**.\n6. If the policy is no longer needed, delete it instead.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Every Conditional Access policy should target at least one resource (cloud apps, user actions, or authentication context). Regularly audit policies to remove unfinished drafts and ensure that all active policies enforce the intended controls. Delete policies that are no longer needed rather than leaving them without targets.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_target_resources_configured"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_all_apps_all_users"
+  ],
+  "Notes": "Disabled policies are evaluated too (Maester parity) because they become active the moment they are enabled. The policy state is always included in the finding message. Conditional Access requires Microsoft Entra ID P1 licence."
+}
