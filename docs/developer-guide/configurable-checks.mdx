@@ -113,14 +113,14 @@ Say a new check needs `max_iam_role_session_hours`, a strictly positive integer 
 
 - **Unknown keys pass through.** Third-party check plugins can introduce arbitrary keys without schema edits; they will not be filtered.
 - **Invalid values never crash the run.** They produce a single warning per field and the key is dropped.
-- **Coerced values are normalized.** A YAML-quoted `"180"` for an `int` field arrives downstream as the integer `180`.
+- **Coerced values are normalized.** If the schema allows coercion, a YAML-quoted `"180"` for an `int` field arrives downstream as the integer `180`.
 - **The shipped `config.yaml` must round-trip cleanly.** The integration test `test_shipped_default_config_loads_without_warnings` will fail if a key is added to the YAML without a matching schema field, so the two stay in sync.
 
 ## Configuration Value Limits
 
-Configurable thresholds enforce hard limits. A value outside the documented range is **dropped with a warning** and the check falls back to its built-in default (the same as if the key were absent). These bounds are intentionally conservative: they are not the absolute service maxima but the range that still produces a meaningful security check.
+Configurable thresholds enforce hard limits. The loader **drops a key with a warning** if its value has an invalid type or falls outside the documented range. Other valid settings are preserved. The check uses its built-in default when the key is absent. These limits keep values meaningful for the checks and can be narrower than the service limits.
 
-Use this section as the reference when upgrading an existing config: if a value you set is being rejected, it is outside the range below.
+Use the tables below to check the accepted types and ranges when upgrading an existing config.
 
 Only fields with a numeric range, a fixed value set, or a length cap are listed. Fields typed as free-form strings or lists (for example `disallowed_regions`, `secrets_ignore_patterns`, `trusted_account_ids`) have no range limit — they are validated for shape only (a 12-digit account ID, a valid IP/CIDR, a dotted version string), not for magnitude.
 
@@ -134,6 +134,7 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_security_group_rules` | `1..1000` | AWS hard limit is 1000 rules per security group |
 | `max_ec2_instance_age_in_days` | `1..1095` days | 3 years |
 | `max_ec2_instance_stopped_days` | `1..1095` days | 3 years |
+| `aws_backup_ebs_recovery_point_max_age_hours` | `1..8760` h | Unquoted YAML integer. The default is `48` hours for a missing, rejected, or `null` value. YAML `null` is accepted without a warning. Invalid values passed directly to Prowler SDK also use `48` hours. |
 | `ec2_high_risk_ports` | each port `1..65535` | port 0 is reserved |
 | `max_idle_disconnect_timeout_in_seconds` | `60..1800` s | NIST AC-12: cap at 30 min |
 | `max_disconnect_timeout_in_seconds` | `60..3600` s | |

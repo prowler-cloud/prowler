@@ -1,8 +1,13 @@
+from collections import defaultdict
+from collections.abc import Iterable
+from contextlib import nullcontext
 from datetime import datetime
-from typing import Optional
+from threading import Lock
+from typing import TYPE_CHECKING, Optional
 
 from botocore.client import ClientError
-from pydantic.v1 import BaseModel
+from botocore.exceptions import PaginationError
+from pydantic.v1 import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
 from prowler.lib.resource_limit import (
@@ -11,12 +16,58 @@ from prowler.lib.resource_limit import (
 )
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
+from prowler.providers.aws.services.backup.ebs_recovery_evidence import (
+    FRESHNESS_CHECK,
+    POINT_ACTION,
+    VAULT_ACTION,
+    CollectionResult,
+    Decision,
+    EbsRecoveryEvidence,
+    EbsRecoveryPoint,
+    Vault,
+    VaultDescription,
+    log_unavailable,
+    volume_scope,
+)
+
+if TYPE_CHECKING:
+    from prowler.providers.aws.services.ec2.ec2_service import Volume
+
+
+def _check_next_token(token: object, seen_tokens: set[str]) -> None:
+    """Validate a continuation token after processing the current page.
+
+    Args:
+        token: The next token from AWS Backup. None or an empty string ends
+            pagination.
+        seen_tokens: Previously used tokens. A valid nonempty token is added
+            to this set in place.
+
+    Raises:
+        PaginationError: If a non-None token is not a string or has already
+            been seen.
+    """
+    # Stop before requesting an invalid page after the current rows are used.
+    if token is None:
+        return
+    if not isinstance(token, str):
+        raise PaginationError(message="Invalid AWS Backup pagination token")
+    if token in seen_tokens:
+        raise PaginationError(message="Repeated AWS Backup pagination token")
+    if token:
+        seen_tokens.add(token)
 
 
 class Backup(AWSService):
+    _ebs_evidence: EbsRecoveryEvidence | None = None
+
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        self._ebs_evidence_lock = Lock()
+        self._ebs_evidence_audit = None
+        if self._ebs_freshness_enabled():
+            self._start_ebs_evidence()
         self.backup_plan_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-plan"
         self.report_plan_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:report-plan"
         self.backup_vault_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-vault"
@@ -41,51 +92,156 @@ class Backup(AWSService):
         self._select_recovery_points_for_analysis()
         self.__threading_call__(self._list_tags, self.recovery_points)
 
-    def _list_backup_vaults(self, regional_client):
+    def _ebs_freshness_enabled(self) -> bool:
+        return (
+            self.provider.audit_config.get("aws_backup_ebs_recovery_evidence_enabled")
+            is True
+            and FRESHNESS_CHECK in self.provider.audit_metadata.expected_checks
+        )
+
+    def _start_ebs_evidence(self) -> EbsRecoveryEvidence:
+        evidence = EbsRecoveryEvidence(self.audited_partition, self.audited_account)
+        self._ebs_evidence = evidence
+        self._ebs_evidence_audit = self.provider.audit_metadata
+        return evidence
+
+    def evaluate_ebs_recovery_points(
+        self, volumes: Iterable["Volume"], hours: int
+    ) -> dict[str, Decision]:
+        """Collect missing Vault evidence and evaluate freshness for the audited volumes."""
+        with self._ebs_evidence_lock:
+            if not self._ebs_freshness_enabled():
+                return {}
+            evidence = self._ebs_evidence
+            if (
+                evidence is None
+                or self._ebs_evidence_audit is not self.provider.audit_metadata
+            ):
+                evidence = self._start_ebs_evidence()
+
+            regional_volumes = defaultdict(set)
+            decisions = {}
+            for volume in volumes:
+                scope = evidence.scope(volume.region)
+                if volume_scope(volume.arn) != scope:
+                    log_unavailable(
+                        POINT_ACTION,
+                        scope,
+                        "VolumeScopeMismatch",
+                        volume_arn=volume.arn,
+                    )
+                    decisions[volume.arn] = Decision(
+                        "SKIP", reason="VolumeScopeMismatch"
+                    )
+                else:
+                    regional_volumes[volume.region].add(volume.arn)
+
+            for region, arns in regional_volumes.items():
+                if region not in evidence.discovery:
+                    client = self.regional_clients.get(region)
+                    if client is None:
+                        evidence.store_discovery(
+                            region, CollectionResult(error_code="RegionUnavailable")
+                        )
+                        log_unavailable(
+                            VAULT_ACTION, evidence.scope(region), "RegionUnavailable"
+                        )
+                    else:
+                        self._list_backup_vaults(client, evidence_only=True)
+                for vault in sorted(
+                    evidence.standard_vaults.get(region) or (),
+                    key=lambda vault: vault.arn,
+                ):
+                    if vault not in evidence.points:
+                        self._list_recovery_points(vault, evidence_only=True)
+                decisions.update(evidence.evaluate(region, arns, hours))
+            return decisions
+
+    def _list_backup_vaults(self, regional_client, *, evidence_only=False):
         logger.info("Backup - Listing Backup Vaults...")
+        region = regional_client.region
+        evidence = self._ebs_evidence
+        discovery = None
+        read = nullcontext()
+        if evidence is not None:
+            discovery = CollectionResult[VaultDescription]()
+            read = discovery.read(VAULT_ACTION, evidence.scope(region))
+        add_legacy_vaults = not evidence_only
+        seen_tokens = set()
         try:
-            list_backup_vaults_paginator = regional_client.get_paginator(
-                "list_backup_vaults"
-            )
-            for page in list_backup_vaults_paginator.paginate():
-                for configuration in page.get("BackupVaultList"):
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            configuration.get("BackupVaultArn"),
-                            self.audit_resources,
+            with read:
+                list_backup_vaults_paginator = regional_client.get_paginator(
+                    "list_backup_vaults"
+                )
+                for page in list_backup_vaults_paginator.paginate():
+                    if discovery is not None:
+                        discovery.rows.update(
+                            VaultDescription.from_row(row)
+                            for row in discovery.page_rows(page, "BackupVaultList")
                         )
-                    ):
-                        if self.backup_vaults is None:
-                            self.backup_vaults = []
-                        self.backup_vaults.append(
-                            BackupVault(
-                                arn=configuration.get("BackupVaultArn"),
-                                name=configuration.get("BackupVaultName"),
-                                region=regional_client.region,
-                                encryption=configuration.get("EncryptionKeyArn"),
-                                recovery_points=configuration.get(
-                                    "NumberOfRecoveryPoints"
-                                ),
-                                locked=configuration.get("Locked"),
-                                min_retention_days=configuration.get(
-                                    "MinRetentionDays"
-                                ),
-                                max_retention_days=configuration.get(
-                                    "MaxRetentionDays"
-                                ),
+                    if add_legacy_vaults:
+                        try:
+                            self._append_backup_vaults(
+                                page.get("BackupVaultList"), region
                             )
-                        )
+                        except ValidationError as error:
+                            if discovery is None:
+                                raise
+                            logger.error(
+                                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                            # Preserve the legacy cutoff while completing discovery.
+                            add_legacy_vaults = False
+                    _check_next_token(page.get("NextToken"), seen_tokens)
         except ClientError as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            if error.response["Error"]["Code"] == "AccessDeniedException":
+            if (
+                add_legacy_vaults
+                and error.response["Error"]["Code"] == "AccessDeniedException"
+            ):
                 if not self.backup_vaults:
                     self.backup_vaults = None
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        finally:
+            if discovery is not None:
+                evidence.store_discovery(region, discovery)
+
+    def _append_backup_vaults(self, configurations, region):
+        """Append matching vaults to the legacy vault list.
+
+        Initialize the list if needed. Vaults appended before an invalid row
+        remain in the list.
+
+        Args:
+            configurations: Vault mappings returned on the current Backup page.
+            region: The AWS Region that returned the vaults.
+
+        Raises:
+            ValidationError: If a selected row fails BackupVault validation.
+        """
+        for configuration in configurations:
+            if not self.audit_resources or is_resource_filtered(
+                configuration.get("BackupVaultArn"), self.audit_resources
+            ):
+                if self.backup_vaults is None:
+                    self.backup_vaults = []
+                self.backup_vaults.append(
+                    BackupVault(
+                        arn=configuration.get("BackupVaultArn"),
+                        name=configuration.get("BackupVaultName"),
+                        region=region,
+                        encryption=configuration.get("EncryptionKeyArn"),
+                        recovery_points=configuration.get("NumberOfRecoveryPoints"),
+                        locked=configuration.get("Locked"),
+                        min_retention_days=configuration.get("MinRetentionDays"),
+                        max_retention_days=configuration.get("MaxRetentionDays"),
+                    )
+                )
 
     def _list_backup_plans(self, regional_client):
         logger.info("Backup - Listing Backup Plans...")
@@ -195,40 +351,55 @@ class Backup(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_recovery_points(self, backup_vault=None):
+    def _list_recovery_points(self, backup_vault=None, *, evidence_only=False):
         logger.info("Backup - Listing Recovery Points...")
         if backup_vault is None:
             for vault in self.backup_vaults or []:
                 self._list_recovery_points(vault)
             return
 
+        evidence = self._ebs_evidence
+        region = backup_vault.region
+        captured = None
+        read = nullcontext()
+        if evidence is not None:
+            vault = Vault(backup_vault.arn, backup_vault.name, region)
+            captured = evidence.start_points(vault)
+            if captured is not None:
+                read = captured.read(POINT_ACTION, evidence.scope(region), vault.arn)
+
+        seen_tokens = set()
         try:
-            regional_client = self.regional_clients[backup_vault.region]
-            paginator = regional_client.get_paginator(
-                "list_recovery_points_by_backup_vault"
-            )
-            for page in paginator.paginate(BackupVaultName=backup_vault.name):
-                for recovery_point in page.get("RecoveryPoints", []):
-                    arn = recovery_point.get("RecoveryPointArn")
-                    if arn:
-                        rp = RecoveryPoint(
-                            arn=arn,
-                            id=arn.split(":")[-1],
-                            backup_vault_name=backup_vault.name,
-                            encrypted=recovery_point.get("IsEncrypted", False),
-                            creation_date=recovery_point.get("CreationDate"),
-                            backup_vault_region=backup_vault.region,
-                            region=backup_vault.region,
-                            tags=[],
+            with read:
+                regional_client = self.regional_clients[region]
+                paginator = regional_client.get_paginator(
+                    "list_recovery_points_by_backup_vault"
+                )
+                for page in paginator.paginate(BackupVaultName=backup_vault.name):
+                    if not evidence_only:
+                        for recovery_point in page.get("RecoveryPoints", []):
+                            arn = recovery_point.get("RecoveryPointArn")
+                            if arn:
+                                rp = RecoveryPoint(
+                                    arn=arn,
+                                    id=arn.split(":")[-1],
+                                    backup_vault_name=backup_vault.name,
+                                    encrypted=recovery_point.get("IsEncrypted", False),
+                                    creation_date=recovery_point.get("CreationDate"),
+                                    backup_vault_region=region,
+                                    region=region,
+                                    tags=[],
+                                )
+                                self.recovery_points.append(rp)
+                    if captured is not None:
+                        captured.rows.update(
+                            EbsRecoveryPoint.from_row(row)
+                            for row in captured.page_rows(page, "RecoveryPoints")
                         )
-                        self.recovery_points.append(rp)
-        except ClientError as error:
-            logger.error(
-                f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                    _check_next_token(page.get("NextToken"), seen_tokens)
         except Exception as error:
             logger.error(
-                f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _select_recovery_points_for_analysis(self):

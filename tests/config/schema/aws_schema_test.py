@@ -332,3 +332,22 @@ class Test_AWS_Full_Default_Config_Round_Trips:
             "ec2_high_risk_ports": [25, 110, 8088],
         }
         assert _validate(raw) == raw
+
+
+class Test_AWS_Ebs_Recovery_Point_Freshness:
+    @pytest.mark.parametrize("hours", [1, 48, 8760])
+    def test_threshold_round_trips(self, hours):
+        config = {
+            "aws_backup_ebs_recovery_evidence_enabled": True,
+            "aws_backup_ebs_recovery_point_max_age_hours": hours,
+        }
+        assert _validate(config) == config
+
+    @pytest.mark.parametrize("hours", [True, 0, -1, 8761, 1.5, "48"])
+    def test_invalid_thresholds_are_dropped(self, hours):
+        assert _validate({"aws_backup_ebs_recovery_point_max_age_hours": hours}) == {}
+
+    def test_enablement_requires_a_boolean(self):
+        key = "aws_backup_ebs_recovery_evidence_enabled"
+        assert _validate({key: False}) == {key: False}
+        assert _validate({key: "true"}) == {}
