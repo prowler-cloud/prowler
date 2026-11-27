@@ -669,3 +669,4 @@ class Test_Defender_get_security_contacts_sovereign_cloud:
             f"https://management.usgovcloudapi.net/subscriptions/{AZURE_SUBSCRIPTION_ID}/"
         )
         assert "management.azure.com" not in url
+        assert mock_get.call_args.kwargs["timeout"] == 30
