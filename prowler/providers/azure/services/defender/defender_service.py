@@ -184,7 +184,8 @@ class Defender(AzureService):
             requests.exceptions.ConnectionError: When every attempt failed to connect.
             requests.exceptions.HTTPError: On an HTTP error status (not retried).
         """
-        for attempt in range(1, _SECURITY_CONTACTS_MAX_RETRIES + 1):
+        attempt = 1
+        while True:
             try:
                 response = requests.get(
                     url, headers=headers, timeout=_SECURITY_CONTACTS_TIMEOUT
@@ -202,6 +203,7 @@ class Defender(AzureService):
                     f"Defender - {error.__class__.__name__} getting security contacts, retrying in {wait}s (attempt {attempt}/{_SECURITY_CONTACTS_MAX_RETRIES})"
                 )
                 time.sleep(wait)
+                attempt += 1
 
     def _get_security_contacts(self, token: str) -> dict[str, dict]:
         """

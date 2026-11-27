@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import requests
 
@@ -623,6 +623,18 @@ class Test_Defender_get_jit_policies:
         )
 
 
+def security_contacts_call(base_url="https://management.azure.com"):
+    """Expected `requests.get` call for the mocked subscription."""
+    return call(
+        f"{base_url}/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview",
+        headers={
+            "Authorization": "Bearer token",
+            "Content-Type": "application/json",
+        },
+        timeout=30,
+    )
+
+
 US_GOV_REGION_CONFIG = AzureRegionConfig(
     name="AzureUSGovernment",
     base_url="https://management.usgovcloudapi.net",
@@ -665,7 +677,9 @@ class Test_Defender_get_security_contacts_sovereign_cloud:
             result = defender._get_security_contacts(token="token")
 
         assert result == {AZURE_SUBSCRIPTION_ID: {}}
-        mock_get.assert_called_once()
+        assert mock_get.call_args_list == [
+            security_contacts_call("https://management.usgovcloudapi.net")
+        ]
         url = mock_get.call_args.args[0]
         assert url.startswith(
             f"https://management.usgovcloudapi.net/subscriptions/{AZURE_SUBSCRIPTION_ID}/"
@@ -711,7 +725,7 @@ class Test_Defender_get_security_contacts_retry:
         ):
             result = defender._get_security_contacts(token="token")
 
-        assert mock_get.call_count == 2
+        assert mock_get.call_args_list == [security_contacts_call()] * 2
         mock_sleep.assert_called_once_with(1)
         assert result[AZURE_SUBSCRIPTION_ID]["default"].emails == ["a@a.com"]
         assert defender.security_contacts_lookup_failed_subscriptions == set()
@@ -724,8 +738,8 @@ class Test_Defender_get_security_contacts_retry:
         ):
             result = defender._get_security_contacts(token="token")
 
-        assert mock_get.call_count == 3
-        assert [call.args[0] for call in mock_sleep.call_args_list] == [1, 2]
+        assert mock_get.call_args_list == [security_contacts_call()] * 3
+        assert mock_sleep.call_args_list == [call(1), call(2)]
         assert AZURE_SUBSCRIPTION_ID not in result
         assert defender.security_contacts_lookup_failed_subscriptions == {
             AZURE_SUBSCRIPTION_ID
@@ -735,9 +749,10 @@ class Test_Defender_get_security_contacts_retry:
         defender = self._defender()
         response = MagicMock()
         response.json.return_value = {"value": []}
-        with patch(GET_PATH, return_value=response):
+        with patch(GET_PATH, return_value=response) as mock_get:
             result = defender._get_security_contacts(token="token")
 
+        assert mock_get.call_args_list == [security_contacts_call()]
         assert result == {AZURE_SUBSCRIPTION_ID: {}}
         assert defender.security_contacts_lookup_failed_subscriptions == set()
 
@@ -751,7 +766,7 @@ class Test_Defender_get_security_contacts_retry:
         ):
             result = defender._get_security_contacts(token="token")
 
-        assert mock_get.call_count == 1
+        assert mock_get.call_args_list == [security_contacts_call()]
         mock_sleep.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID not in result
         assert defender.security_contacts_lookup_failed_subscriptions == {
