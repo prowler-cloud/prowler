@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "auth_anonymous_sign_ins_disabled",
+  "CheckTitle": "Supabase Auth has anonymous sign-ins disabled",
+  "CheckType": [],
+  "ServiceName": "auth",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase Auth** is assessed for **anonymous sign-ins**. Anonymous users are issued JWTs with the `authenticated` role, so every policy written for `authenticated` applies to them unless it also checks `is_anonymous`.",
+  "Risk": "Policies that only check `auth.role() = 'authenticated'` silently **grant anonymous visitors the same data access as real users**, and anonymous accounts can be created in bulk to abuse quotas.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/auth/auth-anonymous"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Sign In / Providers\n3. Disable Allow anonymous sign-ins, or keep it on and add `(auth.jwt() ->> 'is_anonymous')::boolean is false` to sensitive policies",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  auth = jsonencode({\n    external_anonymous_users_enabled = false\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable anonymous sign-ins unless the product needs them; when enabled, exclude anonymous users in row level security policies.",
+      "Url": "https://hub.prowler.com/check/auth_anonymous_sign_ins_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

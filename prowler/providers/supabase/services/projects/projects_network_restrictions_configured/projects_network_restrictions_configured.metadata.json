@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "projects_network_restrictions_configured",
+  "CheckTitle": "Supabase project restricts direct database connections to allowed IP ranges",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Supabase projects** are assessed for **network restrictions** on the Postgres and connection pooler endpoints. By default any IP address on the internet may attempt to connect with valid credentials.",
+  "Risk": "An unrestricted database endpoint turns every leaked connection string or weak password into a **direct path to all data** and lets attackers brute force credentials from anywhere, without passing through the application or its row level security.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/platform/network-restrictions"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "supabase network-restrictions update --project-ref <PROJECT_REF> --db-allow-cidr <CIDR> --experimental",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > Database > Network Restrictions\n3. Click Add restriction and allow only the IPv4/IPv6 ranges of your backends, bastions and office egress\n4. Remove 0.0.0.0/0 and ::/0 entries",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Allow only the CIDR ranges that must reach Postgres directly; route application traffic through the Data API or the pooler from known egress IPs.",
+      "Url": "https://hub.prowler.com/check/projects_network_restrictions_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Network restrictions require a paid plan; projects whose organization is not entitled to the feature are not reported."
+}

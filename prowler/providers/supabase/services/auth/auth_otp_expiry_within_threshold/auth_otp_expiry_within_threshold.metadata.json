@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "auth_otp_expiry_within_threshold",
+  "CheckTitle": "Supabase Auth email one-time passcodes expire within the recommended window",
+  "CheckType": [],
+  "ServiceName": "auth",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase Auth** is assessed for the **email OTP expiry**. Magic links and passcodes are bearer secrets; Supabase recommends keeping them valid for at most one hour.",
+  "Risk": "Long-lived passcodes widen the window in which a code read from a **forwarded email, shared inbox or compromised mail account** still signs the attacker in as the victim.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/auth/auth-email-passwordless",
+    "https://supabase.com/docs/guides/database/database-linter?lint=0017_auth_otp_long_expiry"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Sign In / Providers > Email\n3. Set Email OTP Expiration to 3600 seconds or less",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  auth = jsonencode({\n    mailer_otp_exp = 3600\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Keep OTP expiry at or below one hour; the threshold is configurable with `auth_otp_expiry_seconds`.",
+      "Url": "https://hub.prowler.com/check/auth_otp_expiry_within_threshold"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

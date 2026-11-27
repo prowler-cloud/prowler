@@ -17,6 +17,7 @@ from prowler.config.schema.m365 import M365ProviderConfig
 from prowler.config.schema.mongodbatlas import MongoDBAtlasProviderConfig
 from prowler.config.schema.okta import OktaProviderConfig
 from prowler.config.schema.openstack import OpenStackProviderConfig
+from prowler.config.schema.supabase import SupabaseProviderConfig
 from prowler.config.schema.vercel import VercelProviderConfig
 
 SCHEMAS: dict[str, type[ProviderConfigBase]] = {
@@ -33,4 +34,5 @@ SCHEMAS: dict[str, type[ProviderConfigBase]] = {
     "okta": OktaProviderConfig,
     "alibabacloud": AlibabaCloudProviderConfig,
     "openstack": OpenStackProviderConfig,
+    "supabase": SupabaseProviderConfig,
 }

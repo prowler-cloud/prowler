@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "auth_mfa_enrollment_enabled",
+  "CheckTitle": "Supabase Auth allows users to enroll multi-factor authentication",
+  "CheckType": [],
+  "ServiceName": "auth",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase Auth** is assessed for **MFA enrollment** options (TOTP, phone, WebAuthn). When none is enabled, application users cannot add a second factor even if the application asks for it.",
+  "Risk": "Without a second factor, a phished or reused password is enough to **take over an account** and read or modify every row its policies permit; the application has no way to request step-up authentication.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/auth/auth-mfa"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Multi-Factor\n3. Enable TOTP (and optionally WebAuthn or phone) enrollment and verification\n4. Enforce aal2 in sensitive row level security policies",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  auth = jsonencode({\n    mfa_totp_enroll_enabled = true\n    mfa_totp_verify_enabled = true\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable TOTP enrollment at minimum and require `aal2` in policies that guard sensitive data.",
+      "Url": "https://hub.prowler.com/check/auth_mfa_enrollment_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,38 @@
+{
+  "Provider": "supabase",
+  "CheckID": "projects_postgrest_max_rows_limited",
+  "CheckTitle": "Supabase project limits the maximum rows returned by the Data API",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "api_gateway",
+  "Description": "**Supabase projects** are assessed for the PostgREST **max rows** setting of the Data API. The value bounds how many rows a single unauthenticated or authenticated REST request can pull from an exposed table.",
+  "Risk": "A high row cap lets a single request with the anon key **dump entire tables** that have weak or missing row level security and lets attackers exhaust database CPU and bandwidth, turning any policy mistake into a **mass data exfiltration** in one call.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/api/securing-your-api",
+    "https://supabase.com/docs/guides/database/postgres/configuration"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "supabase postgres-config update --project-ref <PROJECT_REF> --config max_rows=1000 --experimental",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > Data API\n3. Set Max rows to the smallest value your pages need (1000 or lower)\n4. Use range headers or pagination in clients",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  api = jsonencode({\n    max_rows = 1000   # Critical: bound rows per request\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Keep `max_rows` at or below 1000 and paginate in clients; the threshold is configurable with `postgrest_max_rows` in the audit configuration.",
+      "Url": "https://hub.prowler.com/check/projects_postgrest_max_rows_limited"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

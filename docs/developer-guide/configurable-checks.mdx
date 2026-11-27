@@ -221,6 +221,15 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_owner_percentage` | `1..50` % | guidance recommends ≤25% |
 | `max_owners` | `1..1000` | absolute cap, overrides percentage for large teams |
 
+### Supabase
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `max_retries` | `0..10` | Management API retries |
+| `postgrest_max_rows` | `1..1000000` rows | Supabase default is 1000; lower is safer |
+| `auth_password_min_length` | `6..128` characters | Supabase default is 6; 8 or more recommended |
+| `auth_otp_expiry_seconds` | `60..86400` seconds | Supabase advisor flags expiries above one hour |
+
 These bounds live in the provider schemas under `prowler/config/schema/`; each field's `Field(ge=..., le=...)` (or `field_validator`) is the source of truth and the descriptions there carry the full rationale.
 
 This approach ensures that checks are easily configurable, making Prowler highly adaptable to different environments and requirements.
