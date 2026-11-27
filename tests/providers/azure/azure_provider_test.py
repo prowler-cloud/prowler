@@ -1067,6 +1067,7 @@ class TestAzureProviderSovereignCloudSupport:
                 f"https://{login_endpoint}/{tenant_id}/oauth2/v2.0/token"
             )
             assert kwargs["data"]["scope"] == graph_scope
+            assert kwargs["timeout"] == 30
             assert kwargs["data"]["client_id"] == client_id
             assert kwargs["data"]["client_secret"] == client_secret
 

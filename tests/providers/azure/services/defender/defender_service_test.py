@@ -1,5 +1,7 @@
 from datetime import timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+
+import requests
 
 from prowler.providers.azure.models import AzureRegionConfig
 from prowler.providers.azure.services.defender.defender_service import (
@@ -621,6 +623,18 @@ class Test_Defender_get_jit_policies:
         )
 
 
+def security_contacts_call(base_url="https://management.azure.com"):
+    """Expected `requests.get` call for the mocked subscription."""
+    return call(
+        f"{base_url}/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview",
+        headers={
+            "Authorization": "Bearer token",
+            "Content-Type": "application/json",
+        },
+        timeout=30,
+    )
+
+
 US_GOV_REGION_CONFIG = AzureRegionConfig(
     name="AzureUSGovernment",
     base_url="https://management.usgovcloudapi.net",
@@ -663,9 +677,98 @@ class Test_Defender_get_security_contacts_sovereign_cloud:
             result = defender._get_security_contacts(token="token")
 
         assert result == {AZURE_SUBSCRIPTION_ID: {}}
-        mock_get.assert_called_once()
+        assert mock_get.call_args_list == [
+            security_contacts_call("https://management.usgovcloudapi.net")
+        ]
         url = mock_get.call_args.args[0]
         assert url.startswith(
             f"https://management.usgovcloudapi.net/subscriptions/{AZURE_SUBSCRIPTION_ID}/"
         )
         assert "management.azure.com" not in url
+        assert mock_get.call_args.kwargs["timeout"] == 30
+
+
+GET_PATH = "prowler.providers.azure.services.defender.defender_service.requests.get"
+SLEEP_PATH = "prowler.providers.azure.services.defender.defender_service.time.sleep"
+
+
+class Test_Defender_get_security_contacts_retry:
+    def _defender(self):
+        with (
+            patch(DEFENDER_INIT_PATCHES[0], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[1], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[2], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[3], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[4], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[5], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[6], return_value={}),
+        ):
+            return Defender(set_mocked_azure_provider())
+
+    def test_timeout_then_success_is_retried(self):
+        defender = self._defender()
+        response = MagicMock()
+        response.json.return_value = {
+            "value": [
+                {
+                    "id": "/contact/1",
+                    "name": "default",
+                    "properties": {"isEnabled": True, "emails": "a@a.com"},
+                }
+            ]
+        }
+        with (
+            patch(
+                GET_PATH, side_effect=[requests.exceptions.Timeout(), response]
+            ) as mock_get,
+            patch(SLEEP_PATH) as mock_sleep,
+        ):
+            result = defender._get_security_contacts(token="token")
+
+        assert mock_get.call_args_list == [security_contacts_call()] * 2
+        mock_sleep.assert_called_once_with(1)
+        assert result[AZURE_SUBSCRIPTION_ID]["default"].emails == ["a@a.com"]
+        assert defender.security_contacts_lookup_failed_subscriptions == set()
+
+    def test_timeout_on_every_attempt_marks_subscription_unavailable(self):
+        defender = self._defender()
+        with (
+            patch(GET_PATH, side_effect=requests.exceptions.Timeout()) as mock_get,
+            patch(SLEEP_PATH) as mock_sleep,
+        ):
+            result = defender._get_security_contacts(token="token")
+
+        assert mock_get.call_args_list == [security_contacts_call()] * 3
+        assert mock_sleep.call_args_list == [call(1), call(2)]
+        assert AZURE_SUBSCRIPTION_ID not in result
+        assert defender.security_contacts_lookup_failed_subscriptions == {
+            AZURE_SUBSCRIPTION_ID
+        }
+
+    def test_no_contacts_configured_is_not_unavailable(self):
+        defender = self._defender()
+        response = MagicMock()
+        response.json.return_value = {"value": []}
+        with patch(GET_PATH, return_value=response) as mock_get:
+            result = defender._get_security_contacts(token="token")
+
+        assert mock_get.call_args_list == [security_contacts_call()]
+        assert result == {AZURE_SUBSCRIPTION_ID: {}}
+        assert defender.security_contacts_lookup_failed_subscriptions == set()
+
+    def test_http_error_is_not_retried_and_marks_unavailable(self):
+        defender = self._defender()
+        response = MagicMock()
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError("403")
+        with (
+            patch(GET_PATH, return_value=response) as mock_get,
+            patch(SLEEP_PATH) as mock_sleep,
+        ):
+            result = defender._get_security_contacts(token="token")
+
+        assert mock_get.call_args_list == [security_contacts_call()]
+        mock_sleep.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID not in result
+        assert defender.security_contacts_lookup_failed_subscriptions == {
+            AZURE_SUBSCRIPTION_ID
+        }

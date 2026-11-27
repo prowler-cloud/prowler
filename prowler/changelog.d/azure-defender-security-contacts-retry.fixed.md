@@ -1,0 +1,1 @@
+Azure Defender security contacts request now retries timeouts and connection errors, and exposes subscriptions it could not read in `security_contacts_lookup_failed_subscriptions` instead of treating them as having no contacts
