@@ -1,0 +1,42 @@
+{
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/kb-permissions.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Categories": [
+    "gen-ai"
+  ],
+  "CheckID": "bedrock_knowledge_base_role_least_privilege",
+  "CheckTitle": "Amazon Bedrock knowledge base service role follows least privilege",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Privilege Escalation"
+  ],
+  "DependsOn": [],
+  "Description": "Bedrock Knowledge Base service roles must grant only the permissions retrieval needs. FAILs when an effective policy statement grants `bedrock:*` or another Bedrock action wildcard, or grants Bedrock actions on `Resource: \"*\"` instead of scoping them to the knowledge base and data source resources. Explicit `Deny` statements are honoured, so denied permissions never produce a FAIL.",
+  "Notes": "",
+  "Provider": "aws",
+  "RelatedTo": [
+    "bedrock_agent_role_least_privilege"
+  ],
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam put-role-policy --role-name <kb_service_role_name> --policy-name <policy_name> --policy-document file://narrowed-policy.json",
+      "NativeIaC": "",
+      "Other": "1. Identify the knowledge base's service role (roleArn) in the Bedrock console or via aws bedrock-agent get-knowledge-base\\n2. Remove any statement granting bedrock:* or other Bedrock action wildcards from its identity policies\\n3. Scope Bedrock retrieval actions (bedrock:Retrieve, bedrock:RetrieveAndGenerate) to the knowledge base ARN, and S3 access to the data source bucket ARNs\\n4. Re-run Prowler to confirm the check passes",
+      "Terraform": "```hcl\\nresource \\\"aws_iam_role_policy\\\" \\\"kb_narrow\\\" {\\n  role   = aws_iam_role.kb_service_role.name\\n  policy = jsonencode({\\n    Version = \\\"2012-10-17\\\"\\n    Statement = [\\n      {\\n        Effect   = \\\"Allow\\\"\\n        Action   = [\\\"bedrock:Retrieve\\\", \\\"bedrock:RetrieveAndGenerate\\\"]\\n        Resource = [aws_bedrockagent_knowledge_base.example.arn]  # scoped to this KB\\n      },\\n      {\\n        Effect   = \\\"Allow\\\"\\n        Action   = [\\\"s3:GetObject\\\", \\\"s3:ListBucket\\\"]\\n        Resource = [aws_s3_bucket.kb_data.arn, \\\"${aws_s3_bucket.kb_data.arn}/*\\\"]\\n      }\\n    ]\\n  })\\n}\\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege** to every Bedrock Knowledge Base service role: scope Bedrock retrieval actions to the knowledge base ARN, S3 actions to the data source bucket ARNs, and never use `bedrock:*` or `Resource: \"*\"` in the role's identity policies.",
+      "Url": "https://hub.prowler.com/check/bedrock_knowledge_base_role_least_privilege"
+    }
+  },
+  "ResourceGroup": "ai_ml",
+  "ResourceIdTemplate": "",
+  "ResourceType": "Other",
+  "Risk": "An overly permissive Knowledge Base service role lets anyone who can query it reach beyond retrieval: with `bedrock:*`, data-source S3 buckets, other knowledge bases and model APIs are all reachable through the same role, and prompt injection against the RAG app can weaponize each granted permission. Least privilege limits the blast radius to exactly what retrieval needs.",
+  "ServiceName": "bedrock",
+  "Severity": "high",
+  "SubServiceName": ""
+}
