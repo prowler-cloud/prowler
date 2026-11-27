@@ -14,7 +14,11 @@ spec:
   template:
     metadata:
       annotations:
-        secret-hash: "{{ printf "%s%s%s" (.Files.Get "templates/api/configmap.yaml" | sha256sum) (.Files.Get "templates/api/secret-valkey.yaml" | sha256sum) | sha256sum }}"
+        # Checksum of the rendered ConfigMap so pod templates roll out when the
+        # rendered configuration changes. Deliberately excludes the rendered
+        # Secret so the annotation does not publish a verifier for Secret
+        # contents such as the Valkey password.
+        secret-hash: "{{ include (print $.Template.BasePath "/api/configmap.yaml") . | sha256sum }}"
       {{- with .Values.api.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

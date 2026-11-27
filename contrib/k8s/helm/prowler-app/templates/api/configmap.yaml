@@ -6,5 +6,9 @@ metadata:
     {{- include "prowler.labels" . | nindent 4 }}
 data:
   {{- range $key, $value := .Values.api.djangoConfig }}
+  {{- if eq $key "DJANGO_ALLOWED_HOSTS" }}
+  {{ $key }}: {{ include "prowler.api.allowedHosts" $ | quote }}
+  {{- else }}
   {{ $key }}: {{ $value | quote }}
+  {{- end }}
   {{- end }}
