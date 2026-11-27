@@ -1,0 +1,40 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_connection_identity_based_auth",
+  "CheckTitle": "AI services connections authenticate with an identity rather than a stored key",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "connection",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.cognitiveservices/accounts/connections",
+  "ResourceGroup": "ai_ml",
+  "Description": "A **connection** on an **Azure AI Foundry** account or project holds the credential the account uses to reach another resource. Its `authType` decides whether the call presents a directory identity or a credential stored in the connection. Identity types include **AAD**, **ManagedIdentity** and **ServicePrincipal**. Stored credential types include **ApiKey**, **SAS** and **UsernamePassword**.",
+  "Risk": "A credential stored in the connection is presented by every caller that can use it:\n- **Accountability**: the target sees one credential, so calls through different agents cannot be told apart in its logs\n- **Blast radius**: any agent in the project reaches everything the connection is trusted with\n- **Lifetime**: a stored key does not expire on its own",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/connections",
+    "https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/agent-identity"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```bicep\n// Authenticate a Foundry connection as an identity rather than with a stored key\nresource connection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {\n  parent: project\n  name: '<example_connection_name>'\n  properties: {\n    category: '<category>'\n    target: '<target_url>'\n    authType: 'AAD' // CRITICAL: no key is stored in the connection\n    isSharedToAll: false\n  }\n}\n```",
+      "Other": "1. Give the account, the project or the agent an identity that the target resource can authorise\n2. Grant that identity a least-privilege role on the target\n3. Recreate the connection with an identity `authType` and remove the stored credential\n4. Rotate the key that the connection held, because it has been distributed to everything that used the connection",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the connection's `authType` to an identity type and grant that identity a least-privilege role on the target. Where the platform offers an identity per agent, prefer it: the target then sees which agent called, and the agents in one project stop sharing reach.",
+      "Url": "https://hub.prowler.com/check/aiservices_connection_identity_based_auth"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aiservices_account_local_auth_disabled"
+  ],
+  "Notes": "The service accepts authType values that the SDK enum does not list. A value this check does not recognise is reported MANUAL rather than assumed safe or unsafe."
+}
