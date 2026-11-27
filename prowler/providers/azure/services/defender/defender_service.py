@@ -182,7 +182,7 @@ class Defender(AzureService):
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                 }
-                response = requests.get(url, headers=headers)
+                response = requests.get(url, headers=headers, timeout=30)
                 response.raise_for_status()
                 contact_configurations = response.json().get("value", [])
                 security_contacts[subscription_id] = {}
