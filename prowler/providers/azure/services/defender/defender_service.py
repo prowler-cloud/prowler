@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 from typing import Dict, Optional
 
@@ -9,6 +10,10 @@ from pydantic.v1 import BaseModel
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
+
+_SECURITY_CONTACTS_TIMEOUT = 30
+_SECURITY_CONTACTS_MAX_RETRIES = 3
+_SECURITY_CONTACTS_BACKOFF_BASE = 1
 
 
 class Defender(AzureService):
@@ -28,6 +33,7 @@ class Defender(AzureService):
         self.auto_provisioning_settings = self._get_auto_provisioning_settings()
         self.assessments = self._get_assessments()
         self.settings = self._get_settings()
+        self.security_contacts_lookup_failed_subscriptions = set()
         self.security_contact_configurations = self._get_security_contacts(
             token=provider.session.get_token(
                 *self.region_config.credential_scopes
@@ -163,9 +169,48 @@ class Defender(AzureService):
                 )
         return settings
 
+    def _request_security_contacts(self, url: str, headers: dict) -> requests.Response:
+        """Request the security contacts, retrying timeouts and connection errors.
+
+        Args:
+            url: The securityContacts endpoint of one subscription.
+            headers: The request headers, including the bearer token.
+
+        Returns:
+            The successful response.
+
+        Raises:
+            requests.exceptions.Timeout: When every attempt timed out.
+            requests.exceptions.ConnectionError: When every attempt failed to connect.
+            requests.exceptions.HTTPError: On an HTTP error status (not retried).
+        """
+        for attempt in range(1, _SECURITY_CONTACTS_MAX_RETRIES + 1):
+            try:
+                response = requests.get(
+                    url, headers=headers, timeout=_SECURITY_CONTACTS_TIMEOUT
+                )
+                response.raise_for_status()
+                return response
+            except (
+                requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+            ) as error:
+                if attempt == _SECURITY_CONTACTS_MAX_RETRIES:
+                    raise
+                wait = _SECURITY_CONTACTS_BACKOFF_BASE * (2 ** (attempt - 1))
+                logger.warning(
+                    f"Defender - {error.__class__.__name__} getting security contacts, retrying in {wait}s (attempt {attempt}/{_SECURITY_CONTACTS_MAX_RETRIES})"
+                )
+                time.sleep(wait)
+
     def _get_security_contacts(self, token: str) -> dict[str, dict]:
         """
         Get all security contacts configuration for all subscriptions.
+
+        A subscription whose request still fails after the retries gets no entry
+        and is added to `security_contacts_lookup_failed_subscriptions`, so it
+        stays distinct from a subscription collected with no contacts
+        configured (`{}`). The contact checks emit no finding for it.
 
         Args:
             token: The authentication token to make the request.
@@ -182,8 +227,7 @@ class Defender(AzureService):
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                 }
-                response = requests.get(url, headers=headers, timeout=30)
-                response.raise_for_status()
+                response = self._request_security_contacts(url, headers)
                 contact_configurations = response.json().get("value", [])
                 security_contacts[subscription_id] = {}
                 for contact_configuration in contact_configurations:
@@ -229,6 +273,8 @@ class Defender(AzureService):
                         alert_minimal_severity=alert_minimal_severity,
                     )
             except Exception as error:
+                self.security_contacts_lookup_failed_subscriptions.add(subscription_id)
+                security_contacts.pop(subscription_id, None)
                 logger.error(
                     f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
