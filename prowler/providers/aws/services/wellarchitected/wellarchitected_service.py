@@ -19,21 +19,30 @@ class WellArchitected(AWSService):
     def _list_workloads(self, regional_client):
         logger.info("WellArchitected - Listing Workloads...")
         try:
-            for workload in regional_client.list_workloads()["WorkloadSummaries"]:
-                if not self.audit_resources or (
-                    is_resource_filtered(workload["WorkloadArn"], self.audit_resources)
-                ):
-                    self.workloads.append(
-                        Workload(
-                            id=workload["WorkloadId"],
-                            arn=workload["WorkloadArn"],
-                            name=workload["WorkloadName"],
-                            region=regional_client.region,
-                            lenses=workload["Lenses"],
-                            improvement_status=workload["ImprovementStatus"],
-                            risks=workload["RiskCounts"],
+            next_token = None
+            while True:
+                params = {"NextToken": next_token} if next_token else {}
+                page = regional_client.list_workloads(**params)
+                for workload in page["WorkloadSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            workload["WorkloadArn"], self.audit_resources
                         )
-                    )
+                    ):
+                        self.workloads.append(
+                            Workload(
+                                id=workload["WorkloadId"],
+                                arn=workload["WorkloadArn"],
+                                name=workload["WorkloadName"],
+                                region=regional_client.region,
+                                lenses=workload["Lenses"],
+                                improvement_status=workload["ImprovementStatus"],
+                                risks=workload["RiskCounts"],
+                            )
+                        )
+                next_token = page.get("NextToken")
+                if not next_token:
+                    break
 
         except Exception as error:
             logger.error(
