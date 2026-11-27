@@ -18,9 +18,10 @@ class dynamodb_table_autoscaling_enabled(Check):
         autoscaling_mapping = {}
         for target in dynamodb_scalable_targets:
             table_name = target.resource_id.split("/")[1]
-            if table_name not in autoscaling_mapping:
-                autoscaling_mapping[table_name] = {}
-            autoscaling_mapping[table_name][target.scalable_dimension] = target
+            key = (target.region, table_name)
+            if key not in autoscaling_mapping:
+                autoscaling_mapping[key] = {}
+            autoscaling_mapping[key][target.scalable_dimension] = target
 
         for table in dynamodb_client.tables.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=table)
@@ -32,15 +33,16 @@ class dynamodb_table_autoscaling_enabled(Check):
                 read_autoscaling = False
                 write_autoscaling = False
 
-                if table.name in autoscaling_mapping:
+                table_key = (table.region, table.name)
+                if table_key in autoscaling_mapping:
                     if (
                         "dynamodb:table:ReadCapacityUnits"
-                        in autoscaling_mapping[table.name]
+                        in autoscaling_mapping[table_key]
                     ):
                         read_autoscaling = True
                     if (
                         "dynamodb:table:WriteCapacityUnits"
-                        in autoscaling_mapping[table.name]
+                        in autoscaling_mapping[table_key]
                     ):
                         write_autoscaling = True
 

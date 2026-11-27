@@ -1,0 +1,1 @@
+`dynamodb_table_autoscaling_enabled` check now matches scalable targets to tables within the same region, so a same-named table in another region no longer produces a false PASS or mixes read and write dimensions across regions
