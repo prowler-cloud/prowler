@@ -66,8 +66,9 @@ export async function AiSecurityDashboard({
     return <AiSecurityEmptyState />;
   }
 
-  // Started before the overview is awaited, so both load in parallel.
-  const frameworksPromise = getAiFrameworks(filters);
+  // Started before the overview is awaited, so both load in parallel. A failed
+  // overview never awaits it, so a rejection is caught here: the card's error state.
+  const frameworksPromise = getAiFrameworks(filters).catch(() => null);
   const overview = await getAiSecurityOverview(filters, providers);
 
   if (!overview) {
