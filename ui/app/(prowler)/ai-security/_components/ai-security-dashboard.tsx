@@ -36,9 +36,9 @@ export function AiSecurityDashboardSkeleton() {
 }
 
 interface AiSecurityDashboardProps {
-  /** The page's provider filters narrowed to the AI-SPM providers. */
+  /** The page's scope: the AI-SPM provider types. */
   filters: Record<string, string>;
-  /** The AI-SPM providers the stack lists; none of the filtered types shows the empty state. */
+  /** The AI-SPM providers the stack lists; none shows the empty state. */
   providers: ProviderProps[];
 }
 

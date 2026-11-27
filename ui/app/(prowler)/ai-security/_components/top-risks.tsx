@@ -43,7 +43,7 @@ export const TopRisks = ({
                     asChild
                     variant="link"
                     size="link-sm"
-                    className="min-w-0"
+                    className="min-w-0 shrink"
                   >
                     <Link
                       href={aiFindingsHref(filters, {

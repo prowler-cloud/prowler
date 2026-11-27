@@ -16,7 +16,6 @@ import {
   isCloudAi,
   isModelVendor,
   narrowScope,
-  TOP_RISKS,
   toAiSecurityOverview,
 } from "@/app/(prowler)/ai-security/_lib/overview";
 import type { AiSecurityOverview } from "@/app/(prowler)/ai-security/_types";
@@ -32,7 +31,9 @@ import { SCAN_STATES } from "@/types/attack-paths";
 import type { ProviderProps } from "@/types/providers";
 
 const AI_CATEGORY = "gen-ai";
-const NO_SEVERITY: FindingsSeverityAttributes = {
+// shortcut: the stack reads each provider's services from one page of failed checks, the API's largest; page through them if a tenant fails more AI checks than this.
+const FAILED_CHECKS_PAGE = 100;
+const NO_SEVERITY: CategoryOverviewAttributes["severity"] = {
   critical: 0,
   high: 0,
   medium: 0,
@@ -120,7 +121,7 @@ export async function getAiSecurityOverview(
   const cloudScope = narrowScope(filters, isCloudAi);
   const vendorFailed = vendorScope && failedIn(vendorScope);
 
-  const [statuses, categories, scanned, severity, vendorGroups, cloudGroups] =
+  const [statuses, categories, scanned, severities, vendorGroups, cloudGroups] =
     await Promise.all([
       Promise.all(
         vendorTypes.map((type) =>
@@ -149,15 +150,24 @@ export async function getAiSecurityOverview(
           ),
         ),
       ),
-      vendorFailed && getFindingsBySeverity({ filters: vendorFailed }),
+      Promise.all(
+        vendorTypes.map((type) =>
+          getFindingsBySeverity({
+            filters: failedIn({
+              ...filters,
+              "filter[provider_type__in]": type,
+            }),
+          }),
+        ),
+      ),
       vendorFailed &&
         getLatestFindingGroups({
-          pageSize: TOP_RISKS,
+          pageSize: FAILED_CHECKS_PAGE,
           filters: vendorFailed,
         }),
       cloudScope &&
         getLatestFindingGroups({
-          pageSize: TOP_RISKS,
+          pageSize: FAILED_CHECKS_PAGE,
           filters: {
             ...failedIn(cloudScope),
             "filter[category__in]": AI_CATEGORY,
@@ -193,11 +203,19 @@ export async function getAiSecurityOverview(
           : [],
       ),
     );
-  const severityCounts =
-    severity && "data" in severity ? severity.data?.attributes : undefined;
+  const vendorSeverities: Record<string, FindingsSeverityAttributes> =
+    Object.fromEntries(
+      severities.flatMap((severity, index) => {
+        const attributes =
+          severity && "data" in severity
+            ? severity.data?.attributes
+            : undefined;
+        return attributes ? [[vendorTypes[index], attributes]] : [];
+      }),
+    );
   // Without the totals the page would show a misleading empty posture.
   if (
-    (vendorFailed && !severityCounts) ||
+    Object.keys(vendorSeverities).length < vendorTypes.length ||
     Object.keys(results).length < vendorTypes.length ||
     Object.keys(cloudResults).length < cloudTypes.length
   ) {
@@ -206,11 +224,10 @@ export async function getAiSecurityOverview(
 
   return toAiSecurityOverview({
     providers,
-    types: filters["filter[provider_type__in]"].split(","),
     results,
     cloudResults,
     scannedTypes: types.filter((_, index) => scanned[index]),
-    severity: severityCounts ?? NO_SEVERITY,
+    severities: vendorSeverities,
     findingGroups: [
       ...listOf<AiFindingGroup>(vendorGroups),
       ...listOf<AiFindingGroup>(cloudGroups),

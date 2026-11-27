@@ -4,22 +4,8 @@ import { render } from "@/__tests__/render-browser";
 
 import { AiCompliance } from "./_components/ai-compliance";
 import { AiStack } from "./_components/ai-stack";
+import { TopRisks } from "./_components/top-risks";
 import type { AiStackLayer } from "./_types";
-
-const navigation = vi.hoisted(() => ({
-  push: vi.fn(),
-  search: "",
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: navigation.push,
-    replace: vi.fn(),
-    refresh: vi.fn(),
-  }),
-  usePathname: () => "/ai-security",
-  useSearchParams: () => new URLSearchParams(navigation.search),
-}));
 
 // Only OpenAI is installed from the Registry.
 vi.mock(
@@ -38,6 +24,8 @@ vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ permissions: { manage_providers: true } }),
 }));
 
+const NONE = { critical: 0, high: 0, medium: 0, low: 0, informational: 0 };
+
 describe("AI Security stack", () => {
   const layers: AiStackLayer[] = [
     {
@@ -55,6 +43,8 @@ describe("AI Security stack", () => {
           fail: 1,
           manual: 0,
           newFail: 0,
+          severity: { ...NONE, high: 1 },
+          services: ["apikey"],
         },
       ],
     },
@@ -73,6 +63,8 @@ describe("AI Security stack", () => {
           fail: 4,
           manual: 0,
           newFail: 0,
+          severity: { ...NONE, critical: 1, medium: 3 },
+          services: ["bedrock", "sagemaker"],
         },
         {
           type: "azure",
@@ -84,6 +76,8 @@ describe("AI Security stack", () => {
           fail: 0,
           manual: 0,
           newFail: 0,
+          severity: NONE,
+          services: [],
         },
         {
           type: "gcp",
@@ -95,35 +89,33 @@ describe("AI Security stack", () => {
           fail: 0,
           manual: 0,
           newFail: 0,
+          severity: NONE,
+          services: [],
         },
       ],
     },
   ];
 
-  it("filters the page to a provider's type, and back to all when picked again", async () => {
-    navigation.search = "";
-    const screen = await render(<AiStack layers={layers} filters={{}} />);
-    const row = screen.getByRole("button", { name: /OpenAI/ });
-
-    await expect.element(row).toHaveAttribute("aria-pressed", "false");
-    await row.click();
-    expect(navigation.push).toHaveBeenLastCalledWith(
-      "/ai-security?filter%5Bprovider_type__in%5D=openai",
-      { scroll: false },
+  it("opens a provider's failed AI findings, and lists the services that fail", async () => {
+    const screen = await render(
+      <AiStack
+        layers={layers}
+        filters={{ "filter[provider_type__in]": "openai,aws" }}
+      />,
     );
+    const row = screen.getByRole("link", { name: /AWS/ });
 
-    navigation.search = "filter[provider_type__in]=openai";
-    screen.rerender(<AiStack layers={layers} filters={{}} />);
-
-    await expect.element(row).toHaveAttribute("aria-pressed", "true");
-    await row.click();
-    expect(navigation.push).toHaveBeenLastCalledWith("/ai-security", {
-      scroll: false,
-    });
+    await expect
+      .element(row)
+      .toHaveAttribute(
+        "href",
+        "/findings?filter%5Bcategory__in%5D=gen-ai&filter%5Bstatus__in%5D=FAIL&filter%5Bmuted%5D=false&filter%5Bprovider_type__in%5D=aws",
+      );
+    await expect.element(row.getByText("sagemaker")).toBeVisible();
+    await expect.element(row.getByTitle("1 critical")).toBeVisible();
   });
 
   it("tells a cloud without a completed scan from one without AI services", async () => {
-    navigation.search = "";
     const screen = await render(<AiStack layers={layers} filters={{}} />);
 
     await expect
@@ -135,14 +127,13 @@ describe("AI Security stack", () => {
     await expect
       .element(screen.getByText("No AI services found"))
       .toBeVisible();
-    // Neither has results to filter the page to.
+    // Neither has results to open.
     await expect
-      .element(screen.getByRole("button", { name: /Azure|GCP/ }))
+      .element(screen.getByRole("link", { name: /Azure|GCP/ }))
       .not.toBeInTheDocument();
   });
 
   it("sends a model vendor that is not installed to the Registry instead of Add Provider", async () => {
-    navigation.search = "";
     const notConnected = {
       scope: "0 accounts",
       connected: false,
@@ -151,6 +142,8 @@ describe("AI Security stack", () => {
       fail: 0,
       manual: 0,
       newFail: 0,
+      severity: NONE,
+      services: [],
     };
     const screen = await render(
       <AiStack
@@ -187,5 +180,30 @@ describe("AI Security stack", () => {
     await expect
       .element(screen.getByRole("link", { name: "Install from Registry" }))
       .toHaveAttribute("href", "/registry?filter%5Bcapability%5D=compliance");
+  });
+
+  it("keeps a long check title inside its row on a narrow screen", async () => {
+    const screen = await render(
+      <div data-responsive-container className="@container w-[480px]">
+        <TopRisks
+          filters={{}}
+          risks={[
+            {
+              checkId: "bedrock_guardrails_configured",
+              title:
+                "Amazon Bedrock guardrails are configured with sensitive information filters for every model invocation",
+              severity: "high",
+              providerName: "AWS",
+              affected: "12 resources",
+            },
+          ]}
+        />
+      </div>,
+    );
+
+    const title = screen.getByRole("link", { name: /guardrails/ }).element();
+    expect(title.getBoundingClientRect().right).toBeLessThanOrEqual(
+      title.closest("li")!.getBoundingClientRect().right,
+    );
   });
 });
