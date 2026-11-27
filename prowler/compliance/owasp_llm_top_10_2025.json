@@ -1,0 +1,1252 @@
+{
+  "framework": "OWASP-LLM-Top-10",
+  "name": "OWASP Top 10 for LLM Applications 2025",
+  "version": "2025",
+  "description": "The OWASP Top 10 for Large Language Model Applications 2025 identifies the most critical security risks to applications built on large language models, from prompt injection and sensitive information disclosure to excessive agency and unbounded consumption. Each requirement in this framework is one of the prevention and mitigation strategies published for a risk. This Prowler mapping covers the strategies that can be verified from the configuration of managed AI and machine learning services, and of the cloud infrastructure that hosts and monitors them, on AWS, Azure and Google Cloud; application-level, process and model-training strategies are left as manual requirements.",
+  "icon": "owasp",
+  "attributes_metadata": [
+    {
+      "key": "Section",
+      "label": "Risk",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "LLM01:2025 Prompt Injection",
+        "LLM02:2025 Sensitive Information Disclosure",
+        "LLM03:2025 Supply Chain",
+        "LLM04:2025 Data and Model Poisoning",
+        "LLM05:2025 Improper Output Handling",
+        "LLM06:2025 Excessive Agency",
+        "LLM07:2025 System Prompt Leakage",
+        "LLM08:2025 Vector and Embedding Weaknesses",
+        "LLM09:2025 Misinformation",
+        "LLM10:2025 Unbounded Consumption"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "SubSection",
+      "label": "Mitigation Group",
+      "type": "str",
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Section"
+    }
+  },
+  "requirements": [
+    {
+      "id": "LLM01-1",
+      "name": "Constrain model behavior",
+      "description": "Provide specific instructions about the model's role, capabilities, and limitations within the system prompt. Enforce strict context adherence, limit responses to specific tasks or topics, and instruct the model to ignore attempts to modify core instructions.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM01-2",
+      "name": "Define and validate expected output formats",
+      "description": "Specify clear output formats, request detailed reasoning and source citations, and use deterministic code to validate adherence to these formats.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM01-3",
+      "name": "Implement input and output filtering",
+      "description": "Define sensitive categories and construct rules for identifying and handling such content. Apply semantic filters and use string-checking to scan for non-allowed content. Evaluate responses using the RAG Triad: Assess context relevance, groundedness, and question/answer relevance to identify potentially malicious outputs.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_guardrails_configured",
+          "bedrock_guardrail_prompt_attack_filter_enabled",
+          "bedrock_guardrail_contextual_grounding_filter_enabled",
+          "bedrock_agent_guardrail_enabled"
+        ],
+        "azure": [
+          "aiservices_deployment_content_filter_prompt_shield_enabled"
+        ],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM01-4",
+      "name": "Enforce privilege control and least privilege access",
+      "description": "Provide the application with its own API tokens for extensible functionality, and handle these functions in code rather than providing them to the model. Restrict the model's access privileges to the minimum necessary for its intended operations.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_agent_role_least_privilege",
+          "bedrock_agent_role_not_shared_across_agents",
+          "bedrock_full_access_policy_attached",
+          "bedrock_api_key_no_administrative_privileges"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM01-5",
+      "name": "Require human approval for high-risk actions",
+      "description": "Implement human-in-the-loop controls for privileged operations to prevent unauthorized actions.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM01-6",
+      "name": "Segregate and identify external content",
+      "description": "Separate and clearly denote untrusted content to limit its influence on user prompts.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM01-7",
+      "name": "Conduct adversarial testing and attack simulations",
+      "description": "Perform regular penetration testing and breach simulations, treating the model as an untrusted user to test the effectiveness of trust boundaries and access controls.",
+      "attributes": {
+        "Section": "LLM01:2025 Prompt Injection"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-1",
+      "name": "Integrate Data Sanitization Techniques",
+      "description": "Implement data sanitization to prevent user data from entering the training model. This includes scrubbing or masking sensitive content before it is used in training.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Sanitization"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-2",
+      "name": "Robust Input Validation",
+      "description": "Apply strict input validation methods to detect and filter out potentially harmful or sensitive data inputs, ensuring they do not compromise the model.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Sanitization"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_guardrail_sensitive_information_filter_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-3",
+      "name": "Enforce Strict Access Controls",
+      "description": "Limit access to sensitive data based on the principle of least privilege. Only grant access to data that is necessary for the specific user or process.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Access Controls"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_full_access_policy_attached",
+          "bedrock_api_key_no_administrative_privileges",
+          "bedrock_agent_role_least_privilege",
+          "bedrock_agent_role_not_shared_across_agents",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-4",
+      "name": "Restrict Data Sources",
+      "description": "Limit model access to external data sources, and ensure runtime data orchestration is securely managed to avoid unintended data leakage.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Access Controls"
+      },
+      "checks": {
+        "aws": [
+          "sagemaker_models_network_isolation_enabled",
+          "sagemaker_training_jobs_network_isolation_enabled"
+        ],
+        "azure": [
+          "aiservices_account_outbound_network_restricted"
+        ],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-5",
+      "name": "Utilize Federated Learning",
+      "description": "Train models using decentralized data stored across multiple servers or devices. This approach minimizes the need for centralized data collection and reduces exposure risks.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Federated Learning and Privacy Techniques"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-6",
+      "name": "Incorporate Differential Privacy",
+      "description": "Apply techniques that add noise to the data or outputs, making it difficult for attackers to reverse-engineer individual data points.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Federated Learning and Privacy Techniques"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-7",
+      "name": "Educate Users on Safe LLM Usage",
+      "description": "Provide guidance on avoiding the input of sensitive information. Offer training on best practices for interacting with LLMs securely.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "User Education and Transparency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-8",
+      "name": "Ensure Transparency in Data Usage",
+      "description": "Maintain clear policies about data retention, usage, and deletion. Allow users to opt out of having their data included in training processes.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "User Education and Transparency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-9",
+      "name": "Conceal System Preamble",
+      "description": "Limit the ability for users to override or access the system's initial settings, reducing the risk of exposure to internal configurations.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Secure System Configuration"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-10",
+      "name": "Reference Security Misconfiguration Best Practices",
+      "description": "Follow guidelines like \"OWASP API8:2023 Security Misconfiguration\" to prevent leaking sensitive information through error messages or configuration details. (Ref. link: OWASP API8:2023 Security Misconfiguration).",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Secure System Configuration"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-11",
+      "name": "Homomorphic Encryption",
+      "description": "Use homomorphic encryption to enable secure data analysis and privacy-preserving machine learning. This ensures data remains confidential while being processed by the model.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Advanced Techniques"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM02-12",
+      "name": "Tokenization and Redaction",
+      "description": "Implement tokenization to preprocess and sanitize sensitive information. Techniques like pattern matching can detect and redact confidential content before processing.",
+      "attributes": {
+        "Section": "LLM02:2025 Sensitive Information Disclosure",
+        "SubSection": "Advanced Techniques"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_guardrail_sensitive_information_filter_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-1",
+      "name": "Vet data sources and suppliers",
+      "description": "Carefully vet data sources and suppliers, including T&Cs and their privacy policies, only using trusted suppliers. Regularly review and audit supplier Security and Access, ensuring no changes in their security posture or T&Cs.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-2",
+      "name": "Apply vulnerable and outdated components mitigations",
+      "description": "Understand and apply the mitigations found in the OWASP Top Ten's \"A06:2021 – Vulnerable and Outdated Components.\" This includes vulnerability scanning, management, and patching components. For development environments with access to sensitive data, apply these controls in those environments, too.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [
+          "ecr_registry_enhanced_scanning_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-3",
+      "name": "AI red teaming and evaluations of third-party models",
+      "description": "Apply comprehensive AI Red Teaming and Evaluations when selecting a third party model. Decoding Trust is an example of a Trustworthy AI benchmark for LLMs but models can be fine-tuned to bypass published benchmarks. Use extensive AI Red Teaming to evaluate the model, especially in the use cases you are planning to use the model for.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-4",
+      "name": "Maintain an SBOM / AI BOM inventory",
+      "description": "Maintain an up-to-date inventory of components using a Software Bill of Materials (SBOM) to ensure you have an up-to-date, accurate, and signed inventory, preventing tampering with deployed packages. SBOMs can be used to detect and alert for new, zero-date vulnerabilities quickly. AI BOMs and ML SBOMs are an emerging area and you should evaluate options starting with OWASP CycloneDX",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-5",
+      "name": "Manage AI licensing risks",
+      "description": "To mitigate AI licensing risks, create an inventory of all types of licenses involved using BOMs and conduct regular audits of all software, tools, and datasets, ensuring compliance and transparency through BOMs. Use automated license management tools for real-time monitoring and train teams on licensing models. Maintain detailed licensing documentation in BOMs and leverage tools such as Dyana to perform dynamic analysis of third-party software.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-6",
+      "name": "Use models from verifiable sources with integrity checks",
+      "description": "Only use models from verifiable sources and use third-party model integrity checks with signing and file hashes to compensate for the lack of strong model provenance. Similarly, use code signing for externally supplied code.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-7",
+      "name": "Monitor and audit collaborative model development environments",
+      "description": "Implement strict monitoring and auditing practices for collaborative model development environments to prevent and quickly detect any abuse. \"HuggingFace SF_Convertbot Scanner\" is an example of automated scripts to use.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-8",
+      "name": "Anomaly detection and adversarial robustness tests",
+      "description": "Anomaly detection and adversarial robustness tests on supplied models and data can help detect tampering and poisoning as discussed in \"LLM04 Data and Model Poisoning; ideally, this should be part of MLOps and LLM pipelines; however, these are emerging techniques and may be easier to implement as part of red teaming exercises.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM03-9",
+      "name": "Implement a patching policy",
+      "description": "Implement a patching policy to mitigate vulnerable or outdated components. Ensure the application relies on a maintained version of APIs and underlying model.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [
+          "vertexai_workbench_instance_auto_upgrade_enabled"
+        ]
+      }
+    },
+    {
+      "id": "LLM03-10",
+      "name": "Encrypt and attest models deployed at the edge",
+      "description": "Encrypt models deployed at AI edge with integrity checks and use vendor attestation APIs to prevent tampered apps and models and terminate applications of unrecognized firmware.",
+      "attributes": {
+        "Section": "LLM03:2025 Supply Chain"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-1",
+      "name": "Track data origins and transformations",
+      "description": "Track data origins and transformations using tools like OWASP CycloneDX or ML-BOM and leverage tools such as Dyana to perform dynamic analysis of third-party software. Verify data legitimacy during all model development stages.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-2",
+      "name": "Vet data vendors and validate outputs",
+      "description": "Vet data vendors rigorously, and validate model outputs against trusted sources to detect signs of poisoning.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-3",
+      "name": "Sandbox models from unverified data sources",
+      "description": "Implement strict sandboxing to limit model exposure to unverified data sources. Use anomaly detection techniques to filter out adversarial data.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [
+          "sagemaker_models_network_isolation_enabled",
+          "sagemaker_training_jobs_network_isolation_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-4",
+      "name": "Tailor models with use-case specific datasets",
+      "description": "Tailor models for different use cases by using specific datasets for fine-tuning. This helps produce more accurate outputs based on defined goals.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-5",
+      "name": "Infrastructure controls on model data access",
+      "description": "Ensure sufficient infrastructure controls to prevent the model from accessing unintended data sources.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [
+          "sagemaker_models_network_isolation_enabled",
+          "sagemaker_training_jobs_network_isolation_enabled",
+          "sagemaker_models_vpc_settings_configured",
+          "sagemaker_training_jobs_vpc_settings_configured"
+        ],
+        "azure": [
+          "aiservices_account_outbound_network_restricted"
+        ],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-6",
+      "name": "Use data version control",
+      "description": "Use data version control (DVC) to track changes in datasets and detect manipulation. Versioning is crucial for maintaining model integrity.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-7",
+      "name": "Store user-supplied information in a vector database",
+      "description": "Store user-supplied information in a vector database, allowing adjustments without re-training the entire model.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-8",
+      "name": "Test model robustness with red team campaigns",
+      "description": "Test model robustness with red team campaigns and adversarial techniques, such as federated learning, to minimize the impact of data perturbations.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-9",
+      "name": "Monitor training loss and model behavior",
+      "description": "Monitor training loss and analyze model behavior for signs of poisoning. Use thresholds to detect anomalous outputs.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [
+          "sagemaker_models_monitor_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM04-10",
+      "name": "Use RAG and grounding during inference",
+      "description": "During inference, integrate Retrieval-Augmented Generation (RAG) and grounding techniques to reduce risks of hallucinations.",
+      "attributes": {
+        "Section": "LLM04:2025 Data and Model Poisoning"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_guardrail_contextual_grounding_filter_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-1",
+      "name": "Treat the model as an untrusted user (zero trust)",
+      "description": "Treat the model as any other user, adopting a zero-trust approach, and apply proper input validation on responses coming from the model to backend functions.",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-2",
+      "name": "Follow OWASP ASVS input validation and sanitization",
+      "description": "Follow the OWASP ASVS (Application Security Verification Standard) guidelines to ensure effective input validation and sanitization.",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-3",
+      "name": "Encode model output returned to users",
+      "description": "Encode model output back to users to mitigate undesired code execution by JavaScript or Markdown. OWASP ASVS provides detailed guidance on output encoding.",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-4",
+      "name": "Context-aware output encoding",
+      "description": "Implement context-aware output encoding based on where the LLM output will be used (e.g., HTML encoding for web content, SQL escaping for database queries).",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-5",
+      "name": "Parameterized queries for LLM output",
+      "description": "Use parameterized queries or prepared statements for all database operations involving LLM output.",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-6",
+      "name": "Strict Content Security Policies",
+      "description": "Employ strict Content Security Policies (CSP) to mitigate the risk of XSS attacks from LLM-generated content.",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM05-7",
+      "name": "Logging and monitoring of LLM outputs",
+      "description": "Implement robust logging and monitoring systems to detect unusual patterns in LLM outputs that might indicate exploitation attempts.",
+      "attributes": {
+        "Section": "LLM05:2025 Improper Output Handling"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_model_invocation_logging_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-1",
+      "name": "Minimize extensions",
+      "description": "Limit the extensions that LLM agents are allowed to call to only the minimum necessary. For example, if an LLM-based system does not require the ability to fetch the contents of a URL then such an extension should not be offered to the LLM agent.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-2",
+      "name": "Minimize extension functionality",
+      "description": "Limit the functions that are implemented in LLM extensions to the minimum necessary. For example, an extension that accesses a user's mailbox to summarise emails may only require the ability to read emails, so the extension should not contain other functionality such as deleting or sending messages.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-3",
+      "name": "Avoid open-ended extensions",
+      "description": "Avoid the use of open-ended extensions where possible (e.g., run a shell command, fetch a URL, etc.) and use extensions with more granular functionality. For example, an LLM-based app may need to write some output to a file. If this were implemented using an extension to run a shell function then the scope for undesirable actions is very large (any other shell command could be executed). A more secure alternative would be to build a specific file-writing extension that only implements that specific functionality.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-4",
+      "name": "Minimize extension permissions",
+      "description": "Limit the permissions that LLM extensions are granted to other systems to the minimum necessary in order to limit the scope of undesirable actions. For example, an LLM agent that uses a product database in order to make purchase recommendations to a customer might only need read access to a 'products' table; it should not have access to other tables, nor the ability to insert, update or delete records. This should be enforced by applying appropriate database permissions for the identity that the LLM extension uses to connect to the database.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_agent_role_least_privilege",
+          "bedrock_agent_role_not_shared_across_agents"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-5",
+      "name": "Execute extensions in user's context",
+      "description": "Track user authorization and security scope to ensure actions taken on behalf of a user are executed on downstream systems in the context of that specific user, and with the minimum privileges necessary. For example, an LLM extension that reads a user's code repo should require the user to authenticate via OAuth and with the minimum scope required.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-6",
+      "name": "Require user approval",
+      "description": "Utilise human-in-the-loop control to require a human to approve high-impact actions before they are taken. This may be implemented in a downstream system (outside the scope of the LLM application) or within the LLM extension itself. For example, an LLM-based app that creates and posts social media content on behalf of a user should include a user approval routine within the extension that implements the 'post' operation.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-7",
+      "name": "Complete mediation",
+      "description": "Implement authorization in downstream systems rather than relying on an LLM to decide if an action is allowed or not. Enforce the complete mediation principle so that all requests made to downstream systems via extensions are validated against security policies.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM06-8",
+      "name": "Sanitise LLM inputs and outputs",
+      "description": "Follow secure coding best practice, such as applying OWASP’s recommendations in ASVS (Application Security Verification Standard), with a particularly strong focus on input sanitisation. Use Static Application Security Testing (SAST) and Dynamic and Interactive application testing (DAST, IAST) in development pipelines. The following options will not prevent Excessive Agency, but can limit the level of damage caused: * Log and monitor the activity of LLM extensions and downstream systems to identify where undesirable actions are taking place, and respond accordingly. * Implement rate-limiting to reduce the number of undesirable actions that can take place within a given time period, increasing the opportunity to discover undesirable actions through monitoring before significant damage can occur.",
+      "attributes": {
+        "Section": "LLM06:2025 Excessive Agency"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM07-1",
+      "name": "Separate Sensitive Data from System Prompts",
+      "description": "Avoid embedding any sensitive information (e.g. API keys, auth keys, database names, user roles, permission structure of the application) directly in the system prompts. Instead, externalize such information to the systems that the model does not directly access.",
+      "attributes": {
+        "Section": "LLM07:2025 System Prompt Leakage"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM07-2",
+      "name": "Avoid Reliance on System Prompts for Strict Behavior Control",
+      "description": "Since LLMs are susceptible to other attacks like prompt injections which can alter the system prompt, it is recommended to avoid using system prompts to control the model behavior where possible. Instead, rely on systems outside of the LLM to ensure this behavior. For example, detecting and preventing harmful content should be done in external systems.",
+      "attributes": {
+        "Section": "LLM07:2025 System Prompt Leakage"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM07-3",
+      "name": "Implement Guardrails",
+      "description": "Implement a system of guardrails outside of the LLM itself. While training particular behavior into a model can be effective, such as training it not to reveal its system prompt, it is not a guarantee that the model will always adhere to this. An independent system that can inspect the output to determine if the model is in compliance with expectations is preferable to system prompt instructions.",
+      "attributes": {
+        "Section": "LLM07:2025 System Prompt Leakage"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_guardrails_configured",
+          "bedrock_agent_guardrail_enabled"
+        ],
+        "azure": [
+          "aiservices_deployment_content_filter_prompt_shield_enabled"
+        ],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM07-4",
+      "name": "Ensure that security controls are enforced independently from the LLM",
+      "description": "Critical controls such as privilege separation, authorization bounds checks, and similar must not be delegated to the LLM, either through the system prompt or otherwise. These controls need to occur in a deterministic, auditable manner, and LLMs are not (currently) conducive to this. In cases where an agent is performing tasks, if those tasks require different levels of access, then multiple agents should be used, each configured with the least privileges needed to perform the desired tasks.",
+      "attributes": {
+        "Section": "LLM07:2025 System Prompt Leakage"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_agent_role_least_privilege",
+          "bedrock_agent_role_not_shared_across_agents"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM08-1",
+      "name": "Permission and access control",
+      "description": "Implement fine-grained access controls and permission-aware vector and embedding stores. Ensure strict logical and access partitioning of datasets in the vector database to prevent unauthorized access between different classes of users or different groups.",
+      "attributes": {
+        "Section": "LLM08:2025 Vector and Embedding Weaknesses"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM08-2",
+      "name": "Data validation & source authentication",
+      "description": "Implement robust data validation pipelines for knowledge sources. Regularly audit and validate the integrity of the knowledge base for hidden codes and data poisoning. Accept data only from trusted and verified sources.",
+      "attributes": {
+        "Section": "LLM08:2025 Vector and Embedding Weaknesses"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM08-3",
+      "name": "Data review for combination & classification",
+      "description": "When combining data from different sources, thoroughly review the combined dataset. Tag and classify data within the knowledge base to control access levels and prevent data mismatch errors.",
+      "attributes": {
+        "Section": "LLM08:2025 Vector and Embedding Weaknesses"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM08-4",
+      "name": "Monitoring and Logging",
+      "description": "Maintain detailed immutable logs of retrieval activities to detect and respond promptly to suspicious behavior.",
+      "attributes": {
+        "Section": "LLM08:2025 Vector and Embedding Weaknesses"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-1",
+      "name": "Retrieval-Augmented Generation (RAG)",
+      "description": "Use Retrieval-Augmented Generation to enhance the reliability of model outputs by retrieving relevant and verified information from trusted external databases during response generation. This helps mitigate the risk of hallucinations and misinformation.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-2",
+      "name": "Model Fine-Tuning",
+      "description": "Enhance the model with fine-tuning or embeddings to improve output quality. Techniques such as parameter-efficient tuning (PET) and chain-of-thought prompting can help reduce the incidence of misinformation.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-3",
+      "name": "Cross-Verification and Human Oversight",
+      "description": "Encourage users to cross-check LLM outputs with trusted external sources to ensure the accuracy of the information. Implement human oversight and fact-checking processes, especially for critical or sensitive information. Ensure that human reviewers are properly trained to avoid overreliance on AI-generated content.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-4",
+      "name": "Automatic Validation Mechanisms",
+      "description": "Implement tools and processes to automatically validate key outputs, especially output from high-stakes environments.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_guardrail_contextual_grounding_filter_enabled"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-5",
+      "name": "Risk Communication",
+      "description": "Identify the risks and possible harms associated with LLM-generated content, then clearly communicate these risks and limitations to users, including the potential for misinformation.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-6",
+      "name": "Secure Coding Practices",
+      "description": "Establish secure coding practices to prevent the integration of vulnerabilities due to incorrect code suggestions.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-7",
+      "name": "User Interface Design",
+      "description": "Design APIs and user interfaces that encourage responsible use of LLMs, such as integrating content filters, clearly labeling AI-generated content and informing users on limitations of reliability and accuracy. Be specific about the intended field of use limitations.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM09-8",
+      "name": "Training and Education",
+      "description": "Provide comprehensive training for users on the limitations of LLMs, the importance of independent verification of generated content, and the need for critical thinking. In specific contexts, offer domain-specific training to ensure users can effectively evaluate LLM outputs within their field of expertise.",
+      "attributes": {
+        "Section": "LLM09:2025 Misinformation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-1",
+      "name": "Input Validation",
+      "description": "Implement strict input validation to ensure that inputs do not exceed reasonable size limits.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-2",
+      "name": "Limit Exposure of Logits and Logprobs",
+      "description": "Restrict or obfuscate the exposure of logit_bias and logprobs in API responses. Provide only the necessary information without revealing detailed probabilities.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-3",
+      "name": "Rate Limiting",
+      "description": "Apply rate limiting and user quotas to restrict the number of requests a single source entity can make in a given time period.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-4",
+      "name": "Resource Allocation Management",
+      "description": "Monitor and manage resource allocation dynamically to prevent any single user or request from consuming excessive resources.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-5",
+      "name": "Timeouts and Throttling",
+      "description": "Set timeouts and throttle processing for resource-intensive operations to prevent prolonged resource consumption.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-6",
+      "name": "Sandbox Techniques",
+      "description": "Restrict the LLM's access to network resources, internal services, and APIs. - This is particularly significant for all common scenarios as it encompasses insider risks and threats. Furthermore, it governs the extent of access the LLM application has to data and resources, thereby serving as a crucial control mechanism to mitigate or prevent side-channel attacks.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [
+          "sagemaker_models_network_isolation_enabled",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aiservices_account_outbound_network_restricted"
+        ],
+        "gcp": [
+          "vertexai_workbench_instance_public_ip_disabled"
+        ]
+      }
+    },
+    {
+      "id": "LLM10-7",
+      "name": "Comprehensive Logging, Monitoring and Anomaly Detection",
+      "description": "Continuously monitor resource usage and implement logging to detect and respond to unusual patterns of resource consumption.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_model_invocation_logging_enabled",
+          "guardduty_ai_protection_enabled",
+          "cloudtrail_threat_detection_llm_jacking"
+        ],
+        "azure": [
+          "apim_threat_detection_llm_jacking"
+        ],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-8",
+      "name": "Watermarking",
+      "description": "Implement watermarking frameworks to embed and detect unauthorized use of LLM outputs.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-9",
+      "name": "Graceful Degradation",
+      "description": "Design the system to degrade gracefully under heavy load, maintaining partial functionality rather than complete failure.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-10",
+      "name": "Limit Queued Actions and Scale Robustly",
+      "description": "Implement restrictions on the number of queued actions and total actions, while incorporating dynamic scaling and load balancing to handle varying demands and ensure consistent system performance.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-11",
+      "name": "Adversarial Robustness Training",
+      "description": "Train models to detect and mitigate adversarial queries and extraction attempts.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-12",
+      "name": "Glitch Token Filtering",
+      "description": "Build lists of known glitch tokens and scan output before adding it to the model’s context window.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-13",
+      "name": "Access Controls",
+      "description": "Implement strong access controls, including role-based access control (RBAC) and the principle of least privilege, to limit unauthorized access to LLM model repositories and training environments.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_full_access_policy_attached",
+          "bedrock_api_key_no_administrative_privileges",
+          "bedrock_api_key_no_long_term_credentials",
+          "sagemaker_domain_sso_configured",
+          "sagemaker_notebook_instance_root_access_disabled",
+          "iam_user_access_not_stale_to_sagemaker"
+        ],
+        "azure": [
+          "aiservices_account_local_auth_disabled"
+        ],
+        "gcp": [
+          "vertexai_workbench_instance_root_access_disabled"
+        ]
+      }
+    },
+    {
+      "id": "LLM10-14",
+      "name": "Centralized ML Model Inventory",
+      "description": "Use a centralized ML model inventory or registry for models used in production, ensuring proper governance and access control.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [
+          "sagemaker_models_registry_in_use"
+        ],
+        "azure": [],
+        "gcp": []
+      }
+    },
+    {
+      "id": "LLM10-15",
+      "name": "Automated MLOps Deployment",
+      "description": "Implement automated MLOps deployment with governance, tracking, and approval workflows to tighten access and deployment controls within the infrastructure.",
+      "attributes": {
+        "Section": "LLM10:2025 Unbounded Consumption"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": []
+      }
+    }
+  ]
+}
