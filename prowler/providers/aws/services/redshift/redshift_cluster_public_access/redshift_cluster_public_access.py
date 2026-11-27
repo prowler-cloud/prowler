@@ -35,6 +35,7 @@ class redshift_cluster_public_access(Check):
                                     ingress_rule,
                                     "tcp",
                                     any_address=True,
+                                    all_ports=True,
                                     prefix_lists=ec2_client.managed_prefix_lists,
                                 ):
                                     report.status = "FAIL"

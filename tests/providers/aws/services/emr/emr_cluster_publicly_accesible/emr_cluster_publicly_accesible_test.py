@@ -44,7 +44,7 @@ class Test_emr_cluster_publicly_accesible:
             assert len(result) == 0
 
     @mock_aws
-    def test_clusters_master_public_sg(self):
+    def test_clusters_master_public_port_sg(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Security Group
@@ -53,8 +53,8 @@ class Test_emr_cluster_publicly_accesible:
         )
         master_security_group.authorize_ingress(
             IpProtocol="tcp",
-            FromPort=0,
-            ToPort=65535,
+            FromPort=22,
+            ToPort=22,
             CidrIp="0.0.0.0/0",
         )
 
@@ -194,7 +194,7 @@ class Test_emr_cluster_publicly_accesible:
             )
 
     @mock_aws
-    def test_clusters_master_private_slave_public_sg(self):
+    def test_clusters_master_private_slave_public_port_sg(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Master Security Group
@@ -214,8 +214,8 @@ class Test_emr_cluster_publicly_accesible:
         )
         slave_security_group.authorize_ingress(
             IpProtocol="tcp",
-            FromPort=0,
-            ToPort=65535,
+            FromPort=22,
+            ToPort=22,
             CidrIp="0.0.0.0/0",
         )
 
@@ -379,7 +379,9 @@ class Test_emr_cluster_publicly_accesible:
             )
 
     @mock_aws
-    def test_clusters_master_private_slave_public_sg_none_additional_sgs(self):
+    def test_clusters_master_private_slave_public_ipv6_port_sg_none_additional_sgs(
+        self,
+    ):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Master Security Group
@@ -398,10 +400,14 @@ class Test_emr_cluster_publicly_accesible:
             GroupName=str(uuid4()), Description="test-decurity-group"
         )
         slave_security_group.authorize_ingress(
-            IpProtocol="tcp",
-            FromPort=0,
-            ToPort=65535,
-            CidrIp="0.0.0.0/0",
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}],
+                }
+            ],
         )
 
         # EMR Client

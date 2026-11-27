@@ -1,5 +1,6 @@
 from unittest import mock
 
+import pytest
 from boto3 import client, resource
 from moto import mock_aws
 
@@ -114,6 +115,12 @@ class Test_elbv2_internet_facing:
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
+        security_group.authorize_ingress(
+            CidrIp="10.0.0.0/8",
+            FromPort=443,
+            IpProtocol="tcp",
+            ToPort=443,
+        )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
             VpcId=vpc.id,
@@ -133,23 +140,25 @@ class Test_elbv2_internet_facing:
             Scheme="internet-facing",
         )["LoadBalancers"][0]
 
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(
-                    [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
-                ),
+                return_value=aws_provider,
             ),
             mock.patch(
                 "prowler.providers.aws.services.elbv2.elbv2_internet_facing.elbv2_internet_facing.elbv2_client",
-                new=ELBv2(
-                    set_mocked_aws_provider(
-                        [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-                        create_default_organization=False,
-                    )
-                ),
+                new=ELBv2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elbv2.elbv2_internet_facing.elbv2_internet_facing.ec2_client",
+                new=EC2(aws_provider),
             ),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_internet_facing.elbv2_internet_facing import (
@@ -168,7 +177,20 @@ class Test_elbv2_internet_facing:
             assert result[0].resource_arn == lb["LoadBalancerArn"]
 
     @mock_aws
-    def test_elbv2_public_sg(self):
+    @pytest.mark.parametrize(
+        "source_range",
+        [
+            pytest.param(
+                {"IpRanges": [{"CidrIp": "0.0.0.0/0"}]},
+                id="ipv4",
+            ),
+            pytest.param(
+                {"Ipv6Ranges": [{"CidrIpv6": "::/0"}]},
+                id="ipv6",
+            ),
+        ],
+    )
+    def test_elbv2_public_sg(self, source_range):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -195,8 +217,10 @@ class Test_elbv2_internet_facing:
             GroupId=default_sg_id,
             IpPermissions=[
                 {
-                    "IpProtocol": "-1",
-                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "ToPort": 443,
+                    **source_range,
                 }
             ],
         )

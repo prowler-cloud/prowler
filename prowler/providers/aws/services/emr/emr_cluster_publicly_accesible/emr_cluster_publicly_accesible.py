@@ -42,6 +42,7 @@ class emr_cluster_publicly_accesible(Check):
                                     if check_security_group(
                                         ingress_rule,
                                         "-1",
+                                        all_ports=True,
                                         prefix_lists=ec2_client.managed_prefix_lists,
                                     ):
                                         master_sg_public = True
@@ -68,6 +69,7 @@ class emr_cluster_publicly_accesible(Check):
                                     if check_security_group(
                                         ingress_rule,
                                         "-1",
+                                        all_ports=True,
                                         prefix_lists=ec2_client.managed_prefix_lists,
                                     ):
                                         slave_sg_public = True
