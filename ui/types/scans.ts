@@ -55,6 +55,7 @@ export interface ScanAttributes {
   state: ScanState;
   unique_resource_count: number;
   progress: number;
+  waiting_for_credentials?: boolean;
   scanner_args: ScannerArgs | null;
   duration: number | null;
   started_at: string | null;

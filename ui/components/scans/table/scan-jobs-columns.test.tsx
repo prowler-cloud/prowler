@@ -216,6 +216,27 @@ describe("getScanJobsColumns", () => {
     expect(screen.queryByText("Partial")).not.toBeInTheDocument();
   });
 
+  it("shows when an active AWS scan is waiting for replacement credentials", () => {
+    const scan = makeCompletedScan();
+    renderCell(
+      "progress",
+      {
+        ...scan,
+        attributes: {
+          ...scan.attributes,
+          state: "executing",
+          progress: 26,
+          waiting_for_credentials: true,
+        },
+      },
+      SCAN_JOBS_TAB.ACTIVE,
+    );
+
+    expect(
+      screen.getByText("Waiting for updated AWS credentials"),
+    ).toBeInTheDocument();
+  });
+
   it("renders the completed duration column", () => {
     renderCell("duration", makeCompletedScan());
 
