@@ -27,6 +27,7 @@ When scanning the China (`aws-cn`), European Sovereign Cloud (`aws-eusc`) or Gov
 Refer to: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials for more information about the AWS credential configuration.
 
 </Note>
+
 ### Declaring the Partition
 
 `PROWLER_AWS_PARTITION` tells Prowler which partition the scan runs against, without relying on a region being configured:
@@ -35,7 +36,7 @@ Refer to: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credenti
 export PROWLER_AWS_PARTITION="aws-us-gov"
 ```
 
-It matters most where nothing else says. Resolving an identity means calling STS before anything is known about the credentials, and with no region configured Prowler would otherwise start from the commercial endpoints. Declaring the partition makes that first call go to the right place, which is the difference between a scan that starts and one that fails on an endpoint the credentials cannot use.
+It matters most where nothing else does. Resolving an identity means calling STS before anything is known about the credentials, and with no region configured Prowler would otherwise start from the commercial endpoints. Declaring the partition makes that first call go to the right place, which is the difference between a scan that starts and one that fails on an endpoint the credentials cannot use.
 
 A region configured for the session still wins when it belongs to the declared partition, so a deployment in `us-gov-west-1` is not sent to `us-gov-east-1`. A region belonging to a different partition is ignored, since a partition that has been declared explicitly is the more deliberate statement of the two.
 
