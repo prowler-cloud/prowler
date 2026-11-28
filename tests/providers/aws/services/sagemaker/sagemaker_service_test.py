@@ -42,6 +42,13 @@ test_sso_instance_id = "app-test-instance-id"
 test_sso_application_arn = (
     f"arn:aws:sso::{AWS_ACCOUNT_NUMBER}:application/sagemaker/apl-test"
 )
+test_processing_job = "test-processing-job"
+test_processing_job_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:processing-job/{test_processing_job}"
+test_processing_image_uri = (
+    "123456789012.dkr.ecr.us-east-1.amazonaws.com/sagemaker-clarify-processing:1.0"
+)
+test_transform_job = "test-transform-job"
+test_transform_job_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:transform-job/{test_transform_job}"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -174,6 +181,46 @@ def mock_make_api_call(self, operation_name, kwarg):
             "AuthMode": "SSO",
             "SingleSignOnManagedApplicationInstanceId": test_sso_instance_id,
             "SingleSignOnApplicationArn": test_sso_application_arn,
+        }
+    if operation_name == "ListProcessingJobs":
+        return {
+            "ProcessingJobSummaries": [
+                {
+                    "ProcessingJobName": test_processing_job,
+                    "ProcessingJobArn": test_processing_job_arn,
+                },
+            ],
+        }
+    if operation_name == "DescribeProcessingJob":
+        return {
+            "AppSpecification": {
+                "ImageUri": test_processing_image_uri,
+            },
+            "ProcessingResources": {
+                "ClusterConfig": {
+                    "InstanceCount": 1,
+                    "InstanceType": "ml.m5.xlarge",
+                    "VolumeSizeInGB": 30,
+                    "VolumeKmsKeyId": kms_key_id,
+                }
+            },
+        }
+    if operation_name == "ListTransformJobs":
+        return {
+            "TransformJobSummaries": [
+                {
+                    "TransformJobName": test_transform_job,
+                    "TransformJobArn": test_transform_job_arn,
+                },
+            ],
+        }
+    if operation_name == "DescribeTransformJob":
+        return {
+            "TransformResources": {
+                "InstanceType": "ml.m5.xlarge",
+                "InstanceCount": 1,
+                "VolumeKmsKeyId": kms_key_id,
+            },
         }
 
     return make_api_call(self, operation_name, kwarg)
@@ -465,13 +512,187 @@ class Test_SageMaker_Service:
                 sagemaker_service = SageMaker(audit_info)
 
                 # Check that __threading_call__ was called for _list_tags_for_resource
-                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains)
+                # (one for each resource type: models, notebooks, training jobs,
+                # processing jobs, transform jobs, endpoint configs, domains)
                 tag_calls = [
                     c
                     for c in mock_threading_call.call_args_list
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
-                assert len(tag_calls) == 6
+                assert len(tag_calls) == 7
+
+    # Test SageMaker list processing jobs
+    def test_list_processing_jobs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_processing_jobs) == 1
+        assert sagemaker.sagemaker_processing_jobs[0].name == test_processing_job
+        assert sagemaker.sagemaker_processing_jobs[0].arn == test_processing_job_arn
+        assert sagemaker.sagemaker_processing_jobs[0].region == AWS_REGION_EU_WEST_1
+        assert AWS_REGION_EU_WEST_1 in sagemaker.processing_jobs_scanned_regions
+        assert AWS_REGION_EU_WEST_1 not in sagemaker.processing_jobs_list_failed_regions
+
+    # Test SageMaker describe processing jobs
+    def test_describe_processing_jobs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        processing_job = sagemaker.sagemaker_processing_jobs[0]
+        assert processing_job.image_uri == test_processing_image_uri
+        assert processing_job.volume_kms_key_id == kms_key_id
+        assert processing_job.detail_fetch_error is None
+
+    # Test SageMaker list transform jobs
+    def test_list_transform_jobs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_transform_jobs) == 1
+        assert sagemaker.sagemaker_transform_jobs[0].name == test_transform_job
+        assert sagemaker.sagemaker_transform_jobs[0].arn == test_transform_job_arn
+        assert sagemaker.sagemaker_transform_jobs[0].region == AWS_REGION_EU_WEST_1
+        assert AWS_REGION_EU_WEST_1 in sagemaker.transform_jobs_scanned_regions
+        assert AWS_REGION_EU_WEST_1 not in sagemaker.transform_jobs_list_failed_regions
+
+    # Test SageMaker describe transform jobs
+    def test_describe_transform_jobs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        transform_job = sagemaker.sagemaker_transform_jobs[0]
+        assert transform_job.volume_kms_key_id == kms_key_id
+        assert transform_job.detail_fetch_error is None
+
+    def test_describe_processing_job_omitted_volume_kms_key(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_omit_kms(self, operation_name, kwarg):
+            if operation_name == "DescribeProcessingJob":
+                return {
+                    "AppSpecification": {"ImageUri": test_processing_image_uri},
+                    "ProcessingResources": {
+                        "ClusterConfig": {
+                            "InstanceCount": 1,
+                            "InstanceType": "ml.m5.xlarge",
+                            "VolumeSizeInGB": 30,
+                        }
+                    },
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_omit_kms):
+            sagemaker = SageMaker(aws_provider)
+            job = sagemaker.sagemaker_processing_jobs[0]
+            assert job.volume_kms_key_id is None
+            assert job.detail_fetch_error is None
+
+    def test_describe_processing_job_exception(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_describe_error(self, operation_name, kwarg):
+            if operation_name == "DescribeProcessingJob":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "denied",
+                        }
+                    },
+                    "DescribeProcessingJob",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_describe_error
+        ):
+            sagemaker = SageMaker(aws_provider)
+            job = sagemaker.sagemaker_processing_jobs[0]
+            assert job.volume_kms_key_id is None
+            assert job.detail_fetch_error == "ClientError"
+
+    def test_describe_transform_job_omitted_volume_kms_key(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_omit_kms(self, operation_name, kwarg):
+            if operation_name == "DescribeTransformJob":
+                return {
+                    "TransformResources": {
+                        "InstanceType": "ml.m5.xlarge",
+                        "InstanceCount": 1,
+                    }
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_omit_kms):
+            sagemaker = SageMaker(aws_provider)
+            job = sagemaker.sagemaker_transform_jobs[0]
+            assert job.volume_kms_key_id is None
+            assert job.detail_fetch_error is None
+
+    def test_describe_transform_job_exception(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_describe_error(self, operation_name, kwarg):
+            if operation_name == "DescribeTransformJob":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "denied",
+                        }
+                    },
+                    "DescribeTransformJob",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_describe_error
+        ):
+            sagemaker = SageMaker(aws_provider)
+            job = sagemaker.sagemaker_transform_jobs[0]
+            assert job.volume_kms_key_id is None
+            assert job.detail_fetch_error == "ClientError"
+
+    def test_list_transform_jobs_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_access_denied(self, operation_name, kwarg):
+            if operation_name == "ListTransformJobs":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized to perform sagemaker:ListTransformJobs",
+                        }
+                    },
+                    "ListTransformJobs",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.sagemaker_transform_jobs == []
+            assert AWS_REGION_EU_WEST_1 not in sagemaker.transform_jobs_scanned_regions
+            assert AWS_REGION_EU_WEST_1 in sagemaker.transform_jobs_list_failed_regions
+
+    def test_list_processing_jobs_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_access_denied(self, operation_name, kwarg):
+            if operation_name == "ListProcessingJobs":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized to perform sagemaker:ListProcessingJobs",
+                        }
+                    },
+                    "ListProcessingJobs",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.sagemaker_processing_jobs == []
+            assert AWS_REGION_EU_WEST_1 not in sagemaker.processing_jobs_scanned_regions
+            assert AWS_REGION_EU_WEST_1 in sagemaker.processing_jobs_list_failed_regions
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):
