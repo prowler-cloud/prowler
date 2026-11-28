@@ -1223,6 +1223,7 @@ class ScanSerializer(RLSSerializer):
             "state",
             "unique_resource_count",
             "progress",
+            "waiting_for_credentials",
             # "scanner_args",
             "duration",
             "provider",
