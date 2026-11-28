@@ -67,6 +67,7 @@ from django.utils import timezone as django_timezone
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
+from tasks.jobs.aws_credential_recovery import enable_aws_scan_credential_recovery
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
@@ -1494,6 +1495,13 @@ def perform_prowler_scan(
         if exc:
             raise exc
 
+        credential_recovery = (
+            enable_aws_scan_credential_recovery(
+                provider_instance, scan_instance, prowler_provider
+            )
+            if provider_instance.provider == Provider.ProviderChoices.AWS
+            else None
+        )
         prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
         resource_cache = {}
@@ -1509,6 +1517,8 @@ def perform_prowler_scan(
         last_persisted_progress_at = 0.0
 
         for progress, findings in prowler_scan.scan():
+            if credential_recovery is not None:
+                credential_recovery.raise_if_failed()
             # Process findings in micro-batches
             findings_list = list(findings)
             total_findings = len(findings_list)
@@ -1560,6 +1570,9 @@ def perform_prowler_scan(
                     scan_categories_cache,
                 )
 
+        if credential_recovery is not None:
+            credential_recovery.raise_if_failed()
+
         # Written before the scan is saved as completed: a mute rule can
         # reaggregate the categories of a completed scan at any time.
         _store_final_scan_summaries(
@@ -1599,6 +1612,7 @@ def perform_prowler_scan(
                 with rls_transaction(tenant_id):
                     scan_instance.duration = time.time() - start_time
                     scan_instance.completed_at = datetime.now(tz=UTC)
+                    scan_instance.waiting_for_credentials = False
                     scan_instance.unique_resource_count = len(unique_resources)
                     if exception is None:
                         scan_instance.progress = 100
@@ -1609,6 +1623,7 @@ def perform_prowler_scan(
                             "state",
                             "duration",
                             "completed_at",
+                            "waiting_for_credentials",
                             "unique_resource_count",
                             "progress",
                             "updated_at",
