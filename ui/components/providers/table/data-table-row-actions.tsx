@@ -20,6 +20,7 @@ import {
   revalidateProviders,
   startProviderConnectionChecks,
 } from "@/actions/providers/providers";
+import { scheduleDaily } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { pollConnectionTasks } from "@/components/providers/organizations/org-account-selection.utils";
 import {
@@ -32,13 +33,14 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
+import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   getNodeLabel,
   organizationNameFallbackHint,
@@ -340,9 +342,11 @@ export function DataTableRowActions({
   currentScanConfigId = null,
   capability,
 }: DataTableRowActionsProps) {
+  const scheduleCapability = capability ?? getScanScheduleCapability(isCloud());
   const canEditSchedule =
-    (capability ?? getScanScheduleCapability(isCloud())) ===
-    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+    scheduleCapability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const [isDailyScheduleOpen, setIsDailyScheduleOpen] = useState(false);
+  const [isSchedulingDaily, setIsSchedulingDaily] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
@@ -364,6 +368,10 @@ export function DataTableRowActions({
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+  const canScheduleDaily =
+    scheduleCapability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY &&
+    hasSecret &&
+    !provider?.hasSchedule;
   const isCloudProvider = isCloud() && Boolean(provider);
   // Dynamic providers have no config.yaml baseline, so a Scan Configuration
   // can't apply to them — hide the action entirely.
@@ -507,6 +515,35 @@ export function DataTableRowActions({
 
   const handleTestChildConnections = async () => {
     await handleBulkTest(childTestableIds);
+  };
+
+  const handleScheduleDaily = async () => {
+    setIsSchedulingDaily(true);
+    const formData = new FormData();
+    formData.set("providerId", providerId);
+    try {
+      const result = await scheduleDaily(formData);
+      if (hasActionError(result)) {
+        toast({
+          variant: "destructive",
+          title: "Unable to schedule daily scans",
+          description: getActionErrorMessage(result),
+        });
+        return;
+      }
+
+      toast({ title: "Daily scan scheduled" });
+      setIsDailyScheduleOpen(false);
+      router.refresh();
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Unable to schedule daily scans",
+        description: "Try again.",
+      });
+    } finally {
+      setIsSchedulingDaily(false);
+    }
   };
 
   const openScheduleEditor = async (
@@ -676,6 +713,33 @@ export function DataTableRowActions({
           <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
         )}
       </Modal>
+      {canScheduleDaily && (
+        <Modal
+          open={isDailyScheduleOpen}
+          onOpenChange={(open) => {
+            if (!isSchedulingDaily) setIsDailyScheduleOpen(open);
+          }}
+          title="Schedule daily scans"
+          description="Starts a scan now, then scans this provider every 24 hours."
+          size="sm"
+        >
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              disabled={isSchedulingDaily}
+              onClick={() => setIsDailyScheduleOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={isSchedulingDaily}
+              onClick={() => void handleScheduleDaily()}
+            >
+              {isSchedulingDaily ? "Scheduling..." : "Start Daily Scans"}
+            </Button>
+          </div>
+        </Modal>
+      )}
       <EditScanScheduleModal
         open={isScheduleOpen}
         onOpenChange={setIsScheduleOpen}
@@ -718,6 +782,13 @@ export function DataTableRowActions({
               icon={<CalendarClock />}
               label="Edit Scan Schedule"
               onSelect={() => void openScheduleEditor()}
+            />
+          )}
+          {canScheduleDaily && (
+            <ActionDropdownItem
+              icon={<CalendarClock />}
+              label="Schedule Daily Scan"
+              onSelect={() => setIsDailyScheduleOpen(true)}
             />
           )}
           {canManageScanConfig && (
