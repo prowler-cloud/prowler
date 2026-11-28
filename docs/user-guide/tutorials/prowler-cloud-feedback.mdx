@@ -1,0 +1,65 @@
+---
+title: 'Share Product Feedback'
+sidebarTitle: 'Share Feedback'
+description: 'Send product feedback from the floating Feedback widget in Prowler Cloud.'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.37.0" />
+
+Prowler Cloud provides a floating **Feedback** button for sending product feedback without leaving the current page. The button opens a short free-text form and confirms when the response has been submitted.
+
+<Note>
+The widget appears only in Prowler Cloud when feedback collection and a compatible survey are available. It does not appear in Prowler Local Server. The question, supporting text, input placeholder, submit button text, and confirmation message can change over time.
+</Note>
+
+## Send Feedback
+
+To submit product feedback:
+
+1. Sign in to Prowler Cloud.
+2. Locate the floating **Feedback** button near the lower-right corner of the page.
+3. Click **Feedback** to open the form.
+4. Enter the feedback in the text area.
+5. Click the submit button. The button remains unavailable until the response contains text other than spaces.
+6. Wait for the confirmation message to replace the form. If no custom confirmation is configured, Prowler displays **"Thanks for the feedback!"**.
+
+<Frame>
+  <img src="/images/feedback/feedback-widget-form.png" alt="Feedback form open in Prowler Cloud" />
+</Frame>
+
+<Frame>
+  <img src="/images/feedback/feedback-widget-confirmation.png" alt="Feedback submission confirmation in Prowler Cloud" />
+</Frame>
+
+The widget stays available while navigating authenticated Prowler Cloud pages, so feedback can be submitted from the page where the relevant experience occurs.
+
+<Warning>
+Do not include passwords, API keys, access tokens, or other sensitive information. For account assistance or an issue that requires a response, contact [Prowler Support](https://support.prowler.com). The feedback widget does not open a support request.
+</Warning>
+
+## Dismiss the Form Without Submitting
+
+To close the form without sending a response, press **Esc**, click outside the form, or click **Feedback** again. Reopening the form clears any text that was not submitted.
+
+## Troubleshooting
+
+### The Feedback Button Does Not Appear
+
+The widget is available only after signing in to a supported Prowler Cloud environment. If the button is absent:
+
+1. Confirm that Prowler Cloud is open on an authenticated page. The widget is not available on sign-in or other public pages.
+2. Reload the page to request the current feedback survey again.
+3. Check whether a browser privacy extension or network policy blocks optional feedback services, then reload the page.
+4. Contact [Prowler Support](https://support.prowler.com) if the widget should be available but remains absent.
+
+The button also remains hidden when feedback collection is disabled or no compatible free-text survey is currently available. These conditions are managed by Prowler and do not require users to configure tokens or deployment settings.
+
+### The Submit Button Is Unavailable
+
+Enter at least one non-space character in the text area. Empty responses and responses containing only spaces cannot be submitted.
+
+### The Form Does Not Confirm Submission
+
+Reload Prowler Cloud, reopen the widget, and submit the feedback again. If the form still does not show a confirmation message, contact [Prowler Support](https://support.prowler.com) and include the page where the problem occurred. Do not include credentials or other sensitive information.
