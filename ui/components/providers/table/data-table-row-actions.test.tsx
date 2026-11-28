@@ -41,6 +41,8 @@ const {
   getTasksByIdsMock,
   pollConnectionTasksMock,
   pushMock,
+  refreshMock,
+  scheduleDailyMock,
   realPollConnectionTasksHolder,
   resolveProviderConnectionStateMock,
   revalidateProvidersMock,
@@ -54,6 +56,8 @@ const {
   getTasksByIdsMock: vi.fn(),
   pollConnectionTasksMock: vi.fn(),
   pushMock: vi.fn(),
+  refreshMock: vi.fn(),
+  scheduleDailyMock: vi.fn(),
   // Mutable holder for the real `pollConnectionTasks`, captured once the
   // module mock factory below runs, and read fresh in `beforeEach` since
   // `mockReset: true` clears `pollConnectionTasksMock`'s implementation
@@ -69,7 +73,7 @@ const {
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
 }));
 
 vi.mock("@/actions/organizations/organizations", () => ({
@@ -85,6 +89,10 @@ vi.mock("@/actions/providers/providers", () => ({
 
 vi.mock("@/actions/task/tasks", () => ({
   getTasksByIds: getTasksByIdsMock,
+}));
+
+vi.mock("@/actions/scans", () => ({
+  scheduleDaily: scheduleDailyMock,
 }));
 
 vi.mock("@/actions/schedules", () => ({
@@ -469,6 +477,40 @@ describe("DataTableRowActions", () => {
     expect(pushMock).toHaveBeenCalledWith(
       "/scans?filter%5Bprovider__in%5D=provider-1",
     );
+  });
+
+  it("starts a daily scan schedule for an existing self-hosted provider", async () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const user = userEvent.setup();
+    scheduleDailyMock.mockResolvedValue({ data: { id: "task-1" } });
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button"));
+    await user.click(
+      screen.getByRole("menuitem", { name: "Schedule Daily Scan" }),
+    );
+    expect(scheduleDailyMock).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Start Daily Scans" }));
+
+    expect(scheduleDailyMock.mock.calls[0]?.[0].get("providerId")).toBe(
+      "provider-1",
+    );
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Daily scan scheduled" }),
+    );
+    expect(refreshMock).toHaveBeenCalledOnce();
+    expect(getScheduleMock).not.toHaveBeenCalled();
   });
 
   it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {
