@@ -3694,69 +3694,57 @@ aws:
             )
 
     @mock_aws
-    def test_refresh_credentials_before_expiration(self):
+    def test_assumed_session_refreshes_before_expiration(self):
         role_arn = create_role(AWS_REGION_EU_WEST_1)
-        session_duration = 900
-        aws_provider = AwsProvider(role_arn=role_arn, session_duration=session_duration)
+        provider = AwsProvider(role_arn=role_arn, session_duration=3600)
+        session = provider.session.current_session
+        credentials = session.get_credentials()
+        original = credentials.get_frozen_credentials()
+        expiration = provider._assumed_role_configuration.credentials.expiration
 
-        current_credentials = (
-            aws_provider._assumed_role_configuration.credentials.__dict__
-        )
-        refreshed_credentials = {
-            "access_key": current_credentials["aws_access_key_id"],
-            "secret_key": current_credentials["aws_secret_access_key"],
-            "token": current_credentials["aws_session_token"],
-            "expiry_time": current_credentials.get(
-                "expiration", current_credentials.get("expiry_time")
-            ).isoformat(),
-        }
+        credentials._time_fetcher = lambda: expiration - timedelta(seconds=60)
 
-        assert (
-            AwsProvider.refresh_credentials(
-                aws_provider._assumed_role_configuration, aws_provider._session
-            )
-            == refreshed_credentials
-        )
+        assert credentials.get_frozen_credentials().token != original.token
 
     @mock_aws
-    def test_refresh_credentials_after_expiration(self):
+    def test_short_assumed_session_reuses_fresh_credentials(self):
         role_arn = create_role(AWS_REGION_EU_WEST_1)
-        session_duration_in_seconds = 900
-        session_duration = session_duration_in_seconds
-        aws_provider = AwsProvider(role_arn=role_arn, session_duration=session_duration)
+        with patch.object(
+            AwsProvider, "assume_role", wraps=AwsProvider.assume_role
+        ) as assume_role:
+            provider = AwsProvider(role_arn=role_arn, session_duration=900)
+            sts = provider.session.current_session.client("sts", AWS_REGION_EU_WEST_1)
+            sts.get_caller_identity()
+            sts.get_caller_identity()
 
-        # Manually expire credentials
-        aws_provider._assumed_role_configuration.credentials.expiration = datetime.now(
-            get_localzone()
-        ) - timedelta(seconds=session_duration_in_seconds)
+        assume_role.assert_called_once()
 
-        current_credentials = aws_provider._assumed_role_configuration.credentials
+    @mock_aws
+    def test_assumed_session_uses_valid_token_when_advisory_refresh_fails(self):
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+        provider = AwsProvider(role_arn=role_arn)
+        credentials = provider.session.current_session.get_credentials()
+        original = credentials.get_frozen_credentials()
+        expiration = provider._assumed_role_configuration.credentials.expiration
+        credentials._time_fetcher = lambda: expiration - timedelta(minutes=12)
 
-        # Refresh credentials
-        refreshed_credentials = AwsProvider.refresh_credentials(
-            aws_provider._assumed_role_configuration, aws_provider._session
-        )
+        with patch.object(
+            AwsProvider, "assume_role", side_effect=AWSAssumeRoleError()
+        ) as assume_role:
+            assert credentials.get_frozen_credentials() == original
 
-        # Assert that the refreshed credentials are different
-        access_key = refreshed_credentials.get("access_key")
-        assert access_key != current_credentials.aws_access_key_id
+        assume_role.assert_called_once()
 
-        secret_key = refreshed_credentials.get("secret_key")
-        assert secret_key != current_credentials.aws_secret_access_key
+    @mock_aws
+    def test_assumed_session_rejects_expired_token_if_source_cannot_refresh(self):
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+        provider = AwsProvider(role_arn=role_arn)
+        credentials = provider.session.current_session.get_credentials()
+        expiration = provider._assumed_role_configuration.credentials.expiration
+        credentials._time_fetcher = lambda: expiration + timedelta(seconds=1)
 
-        session_token = refreshed_credentials.get("token")
-        assert session_token != current_credentials.aws_session_token
-
-        expiry_time = refreshed_credentials.get("expiry_time")
-        expiry_time_formatted = datetime.fromisoformat(expiry_time)
-        assert expiry_time != current_credentials.expiration
-        assert datetime.now(get_localzone()) < expiry_time_formatted
-
-        # Assert credentials format
-        assert len(access_key) == 20
-        assert search(r"^ASIA.*$", access_key)
-
-        assert len(secret_key) == 40
-
-        assert len(session_token) == 356
-        assert search(r"^FQoGZXIvYXdzE.*$", session_token)
+        with (
+            patch.object(AwsProvider, "assume_role", side_effect=AWSAssumeRoleError()),
+            pytest.raises(AWSAssumeRoleError),
+        ):
+            credentials.get_frozen_credentials()
