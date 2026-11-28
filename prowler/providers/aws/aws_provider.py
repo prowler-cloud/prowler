@@ -1,6 +1,5 @@
 import os
 import pathlib
-from datetime import datetime
 from functools import lru_cache
 from re import fullmatch
 from typing import Any, Callable, Optional
@@ -760,7 +759,7 @@ class AwsProvider(Provider):
 
         Args:
             identity (AWSIdentityInfo): The identity information.
-            assumed_role_credentials (AWSCredentials): The assumed role credentials.
+            assumed_role_configuration (AWSAssumeRoleConfiguration): The role configuration and initial credentials.
             session (AWSSession): The AWS provider session.
 
         Returns:
@@ -776,9 +775,10 @@ class AwsProvider(Provider):
               [AWS Documentation](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
         """
         try:
-            # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
-            # that needs to be a method without arguments that retrieves a new set of fresh credentials
-            # assuming the role again.
+            # Botocore's default advisory window is 15 minutes, the entire
+            # lifetime of the shortest STS role session. Scale the windows so
+            # those sessions do not call STS every time they sign a request.
+            session_duration = assumed_role_configuration.info.session_duration
             assumed_refreshable_credentials = RefreshableCredentials(
                 access_key=assumed_role_configuration.credentials.aws_access_key_id,
                 secret_key=assumed_role_configuration.credentials.aws_secret_access_key,
@@ -788,6 +788,8 @@ class AwsProvider(Provider):
                     assumed_role_configuration, session
                 ),
                 method="sts-assume-role",
+                advisory_timeout=min(15 * 60, session_duration // 3),
+                mandatory_timeout=min(10 * 60, session_duration // 6),
             )
 
             # Here we need the botocore session since it needs to use refreshable credentials
@@ -811,49 +813,25 @@ class AwsProvider(Provider):
             )
             raise error
 
-    # TODO: maybe this can be improved with botocore.credentials.DeferredRefreshableCredentials https://stackoverflow.com/a/75576540
     @staticmethod
     def refresh_credentials(
         assumed_role_configuration: AWSAssumeRoleConfiguration, session: AWSSession
-    ) -> dict:
-        """
-        Refresh credentials method using AWS STS Assume Role.
+    ) -> dict[str, str]:
+        """Fetch fresh assumed-role credentials when Botocore requests a refresh.
 
-        This method is called adding "()" to the name, so it cannot accept arguments
-        https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
+        Botocore decides when to call this method and handles advisory refresh
+        failures while the current credentials are still usable.
         """
         logger.info("Refreshing assumed credentials...")
-
-        # Since this method does not accept arguments, we need to get the original_session and the assumed role credentials
-        current_credentials = assumed_role_configuration.credentials
-        refreshed_credentials = {
-            "access_key": current_credentials.aws_access_key_id,
-            "secret_key": current_credentials.aws_secret_access_key,
-            "token": current_credentials.aws_session_token,
-            "expiry_time": (
-                current_credentials.expiration.isoformat()
-                if hasattr(current_credentials, "expiration")
-                else current_credentials.expiry_time.isoformat()
-            ),
+        credentials = AwsProvider.assume_role(
+            session.original_session, assumed_role_configuration.info
+        )
+        return {
+            "access_key": credentials.aws_access_key_id,
+            "secret_key": credentials.aws_secret_access_key,
+            "token": credentials.aws_session_token,
+            "expiry_time": credentials.expiration.isoformat(),
         }
-
-        if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
-            get_localzone()
-        ):
-            assume_role_response = AwsProvider.assume_role(
-                session.original_session, assumed_role_configuration.info
-            )
-            refreshed_credentials = dict(
-                # Keys of the dict has to be the same as those that are being searched in the parent class
-                # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
-                access_key=assume_role_response.aws_access_key_id,
-                secret_key=assume_role_response.aws_secret_access_key,
-                token=assume_role_response.aws_session_token,
-                expiry_time=assume_role_response.expiration.isoformat(),
-            )
-            logger.info("Refreshed Credentials")
-
-        return refreshed_credentials
 
     def print_credentials(self):
         """
