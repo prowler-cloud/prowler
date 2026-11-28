@@ -723,6 +723,7 @@ class Scan(RowLevelSecurityProtectedModel):
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     unique_resource_count = models.IntegerField(default=0)
     progress = models.IntegerField(default=0)
+    waiting_for_credentials = models.BooleanField(default=False)
     scanner_args = models.JSONField(default=dict)
     duration = models.IntegerField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
